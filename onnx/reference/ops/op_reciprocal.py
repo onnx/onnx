@@ -3,10 +3,10 @@
 
 import numpy as np
 
-from ._op import OpRunUnaryNum
+from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Reciprocal(OpRunUnaryNum):
     def _run(self, x):  # type: ignore
         with np.errstate(divide="ignore"):
-            return (np.reciprocal(x),)
+            return (np.reciprocal(x).astype(x.dtype),)

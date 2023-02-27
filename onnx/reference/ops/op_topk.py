@@ -3,15 +3,14 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
 def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
     """
     See function `_kneighbors_reduce_func
-    <https://github.com/scikit-learn/scikit-learn/tree/master/
-    sklearn/neighbors/base.py#L304>`_.
+    <https://github.com/scikit-learn/scikit-learn/blob/main/
+    sklearn/neighbors/_base.py#L304>`_.
     """
     if isinstance(k, np.ndarray):
         if k.size != 1:
@@ -61,7 +60,7 @@ class _CommonTopK(OpRun):
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
-            <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
+            <https://github.com/Microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
         k = ink[0]
         axis = axis if axis >= 0 else (axis + len(data.shape))  # type: ignore
@@ -81,7 +80,7 @@ class TopK_1(_CommonTopK):
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
-            <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
+            <https://github.com/Microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
         return _CommonTopK._common_run(self, data, [k], axis=axis)  # type: ignore
 
@@ -98,7 +97,7 @@ class TopK_10(_CommonTopK):
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
-            <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
+            <https://github.com/Microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
         return _CommonTopK._common_run(self, data, ink, axis=axis)
 
@@ -115,16 +114,8 @@ class TopK_11(_CommonTopK):
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
-            <https://github.com/Microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
+            <https://github.com/Microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
         if sorted not in (True, 1):
             raise RuntimeError("TopK does not implement anything for sorted=0.")
         return _CommonTopK._common_run(self, data, ink, axis=axis, largest=largest)
-
-
-if onnx_opset_version() >= 11:
-    TopK = TopK_11
-elif onnx_opset_version() >= 10:
-    TopK = TopK_10  # type: ignore
-else:
-    TopK = TopK_1  # type: ignore

@@ -3,9 +3,7 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
-
-from ._op import OpRunReduceNumpy
+from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 class ReduceL2_1(OpRunReduceNumpy):
@@ -30,9 +28,3 @@ class ReduceL2_18(OpRunReduceNumpy):
                 dtype=data.dtype
             ),
         )
-
-
-if onnx_opset_version() >= 18:
-    ReduceL2 = ReduceL2_18
-else:
-    ReduceL2 = ReduceL2_1  # type: ignore

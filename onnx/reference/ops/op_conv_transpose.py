@@ -4,8 +4,7 @@
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-from .op_col2im import col2im_naive_implementation
+from onnx.reference.ops.op_col2im import col2im_naive_implementation
 
 
 class ConvTranspose(OpRun):
@@ -85,7 +84,6 @@ class ConvTranspose(OpRun):
         # N x C x H x W = X.shape
         # C x M/group x k1 x k2 = W.shape
         if group == 1:
-
             for image_id in range(X.shape[0]):
                 w_t = w_reshaped[0].T
                 gemm = np.matmul(w_t, X[image_id].reshape((k, n)))
@@ -107,4 +105,4 @@ class ConvTranspose(OpRun):
                 f"Implementation for group={group} > 1 is not available yet."
             )
 
-        return (final,)
+        return (final.astype(X.dtype),)  # type: ignore[union-attr]

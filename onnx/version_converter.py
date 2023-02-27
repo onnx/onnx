@@ -5,7 +5,7 @@ This enables users to convert their models between different opsets within the
 default domain ("" or "ai.onnx").
 """
 
-import onnx.onnx_cpp2py_export.version_converter as C
+import onnx.onnx_cpp2py_export.version_converter as C  # noqa: N812
 from onnx import ModelProto, load_from_string
 
 

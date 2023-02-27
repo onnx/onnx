@@ -61,14 +61,59 @@ extend_skip_glob = [
 ]
 
 [tool.pylint.message_control]
+# This list is for vscode. Add new disables in pyproject_pylint.toml for lintrunner and CI.
+# Exclude patterns should be modified in .lintrunner.toml
 disable = [
-    "cyclic-import",
-    "fixme",
+    "format",
     "import-error",
-    "invalid-name",           # TODO: Add naming guidance and enable this check.
     "line-too-long",
-    "missing-docstring",
-    "no-member",
     "no-name-in-module",
-    "too-few-public-methods",
+    "useless-return",
 ]
+
+[tool.ruff]
+target-version = "py37"
+select = [
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "W", # pycodestyle
+    "B", # flake8-bugbear
+    "N", # pep8-naming
+    "YTT", # flake8-2020
+    "RUF", # Ruff-specific rules
+    "TID252", # Relative imports
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",
+    "N803", # Argument casing
+    "N806", # Relax: Variable name in function should be lowercase
+    "N999", # Module names
+    "SIM102", # We don't perfer always combining if branches
+    "SIM108", # We don't encourage ternary operators
+    "SIM114", # Don't combine if branches for debugability
+    "SIM116", # Don't use dict lookup to replace if-else
+]
+ignore-init-module-imports = true
+unfixable = [
+    "F401", # Unused imports
+]
+
+[tool.ruff.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
+
+[tool.ruff.per-file-ignores]
+"**/*_test*" = ["N802"] # Function casing
+"onnx/backend/test/case/**" = ["N802"] # Function casing
+"onnx/reference/ops/**" = ["N801"] # Class casing
+"onnx/reference/ops/_op_list.py" = ["F401"]
+"onnx/__init__.py" = ["F401"]
+"onnx/reference/__init__.py" = ["F401"]
+"onnx/reference/ops/__init__.py" = ["F401"]
+"onnx/reference/ops/aionnxml/_op_list.py" = ["F401"]
+"onnx/reference/ops/aionnxml/__init__.py" = ["F401"]
+"onnx/reference/ops/aionnx_preview_training/__init__.py" = ["F401"]
+"onnx/reference/ops/aionnx_preview_training/_op_list.py" = ["F401"]
+"onnx/reference/ops/experimental/__init__.py" = ["F401"]
+"onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]

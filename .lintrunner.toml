@@ -34,9 +34,10 @@
 # new adapter following examples in https://github.com/justinchuby/lintrunner-adapters.
 
 [[linter]]
-code = 'FLAKE8'
+code = 'RUFF'
 include_patterns = [
     '**/*.py',
+    '**/*.pyi',
 ]
 exclude_patterns = [
     '*_pb2*',
@@ -44,26 +45,54 @@ exclude_patterns = [
     'docs/**',
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
-    'flake8_linter',
-    '--',
+    'ruff_linter',
+    '--config=pyproject.toml',
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'flake8==5.0.4',
-    'flake8-bugbear==22.10.27',
-    'flake8-pyi==22.10.0',
-    'dlint==0.13.0',
+    'ruff==0.0.252',
 ]
+
+[[linter]]
+code = 'RUFF-FIX'
+include_patterns = [
+    '**/*.py',
+    '**/*.pyi',
+]
+exclude_patterns = [
+    '*_pb2*',
+    '.setuptools-cmake-build/*',
+    'docs/**',
+]
+command = [
+    'python',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'ruff_fix_linter',
+    '--config=pyproject.toml',
+    '@{{PATHSFILE}}'
+]
+init_command = [
+    'python',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'pip_init',
+    '--dry-run={{DRYRUN}}',
+    'ruff==0.0.252',
+]
+is_formatter = true
 
 [[linter]]
 code = 'MYPY'
@@ -78,23 +107,24 @@ exclude_patterns = [
     'onnx/reference/reference_evaluator.py',
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
     'mypy_linter',
     '--config=pyproject.toml',
+    '--show-disable',
     '--',
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'mypy==0.991',
+    'mypy==1.0.0',
     'types-protobuf==3.20.4',
 ]
 
@@ -110,7 +140,7 @@ exclude_patterns = [
     'docs/**',
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -119,13 +149,13 @@ command = [
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'black==22.10.0',
+    'black==23.1.0',
     'isort==5.10.1',
 ]
 is_formatter = true
@@ -135,7 +165,7 @@ code = 'NAMESPACE'
 include_patterns = ['**/*.cc', '**/*.h']
 exclude_patterns = ['third_party/**']
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -161,7 +191,7 @@ include_patterns = [
 exclude_patterns = [
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -172,7 +202,7 @@ command = [
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
@@ -185,24 +215,31 @@ is_formatter = true
 [[linter]]
 code = 'PYLINT'
 include_patterns = [
-    # TODO: Opt in to pylint by adding paths here
-    'onnx/reference/**/*.py',
+    'onnx/**/*.py',
+    'tools/**/*.py',
 ]
 exclude_patterns = [
-    'onnx/reference/reference_evaluator.py',
+    'onnx/backend/test/**',
+    'onnx/backend/sample/ops/abs.py', # redefined-builtin
+    'onnx/checker.py',
+    'tools/protoc-gen-mypy.py',
+    'onnx/test/basic_test.py',
+    'onnx/test/parser_test.py',
+    'onnx/test/version_converter_test.py',
 ]
 command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',
     'pylint_linter',
-    '--rcfile=pyproject.toml',
+    '--rcfile=pyproject_pylint.toml',
+    '--show-disable',
     '--',
     '@{{PATHSFILE}}'
 ]
 init_command = [
-    'python3',
+    'python',
     '-m',
     'lintrunner_adapters',
     'run',

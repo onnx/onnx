@@ -3,9 +3,7 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
-
-from ._op import OpRunReduceNumpy
+from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 class ReduceLogSum_1(OpRunReduceNumpy):
@@ -29,9 +27,3 @@ class ReduceLogSum_18(OpRunReduceNumpy):
         if len(res.shape) > 0:
             return (np.log(res, out=res),)
         return (np.log(res),)
-
-
-if onnx_opset_version() >= 18:
-    ReduceLogSum = ReduceLogSum_18
-else:
-    ReduceLogSum = ReduceLogSum_1  # type: ignore

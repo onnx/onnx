@@ -121,7 +121,8 @@ class CommonGRU(OpRun):
             )
 
         Y, Y_h = self._step(X, R, B, W, H_0, num_directions=num_directions)
-        return (Y,) if self.n_outputs == 1 else (Y, Y_h)
+        Y = Y.astype(X.dtype)
+        return (Y,) if self.n_outputs == 1 else (Y, Y_h.astype(X.dtype))
 
 
 class GRU(CommonGRU):

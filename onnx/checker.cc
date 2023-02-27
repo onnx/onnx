@@ -831,7 +831,7 @@ void check_opset_compatibility(
     fail_check(
         "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
         "is not compatible with the version imported by model. FunctionOp imports version " +
-        ONNX_NAMESPACE::to_string(func_opset_version) + "whereas model imports version " +
+        ONNX_NAMESPACE::to_string(func_opset_version) + " whereas model imports version " +
         ONNX_NAMESPACE::to_string(model_opset_version));
   }
 }

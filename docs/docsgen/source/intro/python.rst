@@ -7,10 +7,6 @@ Next sections highlight the main functions used to build
 an ONNX graph with the :ref:`Python API <l-python-onnx-api>`
 *onnx* offers.
 
-.. contents::
-    :local:
-    :depth: 1
-
 .. _l-onnx-linear-regression-onnx-api:
 
 A simple example: a linear regression
@@ -505,7 +501,7 @@ number.
 
 Field `training_info` can be used to store additional graphs.
 See `training_tool_test.py
-<https://github.com/onnx/onnx/blob/master/onnx/test/training_tool_test.py>`_
+<https://github.com/onnx/onnx/blob/main/onnx/test/training_tool_test.py>`_
 to see how it works.
 
 Subgraph: test and loops
@@ -1101,7 +1097,7 @@ pipeline.
     opset_import {
     domain: ""
     version: 15
-    }    
+    }
 
 This way is used to create small models but it is rarely used
 in converting libraries.

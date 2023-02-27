@@ -5,57 +5,34 @@
 # probabilites not consumed by any operator.
 
 import textwrap
-from typing import Any, Union
+from typing import Any, Dict
+from typing import Optional as TOptional
+from typing import Union
 
-from onnx.reference.op_run import OpFunction, _split_class_name
+from onnx.reference.op_run import OpFunction
+from onnx.reference.ops._helpers import build_registered_operators_any_domain
+from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
+from onnx.reference.ops.aionnxml.op_array_feature_extractor import ArrayFeatureExtractor
+from onnx.reference.ops.aionnxml.op_binarizer import Binarizer
+from onnx.reference.ops.aionnxml.op_dict_vectorizer import DictVectorizer
+from onnx.reference.ops.aionnxml.op_feature_vectorizer import FeatureVectorizer
+from onnx.reference.ops.aionnxml.op_imputer import Imputer
+from onnx.reference.ops.aionnxml.op_label_encoder import LabelEncoder
+from onnx.reference.ops.aionnxml.op_linear_classifier import LinearClassifier
+from onnx.reference.ops.aionnxml.op_linear_regressor import LinearRegressor
+from onnx.reference.ops.aionnxml.op_normalizer import Normalizer
+from onnx.reference.ops.aionnxml.op_one_hot_encoder import OneHotEncoder
+from onnx.reference.ops.aionnxml.op_scaler import Scaler
+from onnx.reference.ops.aionnxml.op_svm_classifier import SVMClassifier
+from onnx.reference.ops.aionnxml.op_svm_regressor import SVMRegressor
+from onnx.reference.ops.aionnxml.op_tree_ensemble_classifier import (
+    TreeEnsembleClassifier,
+)
+from onnx.reference.ops.aionnxml.op_tree_ensemble_regressor import TreeEnsembleRegressor
 
-from ._op_run_aionnxml import OpRunAiOnnxMl
-from .op_array_feature_extractor import ArrayFeatureExtractor
-from .op_binarizer import Binarizer
-from .op_dict_vectorizer import DictVectorizer
-from .op_feature_vectorizer import FeatureVectorizer
-from .op_imputer import Imputer
-from .op_label_encoder import LabelEncoder
-from .op_linear_classifier import LinearClassifier
-from .op_linear_regressor import LinearRegressor
-from .op_normalizer import Normalizer
-from .op_one_hot_encoder import OneHotEncoder
-from .op_scaler import Scaler
-from .op_svm_classifier import SVMClassifier
-from .op_svm_regressor import SVMRegressor
-from .op_tree_ensemble_classifier import TreeEnsembleClassifier
-from .op_tree_ensemble_regressor import TreeEnsembleRegressor
 
-
-def _build_registered_operators():  # type: ignore
-    clo = globals().copy()
-    reg_ops = {}  # type: ignore
-    for class_name, class_type in clo.items():
-        if class_name[0] == "_" or class_name in {
-            "Any",
-            "cl",
-            "clo",
-            "class_name",
-            "textwrap",
-            "Union",
-        }:
-            continue  # pragma: no cover
-        if isinstance(class_type, type(load_op)):
-            continue
-        try:
-            issub = issubclass(class_type, OpRunAiOnnxMl)
-        except TypeError as e:
-            raise TypeError(
-                f"Unexpected variable type {class_type!r} and class_name={class_name!r}."
-            ) from e
-        if issub:
-            op_type, op_version = _split_class_name(class_name)
-            if op_type not in reg_ops:
-                reg_ops[op_type] = {}
-            reg_ops[op_type][op_version] = class_type
-    if len(reg_ops) == 0:
-        raise RuntimeError("No registered operators. The installation went wrong.")
-    return reg_ops
+def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]:
+    return build_registered_operators_any_domain(globals().copy())  # type: ignore[return-value]
 
 
 def load_op(
@@ -72,7 +49,7 @@ def load_op(
     """
     global _registered_operators
     if _registered_operators is None:
-        _registered_operators = _build_registered_operators()
+        _registered_operators = _build_registered_operators()  # type: ignore[assignment]
     if custom is not None:
         return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
     if domain != "ai.onnx.ml":
@@ -115,4 +92,6 @@ def load_op(
     return cl
 
 
-_registered_operators = None
+# Python 3.7 does not support this annotation for a global variable.
+# _registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]] = None
+_registered_operators = None  # type: ignore

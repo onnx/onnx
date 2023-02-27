@@ -6,9 +6,8 @@ from typing import List, Optional, Sequence
 import numpy as np
 
 from onnx import ModelProto
-
-from ..test_case import TestCase
-from ..utils import import_recursive
+from onnx.backend.test.case.test_case import TestCase
+from onnx.backend.test.case.utils import import_recursive
 
 _SimpleModelTestCases = []
 
@@ -35,14 +34,12 @@ def expect(
     )
 
 
-base_model_opset_version = 10
-BASE_URL = "https://s3.amazonaws.com/download.onnx/models/opset_{}".format(
-    base_model_opset_version
-)
+# BASE_URL = "https://download.onnxruntime.ai/onnx/models"
+BASE_URL = "onnx/backend/test/data/light/light_%s.onnx"
 
 
 def collect_testcases() -> List[TestCase]:
-    """Collect model test cases defined in python/numpy code and in model zoo."""
+    """Collect model test cases defined in python/numpy code."""
 
     real_model_testcases = []
 
@@ -59,7 +56,7 @@ def collect_testcases() -> List[TestCase]:
     ]
 
     for test_name, model_name, rtol, atol in model_tests:
-        url = f"{BASE_URL}/{model_name}.tar.gz"
+        url = BASE_URL % model_name
         real_model_testcases.append(
             TestCase(
                 name=test_name,

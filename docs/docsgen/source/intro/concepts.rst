@@ -37,10 +37,6 @@ semantics of ONNX and to help understand and debug ONNX tools
 and converters. It is not intended to be used for production and
 performance is not a goal (see :ref:`l-reference-implementation`).
 
-.. contents::
-    :local:
-    :depth: 1
-
 Input, Output, Node, Initializer, Attributes
 ++++++++++++++++++++++++++++++++++++++++++++
 
@@ -116,7 +112,7 @@ Metadata
 ++++++++
 
 Machine learned models are continuously refreshed. It is important
-to keep track of the model version, the author of the model and 
+to keep track of the model version, the author of the model and
 how it was trained. ONNX offers the possibility to store additional data
 in the model itself.
 
@@ -168,7 +164,7 @@ supports any custom domains and operators
 Supported Types
 +++++++++++++++
 
-ONNX specifications are optimized for numerical competition with
+ONNX specifications are optimized for numerical computation with
 tensors. A *tensor* is a multidimensional array. It is defined
 by:
 

@@ -1,16 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Text, Union
+from typing import Union
 
 import onnx
-import onnx.onnx_cpp2py_export.printer as C
+import onnx.onnx_cpp2py_export.printer as C  # noqa: N812
 
 
-def to_text(proto: Union[onnx.ModelProto, onnx.FunctionProto, onnx.GraphProto]) -> Text:
+def to_text(proto: Union[onnx.ModelProto, onnx.FunctionProto, onnx.GraphProto]) -> str:
     if isinstance(proto, onnx.ModelProto):
         return C.model_to_text(proto.SerializeToString())
     if isinstance(proto, onnx.FunctionProto):
         return C.function_to_text(proto.SerializeToString())
     if isinstance(proto, onnx.GraphProto):
         return C.graph_to_text(proto.SerializeToString())
-    return TypeError("Unsupported argument type.")
+    raise TypeError("Unsupported argument type.")

@@ -124,6 +124,7 @@ class Backend:
             onnx.checker.check_node(node, special_context)
         else:
             onnx.checker.check_node(node)
+
         return None
 
     @classmethod

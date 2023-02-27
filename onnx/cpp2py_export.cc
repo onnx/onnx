@@ -372,6 +372,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     checker::check_node(proto, ctx, lex_ctx);
   });
 
+  checker.def("check_function", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+    FunctionProto proto{};
+    ParseProtoFromPyBytes(&proto, bytes);
+    checker::check_function(proto, ctx, checker::LexicalScopeContext());
+  });
+
   checker.def("check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     GraphProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);

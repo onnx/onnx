@@ -3,9 +3,7 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
-
-from ._op import OpRunReduceNumpy
+from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 class ReduceProd_1(OpRunReduceNumpy):
@@ -22,9 +20,3 @@ class ReduceProd_18(OpRunReduceNumpy):
         axes = self.handle_axes(axes)
         keepdims = keepdims != 0  # type: ignore
         return (np.prod(data, axis=axes, keepdims=keepdims, dtype=data.dtype),)
-
-
-if onnx_opset_version() >= 18:
-    ReduceProd = ReduceProd_18
-else:
-    ReduceProd = ReduceProd_1  # type: ignore

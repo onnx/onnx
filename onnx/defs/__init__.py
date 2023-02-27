@@ -2,7 +2,7 @@
 
 from typing import List
 
-import onnx.onnx_cpp2py_export.defs as C
+import onnx.onnx_cpp2py_export.defs as C  # noqa: N812
 from onnx import AttributeProto, FunctionProto
 
 ONNX_DOMAIN = ""
@@ -25,24 +25,24 @@ def onnx_opset_version() -> int:
 
 
 @property  # type: ignore
-def _Function_proto(self):  # type: ignore
+def _function_proto(self):  # type: ignore
     func_proto = FunctionProto()
-    func_proto.ParseFromString(self._function_body)
+    func_proto.ParseFromString(self._function_body)  # pylint: disable=protected-access
     return func_proto
 
 
 OpSchema = C.OpSchema  # type: ignore
-C.OpSchema.function_body = _Function_proto  # type: ignore
+C.OpSchema.function_body = _function_proto  # type: ignore
 
 
 @property  # type: ignore
-def _Attribute_default_value(self):  # type: ignore
+def _attribute_default_value(self):  # type: ignore
     attr = AttributeProto()
-    attr.ParseFromString(self._default_value)
+    attr.ParseFromString(self._default_value)  # pylint: disable=protected-access
     return attr
 
 
-OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
+OpSchema.Attribute.default_value = _attribute_default_value  # type: ignore
 
 
 def get_function_ops() -> List[OpSchema]:

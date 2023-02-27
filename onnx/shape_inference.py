@@ -7,7 +7,7 @@ complete.
 from typing import Dict, List, Optional, Union
 
 import onnx
-import onnx.onnx_cpp2py_export.shape_inference as C
+import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
 from onnx import ModelProto
 
 
@@ -41,16 +41,15 @@ def infer_shapes(
             model_str, check_type, strict_mode, data_prop
         )
         return onnx.load_from_string(inferred_model_str)
-    elif isinstance(model, str):
+    if isinstance(model, str):
         raise TypeError(
             "infer_shapes only accepts ModelProto or bytes,"
             "you can use infer_shapes_path for the model path (String)."
         )
-    else:
-        raise TypeError(
-            "infer_shapes only accepts ModelProto or bytes, "
-            "incorrect type: {}".format(type(model))
-        )
+
+    raise TypeError(
+        f"infer_shapes only accepts ModelProto or bytes, incorrect type: {type(model)}"
+    )
 
 
 def infer_shapes_path(
@@ -70,16 +69,16 @@ def infer_shapes_path(
             "you can use infer_shapes for the ModelProto."
         )
     # Directly output the inferred model into the specified path, return nothing
-    elif isinstance(model_path, str):
+    if isinstance(model_path, str):
         # If output_path is not defined, default output_path would be the original model path
         if output_path == "":
             output_path = model_path
         C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
-    else:
-        raise TypeError(
-            "infer_shapes_path only accepts model path (String), "
-            "incorrect type: {}".format(type(model_path))
-        )
+
+    raise TypeError(
+        "infer_shapes_path only accepts model path (String), "
+        f"incorrect type: {type(model_path)}"
+    )
 
 
 def infer_node_outputs(
@@ -121,7 +120,7 @@ def infer_node_outputs(
         if key in input_sparse_data
     }
 
-    outputs = schema._infer_node_outputs(
+    outputs = schema._infer_node_outputs(  # pylint: disable=protected-access
         node.SerializeToString(),
         passed_input_types,
         passed_input_data,

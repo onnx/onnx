@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 import os
-import os.path as Path
 import shutil
 import tempfile
 import unittest
@@ -8,7 +7,6 @@ import uuid
 from typing import Any, List, Tuple
 
 import numpy as np
-import pytest  # type: ignore
 
 import onnx
 from onnx import ModelProto, TensorProto, checker, helper, shape_inference
@@ -55,13 +53,13 @@ class TestLoadExternalDataBase(unittest.TestCase):
             inputs=[],
             outputs=["values"],
             value=self.create_external_data_tensor(
-                self.attribute_value, "attribute_value"
+                self.attribute_value, "attribute_value"  # type: ignore[arg-type]
             ),
         )
 
         initializers = [
             self.create_external_data_tensor(
-                self.initializer_value, "input_value", location
+                self.initializer_value, "input_value", location  # type: ignore[arg-type]
             )
         ]
         inputs = [
@@ -137,7 +135,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         tensors = []
 
         with open(os.path.join(self.temp_dir, tensor_filename), "ab") as data_file:
-            for (value, tensor_name) in tensors_data:
+            for value, tensor_name in tensors_data:
                 tensor = from_array(np.array(value))
                 offset = data_file.tell()
                 if offset % 4096 != 0:
@@ -198,7 +196,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self, tensors_data: List[Tuple[List[Any], Any]]
     ) -> List[TensorProto]:
         tensors = []
-        for (value, tensor_name) in tensors_data:
+        for value, tensor_name in tensors_data:
             tensor = from_array(np.array(value))
             tensor.name = tensor_name
             tensors.append(tensor)
@@ -208,8 +206,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
     def create_test_model_proto(self) -> ModelProto:
         tensors = self.create_data_tensors(
             [
-                (self.attribute_value, "attribute_value"),
-                (self.initializer_value, "input_value"),
+                (self.attribute_value, "attribute_value"),  # type: ignore[list-item]
+                (self.initializer_value, "input_value"),  # type: ignore[list-item]
             ]
         )
 
@@ -269,7 +267,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         )
         onnx.save_model(self.model, model_file_path)
 
-        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, external_data_file)))
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, external_data_file)))
 
         model = onnx.load_model(model_file_path)
 
@@ -300,8 +298,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         )
         onnx.save_model(self.model, model_file_path)
 
-        self.assertTrue(Path.isfile(model_file_path))
-        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, model_file_path)))
+        self.assertTrue(os.path.isfile(model_file_path))
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, model_file_path)))
 
     def test_convert_model_to_external_data_one_file_per_tensor_without_attribute(
         self,
@@ -316,9 +314,9 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         )
         onnx.save_model(self.model, model_file_path)
 
-        self.assertTrue(Path.isfile(model_file_path))
-        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "input_value")))
-        self.assertFalse(Path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+        self.assertTrue(os.path.isfile(model_file_path))
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "input_value")))
+        self.assertFalse(os.path.isfile(os.path.join(self.temp_dir, "attribute_value")))
 
     def test_convert_model_to_external_data_one_file_per_tensor_with_attribute(
         self,
@@ -333,9 +331,9 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         )
         onnx.save_model(self.model, model_file_path)
 
-        self.assertTrue(Path.isfile(model_file_path))
-        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "input_value")))
-        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+        self.assertTrue(os.path.isfile(model_file_path))
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "input_value")))
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "attribute_value")))
 
     def test_convert_model_to_external_data_does_not_convert_attribute_values(
         self,
@@ -350,8 +348,8 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         )
         onnx.save_model(self.model, model_file_path)
 
-        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "input_value")))
-        self.assertFalse(Path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "input_value")))
+        self.assertFalse(os.path.isfile(os.path.join(self.temp_dir, "attribute_value")))
 
         model = onnx.load_model(model_file_path)
         initializer_tensor = model.graph.initializer[0]
@@ -385,7 +383,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
     ) -> None:
         model_file_path = self.get_temp_model_filename()
         onnx.save_model(self.model, model_file_path, save_as_external_data=False)
-        self.assertTrue(Path.isfile(model_file_path))
+        self.assertTrue(os.path.isfile(model_file_path))
 
         model = onnx.load_model(model_file_path)
         initializer_tensor = model.graph.initializer[0]
@@ -457,7 +455,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         onnx.save_model(
             self.model, model_file_path, save_as_external_data=True, size_threshold=0
         )
-        self.assertTrue(Path.isfile(model_file_path))
+        self.assertTrue(os.path.isfile(model_file_path))
 
         model = onnx.load_model(model_file_path, load_external_data=False)
         initializer_tensor = model.graph.initializer[0]
@@ -648,7 +646,7 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
             checker.check_model(self.model_filename)
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Skip Windows test")
+@unittest.skipIf(os.name != "nt", reason="Skip Windows test")
 class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
     TestNotAllowToLoadExternalDataOutsideModelDirectory
 ):

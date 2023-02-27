@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op import OpRunUnaryNum
+from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class LpNormalization(OpRunUnaryNum):
@@ -12,4 +12,4 @@ class LpNormalization(OpRunUnaryNum):
         p = p or self.p  # type: ignore
         norm = np.power(np.power(x, p).sum(axis=axis), 1.0 / p)  # type: ignore
         norm = np.expand_dims(norm, axis)  # type: ignore
-        return (x / norm,)
+        return ((x / norm).astype(x.dtype),)

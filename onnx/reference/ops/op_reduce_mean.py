@@ -3,9 +3,7 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
-
-from ._op import OpRunReduceNumpy
+from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 class ReduceMean_1(OpRunReduceNumpy):
@@ -29,9 +27,3 @@ class ReduceMean_18(OpRunReduceNumpy):
             raise TypeError(
                 f"Unable to reduce shape {data.shape!r} with axes={axes!r} and keepdims={keepdims}."
             ) from e
-
-
-if onnx_opset_version() >= 18:
-    ReduceMean = ReduceMean_18
-else:
-    ReduceMean = ReduceMean_1  # type: ignore
