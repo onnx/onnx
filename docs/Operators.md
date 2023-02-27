@@ -6125,6 +6125,7 @@ expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
 ### <a name="DeformConv"></a><a name="deformconv">**DeformConv**</a>
 
   Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
+  The most common use cases have 2D or 3D data.
 
 #### Version
 
@@ -6151,7 +6152,7 @@ This version of the operator has been available since version 19 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor. For 2D image data, it has shape (N, C, H, W) where N is the batch size, C is the number of input channels, and H and W are the height and width. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes.</dd>
+<dd>Input data tensor. For 2D image data, it has shape (N, C, H, W) where N is the batch size, C is the number of input channels, and H and W are the height and width. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes. The most common use cases have n = 2 or 3.</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>Weight tensor that will be used in the convolutions. It has shape (oC, C/group, kH, kW), where oC is the number of output channels and kH and kW are the kernel height and width. For more than 2 dimensions, it has shape (oC, C/group, k1, k2, ... , kn).</dd>
 <dt><tt>offset</tt> : T</dt>

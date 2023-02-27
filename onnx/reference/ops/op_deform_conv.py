@@ -69,7 +69,7 @@ def _conv_implementation(  # type: ignore
 
         bh, bw = -pads[0], -pads[1]
 
-        res = np.zeros((n, oc, oh, ow))
+        res = np.zeros((n, oc, oh, ow), dtype=X.dtype)
         if B is not None:
             res[:, :, :, :] = B.reshape((1, -1, 1, 1))
 
@@ -84,7 +84,6 @@ def _conv_implementation(  # type: ignore
         for batch_idx in range(n):
             for oc_idx in range(oc):
                 for ic_idx in range(ic):
-
                     # Group convolution logic
                     if ic_idx // ics_per_group != oc_idx // ocs_per_group:
                         # Input channel and output channel don't belong to same group
