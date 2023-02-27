@@ -113,34 +113,57 @@ class Cast(Base):
                     ],
                     dtype=np.float32,
                 )
-                if "FLOAT16" in (from_type, to_type):
-                    np_fp32 = np_fp32.astype(np.float16).astype(np.float32)
-                if to_type == "FLOATE4M3":
-                    expected = floate4m3_to_float32(vect_float32_to_floate4m3(np_fp32))
-                    expected_tensor = make_tensor(
-                        "x", TensorProto.FLOATE4M3, [3, 4], expected.tolist()
-                    )
-                else:
-                    expected = floate5m2_to_float32(vect_float32_to_floate5m2(np_fp32))
-                    expected_tensor = make_tensor(
-                        "x", TensorProto.FLOATE5M2, [3, 4], expected.tolist()
-                    )
+
                 if from_type == "FLOAT":
-                    input = np_fp32.reshape((3, 4))
-                    output = expected_tensor
+                    input_values = np_fp32
+                    input = make_tensor(
+                        "x", TensorProto.FLOAT, [3, 4], np_fp32.tolist()
+                    )
                 elif from_type == "FLOAT16":
-                    input = np_fp32.astype(np.float16).reshape((3, 4))
-                    output = expected_tensor
-                elif to_type == "FLOAT16":
-                    input = expected_tensor
-                    output = expected.astype(np.float16).reshape((3, 4))
-                elif to_type == "FLOAT":
-                    input = expected_tensor
-                    output = expected.reshape((3, 4))
+                    input_values = np_fp32.astype(np.float16).astype(np.float32)
+                    input = make_tensor(
+                        "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+                    )
+                elif from_type == "FLOATE4M3":
+                    input_values = floate4m3_to_float32(
+                        vect_float32_to_floate4m3(np_fp32)
+                    )
+                    input = make_tensor(
+                        "x", TensorProto.FLOATE4M3, [3, 4], input_values.tolist()
+                    )
+                elif from_type == "FLOATE5M2":
+                    input_values = floate5m2_to_float32(
+                        vect_float32_to_floate5m2(np_fp32)
+                    )
+                    input = make_tensor(
+                        "x", TensorProto.FLOATE5M2, [3, 4], input_values.tolist()
+                    )
                 else:
                     raise ValueError(
-                        f"Either from_type={from_type!r} or to_type={to_type!r} is misspelled."
+                        "Conversion from {from_type} to {to_type} is not tests."
                     )
+
+                if to_type == "FLOATE4M3":
+                    expected = floate4m3_to_float32(
+                        vect_float32_to_floate4m3(input_values)
+                    )
+                elif to_type == "FLOATE5M2":
+                    expected = floate5m2_to_float32(
+                        vect_float32_to_floate5m2(input_values)
+                    )
+                elif to_type == "FLOAT16":
+                    expected = input_values.astype(np.float16).astype(np.float32)
+                elif to_type == "FLOAT":
+                    expected = input_values
+                else:
+                    raise ValueError(
+                        "Conversion from {from_type} to {to_type} is not tests."
+                    )
+                expected_tensor = make_tensor(
+                    "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
+                )
+                output = expected_tensor
+
             elif from_type != "STRING":
                 input = np.random.random_sample(shape).astype(
                     helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
