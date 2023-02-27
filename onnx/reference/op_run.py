@@ -11,8 +11,7 @@ from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_versi
 from onnx.helper import make_node
 from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
-
-from .custom_element_types import bfloat16, floate4m3, floate5m2
+from onnx.reference.custom_element_types import bfloat16, floate4m3, floate5m2
 
 
 def _split_class_name(name):  # type: ignore

@@ -17,7 +17,6 @@ from onnx.reference.op_run import OpRun
 
 
 class _CommonQuantizeLinear(OpRun):
-
     float32_to_floate4m3 = np.vectorize(float32_to_floate4m3)
     float32_to_floate5m2 = np.vectorize(float32_to_floate5m2)
 

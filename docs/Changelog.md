@@ -22783,7 +22783,7 @@ This version of the operator has been available since version 19 of the default 
   for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
   `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
   there's no zero point (zero point is supposed to be 0).
-  `y_zero_point` is not used for quantization to floate4m3 or floate5m2,
+  Since `zero-point` is not used in the case of floate4m3 or floate5m2 quantization,
   the dequantization formula is then `y = x * x_scale` and 'x_scale' determines the output type.
 
 #### Version
