@@ -6,6 +6,8 @@
 [![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Linux-CI?branchName=main&label=Linux)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=main)
 [![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/MacOS-CI?branchName=main&label=MacOS)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=main)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/onnx/onnx/badge)](https://api.securityscorecards.dev/projects/github.com/onnx/onnx)
+
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
@@ -77,7 +79,7 @@ ONNX released packages are published in PyPi.
 pip install onnx
 ```
 
-[Weekly packages](https://test.pypi.org/project/onnx-weekly/) are published in test pypi to enable experimentation and early testing.
+[ONNX weekly packages](https://pypi.org/project/onnx-weekly/) are published in PyPI to enable experimentation and early testing.
 
 ## vcpkg packages
 

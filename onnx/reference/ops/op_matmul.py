@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op import OpRunBinaryNum
+from onnx.reference.ops._op import OpRunBinaryNum
 
 
 def numpy_matmul(a, b):  # type: ignore

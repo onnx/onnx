@@ -439,7 +439,6 @@ def enumerate_onnx_tests(series, fct_filter=None):
 
 
 class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
-
     folder = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), "onnx_backend_test_code"
     )

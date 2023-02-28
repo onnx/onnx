@@ -5,7 +5,7 @@ from warnings import catch_warnings, simplefilter
 
 import numpy as np
 
-from ._op import OpRunUnaryNum
+from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Sqrt(OpRunUnaryNum):

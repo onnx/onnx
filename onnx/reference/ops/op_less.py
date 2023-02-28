@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op import OpRunBinaryComparison
+from onnx.reference.ops._op import OpRunBinaryComparison
 
 
 class Less(OpRunBinaryComparison):

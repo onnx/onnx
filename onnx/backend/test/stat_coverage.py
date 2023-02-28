@@ -12,10 +12,7 @@ from onnx.backend.test.runner import Runner
 
 
 def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:
-    for s in schemas:
-        if s.domain == "ai.onnx.ml":
-            return True
-    return False
+    return any(s.domain == "ai.onnx.ml" for s in schemas)
 
 
 def gen_outlines(f: IO[Any], ml: bool) -> None:
@@ -159,8 +156,17 @@ def gen_model_test_coverage(
     attrs: Dict[str, Dict[str, List[Any]]] = dict()
     model_paths: List[Any] = []
     for rt in load_model_tests(kind="real"):
-        model_dir = Runner.prepare_model_data(rt)
-        model_paths.append(os.path.join(model_dir, "model.onnx"))
+        if rt.url.startswith("onnx/backend/test/data/light/"):
+            # testing local files
+            model_name = os.path.normpath(
+                os.path.join(os.path.dirname(__file__), "..", "..", "..", rt.url)
+            )
+            if not os.path.exists(model_name):
+                raise FileNotFoundError(f"Unable to find model {model_name!r}.")
+            model_paths.append(model_name)
+        else:
+            model_dir = Runner.prepare_model_data(rt)
+            model_paths.append(os.path.join(model_dir, "model.onnx"))
     model_paths.sort()
     model_written = False
     for model_pb_path in model_paths:
