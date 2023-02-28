@@ -79,7 +79,7 @@ ONNX released packages are published in PyPi.
 pip install onnx
 ```
 
-[Weekly packages](https://test.pypi.org/project/onnx-weekly/) are published in test pypi to enable experimentation and early testing.
+[ONNX weekly packages](https://pypi.org/project/onnx-weekly/) are published in PyPI to enable experimentation and early testing.
 
 ## vcpkg packages
 

@@ -292,10 +292,7 @@ class ReferenceEvaluator:
         Checks if the graph has a linked attribute (= an attribute whose value is defined
         by a function attribute.
         """
-        for node in self.rt_nodes_:
-            if node.has_linked_attribute:
-                return True
-        return False
+        return any(node.has_linked_attribute for node in self.rt_nodes_)
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(self.input_names)}) -> {', '.join(self.output_names)}"

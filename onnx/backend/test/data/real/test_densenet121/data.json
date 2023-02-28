@@ -1,1 +1,1 @@
-{"atol": 1e-07, "model_name": "densenet121", "rtol": 0.002, "url": "https://download.onnxruntime.ai/onnx/models/densenet121.tar.gz"}
+{"atol": 1e-07, "model_name": "densenet121", "rtol": 0.002, "url": "onnx/backend/test/data/light/light_densenet121.onnx"}
