@@ -260,6 +260,34 @@ onnx.shape_inference.infer_shapes_path("path/to/the/model.onnx", "output/inferre
 # inferred_model = onnx.shape_inference.infer_shapes(loaded_onnx_model) will fail if given >2GB model
 ```
 
+## Running Type Inference on an ONNX Function
+
+```python
+import onnx
+import onnx.helper
+import onnx.parser
+import onnx.shape_inference
+
+function_text = """
+    <opset_import: [ "" : 18 ], domain: "local">
+    CastTo <dtype> (x) => (y) {
+        y = Cast <to : int = @dtype> (x)
+    }
+"""
+function = onnx.parser.parse_function(function_text)
+
+# The function above has one input-parameter x, and one attribute-parameter dtype.
+# To apply type-and-shape-inference to this function, we must supply the type of
+# input-parameter and an attribute value for the attribute-parameter as below:
+
+float_type_ = onnx.helper.make_tensor_type_proto(1, None)
+dtype_6 = onnx.helper.make_attribute("dtype", 6)
+result = onnx.shape_inference.infer_function_output_types(
+    function, [float_type_], [dtype_6]
+)
+print(result) # a list containing the (single) output type
+```
+
 ## Converting Version of an ONNX Model within Default Domain (""/"ai.onnx")
 ```python
 import onnx
