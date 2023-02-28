@@ -267,7 +267,6 @@ import onnx
 import onnx.helper
 import onnx.parser
 import onnx.shape_inference
-from onnx import AttributeProto, TypeProto
 
 function_text = """
     <opset_import: [ "" : 18 ], domain: "local">
