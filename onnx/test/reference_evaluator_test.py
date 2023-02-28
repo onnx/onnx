@@ -58,7 +58,7 @@ def skip_if_no_onnxruntime(fn):
 
             del onnxruntime
         except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed")
+            raise unittest.SkipTest("onnxruntime not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -72,7 +72,7 @@ def skip_if_no_torch(fn):
 
             del torch
         except ImportError:
-            raise unittest.SkipTest("torch not installed")
+            raise unittest.SkipTest("torch not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -86,7 +86,7 @@ def skip_if_no_torchvision(fn):
 
             del torchvision
         except ImportError:
-            raise unittest.SkipTest("torchvision not installed")
+            raise unittest.SkipTest("torchvision not installed") from None
         fn(*args, **kwargs)
 
     return wrapper

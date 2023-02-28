@@ -27,6 +27,7 @@ void resizeShapeInferenceHelper(
 void resizeShapeInference_opset7_to_10(InferenceContext& ctx);
 void resizeShapeInference_opset11_to_12(InferenceContext& ctx);
 void resizeShapeInference_opset13_to_18(InferenceContext& ctx);
+void resizeShapeInference_opset18_to_19(InferenceContext& ctx);
 
 void resizeShapeInferenceHelper_opset7_to_10(
     const TensorShapeProto& input_shape,
