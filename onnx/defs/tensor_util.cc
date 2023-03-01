@@ -70,7 +70,7 @@ const std::vector<bool> ParseData<bool>(const Tensor* tensor) {
   std::vector<bool> res;
   if (!tensor->is_raw_data()) {
     std::transform(tensor->int32s().cbegin(), tensor->int32s().cend(), std::back_inserter(res), [](int32_t d) -> bool {
-      return !!d;
+      return static_cast<bool>(d);
     });
     return res;
   }
