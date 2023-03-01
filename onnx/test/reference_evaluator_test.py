@@ -9,8 +9,8 @@ You can run a specific test by using the following syntax.
     python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
 """
 
-import math
 import itertools
+import math
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
