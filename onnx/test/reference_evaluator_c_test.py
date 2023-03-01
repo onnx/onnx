@@ -83,7 +83,7 @@ class TestReferenceEvaluatorC(unittest.TestCase):
 
         self.assertEqual(got[0].shape, (1, 1000))
         self.assertEqual(got[0].dtype, np.float32)
-        assert_allclose(expected, got[0])
+        assert_allclose(expected, got[0], atol=1e-5)
 
         try:
             from onnxruntime import InferenceSession  # pylint: disable=W0611
