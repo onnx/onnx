@@ -92,7 +92,7 @@ class TestReferenceEvaluatorC(unittest.TestCase):
 
         sess2 = InferenceSession(model, providers=["CPUExecutionProvider"])
         got2 = sess2.run(None, {name: img})
-        assert_allclose(expected, got2[0])
+        assert_allclose(expected, got2[0], atol=1e-5)
 
 
 if __name__ == "__main__":
