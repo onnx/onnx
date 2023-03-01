@@ -4,7 +4,7 @@ trigger:
 jobs:
 - job: 'Test'
   pool:
-    vmImage: 'Ubuntu-18.04'
+    vmImage: 'Ubuntu-20.04'
   strategy:
     matrix:
       py39-ml-debug:
@@ -61,16 +61,15 @@ jobs:
       fi
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py --quiet install
+      # enable more sanitizer
+      export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+      python setup.py install
     displayName: 'Install ONNX and dependencies'
 
   - script: |
       source venv/bin/activate
 
-      # check line endings to be UNIX
-      find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
-      git status
-      git diff --exit-code
+      python -m pip install -q -r requirements-dev.txt
 
       # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py
@@ -91,7 +90,7 @@ jobs:
       ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
-      pytest
+      pytest -sv
       if [ $? -ne 0 ]; then
         echo "pytest failed"
         exit 1

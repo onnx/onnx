@@ -3,7 +3,6 @@
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -26,7 +25,6 @@ class CommonReshape(OpRun):
 
 
 class Reshape_5(CommonReshape):
-
     pass
 
 
@@ -37,9 +35,3 @@ class Reshape_14(CommonReshape):
         else:
             allowzero = allowzero == 1
         return (reshape_reference_implementation(data, shape, allowzero),)
-
-
-if onnx_opset_version() >= 14:
-    Reshape = Reshape_14
-else:
-    Reshape = Reshape_5  # type: ignore

@@ -14,4 +14,4 @@ def _vcelu1(x: np.ndarray, alpha: float = 1.0) -> np.ndarray:
 
 class Celu(OpRun):
     def _run(self, x, alpha=None):  # type: ignore
-        return (_vcelu1(x, alpha),)
+        return (_vcelu1(x, alpha).astype(x.dtype),)

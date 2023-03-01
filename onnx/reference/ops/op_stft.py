@@ -4,10 +4,9 @@
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-from .op_concat_from_sequence import _concat_from_sequence
-from .op_dft import _cfft as _dft
-from .op_slice import _slice
+from onnx.reference.ops.op_concat_from_sequence import _concat_from_sequence
+from onnx.reference.ops.op_dft import _cfft as _dft
+from onnx.reference.ops.op_slice import _slice
 
 
 def _concat(*args, axis=0):  # type: ignore
@@ -62,7 +61,7 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
     shape_x = new_x.shape
     shape_x_short = shape_x[:-2]
     shape_x_short_one = tuple(1 for _ in shape_x_short)
-    window_shape = shape_x_short_one + (window_size, 1)
+    window_shape = (*shape_x_short_one, window_size, 1)
     weights = np.reshape(window, window_shape)
     weighted_new_x = new_x * weights
 
@@ -110,8 +109,8 @@ def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
         size = ytmp.shape[-1]
         n_right = expected_signal_len - (n_left + size)
 
-        left_shape = shape_begin + (n_left,)
-        right_shape = shape_begin + (n_right,)
+        left_shape = (*shape_begin, n_left)
+        right_shape = (*shape_begin, n_right)
         right = np.zeros(right_shape, dtype=x.dtype)
         left = np.zeros(left_shape, dtype=x.dtype)
 

@@ -73,8 +73,9 @@ def softmaxcrossentropy(  # type: ignore
     elif reduction == "sum":
         loss = np.sum(loss)
 
+    loss = loss.astype(x.dtype)
     if get_log_prob is True:
-        return loss, log_prob
+        return loss, log_prob.astype(x.dtype)  # type: ignore[union-attr]
     return (loss,)
 
 

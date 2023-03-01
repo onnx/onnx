@@ -3,9 +3,8 @@
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 def compute_negative_log_likelihood_loss(input, target, weight=None, reduction="mean", ignore_index=None):  # type: ignore

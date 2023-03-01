@@ -69,6 +69,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.11.0", 8, 16, 3, 1),
     ("1.12.0", 8, 17, 3, 1),
     ("1.13.0", 8, 18, 3, 1),
+    ("1.13.1", 8, 18, 3, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -76,9 +77,10 @@ VersionMapType = Dict[Tuple[str, int], int]
 
 def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """create a map from (opset-domain, opset-version) to ir-version from above table"""
-    result: VersionMapType = dict()
+    result: VersionMapType = {}
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
+        del release_version  # Unused
         for pair in zip(["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args):
             if pair not in result:
                 result[pair] = ir_version
@@ -93,16 +95,26 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
 OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
 
 
-def find_min_ir_version_for(opsetidlist: List[OperatorSetIdProto]) -> int:
-    """Given list of opset ids, determine minimum IR version required"""
+def find_min_ir_version_for(
+    opsetidlist: List[OperatorSetIdProto], ignore_unknown: bool = False
+) -> int:
+    """Given list of opset ids, determine minimum IR version required.
+
+    Arguments:
+        opsetidlist (List[OperatorSetIdProto]): The list of OperatorSetIdProto
+        ignore_unknown (bool): If True, ignore unknown domain and return default min version for that domain.
+    Returns:
+        The minimum IR version required (integer)
+    """
     default_min_version = 3
 
     def find_min(domain: Union[str, None], version: int) -> int:
         key = (domain if domain else "ai.onnx", version)
         if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
-        else:
-            raise ValueError("Unsupported opset-version.")
+        if ignore_unknown:
+            return default_min_version
+        raise ValueError("Unsupported opset-version.")
 
     if opsetidlist:
         return max(find_min(x.domain, x.version) for x in opsetidlist)
@@ -321,7 +333,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
 
 def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
     del model.metadata_props[:]
-    for (k, v) in dict_value.items():
+    for k, v in dict_value.items():
         entry = model.metadata_props.add()
         entry.key = k
         entry.value = v
@@ -330,7 +342,7 @@ def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
 
 def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
     return [
-        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
+        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)  # type: ignore[misc]
         for i in range(len(ca) * 2)
     ]
 
@@ -350,8 +362,8 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
         return 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
     # drop bottom 16-bits
     # round remaining bits using round-to-nearest-even
-    round = ((ival >> 16) & 1) + 0x7FFF
-    return (ival + round) >> 16
+    rounded = ((ival >> 16) & 1) + 0x7FFF
+    return (ival + rounded) >> 16
 
 
 def make_tensor(
@@ -379,8 +391,8 @@ def make_tensor(
     tensor.data_type = data_type
     tensor.name = name
 
-    if data_type == TensorProto.STRING:
-        assert not raw, "Can not use raw_data to store string type"
+    if data_type == TensorProto.STRING and raw:
+        raise TypeError("Can not use raw_data to store string type.")
 
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
@@ -394,22 +406,23 @@ def make_tensor(
         else:
             expected_size = np_dtype.itemsize
 
-    if type(vals) is np.ndarray and len(vals.shape) > 1:
+    if (
+        type(vals) is np.ndarray  # pylint: disable=unidiomatic-typecheck
+        and len(vals.shape) > 1
+    ):
         vals = vals.flatten()
     for d in dims:
         expected_size *= d
 
     if len(vals) != expected_size:
         raise ValueError(
-            "Number of values does not match tensor's size. Expected {}, but it is {}. ".format(
-                expected_size, len(vals)
-            )
+            f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
         )
 
     if raw:
         tensor.raw_data = vals
     else:
-        if data_type == TensorProto.COMPLEX64 or data_type == TensorProto.COMPLEX128:
+        if data_type in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
             vals = split_complex_to_pairs(vals)
         elif data_type == TensorProto.FLOAT16:
             vals = (
@@ -467,13 +480,13 @@ def make_sequence(
     if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values
+        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values
+        attribute = sequence.sequence_values  # type: ignore[assignment]
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values
+        attribute = sequence.map_values  # type: ignore[assignment]
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values
+        attribute = sequence.optional_values  # type: ignore[assignment]
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
@@ -492,7 +505,7 @@ def make_map(
     - Every key in keys must be of the same type
     - Every value in values must be of the same type
     """
-    map = MapProto()
+    map_proto = MapProto()
     valid_key_int_types = [
         TensorProto.INT8,
         TensorProto.INT16,
@@ -503,14 +516,14 @@ def make_map(
         TensorProto.UINT32,
         TensorProto.UINT64,
     ]
-    map.name = name
-    map.key_type = key_type
+    map_proto.name = name
+    map_proto.key_type = key_type
     if key_type == TensorProto.STRING:
-        map.string_keys.extend(keys)
+        map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
-        map.keys.extend(keys)
-    map.values.CopyFrom(values)
-    return map
+        map_proto.keys.extend(keys)
+    map_proto.values.CopyFrom(values)
+    return map_proto
 
 
 def make_optional(
@@ -530,17 +543,17 @@ def make_optional(
     if elem_type == OptionalProto.TENSOR:
         attribute = optional.tensor_value
     elif elem_type == OptionalProto.SPARSE_TENSOR:
-        attribute = optional.sparse_tensor_value
+        attribute = optional.sparse_tensor_value  # type: ignore[assignment]
     elif elem_type == OptionalProto.SEQUENCE:
-        attribute = optional.sequence_value
+        attribute = optional.sequence_value  # type: ignore[assignment]
     elif elem_type == OptionalProto.MAP:
-        attribute = optional.map_value
+        attribute = optional.map_value  # type: ignore[assignment]
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = optional.optional_value
+        attribute = optional.optional_value  # type: ignore[assignment]
     else:
         raise TypeError("The element type in the input optional is not supported.")
 
-    attribute.CopyFrom(value)
+    attribute.CopyFrom(value)  # type: ignore[arg-type]
     return optional
 
 
@@ -561,9 +574,9 @@ def _to_bytes_or_false(val: Union[str, bytes]) -> Union[bytes, bool]:
         return False
 
 
-def make_attribute(
+def make_attribute(  # pylint: disable=too-many-statements
     key: str, value: Any, doc_string: Optional[str] = None
-) -> AttributeProto:
+) -> AttributeProto:  # pylint: disable=too-many-statements
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
     attr.name = key
@@ -583,7 +596,8 @@ def make_attribute(
         attr.type = AttributeProto.INT
     # string
     elif bytes_or_false is not False:
-        assert isinstance(bytes_or_false, bytes)
+        if not isinstance(bytes_or_false, bytes):
+            raise TypeError(f"bytes_or_false must be an instance of {bytes}.")
         attr.s = bytes_or_false
         attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
@@ -709,11 +723,10 @@ def make_tensor_type_proto(
         # an empty shape!
         tensor_shape_proto.dim.extend([])
 
-        if shape_denotation:
-            if len(shape_denotation) != len(shape):
-                raise ValueError(
-                    "Invalid shape_denotation. " "Must be of the same length as shape."
-                )
+        if shape_denotation and len(shape_denotation) != len(shape):
+            raise ValueError(
+                "Invalid shape_denotation. Must be of the same length as shape."
+            )
 
         for i, d in enumerate(shape):
             dim = tensor_shape_proto.dim.add()
@@ -774,11 +787,10 @@ def make_sparse_tensor_type_proto(
         # an empty shape!
         sparse_tensor_shape_proto.dim.extend([])
 
-        if shape_denotation:
-            if len(shape_denotation) != len(shape):
-                raise ValueError(
-                    "Invalid shape_denotation. " "Must be of the same length as shape."
-                )
+        if shape_denotation and len(shape_denotation) != len(shape):
+            raise ValueError(
+                "Invalid shape_denotation. Must be of the same length as shape."
+            )
 
         for i, d in enumerate(shape):
             dim = sparse_tensor_shape_proto.dim.add()
@@ -863,7 +875,7 @@ def _sanitize_str(s: Union[str, bytes]) -> str:
         sanitized = str(s)
     if len(sanitized) < 64:
         return sanitized
-    return sanitized[:64] + "...<+len=%d>" % (len(sanitized) - 64)
+    return sanitized[:64] + f"...<+len={(len(sanitized) - 64)}>"
 
 
 def make_tensor_sequence_value_info(
@@ -902,7 +914,7 @@ def printable_attribute(
     def str_int(i: int) -> str:
         return str(i)
 
-    _T = TypeVar("_T")  # noqa
+    _T = TypeVar("_T")
 
     def str_list(str_elem: Callable[[_T], str], xs: Sequence[_T]) -> str:
         return "[" + ", ".join(map(str_elem, xs)) + "]"
@@ -959,13 +971,13 @@ def printable_attribute(
         content.append("<Unknown>")
     if subgraphs:
         return " ".join(content), graphs
-    else:
-        return " ".join(content)
+    return " ".join(content)
 
 
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
     which = dim.WhichOneof("value")
-    assert which is not None
+    if which is None:
+        raise TypeError(f"which cannot be {None}.")
     return str(getattr(dim, which))
 
 
@@ -1015,12 +1027,16 @@ def printable_node(
     for attr in node.attribute:
         if subgraphs:
             printed_attr_subgraphs = printable_attribute(attr, subgraphs)
-            assert isinstance(printed_attr_subgraphs[1], list)
+            if not isinstance(printed_attr_subgraphs[1], list):
+                raise TypeError(
+                    f"printed_attr_subgraphs[1] must be an instance of {list}."
+                )
             graphs.extend(printed_attr_subgraphs[1])
             printed_attrs.append(printed_attr_subgraphs[0])
         else:
             printed = printable_attribute(attr)
-            assert isinstance(printed, str)
+            if not isinstance(printed, str):
+                raise TypeError(f"printed must be an instance of {str}.")
             printed_attrs.append(printed)
     printed_attributes = ", ".join(sorted(printed_attrs))
     printed_inputs = ", ".join([f"%{name}" for name in node.input])
@@ -1030,8 +1046,7 @@ def printable_node(
         content.append(f"{node.op_type}({printed_inputs})")
     if subgraphs:
         return prefix + " ".join(content), graphs
-    else:
-        return prefix + " ".join(content)
+    return prefix + " ".join(content)
 
 
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
@@ -1098,7 +1113,8 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     # body
     for node in graph.node:
         contents_subgraphs = printable_node(node, indent, subgraphs=True)
-        assert isinstance(contents_subgraphs[1], list)
+        if not isinstance(contents_subgraphs[1], list):
+            raise TypeError(f"contents_subgraphs[1] must be an instance of {list}.")
         content.append(contents_subgraphs[0])
         graphs.extend(contents_subgraphs[1])
     # tail
@@ -1117,7 +1133,10 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
     """
     Empties `doc_string` field on any nested protobuf messages
     """
-    assert isinstance(proto, google.protobuf.message.Message)
+    if not isinstance(proto, google.protobuf.message.Message):
+        raise TypeError(
+            f"proto must be an instance of {google.protobuf.message.Message}."
+        )
     for descriptor in proto.DESCRIPTOR.fields:
         if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)
@@ -1191,7 +1210,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     :param tensor_dtype: TensorProto's data_type
     :return: field name
     """
-    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
+    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[  # pylint: disable=protected-access
         mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
     ]
 
@@ -1203,7 +1222,10 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     :param np_dtype: numpy's data_type
     :return: TensorsProto's data_type
     """
-    return cast(int, mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype])
+    return cast(
+        int,
+        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],  # pylint: disable=protected-access
+    )
 
 
 def get_all_tensor_dtypes() -> KeysView[int]:

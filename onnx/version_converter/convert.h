@@ -535,6 +535,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceMin", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceProd", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<AxesAttributeToInput>("ReduceSumSquare", OpSetID(17), OpSetID(18)));
+
+    /******** 18 -> 19 ********/
+    registerAdapter(make_unique<CompatibleAdapter>("Equal", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("AveragePool", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Pad", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Resize", OpSetID(18), OpSetID(19)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

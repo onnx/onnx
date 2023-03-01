@@ -518,5 +518,33 @@ doc_string: "function foo"
   CheckModel(code_function_with_attributes);
 }
 
+TEST(ParserTest, TypesModelTest1) {
+  const char* code = R"ONNX(
+    <
+    ir_version: 8,
+    opset_import: [ "" : 18 ]
+    >
+    agraph (seq(float[N]) seqX) => (float[M, N] X)
+    {
+        X = ConcatFromSequence < axis = 0, new_axis = 1 >(seqX)
+    }
+)ONNX";
+  CheckModel(code);
+}
+
+TEST(ParserTest, TypesModelTest2) {
+  const char* code = R"ONNX(
+    <
+    ir_version: 8,
+    opset_import: [ "" : 18 ]
+    >
+    agraph (float[N] tensorX, seq(float[N]) seqX, map(int32, float[N]) mapX, optional(float[N]) optionalX, sparse_tensor(float[N]) sparseX) => (float[N] X)
+    {
+        X = Identity (tensorX)
+    }
+)ONNX";
+  CheckModel(code);
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE

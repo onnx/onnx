@@ -212,4 +212,4 @@ class GridSample(OpRun):
                             dx = x - x0 - 1
                             dy = y - y0 - 1
                             Y[n, c, oy, ox] = self._gs_bicubic_interpolate(p, dx, dy)
-        return (Y,)
+        return (Y.astype(X.dtype),)

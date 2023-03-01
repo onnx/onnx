@@ -1,8 +1,9 @@
+
+.. _l-reference-implementation:
+
 onnx.reference
 ==============
 
-.. contents::
-    :local:
 
 DefaultNone
 +++++++++++

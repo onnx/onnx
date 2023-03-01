@@ -26,7 +26,7 @@ from onnx.onnx_cpp2py_export.defs import (  # pylint: disable=E1101,E0611,E0401
 def get_template():  # type: ignore
     try:
         from jinja2 import Template
-    except ImportError:  # pragma no cover
+    except ImportError:
 
         class Template:  # type: ignore
             "Docstring template"
@@ -131,11 +131,11 @@ def _get_ops_template():  # type: ignore
 
         **Attributes**
 
-        {% for _, attr in sorted(sch.attributes.items()) %}* **{{attr.name}}**{%
-          if attr.required %} (required){% endif %}:
-        {{text_wrap(attr.description, 2)}} {%
-          if attr.default_value %}{{clean_default_value(attr.default_value)}}{%
-          endif %}
+        {% for _, attr in sorted(sch.attributes.items())
+        %}* **{{attr.name}} - {{str(attr.type).split('.')[-1]}}**{%
+          if attr.required %} (required){% endif %} {%
+          if attr.default_value %}{{clean_default_value(attr)}}{%
+          endif %}: {{text_wrap(attr.description, 2)}}
         {% endfor %}
         {% endif %}
         {% if sch.inputs %}
@@ -360,7 +360,7 @@ def get_rst_doc(  # type: ignore
     :param diff: highlights differences between two versions
     :param example: add example to the documentation
     :return: string
-    The function relies on module :epkg:`jinja2` or replaces it
+    The function relies on module `jinja2` or replaces it
     with a simple rendering if not present.
     """
     schemas = get_operator_schemas(op_name, domain=domain, version=version)
@@ -401,8 +401,9 @@ def get_rst_doc(  # type: ignore
             name = str(ii)
         name = f"**{name}** in ("
         if const.allowed_type_strs:
-            text = ",\n  ".join(sorted(const.allowed_type_strs))
-            name += "\n  " + text + "\n  )"
+            types = [f"``{type_str}``" for type_str in sorted(const.allowed_type_strs)]
+            text = ", ".join(types)
+            name += " " + text + " )"
         return name
 
     def getname(obj, i):
@@ -419,7 +420,7 @@ def get_rst_doc(  # type: ignore
                 f"doc must be a string not {type(doc)!r} - {doc + 42!r}."
             )
         doc = textwrap.dedent(doc)
-        main_docs_url = "https://github.com/onnx/onnx/blob/master/"
+        main_docs_url = "https://github.com/onnx/onnx/blob/main/"
         rep = {
             "[the doc](IR.md)": "`ONNX <{0}docs/IR.md>`_",
             "[the doc](Broadcasting.md)": "`Broadcasting in ONNX <{0}docs/Broadcasting.md>`_",
@@ -461,13 +462,33 @@ def get_rst_doc(  # type: ignore
             doc_url += sch.domain + "."
         return doc_url
 
-    def clean_default_value(value):
-        if isinstance(value, onnx.AttributeProto) and hasattr(value, "default_value"):
-            att = value.default_value
-            if att.type in _attribute_conversion_functions:
-                sval = _attribute_conversion_functions[att.type](att)
-                return f"Default value is ``{sval}``."
-        return ""
+    def format_default_value(value):
+        if isinstance(value, float):
+            formatted = str(np.round(value, 5))
+            # use default formatting, unless too long.
+            if len(formatted) > 10:
+                formatted = f"({value:e})"
+            return formatted
+        if isinstance(value, (bytes, bytearray)):
+            return value.decode("utf-8")
+        return str(value)
+
+    def clean_default_value(attr):
+        if not attr.default_value.name:
+            return ""
+        default_value = onnx.helper.get_attribute_value(attr.default_value)
+        if isinstance(default_value, onnx.AttributeProto) and hasattr(
+            default_value, "default_value"
+        ):
+            if attr.type in _attribute_conversion_functions:
+                sval = _attribute_conversion_functions[attr.type](default_value)
+                return f"(default is ``{sval!r}``)"
+
+        if isinstance(default_value, list):
+            sval = [format_default_value(val) for val in default_value]
+        else:
+            sval = format_default_value(default_value)
+        return f"(default is ``{sval!r}``)"
 
     def text_wrap(text, indent):
         s = " " * indent
@@ -540,7 +561,7 @@ def get_rst_doc(  # type: ignore
 def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None, domain=None):  # type: ignore
     """
     Splits a using `split`, insert HTML differences between pieces.
-    The function relies on package :epkg:`pyquickhelper`.
+    The function relies on package `pyquickhelper`.
     """
     spl = docs.split(split)
     if len(spl) <= 1:
@@ -568,8 +589,8 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             raise ValueError(f"Unable to find version {version!r} in\n{spl1}")
         if len(vers2) == 0:
             raise ValueError(f"Unable to find version {version!r} in\n{spl2}")
-        v1 = vers1[0][1]
         v2 = vers2[0][1]
+        v1 = vers1[0][1]
 
         if len(mds) == 0:
             mds.append(
@@ -588,7 +609,7 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             v1, s1 = mds[di]
             v2, s2 = mds[dj]
             d = Differ()
-            result = list(d.compare(s1, s2))
+            result = list(d.compare(s2, s1))
             raw = "".join(result)
 
             tmpl = _template_diff
@@ -735,14 +756,14 @@ def is_last_schema(sch: OpSchema) -> bool:
     return last.since_version == sch.since_version
 
 
-def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=None):  # type: ignore
+def onnx_documentation_folder(folder, title="ONNX Operators", flog=None, max_opsets=None):  # type: ignore
     """
     Creates documentation in a folder for all known
     ONNX operators or a subset.
     :param folder: folder where to write the documentation
-    :param ops: None for all operators or a subset of them
     :param title: index title
     :param flog: logging function
+    :param max_opsets: included operator definition up to this opsets
     :return: list of creates files
     """
 
@@ -804,32 +825,45 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
             res = "\n".join(table_dom)
             return res
 
-    all_schemas = _get_all_schemas_with_history()
+    all_schemas_available = _get_all_schemas_with_history()
+    if len(all_schemas_available) < 3:
+        raise RuntimeError(
+            f"At least three domains are expected, found {list(all_schemas_available)}."
+        )
+
+    # filter out operator under development
+    all_schemas = {}
+    for domain, opset in all_schemas_available.items():
+        max_version = None if max_opsets is None else max_opsets.get(domain, None)
+        d = {}
+        for op, schemas in opset.items():
+            vers = {}
+            for version, schema in schemas.items():
+                if max_version is not None and version > max_version:
+                    continue
+                vers[version] = schema
+            d[op] = vers
+        all_schemas[domain] = d
+
+    if len(all_schemas) < 3:
+        raise RuntimeError(
+            f"At leat three domains are expected, found {list(all_schemas)} in all_schemas."
+        )
+
     if not os.path.exists(folder):
         os.makedirs(folder)
 
     pages = []
     tables = []
 
-    if ops is not None:
-        ops = set(ops)
-
     # loop on domains
     for dom in sorted(all_schemas):
         sdom = "ai.onnx" if dom == "" else dom
         dom_pages = []
 
-        sub = all_schemas[dom]
-        do = []
-        if ops is None:
-            do.extend(sub)
-        else:
-            inter = set(sub).intersection(ops)
-            if len(inter) == 0:
-                continue
-            do.extend(sorted(inter))
+        do = all_schemas[dom]
         if len(do) == 0:
-            continue
+            raise RuntimeError(f"No operator for domain={dom!r}.")
 
         # loop on operators
         for op in sorted(do):
@@ -853,9 +887,6 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
                 main,
                 "=" * len(main),
                 "",
-                ".. contents::",
-                "    :local:",
-                "",
                 doc,
             ]
 
@@ -876,6 +907,8 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
         tables.append(_Table(dom_pages, dom, sdom))
 
     # final
+    if len(tables) < 3:
+        raise RuntimeError(f"At least three domain are expected not {len(tables)}.")
     tmpl = _template_main
     index = tmpl.render(pages=pages, tabs=tables, os=os, len=len, title=title)
     index = _clean_unicode(index)
@@ -889,7 +922,8 @@ def onnx_documentation_folder(folder, ops=None, title="ONNX Operators", flog=Non
 def _generate_op_doc(app):
     logger = logging.getLogger(__name__)
     folder = app.config.onnx_doc_folder
-    onnx_documentation_folder(folder, flog=logger.info)
+    max_opsets = app.config.max_opsets
+    onnx_documentation_folder(folder, flog=logger.info, max_opsets=max_opsets)
 
 
 def setup(app):
@@ -900,6 +934,7 @@ def setup(app):
     import sphinx
 
     app.add_config_value("onnx_doc_folder", "operators", "env")
+    app.add_config_value("max_opsets", {}, "env")
     app.connect("builder-inited", _generate_op_doc)
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
 

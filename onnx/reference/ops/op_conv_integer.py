@@ -4,8 +4,7 @@
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-from .op_conv import _conv_implementation
+from onnx.reference.ops.op_conv import _conv_implementation
 
 
 class ConvInteger(OpRun):

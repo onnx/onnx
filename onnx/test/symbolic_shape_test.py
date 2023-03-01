@@ -24,8 +24,7 @@ class TestSymbolicShape(unittest.TestCase):
             elif expected_vi.type.HasField("sparse_tensor_type"):
                 expected_shape = expected_vi.type.sparse_tensor_type.shape
             assert len(shape.dim) == len(expected_shape.dim), f"{onnx_model}"
-            for dim_i in range(len(shape.dim)):
-                dim = shape.dim[dim_i]
+            for dim_i, dim in enumerate(shape.dim):
                 expected_dim = expected_shape.dim[dim_i]
                 # -1 means it's a symbolic shape
                 if expected_dim.dim_value == -1:

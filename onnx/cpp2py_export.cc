@@ -372,6 +372,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     checker::check_node(proto, ctx, lex_ctx);
   });
 
+  checker.def("check_function", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+    FunctionProto proto{};
+    ParseProtoFromPyBytes(&proto, bytes);
+    checker::check_function(proto, ctx, checker::LexicalScopeContext());
+  });
+
   checker.def("check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     GraphProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
@@ -440,6 +446,41 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
          bool data_prop) -> void {
         ShapeInferenceOptions options{check_type, strict_mode == true ? 1 : 0, data_prop};
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
+      });
+
+  shape_inference.def(
+      "infer_function_output_types",
+      [](const py::bytes& function_proto_bytes,
+         const std::vector<py::bytes> input_types_bytes,
+         const std::vector<py::bytes> attributes_bytes) -> std::vector<py::bytes> {
+        FunctionProto proto{};
+        ParseProtoFromPyBytes(&proto, function_proto_bytes);
+
+        std::vector<TypeProto> input_types;
+        input_types.reserve(input_types_bytes.size());
+        for (const py::bytes& bytes : input_types_bytes) {
+          TypeProto type;
+          ParseProtoFromPyBytes(&type, bytes);
+          input_types.push_back(type);
+        }
+
+        std::vector<AttributeProto> attributes;
+        attributes.reserve(attributes_bytes.size());
+        for (const py::bytes& bytes : attributes_bytes) {
+          AttributeProto attr;
+          ParseProtoFromPyBytes(&attr, bytes);
+          attributes.push_back(attr);
+        }
+
+        std::vector<TypeProto> output_types = shape_inference::InferFunctionOutputTypes(proto, input_types, attributes);
+        std::vector<py::bytes> result;
+        result.reserve(output_types.size());
+        for (auto& type_proto : output_types) {
+          std::string out;
+          type_proto.SerializeToString(&out);
+          result.push_back(py::bytes(out));
+        }
+        return result;
       });
 
   // Submodule `parser`
