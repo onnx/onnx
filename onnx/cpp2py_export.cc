@@ -15,6 +15,7 @@
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/py_utils.h"
+#include "onnx/reference/c_ops/c_op_conv.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
@@ -463,6 +464,32 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   printer.def("model_to_text", ProtoBytesToText<ModelProto>);
   printer.def("function_to_text", ProtoBytesToText<FunctionProto>);
   printer.def("graph_to_text", ProtoBytesToText<GraphProto>);
+
+  // Submodule `schema`
+  auto c_ops = onnx_cpp2py_export.def_submodule("c_ops");
+  c_ops.doc() = "Reference Implementation in C++.";
+
+  py::class_<onnx_c_ops::ConvFloat> clf(
+      c_ops,
+      "ConvFloat",
+      R"pbdoc(Implements float runtime for operator Conv. The code is inspired from
+`conv.cc <https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/nn/conv.cc>`_
+in :epkg:`onnxruntime`. Supports float only.)pbdoc");
+
+  clf.def(py::init<>());
+  clf.def("init", &onnx_c_ops::ConvFloat::init, "Initializes the runtime with the ONNX attributes.");
+  clf.def("compute", &onnx_c_ops::ConvFloat::compute, "Computes the output for operator Conv.");
+
+  py::class_<onnx_c_ops::ConvDouble> cld(
+      c_ops,
+      "ConvDouble",
+      R"pbdoc(Implements float runtime for operator Conv. The code is inspired from
+`conv.cc <https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/core/providers/cpu/nn/conv.cc>`_
+in :epkg:`onnxruntime`. Supports double only.)pbdoc");
+
+  cld.def(py::init<>());
+  cld.def("init", &onnx_c_ops::ConvDouble::init, "Initializes the runtime with the ONNX attributes.");
+  cld.def("compute", &onnx_c_ops::ConvDouble::compute, "Computes the output for operator Conv.");
 }
 
 } // namespace ONNX_NAMESPACE

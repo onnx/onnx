@@ -17,6 +17,13 @@ Inference
 .. autoclass:: onnx.reference.ReferenceEvaluator
     :members: input_names, output_names, opsets, run
 
+Following class overwrite `ReferenceEvaluator` with a C implementation
+of a couple of operators with a slow python implementation.
+That includes operator `Conv`.
+
+.. autoclass:: onnx.reference.c_reference_evaluator.CReferenceEvaluator
+    :members: input_names, output_names, opsets, run
+
 OpFunction
 ++++++++++
 
