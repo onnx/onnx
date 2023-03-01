@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from onnx import FunctionProto
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.c_ops import Conv
+from onnx.reference.c_ops.c_op_conv import Conv
 from onnx.reference.op_run import OpRun
 
 
@@ -32,7 +32,7 @@ class CReferenceEvaluator(ReferenceEvaluator):
         new_ops: Optional[List[OpRun]] = None,
     ):
         if new_ops is None:
-            new_ops = [Conv]
+            new_ops = [Conv]  # type: ignore[list-item]
         else:
             new_ops = new_ops.copy()
             new_ops.append(Conv)  # type: ignore[arg-type]

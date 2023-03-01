@@ -3,7 +3,7 @@
 
 #include "onnx/reference/c_ops/c_op_common.h"
 
-namespace onnx_c_ops {
+namespace ONNX_NAMESPACE {
 
 namespace py = pybind11;
 
@@ -909,4 +909,4 @@ class ConvDouble : public Conv<double> {
   ConvDouble() : Conv<double>() {}
 };
 
-}; // namespace onnx_c_ops
+}; // namespace ONNX_NAMESPACE

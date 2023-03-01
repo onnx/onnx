@@ -469,7 +469,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto c_ops = onnx_cpp2py_export.def_submodule("c_ops");
   c_ops.doc() = "Reference Implementation in C++.";
 
-  py::class_<onnx_c_ops::ConvFloat> clf(
+  py::class_<ConvFloat> clf(
       c_ops,
       "ConvFloat",
       R"pbdoc(Implements float runtime for operator Conv. The code is inspired from
@@ -477,10 +477,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 in :epkg:`onnxruntime`. Supports float only.)pbdoc");
 
   clf.def(py::init<>());
-  clf.def("init", &onnx_c_ops::ConvFloat::init, "Initializes the runtime with the ONNX attributes.");
-  clf.def("compute", &onnx_c_ops::ConvFloat::compute, "Computes the output for operator Conv.");
+  clf.def("init", &ConvFloat::init, "Initializes the runtime with the ONNX attributes.");
+  clf.def("compute", &ConvFloat::compute, "Computes the output for operator Conv.");
 
-  py::class_<onnx_c_ops::ConvDouble> cld(
+  py::class_<ConvDouble> cld(
       c_ops,
       "ConvDouble",
       R"pbdoc(Implements float runtime for operator Conv. The code is inspired from
@@ -488,8 +488,8 @@ in :epkg:`onnxruntime`. Supports float only.)pbdoc");
 in :epkg:`onnxruntime`. Supports double only.)pbdoc");
 
   cld.def(py::init<>());
-  cld.def("init", &onnx_c_ops::ConvDouble::init, "Initializes the runtime with the ONNX attributes.");
-  cld.def("compute", &onnx_c_ops::ConvDouble::compute, "Computes the output for operator Conv.");
+  cld.def("init", &ConvDouble::init, "Initializes the runtime with the ONNX attributes.");
+  cld.def("compute", &ConvDouble::compute, "Computes the output for operator Conv.");
 }
 
 } // namespace ONNX_NAMESPACE

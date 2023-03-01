@@ -6,7 +6,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-namespace onnx_c_ops {
+namespace ONNX_NAMESPACE {
 
 namespace py = pybind11;
 
@@ -53,60 +53,6 @@ NTYPE flattened_dimension(const std::vector<NTYPE>& values, int64_t first) {
   for (auto it = values.begin(); it != end; ++it)
     r *= *it;
   return r;
-}
-
-template <typename T>
-inline void MakeStringInternal(std::ostringstream& ss, const T& t) noexcept {
-  ss << t;
-}
-
-template <>
-inline void MakeStringInternal(std::ostringstream& ss, const std::vector<int32_t>& t) noexcept {
-  for (auto it : t)
-    ss << "x" << it;
-}
-
-template <>
-inline void MakeStringInternal(std::ostringstream& ss, const std::vector<uint32_t>& t) noexcept {
-  for (auto it : t)
-    ss << "x" << it;
-}
-
-template <>
-inline void MakeStringInternal(std::ostringstream& ss, const std::vector<int64_t>& t) noexcept {
-  for (auto it : t)
-    ss << "x" << it;
-}
-
-template <>
-inline void MakeStringInternal(std::ostringstream& ss, const std::vector<uint64_t>& t) noexcept {
-  for (auto it : t)
-    ss << "x" << it;
-}
-
-template <>
-inline void MakeStringInternal(std::ostringstream& ss, const std::vector<int16_t>& t) noexcept {
-  for (auto it : t)
-    ss << "x" << it;
-}
-
-template <>
-inline void MakeStringInternal(std::ostringstream& ss, const std::vector<uint16_t>& t) noexcept {
-  for (auto it : t)
-    ss << "x" << it;
-}
-
-template <typename T, typename... Args>
-inline void MakeStringInternal(std::ostringstream& ss, const T& t, const Args&... args) noexcept {
-  MakeStringInternal(ss, t);
-  MakeStringInternal(ss, args...);
-}
-
-template <typename... Args>
-inline std::string MakeString(const Args&... args) {
-  std::ostringstream ss;
-  MakeStringInternal(ss, args...);
-  return std::string(ss.str());
 }
 
 enum StorageOrder {
@@ -216,4 +162,4 @@ void gemm(
   throw std::invalid_argument("Not implemented for transposed matrices (Gemm<T>).");
 }
 
-}; // namespace onnx_c_ops
+}; // namespace ONNX_NAMESPACE
