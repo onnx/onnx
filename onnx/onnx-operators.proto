@@ -4,7 +4,7 @@
 
 
 // Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
+// Licensed under the Apache-2.0 license.
 
 syntax = "proto2";
 
