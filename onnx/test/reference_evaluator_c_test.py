@@ -13,26 +13,16 @@ import os
 import unittest
 
 import numpy as np  # type: ignore
-import parameterized
 from numpy.testing import assert_allclose  # type: ignore
 
-from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
-from onnx.backend.test.case.node.roialign import get_roi_align_input_values
-from onnx.checker import check_model
-from onnx.defs import onnx_opset_version
+from onnx import TensorProto
 from onnx.helper import (
-    make_function,
     make_graph,
     make_model,
     make_node,
     make_opsetid,
-    make_sequence_type_proto,
-    make_tensor,
-    make_tensor_sequence_value_info,
     make_tensor_value_info,
-    make_value_info,
 )
-from onnx.numpy_helper import from_array
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.c_reference_evaluator import CReferenceEvaluator
 

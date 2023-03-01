@@ -1,15 +1,22 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,R0915,R1702,W0221
 
-from typing import Sequence, Tuple
+from typing import Any, Dict
 
 import numpy as np
 
+from onnx import NodeProto
 from onnx.onnx_cpp2py_export.c_ops import ConvFloat, ConvDouble
 from onnx.reference.op_run import OpRun
 
 
 class Conv(OpRun):
+    def __init__(
+        self, onnx_node: NodeProto, run_params: Dict[str, Any], schema: Any = None
+    ):
+        OpRun.__init__(self, onnx_node, run_params, schema)
+        self.cache_ = {}
+
     def _run(  # type: ignore
         self,
         X,
@@ -22,9 +29,6 @@ class Conv(OpRun):
         pads=None,
         strides=None,
     ):
-
-        if not hasattr(self, "cache_"):
-            self.cache_ = {}
         if X.dtype not in self.cache_:
             if X.dtype == np.float32:
                 rt = ConvFloat()
@@ -37,12 +41,12 @@ class Conv(OpRun):
             self.cache_[X.dtype] = rt
 
             rt.init(
-                self.auto_pad,
-                np.array(self.dilations or [], dtype=np.int64),
-                self.group,
-                np.array(self.kernel_shape or [], dtype=np.int64),
-                np.array(self.pads or [], dtype=np.int64),
-                np.array(self.strides or [], dtype=np.int64),
+                auto_pad,
+                np.array(dilations or [], dtype=np.int64),
+                group,
+                np.array(kernel_shape or [], dtype=np.int64),
+                np.array(pads or [], dtype=np.int64),
+                np.array(strides or [], dtype=np.int64),
             )
 
         rt = self.cache_[X.dtype]

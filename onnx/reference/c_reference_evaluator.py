@@ -35,7 +35,7 @@ class CReferenceEvaluator(ReferenceEvaluator):
             new_ops = [Conv]
         else:
             new_ops = new_ops.copy()
-            new_ops.append(Conv)
+            new_ops.append(Conv)  # type: ignore[arg-type]
         ReferenceEvaluator.__init__(
             self,
             proto,
