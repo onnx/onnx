@@ -87,7 +87,7 @@ jobs:
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
       if: ${{ always() }}
       run: |
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.20.2
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==4.21.1
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 

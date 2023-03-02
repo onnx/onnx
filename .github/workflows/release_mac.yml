@@ -104,7 +104,7 @@ jobs:
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
       if: ${{ always() }}
       run: |
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.20.2
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==4.21.1
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
     # TODO (https://github.com/microsoft/onnxruntime/issues/14663): re-enable ORT 1.14 on Mac when the compatibility has been fixed
