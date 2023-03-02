@@ -117,7 +117,7 @@ jobs:
       fi
 
       # Skip *output_*.pb because NumPy functions might behave differently on different platforms
-      # Skip test_log's input.pb because it uses np.random, which might behave differently on different platforms      
+      # Skip test_log's input.pb because it uses np.random, which might behave differently on different platforms
       git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb' $exclude_onn_ml_filter
       if [ $? -ne 0 ]; then
         echo "git diff for test generation returned failures. Please check updated node test files"
