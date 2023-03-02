@@ -102,6 +102,17 @@ backend_test.exclude(
 backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
 
 
+# The following tests are using types not supported by NumPy.
+# They could be if method to_array is extended to support custom
+# types the same as the reference implementation does
+# (see onnx.reference.op_run.to_array_extended).
+backend_test.exclude(
+    "(test_cast_FLOAT_to_BFLOAT16"
+    "|test_castlike_FLOAT_to_BFLOAT16"
+    "|test_castlike_FLOAT_to_BFLOAT16_expanded"
+    ")"
+)
+
 # The following tests are too slow with the reference implementation (Conv).
 backend_test.exclude(
     "(test_bvlc_alexnet"
