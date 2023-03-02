@@ -42,7 +42,7 @@ jobs:
   - script: |
       # Install Protobuf from source
       export NUM_CORES=`sysctl -n hw.logicalcpu`
-      if [ '$(build_type)' == 'Debug' ];
+      if [ '$(build_type)' == 'Debug' ]; then
         export DEBUG=1
       fi
       source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
