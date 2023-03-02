@@ -6,7 +6,7 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def _conv_implementation(  # type: ignore
+def _deform_conv_implementation(  # type: ignore
     X, W, offset, B, mask, dilations, group, kernel_shape, offset_group, pads, strides
 ):
     if dilations is None:
@@ -160,7 +160,7 @@ class DeformConv(OpRun):
                 f"X must have at least 3 dimensions but its shape is {X.shape}."
             )
         return (
-            _conv_implementation(
+            _deform_conv_implementation(
                 X,
                 W,
                 offset,
