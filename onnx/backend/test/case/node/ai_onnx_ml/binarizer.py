@@ -4,17 +4,9 @@ import numpy as np
 
 import onnx
 
+from ......reference.ops.aionnxml.op_binarizer import compute_binarizer
 from ...base import Base
 from .. import expect
-
-
-def compute_binarizer(x, threshold=None):
-    y = x.copy()
-    cond = y > threshold
-    not_cond = np.logical_not(cond)
-    y[cond] = 1
-    y[not_cond] = 0
-    return (y,)
 
 
 class Binarizer(Base):

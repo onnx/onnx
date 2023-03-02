@@ -5,7 +5,14 @@ import numpy as np
 
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
-from ....backend.test.case.node.ai_onnx_ml.binarizer import compute_binarizer
+
+def compute_binarizer(x, threshold=None):
+    y = x.copy()
+    cond = y > threshold
+    not_cond = np.logical_not(cond)
+    y[cond] = 1
+    y[not_cond] = 0
+    return (y,)
 
 
 class Binarizer(OpRunAiOnnxMl):
