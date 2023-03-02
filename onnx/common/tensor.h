@@ -99,8 +99,8 @@ struct Tensor final {
   std::vector<int64_t>& sizes() {
     return sizes_;
   }
-  /// if tensor is a scaler, the sizes is empty, but the element number is actually 1.
-  /// size_from_dim() can not handle that tensor is a scaler, while elem_num() can correctly
+  /// if tensor is a scalar, the sizes is empty, but the element number is actually 1.
+  /// size_from_dim() can not handle that tensor is a scalar, while elem_num() can correctly
   int64_t elem_num() const {
     return std::accumulate(sizes_.begin(), sizes_.end(), (int64_t)1, std::multiplies<int64_t>{});
   }
