@@ -3,10 +3,9 @@
 import numpy as np
 
 import onnx
-
-from ......reference.ops.aionnxml.op_binarizer import compute_binarizer
-from ...base import Base
-from .. import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
+from onnx.reference.ops.aionnxml.op_binarizer import compute_binarizer
 
 
 class Binarizer(Base):
