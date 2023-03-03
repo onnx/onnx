@@ -192,6 +192,7 @@ name|string|The name of the function
 domain|string|The domain to which this function belongs
 doc_string|string|Human-readable documentation for this function. Markdown is allowed.
 attribute|string[]|The attribute parameters of the function
+attribute_proto|Attribute[]| (IR version 9+) The attribute parameters with default values of the function. A function attribute shall be represented either as a string attribute or an Attribute, not both.
 input|string[]|The input parameters of the function
 output|string[]|The output parameters of the function.
 node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
