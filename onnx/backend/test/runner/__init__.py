@@ -427,7 +427,7 @@ class Runner:
                     break
 
                 if expected_outputs is None:
-                    ref = onnx.reference.ReferenceEvaluator(onx, verbose=9)
+                    ref = onnx.reference.ReferenceEvaluator(onx)
                     outputs = ref.run(None, feeds)
                     for i, o in enumerate(outputs):
                         name = os.path.join(test_data_set, f"output_{i}.pb")
