@@ -30,8 +30,10 @@ make -j$CORE_NUMBER
 if [ "$INSTALL_PROTOBUF_PATH" == "/usr" ]; then
     # install protobuf on default system path so it needs sudo permission
     sudo make install
+    export PATH=$INSTALL_PROTOBUF_PATH/$BUILD_TYPE/include:$INSTALL_PROTOBUF_PATH/$BUILD_TYPE/lib:$INSTALL_PROTOBUF_PATH/$BUILD_TYPE/bin:$PATH
 else
     make install
-    export PATH=$INSTALL_PROTOBUF_PATH/$BUILD_TYPE/include:$INSTALL_PROTOBUF_PATH/$BUILD_TYPE/lib:$INSTALL_PROTOBUF_PATH/$BUILD_TYPE/bin:$PATH
+    export PATH=$INSTALL_PROTOBUF_PATH/include:$INSTALL_PROTOBUF_PATH/lib:$INSTALL_PROTOBUF_PATH/bin:$PATH
 fi
+printenv PATH
 cd $ORIGINAL_PATH
