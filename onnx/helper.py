@@ -253,6 +253,8 @@ def make_function(
 ) -> FunctionProto:
     if attributes is None:
         attributes = []
+    if attribute_protos is None:
+        attribute_protos = []
     f = FunctionProto()
     f.domain = domain
     f.name = fname
@@ -261,7 +263,7 @@ def make_function(
     f.node.extend(nodes)
     f.opset_import.extend(opset_imports)
     f.attribute.extend(attributes)
-    f.attribute_protos.extend(attribute_protos)
+    f.attribute_proto.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
     return f
