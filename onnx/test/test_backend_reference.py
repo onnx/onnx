@@ -31,8 +31,8 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
             else:
                 feeds = {}
                 pos_inputs = 0
-                for i, (inp, tshape) in enumerate(
-                    zip(self._session.input_names, self._session.input_types)
+                for inp, tshape in zip(
+                    self._session.input_names, self._session.input_types
                 ):
                     shape = tuple(d.dim_value for d in tshape.tensor_type.shape.dim)
                     if shape == inputs[pos_inputs].shape:

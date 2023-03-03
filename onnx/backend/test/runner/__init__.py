@@ -35,7 +35,6 @@ import onnx.reference
 from onnx import (
     ModelProto,
     NodeProto,
-    TensorProto,
     TypeProto,
     ValueInfoProto,
     numpy_helper,
@@ -44,7 +43,6 @@ from onnx.backend.base import Backend
 from onnx.backend.test.case.test_case import TestCase
 from onnx.backend.test.loader import load_model_tests
 from onnx.backend.test.runner.item import TestItem
-from onnx.numpy_helper import to_array
 
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
