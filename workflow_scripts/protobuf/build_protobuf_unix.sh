@@ -32,6 +32,6 @@ if [ "$INSTALL_PROTOBUF_PATH" == "/usr" ]; then
     sudo make install
 else
     make install
-    export PATH=$INSTALL_PROTOBUF_PATH/include:$INSTALL_PROTOBUF_PATH/lib:$INSTALL_PROTOBUF_PATH/bin:$PATH
+    export PATH=$INSTALL_PROTOBUF_PATH/$BUILD_TYPE/include:$INSTALL_PROTOBUF_PATH/$BUILD_TYPE/lib:$INSTALL_PROTOBUF_PATH/$BUILD_TYPE/bin:$PATH
 fi
 cd $ORIGINAL_PATH
