@@ -38,7 +38,7 @@ class InferenceSessionBackendRep(onnx.backend.base.BackendRep):
             else:
                 feeds = {}
                 pos_inputs = 0
-                for i, (inp, shape) in enumerate(zip(input_names, input_shapes)):
+                for inp, shape in zip(input_names, input_shapes):
                     if shape == inputs[pos_inputs].shape:
                         feeds[inp] = inputs[pos_inputs]
                         pos_inputs += 1

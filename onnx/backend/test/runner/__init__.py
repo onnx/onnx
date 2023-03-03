@@ -32,13 +32,7 @@ import numpy as np
 
 import onnx
 import onnx.reference
-from onnx import (
-    ModelProto,
-    NodeProto,
-    TypeProto,
-    ValueInfoProto,
-    numpy_helper,
-)
+from onnx import ModelProto, NodeProto, TypeProto, ValueInfoProto, numpy_helper
 from onnx.backend.base import Backend
 from onnx.backend.test.case.test_case import TestCase
 from onnx.backend.test.loader import load_model_tests
