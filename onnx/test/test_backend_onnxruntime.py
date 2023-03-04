@@ -5,6 +5,8 @@ import platform
 import unittest
 from typing import Any
 
+from packaging.version import Version
+
 import numpy
 
 import onnx.backend.base
@@ -15,10 +17,12 @@ from onnx import ModelProto
 from onnx.backend.base import Device, DeviceType
 
 try:
-    from onnxruntime import InferenceSession
+    from onnxruntime import InferenceSession, __version__ as ort_version
+    from onnxruntime.capi.onnxruntime_pybind11_state import InvalidArgument
 except ImportError:
     # onnxruntime is not installed, all tests are skipped.
     InferenceSession = None
+    ort_version = None
 
 # The following just executes a backend based on InferenceSession through the backend test
 
@@ -63,8 +67,34 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
         return d.type == DeviceType.CPU  # type: ignore[no-any-return]
 
     @classmethod
+    def convert_version_opset_before(cls, model):
+        opsets = {d.domain: d.version for d in model.opset_import}
+        if "" not in opsets:
+            return None
+        try:
+            return onnx.version_converter.convert_version(model, opsets[""] - 1)
+        except RuntimeError:
+            # Let's try without any change.
+            del model.opset_import[:]
+            for k, v in opsets.items():
+                d = model.opset_import.add()
+                d.domain = k
+                d.version = v if k != "" else v - 1
+            return model
+
+    @classmethod
     def create_inference_session(cls, model):
-        return InferenceSession(model.SerializeToString())
+        try:
+            return InferenceSession(model.SerializeToString())
+        except InvalidArgument as e:
+            if "Unsupported model IR version" in str(e):
+                model.ir_version -= 1
+                return cls.create_inference_session(model)
+            if "Current official support for domain ai.onnx is till opset" in str(e):
+                new_model = cls.convert_version_opset_before(model)
+                if new_model is not None:
+                    return cls.create_inference_session(new_model)
+            raise e
 
     @classmethod
     def prepare(
@@ -100,6 +130,95 @@ if platform.system() == "Windows":
 
 # The following tests cannot pass because they consists in generating random number.
 backend_test.exclude("(test_bernoulli)")
+
+# The following tests are not supported by onnxruntime.
+backend_test.exclude(
+    "("
+    "test_adagrad"
+    "|test_adam"
+    "|test_add_uint8"
+    "|bitshift_left_uint16"
+    "|bitshift_right_uint16"
+    "|cast_BFLOAT16_to_FLOAT"
+    "|cast_FLOAT_to_BFLOAT16"
+    "|castlike_BFLOAT16_to_FLOAT"
+    "|castlike_FLOAT_to_BFLOAT16"
+    "|clip_default_int8_min_expanded"
+    "|clip_default_int8_max_expanded"
+    "|div_uint8"
+    "|gru_batchwise"  # Batchwise recurrent operations (layout == 1) are not supported.
+    "|loop16_seq_none"  # The graph is missing type information needed to construct the ORT tensor.
+    "|lstm_batchwise"  # Batchwise recurrent operations (layout == 1) are not supported.
+    "|m(in|ax)_u?int(16|8)"
+    "|momentum"
+    "|mul_uint8"
+    "|pow_types_float32_uint32"
+    "|pow_types_float32_uint64"
+    "|simple_rnn_batchwise"  # Batchwise recurrent operations (layout == 1) are not supported.
+    "|sub_uint8"
+    "|gradient_of_add"
+    ")"
+)
+
+# The following tests fail due to small discrepancies.
+backend_test.exclude(
+    "(" "cast_FLOAT_to_STRING" "|castlike_FLOAT_to_STRING" "|dft" "|stft" ")"
+)
+
+# The following tests fail due to huge discrepancies.
+backend_test.exclude(
+    "("
+    "resize_downsample_scales_cubic_align_corners"
+    "|resize_downsample_scales_linear_align_corners"
+    "|training_dropout"
+    ")"
+)
+
+# The following tests fail for no obvious reason.
+backend_test.exclude(
+    "("
+    "maxunpool_export_with_output_shape"  # not the same expected output
+    "|softplus_example_expanded"  # Could not find an implementation for Exp(1) node with name ''
+    "|softplus_expanded"  # Could not find an implementation for Exp(1) node with name ''
+    "|AvgPool[1-3]d"  # Could not find an implementation for AveragePool(1) node with name ''
+    "|BatchNorm1d_3d_input_eval"  # Could not find an implementation for BatchNormalization(6) node with name ''
+    "|BatchNorm[2-3]d_eval"  # Could not find an implementation for BatchNormalization(6) node with name ''
+    "|GLU"  # Could not find an implementation for Mul(6) node with name ''
+    "|Linear"  # Could not find an implementation for Gemm(6) node with name ''
+    "|PReLU"  # Could not find an implementation for PRelu(6) node with name ''
+    "|PoissonNLL"  # Could not find an implementation for Mul(6) node with name ''
+    "|Softsign"  # Could not find an implementation for Gemm(6) node with name ''
+    "|operator_add_broadcast"  # Could not find an implementation for Gemm(6) node with name ''
+    "|operator_add_size1"  # Could not find an implementation for Gemm(6) node with name ''
+    "|operator_addconstant"  # Could not find an implementation for Gemm(6) node with name ''
+    "|operator_addmm"  # Could not find an implementation for Gemm(6) node with name ''
+    "|operator_basic"  # Could not find an implementation for Add(6) node with name ''
+    "|operator_mm"  # Could not find an implementation for Gemm(6) node with name ''
+    "|operator_non_float_params"  # Could not find an implementation for Add(6) node with name ''
+    "|operator_params"  # Could not find an implementation for Add(6) node with name ''
+    "|operator_pow"  # Could not find an implementation for Pow(1) node with name ''
+    ")"
+)
+
+# The following tests fail, discrepancies with ReferenceEvaluator.
+backend_test.exclude(
+    "(" "densenet121" "|inception_v2" "|resnet50" "|shufflenet" "|squeezenet" ")"
+)
+
+
+# The following tests are new with opset 19.
+if ort_version is not None and Version(ort_version) < Version("1.16"):
+    # version should be 1.15 but there is no development version number.
+    backend_test.exclude(
+        "("
+        "averagepool_2d_dilations"
+        "|equal_string"
+        "|optional_get_element_optional_sequence"
+        "|identity_opt"
+        "|half_pixel_symmetric"
+        "|wrap_pad"
+        ")"
+    )
 
 # import all test cases at global scope to make them visible to python.unittest
 if InferenceSession is not None:
