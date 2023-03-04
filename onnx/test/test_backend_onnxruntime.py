@@ -17,7 +17,8 @@ from onnx import ModelProto
 from onnx.backend.base import Device, DeviceType
 
 try:
-    from onnxruntime import InferenceSession, __version__ as ort_version
+    from onnxruntime import InferenceSession
+    from onnxruntime import __version__ as ort_version
     from onnxruntime.capi.onnxruntime_pybind11_state import InvalidArgument
 except ImportError:
     # onnxruntime is not installed, all tests are skipped.
@@ -161,9 +162,7 @@ backend_test.exclude(
 )
 
 # The following tests fail due to small discrepancies.
-backend_test.exclude(
-    "(" "cast_FLOAT_to_STRING" "|castlike_FLOAT_to_STRING" "|dft" "|stft" ")"
-)
+backend_test.exclude("(cast_FLOAT_to_STRING|castlike_FLOAT_to_STRING|dft|stft)")
 
 # The following tests fail due to huge discrepancies.
 backend_test.exclude(
@@ -201,9 +200,7 @@ backend_test.exclude(
 )
 
 # The following tests fail, discrepancies with ReferenceEvaluator.
-backend_test.exclude(
-    "(" "densenet121" "|inception_v2" "|resnet50" "|shufflenet" "|squeezenet" ")"
-)
+backend_test.exclude("(densenet121|inception_v2|resnet50|shufflenet|squeezenet)")
 
 
 # The following tests are new with opset 19.
