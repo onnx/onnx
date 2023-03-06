@@ -120,7 +120,7 @@ def _replace_constant_of_shape_with_range(
             to = node.attribute[0].t.data_type
         else:
             to = TensorProto.FLOAT
-        ac = make_node("Cast", [a.output[0]], _find_name(f"{shape}_RANGEf"), to=to)
+        ac = make_node("Cast", [a.output[0]], [_find_name(f"{shape}_RANGEf")], to=to)
         cl = make_node("Cast", [n.output[0]], [_find_name(f"{shape}_Nf")], to=to)
         d = make_node(
             "Div", [ac.output[0], cl.output[0]], [_find_name(f"{shape}_FLAT")]
