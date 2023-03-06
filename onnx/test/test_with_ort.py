@@ -4,7 +4,15 @@
 # pylint: disable=C0415
 
 
-def example_test_with_ort() -> None:
+def test_with_ort_example() -> None:
+    try:
+        import onnxruntime  # pylint: disable=W0611
+
+        del onnxruntime
+    except ImportError:
+        import unittest
+        raise unittest.SkipTest("onnxruntime not installed") from None
+
     import numpy
     import numpy.random
     import onnxruntime as rt
