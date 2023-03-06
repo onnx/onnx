@@ -198,10 +198,6 @@ backend_test.exclude(
     ")"
 )
 
-# The following tests fail, discrepancies with ReferenceEvaluator.
-backend_test.exclude("(densenet121|inception_v2|resnet50|shufflenet|squeezenet)")
-
-
 # The following tests are new with opset 19.
 if ort_version is not None and Version(ort_version) < Version("1.16"):
     # version should be 1.15 but there is no development version number.
