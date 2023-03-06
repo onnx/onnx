@@ -5,9 +5,8 @@ import platform
 import unittest
 from typing import Any
 
-from packaging.version import Version
-
 import numpy
+from packaging.version import Version
 
 import onnx.backend.base
 import onnx.backend.test

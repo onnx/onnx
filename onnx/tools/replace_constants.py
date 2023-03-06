@@ -67,10 +67,100 @@ def _replace_constant(node: NodeProto, threshold: int) -> List[NodeProto]:
     return [node]
 
 
+def _replace_constant_of_shape_with_range(
+    onx: Union[GraphProto, FunctionProto]
+) -> Union[GraphProto, FunctionProto]:
+    """
+    Replaces all *ConstantOfShape* by node *Range* to avoid constant tensors.
+    The function is not recursive. The recursivity is done by
+    *replace_initializer_by_constant_of_shape*.
+    """
+
+    if isinstance(onx, GraphProto):
+        nodes = list(onx.node)
+    elif isinstance(onx, FunctionProto):
+        nodes = list(onx.node)
+    else:
+        raise TypeError(f"Not implemented for type {type(onx)}.")
+
+    existing_names = set()
+    for node in nodes:
+        existing_names |= set(node.input)
+        existing_names |= set(node.output)
+
+    def _find_name(prefix):
+        if prefix not in existing_names:
+            existing_names.add(prefix)
+            return prefix
+        i = 2
+        while True:
+            name = f"{prefix}_{i}"
+            if name not in existing_names:
+                existing_names.add(name)
+                return name
+            i += 1
+        # The function should never go through that line.
+        raise RuntimeError("The function should never go through that line.")
+
+    cst0 = make_node("Constant", [], [_find_name("zero")], value_int=0)
+    cst1 = make_node("Constant", [], [_find_name("one")], value_int=1)
+    update = {}
+    for inode, node in enumerate(nodes):
+        if node.op_type != "ConstantOfShape":
+            continue
+        shape = node.input[0]
+
+        n = make_node("ReduceProd", [shape], [_find_name(f"{shape}_N")])
+        a = make_node(
+            "Range",
+            [cst0.output[0], n.output[0], cst1.output[0]],
+            [_find_name(f"{shape}_RANGE")],
+        )
+        if len(node.attribute) == 1:
+            to = node.attribute[0].t.data_type
+        else:
+            to = TensorProto.FLOAT
+        ac = make_node("Cast", [a.output[0]], _find_name(f"{shape}_RANGEf"), to=to)
+        cl = make_node("Cast", [n.output[0]], [_find_name(f"{shape}_Nf")], to=to)
+        d = make_node(
+            "Div", [ac.output[0], cl.output[0]], [_find_name(f"{shape}_FLAT")]
+        )
+        resh = make_node("Reshape", [d.output[0], shape], node.output)
+        update[inode] = [n, a, ac, cl, d, resh]
+
+    for inode, up in sorted(update.items(), reverse=True):
+        nodes[inode : inode + 1] = up
+    nodes.insert(0, cst0)
+    nodes.insert(1, cst1)
+
+    if isinstance(onx, GraphProto):
+        graph = make_graph(
+            nodes,
+            onx.name,
+            onx.input,
+            onx.output,
+            initializer=onx.initializer,
+            sparse_initializer=onx.sparse_initializer,
+        )
+        return graph
+    if isinstance(onx, FunctionProto):
+        new_onx = make_function(
+            onx.domain,
+            onx.name,
+            onx.input,
+            onx.output,
+            nodes,
+            opset_imports=onx.opset_import,
+        )
+        return new_onx
+    raise TypeError(f"Not implemented for type {type(onx)}.")
+
+
 def replace_initializer_by_constant_of_shape(
     onx: Union[FunctionProto, GraphProto, ModelProto],
     threshold: int = 128,
     ir_version: Optional[int] = None,
+    use_range: bool = False,
 ):
     """
     Replace initializers or constant node by nodes *ConstantOfShape* to reduce
@@ -81,6 +171,8 @@ def replace_initializer_by_constant_of_shape(
     :param threshold: every initializer under this threshold is not impacted
     :param ir_version: initializer must be specified as input for `ir_version <= 3`,
         this must be specified if onx is :class:`FunctionProto` or :class:`GraphProto`
+    :param use_range: if uses operator *Range* instead of *ConstantOfShape* to avoid
+        constant tensors
     :return: onx, modified ModelProto
     """
     if isinstance(onx, FunctionProto):
@@ -103,16 +195,26 @@ def replace_initializer_by_constant_of_shape(
                 new_nodes,
                 opset_imports=onx.opset_import,
             )
+            if use_range:
+                return _replace_constant_of_shape_with_range(new_onx)
             return new_onx
+        if use_range:
+            return _replace_constant_of_shape_with_range(onx)
         return onx
 
     if isinstance(onx, ModelProto):
         new_graph = replace_initializer_by_constant_of_shape(
-            onx.graph, ir_version=ir_version or onx.ir_version, threshold=threshold
+            onx.graph,
+            ir_version=ir_version or onx.ir_version,
+            threshold=threshold,
+            use_range=use_range,
         )
         new_functions = [
             replace_initializer_by_constant_of_shape(
-                f, threshold=threshold, ir_version=ir_version or onx.ir_version
+                f,
+                threshold=threshold,
+                ir_version=ir_version or onx.ir_version,
+                use_range=use_range,
             )
             for f in onx.functions
         ]
@@ -205,7 +307,10 @@ def replace_initializer_by_constant_of_shape(
                 and att.g is not None
             ):
                 g = replace_initializer_by_constant_of_shape(
-                    att.g, threshold=threshold, ir_version=ir_version
+                    att.g,
+                    threshold=threshold,
+                    ir_version=ir_version,
+                    use_range=use_range,
                 )
                 if id(g) != id(att.g):
                     modified = True
@@ -228,5 +333,9 @@ def replace_initializer_by_constant_of_shape(
             initializer=new_inits,
             sparse_initializer=new_sparse_inits,
         )
+        if use_range:
+            return _replace_constant_of_shape_with_range(graph)
         return graph
+    if use_range:
+        return _replace_constant_of_shape_with_range(onx)
     return onx
