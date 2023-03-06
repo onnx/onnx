@@ -235,6 +235,10 @@ def replace_initializer_by_constant_of_shape(
         del model.opset_import[:]  # pylint: disable=E1101
         for oimp in onx.opset_import:
             op_set = model.opset_import.add()  # pylint: disable=E1101
+            if oimp.domain == "" and oimp.version < 11 and use_range:
+                raise RuntimeError(
+                    f"Range was introduced in " f"opset 11 but opset is {oimp.version}."
+                )
             if oimp.domain == "" and oimp.version < 9:
                 raise RuntimeError(
                     f"ConstantOfShape was introduced in "
