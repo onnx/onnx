@@ -273,8 +273,8 @@ def replace_initializer_by_constant_of_shape(
             return new_onx
         if use_range:
             return _replace_constant_of_shape_with_range(onx)
-            if value_constant_of_shape != 1:
-                return _replace_constant_of_shape_value(onx, value_constant_of_shape)
+        if value_constant_of_shape != 1:
+            return _replace_constant_of_shape_value(onx, value_constant_of_shape)
         return onx
 
     if isinstance(onx, ModelProto):
