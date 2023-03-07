@@ -27,6 +27,7 @@ from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
     ORT_MAX_IR_SUPPORTED_VERSION,
+    ORT_MAX_OPSET_SUPPORTED_VERSION,
     make_function,
     make_graph,
     make_model,
@@ -103,7 +104,12 @@ def make_sequence_value_info(name, elem_type, shape):
 
 def run_ort_inference(onnx_model):
     import onnxruntime as ort
-    if onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
+
+    # The new IR or opset version is not supported by onnxruntime yet
+    if (
+        onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
+        or onnx_model.ir_version > ORT_MAX_OPSET_SUPPORTED_VERSION
+    ):
         return None
     return ort.InferenceSession(
         onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]

@@ -36,7 +36,7 @@ from numpy.testing import assert_allclose  # type: ignore
 
 from onnx import OptionalProto, SequenceProto, TensorProto, load
 from onnx.backend.test import __file__ as backend_folder
-from onnx.helper import ORT_MAX_IR_SUPPORTED_VERSION
+from onnx.helper import ORT_MAX_IR_SUPPORTED_VERSION, ORT_MAX_OPSET_SUPPORTED_VERSION
 from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
@@ -617,9 +617,12 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                 from onnxruntime import InferenceSession
 
                 # The new IR version is not supported by onnxruntime yet
-                if te.onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
+                if (
+                    te.onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
+                    or te.onnx_model.ir_version > ORT_MAX_OPSET_SUPPORTED_VERSION
+                ):
                     print(
-                        "Skip test because of IR version is not supported by onnxruntime yet"
+                        "Skip test because of IR or opset version is not supported by onnxruntime yet"
                     )
                     return
 

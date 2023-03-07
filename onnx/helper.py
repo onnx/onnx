@@ -73,7 +73,13 @@ VERSION_TABLE: VersionTableType = [
 
 VersionMapType = Dict[Tuple[str, int], int]
 
-ORT_MAX_IR_SUPPORTED_VERSION = 8
+# TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
+ORT_MAX_OPSET_SUPPORTED_VERSION = 18
+for version_info in VERSION_TABLE[::-1]:
+    if version_info[2] == ORT_MAX_OPSET_SUPPORTED_VERSION:
+        ORT_MAX_IR_SUPPORTED_VERSION = version_info[1]
+        break
+
 
 def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """create a map from (opset-domain, opset-version) to ir-version from above table"""

@@ -13,6 +13,7 @@ from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
     ORT_MAX_IR_SUPPORTED_VERSION,
+    ORT_MAX_OPSET_SUPPORTED_VERSION,
     make_graph,
     make_model,
     make_node,
@@ -54,8 +55,11 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             return
         from onnxruntime import InferenceSession
 
-        # The new IR version is not supported by onnxruntime yet
-        if onx.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
+        # The new IR or opset version is not supported by onnxruntime yet
+        if (
+            onx.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
+            or onnx_opset_version > ORT_MAX_OPSET_SUPPORTED_VERSION
+        ):
             return
 
         ort = InferenceSession(
