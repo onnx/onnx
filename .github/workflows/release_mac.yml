@@ -127,5 +127,6 @@ jobs:
       if: matrix.python-version != '3.11'
       run: |
         python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
         python -m pip install -q onnxruntime
         pytest

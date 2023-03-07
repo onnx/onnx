@@ -133,5 +133,6 @@ jobs:
       run: |
         cd onnx
         python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         python -m pip install -q onnxruntime
         pytest

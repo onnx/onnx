@@ -102,6 +102,7 @@ def make_sequence_value_info(name, elem_type, shape):
 
 
 def run_ort_inference(onnx_model):
+    import onnxruntime as ort
     if onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
         return None
     return ort.InferenceSession(
@@ -1315,8 +1316,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @skip_if_no_onnxruntime
     def test_conv(self):
-        import onnxruntime as ort
-
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None, None, None])
@@ -1351,8 +1350,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @skip_if_no_onnxruntime
     def test_qlinearconv(self):
-        import onnxruntime as ort
-
         x = make_tensor_value_info("x", TensorProto.UINT8, [None, None, None, None])
         w = make_tensor_value_info("w", TensorProto.UINT8, [None, None, None, None])
         y = make_tensor_value_info("y", TensorProto.UINT8, [None, None, None, None])
@@ -1519,8 +1516,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         sess = ReferenceEvaluator(onnx_model)
 
         try:
-            import onnxruntime as ort
-
             sess_conv = run_ort_inference(onnx_model_conv)
             if sess_conv is None:
                 return
@@ -2307,8 +2302,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         return make_model(graph, opset_imports=[make_opsetid("", 17)])
 
     def common_test_roi_align(self, mode):
-        import onnxruntime as ort
-
         onnx_model = self.get_roi_align_model(mode)
         X, batch_indices, rois = get_roi_align_input_values()
         feeds = {"X": X, "rois": rois, "I": batch_indices}

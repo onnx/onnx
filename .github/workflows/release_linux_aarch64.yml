@@ -124,6 +124,7 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
           python -m pip install -q onnxruntime && \
           pytest && \
           deactivate'
