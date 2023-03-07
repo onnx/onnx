@@ -58,7 +58,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         # The new IR or opset version is not supported by onnxruntime yet
         if (
             onx.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
-            or onnx_opset_version > ORT_MAX_OPSET_SUPPORTED_VERSION
+            or onx.opset_version > ORT_MAX_OPSET_SUPPORTED_VERSION
         ):
             return
 
