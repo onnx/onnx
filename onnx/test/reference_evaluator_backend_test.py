@@ -36,6 +36,7 @@ from numpy.testing import assert_allclose  # type: ignore
 
 from onnx import OptionalProto, SequenceProto, TensorProto, load
 from onnx.backend.test import __file__ as backend_folder
+from onnx.helper import ORT_MAX_IR_SUPPORTED_VERSION
 from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
@@ -456,6 +457,10 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     atol = getattr(cls, "atol", {})
                     if len(rtol) == 0 or len(atol) == 0:
                         raise AssertionError("rtol or atol is empty.")
+                    # The new IR version is not supported by onnxruntime yet
+                    if te.onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
+                        cls.skipped.append((te, None))
+                        return
                     self.common_test_onnx_test_run(
                         te,
                         getattr(cls, "successes", []),

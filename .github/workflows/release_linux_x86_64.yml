@@ -70,13 +70,6 @@ jobs:
         twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
         TEST_HUB=1 pytest
 
-    - name: Verify ONNX with ONNX Runtime PyPI package
-      if: ${{ always() }} && matrix.python-version != '3.11'
-      run: |
-        python -m pip install -q onnxruntime
-        pytest
-        python -m pip uninstall -y onnxruntime
-
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
@@ -101,5 +94,6 @@ jobs:
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != '3.11'
       run: |
+        python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime
-        python onnx/test/test_with_ort.py
+        pytest

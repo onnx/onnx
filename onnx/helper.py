@@ -73,6 +73,7 @@ VERSION_TABLE: VersionTableType = [
 
 VersionMapType = Dict[Tuple[str, int], int]
 
+ORT_MAX_IR_SUPPORTED_VERSION = 8
 
 def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """create a map from (opset-domain, opset-version) to ir-version from above table"""

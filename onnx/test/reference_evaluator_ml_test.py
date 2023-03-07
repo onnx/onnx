@@ -12,6 +12,7 @@ from onnx import ONNX_ML, TensorProto, TypeProto, ValueInfoProto
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
+    ORT_MAX_IR_SUPPORTED_VERSION,
     make_graph,
     make_model,
     make_node,
@@ -52,6 +53,10 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         if not has_onnxruntime():
             return
         from onnxruntime import InferenceSession
+
+        # The new IR version is not supported by onnxruntime yet
+        if te.onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
+            return
 
         ort = InferenceSession(
             onx.SerializeToString(), providers=["CPUExecutionProvider"]

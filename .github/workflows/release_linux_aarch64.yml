@@ -92,18 +92,6 @@ jobs:
         # TODO: stop uploading to TestPyPI after future ONNX 1.14
         twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
-    - name: Verify ONNX with ONNX Runtime PyPI package
-      if: ${{ always() }} && matrix.python-version != 'cp311-cp311'
-      run: |
-         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '\
-          source .env/bin/activate && \
-          python -m pip install -q onnxruntime && \
-          pytest && \
-          python -m pip uninstall -y onnxruntime && \
-          deactivate'
-
     - name: Verify ONNX with the latest numpy and protobuf
       if: ${{ always() }}
       run: |
@@ -125,5 +113,17 @@ jobs:
           source .env/bin/activate && \
           python -m pip uninstall -y onnx && python -m pip install protobuf==3.20.2 && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
+          pytest && \
+          deactivate'
+
+    - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != 'cp311-cp311'
+      run: |
+         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt && \
+          python -m pip install -q onnxruntime && \
           pytest && \
           deactivate'

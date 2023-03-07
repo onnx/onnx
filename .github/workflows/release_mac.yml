@@ -87,13 +87,6 @@ jobs:
         # TODO: stop uploading to TestPyPI after future ONNX 1.14
         twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
-    - name: Verify ONNX with ONNX Runtime PyPI package
-      if: ${{ always() }} && matrix.python-version != '3.11'
-      run: |
-        python -m pip install -q onnxruntime
-        pytest
-        python -m pip uninstall -y onnxruntime
-
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
@@ -128,4 +121,11 @@ jobs:
         python -m pip uninstall -y onnx
         python -m pip install setuptools
         python -m pip install --index-url https://upload.pypi.org/legacy/ --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly
+        pytest
+
+    - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != '3.11'
+      run: |
+        python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt
+        python -m pip install -q onnxruntime
         pytest
