@@ -41,16 +41,15 @@ def infer_shapes(
             model_str, check_type, strict_mode, data_prop
         )
         return onnx.load_from_string(inferred_model_str)
-    elif isinstance(model, str):
+    if isinstance(model, str):
         raise TypeError(
             "infer_shapes only accepts ModelProto or bytes,"
             "you can use infer_shapes_path for the model path (String)."
         )
 
-    else:
-        raise TypeError(
-            f"infer_shapes only accepts ModelProto or bytes, incorrect type: {type(model)}"
-        )
+    raise TypeError(
+        f"infer_shapes only accepts ModelProto or bytes, incorrect type: {type(model)}"
+    )
 
 
 def infer_shapes_path(
@@ -69,8 +68,8 @@ def infer_shapes_path(
             "infer_shapes_path only accepts model Path (String),"
             "you can use infer_shapes for the ModelProto."
         )
-        # Directly output the inferred model into the specified path, return nothing
-    elif isinstance(model_path, str):
+    # Directly output the inferred model into the specified path, return nothing
+    if isinstance(model_path, str):
         # If output_path is not defined, default output_path would be the original model path
         if output_path == "":
             output_path = model_path
