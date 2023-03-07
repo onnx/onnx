@@ -26,6 +26,7 @@ from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
+    ORT_MAX_IR_SUPPORTED_VERSION,
     make_function,
     make_graph,
     make_model,
@@ -98,6 +99,14 @@ def make_sequence_value_info(name, elem_type, shape):
         return make_tensor_sequence_value_info(name, elem_type, shape)
     s_type = make_sequence_type_proto(elem_type)
     return make_value_info(name, s_type, shape)
+
+
+def run_ort_inference(onnx_model):
+    if onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
+        return None
+    return ort.InferenceSession(
+        onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
+    )
 
 
 class TestReferenceEvaluator(unittest.TestCase):
@@ -1322,10 +1331,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         graph = make_graph([node], "g", [X, W, B], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-
-        sess1 = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        sess1 = run_ort_inference(onnx_model)
+        if sess1 is None:
+            return
         sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 5, 6
@@ -1377,9 +1385,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
 
-        sess1 = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        sess1 = run_ort_inference(onnx_model)
+        if sess1 is None:
+            return
         sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 3, 3
@@ -1513,9 +1521,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         try:
             import onnxruntime as ort
 
-            sess_conv = ort.InferenceSession(
-                onnx_model_conv.SerializeToString(), providers=["CPUExecutionProvider"]
-            )
+            sess_conv = run_ort_inference(onnx_model_conv)
+            if sess_conv is None:
+                return
         except ImportError:
             sess_conv = None
 
@@ -2304,10 +2312,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         onnx_model = self.get_roi_align_model(mode)
         X, batch_indices, rois = get_roi_align_input_values()
         feeds = {"X": X, "rois": rois, "I": batch_indices}
-
-        sess = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        sess = run_ort_inference(onnx_model)
+        if sess is None:
+            return
         expected = sess.run(None, feeds)
         ref = ReferenceEvaluator(onnx_model)
         got = ref.run(None, feeds)

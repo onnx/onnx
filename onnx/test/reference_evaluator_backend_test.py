@@ -457,10 +457,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     atol = getattr(cls, "atol", {})
                     if len(rtol) == 0 or len(atol) == 0:
                         raise AssertionError("rtol or atol is empty.")
-                    # The new IR version is not supported by onnxruntime yet
-                    if te.onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
-                        cls.skipped.append((te, None))
-                        return
                     self.common_test_onnx_test_run(
                         te,
                         getattr(cls, "successes", []),
@@ -619,6 +615,13 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             if "onnxruntime" in check_other_runtime:
                 print("CHECK RUNTIME onnxruntime")
                 from onnxruntime import InferenceSession
+
+                # The new IR version is not supported by onnxruntime yet
+                if te.onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
+                    print(
+                        "Skip test because of IR version is not supported by onnxruntime yet"
+                    )
+                    return
 
                 te.run(
                     lambda obj: InferenceSession(obj.SerializeToString()),

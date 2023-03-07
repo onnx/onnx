@@ -55,7 +55,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         from onnxruntime import InferenceSession
 
         # The new IR version is not supported by onnxruntime yet
-        if te.onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
+        if onx.ir_version > ORT_MAX_IR_SUPPORTED_VERSION:
             return
 
         ort = InferenceSession(
