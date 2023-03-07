@@ -9,35 +9,33 @@ class TestONNXRuntime(unittest.TestCase):
     def test_with_ort_example(self) -> None:
         try:
             import onnxruntime  # pylint: disable=W0611
-
             del onnxruntime
         except ImportError:
             raise unittest.SkipTest("onnxruntime not installed") from None
 
-        import numpy
-        import numpy.random
-        import onnxruntime as rt
+        from numpy import float32, random
+        from onnxruntime import InferenceSession
         from onnxruntime.datasets import get_example
 
-        import onnx
+        from onnx import checker, load, save, shape_inference
 
         # get certain example model from ORT
         example1 = get_example("sigmoid.onnx")
 
         # test ONNX functions
-        model = onnx.load(example1)
-        onnx.checker.check_model(model)
-        onnx.checker.check_model(model, True)
-        inferred_model = onnx.shape_inference.infer_shapes(model, True)
+        model = load(example1)
+        checker.check_model(model)
+        checker.check_model(model, True)
+        inferred_model = shape_inference.infer_shapes(model, True)
         temp_filename = "temp.onnx"
-        onnx.save(inferred_model, temp_filename)
+        save(inferred_model, temp_filename)
 
-        # test ONNXRuntime functions
-        sess = rt.InferenceSession(temp_filename)
+        # test ONNX Runtime functions
+        sess = InferenceSession(temp_filename)
         input_name = sess.get_inputs()[0].name
         output_name = sess.get_outputs()[0].name
-        x = numpy.random.random((3, 4, 5))
-        x = x.astype(numpy.float32)
+        x = random.random((3, 4, 5))
+        x = x.astype(float32)
 
         sess.run([output_name], {input_name: x})
 

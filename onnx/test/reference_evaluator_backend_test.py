@@ -616,7 +616,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                 print("CHECK RUNTIME onnxruntime")
                 from onnxruntime import InferenceSession
 
-                # The new IR version is not supported by onnxruntime yet
+                # The new IR or opset version is not supported by onnxruntime yet
                 if (
                     te.onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
                     or te.onnx_model.ir_version > ORT_MAX_OPSET_SUPPORTED_VERSION
