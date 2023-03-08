@@ -74,11 +74,11 @@ def infer_shapes_path(
         if output_path == "":
             output_path = model_path
         C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
-
-    raise TypeError(
-        "infer_shapes_path only accepts model path (String), "
-        f"incorrect type: {type(model_path)}"
-    )
+    else:
+        raise TypeError(
+            "infer_shapes_path only accepts model path (String), "
+            f"incorrect type: {type(model_path)}"
+        )
 
 
 def infer_node_outputs(
