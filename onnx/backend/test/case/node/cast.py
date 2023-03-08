@@ -137,7 +137,7 @@ class Cast(Base):
                         vect_float32_to_float8e4m3(np_fp32)
                     )
                     input = make_tensor(
-                        "x", TensorProto.FLOAT8E4M3, [3, 4], input_values.tolist()
+                        "x", TensorProto.FLOAT8E4M3FN, [3, 4], input_values.tolist()
                     )
                 elif from_type == "FLOAT8E4M3FNUZ":
                     input_values = float8e4m3_to_float32(

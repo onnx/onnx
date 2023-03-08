@@ -429,9 +429,9 @@ def float32_to_float8e5m2(
     :return: converted float
     """
     if fn:
-        raise NotImplementedError("float32_to_float8e4m3 not implemented with fn=True.")
+        raise NotImplementedError("float32_to_float8e5m2 not implemented with fn=True.")
     if uz:
-        raise NotImplementedError("float32_to_float8e4m3 not implemented with uz=True.")
+        raise NotImplementedError("float32_to_float8e5m2 not implemented with uz=True.")
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
     ret = (b & 0x80000000) >> 24  # sign

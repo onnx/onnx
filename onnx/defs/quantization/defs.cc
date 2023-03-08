@@ -14,7 +14,7 @@ The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
 For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
 For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
 'y_zero_point' and 'y' must have same type.
-'y_zero_point' is not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz,
+Since 'y_zero_point' is not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz,
 the quantization formula is then `y = saturate (x / y_scale)`.
 However, the type of the attribute 'y_zero_point' still determines the quantization type.
 )DOC";
