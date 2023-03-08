@@ -9,6 +9,7 @@ class TestONNXRuntime(unittest.TestCase):
     def test_with_ort_example(self) -> None:
         try:
             import onnxruntime  # pylint: disable=W0611
+
             del onnxruntime
         except ImportError:
             raise unittest.SkipTest("onnxruntime not installed") from None
