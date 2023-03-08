@@ -343,7 +343,7 @@ For each variadic operator input, N or more node inputs must be specified where 
 
 #### Optional Inputs and Outputs
 
-##### Pre IR-8 
+**Pre IR-8**
 
 Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
@@ -355,7 +355,7 @@ Each node referring to an operator with optional outputs MUST provide a name for
 
 Optional inputs and outputs of the above kind are referred to as _static-optional_.
 
-##### IR-8 Version and Later
+**IR-8 Version and Later**
 
 IR-8 introduced a new type-constructor to represent _dynamic-optional_ inputs and outputs,
 in addition to the earlier static-optional version described above. A dynamic-optional INT64
