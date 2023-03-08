@@ -343,6 +343,8 @@ For each variadic operator input, N or more node inputs must be specified where 
 
 #### Optional Inputs and Outputs
 
+**Pre IR-8**
+
 Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
 Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs.
@@ -350,6 +352,18 @@ Some operators have outputs that are optional. When an actual output parameter o
 There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
 
 Each node referring to an operator with optional outputs MUST provide a name for each output that is computed and MUST NOT provide names for outputs that are not computed.
+
+Optional inputs and outputs of the above kind are referred to as _static-optional_.
+
+**IR-8 Version and Later**
+
+IR-8 introduced a new type-constructor to represent _dynamic-optional_ inputs and outputs,
+in addition to the earlier static-optional version described above. A dynamic-optional INT64
+tensor is a distinct type from an INT64 tensor type. In contrast, a static-optional INT64
+tensor does not have a distinct type, it has the same type as a INT64 tensor.
+The ops _Optional_ and _OptionalGetElement_ must be explicitly used to convert between
+the dynamic-optional type and the underlying non-optional type.
+The dynamic-optional allows for more expressiveness than static-optional.
 
 #### External Tensor Data
 
