@@ -1505,6 +1505,8 @@ This case is still puzzling.
 
         graph = make_graph([node1, node2], 'example', [X, A], [Y])
 
+        # To let old models runnable by ORT with a released ir_version, 
+        # use make_model_gen_version to create models with corresponding ir_version
         onnx_model = make_model_gen_version(graph, opset_imports=opset_imports)
         return onnx_model
 
