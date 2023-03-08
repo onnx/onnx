@@ -1505,9 +1505,10 @@ This case is still puzzling.
 
         graph = make_graph([node1, node2], 'example', [X, A], [Y])
 
-        # To let old models runnable by ORT with a released ir_version, 
-        # use make_model_gen_version to create models with corresponding ir_version
-        onnx_model = make_model_gen_version(graph, opset_imports=opset_imports)
+        onnx_model = make_model(graph, opset_imports=opset_imports)
+        # Let models runnable by onnxruntime with a released ir_version
+        onnx_model.ir_version = 8
+
         return onnx_model
 
     print("----------- case 1: 2D x 2D -> 2D")
