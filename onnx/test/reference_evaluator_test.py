@@ -27,10 +27,11 @@ from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
     ORT_MAX_IR_SUPPORTED_VERSION,
-    ORT_MAX_OPSET_SUPPORTED_VERSION,
+    ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION,
     make_function,
     make_graph,
     make_model,
+    make_model_gen_version,
     make_node,
     make_opsetid,
     make_sequence_type_proto,
@@ -105,12 +106,18 @@ def make_sequence_value_info(name, elem_type, shape):
 def run_ort_inference(onnx_model):
     import onnxruntime as ort
 
+    onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+    for opset in onnx_model.opset_import:
+        if opset.domain in ("", "ai.onnx"):
+            onnx_domain_opset = opset.version
+            break
     # The new IR or opset version is not supported by onnxruntime yet
     if (
         onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
-        or onnx_model.ir_version > ORT_MAX_OPSET_SUPPORTED_VERSION
+        or onnx_domain_opset > ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
     ):
         return None
+
     return ort.InferenceSession(
         onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
     )
@@ -1335,7 +1342,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             strides=[2, 2],
         )
         graph = make_graph([node], "g", [X, W, B], [Y])
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
         sess1 = run_ort_inference(onnx_model)
         if sess1 is None:
             return
@@ -1386,7 +1393,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             [x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point],
             [y],
         )
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
 
         sess1 = run_ort_inference(onnx_model)
         if sess1 is None:
@@ -1518,7 +1525,9 @@ class TestReferenceEvaluator(unittest.TestCase):
             graph, opset_imports=[make_opsetid("", 16), make_opsetid("experimental", 1)]
         )
         graph_conv = make_graph([node], "g", [X, W], [Y1])
-        onnx_model_conv = make_model(graph_conv, opset_imports=[make_opsetid("", 16)])
+        onnx_model_conv = make_model_gen_version(
+            graph_conv, opset_imports=[make_opsetid("", 16)]
+        )
         sess = ReferenceEvaluator(onnx_model)
 
         try:
@@ -2305,7 +2314,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             mode=mode,
         )
         graph = make_graph([node], "g", [X, rois, IS], [Y])
-        return make_model(graph, opset_imports=[make_opsetid("", 17)])
+        return make_model_gen_version(graph, opset_imports=[make_opsetid("", 17)])
 
     def common_test_roi_align(self, mode):
         onnx_model = self.get_roi_align_model(mode)
