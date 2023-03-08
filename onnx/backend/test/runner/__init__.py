@@ -356,15 +356,17 @@ class Runner:
                 use_dummy = True
             else:
                 model_dir = model_test.model_dir
+
+                if model_test.model_dir is None:
+                    model_dir = self.prepare_model_data(model_test)
+                else:
+                    model_dir = model_test.model_dir
+                model_pb_path = os.path.join(model_dir, "model.onnx")
+                use_dummy = False
+            
             if not ONNX_ML and "ai_onnx_ml" in model_dir:
                 return
 
-            if model_test.model_dir is None:
-                model_dir = self.prepare_model_data(model_test)
-            else:
-                model_dir = model_test.model_dir
-            model_pb_path = os.path.join(model_dir, "model.onnx")
-            use_dummy = False
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             if (
