@@ -620,7 +620,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                 from onnxruntime import InferenceSession
 
                 onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
-                for opset in onnx_model.opset_import:
+                for opset in te.onnx_model.opset_import:
                     if opset.domain in ("", "ai.onnx"):
                         onnx_domain_opset = opset.version
                         break
