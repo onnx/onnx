@@ -106,14 +106,10 @@ backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
 # types the same as the reference implementation does
 # (see onnx.reference.op_run.to_array_extended).
 backend_test.exclude(
-    "(test_cast_FLOAT_to_FLOATE4M3"
-    "|test_cast_FLOAT_to_FLOATE5M2"
-    "|test_cast_FLOAT16_to_FLOATE4M3"
-    "|test_cast_FLOAT16_to_FLOATE5M2"
-    "|test_castlike_FLOAT_to_FLOATE4M3"
-    "|test_castlike_FLOAT_to_FLOATE5M2"
-    "|test_castlike_FLOAT16_to_FLOATE4M3"
-    "|test_castlike_FLOAT16_to_FLOATE5M2"
+    "(test_cast_FLOAT_to_FLOAT8"
+    "|test_cast_FLOAT16_to_FLOAT8"
+    "|test_castlike_FLOAT_to_FLOAT8"
+    "|test_castlike_FLOAT16_to_FLOAT8"
     "|test_cast_BFLOAT16_to_FLOAT"
     "|test_castlike_BFLOAT16_to_FLOAT"
     "|test_quantizelinear_e4m3"

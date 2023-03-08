@@ -3,7 +3,13 @@
 
 import numpy as np
 
-from onnx.reference.custom_element_types import bfloat16, floate4m3, floate5m2
+from onnx.reference.custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+)
 from onnx.reference.op_run import OpRun, RefAttrName
 
 
@@ -11,8 +17,10 @@ def _check_dtype(val):  # type: ignore
     a = val.dtype
     if not isinstance(a, np.dtype) and a not in {
         bfloat16,
-        floate4m3,
-        floate5m2,
+        float8e4m3fn,
+        float8e4m3fnuz,
+        float8e5m2,
+        float8e5m2fnuz,
         np.int8,
         np.uint8,
         np.float16,

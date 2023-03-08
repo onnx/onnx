@@ -5,17 +5,17 @@ import numpy as np
 
 from onnx.helper import (
     float32_to_bfloat16,
-    float32_to_floate4m3,
-    float32_to_floate5m2,
+    float32_to_float8e4m3,
+    float32_to_float8e5m2,
     tensor_dtype_to_np_dtype,
 )
 from onnx.numpy_helper import (
     bfloat16_to_float32,
-    floate4m3_to_float32,
-    floate5m2_to_float32,
+    float8e4m3_to_float32,
+    float8e5m2_to_float32,
 )
 from onnx.onnx_pb import TensorProto
-from onnx.reference.custom_element_types import bfloat16, floate4m3, floate5m2
+from onnx.reference.custom_element_types import bfloat16, float8e4m3, float8e5m2
 from onnx.reference.op_run import OpRun
 
 
@@ -31,27 +31,28 @@ def cast_to(x, to):
         dtype = tensor_dtype_to_np_dtype(to)
         return xf.astype(dtype).reshape(x.shape)
 
-    if x.dtype == floate4m3 and x.dtype.descr[0][0] == "e4m3":
-        if to == TensorProto.FLOATE4M3:
-            return x
-        xr = x.ravel()
-        xf = np.empty(xr.shape[0], dtype=np.float32)
-        for i in range(xr.shape[0]):
-            el = floate4m3_to_float32(xr[i])
-            xf[i] = el
-        dtype = tensor_dtype_to_np_dtype(to)
-        return xf.astype(dtype).reshape(x.shape)
+    f8 = {
+        (float8e4m3fn, "e4m3fn"): float8e4m3_to_float32,
+        (float8e4m3fnuz, "e4m3fnuz"): lambda *args: float8e4m3_to_float32(
+            *args, uz=True
+        ),
+        (float8e5m2, "e5m2"): float8e5m2_to_float32,
+        (float8e5m2fnuz, "e5m2fnuz"): lambda *args: float8e5m2_to_float32(
+            *args, fn=True, uz=True
+        ),
+    }
 
-    if x.dtype == floate5m2 and x.dtype.descr[0][0] == "e5m2":
-        if to == TensorProto.FLOATE5M2:
-            return x
-        xr = x.ravel()
-        xf = np.empty(xr.shape[0], dtype=np.float32)
-        for i in range(xr.shape[0]):
-            el = floate5m2_to_float32(xr[i])
-            xf[i] = el
-        dtype = tensor_dtype_to_np_dtype(to)
-        return xf.astype(dtype).reshape(x.shape)
+    for (dt, st), cvt in f8.items():
+        if x.dtype == dt and x.dtype.descr[0][0] == st:
+            if to == dt:
+                return x
+            xr = x.ravel()
+            xf = np.empty(xr.shape[0], dtype=np.float32)
+            for i in range(xr.shape[0]):
+                el = cvt(xr[i])
+                xf[i] = el
+            dtype = tensor_dtype_to_np_dtype(to)
+            return xf.astype(dtype).reshape(x.shape)
 
     if to == TensorProto.BFLOAT16:
         xf = x.astype(np.float32).ravel()
@@ -61,21 +62,26 @@ def cast_to(x, to):
             y[i] = el
         return y.reshape(x.shape)
 
-    if to == TensorProto.FLOATE4M3:
-        xf = x.astype(np.float32).ravel()
-        y = np.empty(xf.shape, dtype=floate4m3).ravel()
-        for i in range(y.shape[0]):
-            el = float32_to_floate4m3(xf[i])  # type: ignore[assignment]
-            y[i] = el
-        return y.reshape(x.shape)
-
-    if to == TensorProto.FLOATE5M2:
-        xf = x.astype(np.float32).ravel()
-        y = np.empty(xf.shape, dtype=floate5m2).ravel()
-        for i in range(y.shape[0]):
-            el = float32_to_floate5m2(xf[i])  # type: ignore[assignment]
-            y[i] = el
-        return y.reshape(x.shape)
+    f8back = {
+        TensorProto.FLOAT8E4M3FN: (float8e4m3fn, float32_to_float8e4m3),
+        TensorProto.FLOAT8E4M3FNUZ: (
+            float8e4m3fnuz,
+            lambda *args: float32_to_float8e4m3(*args, uz=True),
+        ),
+        TensorProto.FLOAT8E5M2: (float8e5m2, float32_to_float8e5m2),
+        TensorProto.FLOAT8E5M2FNUZ: (
+            float8e5m2fnuz,
+            lambda *args: float32_to_float8e5m2(*args, fn=True, uz=True),
+        ),
+    }
+    for dt, (npdt, cvt) in f8back.items():
+        if to == dt:
+            xf = x.astype(np.float32).ravel()
+            y = np.empty(xf.shape, dtype=npdt).ravel()
+            for i in range(y.shape[0]):
+                el = cvt(xf[i])  # type: ignore[assignment]
+                y[i] = el
+            return y.reshape(x.shape)
 
     if to == TensorProto.STRING:
         return x.astype(np.str_)

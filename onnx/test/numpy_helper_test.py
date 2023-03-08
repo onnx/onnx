@@ -23,7 +23,7 @@ def bfloat16_to_float32(ival: int) -> Any:
     return np.float32(fval)
 
 
-def floate4m3_to_float32(ival: int) -> Any:
+def float8e4m3_to_float32(ival: int) -> Any:
     if ival < 0 or ival > 255:
         raise ValueError(f"{ival} is not a float8.")
     if ival == 255:
@@ -50,7 +50,7 @@ def floate4m3_to_float32(ival: int) -> Any:
     return np.float32(fval)
 
 
-def floate5m2_to_float32(ival: int) -> Any:
+def float8e5m2_to_float32(ival: int) -> Any:
     if ival < 0 or ival > 255:
         raise ValueError(f"{ival} is not a float8.")
     if ival in (255, 254, 253):
@@ -165,12 +165,12 @@ class TestNumpyHelper(unittest.TestCase):
             self.assertEqual(f32, f32_1)
             self.assertEqual(f32, f32_2)
 
-    def test_floate4m3_to_float32(self):
-        self.assertEqual(numpy_helper.floate4m3_to_float32(int("1111110", 2)), 448)
-        self.assertEqual(numpy_helper.floate4m3_to_float32(int("1000", 2)), 2 ** (-6))
-        self.assertEqual(numpy_helper.floate4m3_to_float32(int("1", 2)), 2 ** (-9))
+    def test_float8e4m3_to_float32(self):
+        self.assertEqual(numpy_helper.float8e4m3_to_float32(int("1111110", 2)), 448)
+        self.assertEqual(numpy_helper.float8e4m3_to_float32(int("1000", 2)), 2 ** (-6))
+        self.assertEqual(numpy_helper.float8e4m3_to_float32(int("1", 2)), 2 ** (-9))
         self.assertEqual(
-            numpy_helper.floate4m3_to_float32(int("111", 2)), 0.875 * 2 ** (-6)
+            numpy_helper.float8e4m3_to_float32(int("111", 2)), 0.875 * 2 ** (-6)
         )
         for f in [
             0,
@@ -192,10 +192,10 @@ class TestNumpyHelper(unittest.TestCase):
         ]:
             with self.subTest(f=f):
                 f32 = np.float32(f)
-                f8 = helper.float32_to_floate4m3(f32)
+                f8 = helper.float32_to_float8e4m3(f32)
                 assert isinstance(f8, int)
-                f32_1 = numpy_helper.floate4m3_to_float32(np.array([f8]))[0]
-                f32_2 = floate4m3_to_float32(f8)
+                f32_1 = numpy_helper.float8e4m3_to_float32(np.array([f8]))[0]
+                f32_2 = float8e4m3_to_float32(f8)
                 if np.isnan(f32):
                     assert np.isnan(f32_1)
                     assert np.isnan(f32_2)
@@ -203,21 +203,29 @@ class TestNumpyHelper(unittest.TestCase):
                     self.assertEqual(f32, f32_1)
                     self.assertEqual(f32, f32_2)
 
-    def test_floate5m2_to_float32(self):
-        self.assertEqual(numpy_helper.floate5m2_to_float32(int("1111011", 2)), 57344)
-        self.assertEqual(numpy_helper.floate5m2_to_float32(int("100", 2)), 2 ** (-14))
+    def test_float8e5m2_to_float32(self):
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(int("1111011", 2)), 57344)
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(int("100", 2)), 2 ** (-14))
         self.assertEqual(
-            numpy_helper.floate5m2_to_float32(int("11", 2)), 0.75 * 2 ** (-14)
+            numpy_helper.float8e5m2_to_float32(int("11", 2)), 0.75 * 2 ** (-14)
         )
-        self.assertEqual(numpy_helper.floate5m2_to_float32(int("1", 2)), 2 ** (-16))
-        self.assertTrue(np.isnan(numpy_helper.floate5m2_to_float32(int("1111101", 2))))
-        self.assertTrue(np.isnan(numpy_helper.floate5m2_to_float32(int("1111110", 2))))
-        self.assertTrue(np.isnan(numpy_helper.floate5m2_to_float32(int("1111111", 2))))
-        self.assertTrue(np.isnan(numpy_helper.floate5m2_to_float32(int("11111101", 2))))
-        self.assertTrue(np.isnan(numpy_helper.floate5m2_to_float32(int("11111110", 2))))
-        self.assertTrue(np.isnan(numpy_helper.floate5m2_to_float32(int("11111111", 2))))
-        self.assertEqual(numpy_helper.floate5m2_to_float32(int("1111100", 2)), np.inf)
-        self.assertEqual(numpy_helper.floate5m2_to_float32(int("11111100", 2)), -np.inf)
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(int("1", 2)), 2 ** (-16))
+        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(int("1111101", 2))))
+        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(int("1111110", 2))))
+        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(int("1111111", 2))))
+        self.assertTrue(
+            np.isnan(numpy_helper.float8e5m2_to_float32(int("11111101", 2)))
+        )
+        self.assertTrue(
+            np.isnan(numpy_helper.float8e5m2_to_float32(int("11111110", 2)))
+        )
+        self.assertTrue(
+            np.isnan(numpy_helper.float8e5m2_to_float32(int("11111111", 2)))
+        )
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(int("1111100", 2)), np.inf)
+        self.assertEqual(
+            numpy_helper.float8e5m2_to_float32(int("11111100", 2)), -np.inf
+        )
         for f in [
             0,
             0.0017089844,
@@ -228,10 +236,10 @@ class TestNumpyHelper(unittest.TestCase):
         ]:
             with self.subTest(f=f):
                 f32 = np.float32(f)
-                f8 = helper.float32_to_floate5m2(f32)
+                f8 = helper.float32_to_float8e5m2(f32)
                 assert isinstance(f8, int)
-                f32_1 = numpy_helper.floate5m2_to_float32(np.array([f8]))[0]
-                f32_2 = floate5m2_to_float32(f8)
+                f32_1 = numpy_helper.float8e5m2_to_float32(np.array([f8]))[0]
+                f32_2 = float8e5m2_to_float32(f8)
                 if np.isnan(f32):
                     assert np.isnan(f32_1)
                     assert np.isnan(f32_2)

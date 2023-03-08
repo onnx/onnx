@@ -13,8 +13,8 @@ onnx.helper
     get_all_tensor_dtypes
     get_attribute_value
     float32_to_bfloat16
-    float32_to_floate4m3
-    float32_to_floate5m2
+    float32_to_float8e4m3
+    float32_to_float8e5m2
     make_attribute
     make_empty_tensor_value_info
     make_function
@@ -176,6 +176,6 @@ cast
 
 .. autofunction:: onnx.helper.float32_to_bfloat16
 
-.. autofunction:: onnx.helper.float32_to_floate4m3
+.. autofunction:: onnx.helper.float32_to_float8e4m3
 
-.. autofunction:: onnx.helper.float32_to_floate5m2
+.. autofunction:: onnx.helper.float32_to_float8e5m2

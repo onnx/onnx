@@ -88,8 +88,10 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)",
              "tensor(string)",
              "tensor(bfloat16)",
-             "tensor(floate4m3)",
-             "tensor(floate5m2)"},
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)"},
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
@@ -107,8 +109,10 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)",
              "tensor(string)",
              "tensor(bfloat16)",
-             "tensor(floate4m3)",
-             "tensor(floate5m2)"},
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)"},
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
@@ -166,8 +170,10 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)",
              "tensor(string)",
              "tensor(bfloat16)",
-             "tensor(floate4m3)",
-             "tensor(floate5m2)"},
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)"},
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
@@ -185,8 +191,10 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)",
              "tensor(string)",
              "tensor(bfloat16)",
-             "tensor(floate4m3)",
-             "tensor(floate5m2)"},
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)"},
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 1, 0);

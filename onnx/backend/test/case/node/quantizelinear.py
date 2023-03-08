@@ -62,7 +62,7 @@ class QuantizeLinear(Base):
         )
 
     @staticmethod
-    def export_e4m3() -> None:
+    def export_e4m3fn() -> None:
         node = onnx.helper.make_node(
             "QuantizeLinear",
             inputs=["x", "y_scale", "y_zero_point"],
@@ -71,14 +71,16 @@ class QuantizeLinear(Base):
 
         x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
         y_scale = np.float32(2)
-        y_zero_point = make_tensor("zero_point", TensorProto.FLOATE4M3, [1], [0])
-        y = make_tensor("zero_point", TensorProto.FLOATE4M3, [5], [0, 0.5, 1, 448, 104])
+        y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+        y = make_tensor(
+            "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104]
+        )
 
         expect(
             node,
             inputs=[x, y_scale, y_zero_point],
             outputs=[y],
-            name="test_quantizelinear_e4m3",
+            name="test_quantizelinear_e4m3fn",
         )
 
     @staticmethod
@@ -91,9 +93,9 @@ class QuantizeLinear(Base):
 
         x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
         y_scale = np.float32(2)
-        y_zero_point = make_tensor("zero_point", TensorProto.FLOATE5M2, [1], [0.0])
+        y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
         y = make_tensor(
-            "zero_point", TensorProto.FLOATE5M2, [5], [0, 0.5, 1, 49152, 96]
+            "zero_point", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96]
         )
 
         expect(

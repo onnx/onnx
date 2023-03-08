@@ -4,17 +4,28 @@
 from onnx.helper import np_dtype_to_tensor_dtype
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
-from onnx.reference.ops.op_cast import bfloat16, cast_to, floate4m3, floate5m2
+from onnx.reference.ops.op_cast import (
+    bfloat16,
+    cast_to,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+)
 
 
 class CastLike(OpRun):
     def _run(self, x, y):  # type: ignore
         if y.dtype == bfloat16:
             to = TensorProto.BFLOAT16
-        elif y.dtype == floate4m3 and y.dtype.descr[0][0] == "e4m3":
-            to = TensorProto.FLOATE4M3
-        elif y.dtype == floate5m2 and y.dtype.descr[0][0] == "e5m2":
-            to = TensorProto.FLOATE5M2
+        elif y.dtype == float8e4m3fn and y.dtype.descr[0][0] == "e4m3fn":
+            to = TensorProto.FLOAT8E4M3FN
+        elif y.dtype == float8e4m3fnuz and y.dtype.descr[0][0] == "e4m3fnuz":
+            to = TensorProto.FLOAT8E4M3FNUZ
+        elif y.dtype == float8e5m2 and y.dtype.descr[0][0] == "e5m2":
+            to = TensorProto.FLOAT8E5M2
+        elif y.dtype == float8e5m2fnuz and y.dtype.descr[0][0] == "e5m2fnuz":
+            to = TensorProto.FLOAT8E5M2FNUZ
         else:
             to = np_dtype_to_tensor_dtype(y.dtype)  # type: ignore
         return (cast_to(x, to),)

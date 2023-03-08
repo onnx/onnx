@@ -8,8 +8,8 @@ onnx.numpy_helper
 .. autosummary::
 
     bfloat16_to_float32
-    floate4m3_to_float32
-    floate5m2_to_float32
+    float8e4m3_to_float32
+    float8e5m2_to_float32
     from_array
     from_dict
     from_list
@@ -64,6 +64,6 @@ cast
 
 .. autofunction:: onnx.numpy_helper.bfloat16_to_float32
 
-.. autofunction:: onnx.numpy_helper.floate4m3_to_float32
+.. autofunction:: onnx.numpy_helper.float8e4m3_to_float32
 
-.. autofunction:: onnx.numpy_helper.floate5m2_to_float32
+.. autofunction:: onnx.numpy_helper.float8e5m2_to_float32

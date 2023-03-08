@@ -64,7 +64,7 @@ class DequantizeLinear(Base):
         )
 
     @staticmethod
-    def export_e4m3() -> None:
+    def export_e4m3fn() -> None:
         node = onnx.helper.make_node(
             "DequantizeLinear",
             inputs=["x", "x_scale"],
@@ -72,7 +72,7 @@ class DequantizeLinear(Base):
         )
 
         # scalar zero point and scale
-        x = make_tensor("x", TensorProto.FLOATE4M3, [5], [0, 0.5, 1, 448, 104])
+        x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
         x_scale = np.float32(2)
         y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
 
@@ -80,7 +80,7 @@ class DequantizeLinear(Base):
             node,
             inputs=[x, x_scale],
             outputs=[y],
-            name="test_dequantizelinear_e4m3",
+            name="test_dequantizelinear_e4m3fn",
         )
 
     @staticmethod
@@ -92,7 +92,7 @@ class DequantizeLinear(Base):
         )
 
         # scalar zero point and scale
-        x = make_tensor("x", TensorProto.FLOATE5M2, [5], [0, 0.5, 1, 49152, 96])
+        x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
         x_scale = np.float32(2)
         y = np.array([0.0, 1.0, 2.0, 98304.0, 192.0], dtype=np.float32)
 

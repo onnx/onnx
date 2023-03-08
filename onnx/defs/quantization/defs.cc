@@ -14,7 +14,7 @@ The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
 For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
 For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
 'y_zero_point' and 'y' must have same type.
-'y_zero_point' is not used for quantization to floate4m3 or floate5m2,
+'y_zero_point' is not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz,
 the quantization formula is then `y = saturate (x / y_scale)`.
 However, the type of the attribute 'y_zero_point' still determines the quantization type.
 )DOC";
@@ -49,7 +49,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain 'x' to float, float16, bfloat16 or int32 tensor.")
         .TypeConstraint(
             "T2",
-            {"tensor(int8)", "tensor(uint8)", "tensor(floate4m3)", "tensor(floate5m2)"},
+            {"tensor(int8)",
+             "tensor(uint8)",
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)"},
             "Constrain 'y_zero_point' and 'y' to 8-bit integer or float tensor.")
         .SetDoc(QuantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
@@ -72,7 +77,7 @@ The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and 
 for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
 `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
 there's no zero point (zero point is supposed to be 0).
-Since `zero-point` is not used in the case of floate4m3 or floate5m2 quantization,
+Since `zero-point` is not used in the case of float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz quantization,
 the dequantization formula is then `y = x * x_scale` and 'x_scale' determines the output type.
 )DOC";
 
@@ -102,7 +107,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .TypeConstraint(
             "T1",
-            {"tensor(int8)", "tensor(uint8)", "tensor(int32)", "tensor(floate4m3)", "tensor(floate5m2)"},
+            {"tensor(int8)",
+             "tensor(uint8)",
+             "tensor(int32)",
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)"},
             "Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.")
         .TypeConstraint(
             "T2",

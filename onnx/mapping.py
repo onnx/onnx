@@ -60,12 +60,18 @@ TENSOR_TYPE_MAP = {
     int(TensorProto.STRING): TensorDtypeMap(
         np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"
     ),
-    # Native numpy does not support floate4m3 or floate5m2 so now use float32 for these types.
-    int(TensorProto.FLOATE4M3): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOATE4M3"
+    # Native numpy does not support float8 types, so now use float32 for these types.
+    int(TensorProto.FLOAT8E4M3FN): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FN"
     ),
-    int(TensorProto.FLOATE5M2): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOATE5M2"
+    int(TensorProto.FLOAT8E4M3FNUZ): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FNUZ"
+    ),
+    int(TensorProto.FLOAT8E5M2): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2"
+    ),
+    int(TensorProto.FLOAT8E5M2FNUZ): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2FNUZ"
     ),
 }
 
@@ -134,7 +140,14 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = DeprecatedWarningDict(
 _NP_TYPE_TO_TENSOR_TYPE = {
     v: k
     for k, v in TENSOR_TYPE_TO_NP_TYPE.items()
-    if k not in (TensorProto.BFLOAT16, TensorProto.FLOATE4M3, TensorProto.FLOATE5M2)
+    if k
+    not in (
+        TensorProto.BFLOAT16,
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+    )
 }
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now

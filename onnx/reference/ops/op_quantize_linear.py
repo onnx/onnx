@@ -7,24 +7,42 @@ import numpy as np
 
 from onnx import TensorProto
 from onnx.helper import (
-    float32_to_floate4m3,
-    float32_to_floate5m2,
+    float32_to_float8e4m3,
+    float32_to_float8e5m2,
     np_dtype_to_tensor_dtype,
     tensor_dtype_to_np_dtype,
 )
-from onnx.reference.custom_element_types import floate4m3, floate5m2
+from onnx.reference.custom_element_types import (
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+)
 from onnx.reference.op_run import OpRun
 
 
 class _CommonQuantizeLinear(OpRun):
-    float32_to_floate4m3 = np.vectorize(float32_to_floate4m3)
-    float32_to_floate5m2 = np.vectorize(float32_to_floate5m2)
+    float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+    float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
 
     def get_zero_point_type(self, zero_point: np.ndarray) -> int:
-        if zero_point.dtype == floate4m3 and zero_point.dtype.descr[0][0] == "e4m3":
-            return TensorProto.FLOATE4M3
-        if zero_point.dtype == floate5m2 and zero_point.dtype.descr[0][0] == "e5m2":
-            return TensorProto.FLOATE5M2
+        if (
+            zero_point.dtype == float8e4m3fn
+            and zero_point.dtype.descr[0][0] == "e4m3fn"
+        ):
+            return TensorProto.FLOAT8E4M3FN
+        if (
+            zero_point.dtype == float8e4m3fnuz
+            and zero_point.dtype.descr[0][0] == "e4m3fnuz"
+        ):
+            return TensorProto.FLOAT8E4M3FNUZ
+        if zero_point.dtype == float8e5m2 and zero_point.dtype.descr[0][0] == "e5m2":
+            return TensorProto.FLOAT8E5M2
+        if (
+            zero_point.dtype == float8e5m2fnuz
+            and zero_point.dtype.descr[0][0] == "e5m2fnuz"
+        ):
+            return TensorProto.FLOAT8E5M2FNUZ
         return np_dtype_to_tensor_dtype(zero_point.dtype)
 
     def common_run(  # pylint: disable=too-many-branches
@@ -68,13 +86,21 @@ class _CommonQuantizeLinear(OpRun):
                 dtype = tensor_dtype_to_np_dtype(tensor_type)
                 return (np.ceil(x).astype(dtype),)
 
-            if tensor_type == TensorProto.FLOATE4M3:
-                f8 = _CommonQuantizeLinear.float32_to_floate4m3(x)
-                return (f8.astype(floate4m3),)  # type: ignore[attr-defined]
+            if tensor_type == TensorProto.FLOAT8E4M3FN:
+                f8 = _CommonQuantizeLinear.float32_to_float8e4m3(x)
+                return (f8.astype(float8e4m3fn),)  # type: ignore[attr-defined]
 
-            if tensor_type == TensorProto.FLOATE5M2:
-                f8 = _CommonQuantizeLinear.float32_to_floate5m2(x)
-                return (f8.astype(floate5m2),)  # type: ignore[attr-defined]
+            if tensor_type == TensorProto.FLOAT8E4M3FNUZ:
+                f8 = _CommonQuantizeLinear.float32_to_float8e4m3(x, uz=True)
+                return (f8.astype(float8e4m3fnuz),)  # type: ignore[attr-defined]
+
+            if tensor_type == TensorProto.FLOAT8E5M2:
+                f8 = _CommonQuantizeLinear.float32_to_float8e5m2(x)
+                return (f8.astype(float8e5m2),)  # type: ignore[attr-defined]
+
+            if tensor_type == TensorProto.FLOAT8E5M2FNUZ:
+                f8 = _CommonQuantizeLinear.float32_to_float8e5m2(x, fn=True, uz=True)
+                return (f8.astype(float8e5m2fnuz),)  # type: ignore[attr-defined]
 
             raise RuntimeError(
                 f"Unexpected tensor_type for input 2: tensor_type={tensor_type}, "

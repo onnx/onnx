@@ -257,8 +257,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
       case TensorProto::BFLOAT16:
-      case TensorProto::FLOATE4M3:
-      case TensorProto::FLOATE5M2:
+      case TensorProto::FLOAT8E4M3FN:
+      case TensorProto::FLOAT8E4M3FNUZ:
+      case TensorProto::FLOAT8E5M2:
+      case TensorProto::FLOAT8E5M2FNUZ:
         check_field(int32_data);
         break;
 

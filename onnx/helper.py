@@ -350,16 +350,26 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + rounded) >> 16
 
 
-def float32_to_floate4m3(fval: float, scale: float = 1.0) -> int:
+def float32_to_float8e4m3(
+    fval: float, scale: float = 1.0, fn: bool = True, uz: bool = False
+) -> int:
     """
-    Convert a float32 value to a floate4m3 (as int).
+    Convert a float32 value to a float8, e4m3 (as int).
 
     :param fval: float to convert
     :param scale: scale, divide *fval* by *scale* before casting it
+    :param fn: no infinite values
+    :param uz: no negative zero
     :return: converted float
 
     See :ref:`onnx-detail-float8` for technical details.
     """
+    if not fn:
+        raise NotImplementedError(
+            "float32_to_float8e4m3 not implemented with fn=False."
+        )
+    if uz:
+        raise NotImplementedError("float32_to_float8e4m3 not implemented with uz=True.")
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
     ret = (b & 0x80000000) >> 24  # sign
@@ -406,14 +416,22 @@ def float32_to_floate4m3(fval: float, scale: float = 1.0) -> int:
     return int(ret)
 
 
-def float32_to_floate5m2(fval: float, scale: float = 1.0) -> int:
+def float32_to_float8e5m2(
+    fval: float, scale: float = 1.0, fn: bool = False, uz: bool = False
+) -> int:
     """
-    Convert a float32 value to a floate5m2 (as int).
+    Convert a float32 value to a float8, e5m2 (as int).
 
     :param fval: float to convert
     :param scale: scale, divide *fval* by *scale* before casting it
+    :param fn: no infinite values
+    :param uz: no negative zero
     :return: converted float
     """
+    if fn:
+        raise NotImplementedError("float32_to_float8e4m3 not implemented with fn=True.")
+    if uz:
+        raise NotImplementedError("float32_to_float8e4m3 not implemented with uz=True.")
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
     ret = (b & 0x80000000) >> 24  # sign
@@ -498,7 +516,12 @@ def make_tensor(
         # which has the wrong itemsize.
         if data_type == TensorProto.BFLOAT16:
             expected_size = 2
-        elif data_type in (TensorProto.FLOATE4M3, TensorProto.FLOATE5M2):
+        elif data_type in (
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+        ):
             expected_size = 1
         else:
             expected_size = np_dtype.itemsize
@@ -527,13 +550,21 @@ def make_tensor(
             )
         elif data_type in (
             TensorProto.BFLOAT16,
-            TensorProto.FLOATE4M3,
-            TensorProto.FLOATE5M2,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
         ):
             fcast = {
                 TensorProto.BFLOAT16: float32_to_bfloat16,
-                TensorProto.FLOATE4M3: float32_to_floate4m3,
-                TensorProto.FLOATE5M2: float32_to_floate5m2,
+                TensorProto.FLOAT8E4M3FN: float32_to_float8e4m3,
+                TensorProto.FLOAT8E4M3FNUZ: lambda *args: float32_to_float8e4m3(
+                    *args, uz=True
+                ),
+                TensorProto.FLOAT8E5M2: float32_to_float8e5m2,
+                TensorProto.FLOAT8E5M2FNUZ: lambda *args: float32_to_float8e5m2(
+                    *args, fn=True, uz=True
+                ),
             }[
                 data_type  # type: ignore[index]
             ]
