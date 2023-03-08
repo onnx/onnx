@@ -55,7 +55,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float8e4m3fnuz)",
              "tensor(float8e5m2)",
              "tensor(float8e5m2fnuz)"},
-            "Constrain 'y_zero_point' and 'y' to 8-bit integer or float tensor.")
+            "Constrain 'y_zero_point' and 'y' to 8-bit integer/float tensor.")
         .SetDoc(QuantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.hasInput(2)) {
