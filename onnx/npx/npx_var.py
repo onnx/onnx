@@ -907,9 +907,13 @@ class Var:
         :param axis: only flatten from axis to the end.
         :return: :class:`Var`
         """
-        from .npx_core_api import var
+        from .npx_core_api import cst, var
 
-        return var(self.self_var, op="Flatten")
+        return var(
+            var(self.self_var, op="Flatten", axis=0),
+            cst(np.array([0], dtype=np.int64)),
+            op="Squeeze",
+        )
 
     def get(self, index: int) -> "Var":
         """

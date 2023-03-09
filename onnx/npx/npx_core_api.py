@@ -226,7 +226,7 @@ def _xapi(fn: Callable, inline: bool, eager: bool):
     return wrapper
 
 
-def xapi_function(fn):
+def npxapi_function(fn):
     """
     Decorator to use before any function using part of the numpy API.
     The function inspects the input and decides which version of the function
@@ -235,7 +235,7 @@ def xapi_function(fn):
     return _xapi(fn, inline=False, eager=False)
 
 
-def xapi_inline(fn):
+def npxapi_inline(fn):
     """
     Decorator to use before any function using part of the numpy API.
     The function inspects the input and decides which version of the function

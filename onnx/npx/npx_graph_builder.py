@@ -681,7 +681,6 @@ class _GraphBuilder:
         possible_types = []
 
         for var in self._vars:
-
             key = id(var)
 
             if isinstance(var, Cst):

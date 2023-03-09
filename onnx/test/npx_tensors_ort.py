@@ -27,6 +27,7 @@ class OrtTensor:
 
     CPU = C_OrtDevice(C_OrtDevice.cpu(), OrtMemType.DEFAULT, 0)
     CUDA0 = C_OrtDevice(C_OrtDevice.cuda(), OrtMemType.DEFAULT, 0)
+    providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
 
     @staticmethod
     def from_array(
@@ -69,7 +70,9 @@ class OrtTensor:
 
         def __init__(self, tensor_class: type, input_names: List[str], onx: ModelProto):
             try:
-                self.ref = InferenceSession(onx.SerializeToString())
+                self.ref = InferenceSession(
+                    onx.SerializeToString(), providers=tensor_class.providers
+                )
             except InvalidArgument as e:
                 if (
                     len(onx.graph.output) == 1
@@ -81,7 +84,9 @@ class OrtTensor:
                     onx.graph.output[0].type.tensor_type.elem_type = onx.graph.input[
                         0
                     ].type.tensor_type.elem_type
-                    self.ref = InferenceSession(onx.SerializeToString())
+                    self.ref = InferenceSession(
+                        onx.SerializeToString(), providers=tensor_class.providers
+                    )
                 else:
                     if len(onx.graph.node) <= 3:
                         raise RuntimeError(

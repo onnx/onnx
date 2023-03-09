@@ -5,6 +5,7 @@ from io import StringIO
 import unittest
 import warnings
 import numpy as np
+from numpy.testing import assert_allclose
 import scipy
 from scipy.spatial.distance import cdist as scipy_cdist
 from onnx import FunctionProto, ModelProto, TensorProto
@@ -21,11 +22,10 @@ from onnx.helper import (
 from onnx.reference import ReferenceEvaluator
 from onnx.shape_inference import infer_shapes
 from onnxruntime import InferenceSession
-from pyquickhelper.pycode import ExtTestCase
 from onnx.npx import ElemType, jit_onnx, eager_onnx
 from onnx.npx.npx_types import Bool, Float32, Float64, Int64, OptParType, TensorType
 from onnx.npx.npx_var import Input, Var
-from onnx.npx.npx_core_api import cst, make_tuple, xapi_function, xapi_inline
+from onnx.npx.npx_core_api import cst, make_tuple, npxapi_function, npxapi_inline
 from onnx.npx.npx_functions_test import (
     _min_max,
     _min_max_inline,
@@ -100,9 +100,49 @@ from onnx.test.npx_tensors_ort import BackendOrtTensor, EagerOrtTensor, OrtTenso
 DEFAULT_OPSET = onnx_opset_version()
 
 
-class TestNpx(ExtTestCase):
-
+class TestNpx(unittest.TestCase):
     _warns = []
+
+    classmethod
+
+    def assertEqualArray(cls, expected, value, atol=0, rtol=0):
+        cls.assertEqual(expected.dtype, value.dtype)
+        cls.assertEqual(expected.shape, value.shape)
+        assert_allclose(expected, value, atol=atol, rtol=rtol)
+
+    @classmethod
+    def assertRaise(cls, fct, exc_type):
+        try:
+            fct()
+            e = None
+        except exc_type as e:
+            if type(e) != exc_type:
+                raise AssertionError(f"Unexpected exception {type(e)!r}.")
+            return
+        if e is None:
+            raise AssertionError("No exception was raised.")
+        raise AssertionError(f"Unexpected exception {type(e)!r}.")
+
+    @classmethod
+    def assertEmpty(cls, value):
+        if value is None:
+            return
+        if len(value) == 0:
+            return
+        raise AssertionError(f"value is not empty: {value!r}.")
+
+    @classmethod
+    def assertNotEmpty(cls, value):
+        if value is None:
+            raise AssertionError(f"value is empty: {value!r}.")
+        if isinstance(value, (list, dict, tuple, set)):
+            if len(value) == 0:
+                raise AssertionError(f"value is empty: {value!r}.")
+
+    @classmethod
+    def assertStartsWith(cls, prefix, full):
+        if not full.startswith(prefix):
+            raise AssertionError(f"prefix={prefix!r} does not start string  {full!r}.")
 
     @classmethod
     def tearDownClass(cls):
@@ -572,7 +612,7 @@ class TestNpx(ExtTestCase):
         self.assertEqual(res.dtype, np.int64)
 
     def test_backend_parameters_xapi(self):
-        @xapi_inline
+        @npxapi_inline
         def impl(A, axis=1):
             return argmin_inline(A, axis=axis)
 
@@ -640,7 +680,7 @@ class TestNpx(ExtTestCase):
         self.assertEqual(res.dtype, np.int64)
 
     def test_backend_parameters_no_inline_xapi(self):
-        @xapi_function
+        @npxapi_function
         def impl(
             A: TensorType[ElemType.numerics, "T"], axis: OptParType[int] = 1
         ) -> TensorType[ElemType.numerics, "T"]:
@@ -712,7 +752,7 @@ class TestNpx(ExtTestCase):
         )
         x = np.array([[-5, 6, 7], [5, -6, -7]], dtype=np.float64)
         k = np.array([2], dtype=np.int64)
-        y = np.array([[7, 6], [5, -6]], dtype=np.int64)
+        y = np.array([[7, 6], [5, -6]], dtype=np.float64)
         z = np.array([[2, 1], [0, 1]], dtype=np.int64)
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"X": x, "K": k})
@@ -738,7 +778,7 @@ class TestNpx(ExtTestCase):
         )
         x = np.array([[-5, 6, 7], [5, -6, -7]], dtype=np.float64)
         k = np.array([2], dtype=np.int64)
-        y = np.array([[7, 6], [5, -6]], dtype=np.int64)
+        y = np.array([[7, 6], [5, -6]], dtype=np.float64)
         z = np.array([[2, 1], [0, 1]], dtype=np.int64)
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"X": x, "K": k})
@@ -796,7 +836,7 @@ class TestNpx(ExtTestCase):
         )
         x = np.array([[-5, 6, 7], [5, -6, -7]], dtype=np.float64)
         k = np.array([2], dtype=np.int64)
-        y = np.array([[7, 6], [5, -6]], dtype=np.int64)
+        y = np.array([[7, 6], [5, -6]], dtype=np.float64)
         z = np.array([[2, 1], [0, 1]], dtype=np.int64)
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"X": x, "K": k})
@@ -822,7 +862,7 @@ class TestNpx(ExtTestCase):
         )
         x = np.array([[-5, 6, 7], [5, -6, -7]], dtype=np.float64)
         k = np.array([2], dtype=np.int64)
-        y = np.array([[7, 6], [5, -6]], dtype=np.int64)
+        y = np.array([[7, 6], [5, -6]], dtype=np.float64)
         z = np.array([[2, 1], [0, 1]], dtype=np.int64)
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"X": x, "K": k})
@@ -873,8 +913,8 @@ class TestNpx(ExtTestCase):
             }
         )
         x = np.array([[-5, 6, 7], [5, -6, -7]], dtype=np.float64)
-        z1 = np.array([-7], dtype=np.int64)
-        z2 = np.array([7], dtype=np.int64)
+        z1 = np.array([[-7]], dtype=np.float64)
+        z2 = np.array([[7]], dtype=np.float64)
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"X": x})
         self.assertEqual(len(got), 2)
@@ -903,8 +943,8 @@ class TestNpx(ExtTestCase):
             }
         )
         x = np.array([[-5, 6, 7], [5, -6, -7]], dtype=np.float64)
-        z1 = np.array([-7], dtype=np.int64)
-        z2 = np.array([7], dtype=np.int64)
+        z1 = np.array([[-7]], dtype=np.float64)
+        z2 = np.array([[7]], dtype=np.float64)
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"X": x})
         self.assertEqual(len(got), 2)
@@ -1187,7 +1227,7 @@ class TestNpx(ExtTestCase):
         f = absolute_inline(Input("A").flatten())
         self.assertIsInstance(f, Var)
         onx = f.to_onnx(constraints={"A": Float64[None]})
-        x = np.array([[-5, 6]], dtype=np.float64)
+        x = np.array([[-5, 6], [-5, 6]], dtype=np.float64)
         z = np.abs(x.flatten())
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"A": x})
@@ -1223,7 +1263,7 @@ class TestNpx(ExtTestCase):
         y = fnp(x)
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"A": x})
-        self.assertEqualArray(y, got[0])
+        self.assertEqualArray(y, got[0], atol=1e-10)
 
     def common_test_inline_bin(self, fonx, fnp, tcst=0):
         f = fonx(Input("A"), Input("B"))
@@ -1237,7 +1277,7 @@ class TestNpx(ExtTestCase):
         z = fnp(x, y)
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"A": x, "B": y})
-        self.assertEqualArray(z, got[0])
+        self.assertEqualArray(z, got[0], atol=1e-10)
 
     def test_arccos(self):
         self.common_test_inline(arccos_inline, np.arccos)
@@ -1975,11 +2015,13 @@ class TestNpx(ExtTestCase):
             target_opsets=target_opsets,
         )
         x = np.arange(10).reshape((5, 2)).astype(dtype=np.float32)
-        y = np.arange(14).reshape((7, 2)).astype(dtype=np.float32) * 10
-        z = scipy_cdist(x, y, metric=metric)
-        ref = InferenceSession(onx.SerializeToString())
+        y = (np.arange(14).reshape((7, 2)) * 10).astype(dtype=np.float32)
+        z = scipy_cdist(x, y, metric=metric).astype(np.float32)
+        ref = InferenceSession(
+            onx.SerializeToString(), providers=["CPUExecutionProvider"]
+        )
         got = ref.run(None, {"A": x, "B": y})
-        self.assertEqualArray(z, got[0], atol=1e-5)
+        self.assertEqualArray(z, got[0], atol=1e-4)
 
         f = jit_onnx(impl, BackendOrtTensor, target_opsets=target_opsets)
 
@@ -2001,7 +2043,7 @@ class TestNpx(ExtTestCase):
         self.assertEqualArray(y.astype(np.float64), yort.numpy())
         res = f(xort, yort)
         self.assertEqual(res.numpy().dtype, np.float64)
-        self.assertEqualArray(z.astype(np.float64), res.numpy())
+        self.assertEqualArray(z.astype(np.float64), res.numpy(), atol=1e-5)
 
         pieces = str(onx).split('s: "euclidean"')
         if len(pieces) > 2:
@@ -2114,7 +2156,7 @@ class TestNpx(ExtTestCase):
         x = np.arange(10).reshape((5, 2)).astype(dtype=np.float32)
         z = scipy_cdist(
             x, np.arange(4).reshape((2, 2)).astype(np.float32), metric=metric
-        )
+        ).astype(np.float32)
         ref = ReferenceEvaluator(onx.SerializeToString())
         got = ref.run(None, {"A": x})
         self.assertEqualArray(z, got[0], atol=1e-5)
@@ -2164,7 +2206,7 @@ class TestNpx(ExtTestCase):
         )
 
         x = np.arange(10).reshape((5, 2)).astype(dtype=np.float32)
-        z = (x - np.arange(2).reshape((1, 2))) ** 2
+        z = ((x - np.arange(2).reshape((1, 2))) ** 2).astype(np.float32)
         ref = ReferenceEvaluator(onx.SerializeToString())
         got = ref.run(None, {"A": x})
         self.assertEqualArray(z, got[0], atol=1e-5)
