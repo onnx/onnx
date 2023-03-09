@@ -50,9 +50,9 @@ class NumpyTensor:
     def __init__(self, tensor: np.ndarray):
         if isinstance(tensor, np.ndarray):
             self._tensor = tensor
-        else:
-            t = None
-            for dt in (
+        elif isinstance(
+            tensor,
+            (
                 np.int64,
                 np.float32,
                 np.float64,
@@ -64,11 +64,11 @@ class NumpyTensor:
                 np.uint16,
                 np.uint32,
                 np.uint64,
-            ):
-                t = np.array(tensor)
-            if t is None:
-                raise TypeError(f"A numpy array is expected not {type(tensor)}.")
-            self._tensor = t
+            ),
+        ):
+            self._tensor = np.array(tensor)
+        else:
+            raise TypeError(f"A numpy array is expected not {type(tensor)}.")
 
     @property
     def dtype(self) -> Any:

@@ -74,10 +74,7 @@ def rename_in_onnx_graph(
     new_inputs = []
     for inp in graph.input:
         if inp.name in replacements:
-            new = make_value_info(  # pylint: disable=call-arg
-                replacements.get(inp.name, inp.name)
-            )
-            new.t.CopyFrom(inp.t)  # type: ignore[attr-defined]
+            new = make_value_info(replacements.get(inp.name, inp.name), inp.t)
             new_inputs.append(new)  # type: ignore[arg-type]
             continue
         new_inputs.append(inp)  # type: ignore[arg-type]
