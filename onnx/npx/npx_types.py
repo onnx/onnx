@@ -222,7 +222,7 @@ class ParType:
         if isinstance(dtype, (int, float)):
             msg = str(dtype)
         else:
-            msg = dtype.__name__
+            msg = getattr(dtype, "__name__", str(dtype))
         newt = type(f"{cls.__name__}{msg}", (cls,), dict(dtype=dtype))
         if "<" in newt.__name__:
             raise NameError(f"Name is wrong {newt.__name__!r}.")
