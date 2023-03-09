@@ -15,6 +15,7 @@ from urllib.error import HTTPError
 from urllib.request import urlopen
 
 import onnx
+import onnx.version_converter
 
 if "ONNX_HOME" in os.environ:
     _ONNX_HUB_DIR = join(os.environ["ONNX_HOME"], "hub")
@@ -373,18 +374,27 @@ def load_composite_model(
     """
     preproc = load(preproc_model, preproc_repo, opset, force_reload, silent)
     network = load(network_model, network_repo, opset, force_reload, silent)
+    if preproc is None or network is None:
+        return None
 
     network_opset_ver = 0
-    for opset in network.opset_import:
-        if opset.domain == '' and opset.version > network_opset_ver:
-            network_opset_ver = opset.version
+    for opset_import_entry in network.opset_import:
+        if (
+            opset_import_entry is not None
+            and opset_import_entry.domain == ""
+            and opset_import_entry.version > network_opset_ver
+        ):
+            network_opset_ver = opset_import_entry.version
 
     preproc_opset_ver = 0
-    for opset in preproc.opset_import:
-        if opset.domain == '' and opset.version > preproc_opset_ver:
-            preproc_opset_ver = opset.version
+    for opset_import_entry in preproc.opset_import:
+        if (
+            opset_import_entry is not None
+            and opset_import_entry.domain == ""
+            and opset_import_entry.version > preproc_opset_ver
+        ):
+            preproc_opset_ver = opset_import_entry.version
 
-    from onnx import version_converter
     if preproc_opset_ver > network_opset_ver:
         network = onnx.version_converter.convert_version(network, preproc_opset_ver)
         network.ir_version = preproc.ir_version
