@@ -72,14 +72,8 @@ jobs:
       python onnx/gen_proto.py -l --ml
       python onnx/backend/test/stat_coverage.py
 
-      if [ '$(onnx_ml)' == '1' ]; then
-        export exclude_onn_ml_filter=''
-      else
-        export exclude_onn_ml_filter=':(exclude)*/data/node/test_ai_onnx_ml_*'
-      fi
-
       git status
-      git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3' $exclude_onn_ml_filter
+      git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
       if [ $? -ne 0 ]; then
         echo "git diff returned failures"
         exit 1
@@ -107,12 +101,12 @@ jobs:
 
       python onnx/backend/test/cmd_tools.py generate-data --clean
       git status
-      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb' $exclude_onn_ml_filter
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
       if [ $? -ne 0 ]; then
         echo "git diff for test generation returned failures. Please check updated node test files"
         exit 1
       fi
-      git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' $exclude_onn_ml_filter
+      git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
       if [ $? -ne 0 ]; then
         echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
         exit 1
