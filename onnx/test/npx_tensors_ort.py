@@ -1,18 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import numpy as np
 from typing import Any, Callable, List, Optional, Tuple, Union
+
+import numpy as np
+from onnxruntime import InferenceSession, RunOptions
+from onnxruntime.capi._pybind_state import OrtDevice as C_OrtDevice
+from onnxruntime.capi._pybind_state import OrtMemType
+from onnxruntime.capi._pybind_state import (
+    OrtValue as C_OrtValue,  # pylint: disable=E0611
+)
+from onnxruntime.capi.onnxruntime_pybind11_state import InvalidArgument
+
 from onnx import ModelProto, TensorProto
 from onnx.defs import onnx_opset_version
-from onnxruntime import InferenceSession, RunOptions
-from onnxruntime.capi.onnxruntime_pybind11_state import InvalidArgument
-from onnxruntime.capi._pybind_state import (  # pylint: disable=E0611
-    OrtValue as C_OrtValue,
-    OrtDevice as C_OrtDevice,
-    OrtMemType,
-)
-from onnx.npx.npx_types import TensorType
 from onnx.npx.npx_tensors import BackendTensor, EagerTensor
+from onnx.npx.npx_types import TensorType
 
 
 class OrtTensor:
@@ -60,7 +62,7 @@ class OrtTensor:
         """
         Converts the :class:`OrtValue` into numpy array.
         """
-        return self._tensor.numpy()
+        return self._tensor.numpy()  # type: ignore[no-any-return]
 
     class Evaluator:
         """
@@ -71,7 +73,8 @@ class OrtTensor:
         def __init__(self, tensor_class: type, input_names: List[str], onx: ModelProto):
             try:
                 self.ref = InferenceSession(
-                    onx.SerializeToString(), providers=tensor_class.providers
+                    onx.SerializeToString(),  # type: ignore[attr-defined]
+                    providers=tensor_class.providers,  # type: ignore[attr-defined]
                 )
             except InvalidArgument as e:
                 if (
@@ -85,7 +88,8 @@ class OrtTensor:
                         0
                     ].type.tensor_type.elem_type
                     self.ref = InferenceSession(
-                        onx.SerializeToString(), providers=tensor_class.providers
+                        onx.SerializeToString(),  # type: ignore[attr-defined]
+                        providers=tensor_class.providers,  # type: ignore[attr-defined]
                     )
                 else:
                     if len(onx.graph.node) <= 3:
@@ -112,9 +116,11 @@ class OrtTensor:
                 )
             feeds = {}
             for name, inp in zip(self.input_names, inputs):
-                feeds[name] = inp.value
-            res = self.ref._sess.run_with_ort_values(
-                feeds, self.output_names, self.run_options
+                feeds[name] = inp.value  # type: ignore[attr-defined]
+            res = (
+                self.ref._sess.run_with_ort_values(  # pylint: disable=protected-access
+                    feeds, self.output_names, self.run_options
+                )
             )
             return list(map(OrtTensor, res))
 
@@ -129,7 +135,7 @@ class OrtTensor:
     @property
     def shape(self) -> Tuple[int, ...]:
         "Returns the shape of the tensor."
-        return self._tensor.shape()
+        return self._tensor.shape()  # type: ignore[no-any-return]
 
     @property
     def dtype(self) -> Any:
@@ -149,7 +155,7 @@ class OrtTensor:
     @property
     def tensor_type(self) -> TensorType:
         "Returns the tensor type of this tensor."
-        return TensorType[self.dtype]
+        return TensorType[self.dtype]  # type: ignore[misc,no-any-return]
 
     @property
     def dims(self):
@@ -162,7 +168,7 @@ class OrtTensor:
             return (0,)
         if len(self.shape) == 1:
             return tuple(self.shape)
-        return (None,) + tuple(self.shape[1:])
+        return (None, *tuple(self.shape[1:]))
 
     @property
     def tensor_type_dims(self) -> TensorType:
@@ -173,7 +179,7 @@ class OrtTensor:
         Different keys usually means same ONNX graph but different
         input shapes.
         """
-        return TensorType[self.dtype, self.dims]
+        return TensorType[self.dtype, self.dims]  # type: ignore[misc,no-any-return]
 
     @classmethod
     def create_function(cls: Any, input_names: List[str], onx: ModelProto) -> Callable:
@@ -184,7 +190,7 @@ class OrtTensor:
         :param onx: onnx model
         :return: python function
         """
-        return cls.Evaluator(cls, input_names, onx)
+        return cls.Evaluator(cls, input_names, onx)  # type: ignore[return-value]
 
 
 class BackendOrtTensor(OrtTensor, BackendTensor):

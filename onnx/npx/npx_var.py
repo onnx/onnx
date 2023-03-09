@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=import-outside-toplevel,too-many-statements,too-many-branches
 
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import numpy as np
+
 from onnx import (  # pylint: disable=E0611
     FunctionProto,
     ModelProto,
@@ -9,8 +12,8 @@ from onnx import (  # pylint: disable=E0611
     TensorProto,
 )
 from onnx.helper import np_dtype_to_tensor_dtype
-from onnx.npx.npx_types import OptParType, ParType, TensorType, TupleType
 from onnx.npx.npx_constants import DEFAULT_OPSETS, ONNX_DOMAIN
+from onnx.npx.npx_types import OptParType, ParType, TensorType, TupleType
 
 
 class Par:
@@ -141,7 +144,7 @@ class ManyIdentity:
             this works if there is only one variable to be converted
         :return: ModelProto, FunctionProto
         """
-        from .npx_graph_builder import _GraphBuilder
+        from onnx.npx.npx_graph_builder import _GraphBuilder
 
         # Var.to_onnx
         if target_opsets is None:
@@ -158,7 +161,7 @@ class ManyIdentity:
         done = set()
         outputs = []
         for var in self.inputs:
-            vs = var._get_vars()
+            vs = var._get_vars()  # pylint: disable=protected-access
             for var in vs:
                 key = id(var)
                 if key in done:
@@ -223,7 +226,7 @@ class Var:
             )
 
         def _setitem1_where(self, index, new_values):
-            from .npx_core_api import cst, var
+            from onnx.npx.npx_core_api import cst, var
 
             if isinstance(new_values, (int, float)):
                 new_values = np.array(new_values)
@@ -236,7 +239,7 @@ class Var:
             return var(index, value, self.parent, op="Where")
 
         def _setitem1_slice(self, index, new_values):
-            from .npx_core_api import cst, var
+            from onnx.npx.npx_core_api import cst, var
 
             if isinstance(index, slice):
                 start = 0 if index.start is None else index.start
@@ -378,7 +381,7 @@ class Var:
             n_var_outputs=self.n_var_outputs,
             **self.onnx_op_kwargs,
         )
-        new_var._prefix = self._prefix
+        new_var._prefix = self._prefix  # pylint: disable=protected-access
         return new_var
 
     def __repr__(self) -> str:
@@ -436,12 +439,12 @@ class Var:
                     stack.insert(0, i)
                     continue
                 if isinstance(i, np.ndarray):
-                    from .npx_core_api import cst
+                    from onnx.npx.npx_core_api import cst
 
                     replacement_cst[id(i)] = cst(i)
                     continue
                 if isinstance(i, (int, float)):
-                    from .npx_core_api import cst
+                    from onnx.npx.npx_core_api import cst
 
                     replacement_cst[id(i)] = cst(np.array(i))
                     continue
@@ -536,7 +539,7 @@ class Var:
             this works if there is only one variable to be converted
         :return: ModelProto, FunctionProto
         """
-        from .npx_graph_builder import _GraphBuilder
+        from onnx.npx.npx_graph_builder import _GraphBuilder
 
         # Var.to_onnx
         if target_opsets is None:
@@ -563,81 +566,81 @@ class Var:
 
     # Operators
 
-    def _binary_op(self, ov, op_name, **kwargs):
-        from .npx_core_api import var
+    def _binary_op(self, ov: "Var", op_name: str, **kwargs) -> "Var":
+        from onnx.npx.npx_core_api import var
 
         if isinstance(ov, (int, float, np.ndarray, Cst)):
             return var(self.self_var, var(ov, self.self_var, op="CastLike"), op=op_name)
         return var(self.self_var, ov, op=op_name, **kwargs)
 
-    def _binary_op_right(self, ov, op_name, **kwargs):
-        from .npx_core_api import var
+    def _binary_op_right(self, ov: "Var", op_name: str, **kwargs) -> "Var":
+        from onnx.npx.npx_core_api import var
 
         if isinstance(ov, (int, float, np.ndarray, Cst)):
             return var(var(ov, self.self_var, op="CastLike"), self.self_var, op=op_name)
         return var(ov, self.self_var, op=op_name, **kwargs)
 
-    def __neg__(self):
+    def __neg__(self) -> "Var":
         """
         Automatically adds operator `Neg` to the graph.
         It does not cast automatically.
         """
-        from .npx_core_api import var
+        from onnx.npx.npx_core_api import var
 
         return var(self.self_var, op="Neg")
 
-    def __invert__(self):
+    def __invert__(self) -> "Var":
         """
         Automatically adds operator `BitwiseNot` to the graph.
         It does not cast automatically.
         """
-        from .npx_core_api import var
+        from onnx.npx.npx_core_api import var
 
         return var(self.self_var, op="BitwiseNot")
 
-    def __add__(self, ov):
+    def __add__(self, ov) -> "Var":
         """
         Automatically adds operator `Add` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Add")
 
-    def __radd__(self, ov):
+    def __radd__(self, ov) -> "Var":
         """
         Automatically adds operator `Add` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Add")
 
-    def __sub__(self, ov):
+    def __sub__(self, ov) -> "Var":
         """
         Automatically adds operator `Sub` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Sub")
 
-    def __rsub__(self, ov):
+    def __rsub__(self, ov) -> "Var":
         """
         Automatically adds operator `Sub` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Sub")
 
-    def __mul__(self, ov):
+    def __mul__(self, ov) -> "Var":
         """
         Automatically adds operator `Mul` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Mul")
 
-    def __rmul__(self, ov):
+    def __rmul__(self, ov) -> "Var":
         """
         Automatically adds operator `Mul` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Mul")
 
-    def __matmul__(self, ov):
+    def __matmul__(self, ov) -> "Var":
         """
         Automatically adds operator `MatMul` to the graph.
         It does not cast automatically.
@@ -646,142 +649,142 @@ class Var:
         """
         return self._binary_op(ov, "MatMul")
 
-    def __truediv__(self, ov):
+    def __truediv__(self, ov) -> "Var":
         """
         Automatically adds operator `Div` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Div")
 
-    def __rtruediv__(self, ov):
+    def __rtruediv__(self, ov) -> "Var":
         """
         Automatically adds operator `Div` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Div")
 
-    def __mod__(self, ov):
+    def __mod__(self, ov) -> "Var":
         """
         Automatically adds operator `Mod` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Mod")
 
-    def __rmod__(self, ov):
+    def __rmod__(self, ov) -> "Var":
         """
         Automatically adds operator `Mod` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Mod")
 
-    def __pow__(self, ov):
+    def __pow__(self, ov) -> "Var":
         """
         Automatically adds operator `Pow` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Pow")
 
-    def __rpow__(self, ov):
+    def __rpow__(self, ov) -> "Var":
         """
         Automatically adds operator `Pow` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Pow")
 
-    def __lt__(self, ov):
+    def __lt__(self, ov) -> "Var":
         """
         Automatically adds operator `Less` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Less")
 
-    def __le__(self, ov):
+    def __le__(self, ov) -> "Var":
         """
         Automatically adds operator `LessOrEqual` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "LessOrEqual")
 
-    def __gt__(self, ov):
+    def __gt__(self, ov) -> "Var":
         """
         Automatically adds operator `Greater` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Greater")
 
-    def __ge__(self, ov):
+    def __ge__(self, ov) -> "Var":
         """
         Automatically adds operator `GreaterOrEqual` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "GreaterOrEqual")
 
-    def __eq__(self, ov):
+    def __eq__(self, ov) -> "Var":
         """
         Automatically adds operator `Equal` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Equal")
 
-    def __ne__(self, ov):
+    def __ne__(self, ov) -> "Var":
         """
         Automatically adds operator `Not + Equal` to the graph.
         It does not cast automatically.
         """
-        from .npx_core_api import var
+        from onnx.npx.npx_core_api import var
 
         return var(self._binary_op(ov, "Equal"), op="Not")
 
-    def __lshift__(self, ov):
+    def __lshift__(self, ov) -> "Var":
         """
         Automatically adds operator `BitShift` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitShift", direction="LEFT")
 
-    def __rshift__(self, ov):
+    def __rshift__(self, ov) -> "Var":
         """
         Automatically adds operator `BitShift` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitShift", direction="RIGHT")
 
-    def __and__(self, ov):
+    def __and__(self, ov) -> "Var":
         """
         Automatically adds operator `BitwiseAnd` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitwiseAnd")
 
-    def __rand__(self, ov):
+    def __rand__(self, ov) -> "Var":
         """
         Automatically adds operator `BitwiseAnd` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "BitwiseAnd")
 
-    def __or__(self, ov):
+    def __or__(self, ov) -> "Var":
         """
         Automatically adds operator `BitwiseOr` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitwiseOr")
 
-    def __ror__(self, ov):
+    def __ror__(self, ov) -> "Var":
         """
         Automatically adds operator `BitwiseOr` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "BitwiseOr")
 
-    def __xor__(self, ov):
+    def __xor__(self, ov) -> "Var":
         """
         Automatically adds operator `BitwiseXor` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitwiseXor")
 
-    def __rxor__(self, ov):
+    def __rxor__(self, ov) -> "Var":
         """
         Automatically adds operator `BitwiseXor` to the graph.
         It does not cast automatically.
@@ -789,18 +792,18 @@ class Var:
         return self._binary_op_right(ov, "BitwiseXor")
 
     @property
-    def T(self):
+    def T(self) -> "Var":
         "Transpose."
-        from .npx_core_api import var
+        from onnx.npx.npx_core_api import var
 
-        return var(self.self_var, op="Transpose", perm=[1, 0])
+        return var(self.self_var, op="Transpose", perm=[1, 0])  # type: ignore[type-arg]
 
-    def astype(self, dtype):
+    def astype(self, dtype) -> "Var":
         "Cast"
-        from .npx_core_api import var
+        from onnx.npx.npx_core_api import var
 
         if isinstance(dtype, Var):
-            return var(self.self_var, dtype, op="CastLike")
+            return var(self.self_var, dtype, op="CastLike")  # type: ignore[type-arg]
         if not isinstance(dtype, int):
             try:
                 dtype = np_dtype_to_tensor_dtype(dtype)
@@ -836,59 +839,59 @@ class Var:
                         f"Unable to guess type for dtype={dtype}."
                     )
 
-        return var(self.self_var, op="Cast", to=dtype)
+        return var(self.self_var, op="Cast", to=dtype)  # type: ignore[type-arg]
 
     @property
-    def shape(self):
+    def shape(self) -> "Var":
         "Shape"
-        from .npx_core_api import var
+        from onnx.npx.npx_core_api import var
 
-        return var(self.self_var, op="Shape")
+        return var(self.self_var, op="Shape")  # type: ignore[type-arg]
 
-    def reshape(self, shape):
+    def reshape(self, shape: "Var") -> "Var":
         "Reshape"
-        from .npx_core_api import var
+        from onnx.npx.npx_core_api import var
 
         if isinstance(shape, (tuple, list)):
             shape = np.array(shape, dtype=np.int64)
-        return var(self.self_var, shape, op="Reshape")
+        return var(self.self_var, shape, op="Reshape")  # type: ignore[type-arg]
 
-    def reduce_function(
+    def reduce_function(  # type: ignore[type-arg]
         self,
         reduce_op,
-        axis: OptParType[TupleType[int]] = None,
-        keepdims: ParType[int] = 0,
-    ):
+        axis: OptParType[TupleType[int]] = None,  # type: ignore[type-arg]
+        keepdims: ParType[int] = 0,  # type: ignore[type-arg]
+    ) -> "Var":
         "See :func:`np.sum` or any other reduce function."
-        from .npx_core_api import var
+        from onnx.npx.npx_core_api import var
 
         if axis is None:
             return var(self.self_var, op=reduce_op, keepdims=keepdims)
         if isinstance(axis, int):
-            axis = [axis]
+            axis = [axis]  # type: ignore[assignment]
         if isinstance(axis, (tuple, list)):
-            from .npx_core_api import cst
+            from onnx.npx.npx_core_api import cst
 
             axis = cst(np.array(axis, dtype=np.int64))
-        return var(self.self_var, axis, op=reduce_op, keepdims=keepdims)
+        return var(self.self_var, axis, op=reduce_op, keepdims=keepdims)  # type: ignore[type-arg]
 
-    def sum(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):
+    def sum(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
         "See :func:`np.sum`."
         return self.reduce_function("ReduceSum", axis=axis, keepdims=keepdims)
 
-    def mean(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):
+    def mean(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
         "See :func:`np.mean`."
         return self.reduce_function("ReduceMean", axis=axis, keepdims=keepdims)
 
-    def min(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):
+    def min(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
         "See :func:`np.min`."
         return self.reduce_function("ReduceMin", axis=axis, keepdims=keepdims)
 
-    def max(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):
+    def max(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
         "See :func:`np.max`."
         return self.reduce_function("ReduceMax", axis=axis, keepdims=keepdims)
 
-    def prod(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):
+    def prod(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
         "See :func:`np.prod`."
         return self.reduce_function("ReduceProd", axis=axis, keepdims=keepdims)
 
@@ -896,9 +899,9 @@ class Var:
         """
         Returns a copy of self (use of Identity node).
         """
-        from .npx_core_api import var
+        from onnx.npx.npx_core_api import var
 
-        return var(self.self_var, op="Identity")
+        return var(self.self_var, op="Identity")  # type: ignore[arg-type]
 
     def flatten(self):
         """
@@ -907,12 +910,12 @@ class Var:
         :param axis: only flatten from axis to the end.
         :return: :class:`Var`
         """
-        from .npx_core_api import cst, var
+        from onnx.npx.npx_core_api import cst, var
 
         return var(
-            var(self.self_var, op="Flatten", axis=0),
+            var(self.self_var, op="Flatten", axis=0),  # type: ignore[assignment,arg-type]
             cst(np.array([0], dtype=np.int64)),
-            op="Squeeze",
+            op="Squeeze",  # type: ignore[arg-type]
         )
 
     def get(self, index: int) -> "Var":
@@ -923,7 +926,7 @@ class Var:
         :param index: index of the output to select
         :return: Var
         """
-        if index < 0 or index >= self.n_var_outputs:
+        if index < 0 or index >= self.n_var_outputs:  # type: ignore[assignment,arg-type,operator]
             raise ValueError(
                 f"index={index} must be positive and < {self.n_var_outputs} "
                 f"for var={self!r}."
@@ -943,7 +946,7 @@ class Var:
           boolean to select a subset of the tensor along the first axis,
           example: `mat[mat == 0]` (**scenario 2**)
         """
-        from .npx_core_api import cst, var
+        from onnx.npx.npx_core_api import cst, var
 
         if self.n_var_outputs != 1:
             # Multioutut
@@ -959,11 +962,11 @@ class Var:
             new_shape = cst(np.array([-1], dtype=np.int64))
             new_self = self.reshape(new_shape)
             new_index = index.reshape(new_shape)
-            return var(new_self, new_index, op="Compress")
+            return var(new_self, new_index, op="Compress")  # type: ignore[assignment,arg-type]
 
         if isinstance(index, int):
             # Use Gather instead.
-            return var(self, cst(np.array(index, dtype=np.int64)), axis=0, op="Gather")
+            return var(self, cst(np.array(index, dtype=np.int64)), axis=0, op="Gather")  # type: ignore[assignment,arg-type]
 
         if not isinstance(index, tuple):
             index = (index,)
@@ -993,7 +996,7 @@ class Var:
 
         if ni is not None and ax is not None:
             # Use Gather instead.
-            return var(self, cst(np.array(ni, dtype=np.int64)), axis=ax, op="Gather")
+            return var(self, cst(np.array(ni, dtype=np.int64)), axis=ax, op="Gather")  # type: ignore[assignment,arg-type]
 
         # scenario 1
         starts = []
@@ -1023,19 +1026,19 @@ class Var:
                 if isinstance(end, tuple):
                     needs_shape.append(len(ends) - 1)
                 elif isinstance(end, Var):
-                    needs_shape.append(end)
+                    needs_shape.append(end)  # type: ignore[arg-type]
                 continue
             raise NotImplementedError(  # pragma: no cover
                 f"Not implemented for type {type(ind)!r}."
             )
 
         if max(steps) == min(steps) == 1:
-            steps = None
+            steps = None  # type: ignore[assignment,arg-type]
         else:
-            steps = np.array(steps, dtype=np.int64)
+            steps = np.array(steps, dtype=np.int64)  # type: ignore[assignment,arg-type]
 
-        starts = np.array(starts, dtype=np.int64)
-        axes = np.array(axes, dtype=np.int64)
+        starts = np.array(starts, dtype=np.int64)  # type: ignore[assignment,arg-type]
+        axes = np.array(axes, dtype=np.int64)  # type: ignore[assignment,arg-type]
 
         if len(needs_shape) > 0:
             shape = self.shape
@@ -1051,27 +1054,27 @@ class Var:
                     conc.append(np.array([e], dtype=np.int64))
             if len(conc) > 1:
                 conc_cst = [v if isinstance(v, Var) else cst(v) for v in conc]
-                ends = var(*conc_cst, op="Concat", axis=0)
+                ends = var(*conc_cst, op="Concat", axis=0)  # type: ignore[assignment,arg-type]
             else:
                 ends = conc[0]
         else:
-            ends = np.array(ends, dtype=np.int64)
+            ends = np.array(ends, dtype=np.int64)  # type: ignore[assignment,arg-type]
 
         sliced_args = [starts, ends, axes]
         if steps is not None:
             sliced_args.append(steps)
         sliced_args_cst = [v if isinstance(v, Var) else cst(v) for v in sliced_args]
-        sliced = var(self.self_var, *sliced_args_cst, op="Slice")
+        sliced = var(self.self_var, *sliced_args_cst, op="Slice")  # type: ignore[assignment,arg-type]
         if len(axis_squeeze) > 0:
             return var(
-                sliced, cst(np.array(axis_squeeze, dtype=np.int64)), op="Squeeze"
+                sliced, cst(np.array(axis_squeeze, dtype=np.int64)), op="Squeeze"  # type: ignore[assignment,arg-type]
             )
         return sliced
 
     def __setitem__(self, index, values):
         new_op = self.set[index](values)
         self.current_var_ = new_op
-        self.input_indices = None
+        self.input_indices = None  # type: ignore[assignment]
 
 
 class Input(Var):
@@ -1084,7 +1087,7 @@ class Input(Var):
     def __init__(self, name=None):
         Var.__init__(self)
         self.name = name
-        self._prefix = name or "I"
+        self._prefix = name or "I"  # type: ignore[assignment]
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.name!r})"
@@ -1097,16 +1100,16 @@ class Cst(Var):
 
     def __init__(self, cst: Any):
         if isinstance(cst, np.ndarray):
-            Var.__init__(self, cst, op="Identity")
+            Var.__init__(self, cst, op="Identity")  # type: ignore[arg-type]
         elif isinstance(cst, int):
-            Var.__init__(self, np.array([cst], dtype=np.int64), op="Identity")
+            Var.__init__(self, np.array([cst], dtype=np.int64), op="Identity")  # type: ignore[arg-type]
         elif isinstance(cst, float):
-            Var.__init__(self, np.array([cst], dtype=np.float32), op="Identity")
+            Var.__init__(self, np.array([cst], dtype=np.float32), op="Identity")  # type: ignore[arg-type]
         elif isinstance(cst, list):
             if all(map(lambda t: isinstance(t, int), cst)):
-                Var.__init__(self, np.array(cst, dtype=np.int64), op="Identity")
+                Var.__init__(self, np.array(cst, dtype=np.int64), op="Identity")  # type: ignore[arg-type]
             elif all(map(lambda t: isinstance(t, (float, int)), cst)):
-                Var.__init__(self, np.array(cst, dtype=np.float64), op="Identity")
+                Var.__init__(self, np.array(cst, dtype=np.float64), op="Identity")  # type: ignore[arg-type]
             else:
                 raise ValueError(
                     f"Unable to convert cst (type={type(cst)}), " f"value={cst}."
@@ -1116,4 +1119,4 @@ class Cst(Var):
                 f"Constant of type {type(cst)} are not implemented yet. "
                 f"You should not use 'float32(x)' but 'array(x, dtype=float32)'."
             )
-        self._prefix = "cst"
+        self._prefix = "cst"  # type: ignore[assignment]

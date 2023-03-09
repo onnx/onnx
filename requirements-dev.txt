@@ -5,6 +5,7 @@ pytest
 pytest-cov
 parameterized
 nbval
+scipy
 wheel
 jupyter
 setuptools

@@ -1,13 +1,21 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=too-many-statements,too-many-branches
 
 from inspect import _empty, signature
 from typing import Any, Callable, Dict, Sequence, Union
+
 import numpy as np
+
 from onnx import FunctionProto, ModelProto, NodeProto
-from onnx.npx.npx_types import EagerNotAllowedError, OptParType, ParType, TupleType
-from onnx.npx.npx_var import Cst, Input, ManyIdentity, Par, Var
 from onnx.npx.npx_tensors import EagerTensor
-from onnx.npx.npx_types import ElemType
+from onnx.npx.npx_types import (
+    EagerNotAllowedError,
+    ElemType,
+    OptParType,
+    ParType,
+    TupleType,
+)
+from onnx.npx.npx_var import Cst, Input, ManyIdentity, Par, Var
 
 
 def cst(*args, **kwargs):

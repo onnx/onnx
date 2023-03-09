@@ -1,21 +1,26 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=too-many-branches,protected-access,too-many-statements
 
 from inspect import Parameter, signature
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import numpy as np
+
 from onnx import (  # pylint: disable=E0611
     IR_VERSION,
     AttributeProto,
     FunctionProto,
     ModelProto,
     NodeProto,
-    ValueInfoProto,
     TypeProto,
+    ValueInfoProto,
 )
-from onnx.checker import C as onnxC, check_value_info, check_model, check_node
+from onnx.checker import C as onnxC
+from onnx.checker import check_model, check_node, check_value_info
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
     OP_SET_ID_VERSION_MAP,
+    make_attribute,
     make_function,
     make_graph,
     make_model,
@@ -23,13 +28,13 @@ from onnx.helper import (
     make_opsetid,
     make_tensor_value_info,
 )
-from onnx.numpy_helper import from_array
-from onnx.shape_inference import infer_shapes
-from onnx.onnx_cpp2py_export.checker import (  # pylint: disable=E0611,E0401
-    ValidationError,
-)
-from onnx.onnx_cpp2py_export.shape_inference import (  # pylint: disable=E0611,E0401
-    InferenceError,
+from onnx.npx.npx_constants import _OPSET_TO_IR_VERSION, FUNCTION_DOMAIN, ONNX_DOMAIN
+from onnx.npx.npx_function_implementation import get_function_implementation
+from onnx.npx.npx_helper import (
+    iter_nodes,
+    onnx_convert_model_for_opsets,
+    onnx_model_to_function,
+    rename_in_onnx_graph,
 )
 from onnx.npx.npx_types import (
     ElemType,
@@ -39,15 +44,15 @@ from onnx.npx.npx_types import (
     TensorType,
     TupleType,
 )
-from onnx.npx.npx_constants import FUNCTION_DOMAIN, ONNX_DOMAIN, _OPSET_TO_IR_VERSION
 from onnx.npx.npx_var import Cst, Input, ManyIdentity, Par, Var
-from onnx.npx.npx_function_implementation import get_function_implementation
-from onnx.npx.npx_helper import (
-    iter_nodes,
-    rename_in_onnx_graph,
-    onnx_convert_model_for_opsets,
-    onnx_model_to_function,
+from onnx.numpy_helper import from_array
+from onnx.onnx_cpp2py_export.checker import (  # pylint: disable=E0611,E0401
+    ValidationError,
 )
+from onnx.onnx_cpp2py_export.shape_inference import (  # pylint: disable=E0611,E0401
+    InferenceError,
+)
+from onnx.shape_inference import infer_shapes
 
 
 class _FunctionIO:
@@ -177,12 +182,12 @@ class _GraphBuilder:
         self.functions_[key] = values
 
     def _reset(self):
-        self.inputs_ = []
-        self.outputs_ = []
-        self.nodes_ = []
-        self.functions_ = {}
-        self.attributes_ = []
-        self.onnx_names_ = {}
+        self.inputs_ = []  # pylint: disable=attribute-defined-outside-init
+        self.outputs_ = []  # pylint: disable=attribute-defined-outside-init
+        self.nodes_ = []  # pylint: disable=attribute-defined-outside-init
+        self.functions_ = {}  # pylint: disable=attribute-defined-outside-init
+        self.attributes_ = []  # pylint: disable=attribute-defined-outside-init
+        self.onnx_names_ = {}  # pylint: disable=attribute-defined-outside-init
 
     def make_node(
         self,
@@ -324,8 +329,7 @@ class _GraphBuilder:
                     f"tensor_type cannot be None for name={name!r} and "
                     f"input or output {index}."
                 )
-            else:
-                tensor_type = TensorType["undefined"]
+            tensor_type = TensorType["undefined"]
         if len(tensor_type.dtypes) != 1:
             raise RuntimeError(
                 f"tensor_type is not specific enough ({str(tensor_type)} "
@@ -593,7 +597,9 @@ class _GraphBuilder:
                         if new_g is None:
                             atts.append(att)
                             continue
-                        att = make_attribute(att.name, new_g)
+                        att = make_attribute(
+                            att.name, new_g
+                        )  # pylint: disable=undefined-variable
                     atts.append(att)
 
                 self.make_node(
@@ -617,13 +623,13 @@ class _GraphBuilder:
                 )
                 self.make_node(fct.name, node_inputs, node_outputs, domain=fct.domain)
             elif isinstance(domop[1], ModelProto):
-                model = onnx_convert_model_for_opsets(
+                onnx_convert_model_for_opsets(
                     domop[1], target_opsets=self.target_opsets
                 )
                 if "name" not in kwargs or kwargs["name"] is None:
                     raise ValueError(
-                        f"Parameter 'name' must be specified when "
-                        f"calling function 'compute'."
+                        "Parameter 'name' must be specified when "
+                        "calling function 'compute'."
                     )
                 name = kwargs["name"]
                 domain = kwargs.get("domain", "LOCAL")
@@ -667,7 +673,9 @@ class _GraphBuilder:
                 **kwargs,
             )
 
-    def to_onnx(self, output_vars: Optional[List[Var]] = None):
+    def to_onnx(
+        self, output_vars: Optional[List[Var]] = None
+    ) -> Union[FunctionProto, ModelProto]:
         """
         Conversion to onnx.
 
@@ -832,7 +840,7 @@ class _GraphBuilder:
         # the output is the last variable
         last_vars = output_vars or [self._vars[-1]]
         possible_outputs = []
-        for var in last_vars:
+        for var in last_vars:  # pylint: disable=consider-using-enumerate
             if isinstance(var, ManyIdentity):
                 for i in range(len(var)):  # pylint: disable=C0200
                     possible_outputs.append((var[i], var.input_indices[i], None))
@@ -868,7 +876,7 @@ class _GraphBuilder:
                 if dt is None and not self.as_function:
                     if isinstance(var, ManyIdentity):
                         raise RuntimeError("Cannot add multiple variables.")
-                    if isinstance(var, Var):
+                    if isinstance(var, Var):  # pylint: disable=consider-using-get
                         k = id(var), index
                         if k in map_types:  # pylint: disable=R1715
                             dt = map_types[k]

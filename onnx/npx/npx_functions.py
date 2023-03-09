@@ -1,14 +1,19 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=too-many-statements
+# type: ignore[arg-type]
+
 
 from typing import Optional, Tuple, Union
+
 import numpy as np
+
 from onnx import FunctionProto, ModelProto, NodeProto
-from onnx.numpy_helper import from_array
+from onnx.npx.npx_constants import FUNCTION_DOMAIN
 from onnx.npx.npx_core_api import (  # pylint: disable=W0611
     cst,
     make_tuple,
-    var,
     npxapi_inline,
+    var,
 )
 from onnx.npx.npx_types import (  # pylint: disable=W0611
     ElemType,
@@ -18,8 +23,8 @@ from onnx.npx.npx_types import (  # pylint: disable=W0611
     TensorType,
     TupleType,
 )
-from onnx.npx.npx_constants import FUNCTION_DOMAIN
 from onnx.npx.npx_var import Var
+from onnx.numpy_helper import from_array
 
 
 def _cstv(x):
@@ -31,7 +36,9 @@ def _cstv(x):
 
 
 @npxapi_inline
-def abs(x: TensorType[ElemType.numerics, "T"]) -> TensorType[ElemType.numerics, "T"]:
+def abs(  # pylint: disable=redefined-builtin
+    x: TensorType[ElemType.numerics, "T"]
+) -> TensorType[ElemType.numerics, "T"]:
     "See :func:`np.abs`."
     return var(x, op="Abs")
 
@@ -422,7 +429,9 @@ def relu(x: TensorType[ElemType.numerics, "T"]) -> TensorType[ElemType.numerics,
 
 
 @npxapi_inline
-def round(x: TensorType[ElemType.numerics, "T"]) -> TensorType[ElemType.numerics, "T"]:
+def round(  # pylint: disable=redefined-builtin
+    x: TensorType[ElemType.numerics, "T"]
+) -> TensorType[ElemType.numerics, "T"]:
     "See :func:`np.round`."
     return var(x, op="Round")
 
@@ -496,7 +505,7 @@ def topk(
     k: TensorType[ElemType.int64, "I", (1,)],
     axis: OptParType[int] = -1,
     largest: OptParType[int] = 1,
-    sorted: OptParType[int] = 1,
+    sorted: OptParType[int] = 1,  # pylint: disable=redefined-builtin
 ) -> TupleType[TensorType[ElemType.numerics, "T"], TensorType[ElemType.int64, "I"]]:
     "See :func:`np.argsort`."
     return make_tuple(2, x, k, op="TopK", axis=axis, largest=largest, sorted=sorted)

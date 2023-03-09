@@ -46,6 +46,17 @@ module = [
 ]
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = [
+    'onnx.npx.npx_core_api',
+    'onnx.npx.npx_graph_builder',
+    'onnx.npx.npx_functions',
+    'onnx.npx.npx_functions_test',
+    'onnx.npx.npx_var',
+    'onnx.test.npx_test',
+]
+ignore_errors = true
+
 [tool.black]
 # extend-exclude needs to be a regular expression
 extend-exclude = "third_party/|venv/"
@@ -109,6 +120,11 @@ ban-relative-imports = "all"
 "onnx/reference/ops/**" = ["N801"] # Class casing
 "onnx/reference/ops/_op_list.py" = ["F401"]
 "onnx/__init__.py" = ["F401"]
+"onnx/npx/__init__.py" = ["F401"]
+"onnx/npx/npx_functions.py" = ["F821"]
+"onnx/npx/npx_functions_test.py" = ["F821"]
+"onnx/npx/npx_graph_builder.py" = ["N811", "N801"]
+"onnx/npx/npx_var.py" = ["N801", "N802", "B904"]
 "onnx/reference/__init__.py" = ["F401"]
 "onnx/reference/ops/__init__.py" = ["F401"]
 "onnx/reference/ops/aionnxml/_op_list.py" = ["F401"]
@@ -116,4 +132,5 @@ ban-relative-imports = "all"
 "onnx/reference/ops/aionnx_preview_training/__init__.py" = ["F401"]
 "onnx/reference/ops/aionnx_preview_training/_op_list.py" = ["F401"]
 "onnx/reference/ops/experimental/__init__.py" = ["F401"]
+"onnx/test/npx_test.py" = ["B904", "F821"]
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]

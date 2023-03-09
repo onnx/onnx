@@ -1,31 +1,80 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=unsubscriptable-object,unnecessary-lambda,raise-missing-from,unidiomatic-typecheck
 
-from contextlib import redirect_stdout
-from io import StringIO
 import unittest
 import warnings
+from contextlib import redirect_stdout
+from io import StringIO
+
 import numpy as np
-from numpy.testing import assert_allclose
 import scipy
+from numpy.testing import assert_allclose
+from onnxruntime import InferenceSession
 from scipy.spatial.distance import cdist as scipy_cdist
+
 from onnx import FunctionProto, ModelProto, TensorProto
 from onnx.backend.test.case.node.pad import pad_impl
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
+    make_graph,
     make_model,
     make_node,
-    make_graph,
     make_operatorsetid,
     make_tensor_value_info,
 )
-from onnx.reference import ReferenceEvaluator
-from onnx.shape_inference import infer_shapes
-from onnxruntime import InferenceSession
-from onnx.npx import ElemType, jit_onnx, eager_onnx
-from onnx.npx.npx_types import Bool, Float32, Float64, Int64, OptParType, TensorType
-from onnx.npx.npx_var import Input, Var
+from onnx.npx import ElemType, eager_onnx, jit_onnx
 from onnx.npx.npx_core_api import cst, make_tuple, npxapi_function, npxapi_inline
+from onnx.npx.npx_functions import absolute as absolute_inline
+from onnx.npx.npx_functions import arange as arange_inline
+from onnx.npx.npx_functions import arccos as arccos_inline
+from onnx.npx.npx_functions import arccosh as arccosh_inline
+from onnx.npx.npx_functions import arcsin as arcsin_inline
+from onnx.npx.npx_functions import arcsinh as arcsinh_inline
+from onnx.npx.npx_functions import arctan as arctan_inline
+from onnx.npx.npx_functions import arctanh as arctanh_inline
+from onnx.npx.npx_functions import argmin as argmin_inline
+from onnx.npx.npx_functions import cdist as cdist_inline
+from onnx.npx.npx_functions import ceil as ceil_inline
+from onnx.npx.npx_functions import clip as clip_inline
+from onnx.npx.npx_functions import compress as compress_inline
+from onnx.npx.npx_functions import compute as compute_inline
+from onnx.npx.npx_functions import concat as concat_inline
+from onnx.npx.npx_functions import copy as copy_inline
+from onnx.npx.npx_functions import cos as cos_inline
+from onnx.npx.npx_functions import cosh as cosh_inline
+from onnx.npx.npx_functions import cumsum as cumsum_inline
+from onnx.npx.npx_functions import det as det_inline
+from onnx.npx.npx_functions import dot as dot_inline
+from onnx.npx.npx_functions import einsum as einsum_inline
+from onnx.npx.npx_functions import erf as erf_inline
+from onnx.npx.npx_functions import exp as exp_inline
+from onnx.npx.npx_functions import expand_dims as expand_dims_inline
+from onnx.npx.npx_functions import expit as expit_inline
+from onnx.npx.npx_functions import floor as floor_inline
+from onnx.npx.npx_functions import hstack as hstack_inline
+from onnx.npx.npx_functions import identity as identity_inline
+from onnx.npx.npx_functions import isnan as isnan_inline
+from onnx.npx.npx_functions import log as log_inline
+from onnx.npx.npx_functions import log1p as log1p_inline
+from onnx.npx.npx_functions import matmul as matmul_inline
+from onnx.npx.npx_functions import pad as pad_inline
+from onnx.npx.npx_functions import reciprocal as reciprocal_inline
+from onnx.npx.npx_functions import relu as relu_inline
+from onnx.npx.npx_functions import round as round_inline
+from onnx.npx.npx_functions import sigmoid as sigmoid_inline
+from onnx.npx.npx_functions import sign as sign_inline
+from onnx.npx.npx_functions import sin as sin_inline
+from onnx.npx.npx_functions import sinh as sinh_inline
+from onnx.npx.npx_functions import sqrt as sqrt_inline
+from onnx.npx.npx_functions import squeeze as squeeze_inline
+from onnx.npx.npx_functions import tan as tan_inline
+from onnx.npx.npx_functions import tanh as tanh_inline
+from onnx.npx.npx_functions import topk as topk_inline
+from onnx.npx.npx_functions import transpose as transpose_inline
+from onnx.npx.npx_functions import unsqueeze as unsqueeze_inline
+from onnx.npx.npx_functions import vstack as vstack_inline
+from onnx.npx.npx_functions import where as where_inline
 from onnx.npx.npx_functions_test import (
     _min_max,
     _min_max_inline,
@@ -39,108 +88,53 @@ from onnx.npx.npx_functions_test import (
     relu,
     topk,
 )
-from onnx.npx.npx_functions import (
-    absolute as absolute_inline,
-    arange as arange_inline,
-    arccos as arccos_inline,
-    arccosh as arccosh_inline,
-    argmin as argmin_inline,
-    arcsin as arcsin_inline,
-    arcsinh as arcsinh_inline,
-    arctan as arctan_inline,
-    arctanh as arctanh_inline,
-    cdist as cdist_inline,
-    ceil as ceil_inline,
-    clip as clip_inline,
-    compress as compress_inline,
-    compute as compute_inline,
-    concat as concat_inline,
-    copy as copy_inline,
-    cos as cos_inline,
-    cosh as cosh_inline,
-    cumsum as cumsum_inline,
-    det as det_inline,
-    dot as dot_inline,
-    einsum as einsum_inline,
-    erf as erf_inline,
-    exp as exp_inline,
-    expand_dims as expand_dims_inline,
-    expit as expit_inline,
-    floor as floor_inline,
-    hstack as hstack_inline,
-    identity as identity_inline,
-    isnan as isnan_inline,
-    log as log_inline,
-    log1p as log1p_inline,
-    matmul as matmul_inline,
-    pad as pad_inline,
-    relu as relu_inline,
-    reciprocal as reciprocal_inline,
-    round as round_inline,
-    sigmoid as sigmoid_inline,
-    sign as sign_inline,
-    sin as sin_inline,
-    sinh as sinh_inline,
-    sqrt as sqrt_inline,
-    squeeze as squeeze_inline,
-    tan as tan_inline,
-    tanh as tanh_inline,
-    topk as topk_inline,
-    transpose as transpose_inline,
-    unsqueeze as unsqueeze_inline,
-    vstack as vstack_inline,
-    where as where_inline,
-)
+from onnx.npx.npx_types import Bool, Float32, Float64, Int64, OptParType, TensorType
+from onnx.npx.npx_var import Input, Var
+from onnx.reference import ReferenceEvaluator
+from onnx.shape_inference import infer_shapes
 
 # This file is an example of a backend for classes JitOnnx and JitEager
 # using onnxruntime as a runtime. It is provided as an example.
 from onnx.test.npx_tensors_ort import BackendOrtTensor, EagerOrtTensor, OrtTensor
 
-
 DEFAULT_OPSET = onnx_opset_version()
 
 
 class TestNpx(unittest.TestCase):
-    _warns = []
+    _warns = []  # type: ignore[var-annotated]
 
-    classmethod
-
-    def assertEqualArray(cls, expected, value, atol=0, rtol=0):
-        cls.assertEqual(expected.dtype, value.dtype)
-        cls.assertEqual(expected.shape, value.shape)
+    def assertEqualArray(self, expected, value, atol=0, rtol=0):
+        self.assertEqual(expected.dtype, value.dtype)
+        self.assertEqual(expected.shape, value.shape)
         assert_allclose(expected, value, atol=atol, rtol=rtol)
 
-    @classmethod
-    def assertRaise(cls, fct, exc_type):
+    def assertRaise(self, fct, exc_type):
         try:
             fct()
             e = None
         except exc_type as e:
-            if type(e) != exc_type:
+            if type(e) != exc_type:  # pylint: disable=unidiomatic-typecheck
                 raise AssertionError(f"Unexpected exception {type(e)!r}.")
             return
         if e is None:
             raise AssertionError("No exception was raised.")
         raise AssertionError(f"Unexpected exception {type(e)!r}.")
 
-    @classmethod
-    def assertEmpty(cls, value):
+    def assertEmpty(self, value):
         if value is None:
             return
         if len(value) == 0:
             return
         raise AssertionError(f"value is not empty: {value!r}.")
 
-    @classmethod
-    def assertNotEmpty(cls, value):
+    def assertNotEmpty(self, value):
         if value is None:
             raise AssertionError(f"value is empty: {value!r}.")
         if isinstance(value, (list, dict, tuple, set)):
             if len(value) == 0:
                 raise AssertionError(f"value is empty: {value!r}.")
 
-    @classmethod
-    def assertStartsWith(cls, prefix, full):
+    def assertStartsWith(self, prefix, full):
         if not full.startswith(prefix):
             raise AssertionError(f"prefix={prefix!r} does not start string  {full!r}.")
 
@@ -164,58 +158,60 @@ class TestNpx(unittest.TestCase):
         self.assertEqual(output.type.tensor_type.elem_type, TensorProto.FLOAT)
 
     def test_tensor(self):
-        dt = TensorType["float32"]
+        dt = TensorType["float32"]  # type: ignore[misc,name-defined,type-arg]
         self.assertEqual(len(dt.dtypes), 1)
         self.assertEqual(dt.dtypes[0].dtype, ElemType.float32)
         self.assertEmpty(dt.shape)
         self.assertEqual(dt.type_name(), "TensorType['float32']")
-        dt = TensorType["float32"]
+        dt = TensorType["float32"]  # type: ignore[misc,name-defined]
         self.assertEqual(len(dt.dtypes), 1)
         self.assertEqual(dt.dtypes[0].dtype, ElemType.float32)
         self.assertEqual(dt.type_name(), "TensorType['float32']")
-        dt = TensorType[np.float32]
+        dt = TensorType[np.float32]  # type: ignore[misc,name-defined]
         self.assertEqual(len(dt.dtypes), 1)
         self.assertEqual(dt.dtypes[0].dtype, ElemType.float32)
         self.assertEqual(dt.type_name(), "TensorType['float32']")
         self.assertEmpty(dt.shape)
 
-        self.assertRaise(lambda: TensorType[None], TypeError)
-        self.assertRaise(lambda: TensorType[np.str_], TypeError)
-        self.assertRaise(lambda: TensorType[{np.float32, np.str_}], TypeError)
+        self.assertRaise(lambda: TensorType[None], TypeError)  # type: ignore[misc]
+        self.assertRaise(lambda: TensorType[np.str_], TypeError)  # type: ignore[misc]
+        self.assertRaise(lambda: TensorType[{np.float32, np.str_}], TypeError)  # type: ignore[misc]
 
     def test_superset(self):
-        t1 = TensorType[ElemType.numerics]
-        t2 = TensorType[ElemType.float64]
+        t1 = TensorType[ElemType.numerics]  # type: ignore[type-arg,valid-type]
+        t2 = TensorType[ElemType.float64]  # type: ignore[type-arg,valid-type]
         self.assertTrue(t1.issuperset(t2))
-        t1 = Float32[None]
-        t2 = Float32[None]
+        t1 = Float32[None]  # type: ignore[misc]
+        t2 = Float32[None]  # type: ignore[misc]
         self.assertTrue(t1.issuperset(t2))
-        t1 = Float32[5]
-        t2 = Float32[5]
+        t1 = Float32[5]  # type: ignore[misc]
+        t2 = Float32[5]  # type: ignore[misc]
         self.assertTrue(t1.issuperset(t2))
-        t1 = Float32[None]
-        t2 = Float32[5]
+        t1 = Float32[None]  # type: ignore[misc]
+        t2 = Float32[5]  # type: ignore[misc]
         self.assertTrue(t1.issuperset(t2))
-        t1 = Float32["N"]
-        t2 = Float32[5]
+        t1 = Float32["N"]  # type: ignore[misc]
+        t2 = Float32[5]  # type: ignore[misc]
         self.assertTrue(t1.issuperset(t2))
-        t1 = TensorType[ElemType.int64]
-        t2 = Int64[1]
+        t1 = TensorType[ElemType.int64]  # type: ignore[misc]
+        t2 = Int64[1]  # type: ignore[misc]
         self.assertTrue(t1.issuperset(t2))
 
     def test_sig(self):
-        def local1(x: TensorType[ElemType.floats]) -> TensorType[ElemType.floats]:
+        def local1(
+            x: TensorType[ElemType.floats],  # type: ignore[type-arg,valid-type]
+        ) -> TensorType[ElemType.floats]:  # type: ignore[name-defined,type-arg,valid-type]
             return x
 
         def local2(
-            x: TensorType[ElemType.floats, "T"]
-        ) -> TensorType[ElemType.floats, "T"]:
+            x: TensorType[ElemType.floats, "T"]  # type: ignore[type-arg,valid-type,name-defined]
+        ) -> TensorType[ElemType.floats, "T"]:  # type: ignore[name-defined,type-arg,valid-type]
             return x
 
-        def local3(x: Float32["N", 1]) -> Float32["N", 1]:
+        def local3(x: Float32["N", 1]) -> Float32["N", 1]:  # type: ignore[name-defined]
             return x
 
-        def local4(x: Float64["N", 1]) -> Int64["N", 1]:
+        def local4(x: Float64["N", 1]) -> Int64["N", 1]:  # type: ignore[name-defined]
             return x
 
         self.assertNotEmpty(local1)
@@ -682,9 +678,9 @@ class TestNpx(unittest.TestCase):
     def test_backend_parameters_no_inline_xapi(self):
         @npxapi_function
         def impl(
-            A: TensorType[ElemType.numerics, "T"], axis: OptParType[int] = 1
-        ) -> TensorType[ElemType.numerics, "T"]:
-            return argmin(A, axis=axis)
+            A: TensorType[ElemType.numerics, "T"], axis: OptParType[int] = 1  # type: ignore[assignment,type-arg,valid-type,name-defined]
+        ) -> TensorType[ElemType.numerics, "T"]:  # type: ignore[no-any-return,type-arg,valid-type,name-defined]
+            return argmin(A, axis=axis)  # type: ignore[no-any-return]
 
         f = impl(Input("A"))
 
@@ -1072,7 +1068,7 @@ class TestNpx(unittest.TestCase):
             dtype = np.int64
             otype = Float64
         else:
-            dtype = np.float64
+            dtype = np.float64  # type: ignore[assignment]
             otype = Int64
         with self.subTest(msg=msg, op=fct):
             f = copy(fct(copy(Input("A")), Input("B")))
@@ -1124,13 +1120,13 @@ class TestNpx(unittest.TestCase):
             dtype = np.int64
             otype = Float64
         else:
-            dtype = np.float64
+            dtype = np.float64  # type: ignore[assignment]
             otype = Int64
         if msg == "@":
             ccc = np.array([[1, 1]], dtype=dtype).T
             x = np.array([[-5, 6]], dtype=dtype)
         else:
-            ccc = 1
+            ccc = 1  # type: ignore[assignment]
             x = np.array([-5, 6], dtype=dtype)
         with self.subTest(msg=msg, op=fct):
             z = fct(ccc, x)
@@ -1238,7 +1234,7 @@ class TestNpx(unittest.TestCase):
         self.assertIsInstance(f, Var)
         onx = f.to_onnx(constraints={"A": Float64[None]})
         x = np.array([[-5, 6]], dtype=np.float64)
-        z = np.abs(x.sum(axis=1, keepdims=1))
+        z = np.abs(x.sum(axis=1, keepdims=1))  # type: ignore[call-overload]
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"A": x})
         self.assertEqualArray(z, got[0])
@@ -1347,7 +1343,7 @@ class TestNpx(unittest.TestCase):
         self.assertIsInstance(f, Var)
         onx = f.to_onnx(constraints={0: Int64[None], (0, False): Int64[None]})
         x = np.array(5, dtype=np.int64)
-        y = np.arange(x)
+        y = np.arange(x)  # type: ignore[call-overload]
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"A": x})
         self.assertEqualArray(y, got[0])
@@ -1494,8 +1490,7 @@ class TestNpx(unittest.TestCase):
         onx = f.to_onnx(constraints={(0, False): Float64[None]})
         z = np.identity(2)
         ref = ReferenceEvaluator(onx)
-        feeds = {}
-        got = ref.run(None, feeds)
+        got = ref.run(None, {})
         self.assertEqualArray(z, got[0])
 
     def test_isnan(self):
@@ -2175,8 +2170,6 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z.astype(np.float64), res)
 
     def test_onnx_in_var_function_proto(self):
-        metric = "sqeuclidean"
-
         def impl(xa, xb):
             return (xa - xb) ** 2
 
