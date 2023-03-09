@@ -91,7 +91,10 @@ from onnx.npx.npx_functions import (
     vstack as vstack_inline,
     where as where_inline,
 )
-from onnx.npx.npx_tensors_ort import BackendOrtTensor, EagerOrtTensor, OrtTensor
+
+# This file is an example of a backend for classes JitOnnx and JitEager
+# using onnxruntime as a runtime. It is provided as an example.
+from onnx.test.npx_tensors_ort import BackendOrtTensor, EagerOrtTensor, OrtTensor
 
 
 DEFAULT_OPSET = onnx_opset_version()
