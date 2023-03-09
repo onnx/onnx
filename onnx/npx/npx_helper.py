@@ -1,9 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Dict, Iterator, List, Optional, Sequence, Tuple, Union
+
 from onnx import AttributeProto, FunctionProto, GraphProto, ModelProto, NodeProto
+from onnx.helper import (
+    make_attribute,
+    make_function,
+    make_node,
+    make_graph,
+    make_operatorsetid,
+)
 from onnx.version_converter import convert_version
-from onnx.helper import make_function, make_operatorsetid
 
 
 def rename_in_onnx_graph(
@@ -102,7 +109,7 @@ def onnx_convert_model_for_opsets(
         new_model = convert_version(model, domains[0][2])
     elif len(domains) > 1:
         msg = ", ".join(
-            f"domain={d!r}, from {before} -> {after}" for b, before, after in domains
+            f"domain={b!r}, from {before} -> {after}" for b, before, after in domains
         )
         raise RuntimeError(
             f"Unable to convert a model for the following domains {msg}."
@@ -185,13 +192,11 @@ def onnx_model_to_function(
         # Needs to convert every initializer into Constant.
         csts = []
         for init in onx.initializer:
-            v = _var_as_dict(init)
-            value = from_array(v["value"])
+            value = from_array(init)
             n = make_node("Constant", [], [init.name], value=value)
             csts.append(n)
         for init in onx.sparse_initializer:
-            v = _var_as_dict(init)
-            value = from_array(v["sparse_value"])
+            value = from_array(init)
             n = make_node("Constant", [], [init.name], sparse_value=value)
             csts.append(n)
         nodes.extend(csts)

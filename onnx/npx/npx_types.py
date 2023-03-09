@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Any, Tuple, Union
+
 import numpy as np
+
 from onnx import AttributeProto
 
 

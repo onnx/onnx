@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Any, Callable, List, Tuple
+
 import numpy as np
+
 from onnx import ModelProto
-from onnx.reference import ReferenceEvaluator
 from onnx.npx.npx_types import TensorType
+from onnx.reference import ReferenceEvaluator
 
 
 class NumpyTensor:

@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Any, Dict, List, Tuple
-from onnx import AttributeProto, FunctionProto, ValueInfoProto
+
+from onnx import FunctionProto, ValueInfoProto
 from onnx.helper import (
     make_function,
     make_graph,
     make_node,
     make_opsetid,
-    make_tensor_value_info,
 )
 from onnx.npx.npx_constants import FUNCTION_DOMAIN
 
@@ -48,6 +48,10 @@ def _get_cdist_implementation(
     """
     Returns the CDist implementation as a function.
     """
+    if len(node_inputs) != 2:
+        raise ValueError(f"cdist has two inputs not {len(node_inputs)}.")
+    if len(node_outputs) != 1:
+        raise ValueError(f"cdist has one outputs not {len(node_outputs)}.")
     if opsets is None:
         raise ValueError("opsets cannot be None.")
     if "" not in opsets:

@@ -23,7 +23,6 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
         pads = [raw_pads[i], raw_pads[i + len(axes)]]
         pad_width[axis, :] = pads
 
-    half = raw_pads.shape[0] // 2
     pad_width = tuple(tuple(row) for row in pad_width)
 
     if mode == "constant":

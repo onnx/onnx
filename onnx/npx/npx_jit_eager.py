@@ -2,13 +2,14 @@
 
 from inspect import signature
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-from onnx.npx.npx_var import Input, Var
+
 from onnx.npx.npx_tensors import (
+    BackendEagerTensor,
     BackendNumpyTensor,
     EagerNumpyTensor,
-    BackendEagerTensor,
 )
 from onnx.npx.npx_types import EagerNotAllowedError, TensorType
+from onnx.npx.npx_var import Input, Var
 
 
 class JitEager:
