@@ -15,7 +15,6 @@ from urllib.error import HTTPError
 from urllib.request import urlopen
 
 import onnx
-import onnx.version_converter
 
 if "ONNX_HOME" in os.environ:
     _ONNX_HUB_DIR = join(os.environ["ONNX_HOME"], "hub")

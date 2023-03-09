@@ -5,8 +5,40 @@ This enables users to convert their models between different opsets within the
 default domain ("" or "ai.onnx").
 """
 
+import typing
+from typing import Optional
+
+import google.protobuf.message
+
 import onnx.onnx_cpp2py_export.version_converter as C  # noqa: N812
-from onnx import ModelProto, load_from_string
+from onnx import ModelProto
+
+
+def _deserialize(s: bytes, proto: ModelProto) -> ModelProto:
+    """Parse bytes into a in-memory proto.
+
+    Args:
+        s: bytes containing serialized proto
+        proto: a in-memory proto object
+
+    Returns:
+        The proto instance filled in by `s`.
+
+    Raises:
+        TypeError: if `proto` is not a protobuf message.
+    """
+    if not isinstance(s, bytes):
+        raise TypeError(f"Parameter 's' must be bytes, but got type: {type(s)}")
+
+    if not (hasattr(proto, "ParseFromString") and callable(proto.ParseFromString)):
+        raise TypeError(f"No ParseFromString method is detected. Type is {type(proto)}")
+
+    decoded = typing.cast(Optional[int], proto.ParseFromString(s))
+    if decoded is not None and decoded != len(s):
+        raise google.protobuf.message.DecodeError(
+            f"Protobuf decoding consumed too few bytes: {decoded} out of {len(s)}"
+        )
+    return proto
 
 
 def convert_version(model: ModelProto, target_version: int) -> ModelProto:
@@ -168,7 +200,7 @@ def convert_version(model: ModelProto, target_version: int) -> ModelProto:
         )
     model_str = model.SerializeToString()
     converted_model_str = C.convert_version(model_str, target_version)
-    return load_from_string(converted_model_str)
+    return _deserialize(converted_model_str, ModelProto())
 
 
 ConvertError = C.ConvertError
