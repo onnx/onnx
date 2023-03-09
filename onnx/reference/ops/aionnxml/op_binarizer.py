@@ -7,12 +7,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 def compute_binarizer(x, threshold=None):
-    y = x.copy()
-    cond = y > threshold
-    not_cond = np.logical_not(cond)
-    y[cond] = 1
-    y[not_cond] = 0
-    return (y,)
+    return ((x > threshold).astype(x.dtype),)
 
 
 class Binarizer(OpRunAiOnnxMl):

@@ -355,8 +355,6 @@ class Runner:
                     os.makedirs(model_dir)
                 use_dummy = True
             else:
-                model_dir = model_test.model_dir
-
                 if model_test.model_dir is None:
                     model_dir = self.prepare_model_data(model_test)
                 else:
