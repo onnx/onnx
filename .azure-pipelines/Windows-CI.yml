@@ -65,7 +65,7 @@ jobs:
       python onnx/gen_proto.py -l
       python onnx/gen_proto.py -l --ml
 
-      git diff --exit-code -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3
+      git diff --exit-code -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "git diff returned failures"
         EXIT 1
@@ -78,7 +78,6 @@ jobs:
         @echo "git diff for test generation returned failures. Please check updated node test files"
         EXIT 1
       )
-
       git diff --exit-code --diff-filter=ADR -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)."
