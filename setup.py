@@ -23,7 +23,7 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, "onnx")
 TP_DIR = os.path.join(TOP_DIR, "third_party")
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, ".setuptools-cmake-build")
-PACKAGE_NAME = "onnx-test-protobufv21"
+PACKAGE_NAME = "onnx"
 
 WINDOWS = os.name == "nt"
 
