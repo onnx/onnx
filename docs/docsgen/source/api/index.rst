@@ -58,6 +58,7 @@ verify a model with the following helpers.
     helper
     hub
     mapping
+    npx
     numpy_helper
     parser
     printer

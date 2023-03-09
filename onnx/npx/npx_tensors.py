@@ -44,19 +44,20 @@ class NumpyTensor:
             feeds = {}
             for name, inp in zip(self.input_names, inputs):
                 feeds[name] = inp.value
-            return list(map(self.tensor_class, self.ref.run(None, feeds)))
+            res = self.ref.run(None, feeds)
+            return list(map(self.tensor_class, res))
 
     def __init__(self, tensor: np.ndarray):
-        if isinstance(tensor, np.int64):
-            tensor = np.array(tensor, dtype=np.int64)
-        if not isinstance(tensor, np.ndarray):
-            raise TypeError(f"A numpy array is expected not {type(tensor)}.")
-        self._tensor = tensor
-
-    @property
-    def shape(self) -> Tuple[int, ...]:
-        "Returns the shape of the tensor."
-        return self._tensor.shape
+        if isinstance(tensor, np.ndarray):
+            self._tensor = tensor
+        else:
+            t = None
+            for dt in (np.int64, np.float32, np.float64, np.int32, np.float16,
+                      np.int8, np.int16, np.uint8, np.uint16, np.uint32, np.uint64):
+                t = np.array(tensor)
+            if t is None:
+                raise TypeError(f"A numpy array is expected not {type(tensor)}.")
+            self._tensor = t
 
     @property
     def dtype(self) -> Any:
@@ -66,7 +67,7 @@ class NumpyTensor:
     @property
     def key(self) -> Any:
         "Unique key for a tensor of the same type."
-        return (self.dtype, len(self.shape))
+        return (self.dtype, len(self._tensor.shape))
 
     @property
     def value(self) -> np.ndarray:
@@ -85,11 +86,16 @@ class NumpyTensor:
         First dimension is the batch dimension if the tensor
         has more than one dimension.
         """
-        if len(self.shape) == 0:
+        if len(self._tensor.shape) == 0:
             return (0,)
-        if len(self.shape) == 1:
-            return self.shape
-        return (None,) + self.shape[1:]
+        if len(self._tensor.shape) == 1:
+            return self._tensor.shape
+        return (None,) + self._tensor.shape[1:]
+
+    @property
+    def shape(self) -> Tuple[int, ...]:
+        "Returns the shape of the tensor."
+        return self._tensor.shape
 
     @property
     def tensor_type_dims(self) -> TensorType:
@@ -130,6 +136,9 @@ class NumpyTensor:
         By default, it returns ir_version.
         """
         return ir_version
+
+    # The class should support whatever Var supports.
+    # This part is not yet complete.
 
 
 class BackendEagerTensor:
