@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=unnecessary-pass
 
 from typing import Any, Callable, List, Tuple
 

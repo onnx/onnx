@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=unnecessary-pass,too-many-branches,too-many-statements
 
 from typing import Any, Tuple, Union
 

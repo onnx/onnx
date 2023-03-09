@@ -18,7 +18,7 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
             f"in raw_pads should be 2 * len(axes) ({len(axes)})."
         )
 
-    for i in range(len(axes)):
+    for i in range(len(axes)):  # pylint: disable=consider-using-enumerate
         axis = axes[i]
         pads = [raw_pads[i], raw_pads[i + len(axes)]]
         pad_width[axis, :] = pads

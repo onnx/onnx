@@ -6,10 +6,12 @@ from onnx import AttributeProto, FunctionProto, GraphProto, ModelProto, NodeProt
 from onnx.helper import (
     make_attribute,
     make_function,
-    make_node,
     make_graph,
+    make_node,
     make_operatorsetid,
+    make_value_info,
 )
+from onnx.numpy_helper import from_array
 from onnx.version_converter import convert_version
 
 
@@ -73,11 +75,11 @@ def rename_in_onnx_graph(
     for inp in graph.input:
         if inp.name in replacements:
             new = make_value_info(replacements.get(inp.name, inp.name))
-            new.t.CopyFrom(inp.t)
+            new.t.CopyFrom(inp.t)  # type: ignore[attr-defined]
             new_inputs.append(new)
             continue
-        new_inputs.append(inp)
-    new_graph = make_graph(nodes, graph.name, new_inputs, graph.output)
+        new_inputs.append(inp)  # type: ignore[arg-type]
+    new_graph = make_graph(nodes, graph.name, new_inputs, graph.output)  # type: ignore[arg-type]
     return new_graph
 
 
@@ -106,7 +108,7 @@ def onnx_convert_model_for_opsets(
         )
     if len(domains) == 1 and domains[0][0] == "":
         # Use the conversion.
-        new_model = convert_version(model, domains[0][2])
+        new_model = convert_version(model, domains[0][2])  # type: ignore[arg-type]
     elif len(domains) > 1:
         msg = ", ".join(
             f"domain={b!r}, from {before} -> {after}" for b, before, after in domains
@@ -167,7 +169,7 @@ def onnx_model_to_function(
         if doc_string is None:
             doc_string = onx.doc_string
         fp, lf = onnx_model_to_function(
-            onx.graph,
+            onx.graph,  # type: ignore[arg-type]
             name=name,
             domain=domain,
             opset_imports=opset_imports,

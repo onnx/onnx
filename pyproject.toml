@@ -52,6 +52,9 @@ module = [
     'onnx.npx.npx_graph_builder',
     'onnx.npx.npx_functions',
     'onnx.npx.npx_functions_test',
+    'onnx.npx.npx_jit_eager',
+    'onnx.npx.npx_tensors',
+    'onnx.npx.npx_types',
     'onnx.npx.npx_var',
     'onnx.test.npx_test',
 ]
