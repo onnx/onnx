@@ -348,3 +348,56 @@ def download_model_with_test_data(
     )
 
     return model_with_data_path
+
+
+def load_composite_model(
+    network_model: str,
+    preproc_model: str,
+    network_repo: str = "onnx/models:main",
+    preproc_repo: str = "onnx/models:main",
+    opset: Optional[int] = None,
+    force_reload: bool = False,
+    silent: bool = False,
+) -> Optional[onnx.ModelProto]:
+    """
+    Builds a composite model including data preprocessing by downloading a network and a preprocessing model
+    and combine it into a single model
+
+    :param model: The name of the onnx model in the manifest. This field is case-sensitive
+    :param repo: The location of the model repo in format "user/repo[:branch]".
+        If no branch is found will default to "main"
+    :param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
+    :param force_reload: Whether to force the model to re-download even if its already found in the cache
+    :param silent: Whether to suppress the warning message if the repo is not trusted.
+    :return: ModelProto or None
+    """
+    preproc = load(preproc_model, preproc_repo, opset, force_reload, silent)
+    network = load(network_model, network_repo, opset, force_reload, silent)
+
+    network_opset_ver = 0
+    for opset in network.opset_import:
+        if opset.domain == '' and opset.version > network_opset_ver:
+            network_opset_ver = opset.version
+
+    preproc_opset_ver = 0
+    for opset in preproc.opset_import:
+        if opset.domain == '' and opset.version > preproc_opset_ver:
+            preproc_opset_ver = opset.version
+
+    from onnx import version_converter
+    if preproc_opset_ver > network_opset_ver:
+        network = onnx.version_converter.convert_version(network, preproc_opset_ver)
+        network.ir_version = preproc.ir_version
+        onnx.checker.check_model(network)
+    elif network_opset_ver > preproc_opset_ver:
+        preproc = onnx.version_converter.convert_version(preproc, network_opset_ver)
+        preproc.ir_version = network.ir_version
+        onnx.checker.check_model(preproc)
+
+    io_map = []
+    for out_entry, in_entry in zip(preproc.graph.output, network.graph.input):
+        io_map.append((out_entry.name, in_entry.name))
+
+    model_w_preproc = onnx.compose.merge_models(preproc, network, io_map=io_map)
+    onnx.checker.check_model(model_w_preproc)
+    return model_w_preproc
