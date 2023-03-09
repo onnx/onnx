@@ -27,22 +27,9 @@ def generate_data(args: argparse.Namespace) -> None:
         [name for name in os.listdir(node_root) if os.path.isfile(name)]
     )
     if args.clean and os.path.exists(node_root):
-
-        def remove_dir(target_dir, keep_dirs):
-            for root, dirs, files in os.walk(target_dir):
-                for name in files:
-                    os.remove(os.path.join(root, name))  # Delete all files
-                for name in dirs:
-                    if not keep_dirs(name):
-                        remove_dir(
-                            os.path.join(root, name),
-                            keep_dirs
-                        )  # Delete unwanted directories
-
-        remove_dir(
-            node_root,
-            lambda x: x.startswith("test_ai_onnx_ml_") if not ONNX_ML else False,
-        )
+        for sub_dir in os.listdir(node_root):
+            if ONNX_ML or not sub_dir.startswith("test_ai_onnx_ml_"):
+                shutil.rmtree(os.path.join(node_root, sub_dir))
 
     cases = model_test.collect_testcases()
     # If op_type is specified, only include those testcases including the given operator
