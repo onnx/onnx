@@ -2907,7 +2907,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 for domain, version in opsets.items()
             ]
 
-            graph = make_graph(nodes, "numpyx", inputs, outputs)
+            graph = make_graph(nodes, "npx", inputs, outputs)
 
             onnx_model = make_model(
                 graph, opset_imports=opset_imports, functions=functions
