@@ -7,10 +7,8 @@ from contextlib import redirect_stdout
 from io import StringIO
 
 import numpy as np
-import scipy
 from numpy.testing import assert_allclose
 from onnxruntime import InferenceSession
-from scipy.spatial.distance import cdist as scipy_cdist
 
 from onnx import FunctionProto, ModelProto, TensorProto
 from onnx.backend.test.case.node.pad import pad_impl
@@ -1444,6 +1442,8 @@ class TestNpx(unittest.TestCase):
         )
 
     def test_erf(self):
+        import scipy.special
+
         self.common_test_inline(erf_inline, scipy.special.erf)
 
     def test_exp(self):
@@ -1463,6 +1463,8 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z, got[0])
 
     def test_expit(self):
+        import scipy.special
+
         self.common_test_inline(expit_inline, scipy.special.expit)
 
     def test_floor(self):
@@ -1592,6 +1594,8 @@ class TestNpx(unittest.TestCase):
         self.common_test_inline(round_inline, np.round)
 
     def test_sigmoid(self):
+        import scipy.special
+
         self.common_test_inline(sigmoid_inline, scipy.special.expit)
 
     def test_sign(self):
@@ -1995,6 +1999,8 @@ class TestNpx(unittest.TestCase):
         self.assertEqual(res.dtype, np.int64)
 
     def test_cdist_com_microsoft(self):
+        from scipy.spatial.distance import cdist as scipy_cdist
+
         metric = "euclidean"
 
         def impl(xa, xb):
@@ -2045,6 +2051,8 @@ class TestNpx(unittest.TestCase):
             raise AssertionError(f"Function is not using argument:\n{onx}")
 
     def test_cdist(self):
+        from scipy.spatial.distance import cdist as scipy_cdist
+
         for metric in ["euclidean", "sqeuclidean"]:
             with self.subTest(metric=metric):
 
@@ -2122,6 +2130,8 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z.astype(np.float64), res)
 
     def test_onnx_in_var_model_proto(self):
+        from scipy.spatial.distance import cdist as scipy_cdist
+
         metric = "sqeuclidean"
 
         def impl(xa, xb):
