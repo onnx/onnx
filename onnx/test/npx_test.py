@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=unsubscriptable-object,unnecessary-lambda,raise-missing-from,unidiomatic-typecheck
+# pylint: disable=unsubscriptable-object,unnecessary-lambda,raise-missing-from,unidiomatic-typecheck,import-outside-toplevel
 
 import unittest
 import warnings
@@ -8,7 +8,6 @@ from io import StringIO
 
 import numpy as np
 from numpy.testing import assert_allclose
-from onnxruntime import InferenceSession
 
 from onnx import FunctionProto, ModelProto, TensorProto
 from onnx.backend.test.case.node.pad import pad_impl
@@ -94,6 +93,11 @@ from onnx.shape_inference import infer_shapes
 # This file is an example of a backend for classes JitOnnx and JitEager
 # using onnxruntime as a runtime. It is provided as an example.
 from onnx.test.npx_tensors_ort import BackendOrtTensor, EagerOrtTensor, OrtTensor
+
+try:
+    from onnxruntime import InferenceSession
+except ImportError:
+    InferenceSession = None
 
 DEFAULT_OPSET = onnx_opset_version()
 
@@ -1998,6 +2002,7 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z.astype(np.int64), res)
         self.assertEqual(res.dtype, np.int64)
 
+    @unittest.skipIf(InferenceSession is None, reason="onnxruntime is not available")
     def test_cdist_com_microsoft(self):
         from scipy.spatial.distance import cdist as scipy_cdist
 
