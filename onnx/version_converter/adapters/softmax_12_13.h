@@ -25,8 +25,8 @@ class Softmax_12_13 final : public Adapter {
     if (old_axis == input_rank - 1)
       node->i_(kaxis, -1);
     else {
-      //    -- shape -----------------
-      //   /                          \
+      //    -- shape ------------------
+      //   /                           |
       // ----- flatten -- softmax -- reshape
 
       // get original softmax's input shape
