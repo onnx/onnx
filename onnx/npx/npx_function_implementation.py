@@ -3,12 +3,7 @@
 from typing import Any, Dict, List, Tuple
 
 from onnx import FunctionProto, ValueInfoProto
-from onnx.helper import (
-    make_function,
-    make_graph,
-    make_node,
-    make_opsetid,
-)
+from onnx.helper import make_function, make_graph, make_node, make_opsetid
 from onnx.npx.npx_constants import FUNCTION_DOMAIN
 
 

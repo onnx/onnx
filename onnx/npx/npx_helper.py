@@ -74,9 +74,11 @@ def rename_in_onnx_graph(
     new_inputs = []
     for inp in graph.input:
         if inp.name in replacements:
-            new = make_value_info(replacements.get(inp.name, inp.name))
+            new = make_value_info(
+                replacements.get(inp.name, inp.name)
+            )  # pylint: disable=no-value-for-parameter,call-arg
             new.t.CopyFrom(inp.t)  # type: ignore[attr-defined]
-            new_inputs.append(new)
+            new_inputs.append(new)  # type: ignore[arg-type]
             continue
         new_inputs.append(inp)  # type: ignore[arg-type]
     new_graph = make_graph(nodes, graph.name, new_inputs, graph.output)  # type: ignore[arg-type]

@@ -551,7 +551,9 @@ class TupleType:
 
 
 def _make_type(name: str, elem_type: int):
-    def class_getitem(cls, shape: Union[int, ShapeType]) -> TensorType:
+    def class_getitem(
+        cls, shape: Union[int, ShapeType]
+    ) -> TensorType:  # pylint: disable=unused-argument
         if isinstance(shape, int):
             shape = (shape,)
         return TensorType[elem_type, shape]
