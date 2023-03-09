@@ -27,9 +27,10 @@ def generate_data(args: argparse.Namespace) -> None:
         [name for name in os.listdir(node_root) if os.path.isfile(name)]
     )
     if args.clean and os.path.exists(node_root):
-        for sub_dir in os.listdir(node_root):
-            if ONNX_ML or not sub_dir.startswith("test_ai_onnx_ml_"):
-                shutil.rmtree(os.path.join(node_root, sub_dir))
+        shutil.rmtree(node_root)
+        # for sub_dir in os.listdir(node_root):
+        #     if ONNX_ML or not sub_dir.startswith("test_ai_onnx_ml_"):
+        #         shutil.rmtree(os.path.join(node_root, sub_dir))
 
     cases = model_test.collect_testcases()
     # If op_type is specified, only include those testcases including the given operator
