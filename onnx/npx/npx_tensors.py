@@ -52,8 +52,19 @@ class NumpyTensor:
             self._tensor = tensor
         else:
             t = None
-            for dt in (np.int64, np.float32, np.float64, np.int32, np.float16,
-                      np.int8, np.int16, np.uint8, np.uint16, np.uint32, np.uint64):
+            for dt in (
+                np.int64,
+                np.float32,
+                np.float64,
+                np.int32,
+                np.float16,
+                np.int8,
+                np.int16,
+                np.uint8,
+                np.uint16,
+                np.uint32,
+                np.uint64,
+            ):
                 t = np.array(tensor)
             if t is None:
                 raise TypeError(f"A numpy array is expected not {type(tensor)}.")
