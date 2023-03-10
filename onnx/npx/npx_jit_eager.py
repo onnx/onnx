@@ -286,8 +286,9 @@ class EagerOnnx(JitEager):
             jit_call = False
             try:
                 res = self.f(*values)
-            except EagerNotAllowedError:
+            except EagerNotAllowedError as ea:
                 jit_call = True
+                raise NotImplementedError("Not yet implemented.") from ea
             except (AttributeError, TypeError) as e:
                 inp1 = ", ".join(map(str, map(type, args)))
                 inp2 = ", ".join(map(str, map(type, values)))

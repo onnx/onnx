@@ -356,9 +356,7 @@ class TestNpx(unittest.TestCase):
             if type(e) != exc_type:  # pylint: disable=unidiomatic-typecheck
                 raise AssertionError(f"Unexpected exception {type(e)!r}.")
             return
-        if e is None:
-            raise AssertionError("No exception was raised.")
-        raise AssertionError(f"Unexpected exception {type(e)!r}.")
+        raise AssertionError("No exception was raised.")
 
     def assertEmpty(self, value):
         if value is None:
@@ -1194,6 +1192,7 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z1, res[0])
         self.assertEqualArray(z2, res[1])
 
+    @unittest.skipIf(True, reason="eager mode not ready yet")
     def test_eager_numpy(self):
         def impl(A):
             print("A")
@@ -1247,6 +1246,7 @@ class TestNpx(unittest.TestCase):
         self.assertEqual("A\nB\nC\n", text)
 
     @unittest.skipIf(InferenceSession is None, reason="onnxruntime is needed.")
+    @unittest.skipIf(True, reason="eager mode not ready yet")
     def test_eager_ort(self):
         def impl(A):
             print("A")

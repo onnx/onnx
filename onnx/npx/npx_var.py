@@ -162,11 +162,11 @@ class ManyIdentity:
         outputs = []
         for var in self.inputs:
             vs = var._get_vars()  # pylint: disable=protected-access
-            for var in vs:
-                key = id(var)
+            for var2 in vs:
+                key = id(var2)
                 if key in done:
                     continue
-                g.append(var)
+                g.append(var2)
                 done.add(key)
             outputs.append(vs[-1])
         onx = g.to_onnx(output_vars=outputs)
@@ -206,6 +206,12 @@ class Var:
     :param onnx_input_type_: names given to the variables
     """
 
+    @staticmethod
+    def get_cst_var():
+        from onnx.npx.npx_core_api import cst, var
+
+        return cst, var
+
     class _setter_do:
         def __init__(self, parent: "Var", *args):
             self.parent = parent.self_var
@@ -226,8 +232,7 @@ class Var:
             )
 
         def _setitem1_where(self, index, new_values):
-            from onnx.npx.npx_core_api import cst, var
-
+            cst, var = Var.get_cst_var()
             if isinstance(new_values, (int, float)):
                 new_values = np.array(new_values)
             if isinstance(new_values, np.ndarray):
@@ -239,7 +244,7 @@ class Var:
             return var(index, value, self.parent, op="Where")
 
         def _setitem1_slice(self, index, new_values):
-            from onnx.npx.npx_core_api import cst, var
+            cst, var = Var.get_cst_var()
 
             if isinstance(index, slice):
                 start = 0 if index.start is None else index.start
@@ -439,13 +444,11 @@ class Var:
                     stack.insert(0, i)
                     continue
                 if isinstance(i, np.ndarray):
-                    from onnx.npx.npx_core_api import cst
-
+                    cst = Var.get_cst_var()[0]
                     replacement_cst[id(i)] = cst(i)
                     continue
                 if isinstance(i, (int, float)):
-                    from onnx.npx.npx_core_api import cst
-
+                    cst = Var.get_cst_var()[0]
                     replacement_cst[id(i)] = cst(np.array(i))
                     continue
                 if i is None:
@@ -567,15 +570,13 @@ class Var:
     # Operators
 
     def _binary_op(self, ov: "Var", op_name: str, **kwargs) -> "Var":
-        from onnx.npx.npx_core_api import var
-
+        var = Var.get_cst_var()[1]
         if isinstance(ov, (int, float, np.ndarray, Cst)):
             return var(self.self_var, var(ov, self.self_var, op="CastLike"), op=op_name)
         return var(self.self_var, ov, op=op_name, **kwargs)
 
     def _binary_op_right(self, ov: "Var", op_name: str, **kwargs) -> "Var":
-        from onnx.npx.npx_core_api import var
-
+        var = Var.get_cst_var()[1]
         if isinstance(ov, (int, float, np.ndarray, Cst)):
             return var(var(ov, self.self_var, op="CastLike"), self.self_var, op=op_name)
         return var(ov, self.self_var, op=op_name, **kwargs)
@@ -585,7 +586,7 @@ class Var:
         Automatically adds operator `Neg` to the graph.
         It does not cast automatically.
         """
-        from onnx.npx.npx_core_api import var
+        var = Var.get_cst_var()[1]
 
         return var(self.self_var, op="Neg")
 
@@ -594,7 +595,7 @@ class Var:
         Automatically adds operator `BitwiseNot` to the graph.
         It does not cast automatically.
         """
-        from onnx.npx.npx_core_api import var
+        var = Var.get_cst_var()[1]
 
         return var(self.self_var, op="BitwiseNot")
 
@@ -731,7 +732,7 @@ class Var:
         Automatically adds operator `Not + Equal` to the graph.
         It does not cast automatically.
         """
-        from onnx.npx.npx_core_api import var
+        var = Var.get_cst_var()[1]
 
         return var(self._binary_op(ov, "Equal"), op="Not")
 
@@ -794,13 +795,13 @@ class Var:
     @property
     def T(self) -> "Var":
         "Transpose."
-        from onnx.npx.npx_core_api import var
+        var = Var.get_cst_var()[1]
 
         return var(self.self_var, op="Transpose", perm=[1, 0])  # type: ignore[type-arg]
 
     def astype(self, dtype) -> "Var":
         "Cast"
-        from onnx.npx.npx_core_api import var
+        var = Var.get_cst_var()[1]
 
         if isinstance(dtype, Var):
             return var(self.self_var, dtype, op="CastLike")  # type: ignore[type-arg]
@@ -844,13 +845,13 @@ class Var:
     @property
     def shape(self) -> "Var":
         "Shape"
-        from onnx.npx.npx_core_api import var
+        var = Var.get_cst_var()[1]
 
         return var(self.self_var, op="Shape")  # type: ignore[type-arg]
 
     def reshape(self, shape: "Var") -> "Var":
         "Reshape"
-        from onnx.npx.npx_core_api import var
+        var = Var.get_cst_var()[1]
 
         if isinstance(shape, (tuple, list)):
             shape = np.array(shape, dtype=np.int64)
@@ -863,14 +864,14 @@ class Var:
         keepdims: ParType[int] = 0,  # type: ignore[type-arg]
     ) -> "Var":
         "See :func:`np.sum` or any other reduce function."
-        from onnx.npx.npx_core_api import var
+        var = Var.get_cst_var()[1]
 
         if axis is None:
             return var(self.self_var, op=reduce_op, keepdims=keepdims)
         if isinstance(axis, int):
             axis = [axis]  # type: ignore[assignment]
         if isinstance(axis, (tuple, list)):
-            from onnx.npx.npx_core_api import cst
+            cst = Var.get_cst_var()[0]
 
             axis = cst(np.array(axis, dtype=np.int64))
         return var(self.self_var, axis, op=reduce_op, keepdims=keepdims)  # type: ignore[type-arg]
@@ -899,7 +900,7 @@ class Var:
         """
         Returns a copy of self (use of Identity node).
         """
-        from onnx.npx.npx_core_api import var
+        var = Var.get_cst_var()[1]
 
         return var(self.self_var, op="Identity")  # type: ignore[arg-type]
 
@@ -910,7 +911,7 @@ class Var:
         :param axis: only flatten from axis to the end.
         :return: :class:`Var`
         """
-        from onnx.npx.npx_core_api import cst, var
+        cst, var = Var.get_cst_var()
 
         return var(
             var(self.self_var, op="Flatten", axis=0),  # type: ignore[assignment,arg-type]
@@ -946,7 +947,7 @@ class Var:
           boolean to select a subset of the tensor along the first axis,
           example: `mat[mat == 0]` (**scenario 2**)
         """
-        from onnx.npx.npx_core_api import cst, var
+        cst, var = Var.get_cst_var()
 
         if self.n_var_outputs != 1:
             # Multioutut
