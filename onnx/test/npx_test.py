@@ -95,6 +95,11 @@ try:
 except ImportError:
     InferenceSession = None
 
+try:
+    import scipy
+except ImportError:
+    scipy = None
+
 if InferenceSession is not None:
     # This is an example of a backend for classes JitOnnx and JitEager
     # using onnxruntime as a runtime. It is provided as an example.
@@ -1679,6 +1684,7 @@ class TestNpx(unittest.TestCase):
             lambda x, y: np.einsum(equation, x, y),
         )
 
+    @unittest.skipIf(scipy is None, reason="scipy is not installed.")
     def test_erf(self):
         import scipy.special
 
@@ -1700,6 +1706,7 @@ class TestNpx(unittest.TestCase):
         got = ref.run(None, {"A": x, "B": y})
         self.assertEqualArray(z, got[0])
 
+    @unittest.skipIf(scipy is None, reason="scipy is not installed.")
     def test_expit(self):
         import scipy.special
 
@@ -1831,6 +1838,7 @@ class TestNpx(unittest.TestCase):
     def test_round(self):
         self.common_test_inline(round_inline, np.round)
 
+    @unittest.skipIf(scipy is None, reason="scipy is not installed.")
     def test_sigmoid(self):
         import scipy.special
 
@@ -2237,6 +2245,7 @@ class TestNpx(unittest.TestCase):
         self.assertEqual(res.dtype, np.int64)
 
     @unittest.skipIf(InferenceSession is None, reason="onnxruntime is not available")
+    @unittest.skipIf(scipy is None, reason="scipy is not installed.")
     def test_cdist_com_microsoft(self):
         from scipy.spatial.distance import cdist as scipy_cdist
 
@@ -2289,6 +2298,7 @@ class TestNpx(unittest.TestCase):
         if len(pieces) > 2:
             raise AssertionError(f"Function is not using argument:\n{onx}")
 
+    @unittest.skipIf(scipy is None, reason="scipy is not installed.")
     def test_cdist(self):
         from scipy.spatial.distance import cdist as scipy_cdist
 
@@ -2368,6 +2378,7 @@ class TestNpx(unittest.TestCase):
         self.assertEqual(res.dtype, np.float64)
         self.assertEqualArray(z.astype(np.float64), res)
 
+    @unittest.skipIf(scipy is None, reason="scipy is not installed.")
     def test_onnx_in_var_model_proto(self):
         from scipy.spatial.distance import cdist as scipy_cdist
 
