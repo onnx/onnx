@@ -476,7 +476,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             "zero_point", TensorProto.FLOAT8E4M3FNUZ, [5], [0, 0.5, 1, 50000, 10.1]
         )
         ynp = numpy_helper.to_array(y)
-        expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
+        expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
         np.testing.assert_equal(expected, ynp)
 
     def test_make_float8e5m2_tensor(self) -> None:
@@ -565,7 +565,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         np.testing.assert_equal(expected, ynp)
 
     def test_make_float8e4m3fnuz_tensor_raw(self) -> None:
-        expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
+        expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
         f8 = np.array(
             [helper.float32_to_float8e4m3(x, uz=True) for x in expected], dtype=np.uint8
         )
