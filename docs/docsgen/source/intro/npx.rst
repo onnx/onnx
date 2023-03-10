@@ -91,8 +91,8 @@ onnxruntime
 The backend is the class :class:`ReferenceEvalutor` by default but it could
 be replaced by onnxruntime. The backend is not implemented in onnx package
 but is added to the following example. The current implementation
-is available in file `onnx/test/npx_tensors_ort.py
-<https://github.com/onnx/onnx/tree/main/onnx/test/npx_tensors_ort.py>`_.
+is available with class `OrtTensor
+<https://github.com/onnx/onnx/tree/main/onnx/test/npx_test.py#L100>`_.
 
 .. exec_code::
 
