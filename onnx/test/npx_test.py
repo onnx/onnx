@@ -351,7 +351,6 @@ class TestNpx(unittest.TestCase):
     def assertRaise(self, fct, exc_type):
         try:
             fct()
-            e = None
         except exc_type as e:
             if type(e) != exc_type:  # pylint: disable=unidiomatic-typecheck
                 raise AssertionError(f"Unexpected exception {type(e)!r}.")
