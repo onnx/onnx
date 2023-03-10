@@ -117,10 +117,13 @@ and truncating. The tricky part is to handle rounding.
 UZ
 ++
 
-The previous types support positive and negative zero, positive or negative nan.
+The previous types support positive and negative zero, positive and negative nan.
 Another type definition was introduced by GraphCore to make a better use
 of these four values. Every type including UZ in its name have only one zero
-and one nan.
+and one nan (= negative zero). The other difference comes from the exponent bias.
+As a result, a float 8 *FLOAT8E4M3FN*, not null, not nan, cannot be simply
+converted into *FLOAT8E4M3FNUZ* due to this exponent bias difference.
+Even if the mantissa is the same, the exponent is not.
 
 .. list-table:: Float8 types
    :widths: 10 10 10
