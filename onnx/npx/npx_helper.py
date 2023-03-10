@@ -17,7 +17,7 @@ from onnx.version_converter import convert_version
 
 def rename_in_onnx_graph(
     graph: GraphProto, replacements: Dict[str, str]
-) -> Union[GraphProto | None]:
+) -> Optional[GraphProto, None]:
     """
     Renames input results in a GraphProto.
 

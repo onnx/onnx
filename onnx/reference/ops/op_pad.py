@@ -12,7 +12,7 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
 
     if axes is None:
         axes = list(range(input_rank))
-    if len(axes) * 2 != raw_pads.size:
+    if len(axes) * 2 != len(raw_pads):
         raise RuntimeError(
             f"The number of elements ({raw_pads.size}) "
             f"in raw_pads should be 2 * len(axes) ({len(axes)})."
