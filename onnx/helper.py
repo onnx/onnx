@@ -368,52 +368,83 @@ def float32_to_float8e4m3(
         raise NotImplementedError(
             "float32_to_float8e4m3 not implemented with fn=False."
         )
-    if uz:
-        raise NotImplementedError("float32_to_float8e4m3 not implemented with uz=True.")
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
     ret = (b & 0x80000000) >> 24  # sign
-    # handle specific cases
-    if (b & 0x7FC00000) == 0x7FC00000:
-        return 0xFF | ret
-    e = (b & 0x7F800000) >> 23  # exponent
-    m = b & 0x007FFFFF  # mantissa
+    if uz:
+        if (b & 0x7FC00000) == 0x7FC00000:
+            return 0x80
+        if np.isinf(x):
+            return 0x80
+        e = (b & 0x7F800000) >> 23  # exponent
+        m = b & 0x007FFFFF  # mantissa
 
-    if e != 0:
-        # exponent is not zero, when it is, closest float 8 is zero
-        if e < 117:
-            # exponent is too small
-            pass
-        elif e < 118:
-            # float 8 exponent is zero
-            ret |= 1
-            if (m >> 23) & 1:
-                # rounding
-                ret += 1
-        elif e < 121:  # 127 - 7 + 1
-            # float 8 exponent is zero except if the rounding
-            # moves the next float 8 and this one needs an exponent != 0
-            d = 120 - e
-            ret |= 1 << (2 - d)
-            ret |= m >> (21 + d)
-            if (m >> (20 + d)) & 1:
-                # rounding
-                ret += 1
-        elif e < 136:  # 127 + 8 + 1
-            # float 8 exponent is not zero
-            ex = e - 120  # 127 - 7
-            if ex == 0:
-                ret |= 0x4
-                ret |= m >> 21
+        if e != 0:
+            if e < 116:
+                pass
+            elif e < 117:
+                ret |= 1
+                if (m >> 23) & 1:
+                    # rounding
+                    ret += 1
+            elif e < 120:  # 127 - 8 + 1
+                d = 119 - e
+                ret |= 1 << (2 - d)
+                ret |= m >> (21 + d)
+                if (m >> (20 + d)) & 1:
+                    # rounding
+                    ret += 1
+            elif e < 137:  # 127 + 9 + 1
+                ex = e - 119  # 127 - 8
+                if ex == 0:
+                    ret |= 0x4
+                    ret |= m >> 21
+                else:
+                    ret |= ex << 3
+                    ret |= m >> 20
+                if m & 0x80000:
+                    # rounding
+                    ret += 1
             else:
-                ret |= ex << 3
-                ret |= m >> 20
-            if m & 0x80000:
-                # rounding
-                ret += 1
-        else:
-            ret |= 126  # 01111110
-    return int(ret)
+                ret |= 0x7F  # 01111110
+        return int(ret)
+    else:
+        if (b & 0x7FC00000) == 0x7FC00000:
+            return 0x7F | ret
+        if np.isinf(x):
+            return 0x7F | ret
+        e = (b & 0x7F800000) >> 23  # exponent
+        m = b & 0x007FFFFF  # mantissa
+
+        if e != 0:
+            if e < 117:
+                pass
+            elif e < 118:
+                ret |= 1
+                if (m >> 23) & 1:
+                    # rounding
+                    ret += 1
+            elif e < 121:  # 127 - 7 + 1
+                d = 120 - e
+                ret |= 1 << (2 - d)
+                ret |= m >> (21 + d)
+                if (m >> (20 + d)) & 1:
+                    # rounding
+                    ret += 1
+            elif e < 136:  # 127 + 8 + 1
+                ex = e - 120  # 127 - 7
+                if ex == 0:
+                    ret |= 0x4
+                    ret |= m >> 21
+                else:
+                    ret |= ex << 3
+                    ret |= m >> 20
+                if m & 0x80000:
+                    # rounding
+                    ret += 1
+            else:
+                ret |= 126  # 01111110
+        return int(ret)
 
 
 def float32_to_float8e5m2(
@@ -428,55 +459,80 @@ def float32_to_float8e5m2(
     :param uz: no negative zero
     :return: converted float
     """
-    if fn:
-        raise NotImplementedError("float32_to_float8e5m2 not implemented with fn=True.")
-    if uz:
-        raise NotImplementedError("float32_to_float8e5m2 not implemented with uz=True.")
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
     ret = (b & 0x80000000) >> 24  # sign
-    # handle specific cases
-    if (b & 0x7FC00000) == 0x7FC00000:
-        return 0xFF | ret
-    e = (b & 0x7F800000) >> 23  # exponent
-    m = b & 0x007FFFFF  # mantissa
 
-    if e != 0:
-        # exponent is not zero, when it is, closest float 8 is zero
-        if e < 110:
-            # exponent is too small
-            pass
-        elif e < 111:
-            # float 8 exponent is zero
-            ret |= 1
-            if (m >> 23) & 1:
-                # rounding
-                # may be unused
-                ret += 1
-        elif e < 113:  # 127 - 15 + 1
-            # float 8 exponent is zero except if the rounding
-            # moves the next float 8 and this one needs an exponent != 0
-            d = 112 - e
-            ret |= 1 << (1 - d)
-            ret |= m >> (22 + d)
-            if (m >> (21 + d)) & 1:
-                # rounding
-                ret += 1
-        elif e < 144:  # 127 + 16 + 1
-            # float 8 exponent is not zero
-            ex = e - 112  # 127 - 15
-            ret |= ex << 2
-            ret |= m >> 21
-            if m & 0x100000:
-                # rounding
-                ret += 1
-        elif e == 255 and m == 0:  # inf
-            # infinity
-            ret |= 124
-        else:
-            # highest values
-            ret |= 123
-    return int(ret)
+    if fn and uz:
+        if (b & 0x7FC00000) == 0x7FC00000:
+            return 0x80
+        e = (b & 0x7F800000) >> 23  # exponent
+        m = b & 0x007FFFFF  # mantissa
+
+        if e != 0:
+            if e < 109:
+                pass
+            elif e < 110:
+                ret |= 1
+                if (m >> 23) & 1:
+                    # rounding
+                    # may be unused
+                    ret += 1
+            elif e < 112:  # 127 - 16 + 1
+                d = 111 - e
+                ret |= 1 << (1 - d)
+                ret |= m >> (22 + d)
+                if (m >> (21 + d)) & 1:
+                    # rounding
+                    ret += 1
+            elif e < 145:  # 127 + 17 + 1
+                ex = e - 111  # 127 - 16
+                ret |= ex << 2
+                ret |= m >> 21
+                if m & 0x100000:
+                    # rounding
+                    ret += 1
+            elif e == 255 and m == 0:  # inf
+                return 0x80
+            else:
+                ret |= 0x7F  # last possible number
+        return int(ret)
+    elif not fn and not uz:
+        if (b & 0x7FC00000) == 0x7FC00000:
+            return 0x7F | ret
+        e = (b & 0x7F800000) >> 23  # exponent
+        m = b & 0x007FFFFF  # mantissa
+
+        if e != 0:
+            if e < 110:
+                pass
+            elif e < 111:
+                ret |= 1
+                if (m >> 23) & 1:
+                    # rounding
+                    # may be unused
+                    ret += 1
+            elif e < 113:  # 127 - 15 + 1
+                d = 112 - e
+                ret |= 1 << (1 - d)
+                ret |= m >> (22 + d)
+                if (m >> (21 + d)) & 1:
+                    # rounding
+                    ret += 1
+            elif e < 144:  # 127 + 16 + 1
+                ex = e - 112  # 127 - 15
+                ret |= ex << 2
+                ret |= m >> 21
+                if m & 0x100000:
+                    # rounding
+                    ret += 1
+            elif e == 255 and m == 0:  # inf
+                ret |= 124
+            else:
+                ret |= 123
+        return int(ret)
+    else:
+        raise NotImplementedError("fn and uz must be both False or True.")
 
 
 def make_tensor(

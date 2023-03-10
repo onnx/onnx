@@ -33,45 +33,49 @@ def bfloat16_to_float32(
 
 
 def _float8e4m3_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
-    # handling specials cases.
+    if not fn:
+        raise NotImplementedError(f"fn=False is not implemented.")
     if ival < 0 or ival > 255:
         raise ValueError(f"{ival} is not a float8.")
-    if ival == 255:
-        return np.float32(-np.nan)
-    if ival == 127:
-        return np.float32(np.nan)
+    if uz:
+        exponent_bias = 8
+        if ival == 0x80:
+            return np.nan
+    else:
+        exponent_bias = 7
+        if ival == 255:
+            return np.float32(-np.nan)
+        if ival == 127:
+            return np.float32(np.nan)
 
     expo = (ival & 0x78) >> 3
     mant = ival & 0x07
     sign = ival & 0x80
     res = sign << 24
     if expo == 0:
-        # The mantissa has a different meaning in that case.
         if mant > 0:
-            # if not zero, new float32 exponent is float 32 bias - 7
-            expo = 0x7F - 7
+            expo = 0x7F - exponent_bias
             if mant & 0x4 == 0:
-                # if the mantissa is .0??
                 mant &= 0x3
                 mant <<= 1
                 expo -= 1
             if mant & 0x4 == 0:
-                # if the mantissa is .00?
                 mant &= 0x3
                 mant <<= 1
                 expo -= 1
             res |= (mant & 0x3) << 21
             res |= expo << 23
     else:
-        # simple case
         res |= mant << 20
-        expo += 0x7F - 0x7
+        expo += 0x7F - exponent_bias
         res |= expo << 23
     f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
     return f
 
 
-_float8e4m3_to_float32 = np.vectorize(_float8e4m3_to_float32_scalar)
+_float8e4m3_to_float32 = np.vectorize(
+    _float8e4m3_to_float32_scalar, excluded=["fn", "uz"]
+)
 
 
 def float8e4m3_to_float32(
@@ -95,8 +99,6 @@ def float8e4m3_to_float32(
         raise NotImplementedError(
             "float32_to_float8e4m3 not implemented with fn=False."
         )
-    if uz:
-        raise NotImplementedError("float32_to_float8e4m3 not implemented with uz=True.")
     res = _float8e4m3_to_float32(data, fn=fn, uz=uz)
     if dims is None:
         return res  # type: ignore[no-any-return]
@@ -104,41 +106,47 @@ def float8e4m3_to_float32(
 
 
 def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
-    # handle specific cases
-    if ival < 0 or ival > 255:
-        raise ValueError(f"{ival} is not a float8.")
-    if ival in {253, 254, 255, 125, 126, 127}:
-        return np.float32(np.nan)
-    if ival == 252:
-        return np.float32(-np.inf)
-    if ival == 124:
-        return np.float32(np.inf)
+    if fn and uz:
+        if ival == 0x80:
+            return np.float32(np.nan)
+        exponent_bias = 16
+    elif not fn and not uz:
+        if ival in {253, 254, 255}:
+            return np.float32(-np.nan)
+        if ival in {125, 126, 127}:
+            return np.float32(np.nan)
+        if ival == 252:
+            return np.float32(-np.inf)
+        if ival == 124:
+            return np.float32(np.inf)
+        exponent_bias = 15
+    else:
+        raise NotImplementedError("fn and uz must be both False or True.")
 
     expo = (ival & 0x7C) >> 2
     mant = ival & 0x03
     sign = ival & 0x80
     res = sign << 24
     if expo == 0:
-        # The mantissa has a different meaning in that case.
         if mant > 0:
-            expo = 0x7F - 15
+            expo = 0x7F - exponent_bias
             if mant & 0x2 == 0:
-                # if the mantissa is .0?
                 mant &= 0x1
                 mant <<= 1
                 expo -= 1
             res |= (mant & 0x1) << 22
             res |= expo << 23
     else:
-        # simple case
         res |= mant << 21
-        expo += 0x7F - 15
+        expo += 0x7F - exponent_bias
         res |= expo << 23
     f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
     return f
 
 
-_float8e5m2_to_float32 = np.vectorize(_float8e5m2_to_float32_scalar)
+_float8e5m2_to_float32 = np.vectorize(
+    _float8e5m2_to_float32_scalar, excluded=["fn", "uz"]
+)
 
 
 def float8e5m2_to_float32(
@@ -155,10 +163,6 @@ def float8e5m2_to_float32(
     :param uz: no negative zero
     :return: a numpy array of float32 with the same dimension if dims is None,
         or reshaped to dims if specified"""
-    if fn:
-        raise NotImplementedError("float32_to_float8e4m3 not implemented with fn=True.")
-    if uz:
-        raise NotImplementedError("float32_to_float8e4m3 not implemented with uz=True.")
     res = _float8e5m2_to_float32(data, fn=fn, uz=uz)
     if dims is None:
         return res  # type: ignore[no-any-return]

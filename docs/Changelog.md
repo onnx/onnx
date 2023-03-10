@@ -23069,7 +23069,7 @@ This version of the operator has been available since version 19 of the default 
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
 <dd>Constrain 'x' to float, float16, bfloat16 or int32 tensor.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer or float tensor.</dd>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer/float tensor.</dd>
 </dl>
 
 ### <a name="Resize-19"></a>**Resize-19**</a>
