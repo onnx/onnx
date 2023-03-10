@@ -1241,6 +1241,7 @@ class TestNpx(unittest.TestCase):
         self.assertEqual(res.dtype, np.int64)
         self.assertEqual("A\nB\nC\n", text)
 
+    @unittest.skipIf(InferenceSession is None, reason="onnxruntime is needed.")
     def test_eager_ort(self):
         def impl(A):
             print("A")
