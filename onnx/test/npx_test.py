@@ -1686,8 +1686,6 @@ class TestNpx(unittest.TestCase):
 
     @unittest.skipIf(scipy is None, reason="scipy is not installed.")
     def test_erf(self):
-        import scipy.special
-
         self.common_test_inline(erf_inline, scipy.special.erf)
 
     def test_exp(self):
@@ -1708,8 +1706,6 @@ class TestNpx(unittest.TestCase):
 
     @unittest.skipIf(scipy is None, reason="scipy is not installed.")
     def test_expit(self):
-        import scipy.special
-
         self.common_test_inline(expit_inline, scipy.special.expit)
 
     def test_floor(self):
@@ -1840,8 +1836,6 @@ class TestNpx(unittest.TestCase):
 
     @unittest.skipIf(scipy is None, reason="scipy is not installed.")
     def test_sigmoid(self):
-        import scipy.special
-
         self.common_test_inline(sigmoid_inline, scipy.special.expit)
 
     def test_sign(self):
