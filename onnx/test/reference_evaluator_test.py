@@ -1321,7 +1321,9 @@ class TestReferenceEvaluator(unittest.TestCase):
             strides=[2, 2],
         )
         graph = make_graph([node], "g", [X, W, B], [Y])
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)], ir_version=8)
+        onnx_model = make_model(
+            graph, opset_imports=[make_opsetid("", 16)], ir_version=8
+        )
 
         sess1 = ort.InferenceSession(
             onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
@@ -1375,7 +1377,9 @@ class TestReferenceEvaluator(unittest.TestCase):
             [x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point],
             [y],
         )
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)], ir_version=8)
+        onnx_model = make_model(
+            graph, opset_imports=[make_opsetid("", 16)], ir_version=8
+        )
 
         sess1 = ort.InferenceSession(
             onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
@@ -1507,7 +1511,9 @@ class TestReferenceEvaluator(unittest.TestCase):
             graph, opset_imports=[make_opsetid("", 16), make_opsetid("experimental", 1)]
         )
         graph_conv = make_graph([node], "g", [X, W], [Y1])
-        onnx_model_conv = make_model(graph_conv, opset_imports=[make_opsetid("", 16)], ir_version=8)
+        onnx_model_conv = make_model(
+            graph_conv, opset_imports=[make_opsetid("", 16)], ir_version=8
+        )
         sess = ReferenceEvaluator(onnx_model)
 
         try:

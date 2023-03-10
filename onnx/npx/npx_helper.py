@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Dict, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
 from onnx import AttributeProto, FunctionProto, GraphProto, ModelProto, NodeProto
 from onnx.helper import (
@@ -17,7 +17,7 @@ from onnx.version_converter import convert_version
 
 def rename_in_onnx_graph(
     graph: GraphProto, replacements: Dict[str, str]
-) -> Optional[GraphProto, None]:
+) -> Optional[GraphProto]:
     """
     Renames input results in a GraphProto.
 
