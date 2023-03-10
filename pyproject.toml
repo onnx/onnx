@@ -17,22 +17,15 @@ warn_unused_configs = true
 show_error_codes = true
 show_column_numbers = true
 ignore_missing_imports = true
+# NOTE: Do not grow the exclude list. Edit .lintrunner.toml instead
 exclude = [
-    '\.git',
-    '__pycache__',
-    '^build',
     '^third_party',
-    '_pb2.py$',
-    '\.cache',
-    '\.eggs',
-    '\.setuptools-cmake-build',
-    'venv/',
 ]
 
-[[tool.mypy.overrides]]
-module = ['setup']
-ignore_errors = true
-
+# NOTE: Avoid adding overrides unless for exceptional cases. Prefer inline ignores.
+# If you must ignore error for the whole file, consider adapting the example
+# `# mypy: disable-error-code="misc,arg-type,type-arg"`
+# and put this comment on the top of the file.
 [[tool.mypy.overrides]]
 module = [
     'onnx.onnx_data_pb',
@@ -47,18 +40,12 @@ module = [
 ignore_errors = true
 
 [tool.black]
-# extend-exclude needs to be a regular expression
-extend-exclude = "third_party/|venv/"
-target-version = ["py37", "py38", "py39", "py310"]
+# NOTE: Do not create a exclude list. Edit .lintrunner.toml instead
+target-version = ["py37", "py38", "py39", "py310", "py311"]
 
 [tool.isort]
+# NOTE: Do not create a exclude list. Edit .lintrunner.toml instead
 profile = "black"
-extend_skip_glob = [
-    "third_party/*",
-    "*_pb2*",
-    ".setuptools-cmake-build/*",
-    "venv",
-]
 
 [tool.pylint.message_control]
 # This list is for vscode. Add new disables in pyproject_pylint.toml for lintrunner and CI.
@@ -84,8 +71,10 @@ select = [
     "TID252", # Relative imports
     "SIM", # flake8-simplify
 ]
+# NOTE: Refrain from growing the ignore list unless for exceptional cases.
+# Always include a comment to explain why.
 ignore = [
-    "E501",
+    "E501", # Line length controlled by black
     "N803", # Argument casing
     "N806", # Relax: Variable name in function should be lowercase
     "N999", # Module names
@@ -104,6 +93,9 @@ unfixable = [
 ban-relative-imports = "all"
 
 [tool.ruff.per-file-ignores]
+# NOTE: Refrain from growing the ignore list unless for exceptional cases.
+# Prefer inline ingores with `noqa: xxx`.
+# Eventually this list should become empty.
 "**/*_test*" = ["N802"] # Function casing
 "onnx/backend/test/case/**" = ["N802"] # Function casing
 "onnx/reference/ops/**" = ["N801"] # Class casing
