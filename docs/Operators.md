@@ -195,7 +195,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|18|
 |<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|13, 18|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
-|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|1|
+|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|18|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|18|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
 
