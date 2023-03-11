@@ -249,7 +249,11 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
           "Mismatched tensor element type:", " source=", source_elem_type, " target=", target_elem_type);
     }
 
-    UnionShapeInfoForTensor(source_type.tensor_type().shape(), *target_type.mutable_tensor_type());
+    if (source_type.tensor_type().has_shape()) {
+      UnionShapeInfoForTensor(source_type.tensor_type().shape(), *target_type.mutable_tensor_type());
+    } else {
+      target_type.mutable_tensor_type()->clear_shape();
+    }
   } else if (target_case == TypeProto::ValueCase::kSparseTensorType) {
     auto source_elem_type = source_type.sparse_tensor_type().elem_type();
     auto target_elem_type = target_type.sparse_tensor_type().elem_type();
@@ -257,8 +261,11 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
       fail_type_inference(
           "Mismatched sparse tensor element type:", " source=", source_elem_type, " target=", target_elem_type);
     }
-
-    UnionShapeInfoForTensor(source_type.sparse_tensor_type().shape(), *target_type.mutable_sparse_tensor_type());
+    if (source_type.sparse_tensor_type().has_shape()) {
+      UnionShapeInfoForTensor(source_type.sparse_tensor_type().shape(), *target_type.mutable_sparse_tensor_type());
+    } else {
+      target_type.mutable_sparse_tensor_type()->clear_shape();
+    }
   } else if (target_case == TypeProto::ValueCase::kSequenceType) {
     if (!source_type.sequence_type().has_elem_type()) {
       fail_type_inference("source sequence type missing element type.");
