@@ -402,7 +402,7 @@ def float32_to_float8e4m3(
                 else:
                     ret |= ex << 3
                     ret |= m >> 20
-                if m & 0x80000:
+                if (m & 0x80000) and (ret & 0x7F) < 0x7F:
                     # rounding
                     ret += 1
             else:
@@ -439,7 +439,9 @@ def float32_to_float8e4m3(
                 else:
                     ret |= ex << 3
                     ret |= m >> 20
-                if m & 0x80000:
+                    if (ret & 0x7F) == 0x7F:
+                        ret &= 0xFE
+                if (m & 0x80000) and (ret & 0x7F) < 0x7E:
                     # rounding
                     ret += 1
             else:
@@ -485,11 +487,11 @@ def float32_to_float8e5m2(
                 if (m >> (21 + d)) & 1:
                     # rounding
                     ret += 1
-            elif e < 145:  # 127 + 17 + 1
+            elif e < 143:  # 127 + 15 + 1
                 ex = e - 111  # 127 - 16
                 ret |= ex << 2
                 ret |= m >> 21
-                if m & 0x100000:
+                if (m & 0x100000) and (ret & 0x7F) < 0x7F:
                     # rounding
                     ret += 1
             elif e == 255 and m == 0:  # inf
@@ -519,11 +521,11 @@ def float32_to_float8e5m2(
                 if (m >> (21 + d)) & 1:
                     # rounding
                     ret += 1
-            elif e < 144:  # 127 + 16 + 1
+            elif e < 143:  # 127 + 15 + 1
                 ex = e - 112  # 127 - 15
                 ret |= ex << 2
                 ret |= m >> 21
-                if m & 0x100000:
+                if (m & 0x100000) and (ret & 0x7F) < 0x7B:
                     # rounding
                     ret += 1
             elif e == 255 and m == 0:  # inf
