@@ -258,8 +258,11 @@ class OnnxBackendTest:
                             f"Output {i_output} of test {index} in folder {self.folder!r} failed, comment={comment}."
                         ) from ex
                 else:
+                    equal_nan = desired.dtype in (np.float16, np.float32, np.float64)
                     try:
-                        assert_allclose(desired, output, atol=atol, rtol=rtl)
+                        assert_allclose(
+                            desired, output, atol=atol, rtol=rtl, equal_nan=equal_nan
+                        )
                     except AssertionError as ex:
                         try:
                             diff = output - desired
