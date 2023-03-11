@@ -102,6 +102,97 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
   ++counter;
 }
 
+struct FunctionTypeChecker {
+  const OpSchema& schema;
+  const FunctionProto& function_proto;
+
+  // Binds each type-variable in schema to a type-value
+  std::unordered_map<std::string, DataType> typeVarBindings;
+
+  std::vector<std::string> errors;
+
+  void recordError(const std::string& error) {
+    std::ostringstream ostr;
+    ostr << "Type checking failed for instantiation {";
+    for (auto &pair: typeVarBindings) {
+      ostr << pair.first << " = " << *pair.second;
+    }
+    ostr << "}\n" << error << "\n";
+    errors.push_back(ostr.str());
+  }
+  // forTypeVar: This is used to iterate through all possible bindings of type-values
+  // to all type-variables used in the op schema, and invoke the type-checker for
+  // each possible instantiation.
+  void forTypeVar(int i) {
+    auto& typeConstraintVector = schema.typeConstraintParams();
+    if (i < typeConstraintVector.size()) {
+      std::string typeVar = typeConstraintVector[i].type_param_str;
+      auto& values = schema.typeConstraintMap().at(typeVar).first;
+      for (auto typeValue : values) {
+        typeVarBindings[typeVar] = typeValue;
+        // Now, process remaining type-variables
+        forTypeVar(i + 1);
+      }
+    } else {
+      // Generated a complete instantiation of type-values to all type-variables.
+      // Now, check for this instantiation.
+      typeCheckBinding();
+    }
+  }
+
+  // typeCheckBinding: Type-check the function-body for the current type-instantiation
+  void typeCheckBinding() {
+    std::vector<TypeProto> input_types;
+    for (const auto& input : schema.inputs()) {
+      DataType datatype = (1 == input.GetTypes().size())
+          ?
+          // Select the single possible type
+          (*(input.GetTypes().begin()))
+          :
+          // Select the type bound to the type-var in current instantiation
+          typeVarBindings[input.GetTypeStr()];
+      input_types.push_back(Utils::DataTypeUtils::ToTypeProto(datatype));
+    }
+
+    ONNX_TRY {
+      auto output_types = shape_inference::InferFunctionOutputTypes(function_proto, input_types, {});
+    }
+    ONNX_CATCH(ONNX_NAMESPACE::InferenceError& e) {
+      ONNX_HANDLE_EXCEPTION(([&]() { recordError(e.what()); })); 
+    }
+  }
+
+  FunctionTypeChecker(const OpSchema& op_schema, const FunctionProto& proto)
+      : schema(op_schema), function_proto(proto) {}
+
+  void checkAll() {
+    forTypeVar(0);
+  }
+
+  static void check(const std::string& op_name, int opset_version) {
+    auto* pSchema = OpSchemaRegistry::Schema(op_name, opset_version);
+    auto& schema = *pSchema;
+    if (!schema.HasFunction())
+      return;
+    std::vector<int> function_versions = schema.function_opset_versions();
+    for (int function_version : function_versions) {
+      auto function_body = schema.GetFunction(function_version);
+      if (!function_body)
+        continue;
+      FunctionTypeChecker checker(schema, *function_body);
+      checker.checkAll();
+      std::string all_errors = "";
+      for (const std::string& error : checker.errors)
+        all_errors += error;
+      ASSERT_EQ("", all_errors) << all_errors;
+    }
+  }
+};
+
+TEST(FunctionVerification, Softplus) {
+  FunctionTypeChecker::check("Softplus", 1);
+}
+
 void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int& counter) {
   // Verify function proto is valid
   if (!function_proto) {
@@ -128,6 +219,9 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int
   // Verify function op has compatible Type constraints defined in
   // op and function body.
   VerifyTypeConstraint(op, function_proto, counter);
+
+  // FunctionTypeChecker type_checker(op, *function_proto);
+  // type_checker.checkAll();
 }
 
 // Verify registered ops with function body has compatible
