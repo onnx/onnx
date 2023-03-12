@@ -50,6 +50,8 @@ class NumpyTensor:
     def __init__(self, tensor: np.ndarray):
         if isinstance(tensor, np.ndarray):
             self._tensor = tensor
+        elif isinstance(tensor, NumpyTensor):
+            self._tensor = tensor._tensor
         elif isinstance(
             tensor,
             (

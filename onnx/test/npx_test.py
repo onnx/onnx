@@ -21,6 +21,7 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.npx import ElemType, eager_onnx, jit_onnx
+from onnx.npx.npx_tensors import EagerNumpyTensor
 from onnx.npx.npx_core_api import cst, make_tuple, npxapi_function, npxapi_inline
 from onnx.npx.npx_functions import absolute as absolute_inline
 from onnx.npx.npx_functions import arange as arange_inline
@@ -1190,6 +1191,25 @@ class TestNpx(unittest.TestCase):
         self.assertEqual(len(res), 2)
         self.assertEqualArray(z1, res[0])
         self.assertEqualArray(z2, res[1])
+
+    def test_eager_numpy_type(self):
+        def impl(A):
+            self.assertIsInstance(A, EagerNumpyTensor)
+            b = absolute(A)
+            self.assertIsInstance(b, EagerNumpyTensor)
+            c = absolute_inline(A)
+            self.assertIsInstance(c, EagerNumpyTensor)
+            return c
+
+        e = eager_onnx(impl)
+
+        # Float64
+        x = np.array([0, 1, -2], dtype=np.float64)
+        z = np.abs(x)
+        res = e(x)
+
+        self.assertEqualArray(z, res)
+        self.assertEqual(res.dtype, np.float64)
 
     @unittest.skipIf(True, reason="eager mode not ready yet")
     def test_eager_numpy(self):

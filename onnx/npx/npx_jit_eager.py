@@ -7,6 +7,7 @@ from onnx.npx.npx_tensors import (
     BackendEagerTensor,
     BackendNumpyTensor,
     EagerNumpyTensor,
+    EagerTensor,
 )
 from onnx.npx.npx_types import EagerNotAllowedError, TensorType
 from onnx.npx.npx_var import Input, Var
@@ -266,7 +267,7 @@ class EagerOnnx(JitEager):
         self.has_eager_parameter = "eager" in set(p for p in signature(f).parameters)
         self._eager_cache = False
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, already_eager=False, **kwargs):
         """
         The method builds a key which identifies the signature
         (input types + parameters value).
@@ -274,8 +275,16 @@ class EagerOnnx(JitEager):
         from a previous. If not, it converts it and caches the results
         indexed by the previous key. Finally, it executes the onnx graph
         and returns the result or the results in a tuple if there are several.
+
+        :param already_eager: already in eager mode, inputs must be of type
+            EagerTensor and the returned outputs must be the same
         """
-        values = self.cast_to_tensor_class(args)
+        if already_eager:
+            if any(map(lambda t: not isinstance(t, EagerTensor), args)):
+                raise TypeError(f"One of the input is not an EagerTensor.")
+            values = args
+        else:
+            values = self.cast_to_tensor_class(args)
 
         if self._eager_cache:
             # The function was already converted into onnx
@@ -306,6 +315,8 @@ class EagerOnnx(JitEager):
                 # to be converted into onnx.
                 res = self.jit_call(*values, **kwargs)
                 self._eager_cache = True
+        if already_eager:
+            return tuple(res)
         return self.cast_from_tensor_class(res)
 
 

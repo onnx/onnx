@@ -112,7 +112,7 @@ def _process_parameter(fn, sig, k, v, new_pars, inline):
     )
 
 
-def _xapi(fn: Callable, inline: bool, eager: bool):
+def _xapi(fn: Callable, inline: bool):
     """
     Decorator to use before any function using part of the numpy API.
     The function inspects the input and decides which version of the function
@@ -121,22 +121,21 @@ def _xapi(fn: Callable, inline: bool, eager: bool):
     :param fn: function
     :param inline: inline the function instead of creating
         a function
-    :param eager: enables eager mode or convert it into onnx
     """
     sig = signature(fn)
+    f_eager_onnx = []
 
     # It has the same signature
     def wrapper(*inputs, **kwargs):
         if any(map(lambda x: isinstance(x, EagerTensor), inputs)):
-            # eager mode, let's try,
-            # if eager is False, jit should be used
-            if not eager:
-                raise EagerNotAllowedError(
-                    f"Eager mode is not allowed for function {fn}."
-                )
-            return fn(*inputs, **kwargs)
-        if eager:
-            return fn(*inputs, **kwargs)
+            if not f_eager_onnx:
+                from onnx.npx.npx_jit_eager import eager_onnx
+
+                f_eager_onnx.append(eager_onnx(fn))
+            res = f_eager_onnx[0](*inputs, already_eager=True, **kwargs)
+            if not isinstance(res, tuple):
+                raise TypeError(f"Return of the eager must be a tuple not {type(res)}.")
+            return res if len(res) > 1 else res[0]
 
         # conversion to onnx
         new_inputs = []
@@ -240,7 +239,7 @@ def npxapi_function(fn):
     The function inspects the input and decides which version of the function
     to call.
     """
-    return _xapi(fn, inline=False, eager=False)
+    return _xapi(fn, inline=False)
 
 
 def npxapi_inline(fn):
@@ -249,4 +248,4 @@ def npxapi_inline(fn):
     The function inspects the input and decides which version of the function
     to call.
     """
-    return _xapi(fn, inline=True, eager=False)
+    return _xapi(fn, inline=True)
