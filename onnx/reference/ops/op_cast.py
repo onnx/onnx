@@ -38,19 +38,23 @@ def cast_to(x, to):
         return xf.astype(dtype).reshape(x.shape)
 
     f8 = {
-        (float8e4m3fn, "e4m3fn"): float8e4m3_to_float32,
-        (float8e4m3fnuz, "e4m3fnuz"): lambda *args: float8e4m3_to_float32(
-            *args, uz=True
-        ),
-        (float8e5m2, "e5m2"): float8e5m2_to_float32,
-        (float8e5m2fnuz, "e5m2fnuz"): lambda *args: float8e5m2_to_float32(
-            *args, fn=True, uz=True
-        ),
+        (float8e4m3fn, "e4m3fn", TensorProto.FLOAT8E4M3FN): float8e4m3_to_float32,
+        (
+            float8e4m3fnuz,
+            "e4m3fnuz",
+            TensorProto.FLOAT8E4M3FNUZ,
+        ): lambda *args: float8e4m3_to_float32(*args, uz=True),
+        (float8e5m2, "e5m2", TensorProto.FLOAT8E5M2): float8e5m2_to_float32,
+        (
+            float8e5m2fnuz,
+            "e5m2fnuz",
+            TensorProto.FLOAT8E5M2FNUZ,
+        ): lambda *args: float8e5m2_to_float32(*args, fn=True, uz=True),
     }
 
-    for (dt, st), cvt in f8.items():
+    for (dt, st, proto_type), cvt in f8.items():
         if x.dtype == dt and x.dtype.descr[0][0] == st:
-            if to == dt:
+            if to == proto_type:
                 return x
             xr = x.ravel()
             xf = np.empty(xr.shape[0], dtype=np.float32)
