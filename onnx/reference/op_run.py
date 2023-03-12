@@ -159,7 +159,7 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
 
         data = tensor.int32_data
         shape = tuple(tensor.dims)
-        y = np.empty(shape, dtype=m[elem_type]).ravel()
+        y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
         for i, d in enumerate(data):
             y[i] = d
         return y.reshape(shape)
