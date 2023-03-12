@@ -2130,9 +2130,9 @@ test_cases = [
     ("FLOAT8E5M2FNUZ", "FLOAT16"),
 ]
 
-vect_float32_to_floate4m3 = np.vectorize(float32_to_floate4m3)
-vect_float32_to_floate5m2 = np.vectorize(float32_to_floate5m2)
-f8_types = ("FLOATE4M3", "FLOATE5M2")
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
 
 for from_type, to_type in test_cases:
     input_type_proto = None
@@ -2216,32 +2216,58 @@ for from_type, to_type in test_cases:
             input = make_tensor(
                 "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
             )
-        elif from_type == "FLOATE4M3":
-            input_values = floate4m3_to_float32(
-                vect_float32_to_floate4m3(np_fp32)
+        elif from_type == "FLOAT8E4M3FN":
+            input_values = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32)
             )
             input = make_tensor(
-                "x", TensorProto.FLOATE4M3, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E4M3FN, [3, 4], input_values.tolist()
             )
-        elif from_type == "FLOATE5M2":
-            input_values = floate5m2_to_float32(
-                vect_float32_to_floate5m2(np_fp32)
+        elif from_type == "FLOAT8E4M3FNUZ":
+            input_values = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32, uz=True), uz=True
             )
             input = make_tensor(
-                "x", TensorProto.FLOATE5M2, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E5M2":
+            input_values = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32)
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E5M2, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E5M2FNUZ":
+            input_values = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32, fn=True, uz=True),
+                fn=True,
+                uz=True,
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 4], input_values.tolist()
             )
         else:
             raise ValueError(
                 "Conversion from {from_type} to {to_type} is not tests."
             )
 
-        if to_type == "FLOATE4M3":
-            expected = floate4m3_to_float32(
-                vect_float32_to_floate4m3(input_values)
+        if to_type == "FLOAT8E4M3FN":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(input_values)
             )
-        elif to_type == "FLOATE5M2":
-            expected = floate5m2_to_float32(
-                vect_float32_to_floate5m2(input_values)
+        elif to_type == "FLOAT8E4M3FNUZ":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(input_values, uz=True), uz=True
+            )
+        elif to_type == "FLOAT8E5M2":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(input_values)
+            )
+        elif to_type == "FLOAT8E5M2FNUZ":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(input_values, fn=True, uz=True),
+                fn=True,
+                uz=True,
             )
         elif to_type == "FLOAT16":
             expected = input_values.astype(np.float16).astype(np.float32)
@@ -2339,14 +2365,18 @@ test_cases = [
     ("STRING", "FLOAT"),
     ("FLOAT", "BFLOAT16"),
     ("BFLOAT16", "FLOAT"),
-    ("FLOAT", "FLOATE4M3"),
-    ("FLOATE4M3", "FLOAT"),
-    ("FLOAT", "FLOATE5M2"),
-    ("FLOATE5M2", "FLOAT"),
+    ("FLOAT", "FLOAT8E4M3FN"),
+    ("FLOAT", "FLOAT8E4M3FNUZ"),
+    ("FLOAT8E4M3FN", "FLOAT"),
+    ("FLOAT8E4M3FNUZ", "FLOAT"),
+    ("FLOAT", "FLOAT8E5M2"),
+    ("FLOAT", "FLOAT8E5M2FNUZ"),
+    ("FLOAT8E5M2", "FLOAT"),
+    ("FLOAT8E5M2FNUZ", "FLOAT"),
 ]
 
-vect_float32_to_floate4m3 = np.vectorize(float32_to_floate4m3)
-vect_float32_to_floate5m2 = np.vectorize(float32_to_floate5m2)
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
 
 for from_type, to_type in test_cases:
     input_type_proto = None
@@ -2402,9 +2432,16 @@ for from_type, to_type in test_cases:
                 int(TensorProto.FLOAT), output.shape
             )
         like = output.flatten()[0:1]
-    elif from_type in ("FLOATE4M3", "FLOATE5M2") or to_type in (
-        "FLOATE4M3",
-        "FLOATE5M2",
+    elif from_type in (
+        "FLOAT8E4M3FN",
+        "FLOAT8E4M3FNUZ",
+        "FLOAT8E5M2",
+        "FLOAT8E5M2FNUZ",
+    ) or to_type in (
+        "FLOAT8E4M3FN",
+        "FLOAT8E4M3FNUZ",
+        "FLOAT8E5M2",
+        "FLOAT8E5M2FNUZ",
     ):
         np_fp32 = np.array(
             [
@@ -2423,21 +2460,47 @@ for from_type, to_type in test_cases:
             ],
             dtype=np.float32,
         )
-        if to_type == "FLOATE4M3":
-            expected = floate4m3_to_float32(vect_float32_to_floate4m3(np_fp32))
+        if to_type == "FLOAT8E4M3FN":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32)
+            )
             expected_tensor = make_tensor(
-                "x", TensorProto.FLOATE4M3, [3, 4], expected.tolist()
+                "x", TensorProto.FLOAT8E4M3FN, [3, 4], expected.tolist()
             )
             like_tensor = make_tensor(
-                "x", TensorProto.FLOATE4M3, [1], expected[:1]
+                "x", TensorProto.FLOAT8E4M3FN, [1], expected[:1]
             )
-        else:
-            expected = floate5m2_to_float32(vect_float32_to_floate5m2(np_fp32))
+        elif to_type == "FLOAT8E4M3FNUZ":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32, uz=True), uz=True
+            )
             expected_tensor = make_tensor(
-                "x", TensorProto.FLOATE5M2, [3, 4], expected.tolist()
+                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 4], expected.tolist()
             )
             like_tensor = make_tensor(
-                "x", TensorProto.FLOATE5M2, [1], expected[:1]
+                "x", TensorProto.FLOAT8E4M3FNUZ, [1], expected[:1]
+            )
+        elif to_type == "FLOAT8E5M2":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32)
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2, [1], expected[:1]
+            )
+        elif to_type == "FLOAT8E5M2FNUZ":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32, fn=True, uz=True),
+                fn=True,
+                uz=True,
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2FNUZ, [1], expected[:1]
             )
         if from_type == "FLOAT":
             input = np_fp32.reshape((3, 4))
@@ -4547,7 +4610,7 @@ expect(
 
 </details>
 <details>
-<summary>e4m3</summary>
+<summary>e4m3fn</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -4557,7 +4620,7 @@ node = onnx.helper.make_node(
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOATE4M3, [5], [0, 0.5, 1, 448, 104])
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
 x_scale = np.float32(2)
 y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
 
@@ -4565,7 +4628,7 @@ expect(
     node,
     inputs=[x, x_scale],
     outputs=[y],
-    name="test_dequantizelinear_e4m3",
+    name="test_dequantizelinear_e4m3fn",
 )
 ```
 
@@ -4581,7 +4644,7 @@ node = onnx.helper.make_node(
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOATE5M2, [5], [0, 0.5, 1, 49152, 96])
+x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
 x_scale = np.float32(2)
 y = np.array([0.0, 1.0, 2.0, 98304.0, 192.0], dtype=np.float32)
 
@@ -12005,7 +12068,7 @@ expect(
 
 </details>
 <details>
-<summary>e4m3</summary>
+<summary>e4m3fn</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -12016,14 +12079,16 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOATE4M3, [1], [0])
-y = make_tensor("zero_point", TensorProto.FLOATE4M3, [5], [0, 0.5, 1, 448, 104])
+y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+y = make_tensor(
+    "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104]
+)
 
 expect(
     node,
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
-    name="test_quantizelinear_e4m3",
+    name="test_quantizelinear_e4m3fn",
 )
 ```
 
@@ -12040,9 +12105,9 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOATE5M2, [1], [0.0])
+y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
 y = make_tensor(
-    "zero_point", TensorProto.FLOATE5M2, [5], [0, 0.5, 1, 49152, 96]
+    "zero_point", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96]
 )
 
 expect(
