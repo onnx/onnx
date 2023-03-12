@@ -12,4 +12,4 @@ class SequenceLength(OpRun):
             raise TypeError(
                 f"input_sequence must be a list not {type(input_sequence)}."
             )
-        return (np.array(len(input_sequence)),)
+        return (np.array(len(input_sequence), dtype=np.int64),)
