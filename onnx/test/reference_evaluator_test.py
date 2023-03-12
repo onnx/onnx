@@ -3096,8 +3096,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected1 = np.array([float32_to_float8e4m3(x) for x in data])
         expected2 = np.array([float32_to_float8e5m2(x) for x in data])
         got = ref.run(None, {"X": data})
-        assert_allclose(expected1, got[0], equal_nan=False)
-        assert_allclose(expected2, got[1], equal_nan=False)
+        self.assertEqual(expected1.tolist(), got[0].tolist())
+        self.assertEqual(expected2.tolist(), got[1].tolist())
 
     def test_cast_bfloat16_output(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -3116,7 +3116,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
         expected1 = np.array([float32_to_bfloat16(x) for x in data])
         got = ref.run(None, {"X": data})
-        assert_allclose(expected1, got[0], equal_nan=False)
+        self.assertEqual(expected1.tolist(), got[0].tolist())
 
     def test_quantize_linear_e4m3(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
