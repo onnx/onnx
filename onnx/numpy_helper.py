@@ -34,13 +34,13 @@ def bfloat16_to_float32(
 
 def _float8e4m3_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
     if not fn:
-        raise NotImplementedError(f"fn=False is not implemented.")
+        raise NotImplementedError("fn=False is not implemented.")
     if ival < 0 or ival > 255:
         raise ValueError(f"{ival} is not a float8.")
     if uz:
         exponent_bias = 8
         if ival == 0x80:
-            return np.nan
+            return np.nan  # type: ignore[return-value]
     else:
         exponent_bias = 7
         if ival == 255:

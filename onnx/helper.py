@@ -350,7 +350,7 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + rounded) >> 16
 
 
-def float32_to_float8e4m3(
+def float32_to_float8e4m3(  # pylint: disable=too-many-statements
     fval: float, scale: float = 1.0, fn: bool = True, uz: bool = False
 ) -> int:
     """
@@ -449,7 +449,7 @@ def float32_to_float8e4m3(
         return int(ret)
 
 
-def float32_to_float8e5m2(
+def float32_to_float8e5m2(  # pylint: disable=too-many-statements
     fval: float, scale: float = 1.0, fn: bool = False, uz: bool = False
 ) -> int:
     """
@@ -616,18 +616,18 @@ def make_tensor(
             fcast = {
                 TensorProto.BFLOAT16: float32_to_bfloat16,
                 TensorProto.FLOAT8E4M3FN: float32_to_float8e4m3,
-                TensorProto.FLOAT8E4M3FNUZ: lambda *args: float32_to_float8e4m3(
+                TensorProto.FLOAT8E4M3FNUZ: lambda *args: float32_to_float8e4m3(  # type: ignore[misc]
                     *args, uz=True
                 ),
                 TensorProto.FLOAT8E5M2: float32_to_float8e5m2,
-                TensorProto.FLOAT8E5M2FNUZ: lambda *args: float32_to_float8e5m2(
+                TensorProto.FLOAT8E5M2FNUZ: lambda *args: float32_to_float8e5m2(  # type: ignore[misc]
                     *args, fn=True, uz=True
                 ),
             }[
                 data_type  # type: ignore[index]
             ]
             vals = list(
-                map(
+                map(  # type: ignore[call-overload]
                     fcast,
                     np.array(vals).astype(np_dtype).flatten().tolist(),
                 )
