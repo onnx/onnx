@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from typing import Any
+
+import numpy as np
+
 from onnx.npx.npx_types import OptParType, ParType, TupleType
 
 
@@ -14,6 +17,9 @@ class ArrayApi:
             f"Method 'generic_method' can be overwritten as well to change the behaviour "
             f"for all methods supported by class ArrayApi."
         )
+
+    def numpy(self) -> np.ndarray:
+        return self.generic_method("numpy")
 
     def __neg__(self) -> "ArrayApi":
         return self.generic_method("__neg__")
@@ -113,7 +119,7 @@ class ArrayApi:
     def shape(self) -> "ArrayApi":
         return self.generic_method("shape")
 
-    def reshape(self, shape: "Var") -> "ArrayApi":
+    def reshape(self, shape: "ArrayApi") -> "ArrayApi":
         return self.generic_method("reshape", shape)
 
     def sum(

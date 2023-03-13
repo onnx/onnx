@@ -8,12 +8,7 @@ import numpy as np
 
 from onnx import FunctionProto, ModelProto, NodeProto
 from onnx.npx.npx_tensors import EagerTensor
-from onnx.npx.npx_types import (
-    ElemType,
-    OptParType,
-    ParType,
-    TupleType,
-)
+from onnx.npx.npx_types import ElemType, OptParType, ParType, TupleType
 from onnx.npx.npx_var import Cst, Input, ManyIdentity, Par, Var
 
 
@@ -140,9 +135,8 @@ def _xapi(fn: Callable, inline: bool):
                 from onnx.npx.npx_jit_eager import eager_onnx
 
                 eager_onnx_tensor_classes[tensor_class] = eager_onnx(fn, tensor_class)
-            res = eager_onnx_tensor_classes[tensor_class](
-                *inputs, already_eager=True, **kwargs
-            )
+            eag = eager_onnx_tensor_classes[tensor_class]
+            res = eag(*inputs, already_eager=True, **kwargs)
             if not isinstance(res, tuple):
                 raise TypeError(f"Return of the eager must be a tuple not {type(res)}.")
             return res if len(res) > 1 else res[0]

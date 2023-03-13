@@ -73,6 +73,10 @@ class NumpyTensor:
         else:
             raise TypeError(f"A numpy array is expected not {type(tensor)}.")
 
+    def numpy(self):
+        "Returns the array converted into a numpy array."
+        return self._tensor
+
     @property
     def dtype(self) -> Any:
         "Returns the element type of this tensor."

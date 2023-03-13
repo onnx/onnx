@@ -1,14 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=unnecessary-pass
+# pylint: disable=unnecessary-pass,import-outside-toplevel
 
-from typing import Any, Callable, List, Tuple
+from typing import Any
 
-import numpy as np
-
-from onnx import ModelProto
 from onnx.npx.npx_array_api import ArrayApi
-from onnx.npx.npx_types import TensorType
-from onnx.reference import ReferenceEvaluator
 
 
 class JitTensor:

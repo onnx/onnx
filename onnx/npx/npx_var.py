@@ -189,7 +189,7 @@ class ManyIdentity:
         return onx
 
 
-class Var(ArrayApi):
+class Var(ArrayApi):  # pylint: disable=abstract-method
     """
     Defines a variable, a result...
 
@@ -1089,7 +1089,7 @@ class Var(ArrayApi):
         self.input_indices = None  # type: ignore[assignment]
 
 
-class Input(Var):
+class Input(Var):  # pylint: disable=abstract-method
     """
     Defines an input, a placeholder.
 
@@ -1105,7 +1105,7 @@ class Input(Var):
         return f"{self.__class__.__name__}({self.name!r})"
 
 
-class Cst(Var):
+class Cst(Var):  # pylint: disable=abstract-method
     """
     Defines a constant.
     """

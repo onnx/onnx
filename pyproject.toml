@@ -48,6 +48,7 @@ ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = [
+    'onnx.npx.npx_array_api',
     'onnx.npx.npx_core_api',
     'onnx.npx.npx_graph_builder',
     'onnx.npx.npx_functions',
@@ -124,6 +125,7 @@ ban-relative-imports = "all"
 "onnx/reference/ops/_op_list.py" = ["F401"]
 "onnx/__init__.py" = ["F401"]
 "onnx/npx/__init__.py" = ["F401", "F403"]
+"onnx/npx/npx_array_api.py" = ["N802"]
 "onnx/npx/npx_functions.py" = ["F821"]
 "onnx/npx/npx_functions_test.py" = ["F821"]
 "onnx/npx/npx_graph_builder.py" = ["N811", "N801"]

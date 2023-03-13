@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=import-outside-toplevel
 
 from inspect import signature
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from onnx.npx.npx_tensors import (
-    EagerTensor,
-)
+from onnx.npx.npx_tensors import EagerTensor
 from onnx.npx.npx_types import TensorType
 from onnx.npx.npx_var import Input, Var, Cst
 
@@ -294,9 +293,7 @@ class EagerOnnx(JitEager):
             if any(
                 map(lambda t: not isinstance(t, (EagerTensor, Cst, int, float)), args)
             ):
-                raise TypeError(
-                    f"One of the input is not an EagerTensor or a constant."
-                )
+                raise TypeError("One of the input is not an EagerTensor or a constant.")
             values = args
         else:
             values = self.cast_to_tensor_class(args)

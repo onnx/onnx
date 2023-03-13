@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=unsubscriptable-object,unnecessary-lambda,raise-missing-from,unidiomatic-typecheck,import-outside-toplevel,ungrouped-imports,reimported
+# pylint: disable=unsubscriptable-object,unnecessary-lambda,raise-missing-from,unidiomatic-typecheck,import-outside-toplevel,ungrouped-imports,reimported,unnecessary-pass
 
 import unittest
 import warnings
@@ -1377,6 +1377,8 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z.astype(np.int64), res.numpy())
         self.assertEqual(res.numpy().dtype, np.int64)
 
+        # eager
+
         e = eager_onnx(impl, EagerOrtTensor, target_opsets={"": 17}, ir_version=8)
 
         # Float64
@@ -1398,6 +1400,20 @@ class TestNpx(unittest.TestCase):
         self.assertEqual("A\nB\nC\n", text)
         self.assertEqualArray(z.astype(np.int64), res.numpy())
         self.assertEqual(ix.shape, tuple(res.shape()))
+
+        # eager 2D
+
+        x = np.array([[-5, 6], [-1, 2]], dtype=np.float64)
+        xort = OrtTensor.from_array(x)
+        z = np.abs(x) - x
+        s = StringIO()
+        with redirect_stdout(s):
+            res = e(xort)
+        text = s.getvalue()
+        self.assertEqualArray(z, res.numpy())
+        self.assertEqual(res.numpy().dtype, np.float64)
+        self.assertEqual(tuple(res.shape()), z.shape)
+        self.assertStartsWith("A\nB\nC\n", text)
 
     def common_numpy_op(self, msg, fct, use_int=False):
         if use_int:
@@ -2813,6 +2829,5 @@ class TestNpx(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    TestNpx().test_eager_ort()
-    TestNpx().test_eager_numpy()
+    # TestNpx().test_eager_numpy()
     unittest.main(verbosity=2)

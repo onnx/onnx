@@ -345,9 +345,10 @@ class _GraphBuilder:
             value_info_proto.type.CopyFrom(type_proto)
             info = value_info_proto
         else:
-            info = make_tensor_value_info(
-                name, tensor_type.dtypes[0].dtype, tensor_type.shape
-            )
+            # Every runtime must allow inputs of different shapes but
+            # with fixed rank. This can be changed here and in methods `make_key`.
+            shape = [None for _ in tensor_type.shape]
+            info = make_tensor_value_info(name, tensor_type.dtypes[0].dtype, shape)
             # check_value_info fails if the shape is left undefined
             check_value_info(info, self.check_context)
         return info
