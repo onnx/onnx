@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=unsubscriptable-object,unnecessary-lambda,raise-missing-from,unidiomatic-typecheck,import-outside-toplevel,ungrouped-imports,reimported,unnecessary-pass
+# pylint: disable=unsubscriptable-object,unnecessary-lambda,raise-missing-from,unidiomatic-typecheck,import-outside-toplevel,ungrouped-imports,reimported,unnecessary-pass,too-many-statements
 
 import unittest
 import warnings
@@ -21,7 +21,6 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.npx import ElemType, eager_onnx, jit_onnx
-from onnx.npx.npx_numpy_tensors import EagerNumpyTensor
 from onnx.npx.npx_core_api import cst, make_tuple, npxapi_function, npxapi_inline
 from onnx.npx.npx_functions import absolute as absolute_inline
 from onnx.npx.npx_functions import arange as arange_inline
@@ -86,6 +85,7 @@ from onnx.npx.npx_functions_test import (
     relu,
     topk,
 )
+from onnx.npx.npx_numpy_tensors import EagerNumpyTensor
 from onnx.npx.npx_types import Bool, Float32, Float64, Int64, OptParType, TensorType
 from onnx.npx.npx_var import Input, Var
 from onnx.reference import ReferenceEvaluator
@@ -2826,6 +2826,58 @@ class TestNpx(unittest.TestCase):
         onx = f.get_onnx()
         self.assertIsInstance(onx, ModelProto)
         self.assertIn('"Sqrt"', str(onx))
+
+    def test_eager_cst(self):
+        def l2_loss(x, y):
+            d = x - y
+            return d ** cst(2)
+
+        jitted_myloss = jit_onnx(l2_loss)
+        eager_myloss = eager_onnx(l2_loss)
+
+        x = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32)
+        y = np.array([[0.11, 0.22], [0.33, 0.44]], dtype=np.float32)
+
+        res_jit = jitted_myloss(x, y)
+        res_eager = eager_myloss(x, y)
+        assert_allclose(res_jit, res_eager)
+
+    def test_eager_cst_nocst(self):
+        def l2_loss(x, y):
+            return (x - y) ** 2
+
+        jitted_myloss = jit_onnx(l2_loss)
+        eager_myloss = eager_onnx(l2_loss)
+
+        x = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32)
+        y = np.array([[0.11, 0.22], [0.33, 0.44]], dtype=np.float32)
+
+        res_jit = jitted_myloss(x, y)
+        res_eager = eager_myloss(x, y)
+        assert_allclose(res_jit, res_eager)
+
+    def test_eager_cst_index(self):
+        def l1_loss(x, y):
+            return absolute(x - y).sum()
+
+        def l2_loss(x, y):
+            return ((x - y) ** 2).sum()
+
+        def myloss(x, y):
+            x0 = x[:, 0]
+            a = l1_loss(x0, y[:, 0])
+            b = l2_loss(x[:, 1], y[:, 1])
+            return a + b
+
+        jitted_myloss = jit_onnx(myloss)
+        eager_myloss = eager_onnx(myloss)
+
+        x = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32)
+        y = np.array([[0.11, 0.22], [0.33, 0.44]], dtype=np.float32)
+
+        res_jit = jitted_myloss(x, y)
+        res_eager = eager_myloss(x, y)
+        assert_allclose(res_jit, res_eager)
 
 
 if __name__ == "__main__":

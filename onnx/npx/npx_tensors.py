@@ -32,20 +32,40 @@ class EagerTensor(ArrayApi):
         meth = getattr(Var, method_name)
         return meth(*inputs)
 
+    @staticmethod
+    def _item_impl(*inputs, method_name=None):
+        # avoids circular imports.
+        from onnx.npx.npx_var import Var
+
+        if len(inputs) == 0:
+            raise ValueError(f"{method_name!r} must be called with at least one input.")
+        if not isinstance(inputs[0], Var):
+            raise TypeError(f"Input 0 must be a Var not {type(inputs[0])}.")
+        meth = getattr(Var, method_name)
+        return meth(*inputs)
+
     def generic_method(self, method_name, *args: Any, **kwargs: Any) -> Any:
         """
         The method converts the method into an ONNX graph build by the
         corresponding method in class Var.
         """
         # avoids circular imports.
-        from onnx.npx.npx_var import Var
         from onnx.npx.npx_jit_eager import eager_onnx
+        from onnx.npx.npx_var import Var
 
         if not hasattr(Var, method_name):
             raise AttributeError(
                 f"Class Var does not implement method {method_name!r}. "
                 f"This method cannot be converted into an ONNX graph."
             )
+        if method_name in {"__getitem__", "__setitem__"}:
+
+            eag = eager_onnx(EagerTensor._item_impl, self.__class__, bypass_eager=True)
+            res = eag(self, *args, method_name=method_name, already_eager=True)
+            if isinstance(res, tuple) and len(res) == 1:
+                return res[0]
+            return res
+
         if method_name.startswith("__") and method_name.endswith("__"):
             # An operator.
             if len(args) not in (0, 1):

@@ -4,9 +4,9 @@
 from inspect import signature
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from onnx.npx.npx_tensors import EagerTensor
+from onnx.npx.npx_tensors import EagerTensor, JitTensor
 from onnx.npx.npx_types import TensorType
-from onnx.npx.npx_var import Input, Var, Cst
+from onnx.npx.npx_var import Cst, Input, Var
 
 
 class JitEager:
@@ -85,10 +85,29 @@ class JitEager:
         Every set of inputs or parameters producing the same
         key (or signature) must use the same compiled ONNX.
         """
-        if len(kwargs) == 0:
-            key = tuple(v.key for v in values)
-        else:
-            res = [v.key for v in values]
+        res = []
+        for iv, v in enumerate(values):
+            if isinstance(v, (Var, EagerTensor, JitTensor)):
+                res.append(v.key)
+            elif isinstance(v, (int, float)):
+                res.append(v)
+            elif isinstance(v, slice):
+                res.append(("slice", v.start, v.stop, v.step))
+            elif isinstance(v, tuple):
+                subkey = []
+                for sk in v:
+                    if isinstance(sk, slice):
+                        res.append(("slice", sk.start, sk.stop, sk.step))
+                    elif isinstance(sk, (int, float)):
+                        res.append(("slice", sk))
+                    else:
+                        raise TypeError(f"Input {iv} cannot be such tuple: {v}.")
+                res.append(tuple(subkey))
+            else:
+                raise TypeError(
+                    f"Unable to build a key, input {iv} has type {type(v)}."
+                )
+        if kwargs:
             for k, v in sorted(kwargs.items()):
                 if isinstance(v, (int, float, str)):
                     res.append(k)
@@ -98,7 +117,7 @@ class JitEager:
                         f"Type {type(v)} is not yet supported, "
                         f"v={v} and parameter {k!r}."
                     )
-            key = tuple(res)
+        key = tuple(res)
         return key
 
     def to_jit(self, *values, **kwargs):
@@ -109,7 +128,11 @@ class JitEager:
         The onnx graph built by the function defines the input
         types and the expected number of dimensions.
         """
-        constraints = {f"x{i}": v.tensor_type_dims for i, v in enumerate(values)}
+        constraints = {
+            f"x{i}": v.tensor_type_dims
+            for i, v in enumerate(values)
+            if isinstance(v, (EagerTensor, JitTensor))
+        }
         if self.output_types is not None:
             constraints.update(self.output_types)
         inputs = [Input(f"x{i}") for i in range(len(values))]
@@ -291,9 +314,18 @@ class EagerOnnx(JitEager):
         """
         if already_eager:
             if any(
-                map(lambda t: not isinstance(t, (EagerTensor, Cst, int, float)), args)
+                map(
+                    lambda t: not isinstance(
+                        t, (EagerTensor, Cst, int, float, tuple, slice)
+                    ),
+                    args,
+                )
             ):
-                raise TypeError("One of the input is not an EagerTensor or a constant.")
+                raise TypeError(
+                    f"One of the input is not an EagerTensor or a constant, "
+                    f"types are {[type(t) for t in args]} for function "
+                    f"{self.f} from module {self.f.__module__!r}."
+                )
             values = args
         else:
             values = self.cast_to_tensor_class(args)

@@ -299,7 +299,7 @@ class _GraphBuilder:
                 new_type = self.constraints[tensor_type.name]
             elif is_input:
                 raise RuntimeError(
-                    f"tensor_type is not specific enough {tensor_type!r} "
+                    f"tensor_type is not specific enough (tensor_type={tensor_type!r}) "
                     f"and constraints do not precise this type for "
                     f"{'input' if is_input else 'output'} {index} "
                     f"with name={name!r} and constraints={self.constraints!r}."

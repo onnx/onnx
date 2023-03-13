@@ -1113,15 +1113,20 @@ class Cst(Var):  # pylint: disable=abstract-method
     def __init__(self, cst: Any):
         if isinstance(cst, np.ndarray):
             Var.__init__(self, cst, op="Identity")  # type: ignore[arg-type]
+            self.key = (cst.shape, cst.dtype)
         elif isinstance(cst, int):
-            Var.__init__(self, np.array([cst], dtype=np.int64), op="Identity")  # type: ignore[arg-type]
+            Var.__init__(self, np.array(cst, dtype=np.int64), op="Identity")  # type: ignore[arg-type]
+            self.key = (tuple(), np.int64)
         elif isinstance(cst, float):
-            Var.__init__(self, np.array([cst], dtype=np.float32), op="Identity")  # type: ignore[arg-type]
+            Var.__init__(self, np.array(cst, dtype=np.float32), op="Identity")  # type: ignore[arg-type]
+            self.key = (tuple(), np.float32)
         elif isinstance(cst, list):
             if all(map(lambda t: isinstance(t, int), cst)):
                 Var.__init__(self, np.array(cst, dtype=np.int64), op="Identity")  # type: ignore[arg-type]
+                self.key = ((len(cst),), np.int64)
             elif all(map(lambda t: isinstance(t, (float, int)), cst)):
                 Var.__init__(self, np.array(cst, dtype=np.float64), op="Identity")  # type: ignore[arg-type]
+                self.key = ((len(cst),), np.float64)
             else:
                 raise ValueError(
                     f"Unable to convert cst (type={type(cst)}), " f"value={cst}."
