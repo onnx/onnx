@@ -366,9 +366,7 @@ class EagerOnnx(JitEager):
             if any(
                 map(
                     lambda t: t is not None
-                    and not isinstance(
-                        t, (EagerTensor, Cst, int, float, tuple, slice, None)
-                    ),
+                    and not isinstance(t, (EagerTensor, Cst, int, float, tuple, slice)),
                     args,
                 )
             ):
