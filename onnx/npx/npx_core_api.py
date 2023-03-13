@@ -9,7 +9,6 @@ import numpy as np
 from onnx import FunctionProto, ModelProto, NodeProto
 from onnx.npx.npx_tensors import EagerTensor
 from onnx.npx.npx_types import (
-    EagerNotAllowedError,
     ElemType,
     OptParType,
     ParType,
@@ -131,7 +130,16 @@ def _xapi(fn: Callable, inline: bool):
             if not f_eager_onnx:
                 from onnx.npx.npx_jit_eager import eager_onnx
 
-                f_eager_onnx.append(eager_onnx(fn))
+                tensor_class = None
+                for x in inputs:
+                    if isinstance(x, EagerTensor):
+                        tensor_class = x.__class__
+                if tensor_class is None:
+                    raise RuntimeError(
+                        f"Unable to find an EagerTensor in types {[type(x) for x in inputs]}."
+                    )
+
+                f_eager_onnx.append(eager_onnx(fn, tensor_class))
             res = f_eager_onnx[0](*inputs, already_eager=True, **kwargs)
             if not isinstance(res, tuple):
                 raise TypeError(f"Return of the eager must be a tuple not {type(res)}.")

@@ -21,7 +21,7 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.npx import ElemType, eager_onnx, jit_onnx
-from onnx.npx.npx_tensors import EagerNumpyTensor
+from onnx.npx.npx_numpy_tensors import EagerNumpyTensor
 from onnx.npx.npx_core_api import cst, make_tuple, npxapi_function, npxapi_inline
 from onnx.npx.npx_functions import absolute as absolute_inline
 from onnx.npx.npx_functions import arange as arange_inline
@@ -107,7 +107,7 @@ if InferenceSession is not None:
     from typing import Any, Callable, List, Optional, Tuple, Union
 
     import numpy as np
-    from onnxruntime import InferenceSession, RunOptions
+    from onnxruntime import InferenceSession, RunOptions, get_available_providers
     from onnxruntime.capi._pybind_state import OrtDevice as C_OrtDevice
     from onnxruntime.capi._pybind_state import OrtMemType
     from onnxruntime.capi._pybind_state import (
@@ -117,7 +117,7 @@ if InferenceSession is not None:
 
     from onnx import ModelProto, TensorProto
     from onnx.defs import onnx_opset_version
-    from onnx.npx.npx_tensors import BackendTensor, EagerTensor
+    from onnx.npx.npx_tensors import EagerTensor, JitTensor
     from onnx.npx.npx_types import TensorType
 
     class OrtTensor:
@@ -132,7 +132,11 @@ if InferenceSession is not None:
 
         CPU = C_OrtDevice(C_OrtDevice.cpu(), OrtMemType.DEFAULT, 0)
         CUDA0 = C_OrtDevice(C_OrtDevice.cuda(), OrtMemType.DEFAULT, 0)
-        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+        providers = [
+            c
+            for c in ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            if c in get_available_providers()
+        ]
 
         @staticmethod
         def from_array(
@@ -227,7 +231,7 @@ if InferenceSession is not None:
                 res = self.ref._sess.run_with_ort_values(  # pylint: disable=protected-access
                     feeds, self.output_names, self.run_options
                 )
-                return list(map(OrtTensor, res))
+                return list(map(inputs[0].__class__, res))
 
         def __init__(self, tensor: Union[C_OrtValue, "OrtTensor"]):
             if isinstance(tensor, C_OrtValue):
@@ -299,15 +303,15 @@ if InferenceSession is not None:
             """
             return cls.Evaluator(cls, input_names, onx)  # type: ignore[return-value]
 
-    class BackendOrtTensor(OrtTensor, BackendTensor):
+    class OrtCommon:
         """
-        Defines a value for a specific backend.
+        Common methods to jit and eager mode.
         """
 
         @classmethod
         def get_opsets(cls, opsets):
             if opsets is None:
-                return {"": onnx_opset_version(), "com.microsoft": 1}
+                return {"": min(onnx_opset_version(), 18), "com.microsoft": 1}
             if "com.microsoft" in opsets:
                 return opsets
             opsets = opsets.copy()
@@ -316,26 +320,23 @@ if InferenceSession is not None:
 
         @classmethod
         def get_ir_version(cls, ir_version):
-            return ir_version
+            if ir_version is None:
+                return 8
+            return min(ir_version, 8)
 
-    class EagerOrtTensor(OrtTensor, EagerTensor):
+    class EagerOrtTensor(OrtTensor, OrtCommon, EagerTensor):
         """
         Defines a value for a specific backend.
         """
 
-        @classmethod
-        def get_opsets(cls, opsets):
-            if opsets is None:
-                return {"": onnx_opset_version(), "com.microsoft": 1}
-            if "com.microsoft" in opsets:
-                return opsets
-            opsets = opsets.copy()
-            opsets.update({"com.microsoft": 1})
-            return opsets
+        pass
 
-        @classmethod
-        def get_ir_version(cls, ir_version):
-            return ir_version
+    class JitOrtTensor(OrtTensor, OrtCommon, JitTensor):
+        """
+        Defines a value for a specific backend.
+        """
+
+        pass
 
 
 DEFAULT_OPSET = onnx_opset_version()
@@ -1207,9 +1208,38 @@ class TestNpx(unittest.TestCase):
         x = np.array([0, 1, -2], dtype=np.float64)
         z = np.abs(x)
         res = e(x)
-
         self.assertEqualArray(z, res)
         self.assertEqual(res.dtype, np.float64)
+
+        # again
+        res = e(x)
+        self.assertEqualArray(z, res)
+        self.assertEqual(res.dtype, np.float64)
+
+    @unittest.skipIf(InferenceSession is None, reason="onnxruntime is needed.")
+    def test_eager_numpy_type_ort(self):
+        def impl(A):
+            self.assertIsInstance(A, EagerOrtTensor)
+            b = absolute(A)
+            self.assertIsInstance(b, EagerOrtTensor)
+            c = absolute_inline(A)
+            self.assertIsInstance(c, EagerOrtTensor)
+            return c
+
+        e = eager_onnx(impl, EagerOrtTensor, target_opsets={"": 17}, ir_version=8)
+
+        # Float64
+        x = np.array([0, 1, -2], dtype=np.float64)
+        z = np.abs(x)
+        xort = OrtTensor.from_array(x)
+        res = e(xort)
+        self.assertEqualArray(z, res.numpy())
+        self.assertEqual(res.numpy().dtype, np.float64)
+
+        # again
+        res = e(xort)
+        self.assertEqualArray(z, res.numpy())
+        self.assertEqual(res.numpy().dtype, np.float64)
 
     @unittest.skipIf(True, reason="eager mode not ready yet")
     def test_eager_numpy(self):
@@ -2285,7 +2315,7 @@ class TestNpx(unittest.TestCase):
         got = ref.run(None, {"A": x, "B": y})
         self.assertEqualArray(z, got[0], atol=1e-4)
 
-        f = jit_onnx(impl, BackendOrtTensor, target_opsets=target_opsets)
+        f = jit_onnx(impl, JitOrtTensor, target_opsets=target_opsets)
 
         # float32
         xort = OrtTensor.from_array(x)

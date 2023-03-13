@@ -4,12 +4,9 @@ from inspect import signature
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from onnx.npx.npx_tensors import (
-    BackendEagerTensor,
-    BackendNumpyTensor,
-    EagerNumpyTensor,
     EagerTensor,
 )
-from onnx.npx.npx_types import EagerNotAllowedError, TensorType
+from onnx.npx.npx_types import TensorType
 from onnx.npx.npx_var import Input, Var
 
 
@@ -127,7 +124,7 @@ class JitEager:
         exe = self.tensor_class.create_function(names, onx)
         return onx, exe
 
-    def cast_to_tensor_class(self, inputs: List[Any]) -> List[BackendEagerTensor]:
+    def cast_to_tensor_class(self, inputs: List[Any]) -> List[EagerTensor]:
         """
         Wraps input into `self.tensor_class`.
 
@@ -145,7 +142,7 @@ class JitEager:
         return values
 
     def cast_from_tensor_class(
-        self, results: List[BackendEagerTensor]
+        self, results: List[EagerTensor]
     ) -> Union[Any, Tuple[Any]]:
         """
         Wraps input from `self.tensor_class` to python types.
@@ -205,7 +202,9 @@ class JitOnnx(JitEager):
         ir_version: Optional[int] = None,
     ):
         if tensor_class is None:
-            tensor_class = BackendNumpyTensor
+            from onnx.npx.npx_numpy_tensors import JitNumpyTensor
+
+            tensor_class = JitNumpyTensor
         JitEager.__init__(
             self,
             f,
@@ -256,6 +255,8 @@ class EagerOnnx(JitEager):
         ir_version: Optional[int] = None,
     ):
         if tensor_class is None:
+            from onnx.npx.npx_numpy_tensors import EagerNumpyTensor
+
             tensor_class = EagerNumpyTensor
         JitEager.__init__(
             self,
@@ -292,12 +293,8 @@ class EagerOnnx(JitEager):
             res = self.jit_call(*values, **kwargs)
         else:
             # tries to call the version
-            jit_call = False
             try:
                 res = self.f(*values)
-            except EagerNotAllowedError as ea:
-                jit_call = True
-                raise NotImplementedError("Not yet implemented.") from ea
             except (AttributeError, TypeError) as e:
                 inp1 = ", ".join(map(str, map(type, args)))
                 inp2 = ", ".join(map(str, map(type, values)))
@@ -305,11 +302,15 @@ class EagerOnnx(JitEager):
                     f"Unexpected types, input types is {inp1} " f"and {inp2}."
                 ) from e
 
-            if (
-                jit_call
-                or isinstance(res, Var)
-                or any(map(lambda x: isinstance(x, Var), res))
+            if isinstance(res, EagerTensor) or (
+                isinstance(res, tuple) and isinstance(res[0], EagerTensor)
             ):
+                if already_eager:
+                    raise TypeError(
+                        f"EagerTensor ({type(res)}) is not expected for function {self.f} "
+                        f"from module {self.f.__module__!r}, type of first input is {type(args[0])}."
+                    )
+            elif isinstance(res, Var) or any(map(lambda x: isinstance(x, Var), res)):
                 # The function returns instance of type Var.
                 # It does not support eager mode and needs
                 # to be converted into onnx.
