@@ -159,7 +159,7 @@ class NumpyTensor:
     # This part is not yet complete.
 
 
-class EagerNumpyTensor(EagerTensor, NumpyTensor):
+class EagerNumpyTensor(NumpyTensor, EagerTensor):
     """
     Defines a value for a specific backend.
     """
@@ -167,7 +167,7 @@ class EagerNumpyTensor(EagerTensor, NumpyTensor):
     pass
 
 
-class JitNumpyTensor(JitTensor, NumpyTensor):
+class JitNumpyTensor(NumpyTensor, JitTensor):
     """
     Defines a value for a specific backend.
     """

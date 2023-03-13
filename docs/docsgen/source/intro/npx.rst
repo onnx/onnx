@@ -99,7 +99,7 @@ is available with class `OrtTensor
     from typing import Any, Callable, List, Optional, Tuple, Union
 
     import numpy as np
-    from onnxruntime import InferenceSession, RunOptions
+    from onnxruntime import InferenceSession, RunOptions, get_available_providers
     from onnxruntime.capi._pybind_state import OrtDevice as C_OrtDevice
     from onnxruntime.capi._pybind_state import OrtMemType
     from onnxruntime.capi._pybind_state import (
@@ -109,9 +109,8 @@ is available with class `OrtTensor
 
     from onnx import ModelProto, TensorProto
     from onnx.defs import onnx_opset_version
-    from onnx.npx.npx_tensors import BackendTensor, EagerTensor
+    from onnx.npx.npx_tensors import EagerTensor, JitTensor
     from onnx.npx.npx_types import TensorType
-
 
     class OrtTensor:
         """
@@ -125,7 +124,11 @@ is available with class `OrtTensor
 
         CPU = C_OrtDevice(C_OrtDevice.cpu(), OrtMemType.DEFAULT, 0)
         CUDA0 = C_OrtDevice(C_OrtDevice.cuda(), OrtMemType.DEFAULT, 0)
-        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+        providers = [
+            c
+            for c in ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            if c in get_available_providers()
+        ]
 
         @staticmethod
         def from_array(
@@ -166,7 +169,9 @@ is available with class `OrtTensor
             to have a signature closer to python function.
             """
 
-            def __init__(self, tensor_class: type, input_names: List[str], onx: ModelProto):
+            def __init__(
+                self, tensor_class: type, input_names: List[str], onx: ModelProto
+            ):
                 try:
                     self.ref = InferenceSession(
                         onx.SerializeToString(),  # type: ignore[attr-defined]
@@ -180,7 +185,9 @@ is available with class `OrtTensor
                     ):
                         # ShapeInference cannot use python function for unknown node type.
                         # Let's give the only output the same type as the first input.
-                        onx.graph.output[0].type.tensor_type.elem_type = onx.graph.input[
+                        onx.graph.output[
+                            0
+                        ].type.tensor_type.elem_type = onx.graph.input[
                             0
                         ].type.tensor_type.elem_type
                         self.ref = InferenceSession(
@@ -213,12 +220,10 @@ is available with class `OrtTensor
                 feeds = {}
                 for name, inp in zip(self.input_names, inputs):
                     feeds[name] = inp.value  # type: ignore[attr-defined]
-                res = (
-                    self.ref._sess.run_with_ort_values(  # pylint: disable=protected-access
-                        feeds, self.output_names, self.run_options
-                    )
+                res = self.ref._sess.run_with_ort_values(  # pylint: disable=protected-access
+                    feeds, self.output_names, self.run_options
                 )
-                return list(map(OrtTensor, res))
+                return list(map(inputs[0].__class__, res))
 
         def __init__(self, tensor: Union[C_OrtValue, "OrtTensor"]):
             if isinstance(tensor, C_OrtValue):
@@ -278,7 +283,9 @@ is available with class `OrtTensor
             return TensorType[self.dtype, self.dims]  # type: ignore[misc,no-any-return]
 
         @classmethod
-        def create_function(cls: Any, input_names: List[str], onx: ModelProto) -> Callable:
+        def create_function(
+            cls: Any, input_names: List[str], onx: ModelProto
+        ) -> Callable:
             """
             Creates a python function calling the onnx backend
             used by this class.
@@ -288,16 +295,15 @@ is available with class `OrtTensor
             """
             return cls.Evaluator(cls, input_names, onx)  # type: ignore[return-value]
 
-
-    class BackendOrtTensor(OrtTensor, BackendTensor):
+    class OrtCommon:
         """
-        Defines a value for a specific backend.
+        Common methods to jit and eager mode.
         """
 
         @classmethod
         def get_opsets(cls, opsets):
             if opsets is None:
-                return {"": onnx_opset_version(), "com.microsoft": 1}
+                return {"": min(onnx_opset_version(), 18), "com.microsoft": 1}
             if "com.microsoft" in opsets:
                 return opsets
             opsets = opsets.copy()
@@ -306,27 +312,23 @@ is available with class `OrtTensor
 
         @classmethod
         def get_ir_version(cls, ir_version):
-            return ir_version
+            if ir_version is None:
+                return 8
+            return min(ir_version, 8)
 
-
-    class EagerOrtTensor(OrtTensor, EagerTensor):
+    class EagerOrtTensor(OrtTensor, OrtCommon, EagerTensor):
         """
         Defines a value for a specific backend.
         """
 
-        @classmethod
-        def get_opsets(cls, opsets):
-            if opsets is None:
-                return {"": onnx_opset_version(), "com.microsoft": 1}
-            if "com.microsoft" in opsets:
-                return opsets
-            opsets = opsets.copy()
-            opsets.update({"com.microsoft": 1})
-            return opsets
+        pass
 
-        @classmethod
-        def get_ir_version(cls, ir_version):
-            return ir_version
+    class JitOrtTensor(OrtTensor, OrtCommon, JitTensor):
+        """
+        Defines a value for a specific backend.
+        """
+
+        pass
 
 
     import numpy as np
@@ -364,4 +366,41 @@ be placed on CPU or CUDA if it is available.
 Eager mode
 ++++++++++
 
-Eager mode is fully supported yet.
+.. exec_code::
+
+    import numpy as np
+    from onnx.npx import eager_onnx
+    from onnx.npx import absolute
+
+    def l1_loss(x, y):
+        err = absolute(x - y).sum()
+        # err is a type inheriting from :class:`EagerTensor`.
+        # It needs to be converted to numpy first before any display.
+        print(f"l1_loss={err.numpy()}")
+        return err
+
+    def l2_loss(x, y):
+        err = ((x - y) ** 2).sum()
+        print(f"l2_loss={err.numpy()}")
+        return err
+
+    def myloss(x, y):
+        return l1_loss(x[:, 0], y[:, 0]) + l2_loss(x[:, 1], y[:, 1])
+
+    # Eager mode is enabled by function :func:`eager_onnx`.
+    # It intercepts all calls to `my_loss`. On the first call,
+    # it replaces a numpy array by a tensor corresponding to the
+    # selected runtime, here numpy as well through :class:`EagerNumpyTensor`.
+    eager_myloss = eager_onnx(myloss)
+
+    x = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32)
+    y = np.array([[0.11, 0.22], [0.33, 0.44]], dtype=np.float32)
+
+    # First execution and conversion to ONNX.
+    # The wrapper caches many Onnx graphs corresponding to
+    # simple opeator, (+, -, /, *, ..), reduce functions,
+    # any other function from the API.
+    # It reuses it if the input types and the number of dimension are the same.
+    # It creates a new one otherwise and keep the old ones.
+    res = eager_myloss(x, y)
+    print(res)

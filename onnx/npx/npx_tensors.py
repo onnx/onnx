@@ -33,16 +33,44 @@ class EagerTensor(ArrayApi):
         return meth(*inputs)
 
     @staticmethod
-    def _item_impl(*inputs, method_name=None):
+    def _reduce_impl(x, axes, keepdims=0, method_name=None):
         # avoids circular imports.
         from onnx.npx.npx_var import Var
 
-        if len(inputs) == 0:
-            raise ValueError(f"{method_name!r} must be called with at least one input.")
-        if not isinstance(inputs[0], Var):
-            raise TypeError(f"Input 0 must be a Var not {type(inputs[0])}.")
+        if not isinstance(x, Var):
+            raise TypeError(f"Input 0 must be a Var not {type(x)}.")
         meth = getattr(Var, method_name)
-        return meth(*inputs)
+        return meth(x, axes, keepdims=keepdims)
+
+    @staticmethod
+    def _reduce_impl_noaxes(x, keepdims=0, method_name=None):
+        # avoids circular imports.
+        from onnx.npx.npx_var import Var
+
+        if not isinstance(x, Var):
+            raise TypeError(f"Input 0 must be a Var not {type(x)}.")
+        meth = getattr(Var, method_name)
+        return meth(x, keepdims=keepdims)
+
+    @staticmethod
+    def _getitem_impl_var(obj, index, method_name=None):
+        # avoids circular imports.
+        from onnx.npx.npx_var import Var
+
+        if not isinstance(obj, Var):
+            raise TypeError(f"obj must be a Var not {type(obj)}.")
+        meth = getattr(Var, method_name)
+        return meth(obj, index)
+
+    @staticmethod
+    def _getitem_impl_tuple(obj, index=None, method_name=None):
+        # avoids circular imports.
+        from onnx.npx.npx_var import Var
+
+        if not isinstance(obj, Var):
+            raise TypeError(f"obj must be a Var not {type(obj)}.")
+        meth = getattr(Var, method_name)
+        return meth(obj, index)
 
     def generic_method(self, method_name, *args: Any, **kwargs: Any) -> Any:
         """
@@ -58,13 +86,29 @@ class EagerTensor(ArrayApi):
                 f"Class Var does not implement method {method_name!r}. "
                 f"This method cannot be converted into an ONNX graph."
             )
-        if method_name in {"__getitem__", "__setitem__"}:
-
-            eag = eager_onnx(EagerTensor._item_impl, self.__class__, bypass_eager=True)
-            res = eag(self, *args, method_name=method_name, already_eager=True)
+        if method_name == "__getitem__":
+            if len(args) != 1:
+                raise ValueError(
+                    f"Unexpected number of argument {len(args)}, it should be one."
+                )
+            if isinstance(args[0], tuple):
+                eag = eager_onnx(
+                    EagerTensor._getitem_impl_tuple, self.__class__, bypass_eager=True
+                )
+                res = eag(
+                    self, index=args[0], method_name=method_name, already_eager=True
+                )
+            else:
+                eag = eager_onnx(
+                    EagerTensor._getitem_impl_var, self.__class__, bypass_eager=True
+                )
+                res = eag(self, args[0], method_name=method_name, already_eager=True)
             if isinstance(res, tuple) and len(res) == 1:
                 return res[0]
             return res
+
+        if method_name == "__setitem__":
+            return ArrayApi.generic_method(self, method_name, *args, **kwargs)
 
         if method_name.startswith("__") and method_name.endswith("__"):
             # An operator.
@@ -77,6 +121,34 @@ class EagerTensor(ArrayApi):
 
             eag = eager_onnx(EagerTensor._op_impl, self.__class__, bypass_eager=True)
             res = eag(self, *args, method_name=method_name, already_eager=True)
+            if isinstance(res, tuple) and len(res) == 1:
+                return res[0]
+            return res
+
+        if method_name in {"mean", "sum", "min", "max", "prod"}:
+            # ReduceFunction
+            if len(args) not in (0, 1):
+                raise ValueError(
+                    f"An operator must have zero or one argument not {len(args)}."
+                )
+
+            if "axis" in kwargs:
+                axes = kwargs["axis"]
+                del kwargs["axis"]
+            else:
+                axes = None
+            if axes is None:
+                eag = eager_onnx(
+                    EagerTensor._reduce_impl_noaxes, self.__class__, bypass_eager=True
+                )
+                res = eag(self, method_name=method_name, already_eager=True, **kwargs)
+            else:
+                eag = eager_onnx(
+                    EagerTensor._reduce_impl, self.__class__, bypass_eager=True
+                )
+                res = eag(
+                    self, axes, method_name=method_name, already_eager=True, **kwargs
+                )
             if isinstance(res, tuple) and len(res) == 1:
                 return res[0]
             return res

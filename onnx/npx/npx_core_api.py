@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=too-many-statements,too-many-branches
+# pylint: disable=too-many-statements,too-many-branches,import-outside-toplevel
 
 from inspect import _empty, signature
 from typing import Any, Callable, Dict, Sequence, Union

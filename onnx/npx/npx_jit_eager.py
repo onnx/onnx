@@ -4,6 +4,8 @@
 from inspect import signature
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+
 from onnx.npx.npx_tensors import EagerTensor, JitTensor
 from onnx.npx.npx_types import TensorType
 from onnx.npx.npx_var import Cst, Input, Var
@@ -79,7 +81,7 @@ class JitEager:
         return self.onxs[key]
 
     @staticmethod
-    def make_key(*values, **kwargs):
+    def make_key(*values, **kwargs):  # pylint: disable=too-many-branches
         """
         Builds a key based on the input types and parameters.
         Every set of inputs or parameters producing the same
@@ -112,6 +114,18 @@ class JitEager:
                 if isinstance(v, (int, float, str)):
                     res.append(k)
                     res.append(v)
+                elif isinstance(v, tuple):
+                    newv = []
+                    for t in v:
+                        if isinstance(t, Var):
+                            raise NotImplementedError(
+                                f"Cannot support Var in argument {k!r}."
+                            )
+                        if isinstance(t, slice):
+                            newv.append(("slice", t.start, t.stop, t.step))
+                        else:
+                            newv.append(t)
+                    res.append(tuple(newv))
                 else:
                     raise TypeError(
                         f"Type {type(v)} is not yet supported, "
@@ -133,10 +147,13 @@ class JitEager:
             for i, v in enumerate(values)
             if isinstance(v, (EagerTensor, JitTensor))
         }
+
         if self.output_types is not None:
             constraints.update(self.output_types)
+
         inputs = [Input(f"x{i}") for i in range(len(values))]
         var = self.f(*inputs, **kwargs)
+
         onx = var.to_onnx(
             constraints=constraints,
             target_opsets=self.target_opsets,
@@ -300,6 +317,39 @@ class EagerOnnx(JitEager):
         self._eager_cache = False
         self.bypass_eager = bypass_eager
 
+    def _preprocess_constants(self, *args):
+        """
+        An input may be a constant. It needs to be replaced by a tensor.
+        """
+        modified = False
+        new_args = []
+        for i, n in enumerate(args):
+            if isinstance(n, self.tensor_class):
+                new_args.append(n)
+            elif isinstance(n, Cst):
+                new_args.append(self.tensor_class(n.inputs[0]))
+                modified = True
+            # elif isinstance(n, tuple):
+            #    if any(map(lambda t: isinstance(t, Var), n)):
+            #        raise TypeError(
+            #            f"Unexpected types in tuple ({[type(t) for t in n]}) for input {i}, "
+            #            f"function {self.f} from module {self.f.__module__!r}."
+            #        )
+            #    new_args.append(n)
+            elif isinstance(n, (int, float)):
+                new_args.append(self.tensor_class(np.array(n)))
+                modified = True
+            elif n is None:
+                new_args.append(n)
+            else:
+                raise TypeError(
+                    f"Unexpected type ({type(n)}) for input {i}, "
+                    f"function {self.f} from module {self.f.__module__!r}."
+                )
+        if modified:
+            return tuple(new_args)
+        return args
+
     def __call__(self, *args, already_eager=False, **kwargs):
         """
         The method builds a key which identifies the signature
@@ -315,8 +365,9 @@ class EagerOnnx(JitEager):
         if already_eager:
             if any(
                 map(
-                    lambda t: not isinstance(
-                        t, (EagerTensor, Cst, int, float, tuple, slice)
+                    lambda t: t is not None
+                    and not isinstance(
+                        t, (EagerTensor, Cst, int, float, tuple, slice, None)
                     ),
                     args,
                 )
@@ -326,9 +377,11 @@ class EagerOnnx(JitEager):
                     f"types are {[type(t) for t in args]} for function "
                     f"{self.f} from module {self.f.__module__!r}."
                 )
-            values = args
+            values_tensor = args
         else:
-            values = self.cast_to_tensor_class(args)
+            values_tensor = self.cast_to_tensor_class(args)
+
+        values = self._preprocess_constants(*values_tensor)
 
         if self._eager_cache or self.bypass_eager:
             # The function was already converted into onnx
@@ -342,7 +395,7 @@ class EagerOnnx(JitEager):
                 inp1 = ", ".join(map(str, map(type, args)))
                 inp2 = ", ".join(map(str, map(type, values)))
                 raise TypeError(
-                    f"Unexpected types, input types is {inp1} " f"and {inp2}."
+                    f"Unexpected types, input types are {inp1} " f"and {inp2}."
                 ) from e
 
             if isinstance(res, EagerTensor) or (

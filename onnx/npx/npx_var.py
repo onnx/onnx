@@ -14,7 +14,7 @@ from onnx import (  # pylint: disable=E0611
 from onnx.helper import np_dtype_to_tensor_dtype
 from onnx.npx.npx_array_api import ArrayApi
 from onnx.npx.npx_constants import DEFAULT_OPSETS, ONNX_DOMAIN
-from onnx.npx.npx_types import OptParType, ParType, TensorType, TupleType
+from onnx.npx.npx_types import ElemType, OptParType, ParType, TensorType, TupleType
 
 
 class Par:
@@ -861,7 +861,7 @@ class Var(ArrayApi):  # pylint: disable=abstract-method
     def reduce_function(  # type: ignore[type-arg]
         self,
         reduce_op,
-        axis: OptParType[TupleType[int]] = None,  # type: ignore[type-arg]
+        axis: TensorType[ElemType.int64, "I"] = None,  # type: ignore[type-arg]
         keepdims: ParType[int] = 0,  # type: ignore[type-arg]
     ) -> "Var":
         "See :func:`np.sum` or any other reduce function."
@@ -878,7 +878,7 @@ class Var(ArrayApi):  # pylint: disable=abstract-method
         return var(self.self_var, axis, op=reduce_op, keepdims=keepdims)  # type: ignore[type-arg]
 
     def sum(
-        self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0
+        self, axis: TensorType[ElemType.int64, "I"] = None, keepdims: ParType[int] = 0
     ) -> "Var":
         "See :func:`np.sum`."
         return self.reduce_function("ReduceSum", axis=axis, keepdims=keepdims)
@@ -890,19 +890,19 @@ class Var(ArrayApi):  # pylint: disable=abstract-method
         return self.reduce_function("ReduceMean", axis=axis, keepdims=keepdims)
 
     def min(
-        self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0
+        self, axis: TensorType[ElemType.int64, "I"] = None, keepdims: ParType[int] = 0
     ) -> "Var":
         "See :func:`np.min`."
         return self.reduce_function("ReduceMin", axis=axis, keepdims=keepdims)
 
     def max(
-        self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0
+        self, axis: TensorType[ElemType.int64, "I"] = None, keepdims: ParType[int] = 0
     ) -> "Var":
         "See :func:`np.max`."
         return self.reduce_function("ReduceMax", axis=axis, keepdims=keepdims)
 
     def prod(
-        self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0
+        self, axis: TensorType[ElemType.int64, "I"] = None, keepdims: ParType[int] = 0
     ) -> "Var":
         "See :func:`np.prod`."
         return self.reduce_function("ReduceProd", axis=axis, keepdims=keepdims)
@@ -1113,20 +1113,15 @@ class Cst(Var):  # pylint: disable=abstract-method
     def __init__(self, cst: Any):
         if isinstance(cst, np.ndarray):
             Var.__init__(self, cst, op="Identity")  # type: ignore[arg-type]
-            self.key = (cst.shape, cst.dtype)
         elif isinstance(cst, int):
             Var.__init__(self, np.array(cst, dtype=np.int64), op="Identity")  # type: ignore[arg-type]
-            self.key = (tuple(), np.int64)
         elif isinstance(cst, float):
             Var.__init__(self, np.array(cst, dtype=np.float32), op="Identity")  # type: ignore[arg-type]
-            self.key = (tuple(), np.float32)
         elif isinstance(cst, list):
             if all(map(lambda t: isinstance(t, int), cst)):
                 Var.__init__(self, np.array(cst, dtype=np.int64), op="Identity")  # type: ignore[arg-type]
-                self.key = ((len(cst),), np.int64)
             elif all(map(lambda t: isinstance(t, (float, int)), cst)):
                 Var.__init__(self, np.array(cst, dtype=np.float64), op="Identity")  # type: ignore[arg-type]
-                self.key = ((len(cst),), np.float64)
             else:
                 raise ValueError(
                     f"Unable to convert cst (type={type(cst)}), " f"value={cst}."
