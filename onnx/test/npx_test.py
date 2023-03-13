@@ -1217,6 +1217,28 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z, res)
         self.assertEqual(res.dtype, np.float64)
 
+    def test_eager_numpy_type_op(self):
+        def impl(A):
+            self.assertIsInstance(A, EagerNumpyTensor)
+            b = absolute(A) + A
+            self.assertIsInstance(b, EagerNumpyTensor)
+            return b
+
+        e = eager_onnx(impl)
+        self.assertEqual(len(e.versions), 0)
+
+        # Float64
+        x = np.array([0, 1, -2], dtype=np.float64)
+        z = np.abs(x) + x
+        res = e(x)
+        self.assertEqualArray(z, res)
+        self.assertEqual(res.dtype, np.float64)
+
+        # again
+        res = e(x)
+        self.assertEqualArray(z, res)
+        self.assertEqual(res.dtype, np.float64)
+
     @unittest.skipIf(InferenceSession is None, reason="onnxruntime is needed.")
     def test_eager_numpy_type_ort(self):
         def impl(A):
@@ -1233,6 +1255,30 @@ class TestNpx(unittest.TestCase):
         # Float64
         x = np.array([0, 1, -2], dtype=np.float64)
         z = np.abs(x)
+        xort = OrtTensor.from_array(x)
+        res = e(xort)
+        self.assertEqualArray(z, res.numpy())
+        self.assertEqual(res.numpy().dtype, np.float64)
+
+        # again
+        res = e(xort)
+        self.assertEqualArray(z, res.numpy())
+        self.assertEqual(res.numpy().dtype, np.float64)
+
+    @unittest.skipIf(InferenceSession is None, reason="onnxruntime is needed.")
+    def test_eager_numpy_type_ort_op(self):
+        def impl(A):
+            self.assertIsInstance(A, EagerOrtTensor)
+            b = absolute(A) + A
+            self.assertIsInstance(b, EagerOrtTensor)
+            return b
+
+        e = eager_onnx(impl, EagerOrtTensor, target_opsets={"": 17}, ir_version=8)
+        self.assertEqual(len(e.versions), 0)
+
+        # Float64
+        x = np.array([0, 1, -2], dtype=np.float64)
+        z = np.abs(x) + x
         xort = OrtTensor.from_array(x)
         res = e(xort)
         self.assertEqualArray(z, res.numpy())
@@ -1284,7 +1330,7 @@ class TestNpx(unittest.TestCase):
         text = s.getvalue()
         self.assertEqualArray(z, res)
         self.assertEqual(res.dtype, np.float64)
-        self.assertStartsWith("A\nA\nB\nC\n", text)
+        self.assertStartsWith("A\nB\nC\n", text)
 
         # Int64
         s = StringIO()
@@ -1296,13 +1342,12 @@ class TestNpx(unittest.TestCase):
         self.assertEqual("A\nB\nC\n", text)
 
     @unittest.skipIf(InferenceSession is None, reason="onnxruntime is needed.")
-    @unittest.skipIf(True, reason="eager mode not ready yet")
     def test_eager_ort(self):
         def impl(A):
             print("A")
             b = absolute(A)
             print("B")
-            c = b - A + cst([1])
+            c = b - A
             print("C")
             return c
 
@@ -1310,12 +1355,12 @@ class TestNpx(unittest.TestCase):
             f = impl(Input("A"))
             onx = f.to_onnx(constraints={"A": Float64[None], (0, False): Float64[None]})
         x = np.array([-5, 6], dtype=np.float64)
-        z = np.abs(x) - x + 1
+        z = np.abs(x) - x
         ref = ReferenceEvaluator(onx)
         got = ref.run(None, {"A": x})
         self.assertEqualArray(z, got[0])
 
-        f = jit_onnx(impl, BackendOrtTensor, target_opsets={"": 17}, ir_version=8)
+        f = jit_onnx(impl, EagerOrtTensor, target_opsets={"": 17}, ir_version=8)
 
         # Float64
         xort = OrtTensor.from_array(x)
@@ -1332,7 +1377,7 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z.astype(np.int64), res.numpy())
         self.assertEqual(res.numpy().dtype, np.int64)
 
-        e = eager_onnx(impl, EagerOrtTensor, target_opsets={"": 17})
+        e = eager_onnx(impl, EagerOrtTensor, target_opsets={"": 17}, ir_version=8)
 
         # Float64
         s = StringIO()
@@ -1342,7 +1387,7 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z, res.numpy())
         self.assertEqual(res.numpy().dtype, np.float64)
         self.assertEqual(tuple(res.shape()), z.shape)
-        self.assertStartsWith("A\nA\nB\nC\n", text)
+        self.assertStartsWith("A\nB\nC\n", text)
 
         # Int64
         s = StringIO()
@@ -2768,6 +2813,6 @@ class TestNpx(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    TestNpx().test_eager_ort()
     TestNpx().test_eager_numpy()
-    stop
     unittest.main(verbosity=2)

@@ -8,7 +8,7 @@ class ArrayApi:
     List of supported method by a tensor.
     """
 
-    def generic_method(self, method_name, *args, **kwargs):
+    def generic_method(self, method_name, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError(
             f"Method {method_name!r} must be overwritten for class {self.__class__.__name__!r}. "
             f"Method 'generic_method' can be overwritten as well to change the behaviour "

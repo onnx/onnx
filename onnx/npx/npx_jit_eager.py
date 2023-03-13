@@ -7,7 +7,7 @@ from onnx.npx.npx_tensors import (
     EagerTensor,
 )
 from onnx.npx.npx_types import TensorType
-from onnx.npx.npx_var import Input, Var
+from onnx.npx.npx_var import Input, Var, Cst
 
 
 class JitEager:
@@ -172,7 +172,13 @@ class JitEager:
             onx, fct = self.to_jit(*values, **kwargs)
             self.versions[key] = fct
             self.onxs[key] = onx
-        res = fct.run(*values)
+        try:
+            res = fct.run(*values)
+        except Exception as e:
+            raise RuntimeError(
+                f"Unable to run function for key={key!r}, types={[type(x) for x in values]}, "
+                f"onnx={self.onxs[key]}."
+            ) from e
         return res
 
 
@@ -254,6 +260,7 @@ class EagerOnnx(JitEager):
         target_opsets: Optional[Dict[str, int]] = None,
         output_types: Optional[Dict[Any, TensorType]] = None,
         ir_version: Optional[int] = None,
+        bypass_eager: bool = False,
     ):
         if tensor_class is None:
             from onnx.npx.npx_numpy_tensors import EagerNumpyTensor
@@ -269,6 +276,7 @@ class EagerOnnx(JitEager):
         )
         self.has_eager_parameter = "eager" in set(p for p in signature(f).parameters)
         self._eager_cache = False
+        self.bypass_eager = bypass_eager
 
     def __call__(self, *args, already_eager=False, **kwargs):
         """
@@ -283,13 +291,17 @@ class EagerOnnx(JitEager):
             EagerTensor and the returned outputs must be the same
         """
         if already_eager:
-            if any(map(lambda t: not isinstance(t, EagerTensor), args)):
-                raise TypeError(f"One of the input is not an EagerTensor.")
+            if any(
+                map(lambda t: not isinstance(t, (EagerTensor, Cst, int, float)), args)
+            ):
+                raise TypeError(
+                    f"One of the input is not an EagerTensor or a constant."
+                )
             values = args
         else:
             values = self.cast_to_tensor_class(args)
 
-        if self._eager_cache:
+        if self._eager_cache or self.bypass_eager:
             # The function was already converted into onnx
             # reuse it or create a new one for different types.
             res = self.jit_call(*values, **kwargs)
