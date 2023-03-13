@@ -211,6 +211,7 @@ class JitOnnx(JitEager):
             tensor_class,
             target_opsets=target_opsets,
             output_types=output_types,
+            ir_version=ir_version,
         )
 
     def __call__(self, *args, **kwargs):
@@ -264,6 +265,7 @@ class EagerOnnx(JitEager):
             tensor_class,
             target_opsets=target_opsets,
             output_types=output_types,
+            ir_version=ir_version,
         )
         self.has_eager_parameter = "eager" in set(p for p in signature(f).parameters)
         self._eager_cache = False

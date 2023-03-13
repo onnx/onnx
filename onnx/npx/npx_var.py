@@ -12,6 +12,7 @@ from onnx import (  # pylint: disable=E0611
     TensorProto,
 )
 from onnx.helper import np_dtype_to_tensor_dtype
+from onnx.npx.npx_array_api import ArrayApi
 from onnx.npx.npx_constants import DEFAULT_OPSETS, ONNX_DOMAIN
 from onnx.npx.npx_types import OptParType, ParType, TensorType, TupleType
 
@@ -188,7 +189,7 @@ class ManyIdentity:
         return onx
 
 
-class Var:
+class Var(ArrayApi):
     """
     Defines a variable, a result...
 
@@ -599,49 +600,49 @@ class Var:
 
         return var(self.self_var, op="BitwiseNot")
 
-    def __add__(self, ov) -> "Var":
+    def __add__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Add` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Add")
 
-    def __radd__(self, ov) -> "Var":
+    def __radd__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Add` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Add")
 
-    def __sub__(self, ov) -> "Var":
+    def __sub__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Sub` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Sub")
 
-    def __rsub__(self, ov) -> "Var":
+    def __rsub__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Sub` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Sub")
 
-    def __mul__(self, ov) -> "Var":
+    def __mul__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Mul` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Mul")
 
-    def __rmul__(self, ov) -> "Var":
+    def __rmul__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Mul` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Mul")
 
-    def __matmul__(self, ov) -> "Var":
+    def __matmul__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `MatMul` to the graph.
         It does not cast automatically.
@@ -650,84 +651,84 @@ class Var:
         """
         return self._binary_op(ov, "MatMul")
 
-    def __truediv__(self, ov) -> "Var":
+    def __truediv__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Div` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Div")
 
-    def __rtruediv__(self, ov) -> "Var":
+    def __rtruediv__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Div` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Div")
 
-    def __mod__(self, ov) -> "Var":
+    def __mod__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Mod` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Mod")
 
-    def __rmod__(self, ov) -> "Var":
+    def __rmod__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Mod` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Mod")
 
-    def __pow__(self, ov) -> "Var":
+    def __pow__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Pow` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Pow")
 
-    def __rpow__(self, ov) -> "Var":
+    def __rpow__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Pow` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "Pow")
 
-    def __lt__(self, ov) -> "Var":
+    def __lt__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Less` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Less")
 
-    def __le__(self, ov) -> "Var":
+    def __le__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `LessOrEqual` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "LessOrEqual")
 
-    def __gt__(self, ov) -> "Var":
+    def __gt__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Greater` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Greater")
 
-    def __ge__(self, ov) -> "Var":
+    def __ge__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `GreaterOrEqual` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "GreaterOrEqual")
 
-    def __eq__(self, ov) -> "Var":
+    def __eq__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Equal` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "Equal")
 
-    def __ne__(self, ov) -> "Var":
+    def __ne__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `Not + Equal` to the graph.
         It does not cast automatically.
@@ -736,56 +737,56 @@ class Var:
 
         return var(self._binary_op(ov, "Equal"), op="Not")
 
-    def __lshift__(self, ov) -> "Var":
+    def __lshift__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `BitShift` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitShift", direction="LEFT")
 
-    def __rshift__(self, ov) -> "Var":
+    def __rshift__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `BitShift` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitShift", direction="RIGHT")
 
-    def __and__(self, ov) -> "Var":
+    def __and__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `BitwiseAnd` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitwiseAnd")
 
-    def __rand__(self, ov) -> "Var":
+    def __rand__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `BitwiseAnd` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "BitwiseAnd")
 
-    def __or__(self, ov) -> "Var":
+    def __or__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `BitwiseOr` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitwiseOr")
 
-    def __ror__(self, ov) -> "Var":
+    def __ror__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `BitwiseOr` to the graph.
         It does not cast automatically.
         """
         return self._binary_op_right(ov, "BitwiseOr")
 
-    def __xor__(self, ov) -> "Var":
+    def __xor__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `BitwiseXor` to the graph.
         It does not cast automatically.
         """
         return self._binary_op(ov, "BitwiseXor")
 
-    def __rxor__(self, ov) -> "Var":
+    def __rxor__(self, ov: "Var") -> "Var":
         """
         Automatically adds operator `BitwiseXor` to the graph.
         It does not cast automatically.
@@ -876,27 +877,37 @@ class Var:
             axis = cst(np.array(axis, dtype=np.int64))
         return var(self.self_var, axis, op=reduce_op, keepdims=keepdims)  # type: ignore[type-arg]
 
-    def sum(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
+    def sum(
+        self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0
+    ) -> "Var":
         "See :func:`np.sum`."
         return self.reduce_function("ReduceSum", axis=axis, keepdims=keepdims)
 
-    def mean(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
+    def mean(
+        self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0
+    ) -> "Var":
         "See :func:`np.mean`."
         return self.reduce_function("ReduceMean", axis=axis, keepdims=keepdims)
 
-    def min(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
+    def min(
+        self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0
+    ) -> "Var":
         "See :func:`np.min`."
         return self.reduce_function("ReduceMin", axis=axis, keepdims=keepdims)
 
-    def max(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
+    def max(
+        self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0
+    ) -> "Var":
         "See :func:`np.max`."
         return self.reduce_function("ReduceMax", axis=axis, keepdims=keepdims)
 
-    def prod(self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0):  # type: ignore[type-arg]
+    def prod(
+        self, axis: OptParType[TupleType[int]] = None, keepdims: ParType[int] = 0
+    ) -> "Var":
         "See :func:`np.prod`."
         return self.reduce_function("ReduceProd", axis=axis, keepdims=keepdims)
 
-    def copy(self):
+    def copy(self) -> "Var":
         """
         Returns a copy of self (use of Identity node).
         """
@@ -904,7 +915,7 @@ class Var:
 
         return var(self.self_var, op="Identity")  # type: ignore[arg-type]
 
-    def flatten(self):
+    def flatten(self) -> "Var":
         """
         Flattens a matrix (see :epkg:`numpy:ndarray:flatten`).
 

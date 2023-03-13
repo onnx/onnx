@@ -122,25 +122,27 @@ def _xapi(fn: Callable, inline: bool):
         a function
     """
     sig = signature(fn)
-    f_eager_onnx = []
+    eager_onnx_tensor_classes = {}
 
     # It has the same signature
     def wrapper(*inputs, **kwargs):
         if any(map(lambda x: isinstance(x, EagerTensor), inputs)):
-            if not f_eager_onnx:
+            tensor_class = None
+            for x in inputs:
+                if isinstance(x, EagerTensor):
+                    tensor_class = x.__class__
+            if tensor_class is None:
+                raise RuntimeError(
+                    f"Unable to find an EagerTensor in types {[type(x) for x in inputs]}."
+                )
+
+            if tensor_class not in eager_onnx_tensor_classes:
                 from onnx.npx.npx_jit_eager import eager_onnx
 
-                tensor_class = None
-                for x in inputs:
-                    if isinstance(x, EagerTensor):
-                        tensor_class = x.__class__
-                if tensor_class is None:
-                    raise RuntimeError(
-                        f"Unable to find an EagerTensor in types {[type(x) for x in inputs]}."
-                    )
-
-                f_eager_onnx.append(eager_onnx(fn, tensor_class))
-            res = f_eager_onnx[0](*inputs, already_eager=True, **kwargs)
+                eager_onnx_tensor_classes[tensor_class] = eager_onnx(fn, tensor_class)
+            res = eager_onnx_tensor_classes[tensor_class](
+                *inputs, already_eager=True, **kwargs
+            )
             if not isinstance(res, tuple):
                 raise TypeError(f"Return of the eager must be a tuple not {type(res)}.")
             return res if len(res) > 1 else res[0]

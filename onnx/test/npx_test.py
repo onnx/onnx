@@ -1203,6 +1203,7 @@ class TestNpx(unittest.TestCase):
             return c
 
         e = eager_onnx(impl)
+        self.assertEqual(len(e.versions), 0)
 
         # Float64
         x = np.array([0, 1, -2], dtype=np.float64)
@@ -1227,6 +1228,7 @@ class TestNpx(unittest.TestCase):
             return c
 
         e = eager_onnx(impl, EagerOrtTensor, target_opsets={"": 17}, ir_version=8)
+        self.assertEqual(len(e.versions), 0)
 
         # Float64
         x = np.array([0, 1, -2], dtype=np.float64)
@@ -1241,7 +1243,6 @@ class TestNpx(unittest.TestCase):
         self.assertEqualArray(z, res.numpy())
         self.assertEqual(res.numpy().dtype, np.float64)
 
-    @unittest.skipIf(True, reason="eager mode not ready yet")
     def test_eager_numpy(self):
         def impl(A):
             print("A")
@@ -2767,5 +2768,6 @@ class TestNpx(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    TestNpx().test_pad_2()
+    TestNpx().test_eager_numpy()
+    stop
     unittest.main(verbosity=2)
