@@ -102,6 +102,15 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
   ++counter;
 }
 
+// FunctionOpAttributeMap: Used to specify attribute-values for function-ops for testing.
+struct FunctionOpAttributeMap {
+
+  FunctionOpAttributeMap() {
+    AddTestCase("Elu", 6, {"alpha = 1.0"} );
+  }
+
+}
+
 struct FunctionTypeChecker {
   const OpSchema& schema;
   const FunctionProto& function_proto;
