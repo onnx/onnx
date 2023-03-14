@@ -3853,8 +3853,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(graph, [make_tensor_value_info("if_output", TensorProto.FLOAT, (None,))])  # type: ignore
 
     def test_if_no_shape_in_then_branch(self) -> None:
-        then_graph = parse_graph("then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X, axes) }")
-        else_graph = parse_graph("else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X) }")
+        then_graph = parse_graph(
+            "then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X, axes) }"
+        )
+        else_graph = parse_graph(
+            "else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X) }"
+        )
         graph = self._make_graph(
             [
                 ("cond", TensorProto.BOOL, (1,)),
@@ -3875,8 +3879,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(graph, [make_tensor_value_info("if_output", TensorProto.FLOAT, None)])  # type: ignore
 
     def test_if_no_shape_in_else_branch(self) -> None:
-        then_graph = parse_graph("then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X) }")
-        else_graph = parse_graph("else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X, axes) }")
+        then_graph = parse_graph(
+            "then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X) }"
+        )
+        else_graph = parse_graph(
+            "else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X, axes) }"
+        )
         graph = self._make_graph(
             [
                 ("cond", TensorProto.BOOL, (1,)),
