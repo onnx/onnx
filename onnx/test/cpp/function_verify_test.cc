@@ -102,18 +102,60 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
   ++counter;
 }
 
-// FunctionOpAttributeMap: Used to specify attribute-values for function-ops for testing.
-struct FunctionOpAttributeMap {
+// Testing the function-definitions provided for function-ops in ONNX schema registry.
+// We type-check the function-definition for all possible input-typings, as permitted
+// by the op-schema. Since the type-checking is dependent on attribute-values, we specify
+// the attribute-values for which we want to do the testing down below.
 
-  FunctionOpAttributeMap() {
-    AddTestCase("Elu", 6, {"alpha = 1.0"} );
+// The set of attribute-values (for testing a function) is represented using a vector.
+using AttributeValues = std::vector<AttributeProto>;
+
+// FunctionOpAttributeMap: Used to implement a map from OpSchema to a set of AttributeValues
+// (implemented as a vector). The testing will be done for each attribute-values specified.
+
+struct FunctionOpAttributeMap {
+  std::unordered_map<std::string, std::vector<AttributeValues>> map;
+
+  std::string key(std::string domain, std::string opname, int opset_version) const {
+    return domain + ":" + opname + ":" + std::to_string(opset_version);
   }
 
-}
+  void addTestCase(const std::string& opname, int opset_version, std::initializer_list<const char*> attributes) {
+    auto& schema_test_cases = map[key("", opname, opset_version)];
+    schema_test_cases.push_back(AttributeValues());
+    auto& test_case = schema_test_cases.back();
+    for (auto attr_text : attributes) {
+      test_case.push_back(AttributeProto());
+      OnnxParser::Parse(test_case.back(), attr_text);
+    }
+  }
+
+  FunctionOpAttributeMap() {
+    addTestCase("Elu", 6, {"alpha = 1.0"});
+  }
+
+  const std::vector<AttributeValues>& getTestCases(const OpSchema& schema) const {
+    auto it = map.find(key(schema.domain(), schema.Name(), schema.SinceVersion()));
+    if (it != map.end())
+      return it->second;
+    return std::vector<AttributeValues>(); // return an empty vector.
+  }
+
+  static const FunctionOpAttributeMap& instance() {
+    static FunctionOpAttributeMap _instance;
+    return _instance;
+  }
+};
 
 struct FunctionTypeChecker {
   const OpSchema& schema;
   const FunctionProto& function_proto;
+  const std::vector<AttributeValues>* attribute_cases;
+
+  FunctionTypeChecker(const OpSchema& op_schema, const FunctionProto& proto)
+      : schema(op_schema), function_proto(proto) {
+    attribute_cases = &FunctionOpAttributeMap::instance().getTestCases(op_schema);
+  }
 
   // Binds each type-variable in schema to a type-value
   std::unordered_map<std::string, DataType> typeVarBindings;
@@ -123,12 +165,13 @@ struct FunctionTypeChecker {
   void recordError(const std::string& error) {
     std::ostringstream ostr;
     ostr << "Type checking failed for instantiation {";
-    for (auto &pair: typeVarBindings) {
+    for (auto& pair : typeVarBindings) {
       ostr << pair.first << " = " << *pair.second;
     }
     ostr << "}\n" << error << "\n";
     errors.push_back(ostr.str());
   }
+
   // forTypeVar: This is used to iterate through all possible bindings of type-values
   // to all type-variables used in the op schema, and invoke the type-checker for
   // each possible instantiation.
@@ -163,19 +206,23 @@ struct FunctionTypeChecker {
       input_types.push_back(Utils::DataTypeUtils::ToTypeProto(datatype));
     }
 
-    ONNX_TRY {
-      auto output_types = shape_inference::InferFunctionOutputTypes(function_proto, input_types, {});
-    }
-    ONNX_CATCH(ONNX_NAMESPACE::InferenceError& e) {
-      ONNX_HANDLE_EXCEPTION(([&]() { recordError(e.what()); })); 
+    for (auto& attribute_vals : *attribute_cases) {
+      ONNX_TRY {
+        auto output_types = shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
+      }
+      ONNX_CATCH(ONNX_NAMESPACE::InferenceError & e) {
+        ONNX_HANDLE_EXCEPTION(([&]() { recordError(e.what()); }));
+      }
     }
   }
 
-  FunctionTypeChecker(const OpSchema& op_schema, const FunctionProto& proto)
-      : schema(op_schema), function_proto(proto) {}
-
-  void checkAll() {
-    forTypeVar(0);
+  std::string checkAll() {
+    if (attribute_cases->size() > 0)
+      forTypeVar(0);
+    std::string all_errors = "";
+    for (const std::string& error : errors)
+      all_errors += error;
+    return all_errors;
   }
 
   static void check(const std::string& op_name, int opset_version) {
@@ -189,18 +236,11 @@ struct FunctionTypeChecker {
       if (!function_body)
         continue;
       FunctionTypeChecker checker(schema, *function_body);
-      checker.checkAll();
-      std::string all_errors = "";
-      for (const std::string& error : checker.errors)
-        all_errors += error;
+      auto all_errors = checker.checkAll();
       ASSERT_EQ("", all_errors) << all_errors;
     }
   }
 };
-
-TEST(FunctionVerification, Softplus) {
-  FunctionTypeChecker::check("Softplus", 1);
-}
 
 void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int& counter) {
   // Verify function proto is valid
@@ -229,8 +269,9 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int
   // op and function body.
   VerifyTypeConstraint(op, function_proto, counter);
 
-  // FunctionTypeChecker type_checker(op, *function_proto);
-  // type_checker.checkAll();
+  FunctionTypeChecker type_checker(op, *function_proto);
+  auto type_errors = type_checker.checkAll();
+  ASSERT_EQ("", type_errors) << type_errors;
 }
 
 // Verify registered ops with function body has compatible
