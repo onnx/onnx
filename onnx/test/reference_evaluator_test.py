@@ -10,6 +10,7 @@ You can run a specific test by using the following syntax.
 """
 
 import itertools
+import math
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
@@ -3017,6 +3018,41 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(len(expected[0]), len(got[0]))
         for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
+
+    def test_lrn(self):
+        def _expected(x, alpha, beta, bias, size):
+            square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+            for n, c, h, w in np.ndindex(x.shape):
+                square_sum[n, c, h, w] = sum(
+                    x[
+                        n,
+                        max(0, c - int(math.floor((size - 1) / 2))) : min(
+                            5, c + int(math.ceil((size - 1) / 2)) + 1
+                        ),
+                        h,
+                        w,
+                    ]
+                    ** 2
+                )
+            y = x / ((bias + (alpha / size) * square_sum) ** beta)
+            return y
+
+        # keepdims is ignored in that case
+        alpha = 0.0002
+        beta = 0.5
+        bias = 2.0
+        size = 3
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [5, 5, 50, 50])
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [
+            make_node("LRN", ["X"], ["Z"], alpha=alpha, beta=beta, bias=bias, size=size)
+        ]
+        model = make_model(make_graph(nodes, "g", [X], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.random.rand(5, 5, 5, 5).astype(np.float32)
+        got = ref.run(None, {"X": data})
+        expected = _expected(data, alpha, beta, bias, size)
+        self.assertEqual(len(expected), len(got[0]))
 
 
 if __name__ == "__main__":

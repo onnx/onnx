@@ -69,7 +69,7 @@ The grammar below describes the syntax:
    graph ::= id value-info-list '=>' value-info-list node-list
    other-data ::= id ':' value
    other-data-list ::= '<' other-data (',' other-data)* '>'
-   fun-attr-list ::= '<' id-list '>'
+   fun-attr-list ::= '<' id | attr (',' id | attr)* '>'
    fun-input-list ::= '(' id-list ')'
    fun-output-list ::= '(' id-list ')'
    function ::= other-data-list? id fun-attr-list?  fun-input-list '=>' fun-output-list  node-list

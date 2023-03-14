@@ -448,6 +448,41 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
       });
 
+  shape_inference.def(
+      "infer_function_output_types",
+      [](const py::bytes& function_proto_bytes,
+         const std::vector<py::bytes> input_types_bytes,
+         const std::vector<py::bytes> attributes_bytes) -> std::vector<py::bytes> {
+        FunctionProto proto{};
+        ParseProtoFromPyBytes(&proto, function_proto_bytes);
+
+        std::vector<TypeProto> input_types;
+        input_types.reserve(input_types_bytes.size());
+        for (const py::bytes& bytes : input_types_bytes) {
+          TypeProto type;
+          ParseProtoFromPyBytes(&type, bytes);
+          input_types.push_back(type);
+        }
+
+        std::vector<AttributeProto> attributes;
+        attributes.reserve(attributes_bytes.size());
+        for (const py::bytes& bytes : attributes_bytes) {
+          AttributeProto attr;
+          ParseProtoFromPyBytes(&attr, bytes);
+          attributes.push_back(attr);
+        }
+
+        std::vector<TypeProto> output_types = shape_inference::InferFunctionOutputTypes(proto, input_types, attributes);
+        std::vector<py::bytes> result;
+        result.reserve(output_types.size());
+        for (auto& type_proto : output_types) {
+          std::string out;
+          type_proto.SerializeToString(&out);
+          result.push_back(py::bytes(out));
+        }
+        return result;
+      });
+
   // Submodule `parser`
   auto parser = onnx_cpp2py_export.def_submodule("parser");
   parser.doc() = "Parser submodule";
