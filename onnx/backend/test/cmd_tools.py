@@ -6,6 +6,8 @@ import os
 import shutil
 import warnings
 
+import google.protobuf.text_format
+
 import onnx.backend.test.case.model as model_test
 import onnx.backend.test.case.node as node_test
 from onnx import ONNX_ML, numpy_helper
@@ -56,8 +58,8 @@ def generate_data(args: argparse.Namespace) -> None:
                 )
         else:
             assert case.model
-            with open(os.path.join(output_dir, "model.onnx"), "wb") as f:
-                f.write(case.model.SerializeToString())
+            with open(os.path.join(output_dir, "model.onnx"), "w", encoding="utf-8") as f:
+                f.write(google.protobuf.text_format.MessageToString(case.model))
             assert case.data_sets
             for i, (inputs, outputs) in enumerate(case.data_sets):
                 data_set_dir = os.path.join(output_dir, f"test_data_set_{i}")
