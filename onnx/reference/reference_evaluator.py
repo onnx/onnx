@@ -8,8 +8,7 @@ import numpy as np
 from onnx import load, numpy_helper
 from onnx.defs import onnx_opset_version
 from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
-
-from .op_run import OpRun, RuntimeContextError
+from onnx.reference.op_run import OpRun, RuntimeContextError
 
 
 class ReferenceEvaluator:
@@ -293,10 +292,7 @@ class ReferenceEvaluator:
         Checks if the graph has a linked attribute (= an attribute whose value is defined
         by a function attribute.
         """
-        for node in self.rt_nodes_:
-            if node.has_linked_attribute:
-                return True
-        return False
+        return any(node.has_linked_attribute for node in self.rt_nodes_)
 
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(self.input_names)}) -> {', '.join(self.output_names)}"
@@ -379,7 +375,7 @@ class ReferenceEvaluator:
             return self.new_ops_[key]
 
         if node.domain == "":
-            from .ops import load_op
+            from onnx.reference.ops import load_op
 
             try:
                 return load_op(node.domain, node.op_type, version)
@@ -395,23 +391,23 @@ class ReferenceEvaluator:
                 )
 
         if node.domain == "ai.onnx.preview.training":
-            from .ops.aionnx_preview_training import load_op as load_op_pt
+            from onnx.reference.ops.aionnx_preview_training import load_op as load_op_pt
 
             return load_op_pt(node.domain, node.op_type, version)
 
         if node.domain == "experimental":
-            from .ops.experimental import load_op as load_op_exp
+            from onnx.reference.ops.experimental import load_op as load_op_exp
 
             return load_op_exp(node.domain, node.op_type, version)
 
         if node.domain == "ai.onnx.ml":
-            from .ops.aionnxml import load_op as load_op_ml
+            from onnx.reference.ops.aionnxml import load_op as load_op_ml
 
             return load_op_ml(node.domain, node.op_type, version)
 
         # It has to be a function.
         if key in self.functions_:
-            from .ops import load_op
+            from onnx.reference.ops import load_op
 
             impl = self.functions_[key]
             return load_op(node.domain, node.op_type, version, custom=impl)

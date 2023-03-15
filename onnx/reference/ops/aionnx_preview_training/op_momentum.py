@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,W0221
 
-from ._op_run_training import OpRunTraining
+from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
 def _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignore

@@ -6,36 +6,21 @@ on:
       - main
   pull_request:
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
 jobs:
   optional-lint:
     name: Optional Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      # Install onnx so that it is found by the linters
-      - name: Install ONNX
-        run: |
-          source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
-
-          python -m pip install --quiet --upgrade pip setuptools wheel
-          python -m pip install --quiet -r requirements-release.txt
-
-          sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
-          git submodule update --init --recursive
-          export ONNX_BUILD_TESTS=0
-          export ONNX_ML=1
-          export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
-          # ONNX lite
-          export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
-          export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-
-          python setup.py install
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       - name: misspell # Check spellings as well
-        uses: reviewdog/action-misspell@v1
+        uses: reviewdog/action-misspell@fe8d5c98c3761ef40755a7bb95460b2a33f6b346 # v1.12.3
         with:
           github_token: ${{ secrets.github_token }}
           locale: "US"
@@ -45,7 +30,7 @@ jobs:
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@v1
+        uses: reviewdog/action-shellcheck@f52d78284b4941028952125a10c76676c3d456eb # v1.17.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
@@ -56,9 +41,9 @@ jobs:
     name: Enforce style
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
         with:
           # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
           python-version: "3.10"
@@ -69,13 +54,10 @@ jobs:
           python -m pip install --quiet --upgrade pip setuptools wheel
           python -m pip install --quiet -r requirements-release.txt
 
-          sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
           git submodule update --init --recursive
           export ONNX_BUILD_TESTS=0
           export ONNX_ML=1
           export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
-          # ONNX lite
-          export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
           export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
           python setup.py install
@@ -99,7 +81,7 @@ jobs:
         # Do not display on drafts to make reviewing easier
         if: github.event.pull_request.draft == false
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@16964e90ba004cdf0cd845b866b5df21038b7723 # v2.2.6
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif

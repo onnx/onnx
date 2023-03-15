@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op_common_window import _CommonWindow
+from onnx.reference.ops._op_common_window import _CommonWindow
 
 
 class HammingWindow(_CommonWindow):

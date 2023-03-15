@@ -146,7 +146,7 @@ def _conv_implementation_im2col(  # type: ignore
                     td += cv.shape[1]
                 res.append((b, cv))
 
-        new_shape = [X.shape[0]] + list(res[0][1].shape[1:])
+        new_shape = [X.shape[0], *list(res[0][1].shape[1:])]
         new_shape[1] = td
         final = np.zeros(tuple(new_shape), dtype=res[0][1].dtype)
         p = 0
@@ -165,7 +165,7 @@ def _conv_implementation_im2col(  # type: ignore
     c2 = im2col(X, kernel_shape, dilations, pads, strides)
     w_shape = W.shape[: -len(kernel_shape) :] + (-1,)
     w_reshaped = W.reshape(w_shape)
-    perm = [len(w_shape) - 1] + list(range(len(w_shape) - 1))
+    perm = [len(w_shape) - 1, *list(range(len(w_shape) - 1))]
     w_perm = np.transpose(w_reshaped, perm)
     mul = np.matmul(c2, w_perm)
     if B is not None:
@@ -223,7 +223,7 @@ def _conv_implementation(  # type: ignore
                     td += cv.shape[1]
                 res.append((b, cv))
 
-        new_shape = [X.shape[0]] + list(res[0][1].shape[1:])
+        new_shape = [X.shape[0], *list(res[0][1].shape[1:])]
         new_shape[1] = td
         final = np.zeros(tuple(new_shape), dtype=res[0][1].dtype)
         p = 0

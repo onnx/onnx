@@ -16,7 +16,7 @@ class TestModelInference(unittest.TestCase):
         model = onnx.parser.parse_model(model_text)
         inferred = onnx.shape_inference.infer_shapes(model)
         outputs = inferred.graph.output
-        for (output, expected_elem_type) in zip(outputs, expected):
+        for output, expected_elem_type in zip(outputs, expected):
             inferred_type = output.type
             self.assertTrue(inferred_type.HasField("tensor_type"))
             tensor_type = inferred_type.tensor_type
@@ -141,14 +141,14 @@ class TestModelInference(unittest.TestCase):
         model = onnx.parser.parse_model(model_text)
         inferred = onnx.shape_inference.infer_shapes(model, True, True, True)
         outputs = inferred.graph.output
-        for (output, expected_shape) in zip(outputs, expected):
+        for output, expected_shape in zip(outputs, expected):
             inferred_type = output.type
             self.assertTrue(inferred_type.HasField("tensor_type"))
             tensor_type = inferred_type.tensor_type
             self.assertTrue(tensor_type.HasField("shape"))
             inferred_shape = tensor_type.shape
             self.assertEqual(len(inferred_shape.dim), len(expected_shape))
-            for (inferred_dim, expected_dim) in zip(inferred_shape.dim, expected_shape):
+            for inferred_dim, expected_dim in zip(inferred_shape.dim, expected_shape):
                 self.assertTrue(inferred_dim.HasField("dim_value"))
                 self.assertEqual(inferred_dim.dim_value, expected_dim)
 

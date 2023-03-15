@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op import OpRunReduceNumpy
+from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 class ReduceMean_1(OpRunReduceNumpy):

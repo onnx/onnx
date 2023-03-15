@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op import OpRunReduceNumpy
+from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 class ReduceMax_1(OpRunReduceNumpy):

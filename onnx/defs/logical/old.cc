@@ -248,4 +248,27 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    Equal,
+    13,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator("equal"))
+        .TypeConstraint(
+            "T",
+            {"tensor(bool)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(bfloat16)"},
+            "Constrain input types to all numeric tensors.")
+        .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor."));
+
 } // namespace ONNX_NAMESPACE

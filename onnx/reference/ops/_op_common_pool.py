@@ -7,8 +7,7 @@ from typing import Optional, Tuple
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-from ._op_common_indices import _get_index, _get_indices
+from onnx.reference.ops._op_common_indices import _get_index, _get_indices
 
 
 def _get_pad_shape(
@@ -138,7 +137,7 @@ def _pool(
             f"Pooling type {pooling_type!r} does not support. Should be AVG, MAX."
         )
     spatial_size = len(x_shape) - 2
-    y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))  # type: ignore
+    y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)])  # type: ignore
     if indices:
         z = np.full(y.shape, fill_value=-1, dtype=np.int64)
     round_fct = np.ceil if ceil_mode else np.floor
@@ -212,13 +211,6 @@ class CommonPool(OpRun):
         storage_order=None,  # pylint: disable=W0613
         strides=None,
     ):
-
-        auto_pad = auto_pad or self.auto_pad  # type: ignore
-        ceil_mode = ceil_mode or self.ceil_mode  # type: ignore
-        kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
-        pads = pads or self.pads  # type: ignore
-        strides = strides or self.strides  # type: ignore
-
         if pooling_type == "MAX" and dilations is None:
             dilations = [1 for s in kernel_shape]
         if pads is None:

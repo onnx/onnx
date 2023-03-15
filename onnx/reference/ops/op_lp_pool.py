@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op_common_pool import CommonPool
+from onnx.reference.ops._op_common_pool import CommonPool
 
 
 class LpPool(CommonPool):

@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._common_classifier import (
+from onnx.reference.ops.aionnxml._common_classifier import (
     compute_logistic,
     compute_probit,
     compute_softmax_zero,
@@ -11,8 +11,8 @@ from ._common_classifier import (
     softmax,
     softmax_zero,
 )
-from ._op_run_aionnxml import OpRunAiOnnxMl
-from .op_svm_helper import SVMCommon
+from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
+from onnx.reference.ops.aionnxml.op_svm_helper import SVMCommon
 
 
 def multiclass_probability(k, R):
@@ -190,7 +190,6 @@ class SVMClassifier(OpRunAiOnnxMl):
     def _compute_final_scores(
         self, votes, scores, weights_are_all_positive_, has_proba, classlabels_ints
     ):
-
         max_weight = 0
         if votes is not None and len(votes) > 0:
             max_class = np.argmax(votes)

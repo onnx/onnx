@@ -27,6 +27,7 @@ void resizeShapeInferenceHelper(
 void resizeShapeInference_opset7_to_10(InferenceContext& ctx);
 void resizeShapeInference_opset11_to_12(InferenceContext& ctx);
 void resizeShapeInference_opset13_to_18(InferenceContext& ctx);
+void resizeShapeInference_opset18_to_19(InferenceContext& ctx);
 
 void resizeShapeInferenceHelper_opset7_to_10(
     const TensorShapeProto& input_shape,
@@ -47,4 +48,5 @@ void KeepAspectRatioHelper(
 
 extern const char* NonZero_ver9_doc;
 
+std::function<void(OpSchema&)> PadDocGenerator(const char* description, const char* mode_description);
 } // namespace ONNX_NAMESPACE

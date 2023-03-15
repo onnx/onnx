@@ -8,7 +8,6 @@ from onnx.reference.op_run import OpRun
 
 class MaxUnpool(OpRun):
     def _run(self, X, indices, output_shape=None, kernel_shape=None, pads=None, strides=None):  # type: ignore
-
         pooling_dims = len(X.shape) - 2
         if pooling_dims > 3:
             raise NotImplementedError(

@@ -3,9 +3,8 @@
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 # Group normalization's reference implementation
@@ -14,7 +13,7 @@ def _group_normalization(x, num_groups, scale, bias, epsilon=1e-5):
     assert x.shape[1] % num_groups == 0
     group_size = x.shape[1] // num_groups
     # Reshape to [N, group_size, C/group_size, H, W, ...]
-    new_shape = [x.shape[0], num_groups, group_size] + list(x.shape[2:])
+    new_shape = [x.shape[0], num_groups, group_size, *list(x.shape[2:])]
     x_reshaped = x.reshape(new_shape)
     axes = tuple(range(2, len(new_shape)))
     mean = np.mean(x_reshaped, axis=axes, keepdims=True)

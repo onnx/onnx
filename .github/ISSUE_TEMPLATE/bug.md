@@ -16,8 +16,8 @@ assignees: ''
 
 ### System information
 <!--
-- OS Platform and Distribution (*e.g. Linux Ubuntu 16.04*):
-- ONNX version (*e.g. 1.7*):
+- OS Platform and Distribution (*e.g. Linux Ubuntu 20.04*):
+- ONNX version (*e.g. 1.13*):
 - Python version:
 - GCC/Compiler version (if compiling from source):
 - CMake version:

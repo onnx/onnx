@@ -1641,6 +1641,40 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (30, 4, 4, 3, 4))]
         )
 
+    def test_average_pool_with_dilations(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "AveragePool", ["X"], ["Y"], kernel_shape=[2, 2], dilations=[2, 2]
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+        )
+
+    def test_average_pool_with_same_upper_padding_and_stride_and_dilation(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "AveragePool",
+                    ["X"],
+                    ["Y"],
+                    auto_pad="SAME_UPPER",
+                    kernel_shape=[2, 2],
+                    strides=[2, 2],
+                    dilations=[2, 3],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
+        )
+
     def test_relu(self) -> None:
         self._identity_prop("Relu")
 
@@ -1937,6 +1971,10 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_equal(self) -> None:
         self._logical_binary_op("Equal", TensorProto.BOOL)
         self._logical_binary_op_with_broadcasting("Equal", TensorProto.BOOL)
+
+    def test_equal_string(self) -> None:
+        self._logical_binary_op("Equal", TensorProto.STRING)
+        self._logical_binary_op_with_broadcasting("Equal", TensorProto.STRING)
 
     def test_logical_not(self) -> None:
         graph = self._make_graph(
@@ -3688,7 +3726,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if_ver1(self) -> None:
-
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.
         # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
@@ -3733,7 +3770,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if(self) -> None:
-
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.
         # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
@@ -3776,7 +3812,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_if_with_different_shapes_in_then_else_branches(self) -> None:
-
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.
         # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
@@ -6997,6 +7032,22 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )  # type: ignore
 
+    def test_tensor_get_element(self) -> None:
+        tensor_type_proto = helper.make_tensor_type_proto(
+            elem_type=TensorProto.DOUBLE, shape=[2, 1, 4]
+        )
+        output_tensor_val_info = helper.make_value_info(
+            name="output", type_proto=tensor_type_proto
+        )
+        graph = self._make_graph(
+            [("input", TensorProto.DOUBLE, (2, 1, 4))],
+            [
+                make_node("OptionalGetElement", ["input"], ["output"]),
+            ],
+            [],
+        )
+        self._assert_inferred(graph, [output_tensor_val_info])  # type: ignore
+
     def test_optional_tensor_get_element(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
             elem_type=TensorProto.DOUBLE, shape=[2, 1, 4]
@@ -8594,7 +8645,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ["z"],
             domain=ONNX_ML_DOMAIN,
         )
-        for (axes_shape, expected) in [
+        for axes_shape, expected in [
             ((2,), 2),
             (tuple(), "unk__0"),
             (("N",), "N"),
@@ -8615,6 +8666,30 @@ class TestShapeInference(TestShapeInferenceHelper):
                     make_opsetid(ONNX_DOMAIN, 18),
                 ],
             )
+
+    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    def test_binarizer(self) -> None:
+        node = make_node(
+            "Binarizer",
+            ["x"],
+            ["y"],
+            domain=ONNX_ML_DOMAIN,
+        )
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.INT64, (3, 4, 5)),
+            ],
+            [node],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (3, 4, 5))],  # type: ignore
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 3),
+                make_opsetid(ONNX_DOMAIN, 18),
+            ],
+        )
 
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_one_hot_encoder(self) -> None:

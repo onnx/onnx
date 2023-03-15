@@ -124,6 +124,29 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>binarizer</summary>
+
+```python
+threshold = 1.0
+node = onnx.helper.make_node(
+    "Binarizer",
+    inputs=["X"],
+    outputs=["Y"],
+    threshold=threshold,
+    domain="ai.onnx.ml",
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = compute_binarizer(x, threshold)[0]
+
+expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
+```
+
+</details>
+
+
 ### <a name="ai.onnx.ml.CastMap"></a><a name="ai.onnx.ml.castmap">**ai.onnx.ml.CastMap**</a>
 
   Converts a map to a tensor.<br>The map key must be an int64 and the values will be ordered

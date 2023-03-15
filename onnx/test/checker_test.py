@@ -5,7 +5,7 @@ from typing import Sequence
 import numpy as np
 
 import onnx.defs
-import onnx.onnx_cpp2py_export.checker as C
+import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
 from onnx import (
     GraphProto,
     SparseTensorProto,

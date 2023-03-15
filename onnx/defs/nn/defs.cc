@@ -307,7 +307,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
 
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
-    11,
+    19,
     OpSchema()
         .FillUsing(PoolOpSchemaGenerator(
             "AveragePool",
@@ -315,6 +315,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
             false,
             false))
+        .Attr(
+            "dilations",
+            "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
         .Attr(
             "count_include_pad",
             "Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.",

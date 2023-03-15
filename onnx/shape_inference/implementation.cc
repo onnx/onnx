@@ -6,6 +6,7 @@
 #include <fstream>
 #include <list>
 #include "onnx/checker.h"
+#include "onnx/common/common.h"
 #include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
@@ -649,6 +650,10 @@ class ShapeInferenceImplBase {
     }
   }
 
+  const std::vector<std::string>& getErrors() const {
+    return inference_errors;
+  }
+
  private:
   GraphProto& g;
   std::unordered_map<std::string, TypeProto*> value_types_by_name;
@@ -821,6 +826,104 @@ void InferShapeForFunctionNode(
       model_local_functions_map,
       symbol_table,
       generated_shape_data_by_name);
+}
+
+struct FunctionInferenceContext : public InferenceContext {
+  FunctionInferenceContext(
+      const FunctionProto& func_proto,
+      const std::vector<TypeProto>& input_types,
+      const std::vector<AttributeProto>& attributes)
+      : input_types_(input_types) {
+    for (const auto& attr : attributes) {
+      attributesByName_[attr.name()] = &attr;
+    }
+    auto num_outputs = func_proto.output_size();
+    for (int i = 0; i < num_outputs; i++) {
+      output_types_.push_back(TypeProto());
+    }
+  }
+
+  const AttributeProto* getAttribute(const std::string& name) const override {
+    auto iter = attributesByName_.find(name);
+    if (iter == attributesByName_.end()) {
+      return nullptr;
+    } else {
+      return iter->second;
+    }
+  }
+  size_t getNumInputs() const override {
+    return input_types_.size();
+  }
+
+  size_t getNumOutputs() const override {
+    return output_types_.size();
+  }
+
+  const TypeProto* getInputType(size_t index) const override {
+    return (index < input_types_.size()) ? &input_types_[index] : nullptr;
+  }
+
+  TypeProto* getOutputType(size_t index) override {
+    return (index < output_types_.size()) ? &output_types_[index] : nullptr;
+  }
+
+  GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override {
+    ONNX_UNUSED_PARAMETER(attribute_name); // This method is unused for function-type-inference.
+    return nullptr;
+  }
+
+  const TensorProto* getInputData(size_t index) const override {
+    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of statically known input values.
+    return nullptr;
+  }
+
+  const SparseTensorProto* getInputSparseData(size_t index) const override {
+    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of statically known input values.
+    return nullptr;
+  }
+
+  const TensorShapeProto* getSymbolicInput(size_t index) const override {
+    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of data-propagation.
+    return nullptr;
+  }
+
+  std::vector<TypeProto> popOutputTypes() {
+    return std::move(output_types_);
+  }
+
+ private:
+  const std::vector<TypeProto>& input_types_;
+  std::vector<TypeProto> output_types_;
+  std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+};
+
+std::vector<TypeProto> InferFunctionOutputTypes(
+    const FunctionProto& function_proto,
+    const std::vector<TypeProto>& input_types,
+    const std::vector<AttributeProto>& attributes) {
+  FunctionInferenceContext ctx(function_proto, input_types, attributes);
+  auto opset_imports = GetOpsetImportsFromProto(function_proto);
+  GraphProto g;
+  ShapeInferenceOptions options{true, 1, false};
+  ShapeInferenceImplBase base(
+      &g,
+      {}, // outer_scope_value_types_by_name
+      opset_imports,
+      options,
+      /*symbol_table*/ nullptr,
+      /*model_local_functions_map*/ {},
+      /*schema_registry*/ OpSchemaRegistry::Instance(),
+      /*generated_shape_data_by_name*/ nullptr);
+  base.process(function_proto, ctx);
+  auto& errors = base.getErrors();
+  if (!errors.empty()) {
+    std::string all_errors = "Inference error(s): ";
+    for (const std::string& error : errors) {
+      all_errors += error + "\n";
+    }
+    fail_shape_inference(all_errors);
+  }
+  return ctx.popOutputTypes();
 }
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(

@@ -47,7 +47,7 @@ class Constant_1(ConstantCommon):
         if overridden_attributes and (
             len(overridden_attributes) > 1
             or "value" not in overridden_attributes
-            or id(overridden_attributes["value"]) != id(getattr(self, "value"))  # noqa
+            or id(overridden_attributes["value"]) != id(self.value)
         ):
             raise RuntimeError(
                 "Function attributes are not implemented for opset <= 11. Use opset > 12."
@@ -73,7 +73,7 @@ class Constant_11(ConstantCommon):
         if overridden_attributes and (
             len(overridden_attributes) > 1
             or "value" not in overridden_attributes
-            or id(overridden_attributes["value"]) != id(getattr(self, "value"))  # noqa
+            or id(overridden_attributes["value"]) != id(self.value)
         ):
             raise RuntimeError(
                 "Function attributes are not implemented for opset <= 11. Use opset > 12."

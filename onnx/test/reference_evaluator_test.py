@@ -10,12 +10,12 @@ You can run a specific test by using the following syntax.
 """
 
 import itertools
+import math
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
 from textwrap import dedent
-from typing import Any, List
 
 import numpy as np  # type: ignore
 import parameterized
@@ -56,8 +56,10 @@ def skip_if_no_onnxruntime(fn):
     def wrapper(*args, **kwargs):
         try:
             import onnxruntime  # pylint: disable=W0611
+
+            del onnxruntime
         except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed")  # noqa
+            raise unittest.SkipTest("onnxruntime not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -68,8 +70,10 @@ def skip_if_no_torch(fn):
     def wrapper(*args, **kwargs):
         try:
             import torch  # pylint: disable=W0611
+
+            del torch
         except ImportError:
-            raise unittest.SkipTest("torch not installed")  # noqa
+            raise unittest.SkipTest("torch not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -80,8 +84,10 @@ def skip_if_no_torchvision(fn):
     def wrapper(*args, **kwargs):
         try:
             import torchvision  # pylint: disable=W0611
+
+            del torchvision
         except ImportError:
-            raise unittest.SkipTest("torchvision not installed")  # noqa
+            raise unittest.SkipTest("torchvision not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -1024,7 +1030,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     def test_custom_node(self):
         class _InvAlpha:
-
             op_domain = "custom"
 
             def __init__(self, onnx_node, run_params):  # type: ignore
@@ -1034,12 +1039,11 @@ class TestReferenceEvaluator(unittest.TestCase):
             def _run(self, x):  # type: ignore
                 return (1 / (x + self.alpha),)
 
-        class InvAlpha_(OpRun):
+        class InvAlpha2(OpRun):
             def _run(self, x):  # type: ignore
                 return (1 / (x + self.alpha),)
 
         class InvAlpha(OpRun):
-
             op_domain = "custom"
 
             def _run(self, x, alpha=None):  # type: ignore
@@ -1061,11 +1065,11 @@ class TestReferenceEvaluator(unittest.TestCase):
         with self.assertRaises(TypeError):
             ReferenceEvaluator(onnx_model, new_ops=[_InvAlpha])
 
-        node1 = make_node("InvAlpha_", ["X"], ["Y"], alpha=0.5, domain="custom")
+        node1 = make_node("InvAlpha2", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(NotImplementedError):
-            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha_])
+            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha2])
 
         node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
@@ -1522,11 +1526,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 X = np.zeros((1, 1, sH, sW), dtype=np.float32)
                 X[0, 0, i, j] = 1.0
                 W = np.zeros(
-                    (
-                        1,
-                        1,
-                    )
-                    + kernel_shape,
+                    (1, 1, *kernel_shape),
                     dtype=np.float32,
                 )
                 W[0, 0, :, :] = np.minimum(
@@ -1677,7 +1677,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
     def test_col2im_2d(self):
-
         data = np.zeros([6, 28], dtype=np.float32)
         data[0][0] = 1.0
         image_shape, kernel_shape, dilations, pads, stride = (
@@ -2845,7 +2844,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         ]
     )
     def test_mvn(self, opset: int, ref_opset: int = 13):
-
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         nodes = [
@@ -3020,6 +3018,41 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(len(expected[0]), len(got[0]))
         for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
+
+    def test_lrn(self):
+        def _expected(x, alpha, beta, bias, size):
+            square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+            for n, c, h, w in np.ndindex(x.shape):
+                square_sum[n, c, h, w] = sum(
+                    x[
+                        n,
+                        max(0, c - int(math.floor((size - 1) / 2))) : min(
+                            5, c + int(math.ceil((size - 1) / 2)) + 1
+                        ),
+                        h,
+                        w,
+                    ]
+                    ** 2
+                )
+            y = x / ((bias + (alpha / size) * square_sum) ** beta)
+            return y
+
+        # keepdims is ignored in that case
+        alpha = 0.0002
+        beta = 0.5
+        bias = 2.0
+        size = 3
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [5, 5, 50, 50])
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [
+            make_node("LRN", ["X"], ["Z"], alpha=alpha, beta=beta, bias=bias, size=size)
+        ]
+        model = make_model(make_graph(nodes, "g", [X], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.random.rand(5, 5, 5, 5).astype(np.float32)
+        got = ref.run(None, {"X": data})
+        expected = _expected(data, alpha, beta, bias, size)
+        self.assertEqual(len(expected), len(got[0]))
 
 
 if __name__ == "__main__":

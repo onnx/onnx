@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op import OpRunUnaryNum
+from onnx.reference.ops._op import OpRunUnaryNum
 
 
 def _leaky_relu(x: np.ndarray, alpha: float) -> np.ndarray:

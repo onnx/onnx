@@ -45,8 +45,10 @@ def _form_and_sanitize_docstring(s: str) -> str:
     return url
 
 
-def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProducer:
-    def ReallyGetOpNode(op: NodeProto, op_id: int) -> pydot.Node:
+def GetOpNodeProducer(  # noqa: N802
+    embed_docstring: bool = False, **kwargs: Any
+) -> _NodeProducer:
+    def really_get_op_node(op: NodeProto, op_id: int) -> pydot.Node:
         if op.name:
             node_name = f"{op.name}/{op.op_type} (op#{op_id})"
         else:
@@ -61,10 +63,10 @@ def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProd
             node.set_URL(url)
         return node
 
-    return ReallyGetOpNode
+    return really_get_op_node
 
 
-def GetPydotGraph(
+def GetPydotGraph(  # noqa: N802
     graph: GraphProto,
     name: Optional[str] = None,
     rankdir: str = "LR",

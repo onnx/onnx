@@ -25,7 +25,7 @@ import unittest
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import (  # pylint: disable=deprecated-module
+    from distutils.version import (  # noqa: N813 # pylint: disable=deprecated-module
         StrictVersion as version,
     )
 
@@ -34,7 +34,7 @@ from numpy import __version__ as npver
 from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
-from onnx import OptionalProto, SequenceProto, TensorProto, load
+from onnx import ONNX_ML, OptionalProto, SequenceProto, TensorProto, load
 from onnx.backend.test import __file__ as backend_folder
 from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
@@ -430,6 +430,8 @@ def enumerate_onnx_tests(series, fct_filter=None):
         if fct_filter is not None and not fct_filter(t):
             continue
         folder = os.path.join(sub, t)
+        if not ONNX_ML and "ai_onnx_ml" in folder:
+            continue
         content = os.listdir(folder)
         onx = [c for c in content if os.path.splitext(c)[-1] in {".onnx"}]
         if len(onx) == 1:
@@ -437,7 +439,6 @@ def enumerate_onnx_tests(series, fct_filter=None):
 
 
 class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
-
     folder = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), "onnx_backend_test_code"
     )

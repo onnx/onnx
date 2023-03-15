@@ -1,8 +1,6 @@
 onnx.parser
 ===========
 
-.. contents::
-    :local:
 
 parse_function
 ++++++++++++++

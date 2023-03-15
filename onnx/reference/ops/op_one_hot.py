@@ -16,7 +16,7 @@ def _one_hot(indices, depth, axis=-1, dtype=np.float32):  # type: ignore
     rs = values.shape[axis:rank]
     new_shape = (1,) * len(ls) + depth_range.shape + (1,) * len(rs)
     targets = np.reshape(depth_range, new_shape)
-    values = np.reshape(np.mod(values, depth), ls + (1,) + rs)
+    values = np.reshape(np.mod(values, depth), (*ls, 1, *rs))
     return np.asarray(targets == values, dtype=dtype)
 
 

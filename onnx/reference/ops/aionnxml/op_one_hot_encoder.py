@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op_run_aionnxml import OpRunAiOnnxMl
+from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class OneHotEncoder(OpRunAiOnnxMl):
@@ -16,7 +16,7 @@ class OneHotEncoder(OpRunAiOnnxMl):
             raise RuntimeError("No encoding was defined.")
 
         shape = x.shape
-        new_shape = shape + (len(classes),)
+        new_shape = (*shape, len(classes))
         res = np.zeros(new_shape, dtype=np.float32)
         if len(x.shape) == 1:
             for i, v in enumerate(x):

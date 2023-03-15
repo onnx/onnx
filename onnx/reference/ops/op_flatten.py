@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ._op import OpRunUnary
+from onnx.reference.ops._op import OpRunUnary
 
 
 class Flatten(OpRunUnary):

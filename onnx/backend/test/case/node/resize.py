@@ -1,329 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Callable, List, Optional, Text
-
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
-
-
-def cartesian(arrays: List[np.ndarray], out: np.ndarray = None) -> np.ndarray:
-    """
-    From https://stackoverflow.com/a/1235363
-    Generate a cartesian product of input arrays.
-    Parameters
-    ----------
-    arrays : list of array-like
-        1-D arrays to form the cartesian product of.
-    out : ndarray
-        Array to place the cartesian product in.
-    Returns
-    -------
-    out : ndarray
-        2-D array of shape (M, len(arrays)) containing cartesian products
-        formed of input arrays.
-    Examples
-    --------
-    >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
-    array([[1, 4, 6],
-           [1, 4, 7],
-           [1, 5, 6],
-           [1, 5, 7],
-           [2, 4, 6],
-           [2, 4, 7],
-           [2, 5, 6],
-           [2, 5, 7],
-           [3, 4, 6],
-           [3, 4, 7],
-           [3, 5, 6],
-           [3, 5, 7]])
-    """
-
-    arrays = [np.asarray(x) for x in arrays]
-    dtype = arrays[0].dtype
-
-    n = np.prod([x.size for x in arrays])
-    if out is None:
-        out = np.zeros([n, len(arrays)], dtype=dtype)
-
-    m = n // arrays[0].size
-    out[:, 0] = np.repeat(arrays[0], m)
-    if arrays[1:]:
-        cartesian(arrays[1:], out=out[0:m, 1:])
-        for j in range(1, arrays[0].size):
-            out[j * m : (j + 1) * m, 1:] = out[0:m, 1:]
-    return out
-
-
-def interpolate_1d_with_x(
-    data: np.ndarray,
-    scale_factor: float,
-    x: float,
-    get_coeffs: Callable[[float, float], np.ndarray],
-    roi: np.ndarray = None,
-    extrapolation_value: float = 0.0,
-    coordinate_transformation_mode: str = "half_pixel",
-    exclude_outside: bool = False,
-) -> np.ndarray:
-    def get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
-        """
-        Return the n nearest indexes to x among [0, limit), prefer the indexes smaller than x.
-        As a result, the ratio must be in (0, 1]
-        Examples:
-        get_neighbor_idxes(4, 2, 10) == [3, 4]
-        get_neighbor_idxes(4, 3, 10) == [3, 4, 5]
-        get_neighbor_idxes(4.4, 3, 10) == [3, 4, 5]
-        get_neighbor_idxes(4.5, 3, 10) == [3, 4, 5]
-        get_neighbor_idxes(4.6, 3, 10) == [4, 5, 6]
-        get_neighbor_idxes(4.4, 1, 10) == [4]
-        get_neighbor_idxes(4.6, 1, 10) == [5]
-        :param x:
-        :param n: the number of the wanted indexes
-        :param limit: the maximum value of index
-        :return: An np.array containing n nearest indexes in ascending order
-        """
-        idxes = sorted(range(limit), key=lambda idx: (abs(x - idx), idx))[:n]
-        idxes = sorted(idxes)
-        return np.array(idxes)
-
-    def get_neighbor(x: float, n: int, data: np.ndarray) -> np.ndarray:
-        """
-        Pad `data` in 'edge' mode, and get n nearest elements in the padded array and their indexes in the original
-        array
-        :param x: center index (in the unpadded coordinate system) of the found nearest elements.
-        :param n: the number of neighbors.
-        :param data: the array
-        :return: A tuple containing the indexes of neighbor elements (the index can be smaller than 0 or higher than
-        len(data)) and the value of these elements
-        """
-        pad_width = np.ceil(n / 2).astype(int)
-        padded = np.pad(data, pad_width, mode="edge")
-        x += pad_width
-
-        idxes = get_neighbor_idxes(x, n, len(padded))
-        ret = padded[idxes]
-        return idxes - pad_width, ret
-
-    input_width = len(data)
-    output_width = scale_factor * input_width
-    if coordinate_transformation_mode == "align_corners":
-        if output_width == 1:
-            x_ori = 0.0
-        else:
-            x_ori = x * (input_width - 1) / (output_width - 1)
-    elif coordinate_transformation_mode == "asymmetric":
-        x_ori = x / scale_factor
-    elif coordinate_transformation_mode == "tf_crop_and_resize":
-        if output_width == 1:
-            x_ori = (roi[1] - roi[0]) * (input_width - 1) / 2
-        else:
-            x_ori = x * (roi[1] - roi[0]) * (input_width - 1) / (output_width - 1)
-        x_ori += roi[0] * (input_width - 1)
-        # Return extrapolation_value directly as what TF CropAndResize does
-        if x_ori < 0 or x_ori > input_width - 1:
-            return extrapolation_value
-    elif coordinate_transformation_mode == "pytorch_half_pixel":
-        if output_width == 1:
-            x_ori = -0.5
-        else:
-            x_ori = (x + 0.5) / scale_factor - 0.5
-    elif coordinate_transformation_mode == "half_pixel":
-        x_ori = (x + 0.5) / scale_factor - 0.5
-    else:
-        raise ValueError(
-            f"invalid coordinate_transformation_mode: {coordinate_transformation_mode}"
-        )
-    x_ori_int = np.floor(x_ori).astype(int).item()
-
-    # ratio must be in (0, 1] since we prefer the pixel on the left of `x_ori`
-    if x_ori.is_integer():
-        ratio = 1
-    else:
-        ratio = x_ori - x_ori_int
-
-    coeffs = get_coeffs(ratio, scale_factor)
-    n = len(coeffs)
-
-    idxes, points = get_neighbor(x_ori, n, data)
-
-    if exclude_outside:
-        for i, idx in enumerate(idxes):
-            if idx < 0 or idx >= input_width:
-                coeffs[i] = 0
-        coeffs /= sum(coeffs)
-
-    return np.dot(coeffs, points).item()
-
-
-def interpolate_nd_with_x(
-    data: np.ndarray,
-    n: int,
-    scale_factors: List[float],
-    x: List[float],
-    get_coeffs: Callable[[float, float], np.ndarray],
-    roi: np.ndarray = None,
-    **kwargs: Any,
-) -> np.ndarray:
-    if n == 1:
-        return interpolate_1d_with_x(
-            data, scale_factors[0], x[0], get_coeffs, roi=roi, **kwargs
-        )
-    return interpolate_1d_with_x(
-        [
-            interpolate_nd_with_x(
-                data[i],
-                n - 1,
-                scale_factors[1:],
-                x[1:],
-                get_coeffs,
-                roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
-                **kwargs,
-            )
-            for i in range(data.shape[0])
-        ],
-        scale_factors[0],
-        x[0],
-        get_coeffs,
-        roi=None if roi is None else [roi[0], roi[n]],
-        **kwargs,
-    )
-
-
-def interpolate_nd(
-    data: np.ndarray,
-    get_coeffs: Callable[[float, float], np.ndarray],
-    output_size: Optional[List[int]] = None,
-    scale_factors: Optional[List[float]] = None,
-    axes: Optional[List[int]] = None,
-    roi: np.ndarray = None,
-    keep_aspect_ratio_policy: Optional[Text] = "stretch",
-    **kwargs: Any,
-) -> np.ndarray:
-    def get_all_coords(data: np.ndarray) -> np.ndarray:
-        return cartesian([list(range(data.shape[i])) for i in range(len(data.shape))])
-
-    assert output_size is not None or scale_factors is not None
-
-    r = len(data.shape)
-    if axes is not None:
-        if scale_factors is not None:
-            new_scale_factors = [1.0] * r
-            for i, d in enumerate(axes):
-                new_scale_factors[d] = scale_factors[i]
-            scale_factors = new_scale_factors
-
-        if output_size is not None:
-            new_output_size = [data.shape[i] for i in range(r)]
-            for i, d in enumerate(axes):
-                new_output_size[d] = output_size[i]
-            output_size = new_output_size
-
-        if roi is not None:
-            new_roi = ([0.0] * r) + ([1.0] * r)
-            naxes = len(axes)
-            for i, d in enumerate(axes):
-                new_roi[d] = roi[i]
-                new_roi[r + d] = roi[naxes + i]
-            roi = new_roi
-    else:
-        axes = list(range(r))
-
-    if output_size is not None:
-        scale_factors = [output_size[i] / data.shape[i] for i in range(r)]
-        if keep_aspect_ratio_policy != "stretch":
-            if keep_aspect_ratio_policy == "not_larger":
-                scale = np.array(scale_factors)[axes].min()
-            elif keep_aspect_ratio_policy == "not_smaller":
-                scale = np.array(scale_factors)[axes].max()
-            else:
-                raise ValueError(
-                    f"invalid keep_aspect_ratio_policy: {keep_aspect_ratio_policy}"
-                )
-
-            scale_factors = [scale if i in axes else 1.0 for i in range(r)]
-
-            def round_half_up(x: float) -> int:
-                return int(x + 0.5)
-
-            output_size = [
-                round_half_up(scale * data.shape[i]) if i in axes else data.shape[i]
-                for i in range(r)
-            ]
-
-    else:
-        output_size = (scale_factors * np.array(data.shape)).astype(int)
-
-    assert scale_factors is not None
-
-    ret = np.zeros(output_size)
-    for x in get_all_coords(ret):
-        ret[tuple(x)] = interpolate_nd_with_x(
-            data, len(data.shape), scale_factors, x, get_coeffs, roi=roi, **kwargs
-        )
-    return ret
-
-
-def cubic_coeffs(ratio: float, A: float = -0.75) -> np.ndarray:
-    coeffs = [
-        ((A * (ratio + 1) - 5 * A) * (ratio + 1) + 8 * A) * (ratio + 1) - 4 * A,
-        ((A + 2) * ratio - (A + 3)) * ratio * ratio + 1,
-        ((A + 2) * (1 - ratio) - (A + 3)) * (1 - ratio) * (1 - ratio) + 1,
-        ((A * ((1 - ratio) + 1) - 5 * A) * ((1 - ratio) + 1) + 8 * A)
-        * ((1 - ratio) + 1)
-        - 4 * A,
-    ]
-    return np.array(coeffs)
-
-
-def cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.ndarray:
-    if scale > 1.0:  # Antialias is applied when downsampling
-        scale = 1.0
-
-    def W(x: float) -> float:
-        x = abs(x)
-        x_2 = x * x
-        x_3 = x * x_2
-        if x <= 1:
-            return (A + 2) * x_3 - (A + 3) * x_2 + 1
-        if x < 2:
-            return A * x_3 - 5 * A * x_2 + 8 * A * x - 4 * A
-        return 0.0
-
-    i_start = int(np.floor(-2 / scale) + 1)
-    i_end = 2 - i_start
-    args = [scale * (i - ratio) for i in range(i_start, i_end)]
-    coeffs = [W(x) for x in args]
-    return np.array(coeffs) / sum(coeffs)
-
-
-def linear_coeffs(ratio: float) -> np.ndarray:
-    return np.array([1 - ratio, ratio])
-
-
-def linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
-    if scale > 1.0:  # Antialias is applied when downsampling
-        scale = 1.0
-    start = int(np.floor(-1 / scale) + 1)
-    footprint = 2 - 2 * start
-    args = (np.arange(start, start + footprint) - ratio) * scale
-    coeffs = np.clip(1 - np.abs(args), 0, 1)
-    return np.array(coeffs) / sum(coeffs)
-
-
-def nearest_coeffs(ratio: float, mode: Text = "round_prefer_floor") -> np.ndarray:
-    if type(ratio) == int or ratio.is_integer():
-        return np.array([0, 1])
-    elif mode == "round_prefer_floor":
-        return np.array([ratio <= 0.5, ratio > 0.5])
-    elif mode == "round_prefer_ceil":
-        return np.array([ratio < 0.5, ratio >= 0.5])
-    elif mode == "floor":
-        return np.array([1, 0])
-    elif mode == "ceil":
-        return np.array([0, 1])
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
+from onnx.reference.ops.op_resize import _cubic_coeffs as cubic_coeffs
+from onnx.reference.ops.op_resize import (
+    _cubic_coeffs_antialias as cubic_coeffs_antialias,
+)
+from onnx.reference.ops.op_resize import _interpolate_nd as interpolate_nd
+from onnx.reference.ops.op_resize import _linear_coeffs as linear_coeffs
+from onnx.reference.ops.op_resize import (
+    _linear_coeffs_antialias as linear_coeffs_antialias,
+)
+from onnx.reference.ops.op_resize import _nearest_coeffs as nearest_coeffs
 
 
 class Resize(Base):
@@ -1958,4 +1649,63 @@ class Resize(Base):
             inputs=[data, sizes],
             outputs=[output],
             name="test_resize_downsample_sizes_nearest_not_smaller",
+        )
+
+    @staticmethod
+    def export_resize_downsample_scales_linear_half_pixel_symmetric() -> None:
+        node = onnx.helper.make_node(
+            "Resize",
+            inputs=["X", "", "scales"],
+            outputs=["Y"],
+            mode="linear",
+            coordinate_transformation_mode="half_pixel_symmetric",
+        )
+
+        data = np.array([[[[1, 2, 3, 4]]]], dtype=np.float32)
+        scales = np.array([1.0, 1.0, 1.0, 0.6], dtype=np.float32)
+
+        # [[[[1.6666667, 3.3333333]]]]
+        output = interpolate_nd(
+            data,
+            lambda x, _: linear_coeffs(x),
+            scale_factors=scales,
+            coordinate_transformation_mode="half_pixel_symmetric",
+        ).astype(np.float32)
+
+        expect(
+            node,
+            inputs=[data, scales],
+            outputs=[output],
+            name="test_resize_downsample_scales_linear_half_pixel_symmetric",
+        )
+
+    @staticmethod
+    def export_resize_upsample_scales_linear_half_pixel_symmetric() -> None:
+        node = onnx.helper.make_node(
+            "Resize",
+            inputs=["X", "", "scales"],
+            outputs=["Y"],
+            mode="linear",
+            coordinate_transformation_mode="half_pixel_symmetric",
+        )
+
+        data = np.array([[[[1, 2], [3, 4]]]], dtype=np.float32)
+        scales = np.array([1.0, 1.0, 2.3, 2.94], dtype=np.float32)
+
+        # [[[[1.        , 1.15986395, 1.5       , 1.84013605, 2.        ],
+        #    [1.56521738, 1.72508133, 2.06521738, 2.40535343, 2.56521738],
+        #    [2.43478262, 2.59464657, 2.93478262, 3.27491867, 3.43478262],
+        #    [3.        , 3.15986395, 3.5       , 3.84013605, 4.        ]]]]
+        output = interpolate_nd(
+            data,
+            lambda x, _: linear_coeffs(x),
+            scale_factors=scales,
+            coordinate_transformation_mode="half_pixel_symmetric",
+        ).astype(np.float32)
+
+        expect(
+            node,
+            inputs=[data, scales],
+            outputs=[output],
+            name="test_resize_upsample_scales_linear_half_pixel_symmetric",
         )

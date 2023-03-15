@@ -68,6 +68,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.11.0", 8, 16, 3, 1),
     ("1.12.0", 8, 17, 3, 1),
     ("1.13.0", 8, 18, 3, 1),
+    ("1.13.1", 8, 18, 3, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -93,14 +94,25 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
 OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
 
 
-def find_min_ir_version_for(opsetidlist: List[OperatorSetIdProto]) -> int:
-    """Given list of opset ids, determine minimum IR version required"""
+def find_min_ir_version_for(
+    opsetidlist: List[OperatorSetIdProto], ignore_unknown: bool = False
+) -> int:
+    """Given list of opset ids, determine minimum IR version required.
+
+    Arguments:
+        opsetidlist (List[OperatorSetIdProto]): The list of OperatorSetIdProto
+        ignore_unknown (bool): If True, ignore unknown domain and return default min version for that domain.
+    Returns:
+        The minimum IR version required (integer)
+    """
     default_min_version = 3
 
     def find_min(domain: Union[str, None], version: int) -> int:
         key = (domain if domain else "ai.onnx", version)
         if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
+        if ignore_unknown:
+            return default_min_version
         raise ValueError("Unsupported opset-version.")
 
     if opsetidlist:
@@ -236,10 +248,13 @@ def make_function(
     nodes: Sequence[NodeProto],
     opset_imports: Sequence[OperatorSetIdProto],
     attributes: Optional[Sequence[str]] = None,
+    attribute_protos: Optional[Sequence[AttributeProto]] = None,
     doc_string: Optional[str] = None,
 ) -> FunctionProto:
     if attributes is None:
         attributes = []
+    if attribute_protos is None:
+        attribute_protos = []
     f = FunctionProto()
     f.domain = domain
     f.name = fname
@@ -248,6 +263,7 @@ def make_function(
     f.node.extend(nodes)
     f.opset_import.extend(opset_imports)
     f.attribute.extend(attributes)
+    f.attribute_proto.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
     return f
@@ -301,7 +317,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
 
 def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
     del model.metadata_props[:]
-    for (k, v) in dict_value.items():
+    for k, v in dict_value.items():
         entry = model.metadata_props.add()
         entry.key = k
         entry.value = v
@@ -691,11 +707,10 @@ def make_tensor_type_proto(
         # an empty shape!
         tensor_shape_proto.dim.extend([])
 
-        if shape_denotation:
-            if len(shape_denotation) != len(shape):
-                raise ValueError(
-                    "Invalid shape_denotation. Must be of the same length as shape."
-                )
+        if shape_denotation and len(shape_denotation) != len(shape):
+            raise ValueError(
+                "Invalid shape_denotation. Must be of the same length as shape."
+            )
 
         for i, d in enumerate(shape):
             dim = tensor_shape_proto.dim.add()
@@ -756,11 +771,10 @@ def make_sparse_tensor_type_proto(
         # an empty shape!
         sparse_tensor_shape_proto.dim.extend([])
 
-        if shape_denotation:
-            if len(shape_denotation) != len(shape):
-                raise ValueError(
-                    "Invalid shape_denotation. Must be of the same length as shape."
-                )
+        if shape_denotation and len(shape_denotation) != len(shape):
+            raise ValueError(
+                "Invalid shape_denotation. Must be of the same length as shape."
+            )
 
         for i, d in enumerate(shape):
             dim = sparse_tensor_shape_proto.dim.add()
@@ -884,7 +898,7 @@ def printable_attribute(
     def str_int(i: int) -> str:
         return str(i)
 
-    _T = TypeVar("_T")  # noqa
+    _T = TypeVar("_T")
 
     def str_list(str_elem: Callable[[_T], str], xs: Sequence[_T]) -> str:
         return "[" + ", ".join(map(str_elem, xs)) + "]"

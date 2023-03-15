@@ -14,10 +14,6 @@ supporting all the pieces of the model. If it is not the
 case, the missing parts must be implemented in ONNX.
 That may be very time consuming.
 
-.. contents::
-    :local:
-    :depth: 1
-
 What is a converting library?
 =============================
 

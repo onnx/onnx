@@ -1,6 +1,6 @@
 from typing import Dict, Optional, Sequence, Set, Tuple, overload
 
-from onnx import AttributeProto
+from onnx import AttributeProto, FunctionProto
 
 class SchemaError(Exception): ...
 
@@ -51,6 +51,8 @@ class OpSchema:
         input_data: Dict[str, bytes],
         input_sparse_data: Dict[str, bytes],
     ) -> Dict[str, bytes]: ...
+    @property
+    def function_body(self) -> FunctionProto: ...
 
     class TypeConstraintParam:
         @property

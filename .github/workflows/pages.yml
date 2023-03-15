@@ -27,13 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
         with:
           python-version: '3.10'
       - name: Setup Pages
-        uses: actions/configure-pages@v2
+        uses: actions/configure-pages@fc89b04e7d263ef510d9e77d3a1d088fb2688522 # v3.0.4
       - name: Install Dependencies
         run: |
           python -m pip install --quiet --upgrade pip setuptools wheel
@@ -51,9 +51,9 @@ jobs:
           cd docs/docsgen
           make html
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@253fd476ed429e83b7aae64a92a75b4ceb1a17cf # v1.0.7
         with:
           path: 'docs/docsgen/build/html'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@497da40f5225e762159b457c9ae5d6f75a136f5c # v1.2.5

@@ -102,7 +102,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,
-    13,
+    19,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("equal"))
         .TypeConstraint(
@@ -119,8 +119,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float16)",
              "tensor(float)",
              "tensor(double)",
-             "tensor(bfloat16)"},
-            "Constrain input types to all numeric tensors.")
+             "tensor(bfloat16)",
+             "tensor(string)"},
+            "Constrain input types to all (non-complex) tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor."));
 
 static const char* Not_ver1_doc = R"DOC(

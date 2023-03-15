@@ -3,8 +3,12 @@
 
 import numpy as np
 
-from ._common_classifier import compute_probit, compute_softmax_zero, expit
-from ._op_run_aionnxml import OpRunAiOnnxMl
+from onnx.reference.ops.aionnxml._common_classifier import (
+    compute_probit,
+    compute_softmax_zero,
+    expit,
+)
+from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class LinearClassifier(OpRunAiOnnxMl):

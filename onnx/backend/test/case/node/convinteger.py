@@ -3,15 +3,13 @@
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class ConvInteger(Base):
     @staticmethod
     def export_without_padding() -> None:
-
         x = (
             np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
             .astype(np.uint8)
@@ -36,7 +34,6 @@ class ConvInteger(Base):
 
     @staticmethod
     def export_with_padding() -> None:
-
         x = (
             np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
             .astype(np.uint8)

@@ -56,7 +56,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[0] if isinstance(shape, str) else shape for shape in input_shapes],
         )
         inputs: List[ValueInfoProto] = []
-        for (name, ttype, shape, is_seq, is_opt) in zip(
+        for name, ttype, shape, is_seq, is_opt in zip(
             input_names, input_types, input_shapes_cast, is_sequence, is_optional
         ):
             if name != "":
@@ -84,7 +84,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[0] if isinstance(shape, str) else shape for shape in output_shapes],
         )
         outputs: List[ValueInfoProto] = []
-        for (name, ttype, shape, is_seq, is_opt) in zip(
+        for name, ttype, shape, is_seq, is_opt in zip(
             output_names, output_types, output_shapes_cast, is_sequence, is_optional
         ):
             if is_seq:

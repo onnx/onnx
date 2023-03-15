@@ -61,7 +61,9 @@ jobs:
       fi
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py --quiet install
+      # enable more sanitizer
+      export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+      python setup.py install
     displayName: 'Install ONNX and dependencies'
 
   - script: |
@@ -88,7 +90,7 @@ jobs:
       ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
-      pytest
+      pytest -sv
       if [ $? -ne 0 ]; then
         echo "pytest failed"
         exit 1
