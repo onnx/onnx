@@ -266,9 +266,6 @@ struct FunctionTypeChecker {
   std::string checkAll() {
     if (attribute_cases->size() > 0)
       forTypeVar(0);
-    else {
-      std::cout << "Skipping tests for " << schema.Name() << "\n";
-    }
     std::string all_errors = "";
     for (const std::string& error : errors)
       all_errors += error;
