@@ -139,7 +139,7 @@ struct FunctionOpAttributeMap {
     addTestCase("ReduceL1", 18, {}); // Use default-value for attributes
     addTestCase("ReduceL1", 18, {"keepdims = 0"});
     addTestCase("ReduceL1", 18, {"noop_with_empty_axes = 1"});
-    addTestCase("ReduceL2", 18, {}); 
+    addTestCase("ReduceL2", 18, {});
     addTestCase("ReduceL2", 18, {"noop_with_empty_axes = 1", "keepdims = 0"});
     addTestCase("ReduceSumSquare", 18, {});
     addTestCase("ReduceLogSumExp", 18, {});
@@ -170,7 +170,6 @@ struct FunctionOpAttributeMap {
       map[key_value].push_back(std::vector<AttributeProto>());
     }
     return map[key_value];
-
   }
 
   static FunctionOpAttributeMap& instance() {
@@ -200,7 +199,7 @@ struct FunctionTypeChecker {
     for (auto& pair : typeVarBindings) {
       ostr << pair.first << " = " << *pair.second << ", ";
     }
-    for (auto& attr: attrs) {
+    for (auto& attr : attrs) {
       ostr << attr << ", ";
     }
     ostr << "}\n" << error << "\n";
@@ -212,7 +211,7 @@ struct FunctionTypeChecker {
     for (auto& pair : typeVarBindings) {
       std::cout << pair.first << " = " << *pair.second << ", ";
     }
-    for (auto& attr: attrs) {
+    for (auto& attr : attrs) {
       std::cout << attr << ", ";
     }
     std::cout << "}\n";
