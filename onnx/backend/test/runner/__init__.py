@@ -32,7 +32,7 @@ import numpy as np
 
 import onnx
 import onnx.reference
-from onnx import ModelProto, NodeProto, TypeProto, ValueInfoProto, numpy_helper
+from onnx import ONNX_ML, ModelProto, NodeProto, TypeProto, ValueInfoProto, numpy_helper
 from onnx.backend.base import Backend
 from onnx.backend.test.case.test_case import TestCase
 from onnx.backend.test.loader import load_model_tests
@@ -361,6 +361,10 @@ class Runner:
                     model_dir = model_test.model_dir
                 model_pb_path = os.path.join(model_dir, "model.onnx")
                 use_dummy = False
+
+            if not ONNX_ML and "ai_onnx_ml" in model_dir:
+                return
+
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             if (
