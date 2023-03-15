@@ -1,0 +1,68 @@
+ir_version: 3
+producer_name: "backend-test"
+graph {
+  node {
+    input: "x"
+    output: "Softplus_test_softplus_example_expanded_function_exp_x"
+    op_type: "Exp"
+    domain: ""
+  }
+  node {
+    output: "Softplus_test_softplus_example_expanded_function_one"
+    op_type: "Constant"
+    attribute {
+      name: "value"
+      t {
+        data_type: 1
+        float_data: 1.0
+        name: ""
+      }
+      type: TENSOR
+    }
+    domain: ""
+  }
+  node {
+    input: "Softplus_test_softplus_example_expanded_function_exp_x"
+    input: "Softplus_test_softplus_example_expanded_function_one"
+    output: "Softplus_test_softplus_example_expanded_function_exp_x_add_one"
+    op_type: "Add"
+    domain: ""
+  }
+  node {
+    input: "Softplus_test_softplus_example_expanded_function_exp_x_add_one"
+    output: "y"
+    op_type: "Log"
+    domain: ""
+  }
+  name: "test_softplus_example_expanded"
+  input {
+    name: "x"
+    type {
+      tensor_type {
+        elem_type: 1
+        shape {
+          dim {
+            dim_value: 3
+          }
+        }
+      }
+    }
+  }
+  output {
+    name: "y"
+    type {
+      tensor_type {
+        elem_type: 1
+        shape {
+          dim {
+            dim_value: 3
+          }
+        }
+      }
+    }
+  }
+}
+opset_import {
+  domain: ""
+  version: 1
+}
