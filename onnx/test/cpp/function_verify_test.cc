@@ -8,6 +8,7 @@
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/parser.h"
+#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
@@ -134,14 +135,20 @@ struct FunctionOpAttributeMap {
     addTestCase("Elu", 6, {"alpha = 1.0"});
   }
 
-  const std::vector<AttributeValues>& getTestCases(const OpSchema& schema) const {
-    auto it = map.find(key(schema.domain(), schema.Name(), schema.SinceVersion()));
+  const std::vector<AttributeValues>& getTestCases(const OpSchema& schema) {
+    auto key_value = key(schema.domain(), schema.Name(), schema.SinceVersion());
+    auto it = map.find(key_value);
     if (it != map.end())
       return it->second;
-    return std::vector<AttributeValues>(); // return an empty vector.
+    if (schema.attributes().size() == 0) {
+      // Test with no-attributes
+      map[key_value].push_back(std::vector<AttributeProto>());
+    }
+    return map[key_value];
+
   }
 
-  static const FunctionOpAttributeMap& instance() {
+  static FunctionOpAttributeMap& instance() {
     static FunctionOpAttributeMap _instance;
     return _instance;
   }
@@ -162,14 +169,28 @@ struct FunctionTypeChecker {
 
   std::vector<std::string> errors;
 
-  void recordError(const std::string& error) {
+  void recordError(const std::string& error, AttributeValues attrs) {
     std::ostringstream ostr;
     ostr << "Type checking failed for instantiation {";
     for (auto& pair : typeVarBindings) {
-      ostr << pair.first << " = " << *pair.second;
+      ostr << pair.first << " = " << *pair.second << ", ";
+    }
+    for (auto& attr: attrs) {
+      ostr << attr << ", ";
     }
     ostr << "}\n" << error << "\n";
     errors.push_back(ostr.str());
+  }
+
+  void recordSuccess(AttributeValues attrs) {
+    std::cout << "Type checking succeeded for instantiation " << schema.Name() << ":" << schema.SinceVersion() << " {";
+    for (auto& pair : typeVarBindings) {
+      std::cout << pair.first << " = " << *pair.second << ", ";
+    }
+    for (auto& attr: attrs) {
+      std::cout << attr << ", ";
+    }
+    std::cout << "}\n";
   }
 
   // forTypeVar: This is used to iterate through all possible bindings of type-values
@@ -209,9 +230,10 @@ struct FunctionTypeChecker {
     for (auto& attribute_vals : *attribute_cases) {
       ONNX_TRY {
         auto output_types = shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
+        recordSuccess(attribute_vals);
       }
       ONNX_CATCH(ONNX_NAMESPACE::InferenceError & e) {
-        ONNX_HANDLE_EXCEPTION(([&]() { recordError(e.what()); }));
+        ONNX_HANDLE_EXCEPTION(([&]() { recordError(e.what(), attribute_vals); }));
       }
     }
   }
@@ -219,26 +241,13 @@ struct FunctionTypeChecker {
   std::string checkAll() {
     if (attribute_cases->size() > 0)
       forTypeVar(0);
+    else {
+      std::cout << "Skipping tests for " << schema.Name() << "\n";
+    }
     std::string all_errors = "";
     for (const std::string& error : errors)
       all_errors += error;
     return all_errors;
-  }
-
-  static void check(const std::string& op_name, int opset_version) {
-    auto* pSchema = OpSchemaRegistry::Schema(op_name, opset_version);
-    auto& schema = *pSchema;
-    if (!schema.HasFunction())
-      return;
-    std::vector<int> function_versions = schema.function_opset_versions();
-    for (int function_version : function_versions) {
-      auto function_body = schema.GetFunction(function_version);
-      if (!function_body)
-        continue;
-      FunctionTypeChecker checker(schema, *function_body);
-      auto all_errors = checker.checkAll();
-      ASSERT_EQ("", all_errors) << all_errors;
-    }
   }
 };
 
