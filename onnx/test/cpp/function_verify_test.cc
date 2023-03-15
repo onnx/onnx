@@ -133,6 +133,31 @@ struct FunctionOpAttributeMap {
 
   FunctionOpAttributeMap() {
     addTestCase("Elu", 6, {"alpha = 1.0"});
+    addTestCase("LeakyRelu", 16, {"alpha = 0.1"});
+    addTestCase("HardSigmoid", 6, {"alpha = 0.2", "beta=0.5"});
+    addTestCase("Selu", 6, {"alpha = 1.6", "gamma=1.05"});
+    addTestCase("ReduceL1", 18, {}); // Use default-value for attributes
+    addTestCase("ReduceL1", 18, {"keepdims = 0"});
+    addTestCase("ReduceL1", 18, {"noop_with_empty_axes = 1"});
+    addTestCase("ReduceL2", 18, {}); 
+    addTestCase("ReduceL2", 18, {"noop_with_empty_axes = 1", "keepdims = 0"});
+    addTestCase("ReduceSumSquare", 18, {});
+    addTestCase("ReduceLogSumExp", 18, {});
+    addTestCase("ThresholdedRelu", 10, {"alpha = 0.9"});
+    addTestCase("HannWindow", 17, {"output_datatype = 1", "periodic = 1"});
+    addTestCase("HammingWindow", 17, {"output_datatype = 1", "periodic = 1"});
+    addTestCase("BlackmanWindow", 17, {"output_datatype = 1", "periodic = 1"});
+    addTestCase("MeanValueNormalization", 13, {});
+
+    // The following test-cases fails, correctly so: Some clarification/changes required
+    // to handle unsigned integers or similar issues:
+    // addTestCase("Shrink", 9, {"bias = 0.0", "lambd = 0.5"});
+    // addTestCase("ReduceLogSum", 18, {});
+    // addTestCase("Range", 11, {});
+
+    // The following test-case fails because the checker doesn't support handling of
+    // default-values of attributes of function-ops
+    // addTestCase("ThresholdedRelu", 10, {});
   }
 
   const std::vector<AttributeValues>& getTestCases(const OpSchema& schema) {
@@ -171,7 +196,7 @@ struct FunctionTypeChecker {
 
   void recordError(const std::string& error, AttributeValues attrs) {
     std::ostringstream ostr;
-    ostr << "Type checking failed for instantiation {";
+    ostr << "Type checking failed for instantiation " << schema.Name() << ":" << schema.SinceVersion() << " {";
     for (auto& pair : typeVarBindings) {
       ostr << pair.first << " = " << *pair.second << ", ";
     }
@@ -230,7 +255,7 @@ struct FunctionTypeChecker {
     for (auto& attribute_vals : *attribute_cases) {
       ONNX_TRY {
         auto output_types = shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
-        recordSuccess(attribute_vals);
+        // recordSuccess(attribute_vals);
       }
       ONNX_CATCH(ONNX_NAMESPACE::InferenceError & e) {
         ONNX_HANDLE_EXCEPTION(([&]() { recordError(e.what(), attribute_vals); }));
@@ -280,7 +305,8 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int
 
   FunctionTypeChecker type_checker(op, *function_proto);
   auto type_errors = type_checker.checkAll();
-  ASSERT_EQ("", type_errors) << type_errors;
+  auto success = (type_errors == "");
+  ASSERT_TRUE(success) << type_errors;
 }
 
 // Verify registered ops with function body has compatible
