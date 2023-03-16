@@ -42,11 +42,8 @@ class Softmax_12_13 final : public Adapter {
       flatten->i_(kaxis, old_axis);
       node->replaceInput(0, flatten->output());
 
-      if (old_axis == 0) {
-        node->i_(kaxis, 1);
-      } else {
-        node->i_(kaxis, -1);
-      }
+      // Softmax along the last axis of the flattened 2D tensor
+      node->i_(kaxis, -1);
 
       // Insert Reshape node after softmax
       const std::string original_output_name = node->output()->uniqueName();
