@@ -372,28 +372,47 @@ def load_composite_model(
     :return: ModelProto or None
     """
     preproc = load(preproc_model, preproc_repo, opset, force_reload, silent)
+    if preproc is None:
+        raise RuntimeError(f"Could not load the preprocessing model: {preproc_model}")
     network = load(network_model, network_repo, opset, force_reload, silent)
-    if preproc is None or network is None:
-        return None
+    if network is None:
+        raise RuntimeError(f"Could not load the network model: {network_model}")
 
-    network_opset_ver = 0
+    all_domains: Set[str] = set()
+    domains_to_ver_network: Dict[str, int] = {}
+    domains_to_ver_preproc: Dict[str, int] = {}
+
     for opset_import_entry in network.opset_import:
-        if (
-            opset_import_entry is not None
-            and opset_import_entry.domain == ""
-            and opset_import_entry.version > network_opset_ver
-        ):
-            network_opset_ver = opset_import_entry.version
+        domain = (
+            "ai.onnx" if opset_import_entry.domain == "" else opset_import_entry.domain
+        )
+        all_domains.add(domain)
+        domains_to_ver_network[domain] = opset_import_entry.version
 
-    preproc_opset_ver = 0
     for opset_import_entry in preproc.opset_import:
-        if (
-            opset_import_entry is not None
-            and opset_import_entry.domain == ""
-            and opset_import_entry.version > preproc_opset_ver
-        ):
-            preproc_opset_ver = opset_import_entry.version
+        domain = (
+            "ai.onnx" if opset_import_entry.domain == "" else opset_import_entry.domain
+        )
+        all_domains.add(domain)
+        domains_to_ver_preproc[domain] = opset_import_entry.version
 
+    preproc_opset_ver = -1
+    network_opset_ver = -1
+    for domain in all_domains:
+        if domain == "ai.onnx":
+            preproc_opset_ver = domains_to_ver_preproc[domain]
+            network_opset_ver = domains_to_ver_network[domain]
+        elif (
+            domain in domains_to_ver_preproc
+            and domain in domains_to_ver_network
+            and domains_to_ver_preproc[domain] != domains_to_ver_preproc[domain]
+        ):
+            raise ValueError(
+                f"Can not merge {preproc_model} and {network_model} because they contain "
+                f"different opset versions for domain {domain} ({domains_to_ver_preproc[domain]}) "
+                f"and {domains_to_ver_network[domain]}). Only the default domain can be "
+                "automatically converted to the highest version of the two."
+            )
     if preproc_opset_ver > network_opset_ver:
         network = onnx.version_converter.convert_version(network, preproc_opset_ver)
         network.ir_version = preproc.ir_version
@@ -408,5 +427,4 @@ def load_composite_model(
         io_map.append((out_entry.name, in_entry.name))
 
     model_w_preproc = onnx.compose.merge_models(preproc, network, io_map=io_map)
-    onnx.checker.check_model(model_w_preproc)
     return model_w_preproc
