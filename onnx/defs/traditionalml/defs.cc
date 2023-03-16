@@ -85,7 +85,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
             "The input must be a tensor of a numeric type. The output will be of the same tensor type.")
-        .Attr("threshold", "Values greater than this are mapped to 1, others to 0.", AttributeProto::FLOAT, 0.f));
+        .Attr("threshold", "Values greater than this are mapped to 1, others to 0.", AttributeProto::FLOAT, 0.f)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
 static const char* CastMap_ver1_doc = R"DOC(
     Converts a map to a tensor.<br>The map key must be an int64 and the values will be ordered

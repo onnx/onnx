@@ -98,6 +98,7 @@ is_formatter = true
 code = 'MYPY'
 include_patterns = [
     'onnx/**/*.py',
+    'tools/**/*.py',
 ]
 exclude_patterns = [
     'onnx/backend/test/**',
