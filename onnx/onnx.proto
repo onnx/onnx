@@ -553,7 +553,7 @@ message TensorProto {
   // When this field is present, the data_type field MUST be FLOAT or COMPLEX64.
   repeated float float_data = 4 [packed = true];
 
-  // For int32, uint8, int8, uint16, int16, bool, and float16 values
+  // For int32, uint8, int8, uint16, int16, bool, float8, and float16 values
   // float16 values must be bit-wise converted to an uint16_t prior
   // to writing to the buffer.
   // When this field is present, the data_type field MUST be
