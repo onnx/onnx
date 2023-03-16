@@ -20,4 +20,9 @@ class ArrayFeatureExtractor(Base):
         x = np.arange(12).reshape((3, 4)).astype(np.float32)
         y = np.array([0, 1], dtype=np.int64)
         z = np.array([[0, 4, 8], [1, 5, 9]], dtype=np.float32).T
-        expect(node, inputs=[x, y], outputs=[z], name="test_ai_onnx_ml_array_feature_extractor")
+        expect(
+            node,
+            inputs=[x, y],
+            outputs=[z],
+            name="test_ai_onnx_ml_array_feature_extractor",
+        )
