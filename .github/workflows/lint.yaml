@@ -81,7 +81,7 @@ jobs:
         # Do not display on drafts to make reviewing easier
         if: github.event.pull_request.draft == false
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@32dc499307d133bb5085bae78498c0ac2cf762d5 # v2.2.5
+        uses: github/codeql-action/upload-sarif@168b99b3c22180941ae7dbdd5f5c9678ede476ba # v2.2.7
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif
