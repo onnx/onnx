@@ -22879,6 +22879,35 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
 
+### <a name="Identity-19"></a>**Identity-19**</a>
+
+  Identity operator
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : V</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : V</dt>
+<dd>Tensor to copy input into.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
+</dl>
+
 ### <a name="Pad-19"></a>**Pad-19**</a>
 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
@@ -23072,6 +23101,56 @@ This version of the operator has been available since version 19 of the default 
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit integer/float tensor.</dd>
 </dl>
 
+### <a name="Reshape-19"></a>**Reshape-19**</a>
+
+  Reshape the input tensor similar to numpy.reshape.
+  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
+  At most one dimension of the new shape can be -1. In this case, the value is
+  inferred from the size of the tensor and the remaining dimensions. A dimension
+  could also be 0, in which case the actual dimension value is unchanged (i.e. taken
+  from the input tensor). If 'allowzero' is set, and the new shape includes 0, the
+  dimension will be set explicitly to zero (i.e. not taken from input tensor).
+  Shape (second input) could be an empty shape, which means converting to a scalar.
+  The input tensor's shape and the output tensor's shape are required to have the same number of elements.
+
+  If the attribute 'allowzero' is set, it is invalid for the specified shape to
+  contain both a zero value and -1, as the value of the dimension corresponding
+  to -1 cannot be determined uniquely.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>allowzero</tt> : int (default is 0)</dt>
+<dd>(Optional) By default, when any value in the 'shape' input is equal to zero the corresponding dimension value is copied from the input tensor dynamically. allowzero=1 indicates that if any value in the 'shape' input is set to zero, the zero value is honored, similar to NumPy.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>An input tensor.</dd>
+<dt><tt>shape</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>Specified shape for output.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reshaped</tt> (differentiable) : T</dt>
+<dd>Reshaped data.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
 ### <a name="Resize-19"></a>**Resize-19**</a>
 
   Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
@@ -23202,6 +23281,114 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain roi type to float or double.</dd>
+</dl>
+
+### <a name="Shape-19"></a>**Shape-19**</a>
+
+  Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+  Optional attributes start and end can be used to compute a slice of the input tensor's shape.
+  If start axis is omitted, the slice starts from axis 0.
+  The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
+  If the end axis is omitted, the axes upto the last one will be included.
+  Negative axes indicate counting back from the last axis.
+  Note that axes will be clamped to the range [0, r-1], where r is the
+  rank of the input tensor if they are out-of-range (after adding r in the case of
+  negative axis). Thus, specifying any end value > r is equivalent to specifying an end
+  value of r, and specifying any start value < -r is equivalent to specifying a start
+  value of 0.
+
+  Examples:
+
+  ```
+  Input tensor with shape: [2, 3, 4]
+  No attributes specified.
+  Output: [2, 3, 4]
+  ```
+
+  ```
+  Input tensor with shape: [2, 3, 4]
+  start: -1
+  Output: [4]
+  ```
+
+  ```
+  Input tensor with shape: [2, 3, 4]
+  end: -1
+  Output: [2, 3]
+  ```
+
+  ```
+  Input tensor with shape: [2, 3, 4]
+  start: 1
+  end: 2
+  Output: [3]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>end</tt> : int</dt>
+<dd>(Optional) Ending axis for slicing the shape. Negative value means counting dimensions from the back. If omitted, sizes of all axes upto (including) the last one will be included.</dd>
+<dt><tt>start</tt> : int (default is 0)</dt>
+<dd>(Optional) Starting axis for slicing the shape. Default value is 0.Negative value means counting dimensions from the back.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>shape</tt> (non-differentiable) : T1</dt>
+<dd>Shape of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain output to int64 tensor.</dd>
+</dl>
+
+### <a name="Size-19"></a>**Size-19**</a>
+
+  Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> (non-differentiable) : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dd>Total number of elements of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
 # ai.onnx.preview.training
