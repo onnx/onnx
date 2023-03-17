@@ -127,6 +127,7 @@ def make_node(
     name: Optional[str] = None,
     doc_string: Optional[str] = None,
     domain: Optional[str] = None,
+    overload: Optional[str] = None,
     **kwargs: Any,
 ) -> NodeProto:
     """Construct a NodeProto.
@@ -155,6 +156,8 @@ def make_node(
         node.doc_string = doc_string
     if domain is not None:
         node.domain = domain
+    if overload is not None:
+        node.overload = overload
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
@@ -250,6 +253,7 @@ def make_function(
     attributes: Optional[Sequence[str]] = None,
     attribute_protos: Optional[Sequence[AttributeProto]] = None,
     doc_string: Optional[str] = None,
+    overload: Optional[str] = None,
 ) -> FunctionProto:
     if attributes is None:
         attributes = []
@@ -266,6 +270,8 @@ def make_function(
     f.attribute_proto.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
+    if overload is not None:
+        f.overload = overload
     return f
 
 

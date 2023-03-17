@@ -190,6 +190,7 @@ A serialized function (a _FunctionProto_) has the following properties:
 |---|---|---|
 name|string|The name of the function
 domain|string|The domain to which this function belongs
+overload|string|Part of unique id of function (added in IR version 9)
 doc_string|string|Human-readable documentation for this function. Markdown is allowed.
 attribute|string[]|The attribute parameters of the function
 attribute_proto|Attribute[]| (IR version 9+) The attribute parameters with default values of the function. A function attribute shall be represented either as a string attribute or an Attribute, not both.
@@ -198,9 +199,12 @@ output|string[]|The output parameters of the function.
 node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
 |opset_import|OperatorSetId|A collection of operator set identifiers used by the function implementation.
 
-The name and domain serve to identify the operator uniquely. An opset version is not explicitly
-identified in a FunctionProto, but it is implicitly determined by the opset version of the domain
-included in the model.
+The name and domain serve to identify the operator uniquely in IR versions upto 8. IR version adds the
+field overload, and the triple (name, domain, overload) acts as a unique-id across functions stored in
+a model. This is intended to support cases where distinct function-bodies are required for distinct
+calls to the function within the model.
+An opset version is not explicitly identified in a FunctionProto, but it is implicitly determined by
+the opset version of the domain included in the model.
 
 The input, output, attribute, and attribute_proto (added in IR version 9) constitute the signature part of the operator. No type information
 is explicitly included in the signature. The attribute_proto field describes attribute parameters of the function along with their default-value (when not specified by an call-site node), while the attribute field lists attribute parameters without a default-value. The names in these two lists must be distinct. When an attribute-parameter of the function is used in a node within the function, it is replaced by the actual parameter value specified for the attribute at a call-site node (of the function) when such a attribute is specified, and it is replaced by the default-value if the attribute has a default-value specified, and it is omitted otherwise.
