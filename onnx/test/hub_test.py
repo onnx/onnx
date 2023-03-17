@@ -105,6 +105,15 @@ class TestModelHub(unittest.TestCase):
             member="test_data_set_0", container=files, msg="Test data not found"
         )
 
+    def test_model_with_preprocessing(self) -> None:
+        # TODO(janton): remove preprocessing_repo once https://github.com/onnx/models/pull/594 is merged
+        model = hub.load_composite_model(
+            "ResNet50-fp32",
+            preprocessing_model="ResNet-preproc",
+            preprocessing_repo="jantonguirao/models:resnet_preproc",
+        )
+        self.assertIsInstance(model, ModelProto)
+
 
 if __name__ == "__main__":
     unittest.main()
