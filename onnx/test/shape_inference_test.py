@@ -7294,7 +7294,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info(
-                    "y", TensorProto.FLOAT, ("N", "C",  "D_out", "H_out", "W_out")
+                    "y", TensorProto.FLOAT, ("N", "C", "D_out", "H_out", "W_out")
                 )
             ],
         )  # type: ignore
@@ -7321,7 +7321,6 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", None, None))],
         )  # type: ignore
 
-
     def test_gridsample_3d_no_dim(self) -> None:
         graph = self._make_graph(
             [
@@ -7341,7 +7340,11 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph,
-            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", None, None, None))],
+            [
+                make_tensor_value_info(
+                    "y", TensorProto.FLOAT, ("N", "C", None, None, None)
+                )
+            ],
         )  # type: ignore
 
     def test_sequence_map_identity_known_dims(self):  # type: () -> None
