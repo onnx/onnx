@@ -1,19 +1,15 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+# SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class InstanceNormalization(Base):
-
     @staticmethod
-    def export():  # type: () -> None
+    def export() -> None:
         def _instancenorm_test_mode(x, s, bias, epsilon=1e-5):  # type: ignore
             dims_x = len(x.shape)
             axis = tuple(range(2, dims_x))
@@ -31,14 +27,13 @@ class InstanceNormalization(Base):
         y = _instancenorm_test_mode(x, s, bias).astype(np.float32)
 
         node = onnx.helper.make_node(
-            'InstanceNormalization',
-            inputs=['x', 's', 'bias'],
-            outputs=['y'],
+            "InstanceNormalization",
+            inputs=["x", "s", "bias"],
+            outputs=["y"],
         )
 
         # output size: (1, 2, 1, 3)
-        expect(node, inputs=[x, s, bias], outputs=[y],
-               name='test_instancenorm_example')
+        expect(node, inputs=[x, s, bias], outputs=[y], name="test_instancenorm_example")
 
         # input size: (2, 3, 4, 5)
         x = np.random.randn(2, 3, 4, 5).astype(np.float32)
@@ -48,12 +43,11 @@ class InstanceNormalization(Base):
         y = _instancenorm_test_mode(x, s, bias, epsilon).astype(np.float32)
 
         node = onnx.helper.make_node(
-            'InstanceNormalization',
-            inputs=['x', 's', 'bias'],
-            outputs=['y'],
+            "InstanceNormalization",
+            inputs=["x", "s", "bias"],
+            outputs=["y"],
             epsilon=epsilon,
         )
 
         # output size: (2, 3, 4, 5)
-        expect(node, inputs=[x, s, bias], outputs=[y],
-               name='test_instancenorm_epsilon')
+        expect(node, inputs=[x, s, bias], outputs=[y], name="test_instancenorm_epsilon")

@@ -1,3 +1,4 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
 # Test Coverage Report (ONNX-ML Operators)
 ## Outlines
 * [Node Test Coverage](#node-test-coverage)
@@ -5,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 0/18 (0.00%, 0 generators excluded) common operators.
+Node tests have covered 1/18 (5.56%, 0 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -15,13 +16,33 @@ Node tests have covered 0/0 (N/A) experimental operators.
 * [No Cover Experimental Operators](#no-cover-experimental-operators)
 
 ## &#x1F49A;Covered Common Operators
+### Binarizer
+There are 1 test cases, listed as following:
+<details>
+<summary>binarizer</summary>
+
+```python
+threshold = 1.0
+node = onnx.helper.make_node(
+    "Binarizer",
+    inputs=["X"],
+    outputs=["Y"],
+    threshold=threshold,
+    domain="ai.onnx.ml",
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = compute_binarizer(x, threshold)[0]
+
+expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
+```
+
+</details>
+
+
 <br/>
 
 ## &#x1F494;No Cover Common Operators
 ### ArrayFeatureExtractor (call for test cases)
-
-
-### Binarizer (call for test cases)
 
 
 ### CastMap (call for test cases)
@@ -81,6 +102,6 @@ Node tests have covered 0/0 (N/A) experimental operators.
 <br/>
 
 # Model Test Coverage
-## To be filled.
+No model tests present for selected domain
 # Overall Test Coverage
 ## To be filled.

@@ -1,3 +1,5 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Broadcasting in ONNX
 
 In ONNX, element-wise operators can take inputs with different shape,
@@ -29,17 +31,21 @@ Multidirectional broadcasting is the same as [Numpy's broadcasting](https://docs
 
 Multidirectional broadcasting is supported by the following operators in ONNX:
 - [Add](Operators.md#Add)
-- [Div](Operators.md#Div)
-- [Mul](Operators.md#Mul)
-- [Pow](Operators.md#Pow)
-- [Sub](Operators.md#Sub)
 - [And](Operators.md#And)
-- [Or](Operators.md#Or)
-- [Xor](Operators.md#Xor)
+- [Div](Operators.md#Div)
 - [Equal](Operators.md#Equal)
 - [Greater](Operators.md#Greater)
 - [Less](Operators.md#Less)
-
+- [Max](Operators.md#Max)
+- [Mean](Operators.md#Mean)
+- [Min](Operators.md#Min)
+- [Mul](Operators.md#Mul)
+- [Or](Operators.md#Or)
+- [Pow](Operators.md#Pow)
+- [Sub](Operators.md#Sub)
+- [Sum](Operators.md#Sum)
+- [Where](Operators.md#Where)
+- [Xor](Operators.md#Xor)
 
 ## Unidirectional Broadcasting
 
@@ -51,7 +57,7 @@ each dimensions is either a common length or B's length is 1.
 - Tensor B has too few dimensions, and B can have its shapes prepended
 with a dimension of length 1 to satisfy property 2.
 
-When unidirectional broadcasting happens, the output's shape is the same as 
+When unidirectional broadcasting happens, the output's shape is the same as
 the shape of A (i.e., the larger shape of two input tensors).
 
 In the following examples, tensor B is unidirectional broadcastable to tensor A:

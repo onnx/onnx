@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 set(UT_NAME ${PROJECT_NAME}_gtests)
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
@@ -5,27 +7,10 @@ include(${ONNX_ROOT}/cmake/Utils.cmake)
 
 find_package(Threads)
 
-function(add_whole_archive_flag lib output_var)
-  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    set(${output_var} -Wl,-force_load,$<TARGET_FILE:${lib}> PARENT_SCOPE)
-  elseif(MSVC)
-    # In MSVC, we will add whole archive in default.
-    set(${output_var} -WHOLEARCHIVE:$<SHELL_PATH:$<TARGET_FILE:${lib}>>
-        PARENT_SCOPE)
-  else()
-    # Assume everything else is like gcc
-    set(${output_var}
-        "-Wl,--whole-archive $<TARGET_FILE:${lib}> -Wl,--no-whole-archive"
-        PARENT_SCOPE)
-  endif()
-endfunction()
-
 set(${UT_NAME}_libs ${googletest_STATIC_LIBRARIES})
 
-add_whole_archive_flag(onnx tmp)
-list(APPEND ${UT_NAME}_libs ${tmp})
+list(APPEND ${UT_NAME}_libs onnx)
 list(APPEND ${UT_NAME}_libs onnx_proto)
-list(APPEND ${UT_NAME}_libs onnxifi_loader)
 list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
@@ -66,7 +51,20 @@ function(AddTest)
                                            # unsigned type, result still
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
+                                 /wd4244 # 'argument': conversion from 'google::
+                                         # protobuf::uint64' to 'int', possible 
+                                         # loss of data
+                                 /wd4267 # Conversion from 'size_t' to 'int', 
+                                         # possible loss of data
+                                 /wd4996 # The second parameter is ignored.
                            )
+      if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+        target_compile_options(${_UT_TARGET}
+                               PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
+                                               # have dll-interface to be used by
+                                               # clients of class 'type2'
+                              )
+      endif()
   endif()
 
   set(TEST_ARGS)

@@ -1,0 +1,15 @@
+numpy
+protobuf
+typing-extensions
+pytest
+pytest-cov
+parameterized
+nbval
+wheel
+jupyter
+setuptools
+twine
+# Dependencies for linting. Versions match those in setup.py.
+lintrunner
+lintrunner-adapters
+# Edit additional linter dependencies in .lintrunner.toml.

@@ -1,10 +1,12 @@
+<!--- SPDX-License-Identifier: Apache-2.0 -->
+
 # Type Denotation
 
 Type Denotation is used to describe semantic information around what the inputs and outputs are.    It is stored on the TypeProto message.
 
 ## Motivation
 
-The motivation of such a mechanism can be illustrated via a simple example. In the the neural network SqueezeNet, it takes in an NCHW image input float[1,3,244,244] and produces a output float[1,1000,1,1]:
+The motivation of such a mechanism can be illustrated via a simple example. In the neural network SqueezeNet, it takes in an NCHW image input float[1,3,244,244] and produces a output float[1,1000,1,1]:
 
 ```
 input_in_NCHW -> data_0 -> SqueezeNet() -> output_softmaxout_1
@@ -17,9 +19,9 @@ In order to run this model the user needs a lot of information.    In this case 
 * the pixel data is 8 bit
 * the pixel data is normalized as values 0-255
 
-This proposal consists of three key components to provide all of this information: 
-* Type Denotation, 
-* [Dimension Denotation](DimensionDenotation.md), 
+This proposal consists of three key components to provide all of this information:
+* Type Denotation,
+* [Dimension Denotation](DimensionDenotation.md),
 * [Model Metadata](MetadataProps.md).
 
 ## Type Denotation Definition
@@ -30,7 +32,7 @@ Specifically, in our first proposal we define the following set of standard deno
 
 0. `TENSOR` describes that a type holds a generic tensor using the standard TypeProto message.
 1. `IMAGE` describes that a type holds an image.  You can use dimension denotation to learn more about the layout of the image, and also the optional model metadata_props.
-2. `AUDIO` describes that a type holds an audio clip.   
+2. `AUDIO` describes that a type holds an audio clip.
 3. `TEXT` describes that a type holds a block of text.
 
 Model authors SHOULD add type denotation to inputs and outputs for the model as appropriate.

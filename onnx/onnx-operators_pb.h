@@ -1,5 +1,6 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 

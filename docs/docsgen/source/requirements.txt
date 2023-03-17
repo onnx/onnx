@@ -1,0 +1,14 @@
+
+furo
+markupsafe
+matplotlib
+myst-parser
+onnx
+onnxruntime
+pillow
+pydot
+sphinx-copybutton
+sphinx-exec-code
+sphinx-gallery
+sphinx-tabs
+sphinx

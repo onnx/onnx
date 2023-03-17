@@ -1,9 +1,11 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
 #include <memory>
+#include <ostream>
 #include <string>
 
 namespace ONNX_NAMESPACE {
@@ -44,8 +46,8 @@ class Status {
     }
   }
 
-  Status(Status&& other) = default;
-  Status& operator=(Status&& other) = default;
+  Status(Status&&) = default;
+  Status& operator=(Status&&) = default;
   ~Status() = default;
 
   bool IsOK() const noexcept;
@@ -70,8 +72,7 @@ class Status {
 
  private:
   struct State {
-    State(StatusCategory cat_, int code_, const std::string& msg_)
-        : category(cat_), code(code_), msg(msg_) {}
+    State(StatusCategory cat_, int code_, std::string msg_) : category(cat_), code(code_), msg(std::move(msg_)) {}
 
     StatusCategory category = StatusCategory::NONE;
     int code = 0;

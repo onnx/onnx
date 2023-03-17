@@ -1,15 +1,12 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+# SPDX-License-Identifier: Apache-2.0
 
 import sys
+from typing import Dict, List, Tuple
 
-from .base import Snippets
-from .utils import import_recursive
-from typing import Dict, Text, List, Tuple
+from onnx.backend.test.case.base import Snippets
+from onnx.backend.test.case.utils import import_recursive
 
 
-def collect_snippets():  # type: () -> Dict[Text, List[Tuple[Text, Text]]]
+def collect_snippets() -> Dict[str, List[Tuple[str, str]]]:
     import_recursive(sys.modules[__name__])
     return Snippets

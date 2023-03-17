@@ -1,0 +1,72 @@
+name: Windows_No_Exception_CI
+
+on:
+   push:
+    branches: [ main, rel-* ]
+   pull_request:
+    branches: [ main, rel-* ]
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        architecture: ['x64']
+    steps:
+    - name: Checkout ONNX
+      uses: actions/checkout@dc323e67f16fb5f7663d20ff7941f27f5809e9b6 # v2.6.0
+      with:
+         path: ./onnx
+
+    - name: Checkout ONNX submodules
+      shell: bash
+      run: |
+         cd onnx
+         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+         git submodule sync --recursive
+         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@1ff57057b5cfdc39105cd07a01d78e9b0ea0c14c # v1.3.1
+      with:
+        msbuild-architecture: ${{ matrix.architecture }}
+
+    - name: Build and test ONNX binaries
+      run: |
+        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch ${{ matrix.architecture }}
+
+        cd onnx
+        echo "Build ONNX"
+        cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_DISABLE_EXCEPTIONS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -S . -B .setuptools-cmake-build\
+        cd .setuptools-cmake-build\
+        msbuild onnx.sln /m /p:Configuration=Release
+
+        echo "Run gtests"
+        Release\onnx_gtests.exe
+        if($lastexitcode -ne 0) {
+          EXIT 1
+        }
+
+        cd ..
+        git clean -xdf
+        echo "Build ONNX with non-static registration for testing selective ONNX schema loading"
+        cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -DONNX_DISABLE_STATIC_REGISTRATION=ON -S . -B .setuptools-cmake-build\
+
+        cd .setuptools-cmake-build\
+        msbuild onnx.sln /m /p:Configuration=Release
+
+        echo "Only test selective ONNX schema loading"
+        Release\onnx_gtests.exe --gtest_filter="SchemaRegistrationTest*"
+        if($lastexitcode -ne 0) {
+          EXIT 1
+        }

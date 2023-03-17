@@ -1,0 +1,135 @@
+trigger:
+- main
+
+jobs:
+- job: 'Test'
+  pool:
+    vmImage: 'Ubuntu-20.04'
+  strategy:
+    matrix:
+      py39-ml-debug:
+        python.version: '3.9'
+        onnx_ml: 1
+        onnx_debug: 1
+        documentation: 0
+      py38:
+        python.version: '3.8'
+        onnx_ml: 0
+        onnx_debug: 0
+        documentation: 0
+      py38-ml:
+        python.version: '3.8'
+        onnx_ml: 1
+        onnx_debug: 0
+        documentation: 1
+      py37:
+        python.version: '3.7'
+        onnx_ml: 0
+        onnx_debug: 0
+        documentation: 0
+      py37-ml:
+        python.version: '3.7'
+        onnx_ml: 1
+        onnx_debug: 0
+        documentation: 0
+    maxParallel: 6
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      addToPath: true
+
+  - script: |
+      python -m pip -q install virtualenv
+      python -m virtualenv venv
+      source venv/bin/activate
+
+      sudo apt-get install libprotobuf-dev protobuf-compiler
+      python -m pip install -q --upgrade pip
+      python -m pip install -q -r requirements-release.txt
+
+      sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
+
+      git submodule update --init --recursive
+      export ONNX_BUILD_TESTS=1
+      if [ '$(onnx_debug)' == '1' ]; then
+        export DEBUG=1
+      fi
+      if [ '$(onnx_ml)' == '1' ]; then
+        export ONNX_ML=1
+      fi
+      export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+      # enable more sanitizer
+      export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+      python setup.py install
+    displayName: 'Install ONNX and dependencies'
+
+  - script: |
+      source venv/bin/activate
+
+      python -m pip install -q -r requirements-dev.txt
+
+      # check auto-gen files up-to-date
+      python onnx/defs/gen_doc.py
+      python onnx/gen_proto.py -l
+      python onnx/gen_proto.py -l --ml
+      python onnx/backend/test/stat_coverage.py
+
+      git status
+      git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
+      if [ $? -ne 0 ]; then
+        echo "git diff returned failures"
+        exit 1
+      fi
+
+      # Do not hardcode onnx's namespace in the c++ source code, so that
+      # other libraries who statically link with onnx can hide onnx symbols
+      # in a private namespace.
+      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
+      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
+
+      pytest -sv
+      if [ $? -ne 0 ]; then
+        echo "pytest failed"
+        exit 1
+      fi
+
+      # onnx c++ API tests
+      export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+      ./.setuptools-cmake-build/onnx_gtests
+      if [ $? -ne 0 ]; then
+        echo "onnx_gtests failed"
+        exit 1
+      fi
+
+    displayName: 'Run ONNX tests'
+
+  - script: |
+      source venv/bin/activate
+      python onnx/backend/test/cmd_tools.py generate-data --clean
+      git status
+      # Skip *output_*.pb because NumPy functions might behave differently on different platforms
+      # Skip test_log's input.pb because it uses np.random, which might behave differently on different platforms
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+      if [ $? -ne 0 ]; then
+        echo "git diff for test generation returned failures. Please check updated node test files"
+        exit 1
+      fi
+      git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
+      if [ $? -ne 0 ]; then
+        echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
+        exit 1
+      fi
+
+    displayName: Test backend test data
+
+  - script: |
+      if [ '$(documentation)' == '1' ]; then
+        source venv/bin/activate
+        pip install -r docs/docsgen/source/requirements.txt
+        cd docs/docsgen && make text -j auto
+      fi
+    displayName: Test documentation
+    continueOnError: true  # the documentation generates errors due to operators documentation

@@ -1,0 +1,18 @@
+
+<nav class="bd-links" id="bd-docs-nav" aria-label="{{ _('Section navigation') }}">
+  <p class="bd-links__title" role="heading" aria-level="1">
+  </p>
+
+  {%- set sidebar_nav_html_side = generate_toctree_html("sidebar",
+      startdepth=0,
+      show_nav_level=theme_show_nav_level|int,
+      maxdepth=theme_navigation_depth|int,
+      collapse=theme_collapse_navigation|tobool,
+      includehidden=True,
+      titles_only=True)
+  -%}
+
+  <div class="bd-toc-item navbar-nav">
+    {{ sidebar_nav_html_side }}
+  </div>
+</nav>

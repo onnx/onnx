@@ -1,0 +1,10 @@
+* @onnx/sig-archinfra-approvers
+/community  @onnx/steering-committee
+/onnx/defs  @onnx/sig-operators-approvers
+/onnx/backend/test  @onnx/sig-operators-approvers
+/docs/AddNewOp.md @onnx/sig-operators-approvers
+/docs/TestCoverage*.md  @onnx/sig-operators-approvers
+/docs/Operators*.md @onnx/sig-operators-approvers
+/docs/OpConventions.md @onnx/sig-operators-approvers
+/docs/Broadcasting.md @onnx/sig-operators-approvers
+/docs/Changelog*.md @onnx/sig-operators-approvers

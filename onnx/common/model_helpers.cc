@@ -1,5 +1,6 @@
-// Copyright (c) Facebook Inc. and Microsoft Corporation.
-// Licensed under the MIT license.
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "onnx/common/model_helpers.h"
 #include "onnx/checker.h"
@@ -7,7 +8,6 @@
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
-using namespace Common;
 
 Common::Status BuildNode(
     const std::string& name,
@@ -18,10 +18,7 @@ Common::Status BuildNode(
     std::vector<std::string> const& outputs,
     NodeProto* node) {
   if (node == NULL) {
-    return Status(
-        Common::CHECKER,
-        Common::INVALID_ARGUMENT,
-        "node_proto should not be nullptr.");
+    return Common::Status(Common::CHECKER, Common::INVALID_ARGUMENT, "node_proto should not be nullptr.");
   }
   node->set_name(name);
   node->set_domain(domain);
@@ -34,6 +31,6 @@ Common::Status BuildNode(
     node->add_output(output);
   }
 
-  return Status::OK();
+  return Common::Status::OK();
 }
 } // namespace ONNX_NAMESPACE

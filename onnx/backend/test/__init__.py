@@ -1,7 +1,5 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+# SPDX-License-Identifier: Apache-2.0
 
+__all__ = ["BackendTest"]
 # for backward compatibility
-from .runner import Runner as BackendTest # noqa
+from onnx.backend.test.runner import Runner as BackendTest

@@ -1,0 +1,36 @@
+@import "../basic.css";
+
+html[data-theme="dark"] {
+    --pst-color-text-base: #5c8fda;
+}
+
+.d2h-del {
+    background-color: var(--pst-color-danger-highlight);
+    color: var(--pst-color-text-base);
+}
+
+.d2h-ins {
+    background-color: var(--pst-color-success);
+    color: var(--pst-color-text-base);
+}
+
+.d2h-change {
+    background-color: var(--yellow);
+    color: var(--pst-color-text-base);
+}
+
+.sphinx-tabs-panel {
+    background-color: var(--pst-color-background);
+}
+
+.sphinx-tabs-tab {
+    background-color: var(--pst-color-background);
+}
+
+.sphinx-tabs {
+    background-color: var(--pst-color-background);
+}
+
+.closeable{
+    background-color: var(--pst-color-background);
+}

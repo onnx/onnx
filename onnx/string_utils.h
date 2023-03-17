@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #pragma once
 
 #include <sstream>
@@ -34,8 +38,7 @@ inline void MakeStringInternal(std::stringstream& ss, const T& t) {
 }
 
 template <typename T, typename... Args>
-inline void
-MakeStringInternal(std::stringstream& ss, const T& t, const Args&... args) {
+inline void MakeStringInternal(std::stringstream& ss, const T& t, const Args&... args) {
   MakeStringInternal(ss, t);
   MakeStringInternal(ss, args...);
 }

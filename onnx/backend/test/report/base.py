@@ -1,8 +1,5 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+# SPDX-License-Identifier: Apache-2.0
 
 
-class ReporterBase(object):
+class ReporterBase:
     pass

@@ -1,51 +1,76 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+# SPDX-License-Identifier: Apache-2.0
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class ReduceLogSum(Base):
+    @staticmethod
+    def export_nokeepdims() -> None:
+        shape = [3, 4, 5]
+        axes = np.array([2, 1], dtype=np.int64)
+
+        node = onnx.helper.make_node(
+            "ReduceLogSum",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=0,
+        )
+        data = np.random.ranf(shape).astype(np.float32)
+        reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=False))
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_log_sum_desc_axes",
+        )
+
+        axes = np.array([0, 1], dtype=np.int64)
+        node = onnx.helper.make_node(
+            "ReduceLogSum",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=0,
+        )
+        data = np.random.ranf(shape).astype(np.float32)
+        reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=False))
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_log_sum_asc_axes",
+        )
 
     @staticmethod
-    def export_nokeepdims():  # type: () -> None
+    def export_keepdims() -> None:
         node = onnx.helper.make_node(
-            'ReduceLogSum',
-            inputs=['data'],
-            outputs=["reduced"],
-            axes=[2, 1],
-            keepdims=0
-        )
-        data = np.random.ranf([3, 4, 5]).astype(np.float32)
-        reduced = np.log(np.sum(data, axis=(2, 1), keepdims=False))
-        expect(node, inputs=[data], outputs=[reduced],
-               name='test_reduce_log_sum_desc_axes')
-
-        node = onnx.helper.make_node(
-            'ReduceLogSum',
-            inputs=['data'],
-            outputs=["reduced"],
-            axes=[0, 1],
-            keepdims=0
-        )
-        data = np.random.ranf([3, 4, 5]).astype(np.float32)
-        reduced = np.log(np.sum(data, axis=(0, 1), keepdims=False))
-        expect(node, inputs=[data], outputs=[reduced],
-               name='test_reduce_log_sum_asc_axes')
-
-    @staticmethod
-    def export_keepdims():  # type: () -> None
-        node = onnx.helper.make_node(
-            'ReduceLogSum',
-            inputs=['data'],
-            outputs=["reduced"]
+            "ReduceLogSum", inputs=["data", "axes"], outputs=["reduced"]
         )
         data = np.random.ranf([3, 4, 5]).astype(np.float32)
         reduced = np.log(np.sum(data, keepdims=True))
-        expect(node, inputs=[data], outputs=[reduced],
-               name='test_reduce_log_sum_default')
+        axes = np.array([], dtype=np.int64)
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_log_sum_default",
+        )
+
+    @staticmethod
+    def export_negative_axes_keepdims() -> None:
+        axes = np.array([-2], dtype=np.int64)
+        node = onnx.helper.make_node(
+            "ReduceLogSum", inputs=["data", "axes"], outputs=["reduced"]
+        )
+        data = np.random.ranf([3, 4, 5]).astype(np.float32)
+        reduced = np.log(np.sum(data, axis=tuple(axes), keepdims=True))
+        # print(reduced)
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_log_sum_negative_axes",
+        )

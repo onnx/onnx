@@ -1,0 +1,59 @@
+name: Generate and publish ONNX docs
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # Single deploy job since we're just deploying
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      - name: Setup Python
+        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+        with:
+          python-version: '3.10'
+      - name: Setup Pages
+        uses: actions/configure-pages@7110e9e03ffb4a421945e5d0607007b8e9f1f52b # v3.0.5
+      - name: Install Dependencies
+        run: |
+          python -m pip install --quiet --upgrade pip setuptools wheel
+          python -m pip install -r docs/docsgen/source/requirements.txt
+      - name: Uninstall onnx
+        run: python -m pip uninstall -y onnx
+      - name: Install onnx development version
+        run: |
+          sudo apt-get install libprotobuf-dev protobuf-compiler
+          git submodule update --init --recursive
+          export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          python setup.py install
+      - name: Build Docs
+        run: |
+          cd docs/docsgen
+          make html
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@253fd476ed429e83b7aae64a92a75b4ceb1a17cf # v1.0.7
+        with:
+          path: 'docs/docsgen/build/html'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@e690f03220f8a0e2d4da521d8b3a50e0b52650e0 # v1.2.6

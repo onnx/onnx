@@ -1,0 +1,46 @@
+# `-allow-enabling-analyzer-alpha-checkers` should be passed to clang-tidy for CSA checkers named `clang-analyzer-alpha.*`
+# `aggressive-binary-operation-simplification` should be enabled (via `-Xclang -analyzer-config -Xclang aggressive-binary-operation-simplification=true` in clang)
+# there is some problem in `clang-analyzer-alpha.clone.*`, so do not enable it
+# `clang-analyzer-alpha.deadcode.*` is just too verbose to enable
+Checks: >-
+  -*,
+  clang-diagnostic-*,
+  clang-analyzer-core.*,
+  clang-analyzer-cplusplus.*,
+  clang-analyzer-nullability.*,
+  clang-analyzer-deadcode.*,
+  clang-analyzer-security.*,
+  clang-analyzer-optin.cplusplus.*,
+  clang-analyzer-optin.performance.*,
+  clang-analyzer-alpha.core.*,
+  clang-analyzer-alpha.cplusplus.*,
+  clang-analyzer-alpha.security.*,
+  cppcoreguidelines-avoid-goto,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-interfaces-global-init,
+  cppcoreguidelines-no-malloc,
+  cppcoreguidelines-prefer-member-initializer,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-pro-type-static-cast-downcast,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-special-member-functions,
+  performance-unnecessary-value-param,
+  performance-unnecessary-copy-initialization,
+  performance-noexcept-move-constructor,
+  performance-no-automatic-move,
+  performance-move-const-arg,
+  performance-implicit-conversion-in-loop,
+  performance-for-range-copy,
+  google-default-arguments,
+  google-global-names-in-headers,
+  google-explicit-constructor,
+  modernize-use-emplace
+
+CheckOptions:
+  # `cppcoreguidelines-special-member-functions` is enabled, refer to https://en.cppreference.com/w/cpp/language/rule_of_three
+  - key:             cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value:           True
+  - key:             performance-move-const-arg.CheckTriviallyCopyableMove
+    value:           False
+  - key:             cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted
+    value:           True
