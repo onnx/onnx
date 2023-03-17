@@ -1,4 +1,9 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Test Coverage Report (ONNX-ML Operators)
 ## Outlines
 * [Node Test Coverage](#node-test-coverage)
