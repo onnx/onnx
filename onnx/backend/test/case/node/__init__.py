@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 import sys
 from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
