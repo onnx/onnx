@@ -268,8 +268,6 @@ def expect(
     if "opset_imports" not in kwargs:
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
-        if node.domain == "ai.onnx.ml" and os.environ.get("ONNX_ML", "0") in ("1", 1):
-            return
         produce_opset_version = onnx.defs.get_schema(
             node.op_type, domain=node.domain
         ).since_version
