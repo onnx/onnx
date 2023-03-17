@@ -1,5 +1,6 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221,R0913,R0914
 
 from onnx.reference.ops._op_common_pool import CommonPool
 

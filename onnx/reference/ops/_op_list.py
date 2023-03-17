@@ -1,5 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0611,W0603
+
 """
 Every class imported in this module defines an implementation of
 an operator of the main domain. Any class name uses `_` to specify a
