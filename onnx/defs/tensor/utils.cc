@@ -56,6 +56,61 @@ void KeepAspectRatioHelper(
   }
 }
 
+void gridSampleShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // Grid sample input tensor indices.
+  size_t const input_param = 0, grid_param = 1;
+
+  auto const& input_shape = getInputShape(ctx, input_param);
+  auto const& grid_shape = getInputShape(ctx, grid_param);
+
+  if (input_shape.dim_size() != grid_shape.dim_size()) {
+    fail_shape_inference(
+        "The input tensor and grid tensor must have the same rank for GridSample. ",
+        "Got input tensor rank: ",
+        input_shape.dim_size(),
+        ". ",
+        "Got grid tensor rank: ",
+        grid_shape.dim_size(),
+        ". ");
+  }
+
+  int const num_dims = input_shape.dim_size();
+
+  if (num_dims < 3) {
+    fail_shape_inference(
+        "The input tensor and grid tensor ranks must be >= 3. ",
+        "Got input tensor and grid tensor ranks: ",
+        num_dims,
+        ". ");
+  }
+
+  // Don't know how to do this checking for the moment,
+  // because the grid shape can be a string or None.
+  // if (grid_shape.dim(num_dims - 1) != num_dims - 2)
+  // {
+  //   fail_shape_inference(
+  //       "The last dimension of the grid tensor must be the rank of the grid tensor - 2. ",
+  //       "Got grid tensor rank: ",
+  //       num_dims,
+  //       "Got the last dimension of the grid tensor: ",
+  //       grid_shape.dim(num_dims - 1),
+  //       ". ");
+  // }
+
+  auto* output_shape = getOutputShape(ctx, 0);
+  // Not sure if there are better APIs to set the number of dimensions.
+  // N
+  *(output_shape->add_dim()) = input_shape.dim(0);
+  // C
+  *(output_shape->add_dim()) = input_shape.dim(1);
+  // The rest of the dimensions
+  for (int i = 0; i < num_dims - 2; ++i) {
+    *(output_shape->add_dim()) = grid_shape.dim(1 + i);
+  }
+}
+
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
