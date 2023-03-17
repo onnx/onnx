@@ -284,7 +284,8 @@ static inline bool operator==(const Use& a, const Use& b) {
 using node_list = std::vector<Node*>;
 using value_list = std::vector<Value*>;
 using use_list = std::vector<Use>;
-using NodeKind = Symbol;
+//using NodeKind = Symbol;
+using NodeKind = std::string;
 
 struct Value final {
   ONNX_DISALLOW_COPY_AND_ASSIGN(Value);
@@ -805,20 +806,25 @@ struct Node : public Attributes<Node> {
 // overhead, resulting in a simpler and more readable workflow.
 class OpSetID final {
  private:
-  std::string domain_;
-  int64_t version_;
+  OperatorSetIdProto opset_id_proto_;
 
  public:
-  explicit OpSetID(const OperatorSetIdProto& proto) : domain_(proto.domain()), version_(proto.version()) {}
+  explicit OpSetID(const OperatorSetIdProto& proto) : opset_id_proto_(proto) {}
 
   // Default Domain Constructor
-  explicit OpSetID(const int64_t version) : domain_(""), version_(version) {}
+  explicit OpSetID(const int64_t version) {
+    opset_id_proto_.set_domain("");
+    opset_id_proto_.set_version(version);
+  }
 
-  explicit OpSetID(const std::string& domain, int64_t version) : domain_(domain), version_(version) {}
+  explicit OpSetID(const std::string& domain, int64_t version) {
+    opset_id_proto_.set_domain(domain);
+    opset_id_proto_.set_version(version);
+  }
 
   // target must be in the form "<domain>&<version>"
   std::string toString() const {
-    return domain_ + "$" + ONNX_NAMESPACE::to_string(version_);
+    return opset_id_proto_.domain() + "$" + ONNX_NAMESPACE::to_string(opset_id_proto_.version());
   }
 
   // target must be in the form "<domain>&<version>"
@@ -842,19 +848,19 @@ class OpSetID final {
   }
 
   const std::string& domain() const {
-    return domain_;
+    return opset_id_proto_.domain();
   }
 
   int64_t version() const {
-    return version_;
+    return opset_id_proto_.version();
   }
 
   void incrementVersion(int64_t step) {
-    version_ += step;
+    opset_id_proto_.set_version(opset_id_proto_.version() + step);
   }
 
   void setVersion(int64_t newVal) {
-    version_ = newVal;
+    opset_id_proto_.set_version(newVal);
   }
 };
 
@@ -864,39 +870,15 @@ struct Graph final {
   friend struct Value;
 
  private:
-  // only used to keep track of allocated nodes
-  // actual representation of Graph is done with
-  // inputs, outputs, nodes
-
-  std::unordered_set<const Node*> all_nodes;
-  std::unordered_set<const Value*> all_values;
-  size_t next_unique_;
-
-  size_t new_node_stage_;
-
-  // holds outputs in a way that can be reflected
-  // as a Use object
-  // also used as the beginning/end of the circular node list to avoid
-  // having corner cases where the list is empty.
-  Node* const output_;
-  Node* const input_;
-  // Create an independent node list for those initializers do not exist in input
-  Node* const initializer_node_;
-
-  std::vector<Tensor> initializers_;
-  std::vector<std::string> initializer_names_;
-
-  bool has_name_;
-  std::string name_;
-  bool has_doc_string_;
-  std::string doc_string_;
-
-  std::vector<OpSetID> opset_versions_;
+  GraphProto graph_proto_;
 
   bool isNameUnique(const std::string& name) const {
-    if (std::find(initializer_names_.cbegin(), initializer_names_.cend(), name) != initializer_names_.cend()) {
+    if (std::find_if(graph_proto_.initializer().begin(), graph_proto_.initializer().end(), [=](TensorProto& tp) {
+          return tp.name() == name;
+        }) != graph_proto_.initializer().end()) {
       return false;
     }
+
     const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
     for (const Node* node : all_nodes) {
       for (const auto& attr : node->attributeNames()) {
@@ -1095,12 +1077,14 @@ struct Graph final {
     return outputs().size() - 1;
   }
 
-  Node* create(NodeKind kind, size_t num_outputs = 1) {
+  NodeProto* create(NodeKind kind, size_t num_outputs = 1) {
+    NodeProto* node_proto = graph_proto_.add_node();
+    node_proto->set_op_type(kind);
     // NB: Node constructor adds node to all_nodes
-    auto n = new Node(this, kind);
-    for (size_t i = 0; i < num_outputs; i++)
-      n->addOutput();
-    return n;
+    for (size_t i = 0; i < num_outputs; i++) {
+      node_proto->add_output();
+    }
+    return node_proto;
   }
 
   Node* create(NodeKind kind, ArrayRef<Value*> inputs, size_t num_outputs = 1) {

@@ -16,20 +16,26 @@ class BroadcastBackwardCompatibility final : public Adapter {
   explicit BroadcastBackwardCompatibility(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
-  void adapt_broadcast_backward_compatibility(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_broadcast_backward_compatibility(GraphProto* graph_proto, NodeProto* node) const {
     // Verify that broadcasts are allowed in limited spec of opset version 6
     // Multidirectional broadcasting, as defined in Broadcasting.md
     // MathDocGenerator provides differences
     // Main change: encode broadcasting commands as explicit attribute
-    const ArrayRef<Value*>& inputs = node->inputs();
-    assertInputsAvailable(inputs, name().c_str(), 2);
-    const std::vector<Dimension>& A_sizes = inputs[0]->sizes();
-    const std::vector<Dimension>& B_sizes = inputs[1]->sizes();
-    // Ensure that first input is larger than or equal to the second
-    // numpy_unibroadcastable here is considered to be equivalent to opset1_broadcastable
-    // This is because backwards conversion does not allow for an axis that is not
-    // suffix matching
-    int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(A_sizes, B_sizes);
+    auto it = std::find_if(graph_proto->value_info().begin(), graph_proto->value_info().end(), [node](ValueInfoProto& v) {
+      return v.name() == node->input(0);
+    });
+    const ValueInfoProto& value_info0 = *it;
+    it = std::find_if(graph_proto->value_info().begin(), graph_proto->value_info().end(), [node](ValueInfoProto& v) {
+      return v.name() == node->input(1);
+    });
+    const ValueInfoProto& value_info1 = *it;
+    const TypeProto& type_proto0 = value_info0.type();
+    std::vector<TensorShapeProto_Dimension> dim1 =
+        protobuf_repeated_fields_to_vector<TensorShapeProto_Dimension>(type_proto0.tensor_type().shape().dim());
+    const TypeProto& type_proto1 = value_info1.type();
+    std::vector<TensorShapeProto_Dimension> dim2 =
+        protobuf_repeated_fields_to_vector<TensorShapeProto_Dimension>(type_proto1.tensor_type().shape().dim());
+    int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(dim1, dim2);
     ONNX_ASSERTM(
         req_broadcast != -1,
         "%s being converted from %d to %d does "
@@ -37,14 +43,15 @@ class BroadcastBackwardCompatibility final : public Adapter {
         name().c_str(),
         initial_version().version(),
         target_version().version());
+
     if (req_broadcast == 1) {
       // If conditional is not fulfilled, we have a default broadcast
       // Add broadcast attribute
-      node->i_(kbroadcast, 1);
+      *node->add_attribute() = MakeAttribute("aa", (int64_t)1);
     }
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  NodeProto* adapt(GraphProto* graph, NodeProto* node) const override {
     adapt_broadcast_backward_compatibility(graph, node);
     return node;
   }

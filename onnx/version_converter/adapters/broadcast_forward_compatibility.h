@@ -16,10 +16,10 @@ class BroadcastForwardCompatibility final : public Adapter {
   explicit BroadcastForwardCompatibility(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
-  void adapt_broadcast_forward_compatibility(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_broadcast_forward_compatibility(GraphProto* graph, NodeProto* node) const {
     // Remove axis and broadcast attributes
     // Assess whether axis requires reshaping
-    if (node->hasAttribute(kbroadcast)) {
+    if (HasAttribute(node, "broadcast")) {
       const ArrayRef<Value*>& inputs = node->inputs();
       assertInputsAvailable(inputs, name().c_str(), 2);
       const std::vector<Dimension>& A_sizes = inputs[0]->sizes();
@@ -70,7 +70,7 @@ class BroadcastForwardCompatibility final : public Adapter {
     assert_numpy_multibroadcastable(inputs[0]->sizes(), inputs[1]->sizes());
   }
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  NodeProto* adapt(GraphProto* graph, NodeProto* node) const override {
     adapt_broadcast_forward_compatibility(graph, node);
     return node;
   }

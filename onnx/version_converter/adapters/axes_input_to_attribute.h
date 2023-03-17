@@ -16,46 +16,26 @@ class AxesInputToAttribute : public Adapter {
   explicit AxesInputToAttribute(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
-  Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+  NodeProto* adapt(GraphProto* graph, NodeProto* node) const override {
     // Identify if axes is statically determined; if so, feed as attribute
-    const ArrayRef<Value*>& inputs = node->inputs();
-    // Get axes from initializer or constant operator
-    // Identify whether we have a Constant Op or an Initializer
-    Value* const_val = inputs[1];
-    Node* node_ptr = const_val->node();
-    if (node_ptr->kind() == kConstant) {
-      // Get value attribute of kConstant
-      const std::vector<int64_t>& int64s = node_ptr->t(kvalue).int64s();
-      if (int64s.empty()) {
-        // Also handle raw data
-        std::string raw_data = node_ptr->t(kvalue).raw();
-        ONNX_ASSERTM(
-            raw_data.size() != 0 && raw_data.size() % 8 == 0,
-            "Raw Data must be non-empty and size must be a multiple of 8");
-        int64_t* raw = (int64_t*)const_cast<char*>(raw_data.c_str());
-        node->is_(kaxes, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
-      } else {
-        node->is_(kaxes, std::forward<const std::vector<int64_t>>(int64s));
-      }
-      // If Constant node isn't used anywhere else, remove it
-      node->removeInput(1);
-      if (const_val->uses().size() < 1) {
-        node_ptr->destroy();
-      }
+    auto it_node = std::find_if(graph->node().begin(), graph->node().end(), [node](NodeProto& n) { return n.name() == node->input()[1]; });
+    if (it_node != graph->node().end() && it_node->op_type() == "Constant") {
+      const NodeProto& constant_node = *it_node;
+      auto& axes_proto = constant_node.attribute()[0].ints();
+      const std::vector<int64_t> axes(axes_proto.begin(), axes_proto.end());
+      *node->add_attribute() = MakeAttribute("attr_name", axes);
     } else {
-      // Get Value name, find Initializer with same name
-      for (const auto& initializer : graph->initializers()) {
-        if (initializer.name() == inputs[1]->uniqueName()) {
-          node->is_(kaxes, std::forward<const std::vector<int64_t>>(initializer.int64s()));
-          node->removeInput(1);
-          // Remove initializer
-          if (const_val->uses().size() < 1)
-            graph->eraseInitializerAndInput(const_val);
-          break;
-        }
-      }
+      auto it_initializer =
+          std::find_if(graph->initializer().begin(), graph->initializer().end(), [node](TensorProto& t) {
+            return t.name() == node->input()[1];
+          });
+      ONNX_ASSERTM(it_initializer != graph->initializer().end(), "No initializer or constant input to node found");
+        const TensorProto& axes_proto = *it_initializer;
+        *node->add_attribute() = MakeAttribute("attr_name", axes_proto);
+        std::remove_if(graph->initializer().begin(), graph->initializer().end(), [node](TensorProto& t) {
+          return t.name() == node->input()[1];
+        });
     }
-    ONNX_ASSERTM(node->hasAttribute(kaxes), "No initializer or constant input to node found");
     return node;
   }
 };

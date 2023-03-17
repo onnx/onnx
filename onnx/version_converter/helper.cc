@@ -8,6 +8,19 @@
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
+
+bool HasAttribute(NodeProto* node_proto, const std::string& name) {
+  return std::find_if(node_proto->attribute().begin(), node_proto->attribute().end(), [name](AttributeProto& attr) {
+           return attr.name() == name;
+         }) != node_proto->attribute().end();
+}
+
+template <typename T>
+std::vector<T> protobuf_repeated_fields_to_vector(google::protobuf::RepeatedPtrField<T>& repeated) {
+  std::vector<T> vector(repeated.size());
+  std::copy(repeated.begin(), repeated.end(), vector.begin());
+}
+
 int check_numpy_unibroadcastable_and_require_broadcast(
     const std::vector<Dimension>& input1_sizes,
     const std::vector<Dimension>& input2_sizes) {
@@ -29,6 +42,28 @@ int check_numpy_unibroadcastable_and_require_broadcast(
   else
     return 0;
 }
+
+int check_numpy_unibroadcastable_and_require_broadcast(
+    std::vector<TensorShapeProto_Dimension>& dim1,
+    std::vector<TensorShapeProto_Dimension>& dim2) {
+  if (dim1.size() < dim2.size())
+    return -1;
+  // Check that axis is input1_sizes.size()-input2_sizes.size()
+  bool broadcast = false;
+  int axis = (int)(dim1.size() - dim2.size());
+  for (int i = 0; i < (int)dim2.size(); i++) {
+    if (dim2[i].dim_value() != dim1[axis + i].dim_value() && dim2[i].dim_value() != 1)
+      return -1;
+    if (dim2[i].dim_value() != dim1[axis + i].dim_value())
+      broadcast = true;
+  }
+  // Return true if broadcasting is required
+  if (dim1.size() > dim2.size() || broadcast)
+    return 1;
+  else
+    return 0;
+}
+  
 
 void assert_numpy_multibroadcastable(
     const std::vector<Dimension>& input1_sizes,

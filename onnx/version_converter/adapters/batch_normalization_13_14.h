@@ -15,14 +15,14 @@ class BatchNormalization_13_14 final : public Adapter {
  public:
   explicit BatchNormalization_13_14() : Adapter("BatchNormalization", OpSetID(13), OpSetID(14)) {}
 
-  void adapt_batch_normalization_13_14(Node* node) const {
+  void adapt_batch_normalization_13_14(NodeProto* node) const {
     ONNX_ASSERTM(
         node->outputs().size() < 4,
         "BatchNormalization outputs 4 and 5 are not "
         "supported in Opset 14.");
   }
 
-  Node* adapt(std::shared_ptr<Graph>, Node* node) const override {
+  NodeProto* adapt(GraphProto*, NodeProto* node) const override {
     adapt_batch_normalization_13_14(node);
     return node;
   }
