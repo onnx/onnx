@@ -1961,7 +1961,7 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == 12
 
-    def test_softmax_11_13(self) -> None:
+    def test_softmax_12_13(self) -> None:
         axis = 0
         nodes = [helper.make_node("Softmax", ["X"], ["Y"], axis=axis)]
         graph = helper.make_graph(
