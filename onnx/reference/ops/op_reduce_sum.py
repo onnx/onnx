@@ -9,7 +9,11 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 class ReduceSum_1(OpRunReduceNumpy):
     def _run(self, x, axes=None, keepdims=None):  # type: ignore # pylint: disable=W0221
         axes = tuple(axes) if axes is not None else None
-        return (np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype),)
+        res = np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype)
+        if keepdims == 0 and not isinstance(res, np.ndarray):
+            # The runtime must return a numpy array of a single float.
+            res = np.array(res)
+        return (res,)
 
 
 class ReduceSum_13(OpRunReduceNumpy):
@@ -19,6 +23,9 @@ class ReduceSum_13(OpRunReduceNumpy):
         axes = self.handle_axes(axes)
         try:
             res = np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype)
+            if keepdims == 0 and not isinstance(res, np.ndarray):
+                # The runtime must return a numpy array of a single float.
+                res = np.array(res)
             return (res,)  # type: ignore
         except TypeError as e:
             raise TypeError(

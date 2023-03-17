@@ -7,29 +7,28 @@ from onnx.reference.op_run import OpRun
 
 
 def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ignore
-    if raw_pads is not None:
-        old_raw_pads = raw_pads
-        raw_pads = []
-        pos = 0
-        for i in range(len(data.shape)):
-            if axes is None or i in axes:
-                raw_pads.extend(old_raw_pads[pos : pos + 2])
-                pos += 2
-            else:
-                raw_pads.extend([0, 0])
-        raw_pads = np.array(raw_pads)
-
     input_rank = data.ndim
-    if input_rank * 2 != raw_pads.size:
-        raise RuntimeError("The number of elements in raw_pads should be 2 * data_rank")
+    pad_width = np.zeros((input_rank, 2), dtype=np.int64)
 
-    half = raw_pads.shape[0] // 2
-    pad_width = tuple((raw_pads[i], raw_pads[i + half]) for i in range(0, half))
+    if axes is None:
+        axes = list(range(input_rank))
+    if len(axes) * 2 != len(raw_pads):
+        raise RuntimeError(
+            f"The number of elements ({raw_pads.size}) "
+            f"in raw_pads should be 2 * len(axes) ({len(axes)})."
+        )
+
+    for i in range(len(axes)):  # pylint: disable=consider-using-enumerate
+        axis = axes[i]
+        pads = [raw_pads[i], raw_pads[i + len(axes)]]
+        pad_width[axis, :] = pads
+
+    pad_width = tuple(tuple(row) for row in pad_width)
 
     if mode == "constant":
         return np.pad(
             data, pad_width=pad_width, mode=mode, constant_values=constant_values
-        )
+        ).astype(data.dtype)
     return np.pad(data, pad_width=pad_width, mode=mode).astype(data.dtype)
 
 
