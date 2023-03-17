@@ -352,9 +352,9 @@ def download_model_with_test_data(
 
 def load_composite_model(
     network_model: str,
-    preproc_model: str,
+    preprocessing_model: str,
     network_repo: str = "onnx/models:main",
-    preproc_repo: str = "onnx/models:main",
+    preprocessing_repo: str = "onnx/models:main",
     opset: Optional[int] = None,
     force_reload: bool = False,
     silent: bool = False,
@@ -371,60 +371,71 @@ def load_composite_model(
     :param silent: Whether to suppress the warning message if the repo is not trusted.
     :return: ModelProto or None
     """
-    preproc = load(preproc_model, preproc_repo, opset, force_reload, silent)
-    if preproc is None:
-        raise RuntimeError(f"Could not load the preprocessing model: {preproc_model}")
+    preprocessing = load(
+        preprocessing_model, preprocessing_repo, opset, force_reload, silent
+    )
+    if preprocessing is None:
+        raise RuntimeError(
+            f"Could not load the preprocessing model: {preprocessing_model}"
+        )
     network = load(network_model, network_repo, opset, force_reload, silent)
     if network is None:
         raise RuntimeError(f"Could not load the network model: {network_model}")
 
     all_domains: Set[str] = set()
-    domains_to_ver_network: Dict[str, int] = {}
-    domains_to_ver_preproc: Dict[str, int] = {}
+    domains_to_version_network: Dict[str, int] = {}
+    domains_to_version_preprocessing: Dict[str, int] = {}
 
     for opset_import_entry in network.opset_import:
         domain = (
             "ai.onnx" if opset_import_entry.domain == "" else opset_import_entry.domain
         )
         all_domains.add(domain)
-        domains_to_ver_network[domain] = opset_import_entry.version
+        domains_to_version_network[domain] = opset_import_entry.version
 
-    for opset_import_entry in preproc.opset_import:
+    for opset_import_entry in preprocessing.opset_import:
         domain = (
             "ai.onnx" if opset_import_entry.domain == "" else opset_import_entry.domain
         )
         all_domains.add(domain)
-        domains_to_ver_preproc[domain] = opset_import_entry.version
+        domains_to_version_preprocessing[domain] = opset_import_entry.version
 
-    preproc_opset_ver = -1
-    network_opset_ver = -1
+    preprocessing_opset_version = -1
+    network_opset_version = -1
     for domain in all_domains:
         if domain == "ai.onnx":
-            preproc_opset_ver = domains_to_ver_preproc[domain]
-            network_opset_ver = domains_to_ver_network[domain]
+            preprocessing_opset_version = domains_to_version_preprocessing[domain]
+            network_opset_version = domains_to_version_network[domain]
         elif (
-            domain in domains_to_ver_preproc
-            and domain in domains_to_ver_network
-            and domains_to_ver_preproc[domain] != domains_to_ver_preproc[domain]
+            domain in domains_to_version_preprocessing
+            and domain in domains_to_version_network
+            and domains_to_version_preprocessing[domain]
+            != domains_to_version_preprocessing[domain]
         ):
             raise ValueError(
-                f"Can not merge {preproc_model} and {network_model} because they contain "
-                f"different opset versions for domain {domain} ({domains_to_ver_preproc[domain]}) "
-                f"and {domains_to_ver_network[domain]}). Only the default domain can be "
+                f"Can not merge {preprocessing_model} and {network_model} because they contain "
+                f"different opset versions for domain {domain} ({domains_to_version_preprocessing[domain]}) "
+                f"and {domains_to_version_network[domain]}). Only the default domain can be "
                 "automatically converted to the highest version of the two."
             )
-    if preproc_opset_ver > network_opset_ver:
-        network = onnx.version_converter.convert_version(network, preproc_opset_ver)
-        network.ir_version = preproc.ir_version
+    if preprocessing_opset_version > network_opset_version:
+        network = onnx.version_converter.convert_version(
+            network, preprocessing_opset_version
+        )
+        network.ir_version = preprocessing.ir_version
         onnx.checker.check_model(network)
-    elif network_opset_ver > preproc_opset_ver:
-        preproc = onnx.version_converter.convert_version(preproc, network_opset_ver)
-        preproc.ir_version = network.ir_version
-        onnx.checker.check_model(preproc)
+    elif network_opset_version > preprocessing_opset_version:
+        preprocessing = onnx.version_converter.convert_version(
+            preprocessing, network_opset_version
+        )
+        preprocessing.ir_version = network.ir_version
+        onnx.checker.check_model(preprocessing)
 
     io_map = []
-    for out_entry, in_entry in zip(preproc.graph.output, network.graph.input):
+    for out_entry, in_entry in zip(preprocessing.graph.output, network.graph.input):
         io_map.append((out_entry.name, in_entry.name))
 
-    model_w_preproc = onnx.compose.merge_models(preproc, network, io_map=io_map)
-    return model_w_preproc
+    model_with_preprocessing = onnx.compose.merge_models(
+        preprocessing, network, io_map=io_map
+    )
+    return model_with_preprocessing
