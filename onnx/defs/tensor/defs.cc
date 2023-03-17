@@ -955,6 +955,9 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Input axes has incorrect length");
             }
           }
+          checkAxesRange(axes, input_rank);
+          checkDuplicateAxes(axes, input_rank);
+          adjustNegativeAxes(axes, input_rank);
 
           std::vector<int64_t> steps;
           if (!stepsInitializer) {
@@ -977,20 +980,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          std::unordered_set<int64_t> unique_axes;
           size_t axes_size = axes.size();
           for (size_t axis_index = 0; axis_index < axes_size; ++axis_index) {
             auto axis = axes[axis_index] < 0 ? axes[axis_index] + static_cast<int64_t>(input_rank) : axes[axis_index];
-
-            if (axis >= static_cast<int64_t>(input_rank) || axis < 0) {
-              fail_shape_inference("Input axes has invalid data");
-            }
-
-            if (unique_axes.find(axis) != unique_axes.end()) {
-              fail_shape_inference("'axes' has duplicates");
-            }
-
-            unique_axes.insert(axis);
 
             auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
 
@@ -1793,9 +1785,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
-          std::transform(axes.begin(), axes.end(), axes.begin(), [&](int64_t axis) -> int64_t {
-            return axis < 0 ? axis + input_ndim : axis;
-          });
+          checkAxesRange(axes, input_ndim);
+          adjustNegativeAxes(axes, input_ndim);
 
           for (int i = 0; i < input_ndim; ++i) {
             if (!input_shape.dim(i).has_dim_value() && axes_not_specified) {
@@ -1897,14 +1888,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           const auto output_ndim = input_ndim + static_cast<int>(axes.size());
-          for (auto& axe : axes) {
-            if (axe < -output_ndim || axe >= output_ndim) {
-              fail_shape_inference("values in 'axes' are beyond the bounds of the computed output shape");
-            }
-            if (axe < 0) {
-              axe += output_ndim;
-            }
-          }
+          checkAxesRange(axes, output_ndim);
+          adjustNegativeAxes(axes, output_ndim);
 
           // sort after correcting negative axes values (if any) in the previous
           // step
@@ -3621,14 +3606,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> axes;
           if (axes_attr) {
             axes = RetrieveValues<int64_t>(*axes_attr);
-
-            std::vector<bool> tmp(input_rank, false);
-            for (auto axis : axes) {
-              if (tmp[axis]) {
-                fail_shape_inference("Repeated axis: ", axis);
-              }
-              tmp[axis] = true;
-            }
+            checkAxesRange(axes, input_rank);
+            checkDuplicateAxes(axes, input_rank);
+            adjustNegativeAxes(axes, input_rank);
           } else {
             axes.resize(input_rank);
             std::iota(axes.begin(), axes.end(), 0);
