@@ -824,11 +824,15 @@ OpSchema& OpSchema::FunctionBody(
 }
 
 const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool validate) const {
-  if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
-    requested_opset_version = since_version_;
+  if (opset_version_to_function_body_.empty())
+    return nullptr;
+  // Return latest FunctionProto when opset version request is not set
+  if (requested_opset_version == OpSchema::kUninitializedSinceVersion) {
+    return opset_version_to_function_body_.rbegin()->second.get();
+  }
   std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it =
       opset_version_to_function_body_.upper_bound(requested_opset_version);
-  if (!opset_version_to_function_body_.empty() && it != opset_version_to_function_body_.begin()) {
+  if (it != opset_version_to_function_body_.begin()) {
     --it;
     int function_since_version = it->first;
     const FunctionProto* function = it->second.get();

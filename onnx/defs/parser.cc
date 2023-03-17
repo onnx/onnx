@@ -106,6 +106,32 @@ Status OnnxParser::Parse(char open, IdList& idlist, char close) {
   return Status::OK();
 }
 
+Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
+  idlist.Clear();
+  attrlist.Clear();
+  do {
+    std::string id;
+    ParseIdentifier(id);
+    auto next = NextChar();
+    if (next == ':' || next == '=')
+      Parse(*attrlist.Add(), id);
+    else
+      *idlist.Add() = id;
+  } while (Matches(','));
+  return Status::OK();
+}
+
+Status OnnxParser::Parse(char open, IdList& idlist, AttrList& attrlist, char close) {
+  if (Matches(open)) {
+    PARSE(idlist, attrlist);
+    MATCH(close);
+  } else {
+    idlist.Clear();
+    attrlist.Clear();
+  }
+  return Status::OK();
+}
+
 Status OnnxParser::Parse(TensorShapeProto& shape) {
   shape.clear_dim();
   do {
@@ -424,6 +450,10 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   attr.Clear();
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
+  return Parse(attr, name);
+}
+
+Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   attr.set_name(name);
   if (Matches(':')) {
     CHECK_PARSER_STATUS(ParseIdentifier(name));
@@ -559,7 +589,7 @@ Status OnnxParser::Parse(FunctionProto& fn) {
   ParseIdentifier(id);
   fn.set_name(id);
 
-  PARSE('<', *fn.mutable_attribute(), '>');
+  PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>');
   PARSE('(', *fn.mutable_input(), ')');
   MATCH('=');
   MATCH('>', false);

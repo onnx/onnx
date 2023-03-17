@@ -10,7 +10,7 @@ import warnings
 
 import onnx.backend.test.case.model as model_test
 import onnx.backend.test.case.node as node_test
-from onnx import numpy_helper
+from onnx import ONNX_ML, numpy_helper
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(TOP_DIR, "data")
@@ -29,8 +29,9 @@ def generate_data(args: argparse.Namespace) -> None:
         [name for name in os.listdir(node_root) if os.path.isfile(name)]
     )
     if args.clean and os.path.exists(node_root):
-        shutil.rmtree(node_root)
-        os.makedirs(node_root)
+        for sub_dir in os.listdir(node_root):
+            if ONNX_ML or not sub_dir.startswith("test_ai_onnx_ml_"):
+                shutil.rmtree(os.path.join(node_root, sub_dir))
 
     cases = model_test.collect_testcases()
     # If op_type is specified, only include those testcases including the given operator

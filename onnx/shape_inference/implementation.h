@@ -472,6 +472,17 @@ void InferShapeForFunctionNode(
     SymbolTable* symbolTable = nullptr,
     std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr);
 
+///
+/// Apply type-and-shape-inference based checks to a Function body.
+/// Returns the inferred types of the outputs of the function.
+/// Inference depends on the types of the inputs of the function as well as
+/// the attribute values supplied.
+///
+std::vector<TypeProto> InferFunctionOutputTypes(
+    const FunctionProto& func_proto,
+    const std::vector<TypeProto>& input_types,
+    const std::vector<AttributeProto>& attributes);
+
 std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err);
 
 void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable);
