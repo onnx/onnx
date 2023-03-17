@@ -1370,7 +1370,7 @@ ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 11, OpSchema().FillUsing(ConvTransposeOp
 
 static const char* DeformConv_ver19_doc = R"DOC(
 Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
-The most common use cases have 2D or 3D data.
+This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1384,7 +1384,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Input data tensor. For 2D image data, it has shape (N, C, H, W) where N is the batch size, "
             "C is the number of input channels, and H and W are the height and width. "
             "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
-            "D1 to Dn are the spatial dimension sizes. The most common use cases have n = 2 or 3.",
+            "D1 to Dn are the spatial dimension sizes. Most common use cases have n = 2 or 3.",
             "T")
         .Input(
             1,
