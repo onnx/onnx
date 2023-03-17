@@ -361,30 +361,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain grid types to float tensors.")
         .SetDoc(GridSample_ver16_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          size_t input_param = 0, grid_param = 1;
-
-          checkInputRank(ctx, input_param, 4);
-          checkInputRank(ctx, grid_param, 4);
-
-          // Output dimensions, initialized to an unknown-dimension-value
-          Dim N, C, H_out, W_out;
-
-          // Get value of N from dim 0 of input_param, if available
-          unifyInputDim(ctx, input_param, 0, N);
-          // Get value of C from dim 1 of input_param, if available
-          unifyInputDim(ctx, input_param, 1, C);
-
-          // Get value of H_out from dim 1 of grid_param, if available
-          unifyInputDim(ctx, grid_param, 1, H_out);
-          // Get value of W_out from dim 2 of grid_param, if available
-          unifyInputDim(ctx, grid_param, 2, W_out);
-
-          // set output shape:
-          updateOutputShape(ctx, 0, {N, C, H_out, W_out});
-        }));
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
 static const char* Reshape_ver13_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
