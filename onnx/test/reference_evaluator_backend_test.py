@@ -29,6 +29,8 @@ except ImportError:
         StrictVersion as version,
     )
 
+from os import getenv
+
 import numpy as np
 from numpy import __version__ as npver
 from numpy import object_ as dtype_object
@@ -36,14 +38,16 @@ from numpy.testing import assert_allclose  # type: ignore
 
 from onnx import OptionalProto, SequenceProto, TensorProto, load
 from onnx.backend.test import __file__ as backend_folder
-from onnx.helper import (
-    ORT_MAX_IR_SUPPORTED_VERSION,
-    ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION,
-)
 from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
+
+# it should get env variables from workflow_scripts/set_env_for_ort_test.py
+ORT_MAX_IR_SUPPORTED_VERSION = getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8")
+ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = getenv(
+    "ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18"
+)
 
 # Number of tests expected to pass without raising an exception.
 MIN_PASSING_TESTS = 1235

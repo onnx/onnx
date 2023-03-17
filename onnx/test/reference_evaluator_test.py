@@ -15,6 +15,7 @@ import unittest
 from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
+from os import getenv
 from textwrap import dedent
 
 import numpy as np  # type: ignore
@@ -26,8 +27,6 @@ from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
-    ORT_MAX_IR_SUPPORTED_VERSION,
-    ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION,
     make_function,
     make_graph,
     make_model,
@@ -51,6 +50,12 @@ from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
+)
+
+# it should get env variables from workflow_scripts/set_env_for_ort_test.py
+ORT_MAX_IR_SUPPORTED_VERSION = getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8")
+ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = getenv(
+    "ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18"
 )
 
 

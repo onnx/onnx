@@ -97,4 +97,5 @@ jobs:
         python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install dist/*manylinux2014_x86_64.whl
         python -m pip install -q onnxruntime
+        python workflow_scripts/set_env_for_ort_test.py
         pytest

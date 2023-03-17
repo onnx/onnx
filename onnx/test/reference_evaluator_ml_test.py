@@ -12,9 +12,6 @@ from onnx import ONNX_ML, TensorProto, TypeProto, ValueInfoProto
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
-    ORT_MAX_IR_SUPPORTED_VERSION,
-    ORT_MAX_ML_OPSET_SUPPORTED_VERSION,
-    ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION,
     make_graph,
     make_model_gen_version,
     make_node,
@@ -22,6 +19,13 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.reference import ReferenceEvaluator
+
+# it should get env variables from workflow_scripts/set_env_for_ort_test.py
+ORT_MAX_IR_SUPPORTED_VERSION = getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8")
+ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = getenv(
+    "ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18"
+)
+ORT_MAX_ML_OPSET_SUPPORTED_VERSION = getenv("ORT_MAX_ML_OPSET_SUPPORTED_VERSION", "3")
 
 TARGET_OPSET = onnx_opset_version() - 2
 TARGET_OPSET_ML = 3
