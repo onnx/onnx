@@ -52,7 +52,8 @@ from onnx.reference.ops.op_col2im import (
     col2im_naive_implementation,
 )
 
-# it should get env variables from workflow_scripts/set_env_for_ort_test.py
+# TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
+# For now, bump the version in CIs whenever there is a new onnxruntime release
 ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
 ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
     getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
