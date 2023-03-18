@@ -44,9 +44,9 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
 
 # it should get env variables from workflow_scripts/set_env_for_ort_test.py
-ORT_MAX_IR_SUPPORTED_VERSION = getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8")
-ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = getenv(
-    "ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18"
+ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
+ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
+    getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
 )
 
 # Number of tests expected to pass without raising an exception.
