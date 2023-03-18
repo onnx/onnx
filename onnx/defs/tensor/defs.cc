@@ -2370,14 +2370,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Resize_ver19_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
 
-static const char* GridSample_ver16_doc = R"DOC(
+static const char* GridSample_ver19_doc = R"DOC(
 This is a GridSample operator that supports interpolation in aribtrary dimensions. More details TBD.
-Lots of the operator descriptions need to be rewritten to accomodate the generalization to arbitrary dimensional space. 
+Lots of the operator descriptions need to be rewritten to accomodate the generalization to arbitrary dimensional space.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     GridSample,
-    20,
+    19,
     OpSchema()
         .Attr(
             "mode",
@@ -2443,7 +2443,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain grid types to float tensors.")
-        .SetDoc(GridSample_ver16_doc)
+        .SetDoc(GridSample_ver19_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
 ONNX_OPERATOR_SET_SCHEMA(

@@ -4,7 +4,7 @@
 # pylint: disable=R0912,R0913,R0914,R0915,R1702,R1716,W0221
 
 import numbers
-from typing import Any, Callable, List, Optional, Tuple
+from typing import List
 
 import numpy as np
 
@@ -13,11 +13,6 @@ from onnx.reference.ops.op_resize import _get_all_coords
 
 
 class GridSample(OpRun):
-    # def _get_all_coords(data: np.ndarray) -> np.ndarray:
-    # # FIXME: Fix input type
-    # return _cartesian(
-    #     [list(range(data.shape[i])) for i in range(len(data.shape))]  # type: ignore[arg-type,misc]
-    # )
     # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/GridSampler.h#L26
     def _gs_denormalize(self, n, length: int, align_corners: bool):  # type: ignore
         # n is the normalized coordinate (float)
@@ -37,7 +32,7 @@ class GridSample(OpRun):
         else:
             # Not align to corners
             # x_min = -0.5
-            # x_max = d+0.5
+            # x_max = d-0.5
             # Linear mapping from [x_min, x_max] to [-1, 1]
             # Solving linear equation n = ax + b
             # a = 2/d
@@ -51,10 +46,12 @@ class GridSample(OpRun):
 
     def _gs_denormalize_coordinates(self, n, dims, align_corners: bool):
         x = np.zeros(len(n), dtype=np.float32)
-        for i in range(len(n)):
-            x[i] = self._gs_denormalize(
-                n=n[i], length=dims[i], align_corners=align_corners
-            )
+        # for i in range(len(n)):
+        #     x[i] = self._gs_denormalize(
+        #         n=n[i], length=dims[i], align_corners=align_corners
+        #     )
+        for i, (v, dim) in enumerate(zip(n, dims)):
+            x[i] = self._gs_denormalize(n=v, length=dim, align_corners=align_corners)
         return x
 
     def _gs_reflect(self, x, x_min, x_max):  # type: ignore
@@ -280,20 +277,11 @@ class GridSample(OpRun):
 
     def _cpp_std_round(self, x):
         # https://en.cppreference.com/w/cpp/numeric/math/round
-        print("AAA", x)
-
         def round_single_value(v):
             if v >= 0.0:
                 return np.floor(v + 0.5)
             else:
                 return np.ceil(v - 0.5)
-            # if v > -0.5 and v < 0.5:
-            #     return 0
-            # elif v - np.floor(v) <= 0.5:
-            #     return int(np.floor(v))
-            # elif
-            # else:
-            #     return int(np.floor(v))
 
         if isinstance(x, numbers.Number):
             return round_single_value(x)
@@ -302,9 +290,7 @@ class GridSample(OpRun):
             x_rounded = np.zeros_like(x)
             for i in range(x.shape[0]):
                 x_rounded[i] = round_single_value(x[i])
-            print("CCC", x_rounded)
             x_rounded = x_rounded.astype(np.int32)
-            print("BBB", x_rounded)
             return x_rounded
 
     def _run(self, X, grid, mode=None, padding_mode=None, align_corners=None):
@@ -350,37 +336,30 @@ class GridSample(OpRun):
                         n=nx, dims=dims, align_corners=align_corners
                     )
                     if mode == "nearest":
-                        print("================")
-                        print(nx)
-                        print(x)
-                        # PyTorch uses std::round.
-                        # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/GridSampler.cpp#L177
-                        # PyTorch GridSample 4D and 5D uses different rounding functions
                         if num_dims == 2:
+                            # PyTorch GridSample 2D uses std::nearbyint.
                             # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/cpu/zmath.h#L182
                             x = np.rint(x)  # nearbyintf(x) round to the nearest even.
                         elif num_dims == 3:
+                            # PyTorch GridSample 3D uses std::round.
+                            # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/GridSampler.cpp#L177
                             x = self._cpp_std_round(x)
-                            # x = np.rint(x)
                         else:
                             # Use np.rint for now, since PyTorch does not have implementation for other dimensions anyway.
                             x = np.rint(x)
                     # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/GridSampler.h#L142
                     # Vectorize this later.
-                    for i in range(len(x)):
+                    for i, v in enumerate(x):
                         x_min = border[i]
                         x_max = border[i + num_dims]
-                        if x[i] < x_min or x[i] > x_max:
+                        if v < x_min or v > x_max:
                             if padding_mode == "border":
-                                x[i] = self._clamp(x[i], 0, dims[i] - 1)
+                                x[i] = self._clamp(v, 0, dims[i] - 1)
                             elif padding_mode == "reflection":
-                                x[i] = self._gs_reflect(x[i], x_min, x_max)
+                                x[i] = self._gs_reflect(v, x_min, x_max)
 
                     if mode == "nearest":
-                        print("--------------")
-                        print(x)
                         x = x.astype(np.int32)
-                        print(x)
                         Y[n][c][tuple(ox)] = self._pixel_at_ndarray(
                             ndarray=X_data,
                             x=x,
