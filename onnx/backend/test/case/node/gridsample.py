@@ -614,6 +614,85 @@ class GridSample(Base):
             name="test_gridsample_volumetric_bilinear_align_corners_1",
         )
 
+        Grid = (
+            np.array(
+                [
+                    [
+                        [
+                            [[-1.0, -1.0, -1.0], [-1.0, -0.5, 0.3]],
+                            [[-0.5, -0.5, -0.5], [1.0, -0.6, -1.0]],
+                            [[-0.2, -0.2, -0.2], [0.4, 0.2, 0.6]],
+                            [[0.0, 0.0, 0.0], [-1.0, 0.0, 0.0]],
+                        ],
+                        [
+                            [[0.0, 0.0, 0.0], [-1.0, 1.0, 0.0]],
+                            [[-0.2, -0.2, -0.2], [1.0, 0.4, -0.2]],
+                            [[0.5, 0.5, 0.5], [-1.0, -0.8, 0.8]],
+                            [[1.0, 1.0, 1.0], [0.4, 0.6, -0.3]],
+                        ],
+                    ]
+                ],
+                dtype=np.float32,
+            )
+            * 2.5
+        )
+
+        node = onnx.helper.make_node(
+            "GridSample",
+            inputs=["X", "Grid"],
+            outputs=["Y"],
+            mode="nearest",
+            padding_mode="border",
+            align_corners=0,
+        )
+        # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+        Y_nearest = np.array(
+            [
+                [
+                    [
+                        [[1.0, 9.0], [1.0, 2.0], [1.0, 12.0], [8.0, 7.0]],
+                        [[8.0, 7.0], [1.0, 4.0], [12.0, 9.0], [12.0, 4.0]],
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        expect(
+            node,
+            inputs=[X, Grid],
+            outputs=[Y_nearest],
+            name="test_gridsample_volumetric_padding_border_additional_1",
+        )
+
+        node = onnx.helper.make_node(
+            "GridSample",
+            inputs=["X", "Grid"],
+            outputs=["Y"],
+            mode="nearest",
+            padding_mode="reflection",
+            align_corners=0,
+        )
+        # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+        Y_nearest = np.array(
+            [
+                [
+                    [
+                        [[12.0, 10.0], [1.0, 9.0], [1.0, 12.0], [8.0, 8.0]],
+                        [[8.0, 6.0], [1.0, 3.0], [12.0, 8.0], [1.0, 4.0]],
+                    ]
+                ]
+            ],
+            dtype=np.float32,
+        )
+
+        expect(
+            node,
+            inputs=[X, Grid],
+            outputs=[Y_nearest],
+            name="test_gridsample_volumetric_padding_reflection_additional_1",
+        )
+
     """
     For someone who want to test by script. Comment it cause github ONNX CI
     do not have the torch python package.
