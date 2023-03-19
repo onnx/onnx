@@ -56,7 +56,9 @@ class Softmax_12_13 final : public Adapter {
       reshape->insertAfter(node);
 
       // Fix outputs & wiring
-      reshape->output()->setSizes(node->output()->sizes());
+      if (node->output()->sizes().size() != 0) {
+        reshape->output()->setSizes(node->output()->sizes());
+      }
       reshape->output()->setElemType(node->output()->elemType());
       node->output()->wipeSizes();
       for (Use u : original_uses) {
