@@ -115,13 +115,25 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   py::register_exception<SchemaError>(defs, "SchemaError");
 
   py::class_<OpSchema> op_schema(defs, "OpSchema", "Schema of an operator.");
-  op_schema.def_property_readonly("file", &OpSchema::file)
+  op_schema.def(py::init<>())
+      .def_property(
+          "name",
+          &OpSchema::Name,
+          [](OpSchema& self, const std::string& name) -> OpSchema& { return self.SetName(name); })
+      .def_property(
+          "domain",
+          &OpSchema::domain,
+          [](OpSchema& self, const std::string& domain) -> OpSchema& { return self.SetDomain(domain); })
+      .def("doc", &OpSchema::doc, py::return_value_policy::reference)
+      .def(
+          "set_doc",
+          [](OpSchema& self, const std::string& doc) -> OpSchema& { return self.SetDoc(doc); },
+          py::arg("doc"))
+      .def_property_readonly("file", &OpSchema::file)
       .def_property_readonly("line", &OpSchema::line)
       .def_property_readonly("support_level", &OpSchema::support_level)
-      .def_property_readonly("doc", &OpSchema::doc, py::return_value_policy::reference)
       .def_property_readonly("since_version", &OpSchema::since_version)
       .def_property_readonly("deprecated", &OpSchema::deprecated)
-      .def_property_readonly("domain", &OpSchema::domain)
       .def_property_readonly("function_opset_versions", &OpSchema::function_opset_versions)
       .def_property_readonly(
           "context_dependent_function_opset_versions", &OpSchema::context_dependent_function_opset_versions)
@@ -141,17 +153,82 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                 all_function_opset_versions.end());
             return all_function_opset_versions;
           })
-      .def_property_readonly("name", &OpSchema::Name)
       .def_property_readonly("min_input", &OpSchema::min_input)
       .def_property_readonly("max_input", &OpSchema::max_input)
       .def_property_readonly("min_output", &OpSchema::min_output)
       .def_property_readonly("max_output", &OpSchema::max_output)
       .def_property_readonly("attributes", &OpSchema::attributes)
+      .def(
+          "add_attribute",
+          [](OpSchema& self,
+             const std::string& name,
+             const std::string& description,
+             AttributeProto::AttributeType type,
+             bool required) -> OpSchema& { return self.Attr(name, description, type, required); },
+          py::arg("name"),
+          py::arg("description"),
+          py::arg("type"),
+          py::arg("required") = false)
       .def_property_readonly("inputs", &OpSchema::inputs)
+      .def(
+          "add_input",
+          [](OpSchema& self,
+             int n,
+             std::string name,
+             const std::string& description,
+             std::string type_str,
+             OpSchema::FormalParameterOption param_option,
+             bool is_homogeneous,
+             int min_arity,
+             OpSchema::DifferentiationCategory differentiation_category) -> OpSchema& {
+            return self.Input(
+                n, name, description, type_str, param_option, is_homogeneous, min_arity, differentiation_category);
+          },
+          py::arg("n"),
+          py::arg("name"),
+          py::arg("description"),
+          py::arg("type_str"),
+          py::arg("param_option"),
+          py::arg("is_homogeneous") = false,
+          py::arg("min_arity") = 1,
+          py::arg("differentiation_category") = OpSchema::Unknown)
       .def_property_readonly("outputs", &OpSchema::outputs)
+      .def(
+          "add_output",
+          [](OpSchema& self,
+             int n,
+             std::string name,
+             const std::string& description,
+             std::string type_str,
+             OpSchema::FormalParameterOption param_option,
+             bool is_homogeneous,
+             int min_arity,
+             OpSchema::DifferentiationCategory differentiation_category) -> OpSchema& {
+            return self.Output(
+                n, name, description, type_str, param_option, is_homogeneous, min_arity, differentiation_category);
+          },
+          py::arg("n"),
+          py::arg("name"),
+          py::arg("description"),
+          py::arg("type_str"),
+          py::arg("param_option"),
+          py::arg("is_homogeneous") = false,
+          py::arg("min_arity") = 1,
+          py::arg("differentiation_category") = OpSchema::Unknown)
       .def_property_readonly("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
       .def_property_readonly("has_data_propagation_function", &OpSchema::has_data_propagation_function)
       .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
+      .def(
+          "add_type_constraint",
+          [](OpSchema& self,
+             const std::string& type_str,
+             const std::vector<std::string>& constraints,
+             const std::string& description) -> OpSchema& {
+            return self.TypeConstraint(type_str, constraints, description);
+          },
+          py::arg("type_str"),
+          py::arg("constraints"),
+          py::arg("description"))
       .def_static("is_infinite", [](int v) { return v == std::numeric_limits<int>::max(); })
       .def(
           "_infer_node_outputs",
@@ -298,9 +375,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const std::string& op_type, const int max_inclusive_version, const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
             if (!schema) {
-              fail_schema(
-                  "No schema registered for '" + op_type + "' version '" + std::to_string(max_inclusive_version) +
-                  "' and domain '" + domain + "'!");
+              fail_schema("No schema registered for '" + op_type + "'!");
             }
             return *schema;
           },
@@ -313,7 +388,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const std::string& op_type, const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, domain);
             if (!schema) {
-              fail_schema("No schema registered for '" + op_type + "' and domain '" + domain + "'!");
+              fail_schema("No schema registered for '" + op_type + "'!");
             }
             return *schema;
           },
