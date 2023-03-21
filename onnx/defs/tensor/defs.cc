@@ -956,9 +956,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
           checkAxesRange(axes, input_rank);
-          checkDuplicateAxes(axes, input_rank);
           adjustNegativeAxes(axes, input_rank);
-
+          checkDuplicateAxes(axes, input_rank);
           std::vector<int64_t> steps;
           if (!stepsInitializer) {
             steps = std::vector<int64_t>(starts.size(), 1);
@@ -1874,25 +1873,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
           axes = ParseData<int64_t>(axes_proto);
-
-          // validate 'axes' for duplicate entries
-          std::unordered_set<int64_t> unique_values;
-          for (const auto val : axes) {
-            if (unique_values.find(val) != unique_values.end()) {
-              fail_shape_inference("'axes' attribute must not contain any duplicates");
-            }
-            unique_values.insert(val);
-          }
-
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           const auto output_ndim = input_ndim + static_cast<int>(axes.size());
           checkAxesRange(axes, output_ndim);
           adjustNegativeAxes(axes, output_ndim);
-
-          // sort after correcting negative axes values (if any) in the previous
-          // step
+          checkDuplicateAxes(axes, output_ndim);
+          // sort after correcting negative axes values (if any)
           std::sort(axes.begin(), axes.end());
 
           int j = 0;
@@ -3607,8 +3595,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axes_attr) {
             axes = RetrieveValues<int64_t>(*axes_attr);
             checkAxesRange(axes, input_rank);
-            checkDuplicateAxes(axes, input_rank);
             adjustNegativeAxes(axes, input_rank);
+            checkDuplicateAxes(axes, input_rank);
           } else {
             axes.resize(input_rank);
             std::iota(axes.begin(), axes.end(), 0);

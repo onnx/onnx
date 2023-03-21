@@ -845,7 +845,7 @@ void checkDuplicateAxes(Axes& axes, int rank) {
   for (auto axis : axes) {
     int actual_axis = axis < 0 ? axis + rank : axis;
     if (tmp[actual_axis])
-      fail_shape_inference("Axis ", axis, " is referred more than once.");
+      fail_shape_inference("Axis ", axis, " is referred to more than once.");
     tmp[actual_axis] = true;
   }
 }

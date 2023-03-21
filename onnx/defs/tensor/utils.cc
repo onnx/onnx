@@ -165,9 +165,9 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   std::vector<int64_t> axes;
   if (axes_attr) {
     axes = RetrieveValues<int64_t>(*axes_attr);
-    checkDuplicateAxes(axes, rank_x);
     checkAxesRange(axes, rank_x);
     adjustNegativeAxes(axes, rank_x);
+    checkDuplicateAxes(axes, rank_x);
   }
   if (hasSizesInput) {
     if (!axes.empty()) {
@@ -386,8 +386,8 @@ std::function<void(OpSchema&)> PadDocGenerator(const char* description, const ch
 
         axes = ParseData<int64_t>(axes_initializer);
         checkAxesRange(axes, input_rank);
-        checkDuplicateAxes(axes, input_rank);
         adjustNegativeAxes(axes, input_rank);
+        checkDuplicateAxes(axes, input_rank);
       } else {
         axes.resize(input_rank);
         std::iota(axes.begin(), axes.end(), 0);
