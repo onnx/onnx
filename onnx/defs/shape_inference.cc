@@ -231,6 +231,9 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& targ
 }
 
 void UnionShapeInfo(const TypeProto_Tensor& source_type, TypeProto_Tensor& target_type) {
+  // The union of a tensor of unknown rank and a tensor of known rank is a tensor of unknown rank.
+  // Hence, if the source_type had unknown rank, we clear the shape of the target_type.
+  // Otherwise, UnionShapeInfoForTensor handles the rest.
   if (source_type.has_shape()) {
     UnionShapeInfoForTensor(source_type.shape(), target_type);
   } else {
@@ -239,6 +242,9 @@ void UnionShapeInfo(const TypeProto_Tensor& source_type, TypeProto_Tensor& targe
 }
 
 void UnionShapeInfo(const TypeProto_SparseTensor& source_type, TypeProto_SparseTensor& target_type) {
+  // The union of a tensor of unknown rank and a tensor of known rank is a tensor of unknown rank.
+  // Hence, if the source_type had unknown rank, we clear the shape of the target_type.
+  // Otherwise, UnionShapeInfoForTensor handles the rest.
   if (source_type.has_shape()) {
     UnionShapeInfoForTensor(source_type.shape(), target_type);
   } else {
