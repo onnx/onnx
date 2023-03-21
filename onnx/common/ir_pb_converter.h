@@ -41,5 +41,5 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp);
 
 ModelProto PrepareOutput(const ModelProto& mp_in);
 
-void assertNonNull(const std::shared_ptr<Graph>& g);
+void assertNonNull(const std::shared_ptr<GraphProto>& g);
 } // namespace ONNX_NAMESPACE

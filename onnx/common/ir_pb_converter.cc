@@ -185,8 +185,8 @@ void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_vers
   }
 }
 
-std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::TensorShapeProto& tsp) {
-  std::vector<Dimension> dims;
+std::vector<DimensionIR> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::TensorShapeProto& tsp) {
+  std::vector<DimensionIR> dims;
   dims.reserve(tsp.dim_size());
   for (int i = 0; i < tsp.dim_size(); i++) {
     if (tsp.dim(i).has_dim_value()) {
@@ -540,7 +540,7 @@ void encodeTypeProtoTensorType(ONNX_NAMESPACE::TypeProto_Tensor* tensor_type, Va
   }
   if (n->has_sizes()) {
     ONNX_NAMESPACE::TensorShapeProto* shape = tensor_type->mutable_shape();
-    for (const Dimension& d : n->sizes()) {
+    for (const DimensionIR& d : n->sizes()) {
       auto dim = shape->add_dim();
       if (!d.is_unknown) {
         if (d.is_int) {
@@ -692,7 +692,7 @@ ModelProto PrepareOutput(const ModelProto& mp_in) {
   return mp_out;
 }
 
-void assertNonNull(const std::shared_ptr<Graph>& g) {
+void assertNonNull(const std::shared_ptr<GraphProto>& g) {
   ONNX_ASSERTM(
       g.get() != nullptr,
       "Warning: onnx version converter is unable to parse input model. "

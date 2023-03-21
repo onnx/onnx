@@ -13,10 +13,10 @@ namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
 struct CompatibleAdapter final : public Adapter {
-  explicit CompatibleAdapter(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
+  explicit CompatibleAdapter(const std::string& op_name, const OperatorSetIdProto& initial, const OperatorSetIdProto& target)
       : Adapter(op_name, initial, target) {}
 
-  Node* adapt(std::shared_ptr<Graph>, Node* node) const override {
+  NodeProto* adapt(std::shared_ptr<GraphProto>, NodeProto* node) const override {
     return node;
   }
 };

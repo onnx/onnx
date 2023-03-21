@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include <iostream>
+#include <string>
 #include <utility>
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
@@ -19,15 +20,30 @@
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
+std::string opset_id_to_string(const OperatorSetIdProto& opset_proto) {
+  return opset_proto.domain() + "$" + ONNX_NAMESPACE::to_string(opset_proto.version());
+}
+
+OperatorSetIdProto string_to_opset_id(const std::string& target) {
+  ONNX_TRY{
+    std::string domain = target.substr(0, target.find("$"));
+    int version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
+
+    OperatorSetIdProto opset_proto;
+    opset_proto.set_domain(domain);
+    opset_proto.set_version(version);
+    return opset_proto;
+  }
+    ONNX_CATCH(const std::runtime_error& e) {
+    ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: %s", e.what()); });
+  }
+}
+
 // TODO: Consider creating interface for this class.
 class BaseVersionConverter {
-  // Schema for adapters: {<op_name>:{<from_domain>$<from_version>:{<to_domain>
-  // <to_version>: adapter}}}
  protected:
-  std::unordered_map<
-      std::string,
-      std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<Adapter>>>>
-      adapters;
+   // Schema for adapters: {<op_name>:{<from_domain>$<from_version>:{<to_domain>$<to_version>: adapter}}}
+   std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<Adapter>>>> adapters;
 
   // Map of All Versions of format {op_name: {domain: {version: schema}}}
   std::unordered_map<std::string, std::unordered_map<std::string, std::map<int64_t, const OpSchema*>>> all_schemas;
@@ -41,10 +57,13 @@ class BaseVersionConverter {
   // like to identify the proper registered adapter in the adapters map for
   // a given Node from a certain version to another. It should only be called
   // when the user knows that an adapter should exist for the given context.
-  const Adapter& adapter_lookup(const Node* op, const OpSetID& initial_version, const OpSetID& target_version) const {
-    const std::string op_name = op->kind().toString();
-    const std::string initial = initial_version.toString();
-    const std::string target = target_version.toString();
+  const Adapter& adapter_lookup(
+      const NodeProto* op,
+      const OperatorSetIdProto& initial_version,
+      const OperatorSetIdProto& target_version) const {
+    const std::string op_name = op->op_type();
+    const std::string initial = opset_id_to_string(initial_version);
+    const std::string target = opset_id_to_string(target_version);
     // Find appropriate adapter in adapters map for provided initial and target versions
     // TODO: Consider abstracting elements of this that are specific to
     // DefaultConverter to separate methods here and maintain the procedure in Base Converter
@@ -72,12 +91,12 @@ class BaseVersionConverter {
   }
 
   virtual ModelProto
-  convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version) const = 0;
+  convert_version(const ModelProto& mp_in, const OperatorSetIdProto& initial_version, const OperatorSetIdProto& target_version) const = 0;
 
   void registerAdapter(std::unique_ptr<Adapter> a_ptr) {
-    const OpSetID& iv = a_ptr->initial_version();
-    const OpSetID& tv = a_ptr->target_version();
-    adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::move(a_ptr);
+    const OperatorSetIdProto& iv = a_ptr->initial_version();
+    const OperatorSetIdProto& tv = a_ptr->target_version();
+    adapters[a_ptr->name()][opset_id_to_string(iv)][opset_id_to_string(tv)] = std::move(a_ptr);
   }
 
   void registerAdapter(const char* op, int64_t from, int64_t to, NodeTransformerFunction transformer) {

@@ -24,7 +24,7 @@ class Gemm_7_6 final : public Adapter {
     const auto& C_shape = inputs[2]->sizes();
     // Create (M, N) to input to numpy_unibroadcastable
     // TODO: Reconcile fact that shapes aren't determined for 1st 2 inputs
-    std::vector<Dimension> MN;
+    std::vector<DimensionIR> MN;
     if (node->hasAttribute(ktransA) && node->i(ktransA) == 1) {
       MN.emplace_back(A_shape[1]);
     } else {

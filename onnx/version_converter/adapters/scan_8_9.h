@@ -36,7 +36,7 @@ struct Scan_8_9 final : public Adapter {
 
     for (Value* input : inputs) {
       if (!input->sizes().empty()) {
-        std::vector<Dimension> new_sizes(input->sizes().begin() + 1, input->sizes().end());
+        std::vector<DimensionIR> new_sizes(input->sizes().begin() + 1, input->sizes().end());
         input->setSizes(new_sizes);
         node->addInput(input);
       }
@@ -44,7 +44,7 @@ struct Scan_8_9 final : public Adapter {
 
     for (Value* output : outputs) {
       if (!output->sizes().empty()) {
-        std::vector<Dimension> new_sizes(output->sizes().begin() + 1, output->sizes().end());
+        std::vector<DimensionIR> new_sizes(output->sizes().begin() + 1, output->sizes().end());
         output->setSizes(new_sizes);
       }
     }

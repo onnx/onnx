@@ -64,14 +64,14 @@ struct Scan_9_8 final : public Adapter {
     node->addInput(v);
 
     for (Value* input : inputs) {
-      std::vector<Dimension> new_sizes{Dimension(1)};
+      std::vector<DimensionIR> new_sizes{DimensionIR(1)};
       new_sizes.insert(new_sizes.end(), input->sizes().begin(), input->sizes().end());
       input->setSizes(new_sizes);
       node->addInput(input);
     }
 
     for (Value* output : outputs) {
-      std::vector<Dimension> new_sizes{Dimension(1)};
+      std::vector<DimensionIR> new_sizes{DimensionIR(1)};
       new_sizes.insert(new_sizes.end(), output->sizes().begin(), output->sizes().end());
       output->setSizes(new_sizes);
     }

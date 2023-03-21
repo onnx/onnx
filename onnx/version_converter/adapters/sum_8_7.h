@@ -20,8 +20,8 @@ class Sum_8_7 final : public Adapter {
     const ArrayRef<Value*>& inputs = node->inputs();
     // Determine if inputs are of different sizes
     for (int i = 1; i < (int)inputs.size(); i++) {
-      std::vector<Dimension> A_sizes = inputs[i - 1]->sizes();
-      std::vector<Dimension> B_sizes = inputs[i]->sizes();
+      std::vector<DimensionIR> A_sizes = inputs[i - 1]->sizes();
+      std::vector<DimensionIR> B_sizes = inputs[i]->sizes();
       assert_numpy_multibroadcastable(A_sizes, B_sizes);
     }
   }

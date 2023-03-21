@@ -22,30 +22,8 @@ std::vector<T> protobuf_repeated_fields_to_vector(google::protobuf::RepeatedPtrF
 }
 
 int check_numpy_unibroadcastable_and_require_broadcast(
-    const std::vector<Dimension>& input1_sizes,
-    const std::vector<Dimension>& input2_sizes) {
-  // Check that input1 is larger
-  if (input1_sizes.size() < input2_sizes.size())
-    return -1;
-  // Check that axis is input1_sizes.size()-input2_sizes.size()
-  bool broadcast = false;
-  int axis = (int)(input1_sizes.size() - input2_sizes.size());
-  for (int i = 0; i < (int)input2_sizes.size(); i++) {
-    if (input2_sizes[i].dim != input1_sizes[axis + i].dim && input2_sizes[i].dim != 1)
-      return -1;
-    if (input2_sizes[i].dim != input1_sizes[axis + i].dim)
-      broadcast = true;
-  }
-  // Return true if broadcasting is required
-  if (input1_sizes.size() > input2_sizes.size() || broadcast)
-    return 1;
-  else
-    return 0;
-}
-
-int check_numpy_unibroadcastable_and_require_broadcast(
-    std::vector<TensorShapeProto_Dimension>& dim1,
-    std::vector<TensorShapeProto_Dimension>& dim2) {
+    std::vector<TensorShapeProto::Dimension>& dim1,
+    std::vector<TensorShapeProto::Dimension>& dim2) {
   if (dim1.size() < dim2.size())
     return -1;
   // Check that axis is input1_sizes.size()-input2_sizes.size()
@@ -66,11 +44,11 @@ int check_numpy_unibroadcastable_and_require_broadcast(
   
 
 void assert_numpy_multibroadcastable(
-    const std::vector<Dimension>& input1_sizes,
-    const std::vector<Dimension>& input2_sizes) {
+    const std::vector<TensorShapeProto::Dimension>& input1_sizes,
+    const std::vector<TensorShapeProto::Dimension>& input2_sizes) {
   // Generalize above for multibroadcastable case
-  const std::vector<Dimension>* A_ptr;
-  const std::vector<Dimension>* B_ptr;
+  const std::vector<TensorShapeProto::Dimension>* A_ptr;
+  const std::vector<TensorShapeProto::Dimension>* B_ptr;
   int A;
   int B;
   if (input1_sizes.size() < input2_sizes.size()) {
@@ -84,12 +62,12 @@ void assert_numpy_multibroadcastable(
     A = 1;
     B = 2;
   }
-  const std::vector<Dimension>& A_sizes = *A_ptr;
-  const std::vector<Dimension>& B_sizes = *B_ptr;
+  const std::vector<TensorShapeProto::Dimension>& A_sizes = *A_ptr;
+  const std::vector<TensorShapeProto::Dimension>& B_sizes = *B_ptr;
   int axis = (int)(A_sizes.size() - B_sizes.size());
   for (int i = 0; i < (int)B_sizes.size(); i++) {
     ONNX_ASSERTM(
-        B_sizes[i].dim == A_sizes[axis + i].dim || B_sizes[i].dim == 1 || A_sizes[axis + i].dim == 1,
+        B_sizes[i].dim_value() == A_sizes[axis + i].dim_value() || B_sizes[i].dim_value() == 1 || A_sizes[axis + i].dim_value() == 1,
         "Dimension %d of input %d does not match "
         "dimension %d of input %d, and neither's value is 1",
         i,
@@ -99,13 +77,13 @@ void assert_numpy_multibroadcastable(
   }
 }
 
-void assertNotParams(const std::vector<Dimension>& sizes) {
-  for (const Dimension& dim : sizes) {
-    ONNX_ASSERTM(dim.is_int, "%s Dimension is a param instead of an int.", dim.param.c_str());
+void assertNotParams(const std::vector<TensorShapeProto::Dimension>& sizes) {
+  for (const TensorShapeProto::Dimension& dim : sizes) {
+    ONNX_ASSERTM(dim.has_dim_value(), "%s Dimension is a param instead of an int.", dim.dim_param().c_str());
   }
 }
 
-void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uint64_t num_inputs) {
+void assertInputsAvailable(const std::vector<std::shapred_ptr<Value>>& inputs, const char* name, uint64_t num_inputs) {
   ONNX_ASSERTM(
       inputs.size() == num_inputs,
       "%s in opset version 6 can only broadcast"

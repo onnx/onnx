@@ -20,7 +20,7 @@ struct ExtendSupportedTypes final : public Adapter {
       std::shared_ptr<Graph> graph,
       ArrayRef<Value*> inputs,
       const int to_type,
-      const std::vector<Dimension>& output_shape,
+      const std::vector<DimensionIR>& output_shape,
       const std::string& name) const {
     Node* node = graph->create(kCast, inputs);
     node->i_(kto, to_type);

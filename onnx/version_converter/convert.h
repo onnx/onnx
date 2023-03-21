@@ -47,6 +47,11 @@
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
+OperatorSetIdProto OpSetID(int64_t version) {
+  OperatorSetIdProto opset_proto;
+  opset_proto.set_version(version);
+  return opset_proto;
+}
 class DefaultVersionConverter : public BaseVersionConverter {
  private:
   bool DEBUG = false;
@@ -85,7 +90,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains");
   }
 
-  void convert_graph(std::shared_ptr<Graph> g, const OpSetID& initial_version, const OpSetID& target_version) const;
+  void convert_graph(std::shared_ptr<GraphProto> g, std::vector<OperatorSetIdProto>& opset_imports,
+    const OperatorSetIdProto& initial_version, const OperatorSetIdProto& target_version) const;
 
  public:
   DefaultVersionConverter() {
@@ -543,7 +549,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("Resize", OpSetID(18), OpSetID(19)));
   }
 
-  ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
+  ModelProto convert_version(const ModelProto& mp_in, const OperatorSetIdProto& initial_version, const OperatorSetIdProto& target_version)
       const override;
 };
 

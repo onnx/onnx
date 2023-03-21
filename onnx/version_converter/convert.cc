@@ -9,22 +9,24 @@ namespace version_conversion {
 
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   // Get initial_opsetid from mp_in
-  OpSetID initial_struct(0);
+  OperatorSetIdProto initial_struct;
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
     if (it->domain() == "" || it->domain() == "ai.onnx") {
-      initial_struct.setVersion(it->version());
+      initial_struct.set_version(it->version());
       break;
     }
   }
-  OpSetID target_struct = OpSetID(target_version);
+  OperatorSetIdProto target_struct;
+  target_struct.set_version(target_version);
   DefaultVersionConverter v;
   return v.convert_version(mp_in, initial_struct, target_struct);
 }
 
 void DefaultVersionConverter::convert_graph(
-    std::shared_ptr<Graph> g,
-    const OpSetID& initial_version,
-    const OpSetID& target_version) const {
+    std::shared_ptr<GraphProto> g,
+    std::vector<OperatorSetIdProto> opset_imports,
+    const OperatorSetIdProto& initial_version,
+    const OperatorSetIdProto& target_version) const {
   assertNonNull(g);
 
   // TODO: Move to Inter-Domain Converter
@@ -52,8 +54,8 @@ void DefaultVersionConverter::convert_graph(
   }
   // Identify index of this domain in g.opset_versions
   unsigned int domain_index = 0;
-  for (unsigned int i = 0; i < g->opset_versions_mutable().size(); i++) {
-    if (g->opset_versions_mutable()[i].domain() == "") {
+  for (unsigned int i = 0; i < opset_imports.size(); i++) {
+    if (opset_imports[i].domain() == "") {
       domain_index = i;
     }
   }
@@ -62,23 +64,24 @@ void DefaultVersionConverter::convert_graph(
         "curr_version: " + ONNX_NAMESPACE::to_string(curr_version) +
         ", next_version: " + ONNX_NAMESPACE::to_string(curr_version + step));
     Node* cur_op;
-    graph_node_list_iterator it = g->begin();
-    // Iterate through and call adapter returned by adapter_lookup for ops from
-    // current_version opset. We have to manipulate the iterator explicitly because cur_op
-    // might change when applying the adapter (e.g. for deprecated ops)
-    while (it != g->end()) {
+    for (auto* cur_op : g->node()) {
+      // Iterate through and call adapter returned by adapter_lookup for ops from
+      // current_version opset. We have to manipulate the iterator explicitly because cur_op
+      // might change when applying the adapter (e.g. for deprecated ops)
       cur_op = *it;
       debug(std::string("Finding schema for ") + std::string(cur_op->kind().toString()));
       const std::string op_name = cur_op->kind().toString();
       if (op_name == "ConstantFill") {
         std::cerr
-            << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
-               "Please be advised the converted model may not be working properly if target runtime does not support this "
-               "experimental op."
-            << std::endl;
-      } else if (cur_op->domain() != "" && cur_op->domain() != "ai.onnx") {
+          << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
+          "Please be advised the converted model may not be working properly if target runtime does not support this "
+          "experimental op."
+          << std::endl;
+      }
+      else if (cur_op->domain() != "" && cur_op->domain() != "ai.onnx") {
         std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << std::endl;
-      } else if (op_name != "Undefined" && op_name != "Captured") {
+      }
+      else if (op_name != "Undefined" && op_name != "Captured") {
         auto& op_domain_map = all_schemas.at(op_name);
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);
@@ -100,18 +103,33 @@ void DefaultVersionConverter::convert_graph(
           }
         }
       }
-      it++;
     }
     // Update model version
     curr_version += step;
-    g->opset_versions_mutable()[domain_index].incrementVersion(step);
+    opset_imports[domain_index].incrementVersion(step);
   }
+}
+
+std::unique_ptr<GraphProto> make_graph_and_opset_imports(const ModelProto & mp, std::vector<OperatorSetIdProto>& opset_imports) {
+  if (!mp.has_ir_version()) {
+    return nullptr;
+  }
+  else if (mp.ir_version() <= 1) {
+    // ir_version=1 is not supported and ir_version=0 is illegal
+    return nullptr;
+  }
+
+  std::unique_ptr<GraphProto> g = std::make_unique<GraphProto>(mp.graph());
+  for (int i = 0; i < mp.opset_import_size(); i++) {
+    opset_imports.push_back(mp.opset_import(i));
+  }
+  return g;
 }
 
 ModelProto DefaultVersionConverter::convert_version(
     const ModelProto& mp_in,
-    const OpSetID& initial_version,
-    const OpSetID& target_version) const {
+    const OperatorSetIdProto& initial_version,
+    const OperatorSetIdProto& target_version) const {
   const std::string& initial_domain = initial_version.domain();
   const std::string& target_domain = target_version.domain();
   assertDefaultDomain(initial_domain, target_domain);
@@ -123,7 +141,9 @@ ModelProto DefaultVersionConverter::convert_version(
     }
   }
 
-  std::shared_ptr<Graph> g(ImportModelProto(mp_in));
+  GraphProto g;
+  std::vector<OperatorSetIdProto> opset_imports;
+  g = make_graph_and_opset_imports(mp_in, opset_imports);
 
   convert_graph(g, initial_version, target_version);
 

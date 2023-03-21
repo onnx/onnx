@@ -22,8 +22,8 @@ class BroadcastForwardCompatibility final : public Adapter {
     if (HasAttribute(node, "broadcast")) {
       const ArrayRef<Value*>& inputs = node->inputs();
       assertInputsAvailable(inputs, name().c_str(), 2);
-      const std::vector<Dimension>& A_sizes = inputs[0]->sizes();
-      const std::vector<Dimension>& B_sizes = inputs[1]->sizes();
+      const std::vector<DimensionIR>& A_sizes = inputs[0]->sizes();
+      const std::vector<DimensionIR>& B_sizes = inputs[1]->sizes();
       // Also assert that broadcasting syntax are correct if axis is not present
       if (node->hasAttribute(kaxis)) {
         if (node->i(kaxis) != (int)(A_sizes.size() - B_sizes.size())) {
@@ -31,13 +31,13 @@ class BroadcastForwardCompatibility final : public Adapter {
           Node* n = graph->create(kUnsqueeze);
           n->addInput(inputs[1]);
           std::vector<int64_t> axes;
-          std::vector<Dimension> new_sizes = B_sizes;
+          std::vector<DimensionIR> new_sizes = B_sizes;
           auto size = A_sizes.size() > B_sizes.size() ? A_sizes.size() - B_sizes.size() : 0;
           axes.reserve(size);
           new_sizes.reserve(new_sizes.size() + size);
           for (size_t i = 0; i < size; i++) {
             axes.emplace_back(B_sizes.size() + i);
-            new_sizes.emplace_back(Dimension(1));
+            new_sizes.emplace_back(DimensionIR(1));
           }
           if (target_version().version() >= 13) { // Unsqueeze takes 'axes' input
             Tensor t;

@@ -48,7 +48,7 @@ class Softmax_12_13 final : public Adapter {
       reshape->insertAfter(node);
 
       // Set shape input of Reshape
-      const std::vector<Dimension>& target_shape = flatten->inputs()[0]->sizes();
+      const std::vector<DimensionIR>& target_shape = flatten->inputs()[0]->sizes();
 
       ONNX_ASSERTM(
           target_shape.size() != 0,
@@ -59,7 +59,7 @@ class Softmax_12_13 final : public Adapter {
       t.elem_type() = TensorProto_DataType_INT64;
       t.sizes() = std::vector<int64_t>{static_cast<int64_t>(target_shape.size())};
       auto& data = t.int64s();
-      for (Dimension dim : target_shape) {
+      for (DimensionIR dim : target_shape) {
         data.emplace_back(dim.dim);
       }
       Node* constant = graph->create(kConstant);

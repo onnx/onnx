@@ -67,10 +67,10 @@ class ResourceGuard final {
   }
 };
 
-struct Dimension final {
-  Dimension() : is_unknown(true), is_int(false), dim(-1) {}
-  Dimension(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {} // NOLINT
-  Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {} // NOLINT
+struct DimensionIR final {
+  DimensionIR() : is_unknown(true), is_int(false), dim(-1) {}
+  DimensionIR(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {} // NOLINT
+  DimensionIR(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {} // NOLINT
 
   bool is_unknown;
   bool is_int;
@@ -306,7 +306,7 @@ struct Value final {
   std::string unique_name_;
   int32_t elem_type_;
   bool has_sizes_;
-  std::vector<Dimension> sizes_;
+  std::vector<DimensionIR> sizes_;
 
  public:
   Value* setElemType(int32_t elem_type) {
@@ -319,17 +319,17 @@ struct Value final {
   bool has_sizes() const {
     return has_sizes_;
   }
-  Value* setSizes(std::vector<Dimension> sizes) {
+  Value* setSizes(std::vector<DimensionIR> sizes) {
     has_sizes_ = true;
     sizes_ = std::move(sizes);
     return this;
   }
   Value* wipeSizes() {
     has_sizes_ = false;
-    sizes_ = std::vector<Dimension>();
+    sizes_ = std::vector<DimensionIR>();
     return this;
   }
-  const std::vector<Dimension>& sizes() const {
+  const std::vector<DimensionIR>& sizes() const {
     return sizes_;
   }
   size_t unique() const {
@@ -941,7 +941,7 @@ struct Graph final {
   Value* addInitializerAndCreateValue(Tensor& initializer) {
     addInitializer(initializer);
     auto* init_value = initializer_node_->addOutput();
-    std::vector<Dimension> dim_sizes{initializer.sizes().cbegin(), initializer.sizes().cend()};
+    std::vector<DimensionIR> dim_sizes{initializer.sizes().cbegin(), initializer.sizes().cend()};
     init_value->setUniqueName(initializer.name());
     init_value->setSizes(dim_sizes);
     init_value->setElemType(initializer.elem_type());
@@ -1111,7 +1111,7 @@ struct Graph final {
   // Create an initializer whose value is stored in input
   Value* addInitializerAndInput(const Tensor& initializer, const std::string& name) {
     Tensor initializerCopy = initializer;
-    std::vector<Dimension> dim_sizes{initializerCopy.sizes().cbegin(), initializerCopy.sizes().cend()};
+    std::vector<DimensionIR> dim_sizes{initializerCopy.sizes().cbegin(), initializerCopy.sizes().cend()};
     Value* new_init = addInput();
     initializerCopy.setName(name);
     new_init->setUniqueName(name);

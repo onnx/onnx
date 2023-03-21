@@ -23,7 +23,7 @@ class Gemm_6_7 final : public Adapter {
     // Determine if C is broadcastable
     const auto& C_shape = inputs[2]->sizes();
     // Create (M, N) to input to numpy_unibroadcastable
-    std::vector<Dimension> MN;
+    std::vector<DimensionIR> MN;
     if (node->hasAttribute(ktransA) && node->i(ktransA) == 1) {
       MN.emplace_back(A_shape[1]);
     } else {
