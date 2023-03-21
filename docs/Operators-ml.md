@@ -65,6 +65,33 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>arrayfeatureextractor</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ArrayFeatureExtractor",
+    inputs=["x", "y"],
+    outputs=["z"],
+    domain="ai.onnx.ml",
+)
+
+x = np.arange(12).reshape((3, 4)).astype(np.float32)
+y = np.array([0, 1], dtype=np.int64)
+z = np.array([[0, 4, 8], [1, 5, 9]], dtype=np.float32).T
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_ai_onnx_ml_array_feature_extractor",
+)
+```
+
+</details>
+
+
 ### <a name="ai.onnx.ml.Binarizer"></a><a name="ai.onnx.ml.binarizer">**ai.onnx.ml.Binarizer**</a>
 
   Maps the values of the input tensor to either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
@@ -100,6 +127,29 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
 <dd>The input must be a tensor of a numeric type. The output will be of the same tensor type.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>binarizer</summary>
+
+```python
+threshold = 1.0
+node = onnx.helper.make_node(
+    "Binarizer",
+    inputs=["X"],
+    outputs=["Y"],
+    threshold=threshold,
+    domain="ai.onnx.ml",
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = compute_binarizer(x, threshold)[0]
+
+expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
+```
+
+</details>
 
 
 ### <a name="ai.onnx.ml.CastMap"></a><a name="ai.onnx.ml.castmap">**ai.onnx.ml.CastMap**</a>
