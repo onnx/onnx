@@ -115,6 +115,37 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   py::register_exception<SchemaError>(defs, "SchemaError");
 
   py::class_<OpSchema> op_schema(defs, "OpSchema", "Schema of an operator.");
+
+  py::enum_<OpSchema::FormalParameterOption>(op_schema, "FormalParameterOption")
+      .value("Single", OpSchema::Single)
+      .value("Optional", OpSchema::Optional)
+      .value("Variadic", OpSchema::Variadic);
+
+  py::enum_<OpSchema::DifferentiationCategory>(op_schema, "DifferentiationCategory")
+      .value("Unknown", OpSchema::Unknown)
+      .value("Differentiable", OpSchema::Differentiable)
+      .value("NonDifferentiable", OpSchema::NonDifferentiable);
+
+  py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
+      .value("FLOAT", AttributeProto::FLOAT)
+      .value("INT", AttributeProto::INT)
+      .value("STRING", AttributeProto::STRING)
+      .value("TENSOR", AttributeProto::TENSOR)
+      .value("GRAPH", AttributeProto::GRAPH)
+      .value("FLOATS", AttributeProto::FLOATS)
+      .value("INTS", AttributeProto::INTS)
+      .value("STRINGS", AttributeProto::STRINGS)
+      .value("TENSORS", AttributeProto::TENSORS)
+      .value("GRAPHS", AttributeProto::GRAPHS)
+      .value("SPARSE_TENSOR", AttributeProto::SPARSE_TENSOR)
+      .value("SPARSE_TENSORS", AttributeProto::SPARSE_TENSORS)
+      .value("TYPE_PROTO", AttributeProto::TYPE_PROTO)
+      .value("TYPE_PROTOS", AttributeProto::TYPE_PROTOS);
+
+  py::enum_<OpSchema::SupportType>(op_schema, "SupportType")
+      .value("COMMON", OpSchema::SupportType::COMMON)
+      .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
+
   op_schema.def(py::init<>())
       .def_property(
           "name",
@@ -321,16 +352,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_readonly("description", &OpSchema::TypeConstraintParam::description)
       .def_readonly("allowed_type_strs", &OpSchema::TypeConstraintParam::allowed_type_strs);
 
-  py::enum_<OpSchema::FormalParameterOption>(op_schema, "FormalParameterOption")
-      .value("Single", OpSchema::Single)
-      .value("Optional", OpSchema::Optional)
-      .value("Variadic", OpSchema::Variadic);
-
-  py::enum_<OpSchema::DifferentiationCategory>(op_schema, "DifferentiationCategory")
-      .value("Unknown", OpSchema::Unknown)
-      .value("Differentiable", OpSchema::Differentiable)
-      .value("NonDifferentiable", OpSchema::NonDifferentiable);
-
   py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
       .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
@@ -339,26 +360,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
       .def_property_readonly("isHomogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
       .def_property_readonly("differentiationCategory", &OpSchema::FormalParameter::GetDifferentiationCategory);
-
-  py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
-      .value("FLOAT", AttributeProto::FLOAT)
-      .value("INT", AttributeProto::INT)
-      .value("STRING", AttributeProto::STRING)
-      .value("TENSOR", AttributeProto::TENSOR)
-      .value("GRAPH", AttributeProto::GRAPH)
-      .value("FLOATS", AttributeProto::FLOATS)
-      .value("INTS", AttributeProto::INTS)
-      .value("STRINGS", AttributeProto::STRINGS)
-      .value("TENSORS", AttributeProto::TENSORS)
-      .value("GRAPHS", AttributeProto::GRAPHS)
-      .value("SPARSE_TENSOR", AttributeProto::SPARSE_TENSOR)
-      .value("SPARSE_TENSORS", AttributeProto::SPARSE_TENSORS)
-      .value("TYPE_PROTO", AttributeProto::TYPE_PROTO)
-      .value("TYPE_PROTOS", AttributeProto::TYPE_PROTOS);
-
-  py::enum_<OpSchema::SupportType>(op_schema, "SupportType")
-      .value("COMMON", OpSchema::SupportType::COMMON)
-      .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
   defs.def(
       "has_schema",
