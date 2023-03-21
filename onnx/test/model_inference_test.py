@@ -202,6 +202,43 @@ class TestModelInference(unittest.TestCase):
             """
         self._check_shape(model, [4, 4], [8, 8, 8])
 
+    def test_mi_optionals(self):
+        """
+        Test a function implemention of:
+            def add_bias (input, bias):
+                if (bias is not None):
+                    return input + bias
+                else:
+                    return input
+        where bias may be either a static-optional or dynamic-optional.
+        """
+        model = """
+            <ir_version: 8, opset_import: ["": 19, "local": 1]>
+            mymodel (float[124] x) => (y1, y2, y3, y4) {
+                y1 = local.add_bias (x)     # omitted static-optional input
+                y2 = local.add_bias (x, x)  # not-omitted static-optional input
+                no_bias = Optional <type = float[]> ()
+                y3 = local.add_bias (x, no_bias) # omitted dynamic-optional input
+                some_bias = Optional (x)
+                y4 = local.add_bias (x, some_bias) # not-omitted dynamic input
+            }
+            <opset_import: ["":19], domain: "local">
+            add_bias (input, bias) => (output) {
+                cond = OptionalHasElement(bias)
+                output = If (cond) <
+                    then_branch = g1 () => (z_then) {
+                        bias_value = OptionalGetElement <type = float[]> (bias)
+                        z_then = Add(input, bias_value)
+                    },
+                    else_branch = g2 () => (z_else) {
+                        z_else = Identity (input)
+                    }
+                    >
+            }
+
+            """
+        float_type = onnx.TensorProto.FLOAT
+        self._check(model, float_type, float_type, float_type, float_type)
 
 if __name__ == "__main__":
     unittest.main()

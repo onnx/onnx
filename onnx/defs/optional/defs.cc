@@ -106,18 +106,33 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_tensor_type->mutable_shape()->Clear();
         }));
 
-static const char* OptionalGetElement_ver18_doc = R"DOC(
+static const char* OptionalGetElement_ver19_doc = R"DOC(
 If the input is a tensor or sequence type, it returns the input.
 If the input is an optional type, it outputs the element in the input.
-It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
+It is a runtime error if the input is an empty optional-type
+(i.e. does not have an element) and the behavior is undefined in this case.
+The operator supports both static-optional and dynamic-optional inputs
+as a way to handle both categories of optional inputs uniformly.
+Thus, a call to this operator is permitted to have no inputs statically,
+though it will be a run-time error. In this special case, the attribute
+'type' can be used to indicate the output type to enable type-inference.
+This edge case is allowed to use the following code-pattern, where the
+call to OptionalGetElement will not be invoked if no value is available.
+```
+  if OptionalHasElement(x)
+    ... use OptionalGetElement(x) ...
+  else
+    ... do something else ...
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     OptionalGetElement,
-    18,
+    19,
     OpSchema()
-        .SetDoc(OptionalGetElement_ver18_doc)
-        .Input(0, "input", "The optional input.", "O")
+        .SetDoc(OptionalGetElement_ver19_doc)
+        .Input(0, "input", "The optional input.", "O", OpSchema::Optional)
+        .Attr("type", "Type of the element in the optional output", AttributeProto::TYPE_PROTO, OPTIONAL_VALUE)
         .Output(0, "output", "Output element in the optional input.", "V")
         .TypeConstraint(
             "O",
@@ -134,8 +149,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output type to all tensor or sequence types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
+          const auto* attr_proto = ctx.getAttribute("type");
           if (numInputs != 1) {
-            fail_type_inference("OptionalGetElement must have an input element.");
+            if (attr_proto == nullptr) {
+              fail_type_inference("OptionalGetElement must have an input element or type attribute.");
+            } else {
+              if (!attr_proto->has_tp())
+                fail_type_inference("Attribute 'type' should be a TypeProto and it should specify a type.");
+              auto attr_tp = attr_proto->tp();
+              ctx.getOutputType(0)->CopyFrom(attr_tp);
+              return;              
+            }
           }
           auto input_type = ctx.getInputType(0);
           if (input_type == nullptr) {

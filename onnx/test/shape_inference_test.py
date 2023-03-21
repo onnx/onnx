@@ -7032,6 +7032,20 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )  # type: ignore
 
+    def test_optional_get_element_empty(self) -> None:
+        tensor_type_proto = helper.make_tensor_type_proto(
+            elem_type=TensorProto.INT32, shape=[1, 2, 3]
+        )
+        output_val_info = helper.make_value_info(
+            name="output", type_proto=tensor_type_proto
+        )
+        graph = self._make_graph(
+            [],
+            [make_node("OptionalGetElement", [], ["output"], type=tensor_type_proto)],
+            [],
+        )
+        self._assert_inferred(graph, [output_val_info])  # type: ignore
+
     def test_tensor_get_element(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
             elem_type=TensorProto.DOUBLE, shape=[2, 1, 4]
