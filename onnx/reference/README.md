@@ -1,3 +1,9 @@
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # ReferenceEvaluator
 
 This is a first attempt to provide an implementation for all operators
