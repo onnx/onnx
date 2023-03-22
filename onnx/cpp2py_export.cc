@@ -115,7 +115,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   py::register_exception<SchemaError>(defs, "SchemaError");
 
   py::class_<OpSchema> op_schema(defs, "OpSchema", "Schema of an operator.");
+  op_schema.def(py::init<>());
 
+  // Define the class enums first because they are used as default values in function definitions
   py::enum_<OpSchema::FormalParameterOption>(op_schema, "FormalParameterOption")
       .value("Single", OpSchema::Single)
       .value("Optional", OpSchema::Optional)
@@ -146,7 +148,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("COMMON", OpSchema::SupportType::COMMON)
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
-  op_schema.def(py::init<>())
+  op_schema
       .def_property(
           "name",
           &OpSchema::Name,
