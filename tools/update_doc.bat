@@ -1,3 +1,5 @@
+REM Copyright (c) ONNX Project Contributors
+
 :: SPDX-License-Identifier: Apache-2.0
 
 :: Run this script from ONNX root directory under Anaconda.
