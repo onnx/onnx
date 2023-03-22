@@ -201,7 +201,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::arg("name"),
           py::arg("description"),
           py::arg("type"),
-          py::arg("required") = false)
+          py::arg("required") = true)
       .def_property_readonly("inputs", &OpSchema::inputs)
       .def(
           "add_input",
@@ -222,6 +222,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::arg("description"),
           py::arg("type_str"),
           py::arg("param_option"),
+          // TODO(justinchuby): Confirm defaults
           py::arg("is_homogeneous") = false,
           py::arg("min_arity") = 1,
           py::arg("differentiation_category") = OpSchema::Unknown)

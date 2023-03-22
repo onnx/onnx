@@ -1,26 +1,36 @@
+"""Submodule containing all the ONNX schema definitions."""
+from __future__ import annotations
+
 from typing import Dict, Optional, Sequence, Set, Tuple, overload
+
+from typing_extensions import Self
 
 from onnx import AttributeProto, FunctionProto
 
 class SchemaError(Exception): ...
 
 class OpSchema:
+    def __init__(self) -> None: ...
     @property
     def file(self) -> str: ...
     @property
     def line(self) -> int: ...
     @property
     def support_level(self) -> SupportType: ...
-    @property
     def doc(self) -> Optional[str]: ...
+    def set_doc(self, doc: str) -> None: ...
     @property
     def since_version(self) -> int: ...
     @property
     def deprecated(self) -> bool: ...
     @property
     def domain(self) -> str: ...
+    @domain.setter
+    def domain(self, domain: str) -> None: ...
     @property
     def name(self) -> str: ...
+    @name.setter
+    def name(self, name: str) -> None: ...
     @property
     def min_input(self) -> int: ...
     @property
@@ -31,12 +41,41 @@ class OpSchema:
     def max_output(self) -> int: ...
     @property
     def attributes(self) -> Dict[str, Attribute]: ...
+    def add_attribute(
+        self, name: str, description: str, type: AttributeProto.AttributeType, required: bool = False
+    ) -> None: ...
     @property
     def inputs(self) -> Sequence[FormalParameter]: ...
+    def add_input(
+        self,
+        n: int,
+        name: str,
+        description: str,
+        type_str: str,
+        param_option: OpSchema.FormalParameterOption,
+        is_homogeneous: bool = False,
+        min_arity: int = 1,
+    ) -> Self: ...
     @property
     def outputs(self) -> Sequence[FormalParameter]: ...
+    def add_output(
+        self,
+        n: int,
+        name: str,
+        description: str,
+        type_str: str,
+        param_option: OpSchema.FormalParameterOption,
+        is_homogeneous: bool = False,
+        min_arity: int = 1,
+    ) -> Self: ...
     @property
     def type_constraints(self) -> Sequence[TypeConstraintParam]: ...
+    def add_type_constraint(
+        self,
+        type_str: str,
+        constraints: Sequence[str],
+        description: str,
+    ) -> Self: ...
     @property
     def has_type_and_shape_inference_function(self) -> bool: ...
     @property
