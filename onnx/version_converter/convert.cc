@@ -23,8 +23,8 @@ ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
 }
 
 void DefaultVersionConverter::convert_graph(
-    std::shared_ptr<GraphProto> g,
-    std::vector<OperatorSetIdProto> opset_imports,
+    GraphProto* g,
+    std::vector<OperatorSetIdProto>& opset_imports,
     const OperatorSetIdProto& initial_version,
     const OperatorSetIdProto& target_version) const {
   assertNonNull(g);
@@ -64,53 +64,60 @@ void DefaultVersionConverter::convert_graph(
         "curr_version: " + ONNX_NAMESPACE::to_string(curr_version) +
         ", next_version: " + ONNX_NAMESPACE::to_string(curr_version + step));
     Node* cur_op;
-    for (auto* cur_op : g->node()) {
+    // TODO: work with node in SSA order.
+    for (NodeProto& cur_op : *g->mutable_node()) {
       // Iterate through and call adapter returned by adapter_lookup for ops from
       // current_version opset. We have to manipulate the iterator explicitly because cur_op
       // might change when applying the adapter (e.g. for deprecated ops)
-      cur_op = *it;
-      debug(std::string("Finding schema for ") + std::string(cur_op->kind().toString()));
-      const std::string op_name = cur_op->kind().toString();
-      if (op_name == "ConstantFill") {
+      debug(std::string("Finding schema for ") + cur_op.op_type());
+      if (cur_op.op_type() == "ConstantFill") {
         std::cerr
           << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
           "Please be advised the converted model may not be working properly if target runtime does not support this "
           "experimental op."
           << std::endl;
       }
-      else if (cur_op->domain() != "" && cur_op->domain() != "ai.onnx") {
-        std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << std::endl;
+      else if (cur_op.domain() != "" && cur_op.domain() != "ai.onnx") {
+        std::cerr << "Warning: opset domain '" << cur_op.domain() << "' is not supported." << std::endl;
       }
-      else if (op_name != "Undefined" && op_name != "Captured") {
-        auto& op_domain_map = all_schemas.at(op_name);
-        OpSetID curr_id(curr_version);
-        OpSetID next_id(curr_version + step);
+      else if (cur_op.op_type() != "Undefined" && cur_op.op_type() != "Captured") {
+        auto& op_domain_map = all_schemas.at(cur_op.op_type());
+        OperatorSetIdProto curr_id = OpSetID(curr_version);
+        OperatorSetIdProto next_id = OpSetID(curr_version + step);
         if (searchOpDomainMap(op_domain_map, curr_version, step)) {
           // Op is specifically defined for this domain and version
-          auto& op_adapter = adapter_lookup(cur_op, curr_id, next_id);
+          auto& op_adapter = adapter_lookup(&cur_op, curr_id, next_id);
           // If adapter_lookup returns null, no adapter is present.
           // Error thrown by adapter_lookup
           if (DEBUG)
             std::cerr << "Applying adapter" << std::endl;
-          // adapt should handle replacing node in graph
-          cur_op = op_adapter.adapt(g, cur_op);
-          it = graph_node_list_iterator(cur_op, kNextDirection);
+          // adapt should handle replacing node in graph. what to do with cur_op2?
+          NodeProto* cur_op2 = op_adapter.adapt(g, &cur_op);
         }
         // Recursively convert any subgraph attributes
-        for (const auto& attr : cur_op->attributeNames()) {
-          if (cur_op->kindOf(attr) == AttributeKind::g) {
-            convert_graph(cur_op->g(attr), curr_id, next_id);
+        for (auto& attr : *cur_op.mutable_attribute()) {
+          if (attr.has_g()) {
+            convert_graph(attr.mutable_g(), opset_imports, curr_id, next_id);
           }
         }
       }
     }
     // Update model version
     curr_version += step;
-    opset_imports[domain_index].incrementVersion(step);
+    opset_imports[domain_index].set_version(opset_imports[domain_index].version() + step);
   }
 }
 
-std::unique_ptr<GraphProto> make_graph_and_opset_imports(const ModelProto & mp, std::vector<OperatorSetIdProto>& opset_imports) {
+void make_model_proto_from_graph_and_opset_imports(ModelProto* p_m, GraphProto* g_p, std::vector<OperatorSetIdProto>& opset_imports) {
+  *p_m->mutable_graph() = *g_p;
+  // Add new opset_versions
+  p_m->clear_opset_import();
+  for (auto& opset : opset_imports) {
+    *p_m->add_opset_import() = opset;
+  }
+}
+
+GraphProto* make_graph_and_opset_imports_from_model_proto(const ModelProto& mp, std::vector<OperatorSetIdProto>& opset_imports) {
   if (!mp.has_ir_version()) {
     return nullptr;
   }
@@ -119,7 +126,7 @@ std::unique_ptr<GraphProto> make_graph_and_opset_imports(const ModelProto & mp, 
     return nullptr;
   }
 
-  std::unique_ptr<GraphProto> g = std::make_unique<GraphProto>(mp.graph());
+  GraphProto* g = new GraphProto(mp.graph());
   for (int i = 0; i < mp.opset_import_size(); i++) {
     opset_imports.push_back(mp.opset_import(i));
   }
@@ -141,16 +148,15 @@ ModelProto DefaultVersionConverter::convert_version(
     }
   }
 
-  GraphProto g;
   std::vector<OperatorSetIdProto> opset_imports;
-  g = make_graph_and_opset_imports(mp_in, opset_imports);
+  GraphProto* g = make_graph_and_opset_imports_from_model_proto(mp_in, opset_imports);
 
-  convert_graph(g, initial_version, target_version);
+  convert_graph(g, opset_imports, initial_version, target_version);
 
   // Export g as ModelProto
   debug("Finished conversion; returning model");
   ModelProto mp_out = PrepareOutput(mp_in);
-  ExportModelProto(&mp_out, g);
+  make_model_proto_from_graph_and_opset_imports(&mp_out, g, opset_imports);
   return mp_out;
 }
 

@@ -16,7 +16,7 @@ struct CompatibleAdapter final : public Adapter {
   explicit CompatibleAdapter(const std::string& op_name, const OperatorSetIdProto& initial, const OperatorSetIdProto& target)
       : Adapter(op_name, initial, target) {}
 
-  NodeProto* adapt(std::shared_ptr<GraphProto>, NodeProto* node) const override {
+  NodeProto* adapt(GraphProto*, NodeProto* node) const override {
     return node;
   }
 };

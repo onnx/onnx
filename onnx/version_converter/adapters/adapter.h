@@ -36,7 +36,7 @@ class Adapter {
   // The only exception are adapters for deprecated operators: in this case the input
   // node must be destroyed and a new one must be created and returned. See e.g.
   // upsample_9_10.h
-  virtual NodeProto* adapt(std::shared_ptr<GraphProto> /*graph*/, NodeProto* node) const = 0;
+  virtual NodeProto* adapt(GraphProto* /*graph*/, NodeProto* node) const = 0;
 
   const std::string& name() const {
     return name_;
@@ -51,14 +51,14 @@ class Adapter {
   }
 };
 
-using NodeTransformerFunction = std::function<NodeProto*(std::shared_ptr<GraphProto>, NodeProto* node)>;
+using NodeTransformerFunction = std::function<NodeProto*(GraphProto*, NodeProto* node)>;
 
 class GenericAdapter final : public Adapter {
  public:
   GenericAdapter(const char* op, int64_t from, int64_t to, NodeTransformerFunction transformer)
       : Adapter(op, OperatorSetIdProto(make_opset_proto(from)), OperatorSetIdProto(make_opset_proto(to))), transformer_(transformer) {}
 
-  NodeProto* adapt(std::shared_ptr<GraphProto> graph, NodeProto* node) const override {
+  NodeProto* adapt(GraphProto* graph, NodeProto* node) const override {
     return transformer_(graph, node);
   }
 

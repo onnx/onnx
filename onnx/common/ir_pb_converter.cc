@@ -692,9 +692,9 @@ ModelProto PrepareOutput(const ModelProto& mp_in) {
   return mp_out;
 }
 
-void assertNonNull(const std::shared_ptr<GraphProto>& g) {
+void assertNonNull(const GraphProto* g) {
   ONNX_ASSERTM(
-      g.get() != nullptr,
+      g != nullptr,
       "Warning: onnx version converter is unable to parse input model. "
       "(The IR version of the ONNX model may be too old.)");
 }

@@ -804,20 +804,20 @@ struct Node : public Attributes<Node> {
 
 // A class with the same properties as OperatorSetIdProto, but without protobuf
 // overhead, resulting in a simpler and more readable workflow.
-class OpSetID final {
+class OpSetIDIR final {
  private:
   OperatorSetIdProto opset_id_proto_;
 
  public:
-  explicit OpSetID(const OperatorSetIdProto& proto) : opset_id_proto_(proto) {}
+  explicit OpSetIDIR(const OperatorSetIdProto& proto) : opset_id_proto_(proto) {}
 
   // Default Domain Constructor
-  explicit OpSetID(const int64_t version) {
+  explicit OpSetIDIR(const int64_t version) {
     opset_id_proto_.set_domain("");
     opset_id_proto_.set_version(version);
   }
 
-  explicit OpSetID(const std::string& domain, int64_t version) {
+  explicit OpSetIDIR(const std::string& domain, int64_t version) {
     opset_id_proto_.set_domain(domain);
     opset_id_proto_.set_version(version);
   }
@@ -828,11 +828,11 @@ class OpSetID final {
   }
 
   // target must be in the form "<domain>&<version>"
-  static OpSetID fromString(const std::string& target) {
+  static OpSetIDIR fromString(const std::string& target) {
     ONNX_TRY {
       std::string new_domain = target.substr(0, target.find("$"));
       int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
-      return OpSetID(new_domain, new_version);
+      return OpSetIDIR(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
       ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: %s", e.what()); });
@@ -844,7 +844,7 @@ class OpSetID final {
     // In case of "no exception build" the code aborts at the site of first exception.
     // Adding this to appease the warning "control may reach end of non-void function"
     // as the mac build fails when ONNX_WERROR==ON
-    return OpSetID("", 0);
+    return OpSetIDIR("", 0);
   }
 
   const std::string& domain() const {
@@ -1005,7 +1005,7 @@ struct Graph final {
     return const_graph_node_list(output_, kNextDirection);
   }
 
-  std::vector<OpSetID>& opset_versions_mutable() {
+  std::vector<OpSetIDIR>& opset_versions_mutable() {
     return opset_versions_;
   }
 

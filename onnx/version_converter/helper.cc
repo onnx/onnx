@@ -5,12 +5,13 @@
 // Helper Methods for Adapters
 
 #include "onnx/version_converter/helper.h"
+#include "onnx/common/assertions.h"
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
 bool HasAttribute(NodeProto* node_proto, const std::string& name) {
-  return std::find_if(node_proto->attribute().begin(), node_proto->attribute().end(), [name](AttributeProto& attr) {
+  return std::find_if(node_proto->attribute().begin(), node_proto->attribute().end(), [name](const AttributeProto& attr) {
            return attr.name() == name;
          }) != node_proto->attribute().end();
 }
@@ -83,17 +84,5 @@ void assertNotParams(const std::vector<TensorShapeProto::Dimension>& sizes) {
   }
 }
 
-void assertInputsAvailable(const std::vector<std::shapred_ptr<Value>>& inputs, const char* name, uint64_t num_inputs) {
-  ONNX_ASSERTM(
-      inputs.size() == num_inputs,
-      "%s in opset version 6 can only broadcast"
-      " between %d inputs",
-      name,
-      num_inputs);
-  for (int i = 0; i < (int)num_inputs; i++) {
-    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs);
-    assertNotParams(inputs[i]->sizes());
-  }
-}
 } // namespace version_conversion
 } // namespace ONNX_NAMESPACE
