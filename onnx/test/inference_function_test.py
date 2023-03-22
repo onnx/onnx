@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 import unittest
 from typing import Dict, List, Optional, Tuple, Union
 
