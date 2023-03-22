@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
@@ -130,7 +132,7 @@ def function_testcase_helper(
 ) -> Tuple[List[Tuple[List[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, node.domain)
+    schema = onnx.defs.get_schema(test_op, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
     # opset versions include the op's since_version and other opset versions
@@ -273,7 +275,7 @@ def expect(
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
         produce_opset_version = onnx.defs.get_schema(
-            node.op_type, node.domain
+            node.op_type, domain=node.domain
         ).since_version
         kwargs["opset_imports"] = [
             onnx.helper.make_operatorsetid(node.domain, produce_opset_version)

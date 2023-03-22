@@ -4,6 +4,7 @@
 
 import unittest
 from functools import wraps
+from os import getenv
 
 import numpy as np  # type: ignore
 from numpy.testing import assert_allclose  # type: ignore
@@ -13,14 +14,23 @@ from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
     make_graph,
-    make_model,
+    make_model_gen_version,
     make_node,
     make_opsetid,
     make_tensor_value_info,
 )
 from onnx.reference import ReferenceEvaluator
 
-TARGET_IR_VERSION = 8
+# TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
+# For now, bump the version in CIs whenever there is a new onnxruntime release
+ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
+ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
+    getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
+)
+ORT_MAX_ML_OPSET_SUPPORTED_VERSION = int(
+    getenv("ORT_MAX_ML_OPSET_SUPPORTED_VERSION", "3")
+)
+
 TARGET_OPSET = onnx_opset_version() - 2
 TARGET_OPSET_ML = 3
 OPSETS = [make_opsetid("", TARGET_OPSET), make_opsetid("ai.onnx.ml", TARGET_OPSET_ML)]
@@ -53,6 +63,24 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         if not has_onnxruntime():
             return
         from onnxruntime import InferenceSession
+
+        onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+        ml_domain_opset = ORT_MAX_ML_OPSET_SUPPORTED_VERSION
+        for opset in onx.opset_import:
+            if opset.domain in ("", "ai.onnx"):
+                onnx_domain_opset = opset.version
+                break
+        for opset in onx.opset_import:
+            if opset.domain == "ai.onnx.ml":
+                ml_domain_opset = opset.version
+                break
+        # The new IR or opset version is not supported by onnxruntime yet
+        if (
+            onx.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
+            or onnx_domain_opset > ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+            or ml_domain_opset > ORT_MAX_ML_OPSET_SUPPORTED_VERSION
+        ):
+            return
 
         ort = InferenceSession(
             onx.SerializeToString(), providers=["CPUExecutionProvider"]
@@ -93,8 +121,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
         node1 = make_node("Binarizer", ["X"], ["Y"], threshold=5.5, domain="ai.onnx.ml")
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.arange(12).reshape((3, 4)).astype(np.float32)
         expected = np.array(
@@ -113,8 +140,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "Scaler", ["X"], ["Y"], scale=[0.5], offset=[-4.5], domain="ai.onnx.ml"
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.arange(12).reshape((3, 4)).astype(np.float32)
         expected = np.array(
@@ -139,8 +165,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "ArrayFeatureExtractor", ["X", "A"], ["Y"], domain="ai.onnx.ml"
         )
         graph = make_graph([node1], "ml", [X, A], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.arange(12).reshape((3, 4)).astype(np.float32)
 
@@ -184,8 +209,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     "Normalizer", ["X"], ["Y"], norm=norm, domain="ai.onnx.ml"
                 )
                 graph = make_graph([node1], "ml", [X], [Y])
-                onx = make_model(graph, opset_imports=OPSETS)
-                onx.ir_version = TARGET_IR_VERSION
+                onx = make_model_gen_version(graph, opset_imports=OPSETS)
                 check_model(onx)
 
                 feeds = {"X": x}
@@ -229,8 +253,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     domain="ai.onnx.ml",
                 )
                 graph = make_graph([node1], "ml", X[: len(att)], [Y])
-                onx = make_model(graph, opset_imports=OPSETS)
-                onx.ir_version = TARGET_IR_VERSION
+                onx = make_model_gen_version(graph, opset_imports=OPSETS)
                 check_model(onx)
 
                 feeds = {f"X{i}": v for i, v in enumerate(x[: len(att)])}
@@ -252,8 +275,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             replaced_value_float=np.nan,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.array([[0, 1, np.nan, 3]], dtype=np.float32).T
         expected = np.array([[0, 1, 0, 3]], dtype=np.float32).T
@@ -275,8 +297,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             replaced_value_float=np.nan,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.array([[0, 1, np.nan, 3], [0, 1, np.nan, 3]], dtype=np.float32).T
         expected = np.array([[0, 1, 0, 3], [0, 1, 0.1, 3]], dtype=np.float32).T
@@ -298,8 +319,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             replaced_value_int64=-1,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.array([[0, 1, -1, 3]], dtype=np.int64).T
         expected = np.array([[0, 1, 0, 3]], dtype=np.int64).T
@@ -322,8 +342,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             values_int64s=[0, 1, 2, 3],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.array([[0, 1, np.nan, 3, 4]], dtype=np.float32).T
         expected = np.array([[-5, 1, -5, 3, 0]], dtype=np.int64).T
@@ -346,8 +365,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             values_strings=["a", "b", "cc", "ddd"],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.array([[0, 1, 3, 4]], dtype=np.int64).T
         expected = np.array([["NONE"], ["a"], ["cc"], ["ddd"]])
@@ -377,8 +395,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             string_vocabulary=["a", "c", "b", "z"],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = {"a": np.array(4, dtype=np.int64), "c": np.array(8, dtype=np.int64)}
         expected = np.array([4, 8, 0, 0], dtype=np.int64)
@@ -401,8 +418,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             cats_int64s=[1, 2, 3],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.array([[5, 1, 3], [2, 1, 3]], dtype=np.int64)
         expected = np.array(
@@ -427,8 +443,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             cats_strings=["c1", "c2", "c3"],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.array([["c5", "c1", "c3"], ["c2", "c1", "c3"]])
         expected = np.array(
@@ -453,7 +468,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             cats_int64s=[1, 2, 3],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.array([[2, 1, 3], [2, 1, 3]], dtype=np.int64)
         expected = np.array(
@@ -480,7 +495,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             targets=1,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.arange(6).reshape((-1, 2)).astype(np.float32)
         expected = np.array([[-0.27], [-1.21], [-2.15]], dtype=np.float32)
@@ -504,7 +519,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             targets=2,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.arange(6).reshape((-1, 2)).astype(np.float32)
         expected = np.array(
@@ -593,8 +608,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     post_transform=post,
                 )
                 graph = make_graph([node1], "ml", [X], [In, Y])
-                onx = make_model(graph, opset_imports=OPSETS)
-                onx.ir_version = TARGET_IR_VERSION
+                onx = make_model_gen_version(graph, opset_imports=OPSETS)
                 check_model(onx)
                 x = np.arange(6).reshape((-1, 2)).astype(np.float32)
                 self._check_ort(onx, {"X": x}, rev=True, atol=1e-4)
@@ -652,8 +666,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     post_transform=post,
                 )
                 graph = make_graph([node1], "ml", [X], [In, Y])
-                onx = make_model(graph, opset_imports=OPSETS)
-                onx.ir_version = TARGET_IR_VERSION
+                onx = make_model_gen_version(graph, opset_imports=OPSETS)
                 check_model(onx)
                 # onnxruntime answer seems odd.
                 # self._check_ort(onx, {"X": x}, rev=True)
@@ -701,8 +714,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     post_transform=post,
                 )
                 graph = make_graph([node1], "ml", [X], [In, Y])
-                onx = make_model(graph, opset_imports=OPSETS)
-                onx.ir_version = TARGET_IR_VERSION
+                onx = make_model_gen_version(graph, opset_imports=OPSETS)
                 check_model(onx)
                 # onnxruntime answer seems odd.
                 # self._check_ort(onx, {"X": x}, rev=True)
@@ -780,8 +792,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             target_weights=targets,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         return onx
 
@@ -916,8 +927,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
         expected = np.array(
@@ -989,8 +999,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         return onx
 
@@ -1084,8 +1093,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             post_transform=post_transform,
         )
         graph = make_graph([node1], "ml", [X], [In, Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         return onx
 
@@ -1207,8 +1215,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             post_transform=post_transform,
         )
         graph = make_graph([node1], "ml", [X], [In, Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         return onx
 
@@ -1357,8 +1364,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "SVMClassifier", ["X"], ["I", "Y"], domain="ai.onnx.ml", **kwargs
         )
         graph = make_graph([node1], "ml", [X], [In, Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         return onx
 
@@ -1646,8 +1652,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "SVMClassifier", ["X"], ["I", "Y"], domain="ai.onnx.ml", **kwargs
         )
         graph = make_graph([node1], "ml", [X], [In, Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         return onx
 
@@ -1710,8 +1715,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
         node1 = make_node("SVMRegressor", ["X"], ["Y"], domain="ai.onnx.ml", **kwargs)
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model(graph, opset_imports=OPSETS)
-        onx.ir_version = TARGET_IR_VERSION
+        onx = make_model_gen_version(graph, opset_imports=OPSETS)
         check_model(onx)
         return onx
 

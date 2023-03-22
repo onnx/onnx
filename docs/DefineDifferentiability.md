@@ -1,4 +1,8 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # A Short Guide on the Differentiability Tag for ONNX Operators
 

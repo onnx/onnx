@@ -554,7 +554,7 @@ message TensorProto {
   repeated float float_data = 4 [packed = true];
 
   // For int32, uint8, int8, uint16, int16, bool, float8, and float16 values
-  // float16 values must be bit-wise converted to an uint16_t prior
+  // float16 and float8 values must be bit-wise converted to an uint16_t prior
   // to writing to the buffer.
   // When this field is present, the data_type field MUST be
   // INT32, INT16, INT8, UINT16, UINT8, BOOL, FLOAT16, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ

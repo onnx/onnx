@@ -65,6 +65,33 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>arrayfeatureextractor</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ArrayFeatureExtractor",
+    inputs=["x", "y"],
+    outputs=["z"],
+    domain="ai.onnx.ml",
+)
+
+x = np.arange(12).reshape((3, 4)).astype(np.float32)
+y = np.array([0, 1], dtype=np.int64)
+z = np.array([[0, 4, 8], [1, 5, 9]], dtype=np.float32).T
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_ai_onnx_ml_array_feature_extractor",
+)
+```
+
+</details>
+
+
 ### <a name="ai.onnx.ml.Binarizer"></a><a name="ai.onnx.ml.binarizer">**ai.onnx.ml.Binarizer**</a>
 
   Maps the values of the input tensor to either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.

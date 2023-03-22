@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: ONNX Runtime Issues
+    url: https://github.com/microsoft/onnxruntime/issues
+    about: issues/questions related to ONNX Runtime
+  - name: ONNX Model Zoo Issues
+    url: https://github.com/onnx/models/issues
+    about: issues/questions related to ONNX Model Zoo
+  - name: PyTorch-ONNX exporters Issues
+    url: https://github.com/pytorch/pytorch/issues
+    about: issues/questions related to PyTorch-ONNX exporters (torch.onnx.export)
+  - name: TensorFlow Converter Issues
+    url: https://github.com/onnx/tensorflow-onnx
+    about: issues/questions converting TensorFlow models to ONNX (tf2onnx)

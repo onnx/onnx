@@ -60,6 +60,7 @@ from onnx import (
     printer,
     shape_inference,
     utils,
+    version_converter,
 )
 
 
