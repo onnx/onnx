@@ -1835,6 +1835,37 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
         assert len(converted_model.graph.node[0].attribute) == 1
 
+    # Test Pad Adapter: 10 -> 11
+    def test_pad_10_11(self) -> None:
+        pads = (0, 1, 2, 0, 2, 1)
+        nodes = [helper.make_node("Pad", ["X"], ["Y"], pads=pads)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5, 5))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
+
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[1].op_type == "Pad"
+        assert converted_model.opset_import[0].version == 11
+
+    def test_pad_with_value_10_11(self) -> None:
+        pads = (0, 1, 2, 0, 2, 1)
+        nodes = [helper.make_node("Pad", ["X"], ["Y"], pads=pads, value=1.0)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5, 5))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
+
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[1].op_type == "Pad"
+        assert converted_model.opset_import[0].version == 11
+
     # Test that subgraphs are converted
     def test_if_subgraph_10_11(self) -> None:
         from_opset = 10

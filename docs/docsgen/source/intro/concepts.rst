@@ -31,10 +31,11 @@ to deploy a machine learning model in production. An ONNX interpreter
 in the environment where it is deployed. With ONNX, it is possible
 to build a unique process to deploy a model in production and independent
 from the learning framework used to build the model.
-
-.. contents::
-    :local:
-    :depth: 1
+*onnx* implements a python runtime that can be used to evaluate
+ONNX models and to evaluate ONNX ops. This is intended to clarify the
+semantics of ONNX and to help understand and debug ONNX tools
+and converters. It is not intended to be used for production and
+performance is not a goal (see :ref:`l-reference-implementation`).
 
 Input, Output, Node, Initializer, Attributes
 ++++++++++++++++++++++++++++++++++++++++++++
@@ -51,7 +52,7 @@ It is just a kind of pseudo-code to illustrate the model.
     Output: float[M, N] y
 
     r = onnx.MatMul(a, x)
-    y = onnx.Add(ax, c)
+    y = onnx.Add(r, c)
 
 This code implements a function `f(x, a, c) -> y = a @ x + c`.
 And *x*, *a*, *c* are the **inputs**, *y* is the **output**.
@@ -111,7 +112,7 @@ Metadata
 ++++++++
 
 Machine learned models are continuously refreshed. It is important
-to keep track of the model version, the author of the model and 
+to keep track of the model version, the author of the model and
 how it was trained. ONNX offers the possibility to store additional data
 in the model itself.
 
@@ -163,7 +164,7 @@ supports any custom domains and operators
 Supported Types
 +++++++++++++++
 
-ONNX specifications are optimized for numerical competition with
+ONNX specifications are optimized for numerical computation with
 tensors. A *tensor* is a multidimensional array. It is defined
 by:
 
@@ -259,7 +260,7 @@ If
 ~~
 
 Operator :ref:`l-onnx-doc-If` executes
-one of the two graphs depending one the condition evaluation.
+one of the two graphs depending on the condition evaluation.
 
 ::
 

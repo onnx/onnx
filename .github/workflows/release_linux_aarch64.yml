@@ -10,6 +10,9 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
@@ -17,14 +20,14 @@ jobs:
     strategy:
       matrix:
         # the different python versions for building wheels
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310]
+        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
       img: quay.io/pypa/manylinux2014_aarch64
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.4.0
     - name: Checkout submodules
       shell: bash
       run: |
@@ -33,7 +36,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
       # setting up qemu for enabling aarch64 binary execution on x86 machine
-    - uses: docker/setup-qemu-action@v1
+    - uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
       with:
         # TODO: freeze version for now since the latest one cannot use jupyter
         image: tonistiigi/binfmt:qemu-v6.0.0-12
@@ -51,7 +54,7 @@ jobs:
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 
-      # using created virtual environment in new container and executing the script 
+      # using created virtual environment in new container and executing the script
     - name: Build manylinux2014_aarch64
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
@@ -76,15 +79,17 @@ jobs:
           pytest && \
           deactivate'
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       with:
         name: wheels
         path: dist
 
-    - name: Upload wheel to TestPyPI weekly
+    - name: Upload wheel to TestPyPI/PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         python -m pip install -q twine
+        twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
+        # TODO: stop uploading to TestPyPI after future ONNX 1.14
         twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy and protobuf
@@ -106,17 +111,23 @@ jobs:
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip uninstall -y onnx && python -m pip install protobuf==3.12.2 && \
+          python -m pip uninstall -y onnx && python -m pip install protobuf==3.20.2 && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
 
     - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != 'cp311-cp311'
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
+          python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
           python -m pip install -q onnxruntime && \
-          python onnx/test/test_with_ort.py && \
+          export ORT_MAX_IR_SUPPORTED_VERSION=8 \
+          export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3 \
+          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18 \
+          pytest && \
           deactivate'

@@ -79,6 +79,9 @@ namespace ONNX_NAMESPACE {
     /* The given tensor does have raw_data itself so parse it by given type */                                     \
     /* make copy as we may have to reverse bytes */                                                                \
     std::string raw_data = tensor_proto->raw_data();                                                               \
+    if (raw_data.empty()) {                                                                                        \
+      return res;                                                                                                  \
+    }                                                                                                              \
     /* okay to remove const qualifier as we have already made a copy */                                            \
     char* bytes = const_cast<char*>(raw_data.c_str());                                                             \
     /* onnx is little endian serialized always-tweak byte order if needed */                                       \

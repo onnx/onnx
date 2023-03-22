@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# pylint: disable=unnecessary-lambda
+
 import random
 import struct
 import unittest
@@ -195,10 +197,10 @@ class TestHelperAttributeFunctions(unittest.TestCase):
 
     def test_attr_type_proto(self) -> None:
         # type_proto
-        type = TypeProto()
-        attr = helper.make_attribute("type_proto", type)
+        type_proto = TypeProto()
+        attr = helper.make_attribute("type_proto", type_proto)
         self.assertEqual(attr.name, "type_proto")
-        self.assertEqual(attr.tp, type)
+        self.assertEqual(attr.tp, type_proto)
         self.assertEqual(attr.type, AttributeProto.TYPE_PROTO)
         # type_protos
         types = [TypeProto(), TypeProto()]
@@ -386,6 +388,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 15)], 8)
         test([("", 16)], 8)
         test([("", 17)], 8)
+        test([("", 18)], 8)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
@@ -498,7 +501,9 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
 
         # write out 16-bit of fp32 to create bf16 using truncation, no rounding
-        truncate = lambda x: x >> 16  # noqa: E731
+        def truncate(x):
+            return x >> 16
+
         values_as_ints = np_array.astype(np.float32).view(np.uint32).flatten()
         packed_values = truncate(values_as_ints).astype(np.uint16).tobytes()
         tensor = helper.make_tensor(

@@ -14,10 +14,6 @@ supporting all the pieces of the model. If it is not the
 case, the missing parts must be implemented in ONNX.
 That may be very time consuming.
 
-.. contents::
-    :local:
-    :depth: 1
-
 What is a converting library?
 =============================
 
@@ -236,7 +232,7 @@ Build
 
 The windows build requires conda. The following steps might not be up to date.
 Folder `onnx/.azure-pipelines
-<https://github.com/onnx/onnx/tree/master/.azure-pipelines>`_
+<https://github.com/onnx/onnx/tree/main/.azure-pipelines>`_
 contains the latest instructions.
 
 **Windows**
@@ -297,7 +293,7 @@ Update an existing operator
 +++++++++++++++++++++++++++
 
 All operators are defined in folder
-`onnx/onnx/defs <https://github.com/onnx/onnx/tree/master/onnx/defs>`_.
+`onnx/onnx/defs <https://github.com/onnx/onnx/tree/main/onnx/defs>`_.
 There are two files in every subfolder, one called `defs.cc` and another one
 called `old.cc`.
 
@@ -312,12 +308,12 @@ must be modified. These headers registers the list
 of existing operators.
 
 File `onnx/defs/schema.h
-<https://github.com/onnx/onnx/tree/master/onnx/defs/schema.h>`_
+<https://github.com/onnx/onnx/blob/main/onnx/defs/schema.h>`_
 contains the latest opset version. It must be updated too if one opset
 was upgraded.
 
 File `onnx/version_converter/convert.h
-<https://github.com/onnx/onnx/tree/master/onnx/version_converter/convert.h>`_
+<https://github.com/onnx/onnx/blob/main/onnx/version_converter/convert.h>`_
 contains rules to apply when converter a node from an opset to the next one.
 This file may be updated too.
 

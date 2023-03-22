@@ -1,17 +1,17 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.model import expect
 
 
 class SingleRelu(Base):
     @staticmethod
     def export() -> None:
-
         node = onnx.helper.make_node("Relu", ["x"], ["y"], name="test")
         graph = onnx.helper.make_graph(
             nodes=[node],

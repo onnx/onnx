@@ -7,22 +7,24 @@ proto is legal.
 
 import functools
 import sys
-from typing import Any, Callable, Type, TypeVar, Union, cast
+from typing import Any, Callable, Optional, Type, TypeVar, Union, cast
 
 from google.protobuf.message import Message
 
 import onnx.defs
-import onnx.onnx_cpp2py_export.checker as C
+import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
 import onnx.shape_inference
 from onnx import (
     IR_VERSION,
     AttributeProto,
+    FunctionProto,
     GraphProto,
     ModelProto,
     NodeProto,
     SparseTensorProto,
     TensorProto,
     ValueInfoProto,
+    helper,
 )
 
 # Limitation of single protobuf file is 2GB
@@ -50,9 +52,7 @@ def _create_checker(proto_type: Type[Message]) -> Callable[[FuncType], FuncType]
         def checker(proto: Message, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> Any:
             if not isinstance(proto, proto_type):
                 raise RuntimeError(
-                    "You cannot pass an object that is not of type {}".format(
-                        proto_type.__name__
-                    )
+                    f"You cannot pass an object that is not of type {proto_type.__name__}"
                 )
             return getattr(C, py_func.__name__)(proto.SerializeToString(), ctx)
 
@@ -83,6 +83,21 @@ def check_attribute(
 @_create_checker(NodeProto)
 def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
     pass
+
+
+def check_function(
+    function: FunctionProto, ctx: Optional[C.CheckerContext] = None
+) -> None:
+    if ctx is None:
+        ctx = C.CheckerContext()
+        ctx.ir_version = helper.find_min_ir_version_for(
+            list(function.opset_import), True
+        )
+        function_opset_dic = {}
+        for domain_version in function.opset_import:
+            function_opset_dic[domain_version.domain] = domain_version.version
+        ctx.opset_imports = function_opset_dic
+    C.check_function(function.SerializeToString(), ctx)
 
 
 @_create_checker(GraphProto)

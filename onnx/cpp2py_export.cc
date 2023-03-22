@@ -58,7 +58,9 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
     const py::bytes& nodeBytes,
     std::unordered_map<std::string, py::bytes> valueTypesByNameBytes,
     std::unordered_map<std::string, py::bytes> inputDataByNameBytes,
-    std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes) {
+    std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes,
+    std::unordered_map<std::string, int> opsetImports,
+    const int irVersion) {
   NodeProto node{};
   ParseProtoFromPyBytes(&node, nodeBytes);
   // Early fail if node is badly defined - may throw ValidationError
@@ -68,9 +70,15 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
   const auto& valueTypes = ParseProtoFromBytesMap<TypeProto>(valueTypesByNameBytes);
   const auto& inputData = ParseProtoFromBytesMap<const TensorProto>(inputDataByNameBytes);
   const auto& inputSparseData = ParseProtoFromBytesMap<const SparseTensorProto>(inputSparseDataByNameBytes);
+  if (opsetImports.empty()) {
+    opsetImports[schema->domain()] = schema->SinceVersion();
+  }
 
+  shape_inference::GraphInferenceContext graphInferenceContext(
+      valueTypes.second, opsetImports, nullptr, {}, OpSchemaRegistry::Instance(), nullptr, irVersion);
   // Construct inference context and get results - may throw InferenceError
-  shape_inference::InferenceContextImpl ctx(node, valueTypes.second, inputData.second, inputSparseData.second);
+  shape_inference::InferenceContextImpl ctx(
+      node, valueTypes.second, inputData.second, inputSparseData.second, nullptr, &graphInferenceContext);
   schema->GetTypeAndShapeInferenceFunction()(ctx);
   // Verify the inference succeeded - may also throw ValidationError
   // Note that input types were not validated until now (except that their count was correct)
@@ -114,6 +122,25 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("since_version", &OpSchema::since_version)
       .def_property_readonly("deprecated", &OpSchema::deprecated)
       .def_property_readonly("domain", &OpSchema::domain)
+      .def_property_readonly("function_opset_versions", &OpSchema::function_opset_versions)
+      .def_property_readonly(
+          "context_dependent_function_opset_versions", &OpSchema::context_dependent_function_opset_versions)
+      .def_property_readonly(
+          "all_function_opset_versions",
+          [](OpSchema* op) -> std::vector<int> {
+            std::vector<int> all_function_opset_versions = op->function_opset_versions();
+            std::vector<int> context_dependent_function_opset_versions =
+                op->context_dependent_function_opset_versions();
+            all_function_opset_versions.insert(
+                all_function_opset_versions.end(),
+                context_dependent_function_opset_versions.begin(),
+                context_dependent_function_opset_versions.end());
+            std::sort(all_function_opset_versions.begin(), all_function_opset_versions.end());
+            all_function_opset_versions.erase(
+                std::unique(all_function_opset_versions.begin(), all_function_opset_versions.end()),
+                all_function_opset_versions.end());
+            return all_function_opset_versions;
+          })
       .def_property_readonly("name", &OpSchema::Name)
       .def_property_readonly("min_input", &OpSchema::min_input)
       .def_property_readonly("max_input", &OpSchema::max_input)
@@ -126,6 +153,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("has_data_propagation_function", &OpSchema::has_data_propagation_function)
       .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
       .def_static("is_infinite", [](int v) { return v == std::numeric_limits<int>::max(); })
+      .def(
+          "_infer_node_outputs",
+          CallNodeInferenceFunction,
+          py::arg("nodeBytes"),
+          py::arg("valueTypesByNameBytes"),
+          py::arg("inputDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
+          py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
+          py::arg("opsetImports") = std::unordered_map<std::string, int>{},
+          py::arg("irVersion") = int(IR_VERSION))
       .def_property_readonly("has_function", &OpSchema::HasFunction)
       .def_property_readonly(
           "_function_body",
@@ -135,14 +171,17 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               op->GetFunction()->SerializeToString(&bytes);
             return py::bytes(bytes);
           })
-      .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
       .def(
-          "_infer_node_outputs",
-          CallNodeInferenceFunction,
-          py::arg("nodeBytes"),
-          py::arg("valueTypesByNameBytes"),
-          py::arg("inputDataByNameBytes") = std::unordered_map<std::string, py::bytes>{},
-          py::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, py::bytes>{})
+          "get_function_with_opset_version",
+          [](OpSchema* op, int opset_version) -> py::bytes {
+            std::string bytes = "";
+            const FunctionProto* function_proto = op->GetFunction(opset_version);
+            if (function_proto) {
+              function_proto->SerializeToString(&bytes);
+            }
+            return py::bytes(bytes);
+          })
+      .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
       .def(
           "get_context_dependent_function",
           [](OpSchema* op, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes) -> py::bytes {
@@ -163,8 +202,29 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               func_proto.SerializeToString(&func_bytes);
             }
             return py::bytes(func_bytes);
+          })
+      .def(
+          "get_context_dependent_function_with_opset_version",
+          [](OpSchema* op, int opset_version, const py::bytes& bytes, const std::vector<py::bytes>& input_types_bytes)
+              -> py::bytes {
+            NodeProto proto{};
+            ParseProtoFromPyBytes(&proto, bytes);
+            std::string func_bytes = "";
+            if (op->HasContextDependentFunctionWithOpsetVersion(opset_version)) {
+              std::vector<TypeProto> input_types;
+              input_types.reserve(input_types_bytes.size());
+              for (auto& type_bytes : input_types_bytes) {
+                TypeProto type_proto{};
+                ParseProtoFromPyBytes(&type_proto, type_bytes);
+                input_types.push_back(type_proto);
+              }
+              FunctionBodyBuildContextImpl ctx(proto, input_types);
+              FunctionProto func_proto;
+              op->BuildContextDependentFunction(ctx, func_proto, opset_version);
+              func_proto.SerializeToString(&func_bytes);
+            }
+            return py::bytes(func_bytes);
           });
-  ;
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
@@ -238,7 +298,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const std::string& op_type, const int max_inclusive_version, const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
             if (!schema) {
-              fail_schema("No schema registered for '" + op_type + "'!");
+              fail_schema(
+                  "No schema registered for '" + op_type + "' version '" + std::to_string(max_inclusive_version) +
+                  "' and domain '" + domain + "'!");
             }
             return *schema;
           },
@@ -251,7 +313,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const std::string& op_type, const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, domain);
             if (!schema) {
-              fail_schema("No schema registered for '" + op_type + "'!");
+              fail_schema("No schema registered for '" + op_type + "' and domain '" + domain + "'!");
             }
             return *schema;
           },
@@ -310,6 +372,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     ParseProtoFromPyBytes(&proto, bytes);
     checker::LexicalScopeContext lex_ctx;
     checker::check_node(proto, ctx, lex_ctx);
+  });
+
+  checker.def("check_function", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+    FunctionProto proto{};
+    ParseProtoFromPyBytes(&proto, bytes);
+    checker::check_function(proto, ctx, checker::LexicalScopeContext());
   });
 
   checker.def("check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
@@ -380,6 +448,41 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
          bool data_prop) -> void {
         ShapeInferenceOptions options{check_type, strict_mode == true ? 1 : 0, data_prop};
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
+      });
+
+  shape_inference.def(
+      "infer_function_output_types",
+      [](const py::bytes& function_proto_bytes,
+         const std::vector<py::bytes> input_types_bytes,
+         const std::vector<py::bytes> attributes_bytes) -> std::vector<py::bytes> {
+        FunctionProto proto{};
+        ParseProtoFromPyBytes(&proto, function_proto_bytes);
+
+        std::vector<TypeProto> input_types;
+        input_types.reserve(input_types_bytes.size());
+        for (const py::bytes& bytes : input_types_bytes) {
+          TypeProto type;
+          ParseProtoFromPyBytes(&type, bytes);
+          input_types.push_back(type);
+        }
+
+        std::vector<AttributeProto> attributes;
+        attributes.reserve(attributes_bytes.size());
+        for (const py::bytes& bytes : attributes_bytes) {
+          AttributeProto attr;
+          ParseProtoFromPyBytes(&attr, bytes);
+          attributes.push_back(attr);
+        }
+
+        std::vector<TypeProto> output_types = shape_inference::InferFunctionOutputTypes(proto, input_types, attributes);
+        std::vector<py::bytes> result;
+        result.reserve(output_types.size());
+        for (auto& type_proto : output_types) {
+          std::string out;
+          type_proto.SerializeToString(&out);
+          result.push_back(py::bytes(out));
+        }
+        return result;
       });
 
   // Submodule `parser`

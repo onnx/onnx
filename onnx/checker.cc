@@ -622,7 +622,14 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   }
   auto domain_version = dit->second;
 
+  // for ops referencing local functions, there is no schema to verify it.
+  // will add a check to verify consistency between these ops and local functions.
+  std::unordered_set<std::string> seen_attr_names{};
   for (const auto& attr : node.attribute()) {
+    if (!seen_attr_names.insert(attr.name()).second) {
+      fail_check("Attribute '", attr.name(), "' appeared multiple times.");
+    };
+
     check_attribute(attr, ctx, lex_ctx);
   }
 
@@ -831,7 +838,7 @@ void check_opset_compatibility(
     fail_check(
         "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
         "is not compatible with the version imported by model. FunctionOp imports version " +
-        ONNX_NAMESPACE::to_string(func_opset_version) + "whereas model imports version " +
+        ONNX_NAMESPACE::to_string(func_opset_version) + " whereas model imports version " +
         ONNX_NAMESPACE::to_string(model_opset_version));
   }
 }
@@ -994,6 +1001,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
 
   if (ctx.get_ir_version() >= 0x00000008) {
     check_model_local_functions(model, ctx, lex_ctx);
+    // TODO: check consistency between local functions and ops referencing it.
   }
 }
 

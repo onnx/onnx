@@ -1,25 +1,25 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class ReduceL2(Base):
     @staticmethod
     def export_do_not_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [2]
+        axes = np.array([2], dtype=np.int64)
         keepdims = 0
 
         node = onnx.helper.make_node(
             "ReduceL2",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -37,7 +37,7 @@ class ReduceL2(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_l2_do_not_keepdims_example",
         )
@@ -50,7 +50,7 @@ class ReduceL2(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_l2_do_not_keepdims_random",
         )
@@ -58,14 +58,13 @@ class ReduceL2(Base):
     @staticmethod
     def export_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [2]
+        axes = np.array([2], dtype=np.int64)
         keepdims = 1
 
         node = onnx.helper.make_node(
             "ReduceL2",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -83,7 +82,7 @@ class ReduceL2(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_l2_keep_dims_example",
         )
@@ -96,7 +95,7 @@ class ReduceL2(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_l2_keep_dims_random",
         )
@@ -104,35 +103,35 @@ class ReduceL2(Base):
     @staticmethod
     def export_default_axes_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = None
+        axes = np.array([], dtype=np.int64)
         keepdims = 1
 
         node = onnx.helper.make_node(
-            "ReduceL2", inputs=["data"], outputs=["reduced"], keepdims=keepdims
+            "ReduceL2", inputs=["data", "axes"], outputs=["reduced"], keepdims=keepdims
         )
 
         data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
         # print(data)
         # [[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
 
-        reduced = np.sqrt(np.sum(a=np.square(data), axis=axes, keepdims=keepdims == 1))
+        reduced = np.sqrt(np.sum(a=np.square(data), axis=None, keepdims=keepdims == 1))
         # print(reduced)
         # [[[25.49509757]]]
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_l2_default_axes_keepdims_example",
         )
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
-        reduced = np.sqrt(np.sum(a=np.square(data), axis=axes, keepdims=keepdims == 1))
+        reduced = np.sqrt(np.sum(a=np.square(data), axis=None, keepdims=keepdims == 1))
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_l2_default_axes_keepdims_random",
         )
@@ -140,14 +139,13 @@ class ReduceL2(Base):
     @staticmethod
     def export_negative_axes_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [-1]
+        axes = np.array([-1], dtype=np.int64)
         keepdims = 1
 
         node = onnx.helper.make_node(
             "ReduceL2",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -165,7 +163,7 @@ class ReduceL2(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_l2_negative_axes_keep_dims_example",
         )
@@ -178,7 +176,7 @@ class ReduceL2(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_l2_negative_axes_keep_dims_random",
         )

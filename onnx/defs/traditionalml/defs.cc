@@ -26,23 +26,44 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
-
+          if (input_ndim == 1) {
+            return;
+          }
           auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           // This operator only applies to the last dimension; thus -1
           for (int i = 0; i < input_ndim - 1; ++i) {
             *output_shape->add_dim() = input_shape.dim(i);
           }
-          // The length of second input is the length of the last dimension of the output
+
+          // value of the output's last dimension is the total amount of indices
+          // set Unknown length for the last dimension if it cannot be calculated
+          auto last_dim = output_shape->add_dim();
           if (hasInputShape(ctx, 1)) {
             const auto& indices_shape = getInputShape(ctx, 1);
             if (indices_shape.dim_size() > 0) {
-              auto dim = indices_shape.dim(0);
-              *output_shape->add_dim() = dim;
-              return;
+              int64_t num_indices = 1;
+              std::string single_symbolic_dim;
+              for (int i = 0; i < indices_shape.dim_size(); i++) {
+                if (indices_shape.dim(i).has_dim_value()) {
+                  num_indices *= indices_shape.dim(i).dim_value();
+                } else if (indices_shape.dim(i).has_dim_param()) {
+                  if (single_symbolic_dim.empty()) {
+                    // it is possible to set symbolic dimension param if the rest dim values are all value 1
+                    single_symbolic_dim = indices_shape.dim(i).dim_param();
+                  } else {
+                    return;
+                  }
+                } else {
+                  return;
+                }
+              }
+              if (single_symbolic_dim.empty()) {
+                last_dim->set_dim_value(num_indices);
+              } else if (num_indices == 1) {
+                last_dim->set_dim_param(single_symbolic_dim);
+              }
             }
           }
-          // Unknown length of the last dimension
-          output_shape->add_dim();
         })
         .TypeConstraint(
             "T",
@@ -64,7 +85,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
             "The input must be a tensor of a numeric type. The output will be of the same tensor type.")
-        .Attr("threshold", "Values greater than this are mapped to 1, others to 0.", AttributeProto::FLOAT, 0.f));
+        .Attr("threshold", "Values greater than this are mapped to 1, others to 0.", AttributeProto::FLOAT, 0.f)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
 static const char* CastMap_ver1_doc = R"DOC(
     Converts a map to a tensor.<br>The map key must be an int64 and the values will be ordered
@@ -582,7 +604,23 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "zeros",
             "If true and category is not present, will return all zeros; if false and a category if not found, the operator will fail.",
             AttributeProto::INT,
-            static_cast<int64_t>(1)));
+            static_cast<int64_t>(1))
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          std::vector<int64_t> cats_int64s;
+          bool has_int64s = getRepeatedAttribute(ctx, "cats_int64s", cats_int64s);
+          std::vector<std::string> cats_strings;
+          bool has_strings = getRepeatedAttribute(ctx, "cats_strings", cats_strings);
+          if (has_int64s == has_strings) {
+            fail_shape_inference("Exactly one of 'cats_*' attributes must be provided.");
+          }
+          const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          TensorShapeProto* shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          for (int i = 0; i < input_shape.dim_size(); i++) {
+            *shape->add_dim() = input_shape.dim(i);
+          }
+          shape->add_dim()->set_dim_value(std::max(cats_int64s.size(), cats_strings.size()));
+          updateOutputElemType(ctx, 0, TensorProto::FLOAT);
+        }));
 
 static const char* Scaler_ver1_doc = R"DOC(
     Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
@@ -851,9 +889,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                 "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
           }
 
-          std::vector<std::string> label_strs;
-          auto result = getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
-          bool using_strings = (result && !label_strs.empty());
+          std::vector<std::string> classlabels_strings;
+          auto result = getRepeatedAttribute(ctx, "classlabels_strings", classlabels_strings);
+          bool using_strings = (result && !classlabels_strings.empty());
           if (using_strings) {
             updateOutputElemType(ctx, 0, TensorProto::STRING);
           } else {
@@ -864,10 +902,16 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           checkInputRank(ctx, 0, 2);
           Dim N, E;
           unifyInputDim(ctx, 0, 0, N);
-          std::vector<int64_t> class_ids;
-          auto has_ids = getRepeatedAttribute(ctx, "class_ids", class_ids);
-          if (has_ids) {
-            unifyDim(E, class_ids.size());
+
+          if (using_strings) {
+            unifyDim(E, classlabels_strings.size());
+          } else {
+            std::vector<int64_t> classlabels_int64s;
+            result = getRepeatedAttribute(ctx, "classlabels_int64s", classlabels_int64s);
+            if (!result || classlabels_int64s.empty()) {
+              fail_shape_inference("Non of classlabels_int64s or classlabels_strings is set.");
+            }
+            unifyDim(E, classlabels_int64s.size());
           }
           updateOutputShape(ctx, 0, {N});
           updateOutputShape(ctx, 1, {N, E});

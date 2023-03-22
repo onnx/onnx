@@ -37,7 +37,6 @@ class TestAutomaticUpgrade(unittest.TestCase):
         if attrs is None:
             attrs = {}
 
-        global tested_ops
         tested_ops.append(op)
 
         n_inputs = len(input_shapes)
@@ -57,7 +56,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[0] if isinstance(shape, str) else shape for shape in input_shapes],
         )
         inputs: List[ValueInfoProto] = []
-        for (name, ttype, shape, is_seq, is_opt) in zip(
+        for name, ttype, shape, is_seq, is_opt in zip(
             input_names, input_types, input_shapes_cast, is_sequence, is_optional
         ):
             if name != "":
@@ -85,7 +84,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[0] if isinstance(shape, str) else shape for shape in output_shapes],
         )
         outputs: List[ValueInfoProto] = []
-        for (name, ttype, shape, is_seq, is_opt) in zip(
+        for name, ttype, shape, is_seq, is_opt in zip(
             output_names, output_types, output_shapes_cast, is_sequence, is_optional
         ):
             if is_seq:
@@ -1707,7 +1706,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
         )
 
     def test_CenterCropPad(self) -> None:
-        input = helper.make_tensor(
+        input_ = helper.make_tensor(
             "input",
             TensorProto.FLOAT,
             dims=[2, 4],
@@ -1722,7 +1721,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[], []],
             [[3, 3]],
             [TensorProto.FLOAT, TensorProto.INT64],
-            initializer=[input, shape],
+            initializer=[input_, shape],
         )
 
     def test_BitwiseNot(self) -> None:

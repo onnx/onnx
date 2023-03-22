@@ -6,6 +6,7 @@
 #include <functional>
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/math/utils.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -86,69 +87,6 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
   };
 }
 
-std::function<void(OpSchema&)>
-SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {
-  return [=](OpSchema& schema) {
-    std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
-The operator computes the {description} values for the given input:
-
- {equation}
-
-The "axis" attribute indicates the dimension along which {name}
-will be performed. The output tensor has the same shape
-and contains the {name} values of the corresponding input.
-)DOC";
-                        ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{description}", description);
-                        ReplaceAll(doc, "{equation}", equation););
-    std::string axis_attr;
-    POPULATE_OP_DOC_STR(axis_attr = R"DOC(
-Describes the dimension {name} will be performed on.
-Negative value means counting dimensions
-from the back. Accepted range is [-r, r-1] where r = rank(input).
-)DOC";
-                        ReplaceAll(axis_attr, "{name}", name););
-    schema.SetDoc(doc);
-    schema.Attr("axis", axis_attr, AttributeProto::INT, static_cast<int64_t>(-1));
-    schema.Input(
-        0, "input", "The input tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
-    schema.Output(
-        0,
-        "output",
-        "The output values with the same shape as the input tensor.",
-        "T",
-        OpSchema::Single,
-        true,
-        1,
-        OpSchema::Differentiable);
-    schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
-        "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-      // Shape inference starts
-      if (!hasNInputShapes(ctx, 1)) {
-        return;
-      }
-
-      // Validate the value of 'axis'
-      const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-      int r = input_shape.dim_size();
-      int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
-      if (axis < -r || axis >= r) {
-        fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis);
-      }
-
-      // Shape inference
-      propagateShapeFromInputToOutput(ctx, 0, 0);
-    });
-  };
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Add,
     14,
@@ -165,16 +103,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Mod_doc = R"DOC(
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
-    The sign of the remainder is the same as that of the Divisor.
+  The sign of the remainder is the same as that of the Divisor.
 
-    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-    This attribute is set to 0 by default causing the behavior to be like integer mod.
-    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
+  (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+  This attribute is set to 0 by default causing the behavior to be like integer mod.
+  Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
 
-    If the input type is floating point, then `fmod` attribute must be set to 1.
+  If the input type is floating point, then `fmod` attribute must be set to 1.
 
-    In case of dividend being zero, the results will be platform dependent.
+  In case of dividend being zero, the results will be platform dependent.
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 )DOC";
@@ -359,23 +297,21 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to signed numeric tensors.")
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Zero = Constant <value = float {0.0}>()
             ZeroCast = CastLike (Zero, X)
             Y = Max (X, ZeroCast)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18)
+        )ONNX",
+            18)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* LeakyRelu_ver16_doc = R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
 output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
-
-**History**
-- Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -422,7 +358,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Alpha = Constant <value_float: float = @alpha>()
             AlphaCast = CastLike (Alpha, X)
@@ -431,8 +368,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AlphaLessThanX = Less(AlphaCast, X)
             Y = Where(AlphaLessThanX, X, ZeroCast)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+            18));
 
 static const char* Selu_ver6_doc = R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
@@ -465,7 +402,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Alpha = Constant <value_float: float = @alpha>()
             AlphaCast = CastLike (Alpha, X)
@@ -481,8 +419,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             XLessThanZero = Less (X, ZeroCast)
             Y = Where(XLessThanZero, Neg, Pos)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+            18));
 
 static const char* Elu_ver6_doc = R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
@@ -504,7 +442,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Alpha = Constant <value_float: float = @alpha>()
             AlphaCast = CastLike (Alpha, X)
@@ -518,8 +457,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AlphaMulExpXSubOne = Mul (AlphaCast, ExpXSubOne)
             Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+            18));
 
 static const char* mish_ver18_doc = R"DOC(
 Mish: A Self Regularized Non-Monotonic Neural Activation Function.
@@ -756,9 +695,6 @@ static const char* PRelu_ver16_doc = R"DOC(
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-
-**History**
-- Version 16 adds bfloat16 to the types allowed.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -794,7 +730,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FunctionBody(R"ONNX(
         {
           Zero = Constant <value = float {0.0}>()
-          ZeroCast = CastLike(Zero, X)    
+          ZeroCast = CastLike(Zero, X)
           XLessThanZero = Less (X, ZeroCast)
           SlopeMulX = Mul (slope, X)
           Y = Where(XLessThanZero, SlopeMulX, X)
@@ -840,7 +776,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Alpha = Constant <value_float: float = @alpha>()
             AlphaCast = CastLike (Alpha, X)
@@ -855,8 +792,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             MinOneOrAlphaMulXAddBeta = Min (AlphaMulXAddBeta, OneCast)
             Y = Max(MinOneOrAlphaMulXAddBeta, ZeroCast)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+            18));
 
 static const char* HardSwish_ver14_doc = R"DOC(
 HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
@@ -1055,6 +992,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Softmax",
             "normalized exponential",
             "Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) "))
+        // function body builder for opset version 13 (the default opset version is the same
+        // as the operator's since_version.
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
@@ -1070,7 +1009,26 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            }));
+            })
+        // function body builder for opset version 18.
+        // ReduceSum is updated in opset 18 to have axes as the second input.
+        // Therefore function body for opset version 18
+        // is different than the one defined using opset version 13.
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
+              int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              FunctionBuilder builder(functionProto);
+              builder.Const1D("axes", axis).Add("X_ReduceMax = ReduceMax <keepdims = 1> (input, axes)").Add(R"(
+                    X_Sub = Sub (input, X_ReduceMax)
+                    X_Exp = Exp (X_Sub)
+                    X_ReduceSum = ReduceSum <keepdims = 1> (X_Exp, axes)
+                    output = Div (X_Exp, X_ReduceSum)
+                )");
+
+              schema.BuildFunction(functionProto);
+              return true;
+            },
+            18));
 
 ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
@@ -1080,6 +1038,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "LogSoftmax",
             "log of softmax",
             "LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))"))
+        // Function for opset 13
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
@@ -1096,7 +1055,25 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            }));
+            },
+            13)
+        // Function for opset 18
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
+              const int64_t axis = ctx.getAttribute("axis") != nullptr ? ctx.getAttribute("axis")->i() : -1;
+              FunctionBuilder builder(functionProto);
+              builder.Const1D("axes", axis).Add("X_ReduceMax = ReduceMax <keepdims = 1> (input, axes)").Add(R"(
+                    X_Sub = Sub (input, X_ReduceMax)
+                    X_Exp = Exp (X_Sub)
+                    X_ReduceSum = ReduceSum <keepdims = 1> (X_Exp, axes)
+                    X_Log = Log (X_ReduceSum)
+                    output = Sub (X_Sub, X_Log)
+                )");
+
+              schema.BuildFunction(functionProto);
+              return true;
+            },
+            18));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
@@ -1130,7 +1107,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             One = Constant <value = float {1.0}>()
             OneCast = CastLike (One, input)
@@ -1138,8 +1116,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OneAddAbsInput = Add (OneCast, AbsInput)
             output = Div(input, OneAddAbsInput)
           }
-        )ONNX")
-        .FunctionAddOpset("", 18));
+        )ONNX",
+            18));
 
 static const char* Softplus_ver1_doc = R"DOC(
 Softplus takes one input data (Tensor<T>) and produces one output data
@@ -1159,21 +1137,23 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
-        {
-          exp_x = Exp (X)
-          one = Constant <value = float {1.0}>()
-          exp_x_add_one = Add (exp_x, one)
-          Y = Log (exp_x_add_one)
-        }
-        )ONNX"));
+        .FunctionBody(
+            R"ONNX(
+            {
+              exp_x = Exp (X)
+              one = Constant <value = float {1.0}>()
+              one_cast = CastLike (one, X)
+              exp_x_add_one = Add (exp_x, one_cast)
+              Y = Log (exp_x_add_one)
+            }
+            )ONNX",
+            18));
 
 static const char* Gemm_ver13_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
-A' = transpose(A) if transA else A
-
-B' = transpose(B) if transB else B
+* A' = transpose(A) if transA else A
+* B' = transpose(B) if transB else B
 
 Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
 input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
@@ -1355,18 +1335,19 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* TopK_ver11_doc = R"DOC(
 Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
 shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
-  -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
-    which contains the values of the top k elements along the specified axis
-  -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
-   contains the indices of the top k elements (original indices from the input
-   tensor).
 
-If "largest" is 1 (the default value) then the k largest elements are returned.
-If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
-If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+* Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+  which contains the values of the top k elements along the specified axis
+* Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+  contains the indices of the top k elements (original indices from the input
+  tensor).
+
+* If "largest" is 1 (the default value) then the k largest elements are returned.
+* If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+* If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
 
 Given two equivalent values, this operator uses the indices along the axis as
- a tiebreaker. That is, the element with the lower index will appear first.
+a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2220,85 +2201,100 @@ The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It e
 or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
 The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
 
-    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+```
+loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+```
 
 When an optional "weight" is provided, the sample loss is calculated as:
 
-    loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+```
+loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+```
 
 loss is zero for the case when target-value equals ignore_index.
 
-    loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+```
+loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+```
 
 If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
 If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
 
-    mean(loss), if "weight" is not provided,
+```
+mean(loss), if "weight" is not provided,
+```
 
 or if weight is provided,
 
-    sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+```
+sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+```
 
-If "reduction" attribute is set to "sum", the output is a scalar:
-    sum(loss).
+If "reduction" attribute is set to "sum", the output is a scalar: `sum(loss)`.
 
 See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
 
 Example 1:
 
-    // negative log likelihood loss, "none" reduction
-    N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-             [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-    target = [[2, 1], [0, 2]]
+```
+// negative log likelihood loss, "none" reduction
+N, C, d1 = 2, 3, 2
+input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+          [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+target = [[2, 1], [0, 2]]
 
-    loss = np.zeros((N, d1))
-    for n in range(N):
-        for d_1 in range(d1):
-            c = target[n][d_1]
-            loss[n][d_1] = -input[n][c][d_1]
+loss = np.zeros((N, d1))
+for n in range(N):
+    for d_1 in range(d1):
+        c = target[n][d_1]
+        loss[n][d_1] = -input[n][c][d_1]
 
-    // print(loss)
-    // [[-3. -2.]
-    //  [-0. -2.]]
+// print(loss)
+// [[-3. -2.]
+//  [-0. -2.]]
+```
 
 Example 2:
 
-    // weighted negative log likelihood loss, sum reduction
-    N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-    target = [[2, 1], [0, 2]]
-    weight = [0.2, 0.3, 0.1]
-    loss = np.zeros((N, d1))
-    for n in range(N):
-        for d_1 in range(d1):
-            c = target[n][d_1]
-            loss[n][d_1] = -input[n][c][d_1] * weight[c]
+```
+// weighted negative log likelihood loss, sum reduction
+N, C, d1 = 2, 3, 2
+input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+        [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+target = [[2, 1], [0, 2]]
+weight = [0.2, 0.3, 0.1]
+loss = np.zeros((N, d1))
+for n in range(N):
+    for d_1 in range(d1):
+        c = target[n][d_1]
+        loss[n][d_1] = -input[n][c][d_1] * weight[c]
 
-    loss = np.sum(loss)
-    // print(loss)
-    // -1.1
+loss = np.sum(loss)
+// print(loss)
+// -1.1
+```
 
 Example 3:
 
-    // weighted negative log likelihood loss, mean reduction
-    N, C, d1 = 2, 3, 2
-    input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-    target = [[2, 1], [0, 2]]
-    weight = [0.2, 0.3, 0.1]
-    loss = np.zeros((N, d1))
-    weight_total = 0
-    for n in range(N):
-        for d_1 in range(d1):
-            c = target[n][d_1]
-            loss[n][d_1] = -input[n][c][d_1] * weight[c]
-            weight_total = weight_total + weight[c]
+```
+// weighted negative log likelihood loss, mean reduction
+N, C, d1 = 2, 3, 2
+input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+        [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+target = [[2, 1], [0, 2]]
+weight = [0.2, 0.3, 0.1]
+loss = np.zeros((N, d1))
+weight_total = 0
+for n in range(N):
+    for d_1 in range(d1):
+        c = target[n][d_1]
+        loss[n][d_1] = -input[n][c][d_1] * weight[c]
+        weight_total = weight_total + weight[c]
 
-    loss = np.sum(loss) / weight_total
-    // print(loss)
-    // -1.57
+loss = np.sum(loss) / weight_total
+// print(loss)
+// -1.57
+```
 )DOC";
 
 bool BuildContextDependentFunctionBody(
@@ -2618,9 +2614,11 @@ void einsumRankInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equa
 }
 
 static const char* Einsum_ver12_doc = R"DOC(
-An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
+An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
-```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
+```
+output[output-term] = reduce-sum( input1[term1] * input2[term] )
+```
 
 where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
 that do not occur in the output-term.
@@ -2681,29 +2679,38 @@ If the input is N-D tensor with shape (N, C, D1, D2, ..., Dk),
 the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
 After L is available, this operator can optionally do a reduction operator.
 
-shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
-        with K >= 1 in case of K-dimensional loss.
-shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
-        with K >= 1 in case of K-dimensional loss.
+* shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
+  with K >= 1 in case of K-dimensional loss.
+* shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
+  with K >= 1 in case of K-dimensional loss.
 
 The loss for one sample, l_i, can caculated as follows:
-    l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+```
+l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+```
 or
-    l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+```
+l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+```
 
 loss is zero for the case when label-value equals ignore_index.
-    l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
+```
+l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
+```
 
 where:
-    p = Softmax(scores)
-    y = Log(p)
-    c = labels[i][d1][d2]...[dk]
+```
+p = Softmax(scores)
+y = Log(p)
+c = labels[i][d1][d2]...[dk]
+```
 
 Finally, L is optionally reduced:
-If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
-If reduction = 'sum', the output is scalar: Sum(L).
-If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: ReduceSum(L) / ReduceSum(W),
-where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
+
+* If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
+* If reduction = 'sum', the output is scalar: Sum(L).
+* If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: `ReduceSum(L) / ReduceSum(W)`,
+  where tensor W is of shape `(N, D1, D2, ..., Dk)` and `W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]]`.
 )DOC";
 
 bool BuildContextDependentFunctionBodySCE(
@@ -2909,9 +2916,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "output",
             "The Fourier Transform of the input vector."
             "If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. "
-            "If axis=0 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. "
-            "If axis=1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. "
-            "If axis=N-1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. "
+            "If axis=1 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. "
+            "If axis=2 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. "
+            "If axis=N and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. "
             "The signal_dim at the specified axis is equal to the dft_length.",
             "T1")
         .TypeConstraint(
@@ -3460,9 +3467,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
-          if (is_onesided) {
-            dft_size = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
-          }
+          int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
 
           auto n_dfts = static_cast<int64_t>((signal_size - dft_size) / static_cast<float>(frame_step_value)) + 1;
 
@@ -3470,7 +3475,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ONNX_NAMESPACE::TensorShapeProto result_shape_proto;
           result_shape_proto.add_dim()->set_dim_value(input_shape.dim(0).dim_value()); // batch size
           result_shape_proto.add_dim()->set_dim_value(n_dfts);
-          result_shape_proto.add_dim()->set_dim_value(dft_size);
+          result_shape_proto.add_dim()->set_dim_value(dft_unique_bins);
           result_shape_proto.add_dim()->set_dim_value(2);
           updateOutputShape(ctx, 0, result_shape_proto);
         }));

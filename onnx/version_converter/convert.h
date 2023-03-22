@@ -525,6 +525,22 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<Split_17_18>());
     registerAdapter(make_unique<CompatibleAdapter>("ScatterND", OpSetID(17), OpSetID(18)));
     registerAdapter(make_unique<CompatibleAdapter>("ScatterElements", OpSetID(17), OpSetID(18)));
+    registerAdapter("LpPool", 17, 18, SetAttribute(kceil_mode, 0));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceL1", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceL2", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceLogSum", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceLogSumExp", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceMax", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceMean", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceMin", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceProd", OpSetID(17), OpSetID(18)));
+    registerAdapter(make_unique<AxesAttributeToInput>("ReduceSumSquare", OpSetID(17), OpSetID(18)));
+
+    /******** 18 -> 19 ********/
+    registerAdapter(make_unique<CompatibleAdapter>("Equal", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("AveragePool", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Pad", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Resize", OpSetID(18), OpSetID(19)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

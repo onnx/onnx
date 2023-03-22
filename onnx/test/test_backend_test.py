@@ -100,10 +100,7 @@ test_coverage_safelist = {
 def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
     if model.graph.name not in test_coverage_safelist:
         return False
-    for node in model.graph.node:
-        if node.op_type in {"RNN", "LSTM", "GRU"}:
-            return False
-    return True
+    return all(node.op_type not in {"RNN", "LSTM", "GRU"} for node in model.graph.node)
 
 
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)

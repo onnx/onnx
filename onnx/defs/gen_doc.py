@@ -41,15 +41,12 @@ def format_name_with_domain(domain: str, schema_name: str) -> str:
     return schema_name
 
 
+def format_function_versions(function_versions: Sequence[int]) -> str:
+    return f"{', '.join([str(v) for v in function_versions])}"
+
+
 def format_versions(versions: Sequence[OpSchema]) -> str:
-    return "{}".format(
-        ", ".join(
-            display_version_link(
-                format_name_with_domain(v.domain, v.name), v.since_version
-            )
-            for v in versions[::-1]
-        )
-    )
+    return f"{', '.join(display_version_link(format_name_with_domain(v.domain, v.name), v.since_version) for v in versions[::-1])}"
 
 
 def display_attr_type(v: OpSchema.AttrType) -> str:
@@ -102,7 +99,9 @@ def generate_formal_parameter_tags(formal_parameter: OpSchema.FormalParameter) -
     return "" if len(tags) == 0 else " (" + ", ".join(tags) + ")"
 
 
-def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> str:
+def display_schema(  # pylint: disable=too-many-branches,too-many-statements
+    schema: OpSchema, versions: Sequence[OpSchema]
+) -> str:
     s = ""
 
     # doc
@@ -126,7 +125,7 @@ def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> str:
         s += f" of {display_domain(schema.domain)}.\n"
         if len(versions) > 1:
             # TODO: link to the Changelog.md
-            s += "\nOther versions of this operator: {}\n".format(
+            s += "\nOther versions of this operator: {}\n".format(  # pylint: disable=consider-using-f-string
                 ", ".join(
                     display_version_link(
                         format_name_with_domain(v.domain, v.name), v.since_version
@@ -158,7 +157,7 @@ def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> str:
                         if len(formatted) > 10:
                             formatted = str(f"({value:e})")
                         return formatted
-                    elif isinstance(value, (bytes, bytearray)):
+                    if isinstance(value, (bytes, bytearray)):
                         return str(value.decode("utf-8"))
                     return str(value)
 
@@ -168,33 +167,27 @@ def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> str:
                     default_value = format_value(default_value)
                 opt = f"default is {default_value}"
 
-            s += "<dt><tt>{}</tt> : {}{}</dt>\n".format(
-                attr.name, display_attr_type(attr.type), f" ({opt})" if opt else ""
-            )
+            s += f"<dt><tt>{attr.name}</tt> : {display_attr_type(attr.type)}{f' ({opt})' if opt else ''}</dt>\n"
             s += f"<dd>{attr.description}</dd>\n"
         s += "</dl>\n"
 
     # inputs
     s += "\n#### Inputs"
     if schema.min_input != schema.max_input:
-        s += " ({} - {})".format(
-            display_number(schema.min_input), display_number(schema.max_input)
-        )
+        s += f" ({display_number(schema.min_input)} - {display_number(schema.max_input)})"
     s += "\n\n"
     if schema.inputs:
         s += "<dl>\n"
-        for input in schema.inputs:
-            option_str = generate_formal_parameter_tags(input)
-            s += f"<dt><tt>{input.name}</tt>{option_str} : {input.typeStr}</dt>\n"
-            s += f"<dd>{input.description}</dd>\n"
+        for input_ in schema.inputs:
+            option_str = generate_formal_parameter_tags(input_)
+            s += f"<dt><tt>{input_.name}</tt>{option_str} : {input_.typeStr}</dt>\n"
+            s += f"<dd>{input_.description}</dd>\n"
         s += "</dl>\n"
 
     # outputs
     s += "\n#### Outputs"
     if schema.min_output != schema.max_output:
-        s += " ({} - {})".format(
-            display_number(schema.min_output), display_number(schema.max_output)
-        )
+        s += f" ({display_number(schema.min_output)} - {display_number(schema.max_output)})"
     s += "\n\n"
 
     if schema.outputs:
@@ -216,9 +209,7 @@ def display_schema(schema: OpSchema, versions: Sequence[OpSchema]) -> str:
                 allowedTypeStr = allowedTypes[0]
             for allowedType in allowedTypes[1:]:
                 allowedTypeStr += ", " + allowedType
-            s += "<dt><tt>{}</tt> : {}</dt>\n".format(
-                type_constraint.type_param_str, allowedTypeStr
-            )
+            s += f"<dt><tt>{type_constraint.type_param_str}</tt> : {allowedTypeStr}</dt>\n"
             s += f"<dd>{type_constraint.description}</dd>\n"
         s += "</dl>\n"
 
@@ -242,8 +233,8 @@ class Args(NamedTuple):
     changelog: str
 
 
-def main(args: Args) -> None:
-    with open(args.changelog, "w", newline="") as fout:
+def main(args: Args) -> None:  # pylint: disable=too-many-branches,too-many-statements
+    with open(args.changelog, "w", newline="", encoding="utf-8") as fout:
         fout.write("<!--- SPDX-License-Identifier: Apache-2.0 -->\n")
         fout.write("## Operator Changelog\n")
         fout.write(
@@ -274,10 +265,7 @@ def main(args: Args) -> None:
             for version, unsorted_schemas in sorted(versionmap.items()):
                 s += f"## Version {version} of {display_domain(domain)}\n"
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
-                    name_with_ver = "{}-{}".format(
-                        format_name_with_domain(domain, schema.name),
-                        schema.since_version,
-                    )
+                    name_with_ver = f"{format_name_with_domain(domain, schema.name)}-{schema.since_version}"
                     s += (
                         '### <a name="{}"></a>**{}**'
                         + (" (deprecated)" if schema.deprecated else "")
@@ -314,15 +302,15 @@ def main(args: Args) -> None:
         # [(domain, [(support_level, [(schema name, current schema, all versions schemas)])])]
         operator_schemas: List[
             Tuple[str, List[Tuple[int, List[Tuple[str, OpSchema, List[OpSchema]]]]]]
-        ] = list()
+        ] = []
         existing_ops: Set[str] = set()
         for domain, _supportmap in sorted(index.items()):
             if not should_render_domain(domain):
                 continue
 
-            processed_supportmap = list()
+            processed_supportmap = []
             for _support, _namemap in sorted(_supportmap.items()):
-                processed_namemap = list()
+                processed_namemap = []
                 for n, unsorted_versions in sorted(_namemap.items()):
                     versions = sorted(unsorted_versions, key=lambda s: s.since_version)
                     schema = versions[-1]
@@ -338,16 +326,17 @@ def main(args: Args) -> None:
             s = f"### {display_domain_short(domain)}\n"
             fout.write(s)
 
-            fout.write("|**Operator**|**Since version**|\n")
-            fout.write("|-|-|\n")
+            fout.write("|**Operator**|**Since version**||\n")
+            fout.write("|-|-|-|\n")
 
-            function_ops = list()
+            function_ops = []
             for _, namemap in supportmap:
                 for n, schema, versions in namemap:
                     if schema.has_function or schema.has_context_dependent_function:  # type: ignore
-                        function_ops.append((n, schema, versions))
+                        function_versions = schema.all_function_opset_versions  # type: ignore
+                        function_ops.append((n, schema, versions, function_versions))
                         continue
-                    s = '|{}<a href="#{}">{}</a>{}|{}|\n'.format(
+                    s = '|{}<a href="#{}">{}</a>{}|{}|\n'.format(  # pylint: disable=consider-using-f-string
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),
@@ -355,14 +344,15 @@ def main(args: Args) -> None:
                         format_versions(versions),
                     )
                     fout.write(s)
-            if len(function_ops):
-                fout.write("|**Function**|**Since version**|\n")
-                for n, schema, versions in function_ops:
-                    s = '|{}<a href="#{}">{}</a>|{}|\n'.format(
+            if function_ops:
+                fout.write("|**Function**|**Since version**|**Function version**|\n")
+                for n, schema, versions, function_versions in function_ops:
+                    s = '|{}<a href="#{}">{}</a>|{}|{}|\n'.format(  # pylint: disable=consider-using-f-string
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),
                         format_versions(versions),
+                        format_function_versions(function_versions),
                     )
                     fout.write(s)
 

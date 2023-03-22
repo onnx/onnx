@@ -42,7 +42,7 @@ class NodeCoverage:
         if self.op_type is None:
             self.op_type = node.op_type
             assert self.op_type is not None
-            self.schema = defs.get_schema(self.op_type, node.domain)
+            self.schema = defs.get_schema(self.op_type, domain=node.domain)
 
         for attr in node.attribute:
             self.attr_coverages[attr.name].add(attr)
@@ -97,11 +97,7 @@ class Coverage:
     def report_text(self, writer: IO[str]) -> None:
         writer.write("---------- onnx coverage: ----------\n")
         writer.write(
-            "Operators (passed/loaded/total): {}/{}/{}\n".format(
-                len(self.buckets["passed"]),
-                len(self.buckets["loaded"]),
-                len(_all_schemas),
-            )
+            f"Operators (passed/loaded/total): {len(self.buckets['passed'])}/{len(self.buckets['loaded'])}/{len(_all_schemas)}\n"
         )
         writer.write("------------------------------------\n")
 
@@ -240,11 +236,7 @@ class Coverage:
                         for other_framework in other_frameworks:
                             existing_models[model][other_framework] = "Skipped!"
                     existing_models[model][str(backend)] = str(
-                        "{}/{} nodes covered: {}".format(
-                            num_covered,
-                            len(self.models[bucket][model].node_coverages),
-                            msg,
-                        )
+                        f"{num_covered}/{len(self.models[bucket][model].node_coverages)} nodes covered: {msg}"
                     )
             summaries.clear()
             if "Summary" in existing_models:
@@ -252,9 +244,9 @@ class Coverage:
                 del existing_models["Summary"]
             if str(backend) in summaries:
                 del summaries[str(backend)]
-            summaries[str(backend)] = "{}/{} model tests passed".format(
-                len(self.models["passed"]), num_models
-            )
+            summaries[
+                str(backend)
+            ] = f"{len(self.models['passed'])}/{num_models} model tests passed"
             summaries["Model"] = "Summary"
             for model in existing_models:  # type: ignore
                 existing_models[model]["Model"] = model

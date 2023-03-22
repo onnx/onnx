@@ -52,8 +52,6 @@ jobs:
       git submodule update --init --recursive
       python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt
-      # Mac cannot work with Python Protobuf 3.18.3 https://github.com/protocolbuffers/protobuf/issues/10691
-      python -m pip install protobuf==3.19.5
 
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
@@ -64,7 +62,7 @@ jobs:
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py -q install
+      python setup.py install
     displayName: 'Install dependencies and ONNX'
 
   - script: |

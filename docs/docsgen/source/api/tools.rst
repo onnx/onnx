@@ -2,8 +2,6 @@
 onnx.tools
 ==========
 
-.. contents::
-    :local:
 
 net_drawer
 ++++++++++
@@ -27,3 +25,8 @@ update_inputs_outputs_dims
 ++++++++++++++++++++++++++
 
 .. autofunction:: onnx.tools.update_model_dims.update_inputs_outputs_dims
+
+replace_initializer_by_constant_of_shape
+++++++++++++++++++++++++++++++++++++++++
+
+.. autofunction:: onnx.tools.replace_constants.replace_initializer_by_constant_of_shape

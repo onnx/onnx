@@ -1,4 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 import itertools
 from typing import Sequence
 
@@ -48,6 +51,13 @@ def get_output_shape(
     return out_shape
 
 
+def lp_pool(x: np.array, p: int) -> float:
+    y = 0
+    for v in np.nditer(x):
+        y += abs(v) ** p
+    return y ** (1.0 / p)
+
+
 def pool(
     padded: np.ndarray,
     x_shape: Sequence[int],
@@ -57,9 +67,13 @@ def pool(
     pad_shape: Sequence[int],
     pooling_type: str,
     count_include_pad: int = 0,
+    p: int = 1,
 ) -> np.ndarray:
     spatial_size = len(x_shape) - 2
-    y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))
+    y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)])
+
+    def lp_pool_p(x):
+        return lp_pool(x, p)
 
     for shape in itertools.product(
         range(x_shape[0]),
@@ -95,12 +109,16 @@ def pool(
             f = np.average
         elif pooling_type == "MAX":
             f = np.max
+        elif pooling_type == "LPPOOL":
+            f = lp_pool_p
         else:
             raise NotImplementedError(
                 f"Pooling type {pooling_type} does not support. Should be AVG, MAX"
             )
 
-        if count_include_pad == 1 and pooling_type == "AVG":
+        if count_include_pad == 1 and (
+            pooling_type == "AVG" or pooling_type == "LPPOOL"
+        ):
             y[shape] = f(window_vals)
         else:
             y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])

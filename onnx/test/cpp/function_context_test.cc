@@ -11,6 +11,9 @@
 
 using namespace ONNX_NAMESPACE::checker;
 
+#pragma warning(push)
+#pragma warning(disable : 4530)
+
 namespace ONNX_NAMESPACE {
 namespace Test {
 
@@ -149,7 +152,96 @@ void RegisterCustomFunctionSchema() {
   (void)unused;
 }
 
-// Test for Context dependant function with type context
+TEST(FunctionAPITest, VersionedFunctionBodyTest) {
+  // This test illustrate issues of ONNX function ops.
+  // It is over simplified in that only one primary op (Sub) is used in function body.
+  // ONNX opset     1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18
+  // MySub:            2                    9                               // MySub function op is created at opset 2.
+  //                                                                        // Its semantic is updated at opset 7
+  // Body Ideal:       2           6  7     9          13 14    16          // Ideally function body shall be provided
+  //                                                                        // each time there is any version bump of
+  //                                                                        // used primary ops. It will be more
+  //                                                                        // frequent
+  //                                                                        // if more primary ops are used.
+  // Body Real:        2                    9                   16          // In real life, we seldom add function body
+  //                                                                        // due to primary op update
+  // Sub:           1              6  7                13 14                // Version bumps of Sub
+  // Model:            y  y  y  y  n  n  n  y  y  y  y n  n  n  y  y  y     // Model can(y)/cannot(n) used
+  // with opset import version.
+  ONNX_NAMESPACE::OpSchema schema_ver2;
+  schema_ver2.SetName("MySub")
+      .SetDomain(ONNX_DOMAIN)
+      .SinceVersion(2)
+      .SetDoc("Z = Sub (X, Y)")
+      .Input(0, "X", "Input tensor X", "T", OpSchema::Single)
+      .Input(1, "Y", "Input tensor Y", "T", OpSchema::Single)
+      .Output(0, "Z", "Output tensor Z", "T", OpSchema::Single)
+      .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
+      .FunctionBody(
+          R"ONNX(
+        {
+          Z = Sub (X, Y)
+        }
+        )ONNX",
+          2);
+
+  ONNX_NAMESPACE::OpSchema schema_ver9;
+  schema_ver9.SetName("MySub")
+      .SetDomain(ONNX_DOMAIN)
+      .SinceVersion(9)
+      .SetDoc("Z = Sub (X, Y)")
+      .Input(0, "X", "Input tensor X", "T", OpSchema::Single)
+      .Input(1, "Y", "Input tensor Y", "T", OpSchema::Single)
+      .Output(0, "Z", "Output tensor Z", "T", OpSchema::Single)
+      .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
+      .FunctionBody(
+          R"ONNX(
+        {
+          Z = Sub (X, Y)
+        }
+        )ONNX",
+          9)
+      .FunctionBody(
+          R"ONNX(
+        {
+          Z = Sub (X, Y)
+        }
+        )ONNX",
+          16);
+
+  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused2(schema_ver2);
+  (void)unused2;
+  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused9(schema_ver9);
+  (void)unused9;
+
+  const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
+  EXPECT_TRUE(schema2);
+  for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
+    try {
+      bool validate = true;
+      const FunctionProto* function = schema2->GetFunction(model_opset_import, validate);
+      if (model_opset_import >= 6) { // function body should be updated at opset 6 where Sub is updated
+        ASSERT_TRUE(function == nullptr);
+      } else {
+        ASSERT_TRUE(function);
+      }
+    } catch (std::runtime_error err) {
+      ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8);
+    }
+  }
+
+  const auto* schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
+  EXPECT_TRUE(schema9);
+  for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
+    try {
+      const FunctionProto* function = schema9->GetFunction(model_opset_import);
+      ASSERT_TRUE(function);
+    } catch (std::runtime_error err) {
+      ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15);
+    }
+  }
+}
+
 TEST(FunctionAPITest, TypeContextTest) {
   RegisterCustomFunctionSchema();
 
@@ -181,3 +273,4 @@ TEST(FunctionAPITest, TypeContextTest) {
 
 } // namespace Test
 } // namespace ONNX_NAMESPACE
+#pragma warning(pop)

@@ -4,8 +4,6 @@
 Serialization
 =============
 
-.. contents::
-    :local:
 
 Save a model and any Proto class
 ++++++++++++++++++++++++++++++++

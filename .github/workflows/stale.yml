@@ -9,6 +9,9 @@ on:
   schedule:
   - cron: '39 6 * * *'
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 jobs:
   stale:
 
@@ -18,7 +21,7 @@ jobs:
       pull-requests: write
 
     steps:
-    - uses: actions/stale@v5
+    - uses: actions/stale@6f05e4244c9a0b2ed3401882b05d701dd0a7289b # v7.0.0
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-label: 'no-issue-activity'

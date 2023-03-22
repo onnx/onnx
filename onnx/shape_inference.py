@@ -4,11 +4,11 @@ complete.
 
 """
 
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 import onnx
-import onnx.onnx_cpp2py_export.shape_inference as C
-from onnx import ModelProto
+import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
+from onnx import AttributeProto, FunctionProto, ModelProto, TypeProto
 
 
 def infer_shapes(
@@ -41,16 +41,15 @@ def infer_shapes(
             model_str, check_type, strict_mode, data_prop
         )
         return onnx.load_from_string(inferred_model_str)
-    elif isinstance(model, str):
+    if isinstance(model, str):
         raise TypeError(
             "infer_shapes only accepts ModelProto or bytes,"
             "you can use infer_shapes_path for the model path (String)."
         )
-    else:
-        raise TypeError(
-            "infer_shapes only accepts ModelProto or bytes, "
-            "incorrect type: {}".format(type(model))
-        )
+
+    raise TypeError(
+        f"infer_shapes only accepts ModelProto or bytes, incorrect type: {type(model)}"
+    )
 
 
 def infer_shapes_path(
@@ -70,7 +69,7 @@ def infer_shapes_path(
             "you can use infer_shapes for the ModelProto."
         )
     # Directly output the inferred model into the specified path, return nothing
-    elif isinstance(model_path, str):
+    if isinstance(model_path, str):
         # If output_path is not defined, default output_path would be the original model path
         if output_path == "":
             output_path = model_path
@@ -78,7 +77,7 @@ def infer_shapes_path(
     else:
         raise TypeError(
             "infer_shapes_path only accepts model path (String), "
-            "incorrect type: {}".format(type(model_path))
+            f"incorrect type: {type(model_path)}"
         )
 
 
@@ -88,6 +87,8 @@ def infer_node_outputs(
     input_types: Dict[str, onnx.TypeProto],
     input_data: Optional[Dict[str, onnx.TensorProto]] = None,
     input_sparse_data: Optional[Dict[str, onnx.SparseTensorProto]] = None,
+    opset_imports: Optional[List[onnx.OperatorSetIdProto]] = None,
+    ir_version: int = onnx.IR_VERSION,
 ) -> Dict[str, onnx.TypeProto]:
     if not schema.has_type_and_shape_inference_function:  # type: ignore
         return {}
@@ -95,11 +96,19 @@ def infer_node_outputs(
         input_data = {}
     if input_sparse_data is None:
         input_sparse_data = {}
+    if opset_imports is None:
+        passed_opset_imports = {}
+    else:
+        passed_opset_imports = {opset.domain: opset.version for opset in opset_imports}
 
-    # To avoid copying on C++ side, pass only what is needed for this inference call
+    # catch KeyError if node's input does not exist in input_types
     passed_input_types = {
         key: input_types[key].SerializeToString() for key in node.input
     }
+    # input_types will also be used as outer_scope_value_types so do not filter by node's input here
+    for key in input_types:
+        if key not in passed_input_types:
+            passed_input_types[key] = input_types[key].SerializeToString()
     passed_input_data = {
         key: input_data[key].SerializeToString()
         for key in node.input
@@ -111,13 +120,38 @@ def infer_node_outputs(
         if key in input_sparse_data
     }
 
-    outputs = schema._infer_node_outputs(
+    outputs = schema._infer_node_outputs(  # pylint: disable=protected-access
         node.SerializeToString(),
         passed_input_types,
         passed_input_data,
         passed_sparse_input_data,
-    )
+        passed_opset_imports,
+        ir_version,
+    )  # type: ignore[call-arg]
     return {key: onnx.TypeProto.FromString(out) for key, out in outputs.items()}
+
+
+def infer_function_output_types(
+    function: FunctionProto,
+    input_types: Sequence[TypeProto],
+    attributes: Sequence[AttributeProto],
+) -> List[TypeProto]:
+    """
+    Apply type-and-shape-inference to given function body, with given input types
+    and given input attribute values.
+    """
+    result = C.infer_function_output_types(
+        function.SerializeToString(),
+        [x.SerializeToString() for x in input_types],
+        [x.SerializeToString() for x in attributes],
+    )
+
+    def to_type_proto(x) -> TypeProto:
+        type_proto = onnx.TypeProto()
+        type_proto.ParseFromString(x)
+        return type_proto
+
+    return [to_type_proto(x) for x in result]
 
 
 InferenceError = C.InferenceError

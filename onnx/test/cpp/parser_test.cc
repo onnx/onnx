@@ -488,6 +488,62 @@ square (x) => (y) {
 )ONNX";
 
   CheckModel(code);
+
+  const char* code_function_with_attributes = R"ONNX(
+<
+  ir_version: 9,
+  opset_import: [ "" : 15, "custom_domain" : 1]
+>
+agraph (float[N] x) => (float[N] out)
+{
+  out = custom_domain.foo<alpha=2.0, gamma=3.0>(x)
+}
+
+<
+domain: "custom_domain",
+opset_import: [ "" : 15],
+doc_string: "function foo"
+>
+  foo
+  <alpha: float=4.0, gamma>
+  (X) => (C)
+  {
+      constant_alpha = Constant<value_float: float=@alpha>()
+      constant_gamma = Constant<value_float: float=@gamma>()
+      constant_alpha_x = Mul(constant_alpha, X)
+      C = Add(constant_alpha_x, constant_gamma)
+  }
+)ONNX";
+
+  CheckModel(code_function_with_attributes);
+}
+
+TEST(ParserTest, TypesModelTest1) {
+  const char* code = R"ONNX(
+    <
+    ir_version: 8,
+    opset_import: [ "" : 18 ]
+    >
+    agraph (seq(float[N]) seqX) => (float[M, N] X)
+    {
+        X = ConcatFromSequence < axis = 0, new_axis = 1 >(seqX)
+    }
+)ONNX";
+  CheckModel(code);
+}
+
+TEST(ParserTest, TypesModelTest2) {
+  const char* code = R"ONNX(
+    <
+    ir_version: 8,
+    opset_import: [ "" : 18 ]
+    >
+    agraph (float[N] tensorX, seq(float[N]) seqX, map(int32, float[N]) mapX, optional(float[N]) optionalX, sparse_tensor(float[N]) sparseX) => (float[N] X)
+    {
+        X = Identity (tensorX)
+    }
+)ONNX";
+  CheckModel(code);
 }
 
 } // namespace Test

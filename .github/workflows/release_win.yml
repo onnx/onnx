@@ -10,18 +10,22 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: windows-latest
     strategy:
       matrix:
-        # TODO: Freeze as 3.10.5 for now; Follow-up this issue by https://github.com/actions/setup-python/issues/481
-        python-version: ['3.7', '3.8', '3.9', '3.10.5']
+        # TODO: Freeze as 3.10.5 for now and use the latest 3.10 after future numpy upgrade in ONNX;
+        # related issue: https://github.com/actions/setup-python/issues/481
+        python-version: ['3.7', '3.8', '3.9', '3.10.5', '3.11']
         architecture: ['x64', 'x86']
-    steps:        
+    steps:
     - name: Checkout ONNX
-      uses: actions/checkout@v3
+      uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.4.0
       with:
          path: ./onnx
     - name: Checkout ONNX submodules
@@ -33,13 +37,13 @@ jobs:
          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ matrix.python-version }}
-        architecture: ${{ matrix.architecture }}    
+        architecture: ${{ matrix.architecture }}
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@1ff57057b5cfdc39105cd07a01d78e9b0ea0c14c # v1.3.1
       with:
         msbuild-architecture: ${{ matrix.architecture }}
 
@@ -69,21 +73,23 @@ jobs:
         } else {
           python setup.py bdist_wheel
         }
-        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname} 
-  
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+
     - name: Test the installed wheel
       run: |
         cd onnx
         pytest
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       with:
         name: wheels
         path: ./onnx/dist
-  
-    - name: Upload wheel to TestPyPI weekly
+
+    - name: Upload onnx-weekly wheel to TestPyPI/PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
+        twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
+        # TODO: stop uploading to TestPyPI after future ONNX 1.14
         twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy
@@ -93,12 +99,16 @@ jobs:
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
-
+    # TODO: Remove one if condition after using consistent NumPy version for all Python versions
     - name: Verify ONNX with the minimum supported numpy  (from requirements.txt)
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+        if ('${{ matrix.python-version }}' -eq '3.11') {
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+        } else {
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+        }
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
@@ -114,11 +124,18 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.12.2
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.20.2
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != '3.11'
       run: |
+        cd onnx
+        python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         python -m pip install -q onnxruntime
-        python onnx\onnx\test\test_with_ort.py
+        $Env:ORT_MAX_IR_SUPPORTED_VERSION=8
+        $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
+        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+        pytest

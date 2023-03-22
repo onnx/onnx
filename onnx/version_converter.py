@@ -5,8 +5,9 @@ This enables users to convert their models between different opsets within the
 default domain ("" or "ai.onnx").
 """
 
-import onnx.onnx_cpp2py_export.version_converter as C
-from onnx import ModelProto, load_from_string
+import onnx
+import onnx.onnx_cpp2py_export.version_converter as C  # noqa: N812
+from onnx import ModelProto
 
 
 def convert_version(model: ModelProto, target_version: int) -> ModelProto:
@@ -168,7 +169,7 @@ def convert_version(model: ModelProto, target_version: int) -> ModelProto:
         )
     model_str = model.SerializeToString()
     converted_model_str = C.convert_version(model_str, target_version)
-    return load_from_string(converted_model_str)
+    return onnx.load_from_string(converted_model_str)
 
 
 ConvertError = C.ConvertError

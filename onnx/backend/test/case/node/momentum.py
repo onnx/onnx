@@ -1,12 +1,13 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 from onnx.defs import AI_ONNX_PREVIEW_TRAINING_DOMAIN
-
-from ..base import Base
-from . import expect
 
 
 def apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignore

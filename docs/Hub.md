@@ -1,4 +1,8 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # ONNX Model Hub
 
@@ -44,7 +48,7 @@ The model hub provides APIs for querying the model zoo to learn more about avail
  This does not download the models, but rather just returns information about models matching the given arguments
  
  ```python
-# List all models in the onnx/models:master repo
+# List all models in the onnx/models:main repo
 all_models = hub.list_models()
 
 # List all versions/opsets of a specific model
@@ -128,7 +132,7 @@ This way, the model cache is human readable, can disambiguate between multiple v
 The ONNX Hub consists of two main components, the client and the server.
  The client code currently is included in the `onnx` package and can be pointed at a
   server in the form of a hosted `ONNX_HUB_MANIFEST.json` within a github repository 
-  such as [the one in the ONNX Model Zoo](https://github.com/onnx/models/blob/master/ONNX_HUB_MANIFEST.json).
+  such as [the one in the ONNX Model Zoo](https://github.com/onnx/models/blob/main/ONNX_HUB_MANIFEST.json).
   This manifest file is a JSON document which lists all models and their metadata
    and is designed to be programming language agnostic. An example of a well formed model manifest entry is as follows:
    
@@ -206,9 +210,9 @@ All other fields in the `metadata` field are optional for the client but provide
 #### Contributing an official model
 
 The simplest way to add a model to the official `onnx/models` version model hub is to follow 
-[these guidelines](https://github.com/onnx/models/blob/master/contribute.md) to contribute your model. Once contributed,
+[these guidelines](https://github.com/onnx/models/blob/main/contribute.md) to contribute your model. Once contributed,
 ensure that your model has a markdown table in its `README.md` 
-([Example](https://github.com/onnx/models/tree/master/vision/classification/mobilenet)). The model hub
+([Example](https://github.com/onnx/models/tree/main/vision/classification/mobilenet)). The model hub
  manifest generator will pull information from these markdown tables. To run the generator:
  
  ```shell script
@@ -223,7 +227,7 @@ Once a new manifest is generated add, submit it in a pull request to ``onnx/mode
 #### Hosting your own ONNX Model Hub
 
 To host your own model hub, add an `ONNX_HUB_MANIFEST.json` to the top level of your github repository
- ([Example](https://github.com/onnx/models/blob/master/ONNX_HUB_MANIFEST.json)). At a minimum your 
+ ([Example](https://github.com/onnx/models/blob/main/ONNX_HUB_MANIFEST.json)). At a minimum your 
  manifest entries should include the fields mentioned in 
  the [Architecture Section](Hub.md#Architecture) of this document.
  Once committed, check that you can download models 

@@ -63,18 +63,14 @@ def update_inputs_outputs_dims(
             if dim >= 0:
                 if dim_proto.HasField("dim_value") and dim_proto.dim_value != dim:
                     raise ValueError(
-                        "Unable to set dimension value to {} for axis {} of {}. Contradicts existing dimension value {}.".format(
-                            dim, j, name, dim_proto.dim_value
-                        )
+                        f"Unable to set dimension value to {dim} for axis {j} of {name}. Contradicts existing dimension value {dim_proto.dim_value}."
                     )
                 dim_proto.dim_value = dim
             else:
                 generated_dim_param = name + "_" + str(j)
                 if generated_dim_param in dim_param_set:
                     raise ValueError(
-                        "Unable to generate unique dim_param for axis {} of {}. Please manually provide a dim_param value.".format(
-                            j, name
-                        )
+                        f"Unable to generate unique dim_param for axis {j} of {name}. Please manually provide a dim_param value."
                     )
                 dim_proto.dim_param = generated_dim_param
         elif isinstance(dim, str):
@@ -84,11 +80,11 @@ def update_inputs_outputs_dims(
                 f"Only int or str is accepted as dimension value, incorrect type: {type(dim)}"
             )
 
-    for input in model.graph.input:
-        input_name = input.name
+    for input_ in model.graph.input:
+        input_name = input_.name
         input_dim_arr = input_dims[input_name]
         for j, dim in enumerate(input_dim_arr):
-            update_dim(input, dim, j, input_name)
+            update_dim(input_, dim, j, input_name)
 
     for output in model.graph.output:
         output_name = output.name
