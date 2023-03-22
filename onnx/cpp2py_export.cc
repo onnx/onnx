@@ -148,8 +148,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("COMMON", OpSchema::SupportType::COMMON)
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
-  op_schema
-      .def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
+  op_schema.def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
       .def_property(
           "domain", &OpSchema::domain, [](OpSchema& self, const std::string& domain) { self.SetDomain(domain); })
       .def_property("doc", &OpSchema::doc, [](OpSchema& self, const std::string& doc) { self.SetDoc(doc); })
@@ -186,12 +185,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "add_attribute",
           [](OpSchema& self,
              const std::string& name,
-             const std::string& description,
              AttributeProto::AttributeType type,
+             const std::string& description,
              bool required) { self.Attr(name, description, type, required); },
           py::arg("name"),
-          py::arg("description"),
           py::arg("type"),
+          py::kw_only(),
+          py::arg("description") = "",
           py::arg("required") = true)
       .def_property_readonly("inputs", &OpSchema::inputs)
       .def(
@@ -199,8 +199,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](OpSchema& self,
              int n,
              std::string name,
-             const std::string& description,
              std::string type_str,
+             const std::string& description,
              OpSchema::FormalParameterOption param_option,
              bool is_homogeneous,
              int min_arity,
@@ -210,10 +210,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           },
           py::arg("n"),
           py::arg("name"),
-          py::arg("description"),
           py::arg("type_str"),
-          py::arg("param_option"),
-          // TODO(justinchuby): Confirm defaults
+          py::kw_only(),
+          py::arg("description") = "",
+          py::arg("param_option") = OpSchema::Single,
           py::arg("is_homogeneous") = false,
           py::arg("min_arity") = 1,
           py::arg("differentiation_category") = OpSchema::Unknown)
@@ -223,8 +223,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](OpSchema& self,
              int n,
              std::string name,
-             const std::string& description,
              std::string type_str,
+             const std::string& description,
              OpSchema::FormalParameterOption param_option,
              bool is_homogeneous,
              int min_arity,
@@ -234,9 +234,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           },
           py::arg("n"),
           py::arg("name"),
-          py::arg("description"),
           py::arg("type_str"),
-          py::arg("param_option"),
+          py::kw_only(),
+          py::arg("description") = "",
+          py::arg("param_option") = OpSchema::Single,
           py::arg("is_homogeneous") = false,
           py::arg("min_arity") = 1,
           py::arg("differentiation_category") = OpSchema::Unknown)

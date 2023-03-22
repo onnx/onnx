@@ -41,7 +41,12 @@ class TestOpSchema(unittest.TestCase):
 
     def test_add_attribute_adds_one_attribute(self) -> None:
         schema = defs.OpSchema()
-        schema.add_attribute("TestAttr", "TestAttr doc", defs.OpSchema.AttrType.INT, required=True)
+        schema.add_attribute(
+            "TestAttr",
+            defs.OpSchema.AttrType.INT,
+            description="TestAttr doc",
+            required=True,
+        )
         self.assertEqual(len(schema.attributes), 1)
         self.assertEqual(schema.attributes["TestAttr"].name, "TestAttr")
         self.assertEqual(schema.attributes["TestAttr"].description, "TestAttr doc")
@@ -51,6 +56,46 @@ class TestOpSchema(unittest.TestCase):
     def test_add_attribute_can_specify_default_value(self) -> None:
         # TODO(justinchuby)
         ...
+
+    def test_add_input_adds_one_input(self) -> None:
+        schema = defs.OpSchema()
+        schema.add_input(0, "TestInput", "T")
+        self.assertEqual(len(schema.inputs), 1)
+        self.assertEqual(schema.inputs[0].name, "TestInput")
+        self.assertEqual(schema.inputs[0].description, "")
+        self.assertEqual(schema.inputs[0].typeStr, "T")
+
+    def test_add_input_adds_two_inputs(self) -> None:
+        schema = defs.OpSchema()
+        schema.add_input(0, "TestInput1", "T", description="TestInput1 doc")
+        schema.add_input(1, "TestInput2", "T", description="TestInput2 doc")
+        self.assertEqual(len(schema.inputs), 2)
+        self.assertEqual(schema.inputs[0].name, "TestInput1")
+        self.assertEqual(schema.inputs[0].description, "TestInput1 doc")
+        self.assertEqual(schema.inputs[0].typeStr, "T")
+        self.assertEqual(schema.inputs[1].name, "TestInput2")
+        self.assertEqual(schema.inputs[1].description, "TestInput2 doc")
+        self.assertEqual(schema.inputs[1].typeStr, "T")
+
+    def test_add_output_adds_one_output(self) -> None:
+        schema = defs.OpSchema()
+        schema.add_output(0, "TestOutput", "T")
+        self.assertEqual(len(schema.outputs), 1)
+        self.assertEqual(schema.outputs[0].name, "TestOutput")
+        self.assertEqual(schema.outputs[0].description, "")
+        self.assertEqual(schema.outputs[0].typeStr, "T")
+
+    def test_add_output_adds_two_outputs(self) -> None:
+        schema = defs.OpSchema()
+        schema.add_output(0, "TestOutput1", "T", description="TestOutput1 doc")
+        schema.add_output(1, "TestOutput2", "T", description="TestOutput2 doc")
+        self.assertEqual(len(schema.outputs), 2)
+        self.assertEqual(schema.outputs[0].name, "TestOutput1")
+        self.assertEqual(schema.outputs[0].description, "TestOutput1 doc")
+        self.assertEqual(schema.outputs[0].typeStr, "T")
+        self.assertEqual(schema.outputs[1].name, "TestOutput2")
+        self.assertEqual(schema.outputs[1].description, "TestOutput2 doc")
+        self.assertEqual(schema.outputs[1].typeStr, "T")
 
 
 if __name__ == "__main__":

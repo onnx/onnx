@@ -9,6 +9,17 @@ class SchemaError(Exception): ...
 
 class OpSchema:
     def __init__(self) -> None: ...
+
+    class FormalParameterOption:
+        Single: "OpSchema.FormalParameterOption" = ...
+        Optional: "OpSchema.FormalParameterOption" = ...
+        Variadic: "OpSchema.FormalParameterOption" = ...
+
+    class DifferentiationCategory:
+        Unknown: "OpSchema.DifferentiationCategory" = ...
+        Differentiable: "OpSchema.DifferentiationCategory" = ...
+        NonDifferentiable: "OpSchema.DifferentiationCategory" = ...
+
     @property
     def file(self) -> str: ...
     @property
@@ -42,7 +53,12 @@ class OpSchema:
     @property
     def attributes(self) -> Dict[str, Attribute]: ...
     def add_attribute(
-        self, name: str, description: str, type: OpSchema.AttrType, required: bool = False
+        self,
+        name: str,
+        type: OpSchema.AttrType,
+        *,
+        description: Optional[str] = None,
+        required: bool = False
     ) -> None: ...
     @property
     def inputs(self) -> Sequence[FormalParameter]: ...
@@ -50,9 +66,10 @@ class OpSchema:
         self,
         n: int,
         name: str,
-        description: str,
         type_str: str,
-        param_option: OpSchema.FormalParameterOption,
+        *,
+        description: Optional[str] = None,
+        param_option: FormalParameterOption = FormalParameterOption.Single,
         is_homogeneous: bool = False,
         min_arity: int = 1,
     ) -> None: ...
@@ -62,9 +79,10 @@ class OpSchema:
         self,
         n: int,
         name: str,
-        description: str,
         type_str: str,
-        param_option: OpSchema.FormalParameterOption,
+        *,
+        description: Optional[str] = None,
+        param_option: FormalParameterOption = FormalParameterOption.Single,
         is_homogeneous: bool = False,
         min_arity: int = 1,
     ) -> None: ...
@@ -100,16 +118,6 @@ class OpSchema:
         def description(self) -> str: ...
         @property
         def allowed_type_strs(self) -> Sequence[str]: ...
-
-    class FormalParameterOption:
-        Single: "OpSchema.FormalParameterOption" = ...
-        Optional: "OpSchema.FormalParameterOption" = ...
-        Variadic: "OpSchema.FormalParameterOption" = ...
-
-    class DifferentiationCategory:
-        Unknown: "OpSchema.DifferentiationCategory" = ...
-        Differentiable: "OpSchema.DifferentiationCategory" = ...
-        NonDifferentiable: "OpSchema.DifferentiationCategory" = ...
 
     class FormalParameter:
         @property
