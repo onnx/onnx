@@ -247,6 +247,37 @@ class TestNumpyHelper(unittest.TestCase):
                     self.assertEqual(f32, f32_1)
                     self.assertEqual(f32, f32_2)
 
+    def test_float8_inf(self):
+        x = np.float32(np.inf)
+        to = helper.float32_to_float8e4m3(x)
+        back = numpy_helper.float8e4m3_to_float32(to)
+        self.assertEqual(back, 448)
+
+        x = np.float32(-np.inf)
+        to = helper.float32_to_float8e4m3(x)
+        back = numpy_helper.float8e4m3_to_float32(to)
+        self.assertEqual(back, -448)
+
+        x = np.float32(np.inf)
+        to = helper.float32_to_float8e4m3(x, uz=True)
+        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        self.assertEqual(back, 240)
+
+        x = np.float32(-np.inf)
+        to = helper.float32_to_float8e4m3(x, uz=True)
+        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        self.assertEqual(back, -240)
+
+        x = np.float32(np.inf)
+        to = helper.float32_to_float8e5m2(x, fn=True, uz=True)
+        back = numpy_helper.float8e5m2_to_float32(to, fn=True, uz=True)
+        self.assertEqual(back, 57344)
+
+        x = np.float32(-np.inf)
+        to = helper.float32_to_float8e5m2(x, fn=True, uz=True)
+        back = numpy_helper.float8e5m2_to_float32(to, fn=True, uz=True)
+        self.assertEqual(back, -57344)
+
 
 if __name__ == "__main__":
     unittest.main()
