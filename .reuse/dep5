@@ -44,3 +44,15 @@ License: Apache-2.0
 Files: onnx/backend/test/data/pytorch-converted/**/test_data_set_0/*.pb
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
+
+Files: onnx/backend/test/data/pytorch-converted/**/*.onnx
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/light/light/*.onnx
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/light/light/*.onnx
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
