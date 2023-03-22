@@ -149,19 +149,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
   op_schema
+      .def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
       .def_property(
-          "name",
-          &OpSchema::Name,
-          [](OpSchema& self, const std::string& name) -> OpSchema& { return self.SetName(name); })
-      .def_property(
-          "domain",
-          &OpSchema::domain,
-          [](OpSchema& self, const std::string& domain) -> OpSchema& { return self.SetDomain(domain); })
-      .def("doc", &OpSchema::doc, py::return_value_policy::reference)
-      .def(
-          "set_doc",
-          [](OpSchema& self, const std::string& doc) -> OpSchema& { return self.SetDoc(doc); },
-          py::arg("doc"))
+          "domain", &OpSchema::domain, [](OpSchema& self, const std::string& domain) { self.SetDomain(domain); })
+      .def_property("doc", &OpSchema::doc, [](OpSchema& self, const std::string& doc) { self.SetDoc(doc); })
       .def_property_readonly("file", &OpSchema::file)
       .def_property_readonly("line", &OpSchema::line)
       .def_property_readonly("support_level", &OpSchema::support_level)
@@ -197,7 +188,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              const std::string& name,
              const std::string& description,
              AttributeProto::AttributeType type,
-             bool required) -> OpSchema& { return self.Attr(name, description, type, required); },
+             bool required) { self.Attr(name, description, type, required); },
           py::arg("name"),
           py::arg("description"),
           py::arg("type"),
@@ -213,8 +204,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              OpSchema::FormalParameterOption param_option,
              bool is_homogeneous,
              int min_arity,
-             OpSchema::DifferentiationCategory differentiation_category) -> OpSchema& {
-            return self.Input(
+             OpSchema::DifferentiationCategory differentiation_category) {
+            self.Input(
                 n, name, description, type_str, param_option, is_homogeneous, min_arity, differentiation_category);
           },
           py::arg("n"),
@@ -237,8 +228,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              OpSchema::FormalParameterOption param_option,
              bool is_homogeneous,
              int min_arity,
-             OpSchema::DifferentiationCategory differentiation_category) -> OpSchema& {
-            return self.Output(
+             OpSchema::DifferentiationCategory differentiation_category) {
+            self.Output(
                 n, name, description, type_str, param_option, is_homogeneous, min_arity, differentiation_category);
           },
           py::arg("n"),
@@ -257,9 +248,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](OpSchema& self,
              const std::string& type_str,
              const std::vector<std::string>& constraints,
-             const std::string& description) -> OpSchema& {
-            return self.TypeConstraint(type_str, constraints, description);
-          },
+             const std::string& description) { self.TypeConstraint(type_str, constraints, description); },
           py::arg("type_str"),
           py::arg("constraints"),
           py::arg("description"))

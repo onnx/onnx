@@ -20,5 +20,10 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(type(defs.get_schema("Selu").function_body), FunctionProto)
 
 
+class TestOpSchema(unittest.TestCase):
+    def test_init_successful(self) -> None:
+        defs.OpSchema()
+
+
 if __name__ == "__main__":
     unittest.main()
