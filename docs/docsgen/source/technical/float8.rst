@@ -38,12 +38,12 @@ to support a limited set of operators to enable computation
 with float 8.
 
 - `E4M3FN`: 1 bit for the sign, 4 bits for the exponents, 3 bits for the mantissa,
-  only nan values and no infinitie values (FN),
+  only nan values and no infinite values (FN),
 - `E4M3FNUZ`: 1 bit for the sign, 4 bits for the exponents, 3 bits for the mantissa,
-  only nan values and no infinitie values (FN), no negative zero (UZ)
+  only nan values and no infinite values (FN), no negative zero (UZ)
 - `E5M2`: 1 bit for the sign, 5 bits for the exponents, 2 bits for the mantissa,
 - `E5M2FNUZ`: 1 bit for the sign, 5 bits for the exponents, 2 bits for the mantissa,
-  only nan values and no infinitie values (FN), no negative zero (UZ)
+  only nan values and no infinite values (FN), no negative zero (UZ)
 
 The implementation is usually hardware dependant.
 NVIDIA implements `E4M3FN` and `E5M2` is its latest graphical processor.
