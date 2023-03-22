@@ -398,13 +398,13 @@ class Runner:
                     if onx.graph.input[i].name in inits:
                         continue
                     name = os.path.join(test_data_set, f"input_{n_input}.pb")
-                    inputs.append(name)
                     n_input += 1
                     x = onx.graph.input[i]
                     value = self.generate_random_data(
                         x, seed=0, name=model_test.model_name
                     )
                     feeds[x.name] = value
+                    inputs.append(value)
                     with open(name, "wb") as f:
                         f.write(onnx.numpy_helper.from_array(value).SerializeToString())
 
