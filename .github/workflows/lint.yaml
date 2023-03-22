@@ -18,7 +18,7 @@ jobs:
     name: Optional Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      - uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.4.0
       - name: misspell # Check spellings as well
         uses: reviewdog/action-misspell@fe8d5c98c3761ef40755a7bb95460b2a33f6b346 # v1.12.3
         with:
@@ -41,7 +41,7 @@ jobs:
     name: Enforce style
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      - uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.4.0
       - name: Setup Python
         uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
         with:
@@ -81,7 +81,7 @@ jobs:
         # Do not display on drafts to make reviewing easier
         if: github.event.pull_request.draft == false
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@32dc499307d133bb5085bae78498c0ac2cf762d5 # v2.2.5
+        uses: github/codeql-action/upload-sarif@168b99b3c22180941ae7dbdd5f5c9678ede476ba # v2.2.7
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif

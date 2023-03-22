@@ -1,3 +1,9 @@
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 ## Optional Type
 
 An optional type represents a reference to either an element (could be Tensor, Sequence, Map, or Sparse Tensor) or a null value. The optional type appears in model inputs, outputs, as well as intermediate values.  

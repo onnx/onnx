@@ -1,7 +1,9 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 
-from onnx import AttributeProto, defs
+from onnx import AttributeProto, FunctionProto, defs
 
 
 class TestSchema(unittest.TestCase):
@@ -15,6 +17,9 @@ class TestSchema(unittest.TestCase):
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
         self.assertEqual(type(v), AttributeProto)
         self.assertEqual(v.type, AttributeProto.FLOAT)
+
+    def test_function_body(self) -> None:
+        self.assertEqual(type(defs.get_schema("Selu").function_body), FunctionProto)
 
 
 if __name__ == "__main__":

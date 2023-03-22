@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
 # pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
@@ -15,6 +17,7 @@ import unittest
 from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
+from os import getenv
 from textwrap import dedent
 
 import numpy as np  # type: ignore
@@ -29,6 +32,7 @@ from onnx.helper import (
     make_function,
     make_graph,
     make_model,
+    make_model_gen_version,
     make_node,
     make_opsetid,
     make_sequence_type_proto,
@@ -48,6 +52,13 @@ from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
+)
+
+# TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
+# For now, bump the version in CIs whenever there is a new onnxruntime release
+ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
+ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
+    getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
 )
 
 
@@ -98,6 +109,26 @@ def make_sequence_value_info(name, elem_type, shape):
         return make_tensor_sequence_value_info(name, elem_type, shape)
     s_type = make_sequence_type_proto(elem_type)
     return make_value_info(name, s_type, shape)
+
+
+def run_ort_inference(onnx_model):
+    import onnxruntime as ort
+
+    onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+    for opset in onnx_model.opset_import:
+        if opset.domain in ("", "ai.onnx"):
+            onnx_domain_opset = opset.version
+            break
+    # The new IR or opset version is not supported by onnxruntime yet
+    if (
+        onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
+        or onnx_domain_opset > ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+    ):
+        return None
+
+    return ort.InferenceSession(
+        onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
+    )
 
 
 class TestReferenceEvaluator(unittest.TestCase):
@@ -1306,8 +1337,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @skip_if_no_onnxruntime
     def test_conv(self):
-        import onnxruntime as ort
-
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None, None, None])
@@ -1321,11 +1350,10 @@ class TestReferenceEvaluator(unittest.TestCase):
             strides=[2, 2],
         )
         graph = make_graph([node], "g", [X, W, B], [Y])
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-
-        sess1 = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
+        sess1 = run_ort_inference(onnx_model)
+        if sess1 is None:
+            return
         sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 5, 6
@@ -1343,8 +1371,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @skip_if_no_onnxruntime
     def test_qlinearconv(self):
-        import onnxruntime as ort
-
         x = make_tensor_value_info("x", TensorProto.UINT8, [None, None, None, None])
         w = make_tensor_value_info("w", TensorProto.UINT8, [None, None, None, None])
         y = make_tensor_value_info("y", TensorProto.UINT8, [None, None, None, None])
@@ -1375,11 +1401,11 @@ class TestReferenceEvaluator(unittest.TestCase):
             [x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point],
             [y],
         )
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
 
-        sess1 = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        sess1 = run_ort_inference(onnx_model)
+        if sess1 is None:
+            return
         sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 3, 3
@@ -1507,15 +1533,15 @@ class TestReferenceEvaluator(unittest.TestCase):
             graph, opset_imports=[make_opsetid("", 16), make_opsetid("experimental", 1)]
         )
         graph_conv = make_graph([node], "g", [X, W], [Y1])
-        onnx_model_conv = make_model(graph_conv, opset_imports=[make_opsetid("", 16)])
+        onnx_model_conv = make_model_gen_version(
+            graph_conv, opset_imports=[make_opsetid("", 16)]
+        )
         sess = ReferenceEvaluator(onnx_model)
 
         try:
-            import onnxruntime as ort
-
-            sess_conv = ort.InferenceSession(
-                onnx_model_conv.SerializeToString(), providers=["CPUExecutionProvider"]
-            )
+            sess_conv = run_ort_inference(onnx_model_conv)
+            if sess_conv is None:
+                return
         except ImportError:
             sess_conv = None
 
@@ -2296,18 +2322,15 @@ class TestReferenceEvaluator(unittest.TestCase):
             mode=mode,
         )
         graph = make_graph([node], "g", [X, rois, IS], [Y])
-        return make_model(graph, opset_imports=[make_opsetid("", 17)])
+        return make_model_gen_version(graph, opset_imports=[make_opsetid("", 17)])
 
     def common_test_roi_align(self, mode):
-        import onnxruntime as ort
-
         onnx_model = self.get_roi_align_model(mode)
         X, batch_indices, rois = get_roi_align_input_values()
         feeds = {"X": X, "rois": rois, "I": batch_indices}
-
-        sess = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        sess = run_ort_inference(onnx_model)
+        if sess is None:
+            return
         expected = sess.run(None, feeds)
         ref = ReferenceEvaluator(onnx_model)
         got = ref.run(None, feeds)

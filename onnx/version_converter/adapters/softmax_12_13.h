@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -25,6 +27,16 @@ class Softmax_12_13 final : public Adapter {
     if (old_axis == input_rank - 1)
       node->i_(kaxis, -1);
     else {
+      //    -- shape ------------------
+      //   /                           |
+      // ----- flatten -- softmax -- reshape
+
+      // get original softmax's input shape
+      Symbol kShape("Shape");
+      Node* shape = graph->create(kShape);
+      shape->addInput(node->inputs()[0]);
+      shape->insertBefore(node);
+
       // Insert Flatten node before softmax
       Node* flatten = graph->create(kFlatten);
       flatten->addInput(node->inputs()[0]);
@@ -32,11 +44,8 @@ class Softmax_12_13 final : public Adapter {
       flatten->i_(kaxis, old_axis);
       node->replaceInput(0, flatten->output());
 
-      if (old_axis == 0) {
-        node->i_(kaxis, 1);
-      } else {
-        node->i_(kaxis, -1);
-      }
+      // Softmax along the last axis of the flattened 2D tensor
+      node->i_(kaxis, -1);
 
       // Insert Reshape node after softmax
       const std::string original_output_name = node->output()->uniqueName();
@@ -44,38 +53,21 @@ class Softmax_12_13 final : public Adapter {
       node->output()->setUniqueName(original_output_name + "_intermediate");
       Node* reshape = graph->create(kReshape);
       reshape->addInput(node->outputs()[0]);
+      reshape->addInput(shape->output());
       reshape->output()->setUniqueName(original_output_name);
       reshape->insertAfter(node);
 
-      // Set shape input of Reshape
-      const std::vector<Dimension>& target_shape = flatten->inputs()[0]->sizes();
-
-      ONNX_ASSERTM(
-          target_shape.size() != 0,
-          "Version conversion for Softmax failed because "
-          "input shape is unknown.");
-
-      Tensor t;
-      t.elem_type() = TensorProto_DataType_INT64;
-      t.sizes() = std::vector<int64_t>{static_cast<int64_t>(target_shape.size())};
-      auto& data = t.int64s();
-      for (Dimension dim : target_shape) {
-        data.emplace_back(dim.dim);
-      }
-      Node* constant = graph->create(kConstant);
-      constant->insertBefore(node);
-      constant->t_(kvalue, t);
-      reshape->addInput(constant->output());
-
       // Fix outputs & wiring
-      node->output()->wipeSizes();
-      reshape->output()->setSizes(target_shape);
+      if (node->output()->sizes().size() != 0) {
+        reshape->output()->setSizes(node->output()->sizes());
+      }
       reshape->output()->setElemType(node->output()->elemType());
+      node->output()->wipeSizes();
       for (Use u : original_uses) {
         u.user->replaceInputWith(node->output(), reshape->output());
       }
       for (size_t i = 0; i < graph->outputs().size(); i++) {
-        if (graph->outputs()[i]->uniqueName() == node->output()->uniqueName()) {
+        if (graph->outputs()[i]->uniqueName() == original_output_name) {
           graph->return_node()->replaceInput(i, reshape->output());
         }
       }
