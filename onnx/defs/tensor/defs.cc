@@ -37,11 +37,13 @@ an integer 36 to Boolean may produce 1 because we truncate bits which can't be s
 In more detail, the conversion among numerical types should follow these rules:
 
 * Casting from floating point to:
-  * floating point: +/- highest value if OOR (out of range, that includes float8 infinities).
+  * floating point: +/- highest value if OOR (out of range),
+    infinities are converting into NaN if infinity is not available
   * fixed point: undefined if OOR.
   * bool: +/- 0.0 to False; all else to True.
 * Casting from fixed point to:
-  * floating point: +/- highest value if OOR (out of range, float8 infinities and infinity for uint8)
+  * floating point: +/- highest value if OOR (out of range),
+    infinities are converting into NaN if infinity is not available
   * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
     signed types). For example, 200 (int16) -> -56 (int8).
   * bool: zero to False; nonzero to True.

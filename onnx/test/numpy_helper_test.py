@@ -253,32 +253,42 @@ class TestNumpyHelper(unittest.TestCase):
         x = np.float32(np.inf)
         to = helper.float32_to_float8e4m3(x)
         back = numpy_helper.float8e4m3_to_float32(to)
-        self.assertEqual(back, 448)
+        self.assertTrue(np.isnan(back))
 
         x = np.float32(-np.inf)
         to = helper.float32_to_float8e4m3(x)
         back = numpy_helper.float8e4m3_to_float32(to)
-        self.assertEqual(back, -448)
+        self.assertTrue(np.isnan(back))
 
         x = np.float32(np.inf)
         to = helper.float32_to_float8e4m3(x, uz=True)
         back = numpy_helper.float8e4m3_to_float32(to, uz=True)
-        self.assertEqual(back, 240)
+        self.assertTrue(np.isnan(back))
 
         x = np.float32(-np.inf)
         to = helper.float32_to_float8e4m3(x, uz=True)
         back = numpy_helper.float8e4m3_to_float32(to, uz=True)
-        self.assertEqual(back, -240)
+        self.assertTrue(np.isnan(back))
+
+        x = np.float32(np.inf)
+        to = helper.float32_to_float8e5m2(x)
+        back = numpy_helper.float8e5m2_to_float32(to)
+        self.assertTrue(np.isinf(back))
+
+        x = np.float32(-np.inf)
+        to = helper.float32_to_float8e5m2(x)
+        back = numpy_helper.float8e5m2_to_float32(to)
+        self.assertTrue(np.isinf(back))
 
         x = np.float32(np.inf)
         to = helper.float32_to_float8e5m2(x, fn=True, uz=True)
         back = numpy_helper.float8e5m2_to_float32(to, fn=True, uz=True)
-        self.assertEqual(back, 57344)
+        self.assertTrue(np.isnan(back))
 
         x = np.float32(-np.inf)
         to = helper.float32_to_float8e5m2(x, fn=True, uz=True)
         back = numpy_helper.float8e5m2_to_float32(to, fn=True, uz=True)
-        self.assertEqual(back, -57344)
+        self.assertTrue(np.isnan(back))
 
 
 if __name__ == "__main__":

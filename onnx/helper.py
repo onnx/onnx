@@ -375,7 +375,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
         if (b & 0x7FC00000) == 0x7FC00000:
             return 0x80
         if np.isinf(x):
-            return ret | 0x7F  # saturation
+            return 0x80
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
 
@@ -412,7 +412,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
         if (b & 0x7FC00000) == 0x7FC00000:
             return 0x7F | ret
         if np.isinf(x):
-            return 0x7E | ret  # saturation
+            return 0x7F | ret
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
 
@@ -469,7 +469,7 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
         if (b & 0x7FC00000) == 0x7FC00000:
             return 0x80
         if (b & 0x7FFFFFFF) == 0x7F800000:
-            return ret | 0x7F  # saturation
+            return 0x80
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
 
