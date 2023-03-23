@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 import unittest
 
 import onnx
