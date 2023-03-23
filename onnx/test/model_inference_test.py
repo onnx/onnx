@@ -240,5 +240,6 @@ class TestModelInference(unittest.TestCase):
         float_type = onnx.TensorProto.FLOAT
         self._check(model, float_type, float_type, float_type, float_type)
 
+
 if __name__ == "__main__":
     unittest.main()

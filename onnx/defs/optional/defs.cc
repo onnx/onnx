@@ -158,7 +158,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 fail_type_inference("Attribute 'type' should be a TypeProto and it should specify a type.");
               auto attr_tp = attr_proto->tp();
               ctx.getOutputType(0)->CopyFrom(attr_tp);
-              return;              
+              return;
             }
           }
           auto input_type = ctx.getInputType(0);

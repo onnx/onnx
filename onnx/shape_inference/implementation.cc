@@ -587,7 +587,7 @@ class ShapeInferenceImplBase {
 
     // Create a temporary initializer value map
     for (int i = 0; i < num_actual_inputs && i < num_func_inputs; ++i) {
-      const TypeProto* type = ctx.getInputType(i); 
+      const TypeProto* type = ctx.getInputType(i);
       if (type->value_case() == TypeProto::kTensorType && ctx.getInputData(i) != nullptr) {
         input_data_by_name[func_proto.input().Get(i)] = ctx.getInputData(i);
       } else if (type->value_case() == TypeProto::kSparseTensorType && ctx.getInputSparseData(i) != nullptr) {
