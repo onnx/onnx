@@ -36,6 +36,11 @@ jobs:
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
+      - name: clang-tidy
+        uses: ZedThree/clang-tidy-review@v0.12.0
+        id: review
+      - if: steps.review.outputs.total_comments > 0
+        run: exit 1
 
   enforce-style:
     name: Enforce style
