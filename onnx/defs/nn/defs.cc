@@ -1368,6 +1368,104 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 11, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
+static const char* DeformConv_ver19_doc = R"DOC(
+Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
+This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    DeformConv,
+    19,
+    OpSchema()
+        .SetDoc(DeformConv_ver19_doc)
+        .Input(
+            0,
+            "X",
+            "Input data tensor. For 2D image data, it has shape (N, C, H, W) where N is the batch size, "
+            "C is the number of input channels, and H and W are the height and width. "
+            "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
+            "D1 to Dn are the spatial dimension sizes. Most common use cases have n = 2 or 3.",
+            "T")
+        .Input(
+            1,
+            "W",
+            "Weight tensor that will be used in the convolutions. It has shape (oC, C/group, kH, kW), "
+            "where oC is the number of output channels and kH and kW are the kernel height and width. "
+            "For more than 2 dimensions, it has shape (oC, C/group, k1, k2, ... , kn).",
+            "T")
+        .Input(
+            2,
+            "offset",
+            "Offset tensor denoting the offset for the sampling locations in the convolution kernel. "
+            "It has shape (N, offset_group * kH * kW * 2, oH, oW) for 2D data or "
+            "(N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Use linear interpolation"
+            "for fractional offset values. Sampling locations outside of the padded input tensor gives zero.",
+            "T")
+        .Input(
+            3,
+            "B",
+            "Optional 1D bias of length oC to be added to the convolution. Default is a tensor of zeros.",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "mask",
+            "The mask tensor to be applied to each position in the convolution kernel. "
+            "It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or "
+            "(N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Default is a "
+            "tensor of ones.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "Y",
+            "Output data tensor that contains the result of convolution. It has shape (N, oC, oH, oW) "
+            "for 2D data or (N, oC, o1, o2, ..., on) for nD data",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .Attr(
+            "dilations",
+            "Dilation value along each spatial axis of the kernel. Default is 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "group",
+            "Number of groups the input and output channels, C and oC, are divided into. C and oC must both "
+            "be divisible by group. Default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "kernel_shape",
+            "Shape of the convolution kernel. If not present, it is inferred from the shape of input W.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "offset_group",
+            "Number of groups of offset. C must be divisible by offset_group. Default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "pads",
+            "Padding for the beginning and end along each spatial axis. The values represent the number of pixels "
+            "added to the beginning and end of the corresponding axis and can take any nonnegative value. "
+            "The format should be as follows: [x1_begin, x2_begin, ..., x1_end, x2_end, ...], where xi_begin "
+            "is the number of pixels added at the beginning of axis `i` and xi_end is the number of pixels "
+            "added at the end of axis `i`. Default is 0 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "strides",
+            "Stride along each spatial axis. Default is 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          convPoolShapeInference(ctx, true, false, 0, 1);
+        }));
+
 // For GlobalPool operations.
 void globalPoolTypeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
