@@ -88,3 +88,10 @@ jobs:
 
 
     displayName: Install and test ONNX
+
+  - script: |
+      conda remove libprotobuf
+      conda install libprotobuf=3.20
+      pytest
+
+    displayName: Test Protobuf 3.20

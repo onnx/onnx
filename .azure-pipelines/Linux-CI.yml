@@ -45,7 +45,7 @@ jobs:
       python -m virtualenv venv
       source venv/bin/activate
 
-      source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc) "$(pwd)"/protobuf/protobuf_install $(build_type)
+      sudo apt-get install libprotobuf-dev protobuf-compiler
       python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt
 
