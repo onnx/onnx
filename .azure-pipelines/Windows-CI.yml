@@ -86,15 +86,10 @@ jobs:
 
       rm -rf .setuptools-cmake-build
 
-
-    displayName: Install and test ONNX
-
-  - script: |
       conda remove libprotobuf
       conda install libprotobuf=3.20
-      python -m pip install -q --upgrade pip
-      python -m pip install -q -r requirements-release.txt
       python -m pip install protobuf==3.20.2
       pytest
 
-    displayName: Test Protobuf 3.20
+    displayName: Install and test ONNX
+
