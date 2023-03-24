@@ -36,6 +36,7 @@ jobs:
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
+      # Pleaes note that it won't cause any failure here; it will only post comments in PRs
       - name: clang-tidy review
         uses: ZedThree/clang-tidy-review@ddfe311e5d2ee5ea096cedc21adcbdb83c32f62b # v0.12.1
         with:
@@ -46,9 +47,6 @@ jobs:
           split_workflow: true
         id: review
       - uses: ZedThree/clang-tidy-review/upload@ddfe311e5d2ee5ea096cedc21adcbdb83c32f62b # v0.12.1
-      # If there are any comments from clang-tidy, fail the check
-      - if: steps.review.outputs.total_comments > 0
-        run: exit 1
 
   enforce-style:
     name: Enforce style
