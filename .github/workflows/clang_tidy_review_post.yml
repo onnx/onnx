@@ -11,4 +11,4 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: ZedThree/clang-tidy-review/upload@ddfe311e5d2ee5ea096cedc21adcbdb83c32f62b # v0.12.1
+      - uses: ZedThree/clang-tidy-review/post@ddfe311e5d2ee5ea096cedc21adcbdb83c32f62b # v0.12.1
