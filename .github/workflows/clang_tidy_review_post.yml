@@ -6,8 +6,6 @@ on:
     workflows: ["Lint"]
     types:
       - completed
-  pull_request:
-  workflow_dispatch:
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
