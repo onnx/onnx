@@ -13,6 +13,8 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ign
     input_rank = data.ndim
     if axes is None:
         axes = list(range(input_rank))
+    else:
+        axes = list(map(lambda axis: axis if axis >= 0 else axis + input_rank, axes))
     num_axes = len(axes)
 
     if num_axes * 2 != raw_pads.size:
