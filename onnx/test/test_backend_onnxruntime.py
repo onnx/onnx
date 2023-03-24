@@ -204,6 +204,7 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
     backend_test.exclude(
         "("
         "averagepool_2d_dilations"
+        "|deform_conv"
         "|equal_string"
         "|optional_get_element_optional_sequence"
         "|identity_opt"
