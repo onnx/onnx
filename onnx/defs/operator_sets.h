@@ -1063,6 +1063,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Equal);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, AveragePool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Pad);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Resize);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, DeformConv);
 
 // Iterate over schema from ai.onnx version 19
 class OpSet_Onnx_ver19 {
@@ -1072,6 +1073,7 @@ class OpSet_Onnx_ver19 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, AveragePool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Pad)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Resize)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, DeformConv)>());
   }
 };
 

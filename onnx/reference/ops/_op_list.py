@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0611,W0603
 """
@@ -78,6 +80,7 @@ from onnx.reference.ops.op_conv_transpose import ConvTranspose
 from onnx.reference.ops.op_cos import Cos
 from onnx.reference.ops.op_cosh import Cosh
 from onnx.reference.ops.op_cum_sum import CumSum
+from onnx.reference.ops.op_deform_conv import DeformConv
 from onnx.reference.ops.op_depth_to_space import DepthToSpace
 from onnx.reference.ops.op_dequantize_linear import DequantizeLinear
 from onnx.reference.ops.op_det import Det
