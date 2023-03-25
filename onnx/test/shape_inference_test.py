@@ -7014,6 +7014,19 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(graph, [optional_val_info])  # type: ignore
 
+    def test_optional_float_val (self) -> None:
+        graph = self._make_graph(
+            [],
+            [make_node("Optional", [], ["output"], value_float=10.0)],
+            [],
+        )
+        tensor_type = helper.make_tensor_type_proto(elem_type=TensorProto.FLOAT, shape=[])
+        optional_type = helper.make_optional_type_proto(tensor_type)
+        inferred_val_info = helper.make_value_info(
+            name="output", type_proto=optional_type
+        )
+        self._assert_inferred(graph, [inferred_val_info])  # type: ignore
+
     def test_optional_construct_sequence(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
             elem_type=TensorProto.INT64, shape=[2, 3, 0]
