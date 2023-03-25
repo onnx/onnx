@@ -431,7 +431,10 @@ def load_composite_model(
         preprocessing.ir_version = network.ir_version
         onnx.checker.check_model(preprocessing)
 
-    io_map = [(out_entry.name, in_entry.name) for out_entry, in_entry in zip(preprocessing.graph.output, network.graph.input)]
+    io_map = [
+        (out_entry.name, in_entry.name)
+        for out_entry, in_entry in zip(preprocessing.graph.output, network.graph.input)
+    ]
 
     model_with_preprocessing = onnx.compose.merge_models(
         preprocessing, network, io_map=io_map

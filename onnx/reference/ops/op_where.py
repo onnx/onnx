@@ -13,7 +13,8 @@ class Where(OpRun):
         if (
             x.dtype != y.dtype
             and x.dtype not in (object,)
-            and not (x.dtype.type is y.dtype.type is np.str_)
+            and x.dtype.type is not np.str_
+            and y.dtype.type is not np.str_
         ):
             raise RuntimeError(
                 f"x and y should share the same dtype {x.dtype} != {y.dtype}"

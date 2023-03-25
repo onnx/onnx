@@ -205,8 +205,8 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
                 )
                 or (
                     (
-                        opset.domain in {"ai.onnx.training version",
-                                         "ai.onnx.preview.training"}
+                        opset.domain
+                        in {"ai.onnx.training version", "ai.onnx.preview.training"}
                     )
                     and opset.version == latest_training_version + 1
                 )

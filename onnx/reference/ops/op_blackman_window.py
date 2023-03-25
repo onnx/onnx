@@ -4,6 +4,7 @@
 # pylint: disable=W0221
 
 import math
+
 import numpy as np
 
 from onnx.reference.ops._op_common_window import _CommonWindow
