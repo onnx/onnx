@@ -67,6 +67,7 @@ select = [
     "W", # pycodestyle
     "B", # flake8-bugbear
     "N", # pep8-naming
+    "NPY", # modern numpy
     "YTT", # flake8-2020
     "RUF", # Ruff-specific rules
     "TID252", # Relative imports
