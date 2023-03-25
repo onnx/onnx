@@ -76,8 +76,7 @@ def ConcatFromSequenceImpl(
 ) -> np.ndarray:
     if not new_axis:
         return np.concatenate(sequence, axis)
-    else:
-        return np.stack(sequence, axis)
+    return np.stack(sequence, axis)
 
 
 class Sequence(Base):

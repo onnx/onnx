@@ -20,7 +20,7 @@ class AttrCoverage:
         self.values: Set[str] = set()
 
     def add(self, attr: onnx.AttributeProto) -> None:
-        assert self.name in [None, attr.name]
+        assert self.name in {None, attr.name}
         self.name = attr.name
         value = helper.get_attribute_value(attr)
         # Turn list into tuple so we can put it into set
@@ -199,7 +199,7 @@ class Coverage:
                     existing_nodes[node_name][str(backend)] = "Passed!"
                 else:
                     existing_nodes[node_name][str(backend)] = "Failed!"
-            summaries: Dict[Any, Any] = dict()
+            summaries: Dict[Any, Any] = {}
             if "Summary" in existing_nodes:
                 summaries = existing_nodes["Summary"]
                 del existing_nodes["Summary"]

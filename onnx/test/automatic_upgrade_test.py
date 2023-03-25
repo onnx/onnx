@@ -29,12 +29,12 @@ class TestAutomaticUpgrade(unittest.TestCase):
         output_shapes: Sequence[Sequence[Optional[int]]] = ((3, 4, 5),),
         input_types: Optional[Sequence[Any]] = None,
         output_types: Optional[Sequence[Any]] = None,
-        initializer: Sequence[Any] = tuple(),
+        initializer: Sequence[Any] = (),
         attrs: Optional[Dict[str, Any]] = None,
-        seq_inputs: Sequence[int] = tuple(),
-        seq_outputs: Sequence[int] = tuple(),
-        optional_inputs: Sequence[int] = tuple(),
-        optional_outputs: Sequence[int] = tuple(),
+        seq_inputs: Sequence[int] = (),
+        seq_outputs: Sequence[int] = (),
+        optional_inputs: Sequence[int] = (),
+        optional_outputs: Sequence[int] = (),
     ) -> None:
         if attrs is None:
             attrs = {}

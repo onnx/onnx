@@ -57,7 +57,7 @@ class If(OpRun):
             final = tuple(outputs)
             branch = "else"
 
-        if len(final) == 0:
+        if not final:
             raise RuntimeError(  # pragma: no cover
                 f"Operator If ({self.onnx_node.name!r}) does not have any output."
             )

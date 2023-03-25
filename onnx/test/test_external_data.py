@@ -40,7 +40,7 @@ class TestLoadExternalDataBase(unittest.TestCase):
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
-        tensor_filename = location if location else f"{tensor_name}.bin"
+        tensor_filename = location or f"{tensor_name}.bin"
         set_external_data(tensor, location=tensor_filename)
 
         with open(os.path.join(self.temp_dir, tensor_filename), "wb") as data_file:
@@ -621,7 +621,7 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
-        tensor_filename = location if location else f"{tensor_name}.bin"
+        tensor_filename = location or f"{tensor_name}.bin"
 
         set_external_data(tensor, location=tensor_filename)
 

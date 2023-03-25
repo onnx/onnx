@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import math
 import numpy as np
 
 import onnx
@@ -22,7 +23,7 @@ class HammingWindow(Base):
         a0 = 25 / 46
         a1 = 1 - a0
         y = a0 - a1 * np.cos(
-            2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
+            2 * math.pi * np.arange(0, size, 1, dtype=np.float32) / size
         )
         expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
 
@@ -34,6 +35,6 @@ class HammingWindow(Base):
         a0 = 25 / 46
         a1 = 1 - a0
         y = a0 - a1 * np.cos(
-            2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+            2 * math.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
         )
         expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")

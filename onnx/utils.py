@@ -115,10 +115,8 @@ class Extractor:
     ) -> Tuple[List[TensorProto], List[ValueInfoProto]]:
         all_tensors_name = set()
         for node in nodes:
-            for name in node.input:
-                all_tensors_name.add(name)
-            for name in node.output:
-                all_tensors_name.add(name)
+            all_tensors_name.update(node.input)
+            all_tensors_name.update(node.output)
 
         initializer = [self.wmap[t] for t in self.wmap if t in all_tensors_name]
         value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_name]

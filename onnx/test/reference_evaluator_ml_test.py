@@ -590,7 +590,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 ),
             ],
         }
-        for post in ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"]:
+        for post in ("SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"):
             if post == "PROBIT":
                 coefficients = [0.058, 0.029, 0.09, 0.058, 0.029, 0.09]
                 intercepts = [0.27, 0.27, 0.05]
@@ -653,7 +653,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         }
         x = np.arange(6).reshape((-1, 3)).astype(np.float32)
-        for post in ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO"]:
+        for post in ("SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO"):
             expected = expected_post[post]
             with self.subTest(post_transform=post):
                 node1 = make_node(
@@ -701,7 +701,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         }
         x = np.arange(6).reshape((-1, 3)).astype(np.float32)
-        for post in ["NONE", "LOGISTIC", "SOFTMAX_ZERO", "SOFTMAX"]:
+        for post in ("NONE", "LOGISTIC", "SOFTMAX_ZERO", "SOFTMAX"):
             expected = expected_post[post]
             with self.subTest(post_transform=post):
                 node1 = make_node(
@@ -807,7 +807,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "MIN": np.array([[0.076923], [0.076923], [0.076923]], dtype=np.float32),
             "MAX": np.array([[0.5], [0.5], [0.5]], dtype=np.float32),
         }
-        for agg in ["SUM", "AVERAGE", "MIN", "MAX"]:
+        for agg in ("SUM", "AVERAGE", "MIN", "MAX"):
             expected = expected_agg[agg]
             with self.subTest(aggregate_function=agg):
                 onx = self._get_test_tree_ensemble_regressor(agg)

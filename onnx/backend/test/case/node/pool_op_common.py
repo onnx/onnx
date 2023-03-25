@@ -117,7 +117,7 @@ def pool(
             )
 
         if count_include_pad == 1 and (
-            pooling_type == "AVG" or pooling_type == "LPPOOL"
+            pooling_type in {"AVG", "LPPOOL"}
         ):
             y[shape] = f(window_vals)
         else:

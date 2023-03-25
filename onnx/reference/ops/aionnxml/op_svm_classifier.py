@@ -63,9 +63,7 @@ def sigmoid_probability(score, proba, probb):
 def write_scores(n_classes, scores, post_transform, add_second_class):
     if n_classes >= 2:
         if post_transform == "PROBIT":
-            res = []
-            for score in scores:
-                res.append(compute_probit(score))
+            res = [compute_probit(score) for score in scores]
             return np.array(res, dtype=scores.dtype)
         if post_transform == "LOGISTIC":
             return logistic(scores)

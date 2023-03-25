@@ -203,7 +203,7 @@ def get_model_info(
         selected_models = sorted(matching_models, key=lambda m: -m.opset)
     else:
         selected_models = [m for m in matching_models if m.opset == opset]
-        if len(selected_models) == 0:
+        if not selected_models:
             valid_opsets = [m.opset for m in matching_models]
             raise AssertionError(
                 f"{model} has no version with opset {opset}. Valid opsets: {valid_opsets}"
@@ -431,9 +431,7 @@ def load_composite_model(
         preprocessing.ir_version = network.ir_version
         onnx.checker.check_model(preprocessing)
 
-    io_map = []
-    for out_entry, in_entry in zip(preprocessing.graph.output, network.graph.input):
-        io_map.append((out_entry.name, in_entry.name))
+    io_map = [(out_entry.name, in_entry.name) for out_entry, in_entry in zip(preprocessing.graph.output, network.graph.input)]
 
     model_with_preprocessing = onnx.compose.merge_models(
         preprocessing, network, io_map=io_map

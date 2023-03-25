@@ -2433,7 +2433,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, tuple())]
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, ())]
         )
 
     def test_reduce_op_shape_negative_axis(self) -> None:
@@ -8702,7 +8702,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         for axes_shape, expected in [
             ((2,), 2),
-            (tuple(), "unk__0"),
+            ((), "unk__0"),
             (("N",), "N"),
         ]:
             graph = self._make_graph(

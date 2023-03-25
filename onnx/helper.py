@@ -108,7 +108,7 @@ def find_min_ir_version_for(
     default_min_version = 3
 
     def find_min(domain: Union[str, None], version: int) -> int:
-        key = (domain if domain else "ai.onnx", version)
+        key = (domain or "ai.onnx", version)
         if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
         if ignore_unknown:
@@ -923,7 +923,7 @@ def printable_attribute(
         else:
             # special case to print scalars
             field = tensor_dtype_to_field(attr.t.data_type)
-            content.append(f"<Scalar Tensor {str(getattr(attr.t, field))}>")
+            content.append(f"<Scalar Tensor {getattr(attr.t, field)}>")
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)
