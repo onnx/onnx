@@ -483,7 +483,7 @@ std::vector<TypeProto> InferFunctionOutputTypes(
     const std::vector<TypeProto>& input_types,
     const std::vector<AttributeProto>& attributes);
 
-std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err);
+std::string GetErrorWithNodeInfo(const NodeProto& n, const std::runtime_error& err);
 
 void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable);
 
