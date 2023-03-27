@@ -1,3 +1,4 @@
+# This standalone CI is needed for commenting in PRs
 name: Post clang-tidy review comments
 
 on:
@@ -6,9 +7,6 @@ on:
     workflows: ["Lint"]
     types:
       - completed
-
-permissions:  # set top-level default permissions as security best practice
-  contents: read
 
 jobs:
   build:

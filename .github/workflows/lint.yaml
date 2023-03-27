@@ -45,8 +45,8 @@ jobs:
           lgtm_comment_body: ''
           exclude: "/third_party/*"
           split_workflow: true
-        id: review
       - uses: ZedThree/clang-tidy-review/upload@ddfe311e5d2ee5ea096cedc21adcbdb83c32f62b # v0.12.1
+
 
   enforce-style:
     name: Enforce style

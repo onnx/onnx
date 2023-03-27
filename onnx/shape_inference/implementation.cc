@@ -1007,7 +1007,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   return graph_output_types;
 }
 
-std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err ) {
+std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err) {
   std::string op_name = n.has_name() ? (", node name: " + n.name()) : "";
   return "(op_type:" + n.op_type() + op_name + "): " + err.what();
 }
