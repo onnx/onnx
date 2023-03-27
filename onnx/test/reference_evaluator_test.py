@@ -53,6 +53,7 @@ from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
 )
+from onnx.reference.ops.op_conv import _conv_implementation, _conv_implementation_im2col
 
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
 # For now, bump the version in CIs whenever there is a new onnxruntime release
@@ -3076,6 +3077,26 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"X": data})
         expected = _expected(data, alpha, beta, bias, size)
         self.assertEqual(len(expected), len(got[0]))
+
+    def test_conv_im2col(self):
+        feeds = {
+            "X": np.arange(1 * 1 * 11 * 23).reshape((1, 1, 11, 23)).astype(np.float32)
+            + 1,
+            "W": np.arange(9).reshape((1, 1, 3, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[1, 1],
+            auto_pad="NOTSET",
+        )
+        feeds["W"][0, 0, 1] = 1
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
 
 
 if __name__ == "__main__":

@@ -97,6 +97,34 @@ def im2col(
     return res.reshape(new_shape)  # type: ignore
 
 
+def get_indices_fast(X_shape, HF, WF, stride, pad):
+    return i, j, d, out_h, out_w
+
+
+def im2col_fast(X, kernel_shape, pads, strides):
+    HF, WF = kernel_shape
+    m, n_C, n_H, n_W = X.shape
+    out_h = int((n_H + pads[0] + pads[2] - HF) / strides[0]) + 1
+    out_w = int((n_W + pads[1] + pads[3] - WF) / strides[1]) + 1
+
+    level1 = np.tile(np.repeat(np.arange(HF), WF), n_C)
+    every_levels = strides[0] * np.repeat(np.arange(out_h), out_w)
+    i = level1.reshape(-1, 1) + every_levels.reshape(1, -1)
+
+    slide1 = np.tile(np.tile(np.arange(WF), HF), n_C)
+    every_slides = strides[1] * np.tile(np.arange(out_w), out_h)
+    j = slide1.reshape(-1, 1) + every_slides.reshape(1, -1)
+
+    d = np.repeat(np.arange(n_C), HF * WF).reshape(-1, 1)
+
+    X_padded = np.pad(
+        X, ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])), mode="constant"
+    )
+    cols = X_padded[:, d, i, j]
+    cols = np.concatenate(cols, axis=-1)
+    return cols, out_h, out_w
+
+
 def _conv_implementation_im2col(  # type: ignore
     X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
 ):
@@ -164,12 +192,16 @@ def _conv_implementation_im2col(  # type: ignore
             final += b
         return final
 
-    c2 = im2col(X, kernel_shape, dilations, pads, strides)
-    w_shape = W.shape[: -len(kernel_shape) :] + (-1,)
-    w_reshaped = W.reshape(w_shape)
-    perm = [len(w_shape) - 1, *list(range(len(w_shape) - 1))]
-    w_perm = np.transpose(w_reshaped, perm)
-    mul = np.matmul(c2, w_perm)
+    if len(X.shape) == 4 and min(dilations) == max(dilations) == 1:
+        c2, out_h, out_w = im2col_fast(X, kernel_shape, pads, strides)
+        w_reshaped = W.reshape((-1, c2.shape[0]))
+        mul = w_reshaped @ c2
+        mul = mul.reshape((X.shape[0], X.shape[1], out_h, out_w))
+    else:
+        c2 = im2col(X, kernel_shape, dilations, pads, strides)
+        w_shape = W.shape[: -len(kernel_shape) :] + (-1, 1)
+        w_reshaped = W.reshape(w_shape)
+        mul = np.squeeze(np.matmul(c2, w_reshaped), -1)
     if B is not None:
         mul += B
     return mul
