@@ -88,3 +88,11 @@ jobs:
 
 
     displayName: Install and test ONNX
+
+  - script: |
+      python -m pip install -q onnxruntime
+      set ORT_MAX_IR_SUPPORTED_VERSION=8
+      set ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
+      set ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+      pytest
+    displayName: Test ONNX with ONNX Runtime
