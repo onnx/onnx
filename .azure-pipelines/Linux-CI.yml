@@ -62,7 +62,7 @@ jobs:
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       # enable more sanitizer
-      export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+      export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-g -fsanitize=undefined,address -fno-sanitize-recover=all -fno-omit-frame-pointer -fno-optimize-sibling-calls '"
       python setup.py install
     displayName: 'Install ONNX and dependencies'
 
