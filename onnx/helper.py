@@ -541,21 +541,9 @@ def make_optional(
     return optional
 
 
-def _to_bytes_or_false(val: Union[str, bytes]) -> Union[bytes, bool]:
-    """An internal graph to convert the input to a bytes or to False.
-
-    The criteria for conversion is as follows and should be python 2 and 3
-    compatible:
-    - If val is py2 str or py3 bytes: return bytes
-    - If val is py2 unicode or py3 str: return val.decode('utf-8')
-    - Otherwise, return False
-    """
-    if isinstance(val, bytes):
-        return val
-    try:
-        return val.encode("utf-8")
-    except AttributeError:
-        return False
+def _to_bytes(value: Union[str, bytes]) -> bytes:
+    """Coerce a string (or bytes) value into UTF-8 bytes."""
+    return value if isinstance(value, bytes) else value.encode("utf-8")
 
 
 def make_attribute(  # pylint: disable=too-many-statements
@@ -567,22 +555,16 @@ def make_attribute(  # pylint: disable=too-many-statements
     if doc_string:
         attr.doc_string = doc_string
 
-    is_iterable = isinstance(value, collections.abc.Iterable)
-    bytes_or_false = _to_bytes_or_false(value)
-    # First, singular cases
-    # float
+    # Singular cases
     if isinstance(value, float):
         attr.f = value
         attr.type = AttributeProto.FLOAT
-    # integer
     elif isinstance(value, numbers.Integral):
         attr.i = cast(int, value)
         attr.type = AttributeProto.INT
-    # string
-    elif bytes_or_false is not False:
-        if not isinstance(bytes_or_false, bytes):
-            raise TypeError(f"bytes_or_false must be an instance of {bytes}.")
-        attr.s = bytes_or_false
+    elif isinstance(value, (str, bytes)):
+        # Encode strings into utf-8
+        attr.s = _to_bytes(value)
         attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
@@ -596,9 +578,9 @@ def make_attribute(  # pylint: disable=too-many-statements
     elif isinstance(value, TypeProto):
         attr.tp.CopyFrom(value)
         attr.type = AttributeProto.TYPE_PROTO
-    # third, iterable cases
-    elif is_iterable:
-        byte_array = [_to_bytes_or_false(v) for v in value]
+    # Iterable cases
+    elif isinstance(value, collections.abc.Iterable):
+        value = list(value)
         if all(isinstance(v, numbers.Integral) for v in value):
             # Turn np.int32/64 into Python built-in int.
             attr.ints.extend(int(v) for v in value)
@@ -608,8 +590,8 @@ def make_attribute(  # pylint: disable=too-many-statements
             # (and converts the ints to floats).
             attr.floats.extend(float(v) for v in value)
             attr.type = AttributeProto.FLOATS
-        elif all(map(lambda bytes_or_false: bytes_or_false is not False, byte_array)):
-            attr.strings.extend(cast(List[bytes], byte_array))
+        elif all(isinstance(v, (str, bytes)) for v in value):
+            attr.strings.extend(_to_bytes(v) for v in value)
             attr.type = AttributeProto.STRINGS
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
