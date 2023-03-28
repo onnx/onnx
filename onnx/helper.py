@@ -556,12 +556,12 @@ def make_attribute(  # pylint: disable=too-many-statements
         attr.doc_string = doc_string
 
     # Singular cases
-    if isinstance(value, float):
-        attr.f = value
-        attr.type = AttributeProto.FLOAT
-    elif isinstance(value, numbers.Integral):
-        attr.i = cast(int, value)
+    if isinstance(value, numbers.Integral):
+        attr.i = int(value)
         attr.type = AttributeProto.INT
+    elif isinstance(value, numbers.Real):
+        attr.f = float(value)
+        attr.type = AttributeProto.FLOAT
     elif isinstance(value, (str, bytes)):
         # Encode strings into utf-8
         attr.s = _to_bytes(value)
@@ -581,37 +581,34 @@ def make_attribute(  # pylint: disable=too-many-statements
     # Iterable cases
     elif isinstance(value, collections.abc.Iterable):
         value = list(value)
-        if all(isinstance(v, numbers.Integral) for v in value):
-            # Turn np.int32/64 into Python built-in int.
-            attr.ints.extend(int(v) for v in value)
+        types = {type(v) for v in value}
+        if all(issubclass(t, numbers.Integral) for t in types):
+            attr.ints.extend(value)
             attr.type = AttributeProto.INTS
-        elif all(isinstance(v, numbers.Real) for v in value):
-            # Since ints and floats are members of Real, this allows a mix of ints and floats
-            # (and converts the ints to floats).
-            attr.floats.extend(float(v) for v in value)
+        elif all(issubclass(t, numbers.Real) for t in types):
+            attr.floats.extend(value)
             attr.type = AttributeProto.FLOATS
-        elif all(isinstance(v, (str, bytes)) for v in value):
+        elif all(issubclass(t, (str, bytes)) for t in types):
             attr.strings.extend(_to_bytes(v) for v in value)
             attr.type = AttributeProto.STRINGS
-        elif all(isinstance(v, TensorProto) for v in value):
+        elif all(issubclass(t, TensorProto) for t in types):
             attr.tensors.extend(value)
             attr.type = AttributeProto.TENSORS
-        elif all(isinstance(v, SparseTensorProto) for v in value):
+        elif all(issubclass(t, SparseTensorProto) for t in types):
             attr.sparse_tensors.extend(value)
             attr.type = AttributeProto.SPARSE_TENSORS
-        elif all(isinstance(v, GraphProto) for v in value):
+        elif all(issubclass(t, GraphProto) for t in types):
             attr.graphs.extend(value)
             attr.type = AttributeProto.GRAPHS
-        elif all(isinstance(tp, TypeProto) for tp in value):
+        elif all(issubclass(t, TypeProto) for t in types):
             attr.type_protos.extend(value)
             attr.type = AttributeProto.TYPE_PROTOS
         else:
             raise ValueError(
-                "You passed in an iterable attribute but I cannot figure out "
-                "its applicable type."
+                "Could not infer the attribute type from the elements of the passed Iterable value."
             )
     else:
-        raise TypeError(f'value "{value}" is not valid attribute data type.')
+        raise TypeError(f"'{value}' is not an accepted attribute value.")
     return attr
 
 
