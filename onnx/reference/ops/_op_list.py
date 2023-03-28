@@ -141,7 +141,10 @@ from onnx.reference.ops.op_non_zero import NonZero
 from onnx.reference.ops.op_not import Not
 from onnx.reference.ops.op_one_hot import OneHot
 from onnx.reference.ops.op_optional import Optional
-from onnx.reference.ops.op_optional_get_element import OptionalGetElement
+from onnx.reference.ops.op_optional_get_element import (
+    OptionalGetElement_15,
+    OptionalGetElement_18,
+)
 from onnx.reference.ops.op_optional_has_element import OptionalHasElement
 from onnx.reference.ops.op_or import Or
 from onnx.reference.ops.op_pad import Pad_1, Pad_2, Pad_11, Pad_18

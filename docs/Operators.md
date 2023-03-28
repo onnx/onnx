@@ -44,6 +44,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-9">9</a>|
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-17">17</a>|
+|<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-19">19</a>|
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-11">11</a>|
@@ -6119,6 +6120,62 @@ expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
 ```
 
 </details>
+
+
+### <a name="DeformConv"></a><a name="deformconv">**DeformConv**</a>
+
+  Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
+  This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of the kernel. Default is 1 along each axis.</dd>
+<dt><tt>group</tt> : int (default is 1)</dt>
+<dd>Number of groups the input and output channels, C and oC, are divided into. C and oC must both be divisible by group. Default is 1.</dd>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>Shape of the convolution kernel. If not present, it is inferred from the shape of input W.</dd>
+<dt><tt>offset_group</tt> : int (default is 1)</dt>
+<dd>Number of groups of offset. C must be divisible by offset_group. Default is 1.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and end along each spatial axis. The values represent the number of pixels added to the beginning and end of the corresponding axis and can take any nonnegative value. The format should be as follows: [x1_begin, x2_begin, ..., x1_end, x2_end, ...], where xi_begin is the number of pixels added at the beginning of axis `i` and xi_end is the number of pixels added at the end of axis `i`. Default is 0 along each axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. Default is 1 along each axis.</dd>
+</dl>
+
+#### Inputs (3 - 5)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor. For 2D image data, it has shape (N, C, H, W) where N is the batch size, C is the number of input channels, and H and W are the height and width. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes. Most common use cases have n = 2 or 3.</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>Weight tensor that will be used in the convolutions. It has shape (oC, C/group, kH, kW), where oC is the number of output channels and kH and kW are the kernel height and width. For more than 2 dimensions, it has shape (oC, C/group, k1, k2, ... , kn).</dd>
+<dt><tt>offset</tt> : T</dt>
+<dd>Offset tensor denoting the offset for the sampling locations in the convolution kernel. It has shape (N, offset_group * kH * kW * 2, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Use linear interpolationfor fractional offset values. Sampling locations outside of the padded input tensor gives zero.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>Optional 1D bias of length oC to be added to the convolution. Default is a tensor of zeros.</dd>
+<dt><tt>mask</tt> (optional) : T</dt>
+<dd>The mask tensor to be applied to each position in the convolution kernel. It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Default is a tensor of ones.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor that contains the result of convolution. It has shape (N, oC, oH, oW) for 2D data or (N, oC, o1, o2, ..., on) for nD data</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
 
 
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
