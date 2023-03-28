@@ -308,7 +308,7 @@ print(f"The model before conversion:\n{original_model}")
 # Apply the version conversion on the original model
 converted_model = version_converter.convert_version(original_model, <int target_version>)
 
-print(f"The model after conversion:\n{converted_model}")
+print(f"The model after conversion:\n{converted_mode}")
 ```
 
 ## Utility Functions
