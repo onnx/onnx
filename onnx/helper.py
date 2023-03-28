@@ -548,7 +548,7 @@ def _to_bytes(value: Union[str, bytes]) -> bytes:
 
 def make_attribute(  # pylint: disable=too-many-statements
     key: str, value: Any, doc_string: Optional[str] = None
-) -> AttributeProto:  # pylint: disable=too-many-statements
+) -> AttributeProto:
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
     attr.name = key
