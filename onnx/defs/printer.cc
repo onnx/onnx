@@ -307,6 +307,12 @@ void ProtoPrinter::print(const AttributeProto& attr) {
     case AttributeProto_AttributeType_TENSORS:
       printSet("[", ", ", "]", attr.tensors());
       break;
+    case AttributeProto_AttributeType_TYPE_PROTO:
+      print(attr.tp());
+      break;
+    case AttributeProto_AttributeType_TYPE_PROTOS:
+      printSet("[", ", ", "]", attr.type_protos());
+      break;
     default:
       break;
   }

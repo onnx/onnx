@@ -392,6 +392,12 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   return Status::OK();
 }
 
+bool OnnxParser::NextIsIdentifier() {
+  std::string id("");
+  (void)PeekIdentifier(id);
+  return !(id.empty());
+}
+
 bool OnnxParser::NextIsType() {
   std::string id("");
   (void)PeekIdentifier(id);
@@ -413,8 +419,19 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
   auto next = NextChar();
   if (isalpha(next) || next == '_') {
     if (NextIsType()) {
-      attr.set_type(AttributeProto_AttributeType_TENSOR);
-      Parse(*attr.mutable_t());
+      TypeProto typeProto;
+      Parse(typeProto);
+      next = NextChar();
+      if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
+        attr.set_type(AttributeProto_AttributeType_TENSOR);
+        auto& tensorProto = *attr.mutable_t();
+        ParseOptionalIdentifier(*tensorProto.mutable_name());
+        (void)Matches('='); // Optional, to unify handling of initializers
+        Parse(tensorProto, typeProto);
+      } else {
+        attr.set_type(AttributeProto_AttributeType_TYPE_PROTO);
+        attr.mutable_tp()->CopyFrom(typeProto);
+      }
     } else {
       attr.set_type(AttributeProto_AttributeType_GRAPH);
       Parse(*attr.mutable_g());
