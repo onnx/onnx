@@ -822,4 +822,32 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor
 //    output: sequence of tensor, elem_type: float, shape: None
 void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type);
 
+// adjustNegativeAxes: Negative axes values are translated to the right axis in the positive range
+template <typename Axes>
+void adjustNegativeAxes(Axes& axes, int rank) {
+  std::transform(
+      axes.begin(), axes.end(), axes.begin(), [&](int64_t axis) -> int64_t { return axis < 0 ? axis + rank : axis; });
+}
+
+// checkAxesRange: Checks that values are within the range [-rank, rank)
+template <typename Axes>
+void checkAxesRange(Axes& axes, int rank) {
+  for (auto axis : axes) {
+    if (axis < -rank || axis > (rank - 1))
+      fail_shape_inference("Unexpected axis value: ", axis, ". Expected range [", -rank, ", ", rank, ")");
+  }
+}
+
+// checkDuplicateAxes: Check that there are no duplicated axes
+template <typename Axes>
+void checkDuplicateAxes(Axes& axes, int rank) {
+  std::vector<bool> tmp(rank, false);
+  for (auto axis : axes) {
+    int actual_axis = axis < 0 ? axis + rank : axis;
+    if (tmp[actual_axis])
+      fail_shape_inference("Axis ", axis, " is referred to more than once.");
+    tmp[actual_axis] = true;
+  }
+}
+
 } // namespace ONNX_NAMESPACE

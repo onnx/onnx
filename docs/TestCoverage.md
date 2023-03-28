@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 172/185 (92.97%, 5 generators excluded) common operators.
+Node tests have covered 173/186 (93.01%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -2441,7 +2441,7 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
 
 
 ### CenterCropPad
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>center_crop_pad_crop</summary>
 
@@ -2534,6 +2534,32 @@ expect(
     inputs=[x, shape],
     outputs=[y],
     name="test_center_crop_pad_crop_axes_hwc",
+)
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_negative_axes_hwc</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CenterCropPad",
+    inputs=["x", "shape"],
+    outputs=["y"],
+    axes=[-3, -2],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([10, 9, 3], dtype=np.float32)
+y[:, :8, :] = x[5:15, :, :]
+
+expect(
+    node,
+    inputs=[x, shape],
+    outputs=[y],
+    name="test_center_crop_pad_crop_negative_axes_hwc",
 )
 ```
 
@@ -4236,6 +4262,181 @@ y = np.fft.ifft(x, axis=0)
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
+```
+
+</details>
+
+
+### DeformConv
+There are 3 test cases, listed as following:
+<details>
+<summary>deformconv</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+
+# Convolution with padding
+offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
+offset_with_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_with_padding[
+    0, 5, 1, 2
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [1, 2]
+
+node_with_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_with_padding"],
+    outputs=["Y_with_padding"],
+    kernel_shape=[2, 2],
+    pads=[1, 1, 1, 1],
+)
+Y_with_padding = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 2.0],  # (1, 1, 4, 4) output tensor
+                [3.0, 8.0, 11.9, 7.0],
+                [9.0, 20.0, 24.0, 13.0],
+                [6.0, 13.0, 15.0, 8.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_with_padding,
+    inputs=[X, W, offset_with_padding],
+    outputs=[Y_with_padding],
+    name="test_basic_deform_conv_with_padding",
+)
+
+# Convolution without padding
+offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset_without_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_without_padding[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+node_without_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_without_padding"],
+    outputs=["Y_without_padding"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y_without_padding = np.array(
+    [
+        [
+            [
+                [9.5, 11.9],  # (1, 1, 2, 2) output tensor
+                [20.0, 24.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_without_padding,
+    inputs=[X, W, offset_without_padding],
+    outputs=[Y_without_padding],
+    name="test_basic_deform_conv_without_padding",
+)
+```
+
+</details>
+<details>
+<summary>deformconv_with_mask_bias</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+B = np.ones((1,), dtype=np.float32)
+
+offset = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+mask = np.ones((1, 4, 2, 2), dtype=np.float32)
+mask[0, 2, 1, 1] = 0.2  # [1, 0] element of kernel at output position [1, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset", "B", "mask"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y = np.array(
+    [
+        [
+            [
+                [10.5, 12.9],  # (1, 1, 2, 2) output tensor
+                [21.0, 19.4],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset, B, mask],
+    outputs=[Y],
+    name="test_deform_conv_with_mask_bias",
+)
+```
+
+</details>
+<details>
+<summary>deformconv_with_multiple_offset_groups</summary>
+
+```python
+X = np.zeros((1, 2, 3, 3), dtype=np.float32)
+X[0, 0] = np.reshape(np.arange(9).astype(np.float32), (3, 3))
+X[0, 1] = np.reshape(np.arange(8, -1, -1).astype(np.float32), (3, 3))
+X.shape = (1, 2, 3, 3)
+W = np.ones((1, 2, 2, 2), dtype=np.float32)
+
+offset = np.zeros((1, 16, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
+offset[
+    0, 13, 0, 1
+] = (
+    -0.1
+)  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+    offset_group=2,
+)
+Y = np.array(
+    [
+        [
+            [
+                [33.5, 32.1],  # (1, 1, 2, 2) output tensor
+                [32.0, 32.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset],
+    outputs=[Y],
+    name="test_deform_conv_with_multiple_offset_groups",
+)
 ```
 
 </details>
@@ -11403,7 +11604,7 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
 
 ### Pad
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>constant_pad</summary>
 
@@ -11448,6 +11649,36 @@ expect(
     inputs=[x, pads, value, axes],
     outputs=[y],
     name="test_constant_pad_axes",
+)
+```
+
+</details>
+<details>
+<summary>constant_pad_negative_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "value", "axes"], outputs=["y"], mode="constant"
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(
+    np.int64
+)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([-3, -1], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    "constant",
+    1.2,
+    [-3, -1],
+)
+
+expect(
+    node,
+    inputs=[x, pads, value, axes],
+    outputs=[y],
+    name="test_constant_pad_negative_axes",
 )
 ```
 

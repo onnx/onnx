@@ -348,3 +348,94 @@ def download_model_with_test_data(
     )
 
     return model_with_data_path
+
+
+def load_composite_model(
+    network_model: str,
+    preprocessing_model: str,
+    network_repo: str = "onnx/models:main",
+    preprocessing_repo: str = "onnx/models:main",
+    opset: Optional[int] = None,
+    force_reload: bool = False,
+    silent: bool = False,
+) -> Optional[onnx.ModelProto]:
+    """
+    Builds a composite model including data preprocessing by downloading a network and a preprocessing model
+    and combine it into a single model
+
+    :param model: The name of the onnx model in the manifest. This field is case-sensitive
+    :param repo: The location of the model repo in format "user/repo[:branch]".
+        If no branch is found will default to "main"
+    :param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
+    :param force_reload: Whether to force the model to re-download even if its already found in the cache
+    :param silent: Whether to suppress the warning message if the repo is not trusted.
+    :return: ModelProto or None
+    """
+    preprocessing = load(
+        preprocessing_model, preprocessing_repo, opset, force_reload, silent
+    )
+    if preprocessing is None:
+        raise RuntimeError(
+            f"Could not load the preprocessing model: {preprocessing_model}"
+        )
+    network = load(network_model, network_repo, opset, force_reload, silent)
+    if network is None:
+        raise RuntimeError(f"Could not load the network model: {network_model}")
+
+    all_domains: Set[str] = set()
+    domains_to_version_network: Dict[str, int] = {}
+    domains_to_version_preprocessing: Dict[str, int] = {}
+
+    for opset_import_entry in network.opset_import:
+        domain = (
+            "ai.onnx" if opset_import_entry.domain == "" else opset_import_entry.domain
+        )
+        all_domains.add(domain)
+        domains_to_version_network[domain] = opset_import_entry.version
+
+    for opset_import_entry in preprocessing.opset_import:
+        domain = (
+            "ai.onnx" if opset_import_entry.domain == "" else opset_import_entry.domain
+        )
+        all_domains.add(domain)
+        domains_to_version_preprocessing[domain] = opset_import_entry.version
+
+    preprocessing_opset_version = -1
+    network_opset_version = -1
+    for domain in all_domains:
+        if domain == "ai.onnx":
+            preprocessing_opset_version = domains_to_version_preprocessing[domain]
+            network_opset_version = domains_to_version_network[domain]
+        elif (
+            domain in domains_to_version_preprocessing
+            and domain in domains_to_version_network
+            and domains_to_version_preprocessing[domain]
+            != domains_to_version_preprocessing[domain]
+        ):
+            raise ValueError(
+                f"Can not merge {preprocessing_model} and {network_model} because they contain "
+                f"different opset versions for domain {domain} ({domains_to_version_preprocessing[domain]}) "
+                f"and {domains_to_version_network[domain]}). Only the default domain can be "
+                "automatically converted to the highest version of the two."
+            )
+    if preprocessing_opset_version > network_opset_version:
+        network = onnx.version_converter.convert_version(
+            network, preprocessing_opset_version
+        )
+        network.ir_version = preprocessing.ir_version
+        onnx.checker.check_model(network)
+    elif network_opset_version > preprocessing_opset_version:
+        preprocessing = onnx.version_converter.convert_version(
+            preprocessing, network_opset_version
+        )
+        preprocessing.ir_version = network.ir_version
+        onnx.checker.check_model(preprocessing)
+
+    io_map = []
+    for out_entry, in_entry in zip(preprocessing.graph.output, network.graph.input):
+        io_map.append((out_entry.name, in_entry.name))
+
+    model_with_preprocessing = onnx.compose.merge_models(
+        preprocessing, network, io_map=io_map
+    )
+    return model_with_preprocessing

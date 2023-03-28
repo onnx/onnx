@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,W0221
 
@@ -7,24 +9,22 @@ from onnx.reference.op_run import OpRun
 
 
 def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ignore
-    if raw_pads is not None:
-        old_raw_pads = raw_pads
-        raw_pads = []
-        pos = 0
-        for i in range(len(data.shape)):
-            if axes is None or i in axes:
-                raw_pads.extend(old_raw_pads[pos : pos + 2])
-                pos += 2
-            else:
-                raw_pads.extend([0, 0])
-        raw_pads = np.array(raw_pads)
-
     input_rank = data.ndim
-    if input_rank * 2 != raw_pads.size:
-        raise RuntimeError("The number of elements in raw_pads should be 2 * data_rank")
+    if axes is None:
+        axes = list(range(input_rank))
+    else:
+        axes = list(map(lambda axis: axis if axis >= 0 else axis + input_rank, axes))
+    num_axes = len(axes)
+    if num_axes * 2 != len(raw_pads):
+        raise RuntimeError(
+            "The number of elements in raw_pads should be 2 times the number of axes"
+        )
 
-    half = raw_pads.shape[0] // 2
-    pad_width = tuple((raw_pads[i], raw_pads[i + half]) for i in range(0, half))
+    pad_width = [(0, 0)] * input_rank
+    for i, axis in enumerate(axes):
+        pad_begin = raw_pads[i]
+        pad_end = raw_pads[num_axes + i]
+        pad_width[axis] = (pad_begin, pad_end)
 
     if mode == "constant":
         return np.pad(

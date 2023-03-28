@@ -1,3 +1,7 @@
+<!--
+Copyright (c) ONNX Project Contributors
+-->
+
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
 <p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/onnx-horizontal-color.png" /></p>
@@ -38,7 +42,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 
 # Contribute
 
-ONNX is a [community project](community/readme.md). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [Special Interest Groups](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
+ONNX is a community project and the open governance model is described [here](community/readme.md). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [Special Interest Groups](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
 
 Check out our [contribution guide](docs/CONTRIBUTING.md) to get started.
 

@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0613,W0640,W0703
@@ -29,6 +31,8 @@ except ImportError:
         StrictVersion as version,
     )
 
+from os import getenv
+
 import numpy as np
 from numpy import __version__ as npver
 from numpy import object_ as dtype_object
@@ -40,6 +44,13 @@ from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_cast import cast_to
+
+# TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
+# For now, bump the version in CIs whenever there is a new onnxruntime release
+ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
+ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
+    getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
+)
 
 # Number of tests expected to pass without raising an exception.
 MIN_PASSING_TESTS = 1235
@@ -616,6 +627,22 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             if "onnxruntime" in check_other_runtime:
                 print("CHECK RUNTIME onnxruntime")
                 from onnxruntime import InferenceSession
+
+                onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+                for opset in te.onnx_model.opset_import:
+                    if opset.domain in ("", "ai.onnx"):
+                        onnx_domain_opset = opset.version
+                        break
+
+                # The new IR or opset version is not supported by onnxruntime yet
+                if (
+                    te.onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
+                    or onnx_domain_opset > ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+                ):
+                    print(
+                        "Skip test because of IR or opset version is not supported by onnxruntime yet"
+                    )
+                    return
 
                 te.run(
                     lambda obj: InferenceSession(obj.SerializeToString()),

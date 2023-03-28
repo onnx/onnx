@@ -29,7 +29,7 @@ jobs:
         target-architecture: ['x86_64', 'universal2']
 
     steps:
-    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+    - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
     - name: Checkout submodules
       shell: bash
       run: |
@@ -108,12 +108,6 @@ jobs:
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
 
-    - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.11'
-      run: |
-        python -m pip install -q onnxruntime
-        python onnx/test/test_with_ort.py
-
     # Only triggered by weekly event on certain CI
     - name: Build and upload source distribution to PyPI weekly
       if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'x86_64'
@@ -127,4 +121,15 @@ jobs:
         python -m pip uninstall -y onnx
         python -m pip install setuptools
         python -m pip install --index-url https://upload.pypi.org/legacy/ --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly
+        pytest
+
+    - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != '3.11'
+      run: |
+        python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        python -m pip install -q onnxruntime
+        export ORT_MAX_IR_SUPPORTED_VERSION=8
+        export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
+        export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
         pytest

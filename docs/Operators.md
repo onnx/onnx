@@ -99,7 +99,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Not">Not</a>|<a href="Changelog.md#Not-1">1</a>|
 |<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
 |<a href="#Optional">Optional</a>|<a href="Changelog.md#Optional-15">15</a>|
-|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
+|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-19">19</a>, <a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
@@ -3707,6 +3707,34 @@ expect(
 
 
 <details>
+<summary>center_crop_pad_crop_negative_axes_hwc</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CenterCropPad",
+    inputs=["x", "shape"],
+    outputs=["y"],
+    axes=[-3, -2],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([10, 9, 3], dtype=np.float32)
+y[:, :8, :] = x[5:15, :, :]
+
+expect(
+    node,
+    inputs=[x, shape],
+    outputs=[y],
+    name="test_center_crop_pad_crop_negative_axes_hwc",
+)
+```
+
+</details>
+
+
+<details>
 <summary>center_crop_pad_pad</summary>
 
 ```python
@@ -6176,6 +6204,185 @@ This version of the operator has been available since version 19 of the default 
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>deformconv</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+
+# Convolution with padding
+offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
+offset_with_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_with_padding[
+    0, 5, 1, 2
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [1, 2]
+
+node_with_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_with_padding"],
+    outputs=["Y_with_padding"],
+    kernel_shape=[2, 2],
+    pads=[1, 1, 1, 1],
+)
+Y_with_padding = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 2.0],  # (1, 1, 4, 4) output tensor
+                [3.0, 8.0, 11.9, 7.0],
+                [9.0, 20.0, 24.0, 13.0],
+                [6.0, 13.0, 15.0, 8.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_with_padding,
+    inputs=[X, W, offset_with_padding],
+    outputs=[Y_with_padding],
+    name="test_basic_deform_conv_with_padding",
+)
+
+# Convolution without padding
+offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset_without_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_without_padding[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+node_without_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_without_padding"],
+    outputs=["Y_without_padding"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y_without_padding = np.array(
+    [
+        [
+            [
+                [9.5, 11.9],  # (1, 1, 2, 2) output tensor
+                [20.0, 24.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_without_padding,
+    inputs=[X, W, offset_without_padding],
+    outputs=[Y_without_padding],
+    name="test_basic_deform_conv_without_padding",
+)
+```
+
+</details>
+
+
+<details>
+<summary>deformconv_with_mask_bias</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+B = np.ones((1,), dtype=np.float32)
+
+offset = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+mask = np.ones((1, 4, 2, 2), dtype=np.float32)
+mask[0, 2, 1, 1] = 0.2  # [1, 0] element of kernel at output position [1, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset", "B", "mask"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y = np.array(
+    [
+        [
+            [
+                [10.5, 12.9],  # (1, 1, 2, 2) output tensor
+                [21.0, 19.4],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset, B, mask],
+    outputs=[Y],
+    name="test_deform_conv_with_mask_bias",
+)
+```
+
+</details>
+
+
+<details>
+<summary>deformconv_with_multiple_offset_groups</summary>
+
+```python
+X = np.zeros((1, 2, 3, 3), dtype=np.float32)
+X[0, 0] = np.reshape(np.arange(9).astype(np.float32), (3, 3))
+X[0, 1] = np.reshape(np.arange(8, -1, -1).astype(np.float32), (3, 3))
+X.shape = (1, 2, 3, 3)
+W = np.ones((1, 2, 2, 2), dtype=np.float32)
+
+offset = np.zeros((1, 16, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
+offset[
+    0, 13, 0, 1
+] = (
+    -0.1
+)  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+    offset_group=2,
+)
+Y = np.array(
+    [
+        [
+            [
+                [33.5, 32.1],  # (1, 1, 2, 2) output tensor
+                [32.0, 32.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset],
+    outputs=[Y],
+    name="test_deform_conv_with_multiple_offset_groups",
+)
+```
+
+</details>
 
 
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
@@ -16759,18 +16966,39 @@ This version of the operator has been available since version 15 of the default 
 
   If the input is a tensor or sequence type, it returns the input.
   If the input is an optional type, it outputs the element in the input.
-  It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
+  It is a runtime error if the input is an empty optional-type
+  (i.e. does not have an element) and the behavior is undefined in this case.
+  The operator supports both static-optional and dynamic-optional inputs
+  as a way to handle both categories of optional inputs uniformly.
+  Thus, a call to this operator is permitted to have no inputs statically,
+  though it will be a run-time error. In this special case, the attribute
+  'type' can be used to indicate the output type to enable type-inference.
+  This edge case is allowed to use the following code-pattern, where the
+  call to OptionalGetElement will not be invoked if no value is available.
+  ```
+    if OptionalHasElement(x)
+      ... use OptionalGetElement(x) ...
+    else
+      ... do something else ...
+  ```
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 19 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#OptionalGetElement-15">15</a>
+Other versions of this operator: <a href="Changelog.md#OptionalGetElement-15">15</a>, <a href="Changelog.md#OptionalGetElement-18">18</a>
 
-#### Inputs
+#### Attributes
 
 <dl>
-<dt><tt>input</tt> : O</dt>
+<dt><tt>type</tt> : type_proto</dt>
+<dd>Type of the element in the optional output</dd>
+</dl>
+
+#### Inputs (0 - 1)
+
+<dl>
+<dt><tt>input</tt> (optional) : O</dt>
 <dd>The optional input.</dd>
 </dl>
 
@@ -17377,6 +17605,38 @@ expect(
     inputs=[x, pads, value, axes],
     outputs=[y],
     name="test_constant_pad_axes",
+)
+```
+
+</details>
+
+
+<details>
+<summary>constant_pad_negative_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "value", "axes"], outputs=["y"], mode="constant"
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(
+    np.int64
+)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([-3, -1], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    "constant",
+    1.2,
+    [-3, -1],
+)
+
+expect(
+    node,
+    inputs=[x, pads, value, axes],
+    outputs=[y],
+    name="test_constant_pad_negative_axes",
 )
 ```
 

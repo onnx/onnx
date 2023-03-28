@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 from __future__ import annotations
@@ -31,6 +33,7 @@ from onnx.helper import (
     make_tensor_sequence_value_info,
     make_tensor_value_info,
 )
+from onnx.parser import parse_graph
 
 
 class TestShapeInferenceHelper(unittest.TestCase):
@@ -3850,6 +3853,58 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
         self._assert_inferred(graph, [make_tensor_value_info("if_output", TensorProto.FLOAT, (None,))])  # type: ignore
+
+    def test_if_no_shape_in_then_branch(self) -> None:
+        then_graph = parse_graph(
+            "then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X, axes) }"
+        )
+        else_graph = parse_graph(
+            "else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X) }"
+        )
+        graph = self._make_graph(
+            [
+                ("cond", TensorProto.BOOL, (1,)),
+                ("X", TensorProto.FLOAT, (4, 8, 16)),
+                ("axes", TensorProto.INT64, (1,)),
+            ],
+            [
+                make_node(
+                    "If",
+                    ["cond"],
+                    ["if_output"],
+                    then_branch=then_graph,
+                    else_branch=else_graph,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("if_output", TensorProto.FLOAT, None)])  # type: ignore
+
+    def test_if_no_shape_in_else_branch(self) -> None:
+        then_graph = parse_graph(
+            "then_graph () => (then_output) { then_output = ReduceSum <keepdims=0> (X) }"
+        )
+        else_graph = parse_graph(
+            "else_graph () => (else_output) { else_output = ReduceSum <keepdims=0> (X, axes) }"
+        )
+        graph = self._make_graph(
+            [
+                ("cond", TensorProto.BOOL, (1,)),
+                ("X", TensorProto.FLOAT, (4, 8, 16)),
+                ("axes", TensorProto.INT64, (1,)),
+            ],
+            [
+                make_node(
+                    "If",
+                    ["cond"],
+                    ["if_output"],
+                    then_branch=then_graph,
+                    else_branch=else_graph,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("if_output", TensorProto.FLOAT, None)])  # type: ignore
 
     def test_if_with_different_optional_shapes_in_then_else_branches(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
