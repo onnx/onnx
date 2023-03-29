@@ -3074,7 +3074,7 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
   -Inf          -FLT_MAX  NaN        -FLT_MAX  NaN
   > FLT_MAX     FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
   < -FLT_MAX    -FLT_MAX  -FLT_MAX   -FLT_MAX  -FLT_MAX
-  |x] < FLT_MIN 0         0          0         0
+  |x| < FLT_MIN 0         0          0         0
   else          RNE       RNE        RNE       RNE
   ============= ========= ========== ========= ===========
 
@@ -3092,7 +3092,7 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
   -Inf          -NaN     NaN        -Inf   NaN
   > FLT_MAX     NaN      NaN        Inf    NaN
   < -FLT_MAX    NaN      NaN        -Inf   NaN
-  |x] < FLT_MIN 0        0          0      0
+  |x| < FLT_MIN 0        0          0      0
   else          RNE      RNE        RNE    RNE
   ============= ======== ========== ====== ===========
 

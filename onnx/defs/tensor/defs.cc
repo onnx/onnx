@@ -68,7 +68,7 @@ Inf           FLT_MAX   NaN        FLT_MAX   NaN
 -Inf          -FLT_MAX  NaN        -FLT_MAX  NaN
 > FLT_MAX     FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
 < -FLT_MAX    -FLT_MAX  -FLT_MAX   -FLT_MAX  -FLT_MAX
-|x] < FLT_MIN 0         0          0         0
+|x| < FLT_MIN 0         0          0         0
 else          RNE       RNE        RNE       RNE
 ============= ========= ========== ========= ===========
 
@@ -86,7 +86,7 @@ Inf           NaN      NaN        Inf    NaN
 -Inf          -NaN     NaN        -Inf   NaN
 > FLT_MAX     NaN      NaN        Inf    NaN
 < -FLT_MAX    NaN      NaN        -Inf   NaN
-|x] < FLT_MIN 0        0          0      0
+|x| < FLT_MIN 0        0          0      0
 else          RNE      RNE        RNE    RNE
 ============= ======== ========== ====== ===========
 )DOC";

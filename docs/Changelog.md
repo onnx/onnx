@@ -22697,7 +22697,7 @@ This version of the operator has been available since version 19 of the default 
   -Inf          -FLT_MAX  NaN        -FLT_MAX  NaN
   > FLT_MAX     FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
   < -FLT_MAX    -FLT_MAX  -FLT_MAX   -FLT_MAX  -FLT_MAX
-  |x] < FLT_MIN 0         0          0         0
+  |x| < FLT_MIN 0         0          0         0
   else          RNE       RNE        RNE       RNE
   ============= ========= ========== ========= ===========
 
@@ -22715,7 +22715,7 @@ This version of the operator has been available since version 19 of the default 
   -Inf          -NaN     NaN        -Inf   NaN
   > FLT_MAX     NaN      NaN        Inf    NaN
   < -FLT_MAX    NaN      NaN        -Inf   NaN
-  |x] < FLT_MIN 0        0          0      0
+  |x| < FLT_MIN 0        0          0      0
   else          RNE      RNE        RNE    RNE
   ============= ======== ========== ====== ===========
 
