@@ -34,7 +34,8 @@ User must be aware of precision loss and value change caused by range difference
 For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
 an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 
-In more detail, the conversion among numerical types should follow these rules:
+In more detail, the conversion among numerical types should follow these rules
+if the destination type is not a float 8 type.
 
 * Casting from floating point to:
   * floating point: +/- highest value if OOR (out of range),
@@ -51,6 +52,35 @@ In more detail, the conversion among numerical types should follow these rules:
   * floating point: `{1.0, 0.0}`.
   * fixed point: `{1, 0}`.
   * bool: no change.
+
+Float 8 type were introduced to speed up the training of
+deep models. By default the conversion obeys to the
+following rules:
+
+=========== ========= ========== ========= ===========
+Src value   E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
+=========== ========= ========== ========= ===========
+0           0         0          0         0
+NaN         NaN       NaN        NaN       NaN
+Inf         FLT_MAX   NaN        FLT_MAX   NaN
+> FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
+< FLT_MIN   0         0          0         0
+else        RNE       RNE        RNE       RNE
+=========== ========= ========== ========= ===========
+
+The behaviour changes if the parameter 'saturate' is set to False.
+The rules then become:
+
+=========== ======== ========== ====== ===========
+Src Value   E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
+=========== ======== ========== ====== ===========
+0           0        0          0      0
+NaN         NaN      NaN        NaN    NaN
+Inf         NaN      NaN        Inf    NaN
+> FLT_MAX   NaN      NaN        Inf    NaN
+< FLT_MIN   0        0          0      0
+else        RNE      RNE        RNE    RNE
+=========== ======== ========== ====== ===========
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -63,6 +93,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The data type to which the elements of the input tensor are cast. "
             "Strictly must be one of the types from DataType enum in TensorProto",
             AttributeProto::INT)
+        .Attr(
+            "saturate",
+            "The parameter defines how the conversion behaves if an input value is out of "
+            "range of the destination type. It only applies for float 8 conversion "
+            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. "
+            "All cases are fully described in two tables inserted in the operator description.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -137,6 +175,14 @@ ONNX_OPERATOR_SET_SCHEMA(
     19,
     OpSchema()
         .SetDoc(CastLike_ver19_doc)
+        .Attr(
+            "saturate",
+            "The parameter defines how the conversion behaves if an input value is out of "
+            "range of the destination type. It only applies for float 8 conversion "
+            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. "
+            "Please refer to operator Cast description for further details.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,

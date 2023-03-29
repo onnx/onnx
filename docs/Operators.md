@@ -3040,7 +3040,8 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
   For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
   an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 
-  In more detail, the conversion among numerical types should follow these rules:
+  In more detail, the conversion among numerical types should follow these rules
+  if the destination type is not a float 8 type.
 
   * Casting from floating point to:
     * floating point: +/- highest value if OOR (out of range),
@@ -3058,6 +3059,35 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
     * fixed point: `{1, 0}`.
     * bool: no change.
 
+  Float 8 type were introduced to speed up the training of
+  deep models. By default the conversion obeys to the
+  following rules:
+
+  =========== ========= ========== ========= ===========
+  Src value   E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
+  =========== ========= ========== ========= ===========
+  0           0         0          0         0
+  NaN         NaN       NaN        NaN       NaN
+  Inf         FLT_MAX   NaN        FLT_MAX   NaN
+  > FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
+  < FLT_MIN   0         0          0         0
+  else        RNE       RNE        RNE       RNE
+  =========== ========= ========== ========= ===========
+
+  The behaviour changes if the parameter 'saturate' is set to False.
+  The rules then become:
+
+  =========== ======== ========== ====== ===========
+  Src Value   E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
+  =========== ======== ========== ====== ===========
+  0           0        0          0      0
+  NaN         NaN      NaN        NaN    NaN
+  Inf         NaN      NaN        Inf    NaN
+  > FLT_MAX   NaN      NaN        Inf    NaN
+  < FLT_MIN   0        0          0      0
+  else        RNE      RNE        RNE    RNE
+  =========== ======== ========== ====== ===========
+
 #### Version
 
 This version of the operator has been available since version 19 of the default ONNX operator set.
@@ -3067,6 +3097,8 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="C
 #### Attributes
 
 <dl>
+<dt><tt>saturate</tt> : int (default is 1)</dt>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 <dt><tt>to</tt> : int (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
@@ -3249,7 +3281,7 @@ for from_type, to_type in test_cases:
             )
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tests."
+                "Conversion from {from_type} to {to_type} is not tested."
             )
 
         if to_type == "FLOAT8E4M3FN":
@@ -3276,7 +3308,7 @@ for from_type, to_type in test_cases:
             expected = input_values
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tests."
+                "Conversion from {from_type} to {to_type} is not tested."
             )
         expected_tensor = make_tensor(
             "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
@@ -3348,6 +3380,113 @@ for from_type, to_type in test_cases:
 </details>
 
 
+<details>
+<summary>saturate</summary>
+
+```python
+shape = (3, 4)
+test_cases = [
+    ("FLOAT", "FLOAT8E4M3FN"),
+    ("FLOAT16", "FLOAT8E4M3FN"),
+    ("FLOAT", "FLOAT8E4M3FNUZ"),
+    ("FLOAT16", "FLOAT8E4M3FNUZ"),
+    ("FLOAT", "FLOAT8E5M2"),
+    ("FLOAT16", "FLOAT8E5M2"),
+    ("FLOAT", "FLOAT8E5M2FNUZ"),
+    ("FLOAT16", "FLOAT8E5M2FNUZ"),
+]
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+
+for from_type, to_type in test_cases:
+    input_type_proto = None
+    output_type_proto = None
+
+    np_fp32 = np.array(
+        [
+            "0.47892547",
+            "0.48033667",
+            "0.49968487",
+            "0.81910545",
+            "0.47031248",
+            "0.816468",
+            "0.21087195",
+            "0.7229038",
+            "NaN",
+            "INF",
+            "+INF",
+            "-INF",
+        ],
+        dtype=np.float32,
+    )
+
+    if from_type == "FLOAT":
+        input_values = np_fp32
+        input = make_tensor("x", TensorProto.FLOAT, [3, 4], np_fp32.tolist())
+    elif from_type == "FLOAT16":
+        input_values = np_fp32.astype(np.float16).astype(np.float32)
+        input = make_tensor(
+            "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+        )
+    else:
+        raise ValueError(
+            "Conversion from {from_type} to {to_type} is not tested."
+        )
+
+    if to_type == "FLOAT8E4M3FN":
+        expected = float8e4m3_to_float32(
+            vect_float32_to_float8e4m3(input_values)
+        )
+    elif to_type == "FLOAT8E4M3FNUZ":
+        expected = float8e4m3_to_float32(
+            vect_float32_to_float8e4m3(input_values, uz=True), uz=True
+        )
+    elif to_type == "FLOAT8E5M2":
+        expected = float8e5m2_to_float32(
+            vect_float32_to_float8e5m2(input_values)
+        )
+    elif to_type == "FLOAT8E5M2FNUZ":
+        expected = float8e5m2_to_float32(
+            vect_float32_to_float8e5m2(input_values, fn=True, uz=True),
+            fn=True,
+            uz=True,
+        )
+    else:
+        raise ValueError(
+            "Conversion from {from_type} to {to_type} is not tested."
+        )
+    expected_tensor = make_tensor(
+        "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
+    )
+    output = expected_tensor
+
+    node = onnx.helper.make_node(
+        "Cast",
+        inputs=["input"],
+        outputs=["output"],
+        to=getattr(TensorProto, to_type),
+    )
+    if input_type_proto and output_type_proto:
+        expect(
+            node,
+            inputs=[input],
+            outputs=[output],
+            name="test_cast_saturate_" + from_type + "_to_" + to_type,
+            input_type_protos=[input_type_proto],
+            output_type_protos=[output_type_proto],
+        )
+    else:
+        expect(
+            node,
+            inputs=[input],
+            outputs=[output],
+            name="test_cast_saturate_" + from_type + "_to_" + to_type,
+        )
+```
+
+</details>
+
+
 ### <a name="CastLike"></a><a name="castlike">**CastLike**</a>
 
   The operator casts the elements of a given input tensor (the first input) to
@@ -3359,6 +3498,13 @@ for from_type, to_type in test_cases:
 This version of the operator has been available since version 19 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#CastLike-15">15</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>saturate</tt> : int (default is 1)</dt>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. Please refer to operator Cast description for further details.</dd>
+</dl>
 
 #### Inputs
 
@@ -18411,6 +18557,8 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
 <dd>(Optional) The axis of the quantization dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>saturate</tt> : int (default is 1)</dt>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>
 
 #### Inputs (2 - 3)

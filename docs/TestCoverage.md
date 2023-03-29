@@ -2095,7 +2095,7 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 
 
 ### Cast
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>cast</summary>
 
@@ -2248,7 +2248,7 @@ for from_type, to_type in test_cases:
             )
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tests."
+                "Conversion from {from_type} to {to_type} is not tested."
             )
 
         if to_type == "FLOAT8E4M3FN":
@@ -2275,7 +2275,7 @@ for from_type, to_type in test_cases:
             expected = input_values
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tests."
+                "Conversion from {from_type} to {to_type} is not tested."
             )
         expected_tensor = make_tensor(
             "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
@@ -2341,6 +2341,111 @@ for from_type, to_type in test_cases:
             inputs=[input],
             outputs=[output],
             name="test_cast_" + from_type + "_to_" + to_type,
+        )
+```
+
+</details>
+<details>
+<summary>saturate</summary>
+
+```python
+shape = (3, 4)
+test_cases = [
+    ("FLOAT", "FLOAT8E4M3FN"),
+    ("FLOAT16", "FLOAT8E4M3FN"),
+    ("FLOAT", "FLOAT8E4M3FNUZ"),
+    ("FLOAT16", "FLOAT8E4M3FNUZ"),
+    ("FLOAT", "FLOAT8E5M2"),
+    ("FLOAT16", "FLOAT8E5M2"),
+    ("FLOAT", "FLOAT8E5M2FNUZ"),
+    ("FLOAT16", "FLOAT8E5M2FNUZ"),
+]
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+
+for from_type, to_type in test_cases:
+    input_type_proto = None
+    output_type_proto = None
+
+    np_fp32 = np.array(
+        [
+            "0.47892547",
+            "0.48033667",
+            "0.49968487",
+            "0.81910545",
+            "0.47031248",
+            "0.816468",
+            "0.21087195",
+            "0.7229038",
+            "NaN",
+            "INF",
+            "+INF",
+            "-INF",
+        ],
+        dtype=np.float32,
+    )
+
+    if from_type == "FLOAT":
+        input_values = np_fp32
+        input = make_tensor("x", TensorProto.FLOAT, [3, 4], np_fp32.tolist())
+    elif from_type == "FLOAT16":
+        input_values = np_fp32.astype(np.float16).astype(np.float32)
+        input = make_tensor(
+            "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+        )
+    else:
+        raise ValueError(
+            "Conversion from {from_type} to {to_type} is not tested."
+        )
+
+    if to_type == "FLOAT8E4M3FN":
+        expected = float8e4m3_to_float32(
+            vect_float32_to_float8e4m3(input_values)
+        )
+    elif to_type == "FLOAT8E4M3FNUZ":
+        expected = float8e4m3_to_float32(
+            vect_float32_to_float8e4m3(input_values, uz=True), uz=True
+        )
+    elif to_type == "FLOAT8E5M2":
+        expected = float8e5m2_to_float32(
+            vect_float32_to_float8e5m2(input_values)
+        )
+    elif to_type == "FLOAT8E5M2FNUZ":
+        expected = float8e5m2_to_float32(
+            vect_float32_to_float8e5m2(input_values, fn=True, uz=True),
+            fn=True,
+            uz=True,
+        )
+    else:
+        raise ValueError(
+            "Conversion from {from_type} to {to_type} is not tested."
+        )
+    expected_tensor = make_tensor(
+        "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
+    )
+    output = expected_tensor
+
+    node = onnx.helper.make_node(
+        "Cast",
+        inputs=["input"],
+        outputs=["output"],
+        to=getattr(TensorProto, to_type),
+    )
+    if input_type_proto and output_type_proto:
+        expect(
+            node,
+            inputs=[input],
+            outputs=[output],
+            name="test_cast_saturate_" + from_type + "_to_" + to_type,
+            input_type_protos=[input_type_proto],
+            output_type_protos=[output_type_proto],
+        )
+    else:
+        expect(
+            node,
+            inputs=[input],
+            outputs=[output],
+            name="test_cast_saturate_" + from_type + "_to_" + to_type,
         )
 ```
 

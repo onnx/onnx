@@ -27,7 +27,7 @@ from onnx.reference.custom_element_types import (
 from onnx.reference.op_run import OpRun
 
 
-def cast_to(x, to):
+def cast_to(x, to, saturate):
     if x.dtype == bfloat16 and x.dtype.descr[0][0] == "bfloat16":
         if to == TensorProto.BFLOAT16:
             return x
@@ -75,15 +75,23 @@ def cast_to(x, to):
         return y.reshape(x.shape)
 
     f8back = {
-        TensorProto.FLOAT8E4M3FN: (float8e4m3fn, float32_to_float8e4m3),
+        TensorProto.FLOAT8E4M3FN: (
+            float8e4m3fn,
+            lambda *args: float32_to_float8e4m3(*args, saturate=saturate),
+        ),
         TensorProto.FLOAT8E4M3FNUZ: (
             float8e4m3fnuz,
-            lambda *args: float32_to_float8e4m3(*args, uz=True),
+            lambda *args: float32_to_float8e4m3(*args, uz=True, saturate=saturate),
         ),
-        TensorProto.FLOAT8E5M2: (float8e5m2, float32_to_float8e5m2),
+        TensorProto.FLOAT8E5M2: (
+            float8e5m2,
+            lambda *args: float32_to_float8e5m2(*args, saturate=saturate),
+        ),
         TensorProto.FLOAT8E5M2FNUZ: (
             float8e5m2fnuz,
-            lambda *args: float32_to_float8e5m2(*args, fn=True, uz=True),
+            lambda *args: float32_to_float8e5m2(
+                *args, fn=True, uz=True, saturate=saturate
+            ),
         ),
     }
     for dt, (npdt, cvt) in f8back.items():
@@ -102,6 +110,11 @@ def cast_to(x, to):
     return x.astype(dtype)
 
 
-class Cast(OpRun):
+class Cast_1(OpRun):
     def _run(self, x, to=None):  # type: ignore
-        return (cast_to(x, to),)
+        return (cast_to(x, to, saturate=True),)
+
+
+class Cast_19(OpRun):
+    def _run(self, x, to=None, saturate=None):  # type: ignore
+        return (cast_to(x, to, saturate),)

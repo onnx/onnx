@@ -22663,7 +22663,8 @@ This version of the operator has been available since version 19 of the default 
   For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
   an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 
-  In more detail, the conversion among numerical types should follow these rules:
+  In more detail, the conversion among numerical types should follow these rules
+  if the destination type is not a float 8 type.
 
   * Casting from floating point to:
     * floating point: +/- highest value if OOR (out of range),
@@ -22681,6 +22682,35 @@ This version of the operator has been available since version 19 of the default 
     * fixed point: `{1, 0}`.
     * bool: no change.
 
+  Float 8 type were introduced to speed up the training of
+  deep models. By default the conversion obeys to the
+  following rules:
+
+  =========== ========= ========== ========= ===========
+  Src value   E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
+  =========== ========= ========== ========= ===========
+  0           0         0          0         0
+  NaN         NaN       NaN        NaN       NaN
+  Inf         FLT_MAX   NaN        FLT_MAX   NaN
+  > FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
+  < FLT_MIN   0         0          0         0
+  else        RNE       RNE        RNE       RNE
+  =========== ========= ========== ========= ===========
+
+  The behaviour changes if the parameter 'saturate' is set to False.
+  The rules then become:
+
+  =========== ======== ========== ====== ===========
+  Src Value   E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
+  =========== ======== ========== ====== ===========
+  0           0        0          0      0
+  NaN         NaN      NaN        NaN    NaN
+  Inf         NaN      NaN        Inf    NaN
+  > FLT_MAX   NaN      NaN        Inf    NaN
+  < FLT_MIN   0        0          0      0
+  else        RNE      RNE        RNE    RNE
+  =========== ======== ========== ====== ===========
+
 #### Version
 
 This version of the operator has been available since version 19 of the default ONNX operator set.
@@ -22688,6 +22718,8 @@ This version of the operator has been available since version 19 of the default 
 #### Attributes
 
 <dl>
+<dt><tt>saturate</tt> : int (default is 1)</dt>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 <dt><tt>to</tt> : int (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
@@ -22724,6 +22756,13 @@ This version of the operator has been available since version 19 of the default 
 #### Version
 
 This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>saturate</tt> : int (default is 1)</dt>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. Please refer to operator Cast description for further details.</dd>
+</dl>
 
 #### Inputs
 
@@ -23129,6 +23168,8 @@ This version of the operator has been available since version 19 of the default 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
 <dd>(Optional) The axis of the quantization dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>saturate</tt> : int (default is 1)</dt>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>
 
 #### Inputs (2 - 3)

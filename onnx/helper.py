@@ -351,7 +351,11 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
 
 
 def float32_to_float8e4m3(  # pylint: disable=too-many-statements
-    fval: float, scale: float = 1.0, fn: bool = True, uz: bool = False
+    fval: float,
+    scale: float = 1.0,
+    fn: bool = True,
+    uz: bool = False,
+    saturate: bool = True,
 ) -> int:
     """
     Convert a float32 value to a float8, e4m3 (as int).
@@ -360,6 +364,9 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
     :param scale: scale, divide *fval* by *scale* before casting it
     :param fn: no infinite values
     :param uz: no negative zero
+    :param saturate: if True, any value out of range included inf becomes the maximum value,
+        otherwise, it becomes NaN. The description of operator Cast fully describes the
+        differences.
     :return: converted float
 
     See :ref:`onnx-detail-float8` for technical details.
@@ -375,6 +382,8 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
         if (b & 0x7FC00000) == 0x7FC00000:
             return 0x80
         if np.isinf(x):
+            if saturate:
+                return ret | 126
             return 0x80
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
@@ -402,16 +411,23 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                 else:
                     ret |= ex << 3
                     ret |= m >> 20
-                if (m & 0x80000) and (ret & 0x7F) < 0x7F:
-                    # rounding
-                    ret += 1
-            else:
+                if m & 0x80000:
+                    if (ret & 0x7F) < 0x7F:
+                        # rounding
+                        ret += 1
+                    elif not saturate:
+                        return 0x80
+            elif saturate:
                 ret |= 0x7F  # 01111110
+            else:
+                ret = 0x80
         return int(ret)
     else:
         if (b & 0x7FC00000) == 0x7FC00000:
             return 0x7F | ret
         if np.isinf(x):
+            if saturate:
+                return ret | 126
             return 0x7F | ret
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
@@ -441,16 +457,25 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                     ret |= m >> 20
                     if (ret & 0x7F) == 0x7F:
                         ret &= 0xFE
-                if (m & 0x80000) and (ret & 0x7F) < 0x7E:
-                    # rounding
-                    ret += 1
-            else:
+                if m & 0x80000:
+                    if (ret & 0x7F) < 0x7E:
+                        # rounding
+                        ret += 1
+                    elif not saturate:
+                        ret |= 0x7F
+            elif saturate:
                 ret |= 126  # 01111110
+            else:
+                ret |= 0x7F
         return int(ret)
 
 
 def float32_to_float8e5m2(  # pylint: disable=too-many-statements
-    fval: float, scale: float = 1.0, fn: bool = False, uz: bool = False
+    fval: float,
+    scale: float = 1.0,
+    fn: bool = False,
+    uz: bool = False,
+    saturate: bool = True,
 ) -> int:
     """
     Convert a float32 value to a float8, e5m2 (as int).
@@ -459,6 +484,9 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
     :param scale: scale, divide *fval* by *scale* before casting it
     :param fn: no infinite values
     :param uz: no negative zero
+    :param saturate: if True, any value out of range included inf becomes the maximum value,
+        otherwise, it becomes NaN. The description of operator Cast fully describes the
+        differences.
     :return: converted float
     """
     x = fval / scale
@@ -469,6 +497,9 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
         if (b & 0x7FC00000) == 0x7FC00000:
             return 0x80
         if (b & 0x7FFFFFFF) == 0x7F800000:
+            # inf
+            if saturate:
+                return ret | 0x7F
             return 0x80
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
@@ -493,17 +524,24 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 ex = e - 111  # 127 - 16
                 ret |= ex << 2
                 ret |= m >> 21
-                if (m & 0x100000) and (ret & 0x7F) < 0x7F:
-                    # rounding
-                    ret += 1
+                if m & 0x100000:
+                    if (ret & 0x7F) < 0x7F:
+                        # rounding
+                        ret += 1
+                    elif not saturate:
+                        ret = 0x80
             elif e == 255 and m == 0:  # inf
-                return 0x80
-            else:
+                ret = 0x80
+            elif saturate:
                 ret |= 0x7F  # last possible number
+            else:
+                ret = 0x80
         return int(ret)
     elif not fn and not uz:
         if (b & 0x7FC00000) == 0x7FC00000:
             return 0x7F | ret
+        if saturate and np.isinf(x):
+            return 0x7B | ret
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
 
@@ -531,6 +569,8 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                     # rounding
                     ret += 1
             elif e == 255 and m == 0:  # inf
+                ret |= 124
+            elif saturate:
                 ret |= 124
             else:
                 ret |= 123

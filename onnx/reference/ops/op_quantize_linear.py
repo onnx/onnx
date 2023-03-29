@@ -53,6 +53,7 @@ class _CommonQuantizeLinear(OpRun):
         y_scale: np.ndarray,
         zero_point: Optional[np.ndarray] = None,
         axis: int = 1,
+        saturate: bool = True,
     ) -> Tuple[np.ndarray]:
         if len(y_scale.shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
@@ -89,19 +90,23 @@ class _CommonQuantizeLinear(OpRun):
                 return (np.ceil(x).astype(dtype),)
 
             if tensor_type == TensorProto.FLOAT8E4M3FN:
-                f8 = _CommonQuantizeLinear.float32_to_float8e4m3(x)
+                f8 = _CommonQuantizeLinear.float32_to_float8e4m3(x, saturate=saturate)
                 return (f8.astype(float8e4m3fn),)  # type: ignore[attr-defined]
 
             if tensor_type == TensorProto.FLOAT8E4M3FNUZ:
-                f8 = _CommonQuantizeLinear.float32_to_float8e4m3(x, uz=True)
+                f8 = _CommonQuantizeLinear.float32_to_float8e4m3(
+                    x, uz=True, saturate=saturate
+                )
                 return (f8.astype(float8e4m3fnuz),)  # type: ignore[attr-defined]
 
             if tensor_type == TensorProto.FLOAT8E5M2:
-                f8 = _CommonQuantizeLinear.float32_to_float8e5m2(x)
+                f8 = _CommonQuantizeLinear.float32_to_float8e5m2(x, saturate=saturate)
                 return (f8.astype(float8e5m2),)  # type: ignore[attr-defined]
 
             if tensor_type == TensorProto.FLOAT8E5M2FNUZ:
-                f8 = _CommonQuantizeLinear.float32_to_float8e5m2(x, fn=True, uz=True)
+                f8 = _CommonQuantizeLinear.float32_to_float8e5m2(
+                    x, fn=True, uz=True, saturate=saturate
+                )
                 return (f8.astype(float8e5m2fnuz),)  # type: ignore[attr-defined]
 
             raise RuntimeError(
@@ -116,7 +121,13 @@ class _CommonQuantizeLinear(OpRun):
         return (x.astype(dtype),)
 
 
-class QuantizeLinear(_CommonQuantizeLinear):
+class QuantizeLinear_10(_CommonQuantizeLinear):
     def _run(self, *args, axis=None):  # type: ignore
         # args: x, y_scale, zero_point
         return self.common_run(*args, axis=axis)  # type: ignore
+
+
+class QuantizeLinear_19(_CommonQuantizeLinear):
+    def _run(self, *args, axis=None, saturate=None):  # type: ignore
+        # args: x, y_scale, zero_point
+        return self.common_run(*args, axis=axis, saturate=saturate)  # type: ignore
