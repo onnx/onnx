@@ -315,7 +315,7 @@ class TestNumpyHelper(unittest.TestCase):
         self.assertEqual(to & 0x80, 0x80)
         back = numpy_helper.float8e5m2_to_float32(to)
         self.assertTrue(np.isinf(back))
-        self.assertTrue(back < 0)
+        self.assertLess(back, 0)
 
     def test_float8_e5m2fnuz_inf(self):
         x = np.float32(np.inf)
@@ -529,3 +529,4 @@ class TestNumpyHelper(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+ 
