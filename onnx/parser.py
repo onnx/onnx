@@ -57,7 +57,7 @@ def parse_node(node_text: str) -> onnx.NodeProto:
     """Parse a string to build a NodeProto.
 
     Arguments:
-        node_text (string): formatted string
+        node_text: formatted string
     Returns:
         NodeProto
     """
