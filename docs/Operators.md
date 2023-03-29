@@ -3067,6 +3067,7 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
   Src value   E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
   =========== ========= ========== ========= ===========
   0           0         0          0         0
+  -0          -0        0          -0        0
   NaN         NaN       NaN        NaN       NaN
   Inf         FLT_MAX   NaN        FLT_MAX   NaN
   > FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
@@ -3081,6 +3082,7 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
   Src Value   E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
   =========== ======== ========== ====== ===========
   0           0        0          0      0
+  -0          -0       0          -0     0
   NaN         NaN      NaN        NaN    NaN
   Inf         NaN      NaN        Inf    NaN
   > FLT_MAX   NaN      NaN        Inf    NaN
@@ -3398,8 +3400,6 @@ vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
 vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
 
 for from_type, to_type in test_cases:
-    input_type_proto = None
-    output_type_proto = None
 
     np_fp32 = np.array(
         [
@@ -3465,22 +3465,12 @@ for from_type, to_type in test_cases:
         outputs=["output"],
         to=getattr(TensorProto, to_type),
     )
-    if input_type_proto and output_type_proto:
-        expect(
-            node,
-            inputs=[input],
-            outputs=[output],
-            name="test_cast_saturate_" + from_type + "_to_" + to_type,
-            input_type_protos=[input_type_proto],
-            output_type_protos=[output_type_proto],
-        )
-    else:
-        expect(
-            node,
-            inputs=[input],
-            outputs=[output],
-            name="test_cast_saturate_" + from_type + "_to_" + to_type,
-        )
+    expect(
+        node,
+        inputs=[input],
+        outputs=[output],
+        name="test_cast_saturate_" + from_type + "_to_" + to_type,
+    )
 ```
 
 </details>

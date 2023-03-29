@@ -61,6 +61,7 @@ following rules:
 Src value   E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
 =========== ========= ========== ========= ===========
 0           0         0          0         0
+-0          -0        0          -0        0
 NaN         NaN       NaN        NaN       NaN
 Inf         FLT_MAX   NaN        FLT_MAX   NaN
 > FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
@@ -75,6 +76,7 @@ The rules then become:
 Src Value   E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
 =========== ======== ========== ====== ===========
 0           0        0          0      0
+-0          -0       0          -0     0
 NaN         NaN      NaN        NaN    NaN
 Inf         NaN      NaN        Inf    NaN
 > FLT_MAX   NaN      NaN        Inf    NaN

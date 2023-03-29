@@ -2363,8 +2363,6 @@ vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
 vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
 
 for from_type, to_type in test_cases:
-    input_type_proto = None
-    output_type_proto = None
 
     np_fp32 = np.array(
         [
@@ -2430,22 +2428,12 @@ for from_type, to_type in test_cases:
         outputs=["output"],
         to=getattr(TensorProto, to_type),
     )
-    if input_type_proto and output_type_proto:
-        expect(
-            node,
-            inputs=[input],
-            outputs=[output],
-            name="test_cast_saturate_" + from_type + "_to_" + to_type,
-            input_type_protos=[input_type_proto],
-            output_type_protos=[output_type_proto],
-        )
-    else:
-        expect(
-            node,
-            inputs=[input],
-            outputs=[output],
-            name="test_cast_saturate_" + from_type + "_to_" + to_type,
-        )
+    expect(
+        node,
+        inputs=[input],
+        outputs=[output],
+        name="test_cast_saturate_" + from_type + "_to_" + to_type,
+    )
 ```
 
 </details>

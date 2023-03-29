@@ -421,6 +421,9 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                 ret |= 0x7F  # 01111110
             else:
                 ret = 0x80
+        elif m == 0:
+            # -0
+            ret = 0
         return int(ret)
     else:
         if (b & 0x7FC00000) == 0x7FC00000:
@@ -536,12 +539,17 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 ret |= 0x7F  # last possible number
             else:
                 ret = 0x80
+        elif m == 0:
+            # -0
+            ret = 0
         return int(ret)
     elif not fn and not uz:
         if (b & 0x7FC00000) == 0x7FC00000:
             return 0x7F | ret
-        if saturate and np.isinf(x):
-            return 0x7B | ret
+        if np.isinf(x):
+            if saturate:
+                return 0x7B | ret
+            return 0x7C | ret
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
 
@@ -565,15 +573,18 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 ex = e - 112  # 127 - 15
                 ret |= ex << 2
                 ret |= m >> 21
-                if (m & 0x100000) and (ret & 0x7F) < 0x7B:
-                    # rounding
-                    ret += 1
-            elif e == 255 and m == 0:  # inf
-                ret |= 124
+                if (m & 0x100000):
+                    if (ret & 0x7F) < 0x7B:
+                        # rounding
+                        ret += 1
+                    elif saturate:
+                        ret |= 0x7B
+                    else:
+                        ret |= 0x7C
             elif saturate:
-                ret |= 124
+                ret |= 0x7B
             else:
-                ret |= 123
+                ret |= 0x7C
         return int(ret)
     else:
         raise NotImplementedError("fn and uz must be both False or True.")
