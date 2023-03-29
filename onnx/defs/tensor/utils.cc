@@ -165,6 +165,9 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   std::vector<int64_t> axes;
   if (axes_attr) {
     axes = RetrieveValues<int64_t>(*axes_attr);
+    checkAxesRange(axes, rank_x);
+    adjustNegativeAxes(axes, rank_x);
+    checkDuplicateAxes(axes, rank_x);
   }
   if (hasSizesInput) {
     if (!axes.empty()) {
@@ -175,14 +178,6 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
             ") does not match the number of axes (",
             axes.size(),
             ").");
-      }
-
-      std::vector<bool> tmp(rank_x, false);
-      for (auto axis : axes) {
-        if (tmp[axis]) {
-          fail_shape_inference("Repeated axis: ", axis);
-        }
-        tmp[axis] = true;
       }
     } else {
       // sizes_data contains scales for all axes
@@ -390,24 +385,15 @@ std::function<void(OpSchema&)> PadDocGenerator(const char* description, const ch
           return; // can't do shape inference then
 
         axes = ParseData<int64_t>(axes_initializer);
-
-        std::vector<bool> tmp(input_rank, false);
-        for (auto axis : axes) {
-          if (tmp[axis]) {
-            fail_shape_inference("Repeated axis: ", axis);
-          }
-          tmp[axis] = true;
-        }
+        checkAxesRange(axes, input_rank);
+        adjustNegativeAxes(axes, input_rank);
+        checkDuplicateAxes(axes, input_rank);
       } else {
         axes.resize(input_rank);
         std::iota(axes.begin(), axes.end(), 0);
       }
 
       int num_axes = axes.size();
-      if (num_axes > input_rank) {
-        fail_shape_inference("Too many axes provided");
-      }
-
       auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
       // Populating default dims

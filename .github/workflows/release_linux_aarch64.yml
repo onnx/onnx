@@ -27,7 +27,7 @@ jobs:
       img: quay.io/pypa/manylinux2014_aarch64
 
     steps:
-    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+    - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
     - name: Checkout submodules
       shell: bash
       run: |
@@ -123,6 +123,11 @@ jobs:
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
+          python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
           python -m pip install -q onnxruntime && \
-          python onnx/test/test_with_ort.py && \
+          export ORT_MAX_IR_SUPPORTED_VERSION=8 \
+          export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3 \
+          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18 \
+          pytest && \
           deactivate'

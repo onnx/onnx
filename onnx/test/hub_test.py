@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 # pylint: disable=protected-access
@@ -104,6 +106,12 @@ class TestModelHub(unittest.TestCase):
         self.assertIn(
             member="test_data_set_0", container=files, msg="Test data not found"
         )
+
+    def test_model_with_preprocessing(self) -> None:
+        model = hub.load_composite_model(
+            "ResNet50-fp32", preprocessing_model="ResNet-preproc"
+        )
+        self.assertIsInstance(model, ModelProto)
 
 
 if __name__ == "__main__":
