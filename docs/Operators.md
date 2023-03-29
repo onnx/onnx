@@ -3074,7 +3074,7 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
   else        RNE       RNE        RNE       RNE
   =========== ========= ========== ========= ===========
 
-  The behaviour changes if the parameter 'saturate' is set to False.
+  The behavior changes if the parameter 'saturate' is set to False.
   The rules then become:
 
   =========== ======== ========== ====== ===========
