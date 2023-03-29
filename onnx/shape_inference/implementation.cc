@@ -522,7 +522,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void replaceAttrRefs(NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+  void replaceAttrRefs(NodeProto& n, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
     auto& attributes = *n.mutable_attribute();
     for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
       auto& attr = *attr_iter;
@@ -551,13 +551,13 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void replaceAttrRefs(GraphProto& graph, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+  void replaceAttrRefs(GraphProto& graph, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
     for (auto& n : *graph.mutable_node()) {
       replaceAttrRefs(n, attr_map);
     }
   }
 
-  void process(const NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+  void process(const NodeProto& n, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
     NodeProto copy_n(n);
     replaceAttrRefs(copy_n, attr_map);
     process(copy_n);

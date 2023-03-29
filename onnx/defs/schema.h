@@ -817,6 +817,10 @@ class OpSchema final {
     return type_constraint_params_;
   }
 
+  const TypeConstraintMap& typeConstraintMap() const {
+    return type_constraints_;
+  }
+
   const std::string& Name() const {
     return name_;
   }
