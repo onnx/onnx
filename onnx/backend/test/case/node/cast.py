@@ -10,7 +10,12 @@ import onnx
 from onnx import TensorProto, helper
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.helper import float32_to_float8e4m3, float32_to_float8e5m2, make_tensor
+from onnx.helper import (
+    float32_to_float8e4m3,
+    float32_to_float8e5m2,
+    make_tensor,
+    tensor_dtype_to_field,
+)
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32
 
 
@@ -308,33 +313,31 @@ class Cast(Base):
                 )
 
             if to_type == "FLOAT8E4M3FN":
-                expected = float8e4m3_to_float32(
-                    vect_float32_to_float8e4m3(input_values, saturate=False)
-                )
+                expected = vect_float32_to_float8e4m3(input_values, saturate=False)
             elif to_type == "FLOAT8E4M3FNUZ":
-                expected = float8e4m3_to_float32(
-                    vect_float32_to_float8e4m3(input_values, uz=True, saturate=False),
-                    uz=True,
+                expected = vect_float32_to_float8e4m3(
+                    input_values, uz=True, saturate=False
                 )
             elif to_type == "FLOAT8E5M2":
-                expected = float8e5m2_to_float32(
-                    vect_float32_to_float8e5m2(input_values, saturate=False)
-                )
+                expected = vect_float32_to_float8e5m2(input_values, saturate=False)
             elif to_type == "FLOAT8E5M2FNUZ":
-                expected = float8e5m2_to_float32(
-                    vect_float32_to_float8e5m2(
-                        input_values, fn=True, uz=True, saturate=False
-                    ),
-                    fn=True,
-                    uz=True,
+                expected = vect_float32_to_float8e5m2(
+                    input_values, fn=True, uz=True, saturate=False
                 )
             else:
                 raise ValueError(
                     "Conversion from {from_type} to {to_type} is not tested."
                 )
-            output = make_tensor(
-                "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
-            )
+
+            ivals = bytes([int(i) for i in expected])
+            tensor = TensorProto()
+            tensor.data_type = getattr(TensorProto, to_type)
+            tensor.name = "x"
+            tensor.dims.extend([3, 4])
+            field = tensor_dtype_to_field(tensor.data_type)
+            getattr(tensor, field).extend(ivals)
+
+            output = tensor
 
             node = onnx.helper.make_node(
                 "Cast",
