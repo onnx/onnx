@@ -148,7 +148,7 @@ class ReferenceEvaluator:
         a new implementation needs to be registered. `Pad_11`, `Pad_18`.
         `Pad_11` is the implementation chose for opset in [11, 17].
         `Pad_18` is selected for any greater opset. Both classes must be
-        important file `_op_list.py` to registered their existence to the
+        imported into file `_op_list.py` to register their existence to the
         runtime.
     """
 
