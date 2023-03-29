@@ -276,7 +276,6 @@ class Cast(Base):
         vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
 
         for from_type, to_type in test_cases:
-
             np_fp32 = np.array(
                 [
                     "0.47892547",
@@ -310,19 +309,22 @@ class Cast(Base):
 
             if to_type == "FLOAT8E4M3FN":
                 expected = float8e4m3_to_float32(
-                    vect_float32_to_float8e4m3(input_values)
+                    vect_float32_to_float8e4m3(input_values, saturate=True)
                 )
             elif to_type == "FLOAT8E4M3FNUZ":
                 expected = float8e4m3_to_float32(
-                    vect_float32_to_float8e4m3(input_values, uz=True), uz=True
+                    vect_float32_to_float8e4m3(input_values, uz=True, saturate=True),
+                    uz=True,
                 )
             elif to_type == "FLOAT8E5M2":
                 expected = float8e5m2_to_float32(
-                    vect_float32_to_float8e5m2(input_values)
+                    vect_float32_to_float8e5m2(input_values, saturate=True)
                 )
             elif to_type == "FLOAT8E5M2FNUZ":
                 expected = float8e5m2_to_float32(
-                    vect_float32_to_float8e5m2(input_values, fn=True, uz=True),
+                    vect_float32_to_float8e5m2(
+                        input_values, fn=True, uz=True, saturate=True
+                    ),
                     fn=True,
                     uz=True,
                 )
@@ -340,6 +342,7 @@ class Cast(Base):
                 inputs=["input"],
                 outputs=["output"],
                 to=getattr(TensorProto, to_type),
+                saturate=1,
             )
             expect(
                 node,

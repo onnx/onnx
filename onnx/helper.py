@@ -573,7 +573,7 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 ex = e - 112  # 127 - 15
                 ret |= ex << 2
                 ret |= m >> 21
-                if (m & 0x100000):
+                if m & 0x100000:
                     if (ret & 0x7F) < 0x7B:
                         # rounding
                         ret += 1
