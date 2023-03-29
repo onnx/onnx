@@ -29,7 +29,7 @@ def _cast_like(x, y, saturate):
         to = TensorProto.FLOAT8E5M2FNUZ
     else:
         to = np_dtype_to_tensor_dtype(y.dtype)  # type: ignore
-    return (cast_to(x, to),)
+    return (cast_to(x, to, saturate),)
 
 
 class CastLike_15(OpRun):

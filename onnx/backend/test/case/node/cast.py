@@ -262,7 +262,6 @@ class Cast(Base):
 
     @staticmethod
     def export_saturate() -> None:
-        shape = (3, 4)
         test_cases = [
             ("FLOAT", "FLOAT8E4M3FN"),
             ("FLOAT16", "FLOAT8E4M3FN"),

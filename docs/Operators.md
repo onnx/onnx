@@ -3384,7 +3384,6 @@ for from_type, to_type in test_cases:
 <summary>saturate</summary>
 
 ```python
-shape = (3, 4)
 test_cases = [
     ("FLOAT", "FLOAT8E4M3FN"),
     ("FLOAT16", "FLOAT8E4M3FN"),

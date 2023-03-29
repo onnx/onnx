@@ -564,6 +564,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     inputs[i] = cast_to(
                         xf.astype(np.float32).reshape(inputs[i].shape),
                         TensorProto.BFLOAT16,
+                        True
                     )
         feeds = {input_names[i]: inputs[i] for i in range(len(inputs))}
         got = obj.run(None, feeds)
