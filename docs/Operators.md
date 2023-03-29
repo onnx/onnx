@@ -3707,6 +3707,34 @@ expect(
 
 
 <details>
+<summary>center_crop_pad_crop_negative_axes_hwc</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CenterCropPad",
+    inputs=["x", "shape"],
+    outputs=["y"],
+    axes=[-3, -2],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([10, 9, 3], dtype=np.float32)
+y[:, :8, :] = x[5:15, :, :]
+
+expect(
+    node,
+    inputs=[x, shape],
+    outputs=[y],
+    name="test_center_crop_pad_crop_negative_axes_hwc",
+)
+```
+
+</details>
+
+
+<details>
 <summary>center_crop_pad_pad</summary>
 
 ```python
@@ -17556,6 +17584,38 @@ expect(
     inputs=[x, pads, value, axes],
     outputs=[y],
     name="test_constant_pad_axes",
+)
+```
+
+</details>
+
+
+<details>
+<summary>constant_pad_negative_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "value", "axes"], outputs=["y"], mode="constant"
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(
+    np.int64
+)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([-3, -1], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    "constant",
+    1.2,
+    [-3, -1],
+)
+
+expect(
+    node,
+    inputs=[x, pads, value, axes],
+    outputs=[y],
+    name="test_constant_pad_negative_axes",
 )
 ```
 
