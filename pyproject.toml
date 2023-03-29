@@ -67,6 +67,7 @@ select = [
     "W", # pycodestyle
     "B", # flake8-bugbear
     "N", # pep8-naming
+    "NPY", # modern numpy
     "YTT", # flake8-2020
     "RUF", # Ruff-specific rules
     "TID252", # Relative imports
@@ -79,6 +80,7 @@ ignore = [
     "N803", # Argument casing
     "N806", # Relax: Variable name in function should be lowercase
     "N999", # Module names
+    "NPY002", # np.random.Generator may not be preferred in all cases
     "SIM102", # We don't perfer always combining if branches
     "SIM108", # We don't encourage ternary operators
     "SIM114", # Don't combine if branches for debugability
