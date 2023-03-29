@@ -112,9 +112,9 @@ class Cast(Base):
                         "0.49968487",
                         "0.81910545",
                         "0.47031248",
-                        "0.816468",
-                        "0.21087195",
                         "0.7229038",
+                        "1000000",
+                        "1e-7",
                         "NaN",
                         "INF",
                         "+INF",
@@ -261,7 +261,7 @@ class Cast(Base):
                 )
 
     @staticmethod
-    def export_saturate() -> None:
+    def export_saturate_false() -> None:
         test_cases = [
             ("FLOAT", "FLOAT8E4M3FN"),
             ("FLOAT16", "FLOAT8E4M3FN"),
@@ -283,9 +283,9 @@ class Cast(Base):
                     "0.49968487",
                     "0.81910545",
                     "0.47031248",
-                    "0.816468",
-                    "0.21087195",
                     "0.7229038",
+                    "1000000",
+                    "1e-7",
                     "NaN",
                     "INF",
                     "+INF",
@@ -309,21 +309,21 @@ class Cast(Base):
 
             if to_type == "FLOAT8E4M3FN":
                 expected = float8e4m3_to_float32(
-                    vect_float32_to_float8e4m3(input_values, saturate=True)
+                    vect_float32_to_float8e4m3(input_values, saturate=False)
                 )
             elif to_type == "FLOAT8E4M3FNUZ":
                 expected = float8e4m3_to_float32(
-                    vect_float32_to_float8e4m3(input_values, uz=True, saturate=True),
+                    vect_float32_to_float8e4m3(input_values, uz=True, saturate=False),
                     uz=True,
                 )
             elif to_type == "FLOAT8E5M2":
                 expected = float8e5m2_to_float32(
-                    vect_float32_to_float8e5m2(input_values, saturate=True)
+                    vect_float32_to_float8e5m2(input_values, saturate=False)
                 )
             elif to_type == "FLOAT8E5M2FNUZ":
                 expected = float8e5m2_to_float32(
                     vect_float32_to_float8e5m2(
-                        input_values, fn=True, uz=True, saturate=True
+                        input_values, fn=True, uz=True, saturate=False
                     ),
                     fn=True,
                     uz=True,
@@ -332,21 +332,20 @@ class Cast(Base):
                 raise ValueError(
                     "Conversion from {from_type} to {to_type} is not tested."
                 )
-            expected_tensor = make_tensor(
+            output = make_tensor(
                 "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
             )
-            output = expected_tensor
 
             node = onnx.helper.make_node(
                 "Cast",
                 inputs=["input"],
                 outputs=["output"],
                 to=getattr(TensorProto, to_type),
-                saturate=1,
+                saturate=0,
             )
             expect(
                 node,
                 inputs=[input],
                 outputs=[output],
-                name="test_cast_saturate_" + from_type + "_to_" + to_type,
+                name="test_cast_no_saturate_" + from_type + "_to_" + to_type,
             )

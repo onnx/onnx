@@ -22683,11 +22683,11 @@ This version of the operator has been available since version 19 of the default 
     * bool: no change.
 
   Float 8 type were introduced to speed up the training of
-  deep models. By default the conversion obeys to the
-  following rules:
+  deep models. By default the conversion of a float *x* obeys
+  to the following rules:
 
   ============= ========= ========== ========= ===========
-  x value       E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
+  x             E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
   ============= ========= ========== ========= ===========
   0             0         0          0         0
   -0            -0        0          -0        0
@@ -22695,9 +22695,8 @@ This version of the operator has been available since version 19 of the default 
   -NaN          -NaN      NaN        -NaN      NaN
   Inf           FLT_MAX   NaN        FLT_MAX   NaN
   -Inf          -FLT_MAX  NaN        -FLT_MAX  NaN
-  > FLT_MAX     FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
-  < -FLT_MAX    -FLT_MAX  -FLT_MAX   -FLT_MAX  -FLT_MAX
-  |x| < FLT_MIN 0         0          0         0
+  x > FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
+  x < -FLT_MAX  -FLT_MAX  -FLT_MAX   -FLT_MAX  -FLT_MAX
   else          RNE       RNE        RNE       RNE
   ============= ========= ========== ========= ===========
 
@@ -22705,7 +22704,7 @@ This version of the operator has been available since version 19 of the default 
   The rules then become:
 
   ============= ======== ========== ====== ===========
-  x value       E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
+  x             E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
   ============= ======== ========== ====== ===========
   0             0        0          0      0
   -0            -0       0          -0     0
@@ -22713,9 +22712,8 @@ This version of the operator has been available since version 19 of the default 
   -NaN          -NaN     NaN        -NaN   NaN
   Inf           NaN      NaN        Inf    NaN
   -Inf          -NaN     NaN        -Inf   NaN
-  > FLT_MAX     NaN      NaN        Inf    NaN
-  < -FLT_MAX    NaN      NaN        -Inf   NaN
-  |x| < FLT_MIN 0        0          0      0
+  x > FLT_MAX   NaN      NaN        Inf    NaN
+  x < -FLT_MAX  NaN      NaN        -Inf   NaN
   else          RNE      RNE        RNE    RNE
   ============= ======== ========== ====== ===========
 

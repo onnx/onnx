@@ -112,6 +112,8 @@ backend_test.exclude(
     "|test_cast_FLOAT16_to_FLOAT8"
     "|test_castlike_FLOAT_to_FLOAT8"
     "|test_castlike_FLOAT16_to_FLOAT8"
+    "|test_cast_no_saturate_FLOAT_to_FLOAT8"
+    "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
     "|test_cast_BFLOAT16_to_FLOAT"
     "|test_castlike_BFLOAT16_to_FLOAT"
     "|test_quantizelinear_e4m3"
