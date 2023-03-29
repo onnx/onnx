@@ -57,32 +57,38 @@ Float 8 type were introduced to speed up the training of
 deep models. By default the conversion obeys to the
 following rules:
 
-=========== ========= ========== ========= ===========
-Src value   E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
-=========== ========= ========== ========= ===========
-0           0         0          0         0
--0          -0        0          -0        0
-NaN         NaN       NaN        NaN       NaN
-Inf         FLT_MAX   NaN        FLT_MAX   NaN
-> FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
-< FLT_MIN   0         0          0         0
-else        RNE       RNE        RNE       RNE
-=========== ========= ========== ========= ===========
+============= ========= ========== ========= ===========
+x value       E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
+============= ========= ========== ========= ===========
+0             0         0          0         0
+-0            -0        0          -0        0
+NaN           NaN       NaN        NaN       NaN
+-NaN          -NaN      NaN        -NaN      NaN
+Inf           FLT_MAX   NaN        FLT_MAX   NaN
+-Inf          -FLT_MAX  NaN        -FLT_MAX  NaN
+> FLT_MAX     FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
+< -FLT_MAX    -FLT_MAX  -FLT_MAX   -FLT_MAX  -FLT_MAX
+|x] < FLT_MIN 0         0          0         0
+else          RNE       RNE        RNE       RNE
+============= ========= ========== ========= ===========
 
 The behavior changes if the parameter 'saturate' is set to False.
 The rules then become:
 
-=========== ======== ========== ====== ===========
-Src Value   E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
-=========== ======== ========== ====== ===========
-0           0        0          0      0
--0          -0       0          -0     0
-NaN         NaN      NaN        NaN    NaN
-Inf         NaN      NaN        Inf    NaN
-> FLT_MAX   NaN      NaN        Inf    NaN
-< FLT_MIN   0        0          0      0
-else        RNE      RNE        RNE    RNE
-=========== ======== ========== ====== ===========
+============= ======== ========== ====== ===========
+x value       E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
+============= ======== ========== ====== ===========
+0             0        0          0      0
+-0            -0       0          -0     0
+NaN           NaN      NaN        NaN    NaN
+-NaN          -NaN     NaN        -NaN   NaN
+Inf           NaN      NaN        Inf    NaN
+-Inf          -NaN     NaN        -Inf   NaN
+> FLT_MAX     NaN      NaN        Inf    NaN
+< -FLT_MAX    NaN      NaN        -Inf   NaN
+|x] < FLT_MIN 0        0          0      0
+else          RNE      RNE        RNE    RNE
+============= ======== ========== ====== ===========
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
