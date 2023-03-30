@@ -3116,10 +3116,12 @@ class TestReferenceEvaluator(unittest.TestCase):
         p = np.array([1, 1] * dim, dtype=np.int64)
         got = ref.run(None, {"X": x, "P": p, "V": value})[0]
         self.assertEqual(got.shape, (3,) * dim)
+        self.assertEqual(got.dtype, np.float32)
 
         p = np.repeat([7, 3], dim).astype(np.int64)
         got = ref.run(None, {"X": x, "P": p, "V": value})[0]
         self.assertEqual(got.shape, (11,) * dim)
+        self.assertEqual(got.dtype, np.float32)
 
 
 if __name__ == "__main__":
