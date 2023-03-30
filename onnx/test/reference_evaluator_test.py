@@ -3078,7 +3078,25 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = _expected(data, alpha, beta, bias, size)
         self.assertEqual(len(expected), len(got[0]))
 
-    def test_conv_im2col(self):
+    def test_conv_im2col_1d(self):
+        feeds = {
+            "X": np.arange(1 * 1 * 11).reshape((1, 1, 11)).astype(np.float32) + 1,
+            "W": np.arange(3).reshape((1, 1, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1],
+            kernel_shape=[3],
+            pads=[1, 1],
+            strides=[1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d(self):
         feeds = {
             "X": np.arange(1 * 1 * 11 * 23).reshape((1, 1, 11, 23)).astype(np.float32)
             + 1,
@@ -3093,7 +3111,45 @@ class TestReferenceEvaluator(unittest.TestCase):
             strides=[1, 1],
             auto_pad="NOTSET",
         )
-        feeds["W"][0, 0, 1] = 1
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_3d(self):
+        feeds = {
+            "X": np.arange(1 * 1 * 11 * 5 * 13)
+            .reshape((1, 1, 11, 5, 13))
+            .astype(np.float32)
+            + 1,
+            "W": np.arange(27).reshape((1, 1, 3, 3, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1, 1],
+            kernel_shape=[3, 3, 3],
+            pads=[1, 1, 1, 1, 1, 1],
+            strides=[1, 1, 1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_strides(self):
+        feeds = {
+            "X": np.arange(1 * 3 * 6 * 6).reshape((1, 3, 6, 6)).astype(np.float32) + 1,
+            "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
+            "B": np.zeros((2,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+            auto_pad="NOTSET",
+        )
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(expected, got)

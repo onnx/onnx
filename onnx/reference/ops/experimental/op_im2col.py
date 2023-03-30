@@ -2,7 +2,7 @@
 # pylint: disable=R0913,R0914,W0221
 
 from onnx.reference.ops.experimental._op_run_experimental import OpRunExperimental
-from onnx.reference.ops.op_conv import im2col
+from onnx.reference.ops.op_conv import im2col, im2col_fast
 
 
 class Im2Col(OpRunExperimental):
@@ -14,4 +14,6 @@ class Im2Col(OpRunExperimental):
         if strides is None:
             strides = [1 for s in img.shape[2:]]
 
+        if min(dilations) == max(dilations) == 1:
+            return (im2col_fast(img, tuple(kernel_shape[2:]), pads, strides),)  # type: ignore
         return (im2col(img, tuple(kernel_shape[2:]), dilations, pads, strides),)  # type: ignore
