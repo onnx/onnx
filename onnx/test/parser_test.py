@@ -208,7 +208,9 @@ class TestBasicFunctions(unittest.TestCase):
         expect_custom_node_attribute(model.graph.node[0], expected_attribute)
 
     def test_parse_node(self):
-        node = onnx.parser.parse_node("out1, out2 = SomeDomain.SomeOp <attr1 = 1> (in1, in2)")
+        node = onnx.parser.parse_node(
+            "out1, out2 = SomeDomain.SomeOp <attr1 = 1> (in1, in2)"
+        )
         self.assertEqual(list(node.input), ["in1", "in2"])
         self.assertEqual(list(node.output), ["out1", "out2"])
         self.assertEqual(len(node.attribute), 1)
