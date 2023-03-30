@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # pylint: disable=W0622
 # type: ignore
 import os
