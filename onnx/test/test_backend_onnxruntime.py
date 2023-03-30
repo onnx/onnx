@@ -214,7 +214,8 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
     )
 
 # import all test cases at global scope to make them visible to python.unittest
-if InferenceSession is not None:
+if InferenceSession is not None and Version(numpy.__version__) >= Version("1.23.5"):
+    # Version 1.21.5 causes segmentation faults.
     globals().update(backend_test.test_cases)
 
 if __name__ == "__main__":
