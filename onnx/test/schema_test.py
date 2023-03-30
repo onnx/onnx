@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
+from typing import Sequence
 
-from onnx import AttributeProto, FunctionProto, defs
+import parameterized
+
+import onnx
+from onnx import defs
 
 
 class TestSchema(unittest.TestCase):
@@ -13,89 +17,234 @@ class TestSchema(unittest.TestCase):
 
     def test_attr_default_value(self) -> None:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
-        self.assertEqual(type(v), AttributeProto)
-        self.assertEqual(v.type, AttributeProto.FLOAT)
+        self.assertEqual(type(v), onnx.AttributeProto)
+        self.assertEqual(v.type, onnx.AttributeProto.FLOAT)
 
     def test_function_body(self) -> None:
-        self.assertEqual(type(defs.get_schema("Selu").function_body), FunctionProto)
+        self.assertEqual(
+            type(defs.get_schema("Selu").function_body), onnx.FunctionProto
+        )
 
 
 class TestOpSchema(unittest.TestCase):
-    def test_init_successful(self) -> None:
-        defs.OpSchema()
-
-    def test_name_can_be_set(self) -> None:
-        schema = defs.OpSchema()
-        schema.name = "TestOp"
-        self.assertEqual(schema.name, "TestOp")
-
-    def test_doc_can_be_set(self) -> None:
-        schema = defs.OpSchema()
-        schema.doc = "Test doc"
-        self.assertEqual(schema.doc, "Test doc")
-
-    def test_domain_can_be_set(self) -> None:
-        schema = defs.OpSchema()
-        schema.domain = "TestDomain"
-        self.assertEqual(schema.domain, "TestDomain")
-
-    def test_add_attribute_adds_one_attribute(self) -> None:
-        schema = defs.OpSchema()
-        schema.add_attribute(
-            "TestAttr",
-            defs.OpSchema.AttrType.INT,
-            description="TestAttr doc",
-            required=True,
+    def test_init_is_successful(self) -> None:
+        op_schema = defs.OpSchema(
+            "test_op",
+            "test_domain",
+            1,
+            inputs=[defs.OpSchema.FormalParameter("input1", "T")],
+            type_constraints=[("T", ["tensor(int64)"], "")],
         )
-        self.assertEqual(len(schema.attributes), 1)
-        self.assertEqual(schema.attributes["TestAttr"].name, "TestAttr")
-        self.assertEqual(schema.attributes["TestAttr"].description, "TestAttr doc")
-        self.assertEqual(schema.attributes["TestAttr"].type, defs.OpSchema.AttrType.INT)
-        self.assertEqual(schema.attributes["TestAttr"].default_value.i, 0)
+        self.assertEqual(op_schema.name, "test_op")
+        self.assertEqual(op_schema.domain, "test_domain")
+        self.assertEqual(op_schema.since_version, 1)
+        self.assertEqual(len(op_schema.inputs), 1)
+        self.assertEqual(op_schema.inputs[0].name, "input1")
+        self.assertEqual(op_schema.inputs[0].type_str, "T")
+        self.assertEqual(len(op_schema.type_constraints), 1)
+        self.assertEqual(op_schema.type_constraints[0].type_param_str, "T")
+        self.assertEqual(
+            op_schema.type_constraints[0].allowed_type_strs, ["tensor(int64)"]
+        )
 
-    def test_add_attribute_can_specify_default_value(self) -> None:
-        # TODO(justinchuby)
-        ...
+    def test_init_creates_multi_input_output_schema(self) -> None:
+        op_schema = defs.OpSchema(
+            "test_op",
+            "test_domain",
+            1,
+            inputs=[
+                defs.OpSchema.FormalParameter("input1", "T"),
+                defs.OpSchema.FormalParameter("input2", "T"),
+            ],
+            outputs=[
+                defs.OpSchema.FormalParameter("output1", "T"),
+                defs.OpSchema.FormalParameter("output2", "T"),
+            ],
+            type_constraints=[("T", ["tensor(int64)"], "")],
+            attributes=[
+                defs.OpSchema.Attribute(
+                    "attr1", defs.OpSchema.AttrType.INTS, "attr1 description"
+                )
+            ],
+        )
+        self.assertEqual(len(op_schema.inputs), 2)
+        self.assertEqual(op_schema.inputs[0].name, "input1")
+        self.assertEqual(op_schema.inputs[0].type_str, "T")
+        self.assertEqual(op_schema.inputs[1].name, "input2")
+        self.assertEqual(op_schema.inputs[1].type_str, "T")
+        self.assertEqual(len(op_schema.outputs), 2)
+        self.assertEqual(op_schema.outputs[0].name, "output1")
+        self.assertEqual(op_schema.outputs[0].type_str, "T")
+        self.assertEqual(op_schema.outputs[1].name, "output2")
+        self.assertEqual(op_schema.outputs[1].type_str, "T")
+        self.assertEqual(len(op_schema.type_constraints), 1)
+        self.assertEqual(op_schema.type_constraints[0].type_param_str, "T")
+        self.assertEqual(
+            op_schema.type_constraints[0].allowed_type_strs, ["tensor(int64)"]
+        )
+        self.assertEqual(len(op_schema.attributes), 1)
+        self.assertEqual(op_schema.attributes["attr1"].name, "attr1")
+        self.assertEqual(
+            op_schema.attributes["attr1"].type, defs.OpSchema.AttrType.INTS
+        )
+        self.assertEqual(op_schema.attributes["attr1"].description, "attr1 description")
 
-    def test_add_input_adds_one_input(self) -> None:
-        schema = defs.OpSchema()
-        schema.add_input(0, "TestInput", "T")
+    def test_init_is_successful_without_optional_arguments(self) -> None:
+        op_schema = defs.OpSchema("test_op", "test_domain", 1)
+        self.assertEqual(op_schema.name, "test_op")
+        self.assertEqual(op_schema.domain, "test_domain")
+        self.assertEqual(op_schema.since_version, 1)
+        self.assertEqual(len(op_schema.inputs), 0)
+        self.assertEqual(len(op_schema.outputs), 0)
+        self.assertEqual(len(op_schema.type_constraints), 0)
+
+    # ChatGPT generated tests
+    def test_constructor(self):
+        # Test that the constructor creates an OpSchema object
+        schema = defs.OpSchema("test_op", "test_domain", 1)
+        self.assertIsInstance(schema, defs.OpSchema)
+
+    def test_name(self):
+        # Test that the name parameter is required and is a string
+        with self.assertRaises(TypeError):
+            defs.OpSchema(domain="test_domain", since_version=1)  # type: ignore
+        with self.assertRaises(TypeError):
+            defs.OpSchema(123, "test_domain", 1)  # type: ignore
+
+        schema = defs.OpSchema("test_op", "test_domain", 1)
+        self.assertEqual(schema.name, "test_op")
+
+    def test_domain(self):
+        # Test that the domain parameter is required and is a string
+        with self.assertRaises(TypeError):
+            defs.OpSchema(name="test_op", since_version=1)  # type: ignore
+        with self.assertRaises(TypeError):
+            defs.OpSchema("test_op", 123, 1)  # type: ignore
+
+        schema = defs.OpSchema("test_op", "test_domain", 1)
+        self.assertEqual(schema.domain, "test_domain")
+
+    def test_since_version(self):
+        # Test that the since_version parameter is required and is an integer
+        with self.assertRaises(TypeError):
+            defs.OpSchema("test_op", "test_domain")  # type: ignore
+
+        schema = defs.OpSchema("test_op", "test_domain", 1)
+        self.assertEqual(schema.since_version, 1)
+
+    def test_doc(self):
+        schema = defs.OpSchema("test_op", "test_domain", 1, doc="test_doc")
+        self.assertEqual(schema.doc, "test_doc")
+
+    def test_inputs(self):
+        # Test that the inputs parameter is optional and is a sequence of FormalParameter tuples
+        inputs = [
+            defs.OpSchema.FormalParameter(
+                name="input1", type_str="T", description="The first input."
+            )
+        ]
+        schema = defs.OpSchema(
+            "test_op",
+            "test_domain",
+            1,
+            inputs=inputs,
+            type_constraints=[("T", ["tensor(int64)"], "")],
+        )
+
         self.assertEqual(len(schema.inputs), 1)
-        self.assertEqual(schema.inputs[0].name, "TestInput")
-        self.assertEqual(schema.inputs[0].description, "")
-        self.assertEqual(schema.inputs[0].typeStr, "T")
+        self.assertEqual(schema.inputs[0].name, "input1")
+        self.assertEqual(schema.inputs[0].type_str, "T")
+        self.assertEqual(schema.inputs[0].description, "The first input.")
 
-    def test_add_input_adds_two_inputs(self) -> None:
-        schema = defs.OpSchema()
-        schema.add_input(0, "TestInput1", "T", description="TestInput1 doc")
-        schema.add_input(1, "TestInput2", "T", description="TestInput2 doc")
-        self.assertEqual(len(schema.inputs), 2)
-        self.assertEqual(schema.inputs[0].name, "TestInput1")
-        self.assertEqual(schema.inputs[0].description, "TestInput1 doc")
-        self.assertEqual(schema.inputs[0].typeStr, "T")
-        self.assertEqual(schema.inputs[1].name, "TestInput2")
-        self.assertEqual(schema.inputs[1].description, "TestInput2 doc")
-        self.assertEqual(schema.inputs[1].typeStr, "T")
+    def test_outputs(self):
+        # Test that the outputs parameter is optional and is a sequence of FormalParameter tuples
+        outputs = [
+            defs.OpSchema.FormalParameter(
+                name="output1", type_str="T", description="The first output."
+            )
+        ]
 
-    def test_add_output_adds_one_output(self) -> None:
-        schema = defs.OpSchema()
-        schema.add_output(0, "TestOutput", "T")
+        schema = defs.OpSchema(
+            "test_op",
+            "test_domain",
+            1,
+            outputs=outputs,
+            type_constraints=[("T", ["tensor(int64)"], "")],
+        )
         self.assertEqual(len(schema.outputs), 1)
-        self.assertEqual(schema.outputs[0].name, "TestOutput")
-        self.assertEqual(schema.outputs[0].description, "")
-        self.assertEqual(schema.outputs[0].typeStr, "T")
+        self.assertEqual(schema.outputs[0].name, "output1")
+        self.assertEqual(schema.outputs[0].type_str, "T")
+        self.assertEqual(schema.outputs[0].description, "The first output.")
 
-    def test_add_output_adds_two_outputs(self) -> None:
-        schema = defs.OpSchema()
-        schema.add_output(0, "TestOutput1", "T", description="TestOutput1 doc")
-        schema.add_output(1, "TestOutput2", "T", description="TestOutput2 doc")
-        self.assertEqual(len(schema.outputs), 2)
-        self.assertEqual(schema.outputs[0].name, "TestOutput1")
-        self.assertEqual(schema.outputs[0].description, "TestOutput1 doc")
-        self.assertEqual(schema.outputs[0].typeStr, "T")
-        self.assertEqual(schema.outputs[1].name, "TestOutput2")
-        self.assertEqual(schema.outputs[1].description, "TestOutput2 doc")
-        self.assertEqual(schema.outputs[1].typeStr, "T")
+
+class TestFormalParameter(unittest.TestCase):
+    def test_init(self):
+        name = "input1"
+        type_str = "tensor(float)"
+        description = "The first input."
+        param_option = defs.OpSchema.FormalParameterOption.Single
+        is_homogeneous = True
+        min_arity = 1
+        differentiation_category = defs.OpSchema.DifferentiationCategory.Unknown
+        formal_parameter = defs.OpSchema.FormalParameter(
+            name,
+            type_str,
+            description,
+            param_option,
+            is_homogeneous,
+            min_arity,
+            differentiation_category,
+        )
+
+        self.assertEqual(formal_parameter.name, name)
+        self.assertEqual(formal_parameter.type_str, type_str)
+        self.assertEqual(formal_parameter.description, description)
+        self.assertEqual(formal_parameter.option, param_option)
+        self.assertEqual(formal_parameter.is_homogeneous, is_homogeneous)
+        self.assertEqual(formal_parameter.min_arity, min_arity)
+        self.assertEqual(
+            formal_parameter.differentiation_category, differentiation_category
+        )
+
+
+class TestTypeConstraintParam(unittest.TestCase):
+    @parameterized.parameterized.expand(
+        [
+            ("single_type", "T", ["tensor(float)"], "Test description"),
+            (
+                "double_types",
+                "T",
+                ["tensor(float)", "tensor(int64)"],
+                "Test description",
+            ),
+            ("tuple", "T", ("tensor(float)", "tensor(int64)"), "Test description"),
+        ]
+    )
+    def test_init_is_successful(
+        self,
+        _: str,
+        type_param_str: str,
+        allowed_types: Sequence[str],
+        description: str,
+    ) -> None:
+        type_constraint = defs.OpSchema.TypeConstraintParam(
+            type_param_str, allowed_types, description
+        )
+        self.assertEqual(type_constraint.description, description)
+        self.assertEqual(type_constraint.allowed_type_strs, list(allowed_types))
+        self.assertEqual(type_constraint.type_param_str, type_param_str)
+
+
+class TestAttribute(unittest.TestCase):
+    def test_init(self):
+        name = "test_attr"
+        type_ = defs.OpSchema.AttrType.STRINGS
+        description = "Test attribute"
+        attribute = defs.OpSchema.Attribute(name, type_, description)
+
+        self.assertEqual(attribute.name, name)
+        self.assertEqual(attribute.type, type_)
+        self.assertEqual(attribute.description, description)
 
 
 if __name__ == "__main__":

@@ -99,7 +99,7 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
 }
 
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
-  onnx_cpp2py_export.doc() = "Python interface to onnx";
+  onnx_cpp2py_export.doc() = "Python interface to ONNX";
 
   onnx_cpp2py_export.attr("ONNX_ML") = py::bool_(
 #ifdef ONNX_ML
@@ -148,7 +148,146 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("COMMON", OpSchema::SupportType::COMMON)
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
-  op_schema.def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
+  py::class_<OpSchema::Attribute>(op_schema, "Attribute")
+      .def(
+          "__init__",
+          [](OpSchema::Attribute& self,
+             std::string name,
+             AttributeProto::AttributeType type,
+             const std::string& description,
+             bool required) {
+            // Use a lambda to swap the order of the arguments to match the Python API
+            new (&self) OpSchema::Attribute(name, description, type, required);
+          },
+          py::arg("name"),
+          py::arg("type"),
+          py::arg("description") = "",
+          py::arg("required") = true)
+      .def_readonly("name", &OpSchema::Attribute::name)
+      .def_readonly("description", &OpSchema::Attribute::description)
+      .def_readonly("type", &OpSchema::Attribute::type)
+      .def_property_readonly(
+          "_default_value",
+          [](OpSchema::Attribute* attr) -> py::bytes {
+            std::string out;
+            attr->default_value.SerializeToString(&out);
+            return out;
+          })
+      .def_readonly("required", &OpSchema::Attribute::required);
+
+  py::class_<OpSchema::TypeConstraintParam>(op_schema, "TypeConstraintParam")
+      .def(
+          py::init<std::string, std::vector<std::string>, std::string>(),
+          py::arg("type_param_str"),
+          py::arg("allowed_type_strs"),
+          py::arg("description") = "")
+      .def_readonly("type_param_str", &OpSchema::TypeConstraintParam::type_param_str)
+      .def_readonly("allowed_type_strs", &OpSchema::TypeConstraintParam::allowed_type_strs)
+      .def_readonly("description", &OpSchema::TypeConstraintParam::description);
+
+  py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
+      .def(
+          "__init__",
+          [](OpSchema::FormalParameter& self,
+             std::string name,
+             std::string type_str,
+             const std::string& description,
+             OpSchema::FormalParameterOption param_option,
+             bool is_homogeneous,
+             int min_arity,
+             OpSchema::DifferentiationCategory differentiation_category) {
+            // Use a lambda to swap the order of the arguments to match the Python API
+            new (&self) OpSchema::FormalParameter(
+                name, description, type_str, param_option, is_homogeneous, min_arity, differentiation_category);
+          },
+          py::arg("name"),
+          py::arg("type_str"),
+          py::arg("description") = "",
+          py::arg("param_option") = OpSchema::Single,
+          py::arg("is_homogeneous") = true,
+          py::arg("min_arity") = 1,
+          py::arg("differentiation_category") = OpSchema::DifferentiationCategory::Unknown)
+
+      .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
+      .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
+      .def_property_readonly("type_str", &OpSchema::FormalParameter::GetTypeStr)
+      .def_property_readonly("description", &OpSchema::FormalParameter::GetDescription)
+      .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
+      .def_property_readonly("is_homogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
+      .def_property_readonly("min_arity", &OpSchema::FormalParameter::GetMinArity)
+      .def_property_readonly("differentiation_category", &OpSchema::FormalParameter::GetDifferentiationCategory)
+      // Legacy camel cased names. We retain them for backward compatibility.
+      .def_property_readonly("typeStr", &OpSchema::FormalParameter::GetTypeStr)
+      .def_property_readonly("isHomogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
+      .def_property_readonly("differentiationCategory", &OpSchema::FormalParameter::GetDifferentiationCategory);
+
+  op_schema
+      .def(
+          "__init__",
+          [](OpSchema& self,
+             std::string name,
+             std::string domain,
+             int since_version,
+             std::string doc,
+             std::vector<OpSchema::FormalParameter> inputs,
+             std::vector<OpSchema::FormalParameter> outputs,
+             std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
+             std::vector<OpSchema::Attribute> attributes) {
+            auto schema = OpSchema().SetName(name).SetDomain(domain).SinceVersion(since_version).SetDoc(doc);
+            // Add inputs and outputs
+            for (auto i = 0; i < inputs.size(); ++i) {
+              const auto& input = inputs[i];
+              schema = schema.Input(
+                  i,
+                  input.GetName(),
+                  input.GetDescription(),
+                  input.GetTypeStr(),
+                  input.GetOption(),
+                  input.GetIsHomogeneous(),
+                  input.GetMinArity(),
+                  input.GetDifferentiationCategory());
+            }
+            for (auto i = 0; i < outputs.size(); ++i) {
+              const auto& output = outputs[i];
+              schema = schema.Output(
+                  i,
+                  output.GetName(),
+                  output.GetDescription(),
+                  output.GetTypeStr(),
+                  output.GetOption(),
+                  output.GetIsHomogeneous(),
+                  output.GetMinArity(),
+                  output.GetDifferentiationCategory());
+            }
+            // Add type constraints
+            for (const auto& type_constraint : type_constraints) {
+              std::string type_str;
+              std::vector<std::string> constraints;
+              std::string description;
+              tie(type_str, constraints, description) = type_constraint;
+              schema = schema.TypeConstraint(type_str, constraints, description);
+            }
+            // Add attributes
+            for (const auto& attribute : attributes) {
+              schema = schema.Attr(attribute);
+            }
+
+            schema.Finalize();
+
+            new (&self) OpSchema(schema);
+          },
+          py::arg("name"),
+          py::arg("domain"),
+          py::arg("since_version"),
+          py::arg("doc") = "",
+          py::arg("inputs") = std::vector<OpSchema::FormalParameter>{},
+          py::arg("outputs") = std::vector<OpSchema::FormalParameter>{},
+          py::arg("type_constraints") = std::vector<std::tuple<
+              std::string /* type_str */,
+              std::vector<std::string> /* constraints */,
+              std::string /* description */>>{},
+          py::arg("attributes") = std::vector<OpSchema::Attribute>{})
+      .def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
       .def_property(
           "domain", &OpSchema::domain, [](OpSchema& self, const std::string& domain) { self.SetDomain(domain); })
       .def_property("doc", &OpSchema::doc, [](OpSchema& self, const std::string& doc) { self.SetDoc(doc); })
@@ -181,78 +320,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("min_output", &OpSchema::min_output)
       .def_property_readonly("max_output", &OpSchema::max_output)
       .def_property_readonly("attributes", &OpSchema::attributes)
-      .def(
-          "add_attribute",
-          [](OpSchema& self,
-             const std::string& name,
-             AttributeProto::AttributeType type,
-             const std::string& description,
-             bool required) { self.Attr(name, description, type, required); },
-          py::arg("name"),
-          py::arg("type"),
-          py::kw_only(),
-          py::arg("description") = "",
-          py::arg("required") = true)
       .def_property_readonly("inputs", &OpSchema::inputs)
-      .def(
-          "add_input",
-          [](OpSchema& self,
-             int n,
-             std::string name,
-             std::string type_str,
-             const std::string& description,
-             OpSchema::FormalParameterOption param_option,
-             bool is_homogeneous,
-             int min_arity,
-             OpSchema::DifferentiationCategory differentiation_category) {
-            self.Input(
-                n, name, description, type_str, param_option, is_homogeneous, min_arity, differentiation_category);
-          },
-          py::arg("n"),
-          py::arg("name"),
-          py::arg("type_str"),
-          py::kw_only(),
-          py::arg("description") = "",
-          py::arg("param_option") = OpSchema::Single,
-          py::arg("is_homogeneous") = false,
-          py::arg("min_arity") = 1,
-          py::arg("differentiation_category") = OpSchema::Unknown)
       .def_property_readonly("outputs", &OpSchema::outputs)
-      .def(
-          "add_output",
-          [](OpSchema& self,
-             int n,
-             std::string name,
-             std::string type_str,
-             const std::string& description,
-             OpSchema::FormalParameterOption param_option,
-             bool is_homogeneous,
-             int min_arity,
-             OpSchema::DifferentiationCategory differentiation_category) {
-            self.Output(
-                n, name, description, type_str, param_option, is_homogeneous, min_arity, differentiation_category);
-          },
-          py::arg("n"),
-          py::arg("name"),
-          py::arg("type_str"),
-          py::kw_only(),
-          py::arg("description") = "",
-          py::arg("param_option") = OpSchema::Single,
-          py::arg("is_homogeneous") = false,
-          py::arg("min_arity") = 1,
-          py::arg("differentiation_category") = OpSchema::Unknown)
       .def_property_readonly("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
       .def_property_readonly("has_data_propagation_function", &OpSchema::has_data_propagation_function)
       .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
-      .def(
-          "add_type_constraint",
-          [](OpSchema& self,
-             const std::string& type_str,
-             const std::vector<std::string>& constraints,
-             const std::string& description) { self.TypeConstraint(type_str, constraints, description); },
-          py::arg("type_str"),
-          py::arg("constraints"),
-          py::arg("description"))
       .def_static("is_infinite", [](int v) { return v == std::numeric_limits<int>::max(); })
       .def(
           "_infer_node_outputs",
@@ -327,44 +399,19 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             return py::bytes(func_bytes);
           });
 
-  py::class_<OpSchema::Attribute>(op_schema, "Attribute")
-      .def_readonly("name", &OpSchema::Attribute::name)
-      .def_readonly("description", &OpSchema::Attribute::description)
-      .def_readonly("type", &OpSchema::Attribute::type)
-      .def_property_readonly(
-          "_default_value",
-          [](OpSchema::Attribute* attr) -> py::bytes {
-            std::string out;
-            attr->default_value.SerializeToString(&out);
-            return out;
+  defs.def(
+          "has_schema",
+          [](const std::string& op_type, const std::string& domain) -> bool {
+            return OpSchemaRegistry::Schema(op_type, domain) != nullptr;
+          },
+          "op_type"_a,
+          "domain"_a = ONNX_DOMAIN)
+      .def(
+          "schema_version_map",
+          []() -> std::unordered_map<std::string, std::pair<int, int>> {
+            return OpSchemaRegistry::DomainToVersionRange::Instance().Map();
           })
-      .def_readonly("required", &OpSchema::Attribute::required);
-
-  py::class_<OpSchema::TypeConstraintParam>(op_schema, "TypeConstraintParam")
-      .def_readonly("type_param_str", &OpSchema::TypeConstraintParam::type_param_str)
-      .def_readonly("description", &OpSchema::TypeConstraintParam::description)
-      .def_readonly("allowed_type_strs", &OpSchema::TypeConstraintParam::allowed_type_strs);
-
-  py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
-      .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
-      .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
-      .def_property_readonly("typeStr", &OpSchema::FormalParameter::GetTypeStr)
-      .def_property_readonly("description", &OpSchema::FormalParameter::GetDescription)
-      .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
-      .def_property_readonly("isHomogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
-      .def_property_readonly("differentiationCategory", &OpSchema::FormalParameter::GetDifferentiationCategory);
-
-  defs.def(
-      "has_schema",
-      [](const std::string& op_type, const std::string& domain) -> bool {
-        return OpSchemaRegistry::Schema(op_type, domain) != nullptr;
-      },
-      "op_type"_a,
-      "domain"_a = ONNX_DOMAIN);
-  defs.def("schema_version_map", []() -> std::unordered_map<std::string, std::pair<int, int>> {
-    return OpSchemaRegistry::DomainToVersionRange::Instance().Map();
-  });
-  defs.def(
+      .def(
           "get_schema",
           [](const std::string& op_type, const int max_inclusive_version, const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
@@ -390,17 +437,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           },
           "op_type"_a,
           "domain"_a = ONNX_DOMAIN,
-          "Return the schema of the operator *op_type* and for a specific version.");
-
-  defs.def(
-      "get_all_schemas",
-      []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas(); },
-      "Return the schema of all existing operators for the latest version.");
-
-  defs.def(
-      "get_all_schemas_with_history",
-      []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
-      "Return the schema of all existing operators and all versions.");
+          "Return the schema of the operator *op_type* and for a specific version.")
+      .def(
+          "get_all_schemas",
+          []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas(); },
+          "Return the schema of all existing operators for the latest version.")
+      .def(
+          "get_all_schemas_with_history",
+          []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
+          "Return the schema of all existing operators and all versions.");
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
