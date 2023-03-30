@@ -1,3 +1,7 @@
+# Copyright (c) Sphinx Project
+#
+# SPDX-License-Identifier: BSD-2-Clause
+
 # Minimal makefile for Sphinx documentation
 #
 
