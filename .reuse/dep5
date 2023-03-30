@@ -77,3 +77,19 @@ License: Apache-2.0
 Files: onnx/onnx-operators*.proto*
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
+
+Files: docs/docsgen/source/api/*rst
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: docs/Change*.md
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: docs/Test*.md
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: docs/Operator*.md
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
