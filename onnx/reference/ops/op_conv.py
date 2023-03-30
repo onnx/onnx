@@ -97,10 +97,6 @@ def im2col(
     return res.reshape(new_shape)  # type: ignore
 
 
-def get_indices_fast(X_shape, HF, WF, stride, pad):
-    return i, j, d, out_h, out_w
-
-
 # to remove when completed
 # def im2col_fast_z(X, kernel_shape, pads, strides):
 #     HF, WF = kernel_shape
@@ -146,7 +142,6 @@ def im2col_fast(X, kernel_shape, pads, strides):
         dx = X.shape[2 + i]
         shape_out.append((dx + pads[i] + pads[i + n_dims] - dim) // strides[i] + 1)
 
-    out_size = np.prod(shape_out)
     indices = []
     for i in range(len(shape_out)):
         kind = _make_ind(i, kernel_shape)
@@ -160,7 +155,7 @@ def im2col_fast(X, kernel_shape, pads, strides):
     padding = [(pads[i], pads[i + n_dims]) for i in range(n_dims)]
     X_padded = np.pad(X, tuple(nc) + tuple(padding), mode="constant")
 
-    getitem = (slice(0, m), d) + tuple(indices)
+    getitem = (slice(0, m), d, *tuple(indices))
     cols = X_padded[getitem]
     conc_cols = np.concatenate(cols, axis=-1)
     return conc_cols, tuple(shape_out)
@@ -254,7 +249,7 @@ def _conv_implementation_im2col(  # type: ignore
     c2, out_shape = im2col_fast(X, kernel_shape, pads, strides)
     w_reshaped = W.reshape((-1, c2.shape[0]))
     mul = w_reshaped @ c2
-    mul = mul.reshape((X.shape[0], W.shape[0]) + out_shape)
+    mul = mul.reshape((X.shape[0], W.shape[0], *out_shape))
 
     if B is not None:
         if B.size == 1:
