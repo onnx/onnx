@@ -679,7 +679,7 @@ def get_attribute_value(attr: AttributeProto) -> Any:
     raise ValueError(f"Unsupported ONNX attribute: {attr}")
 
 
-def get_node_attr_value (node: NodeProto, attr_name: str) -> Any:
+def get_node_attr_value(node: NodeProto, attr_name: str) -> Any:
     matching = [x for x in node.attribute if x.name == attr_name]
     if len(matching) > 1:
         raise ValueError(f"Node has multiple attributes with name {attr_name}")

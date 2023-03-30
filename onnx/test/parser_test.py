@@ -6,7 +6,7 @@ import unittest
 from parameterized import parameterized
 
 import onnx
-from onnx import GraphProto, NodeProto, OperatorSetIdProto, checker
+from onnx import GraphProto, OperatorSetIdProto, checker
 
 
 class TestBasicFunctions(unittest.TestCase):
