@@ -60,7 +60,7 @@ def _get_diff_template():  # type: ignore
             """
         <div id="{{ div_name }}"></div>
         <link rel="stylesheet" type="text/css" href="../_static/diff2html.min.css" />
-        <script type="text/javascript" src="../_static/diff2html-ui.min.js"></script>
+        <script type="text/javascript" src="../_static/diff2html-ui-slim.min.js"></script>
         <script>
         const diffString = `
         --- a/{{ op_name }}{{ version1 }}
