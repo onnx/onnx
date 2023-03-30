@@ -3061,38 +3061,37 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 
   Float 8 type were introduced to speed up the training of
   deep models. By default the conversion of a float *x* obeys
-  to the following rules:
+  to the following rules. `[x]` means the rounded value.
 
-  ============= ========= ========== ========= ===========
-  x             E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
-  ============= ========= ========== ========= ===========
-  0             0         0          0         0
-  -0            -0        0          -0        0
-  NaN           NaN       NaN        NaN       NaN
-  -NaN          -NaN      NaN        -NaN      NaN
-  Inf           FLT_MAX   NaN        FLT_MAX   NaN
-  -Inf          -FLT_MAX  NaN        -FLT_MAX  NaN
-  x > FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
-  x < -FLT_MAX  -FLT_MAX  -FLT_MAX   -FLT_MAX  -FLT_MAX
-  else          RNE       RNE        RNE       RNE
-  ============= ========= ========== ========= ===========
+  =============== ========= ========== ========= ===========
+  x               E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
+  =============== ========= ========== ========= ===========
+  0               0         0          0         0
+  -0              -0        0          -0        0
+  NaN             NaN       NaN        NaN       NaN
+  Inf             FLT_MAX   NaN        FLT_MAX   NaN
+  -Inf            -FLT_MAX  NaN        -FLT_MAX  NaN
+  [x] > FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
+  [x] < -FLT_MAX  -FLT_MAX  -FLT_MAX   -FLT_MAX  -FLT_MAX
+  else            RNE       RNE        RNE       RNE
+  =============== ========= ========== ========= ===========
 
   The behavior changes if the parameter 'saturate' is set to False.
   The rules then become:
 
-  ============= ======== ========== ====== ===========
-  x             E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
-  ============= ======== ========== ====== ===========
-  0             0        0          0      0
-  -0            -0       0          -0     0
-  NaN           NaN      NaN        NaN    NaN
-  -NaN          -NaN     NaN        -NaN   NaN
-  Inf           NaN      NaN        Inf    NaN
-  -Inf          -NaN     NaN        -Inf   NaN
-  x > FLT_MAX   NaN      NaN        Inf    NaN
-  x < -FLT_MAX  NaN      NaN        -Inf   NaN
-  else          RNE      RNE        RNE    RNE
-  ============= ======== ========== ====== ===========
+  =============== ======== ========== ====== ===========
+  x               E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
+  =============== ======== ========== ====== ===========
+  0               0        0          0      0
+  -0              -0       0          -0     0
+  NaN             NaN      NaN        NaN    NaN
+  -NaN            -NaN     NaN        -NaN   NaN
+  Inf             NaN      NaN        Inf    NaN
+  -Inf            -NaN     NaN        -Inf   NaN
+  [x] > FLT_MAX   NaN      NaN        Inf    NaN
+  [x] < -FLT_MAX  NaN      NaN        -Inf   NaN
+  else            RNE      RNE        RNE    RNE
+  =============== ======== ========== ====== ===========
 
 #### Version
 
@@ -3436,33 +3435,31 @@ for from_type, to_type in test_cases:
         )
 
     if to_type == "FLOAT8E4M3FN":
-        expected = float8e4m3_to_float32(
-            vect_float32_to_float8e4m3(input_values, saturate=False)
-        )
+        expected = vect_float32_to_float8e4m3(input_values, saturate=False)
     elif to_type == "FLOAT8E4M3FNUZ":
-        expected = float8e4m3_to_float32(
-            vect_float32_to_float8e4m3(input_values, uz=True, saturate=False),
-            uz=True,
+        expected = vect_float32_to_float8e4m3(
+            input_values, uz=True, saturate=False
         )
     elif to_type == "FLOAT8E5M2":
-        expected = float8e5m2_to_float32(
-            vect_float32_to_float8e5m2(input_values, saturate=False)
-        )
+        expected = vect_float32_to_float8e5m2(input_values, saturate=False)
     elif to_type == "FLOAT8E5M2FNUZ":
-        expected = float8e5m2_to_float32(
-            vect_float32_to_float8e5m2(
-                input_values, fn=True, uz=True, saturate=False
-            ),
-            fn=True,
-            uz=True,
+        expected = vect_float32_to_float8e5m2(
+            input_values, fn=True, uz=True, saturate=False
         )
     else:
         raise ValueError(
             "Conversion from {from_type} to {to_type} is not tested."
         )
-    output = make_tensor(
-        "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
-    )
+
+    ivals = bytes([int(i) for i in expected])
+    tensor = TensorProto()
+    tensor.data_type = getattr(TensorProto, to_type)
+    tensor.name = "x"
+    tensor.dims.extend([3, 4])
+    field = tensor_dtype_to_field(tensor.data_type)
+    getattr(tensor, field).extend(ivals)
+
+    output = tensor
 
     node = onnx.helper.make_node(
         "Cast",
