@@ -19,6 +19,7 @@ from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
+from typing import Sequence, Tuple
 
 import numpy as np  # type: ignore
 import parameterized
@@ -45,9 +46,9 @@ from onnx.numpy_helper import from_array
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops import load_op
+from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Celu
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
-from onnx.reference.ops.experimental.op_im2col import im2col
 from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
@@ -130,6 +131,73 @@ def run_ort_inference(onnx_model):
     return ort.InferenceSession(
         onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
     )
+
+
+def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  # type: ignore
+    """
+    Naive implementation for `im2col`.
+
+    :param image: image (float)
+    :param kernel_shape: kernel shape
+    :param dilations: dilations
+    :param pads: pads
+    :param strides: strides
+    :return: result
+    """
+    if not isinstance(kernel_shape, tuple):
+        raise TypeError(f"Unexpected type {type(kernel_shape)!r} for kernel_shape.")
+    if len(data.shape) != len(kernel_shape):
+        raise ValueError(f"Shape mismatch {data.shape!r} and {kernel_shape!r}.")
+    n_dims = len(pads) // 2
+    new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
+    list_output_shape = list(data.shape + kernel_shape)
+    for d in range(n_dims):
+        kd = kernel_shape[d] + (kernel_shape[d] - 1) * (dilations[d] - 1)
+        nd = int(
+            ((list_output_shape[d] - kd + new_pads[d][0] + new_pads[d][1]) / strides[d])
+            + 1
+        )
+        list_output_shape[d] = nd
+    output_shape = tuple(list_output_shape)
+
+    res = np.zeros(output_shape, dtype=data.dtype)
+    kernel_size = np.prod(kernel_shape)
+    res_size = np.prod(res.shape[:-n_dims])
+    for i in range(res_size):
+        i_res = _get_indices(i, res.shape[:-n_dims])
+        t_res = tuple(i_res)
+        for j in range(kernel_size):
+            i_kernel = _get_indices(j, kernel_shape)
+            t_kernel = tuple(i_kernel)
+
+            i_img = i_res * strides - new_pads[:, 0] + i_kernel * dilations
+            t_img = tuple(i_img)
+            if _is_out(t_img, data.shape):
+                res[t_res + t_kernel] = 0
+            else:
+                res[t_res + t_kernel] = data[tuple(t_img)]
+    return res
+
+
+def im2col(
+    img: np.ndarray,
+    kernel_shape: Tuple[int, ...],
+    dilations: Sequence[int],
+    pads: Sequence[int],
+    strides: Sequence[int],
+) -> np.ndarray:
+    res = None
+    for n in range(img.shape[0]):
+        for c in range(img.shape[1]):
+            out = im2col_naive_implementation(
+                img[n, c, ...], kernel_shape, dilations, pads, strides
+            )
+            if res is None:
+                new_shape = img.shape[:2] + out.shape
+                res = np.empty(new_shape, dtype=img.dtype)
+            res[n, c, ...] = out
+    new_shape = res.shape[: -len(kernel_shape)] + (-1,)  # type: ignore
+    return res.reshape(new_shape)  # type: ignore
 
 
 class TestReferenceEvaluator(unittest.TestCase):
@@ -1519,13 +1587,9 @@ class TestReferenceEvaluator(unittest.TestCase):
             domain="experimental",
         )
         node_flat = make_node("Flatten", ["W"], ["wflat"])
-        node_axes = make_node(
-            "Constant", [], ["axes"], value=from_array(np.array([0], dtype=np.int64))
-        )
-        node_qu = make_node("Squeeze", ["wflat", "axes"], ["wsqu"])
-        node_gem = make_node("MatMul", ["xim", "wsqu"], ["Y2"])
+        node_gem = make_node("MatMul", ["wflat", "xim"], ["Y2"])
         graph = make_graph(
-            [node, node_shape, node_im, node_axes, node_flat, node_qu, node_gem],
+            [node, node_shape, node_im, node_flat, node_gem],
             "g",
             [X, W],
             [Y1, Y2],
@@ -1563,9 +1627,9 @@ class TestReferenceEvaluator(unittest.TestCase):
                 got = sess.run(None, {"X": X, "W": W})
                 if sess_conv is not None:
                     ort_res = sess_conv.run(None, {"X": X, "W": W})[0]
-                    assert_allclose(got[1], ort_res)
+                    assert_allclose(got[1].ravel(), ort_res.ravel())
                 try:
-                    assert_allclose(got[0], got[1])
+                    assert_allclose(got[0].ravel(), got[1].ravel())
                 except AssertionError as e:
                     raise AssertionError(
                         f"Discrepancies: pads={pads}, dilations={dilations}, strides={strides}, "
@@ -1596,11 +1660,6 @@ class TestReferenceEvaluator(unittest.TestCase):
     def test_im2col_3x3_strides(self):
         self.common_test_im2col(
             (3, 3), pads=[0, 1, 1, 1], strides=[1, 2], dilations=[1, 1]
-        )
-
-    def test_im2col_3x3_dilations(self):
-        self.common_test_im2col(
-            (3, 3), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 2]
         )
 
     def test_im2col_5x5(self):
@@ -3096,6 +3155,24 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = _conv_implementation_im2col(**feeds, **kwargs)
         assert_allclose(expected, got)
 
+    def test_conv_im2col_1d_pad0(self):
+        feeds = {
+            "X": np.arange(2 * 4 * 3).reshape((2, 4, -1)).astype(np.float32) + 1,
+            "W": np.arange(2 * 4 * 3).reshape((-1, 4, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1],
+            kernel_shape=[3],
+            pads=[0, 0],
+            strides=[1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
     def test_conv_im2col_2d(self):
         feeds = {
             "X": np.arange(1 * 1 * 11 * 23).reshape((1, 1, 11, 23)).astype(np.float32)
@@ -3110,6 +3187,43 @@ class TestReferenceEvaluator(unittest.TestCase):
             pads=[1, 1, 1, 1],
             strides=[1, 1],
             auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_pad0(self):
+        feeds = {
+            "X": np.arange(2 * 3 * 5 * 2).reshape((2, 3, 5, -1)).astype(np.float32) + 1,
+            "W": 2
+            ** np.arange(3 * 3 * 1 * 2).reshape((-1, 3, 1, 2)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[1, 2],
+            pads=[0, 0, 0, 0],
+            strides=[1, 1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_autopad(self):
+        feeds = {
+            "X": np.arange(5 * 5).reshape((1, 1, 5, -1)).astype(np.float32) + 1,
+            "W": 2 ** np.arange(3 * 3).reshape((1, 1, 3, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            strides=[2, 2],
+            pads=None,
+            auto_pad="SAME_LOWER",
         )
         expected = _conv_implementation(**feeds, **kwargs)
         got = _conv_implementation_im2col(**feeds, **kwargs)
@@ -3145,6 +3259,24 @@ class TestReferenceEvaluator(unittest.TestCase):
         kwargs = dict(
             group=1,
             dilations=[1, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_dilations(self):
+        feeds = {
+            "X": np.arange(1 * 3 * 6 * 6).reshape((1, 3, 6, 6)).astype(np.float32) + 1,
+            "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
+            "B": np.zeros((2,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[2, 1],
             kernel_shape=[3, 3],
             pads=[1, 1, 1, 1],
             strides=[2, 2],

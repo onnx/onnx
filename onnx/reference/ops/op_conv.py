@@ -3,123 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,R0915,R1702,W0221
 
-from typing import Sequence, Tuple
-
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-
-def _get_indices(i, shape):  # type: ignore
-    res = np.empty((len(shape),), dtype=np.int64)
-    k = len(shape) - 1
-    while k > 0:
-        m = i % shape[k]
-        res[k] = m
-        i -= m
-        i /= shape[k]
-        k -= 1
-    res[0] = i
-    return res
-
-
-def _is_out(ind, shape):  # type: ignore
-    for i, s in zip(ind, shape):
-        if i < 0:
-            return True
-        if i >= s:
-            return True
-    return False
-
-
-def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  # type: ignore
-    """
-    Naive implementation for `im2col`.
-
-    :param image: image (float)
-    :param kernel_shape: kernel shape
-    :param pads: pads
-    :return: result
-    """
-    if not isinstance(kernel_shape, tuple):
-        raise TypeError(f"Unexpected type {type(kernel_shape)!r} for kernel_shape.")
-    if len(data.shape) != len(kernel_shape):
-        raise ValueError(f"Shape mismatch {data.shape!r} and {kernel_shape!r}.")
-    n_dims = len(pads) // 2
-    new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
-    list_output_shape = list(data.shape + kernel_shape)
-    for d in range(n_dims):
-        kd = kernel_shape[d] + (kernel_shape[d] - 1) * (dilations[d] - 1)
-        nd = int(
-            ((list_output_shape[d] - kd + new_pads[d][0] + new_pads[d][1]) / strides[d])
-            + 1
-        )
-        list_output_shape[d] = nd
-    output_shape = tuple(list_output_shape)
-
-    res = np.zeros(output_shape, dtype=data.dtype)
-    kernel_size = np.prod(kernel_shape)
-    res_size = np.prod(res.shape[:-n_dims])
-    for i in range(res_size):
-        i_res = _get_indices(i, res.shape[:-n_dims])
-        t_res = tuple(i_res)
-        for j in range(kernel_size):
-            i_kernel = _get_indices(j, kernel_shape)
-            t_kernel = tuple(i_kernel)
-
-            i_img = i_res * strides - new_pads[:, 0] + i_kernel * dilations
-            t_img = tuple(i_img)
-            if _is_out(t_img, data.shape):
-                res[t_res + t_kernel] = 0
-            else:
-                res[t_res + t_kernel] = data[tuple(t_img)]
-    return res
-
-
-def im2col(
-    img: np.ndarray,
-    kernel_shape: Tuple[int, ...],
-    dilations: Sequence[int],
-    pads: Sequence[int],
-    strides: Sequence[int],
-) -> np.ndarray:
-    res = None
-    for n in range(img.shape[0]):
-        for c in range(img.shape[1]):
-            out = im2col_naive_implementation(
-                img[n, c, ...], kernel_shape, dilations, pads, strides
-            )
-            if res is None:
-                new_shape = img.shape[:2] + out.shape
-                res = np.empty(new_shape, dtype=img.dtype)
-            res[n, c, ...] = out
-    new_shape = res.shape[: -len(kernel_shape)] + (-1,)  # type: ignore
-    return res.reshape(new_shape)  # type: ignore
-
-
-# to remove when completed
-# def im2col_fast_z(X, kernel_shape, pads, strides):
-#     HF, WF = kernel_shape
-#     m, n_C, n_H, n_W = X.shape
-#     out_h = int((n_H + pads[0] + pads[2] - HF) // strides[0]) + 1
-#     out_w = int((n_W + pads[1] + pads[3] - WF) // strides[1]) + 1
-#
-#     level1 = np.tile(np.repeat(np.arange(HF), WF), n_C)
-#     every_levels = strides[0] * np.repeat(np.arange(out_h), out_w)
-#     i = level1.reshape(-1, 1) + every_levels.reshape(1, -1)
-#
-#     slide1 = np.tile(np.tile(np.arange(WF), HF), n_C)
-#     every_slides = strides[1] * np.tile(np.arange(out_w), out_h)
-#     j = slide1.reshape(-1, 1) + every_slides.reshape(1, -1)
-#
-#     d = np.repeat(np.arange(n_C), HF * WF).reshape(-1, 1)
-#
-#     X_padded = np.pad(
-#         X, ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])), mode="constant"
-#     )
-#     cols = X_padded[:, d, i, j]
-#     cols = np.concatenate(cols, axis=-1)
-#     return cols, out_h, out_w
 
 
 def _make_ind(dim, shape):
@@ -246,10 +132,28 @@ def _conv_implementation_im2col(  # type: ignore
         W = new_w
         kernel_shape = new_kernel_shape
 
+    if auto_pad in {"SAME_LOWER", "SAME_UPPER", "VALID"}:
+        head = []
+        tail = []
+        for i in range(len(X.shape) - 2):
+            d = X.shape[i]
+            target_size = (d + strides[i] - 1) // strides[i]
+            pad_needed = (target_size - 1) * strides[i] + kernel_shape[i] - d
+            if auto_pad == "SAME_LOWER":
+                pad_head = (pad_needed + 1) // 2
+            else:
+                pad_head = pad_needed // 2
+            pad_tail = pad_needed - pad_head
+            head.append(pad_head)
+            tail.append(pad_tail)
+        pads = head + tail
+
     c2, out_shape = im2col_fast(X, kernel_shape, pads, strides)
     w_reshaped = W.reshape((-1, c2.shape[0]))
     mul = w_reshaped @ c2
-    mul = mul.reshape((X.shape[0], W.shape[0], *out_shape))
+    mul = mul.reshape((W.shape[0], X.shape[0], *out_shape))
+    perm = (1, 0, *tuple(np.arange(len(X.shape) - 2) + 2))
+    mul = mul.transpose(perm)
 
     if B is not None:
         if B.size == 1:
