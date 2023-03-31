@@ -3,6 +3,7 @@
 import os
 import platform
 import unittest
+import sys
 from typing import Any
 
 import numpy
