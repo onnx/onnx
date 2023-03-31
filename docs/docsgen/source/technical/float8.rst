@@ -2,7 +2,7 @@
 .. _onnx-detail-float8:
 
 ======================
-Float stored on 8 bits
+Float stored in 8 bits
 ======================
 
 .. contents::
