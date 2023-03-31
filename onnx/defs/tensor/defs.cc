@@ -21,7 +21,7 @@ in the 'DataType' enum field in the TensorProto message.
 
 Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
 (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
-result 100. There are some string literals reserved for special floating-point values;
+yield result 100. There are some string literals reserved for special floating-point values;
 "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
 Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
 this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
@@ -39,12 +39,12 @@ if the destination type is not a float 8 type.
 
 * Casting from floating point to:
   * floating point: +/- highest value if OOR (out of range),
-    infinities are converting into NaN if infinity is not available
+    infinities are converted to NaN if infinity is not available
   * fixed point: undefined if OOR.
   * bool: +/- 0.0 to False; all else to True.
 * Casting from fixed point to:
   * floating point: +/- highest value if OOR (out of range),
-    infinities are converting into NaN if infinity is not available
+    infinities are converted to NaN if infinity is not available
   * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
     signed types). For example, 200 (int16) -> -56 (int8).
   * bool: zero to False; nonzero to True.
@@ -55,37 +55,33 @@ if the destination type is not a float 8 type.
 
 Float 8 type were introduced to speed up the training of
 deep models. By default the conversion of a float *x* obeys
-to the following rules. `[x]` means the rounded value.
+to the following rules. `[x]` means the value rounded to
+the target mantissa width.
 
-=============== ========= ========== ========= ===========
-x               E4M3FN    E4M3FNUZ   E5M2      E5M2FNUZ
-=============== ========= ========== ========= ===========
-0               0         0          0         0
--0              -0        0          -0        0
-NaN             NaN       NaN        NaN       NaN
-Inf             FLT_MAX   NaN        FLT_MAX   NaN
--Inf            -FLT_MAX  NaN        -FLT_MAX  NaN
-[x] > FLT_MAX   FLT_MAX   FLT_MAX    FLT_MAX   FLT_MAX
-[x] < -FLT_MAX  -FLT_MAX  -FLT_MAX   -FLT_MAX  -FLT_MAX
-else            RNE       RNE        RNE       RNE
-=============== ========= ========== ========= ===========
+| x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
+|------|----|----|----|----|
+| 0 | 0 | 0 | 0 | 0 |
+|-0 | -0 | 0 | -0 | 0 |
+| NaN | NaN | NaN | NaN | NaN |
+| Inf | FLT_MAX | NaN | FLT_MAX | NaN |
+| -Inf | -FLT_MAX | NaN | -FLT_MAX | NaN |
+| [x] > FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX |
+| [x] < -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
+| else | RNE | RNE | RNE | RNE |
 
 The behavior changes if the parameter 'saturate' is set to False.
 The rules then become:
 
-=============== ======== ========== ====== ===========
-x               E4M3FN   E4M3FNUZ   E5M2   E5M2FNUZ
-=============== ======== ========== ====== ===========
-0               0        0          0      0
--0              -0       0          -0     0
-NaN             NaN      NaN        NaN    NaN
--NaN            -NaN     NaN        -NaN   NaN
-Inf             NaN      NaN        Inf    NaN
--Inf            -NaN     NaN        -Inf   NaN
-[x] > FLT_MAX   NaN      NaN        Inf    NaN
-[x] < -FLT_MAX  NaN      NaN        -Inf   NaN
-else            RNE      RNE        RNE    RNE
-=============== ======== ========== ====== ===========
+| x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
+|------|----|----|----|----|
+| 0 | 0 | 0 | 0 | 0 |
+|-0 | -0 | 0 | -0 | 0 |
+| NaN | NaN | NaN | NaN | NaN |
+| Inf | NaN | NaN | Inf | NaN |
+| -Inf | -NaN | NaN | -Inf | NaN |
+| [x] > FLT_MAX | NaN | NaN | Inf | NaN |
+| [x] < -FLT_MAX | NaN | NaN | -Inf | NaN |
+| else | RNE | RNE | RNE | RNE |
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
