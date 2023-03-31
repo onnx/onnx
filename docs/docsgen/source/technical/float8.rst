@@ -13,7 +13,7 @@ Papers
 
 Two papers have been published in 2022 to introduce floats
 stored on a byte as opposed to float 32 stored on 4 bytes.
-The float precision is much lower but the training precision
+The float precision is much lower but the training accuracy
 does not suffer too much.
 
 `FP8 Formats for Deep Learning <https://arxiv.org/abs/2209.05433>`_
