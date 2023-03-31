@@ -213,7 +213,7 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         ")"
     )
 
-if Version(numpy.__version__) >= Version("1.23.5"):
+if sys.version_info[:2] < (3, 8) or Version(numpy.__version__) >= Version("1.23.5"):
     # Version 1.21.5 causes segmentation faults.
     # onnxruntime should be tested with the same numpy API
     # onnxruntime was compiled with.
