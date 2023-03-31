@@ -1,0 +1,74 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: onnx
+Upstream-Contact:  <>
+Source: onnx.ai
+
+# Sample paragraph, commented out:
+#
+# Files: src/*
+# Copyright: $YEAR $NAME <$CONTACT>
+# License: ...
+
+Files: .azure-pipelines/*.yml
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+
+Files: .github/**/*.md
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: .github/**/*.yml
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/simple/**/test_data_set_0/*pb
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+
+Files: onnx/backend/test/data/node/**/test_data_set_0/*.pb
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/simple/**/*.onnx
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/pytorch-operator/**/test_data_set_0/*.pb
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/pytorch-operator/**/*.onnx
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+
+Files: onnx/backend/test/data/pytorch-operator/**/*.pb
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/node/**/*.onnx
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+
+Files: onnx/backend/test/data/pytorch-converted/**/test_data_set_0/*.pb
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/pytorch-converted/**/*.onnx
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/light/light/*.onnx
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/backend/test/data/light/light/*.onnx
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/onnx-operators*.proto*
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
