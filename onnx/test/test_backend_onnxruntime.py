@@ -2,8 +2,8 @@
 
 import os
 import platform
-import unittest
 import sys
+import unittest
 from typing import Any
 
 import numpy
