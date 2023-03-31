@@ -111,7 +111,7 @@ def _get_ops_template():  # type: ignore
         * **name**: `{{sch.name}} (GitHub) <{{build_doc_url(sch)}}{{sch.name}}>`_
         * **domain**: **{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}**
         * **since_version**: **{{sch.since_version}}**
-        * **function**: {{sch.has_function}}
+        * **function**: {{sch.has_function or sch.has_context_dependent_function}}
         * **support_level**: {{sch.support_level}}
         * **shape inference**: {{sch.has_type_and_shape_inference_function}}
 
