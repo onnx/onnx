@@ -78,7 +78,7 @@ Files: onnx/onnx-operators* onnx/onnx-ml* onnx/onnx-data* onnx/onnx*
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: docs/docsgen/source/api/*rst
+Files: docs/docsgen/source/api/* rst docs/docsgen/source/_static/*
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
@@ -102,7 +102,7 @@ Files: docs/docsgen/source/intro/images/*  docs/docsgen/source/intro/*rst
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: onnx/examples/*ipynb
+Files: onnx/examples/*ipynb onnx/examples/resources/*
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
