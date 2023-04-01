@@ -97,3 +97,11 @@ License: Apache-2.0
 Files: .gitignore .gitmodules .lintrunner.toml .gitattributes .git-blame-ignore-revs .clang* .editorconfig
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
+
+Files: docs/docsgen/source/intro/images/*
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/examples/*ipynb
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
