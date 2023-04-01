@@ -14,7 +14,7 @@ COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
 
-Files: .github/**/*.md * .github/pull_request_template.md
+Files: .github/**/*.md .github/pull_request_template.md
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
