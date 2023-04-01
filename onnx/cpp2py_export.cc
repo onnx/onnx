@@ -115,7 +115,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   py::register_exception<SchemaError>(defs, "SchemaError");
 
   py::class_<OpSchema> op_schema(defs, "OpSchema", "Schema of an operator.");
-  op_schema.def(py::init<>());
 
   // Define the class enums first because they are used as default values in function definitions
   py::enum_<OpSchema::FormalParameterOption>(op_schema, "FormalParameterOption")
@@ -150,15 +149,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def(
-          "__init__",
-          [](OpSchema::Attribute& self,
-             std::string name,
-             AttributeProto::AttributeType type,
-             const std::string& description,
-             bool required) {
-            // Use a lambda to swap the order of the arguments to match the Python API
-            new (&self) OpSchema::Attribute(name, description, type, required);
-          },
+          py::init(
+              [](std::string name, AttributeProto::AttributeType type, const std::string& description, bool required) {
+                // Use a lambda to swap the order of the arguments to match the Python API
+                return OpSchema::Attribute(name, description, type, required);
+              }),
           py::arg("name"),
           py::arg("type"),
           py::arg("description") = "",
@@ -188,19 +183,17 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def(
-          "__init__",
-          [](OpSchema::FormalParameter& self,
-             std::string name,
-             std::string type_str,
-             const std::string& description,
-             OpSchema::FormalParameterOption param_option,
-             bool is_homogeneous,
-             int min_arity,
-             OpSchema::DifferentiationCategory differentiation_category) {
+          py::init([](std::string name,
+                      std::string type_str,
+                      const std::string& description,
+                      OpSchema::FormalParameterOption param_option,
+                      bool is_homogeneous,
+                      int min_arity,
+                      OpSchema::DifferentiationCategory differentiation_category) {
             // Use a lambda to swap the order of the arguments to match the Python API
-            new (&self) OpSchema::FormalParameter(
+            return OpSchema::FormalParameter(
                 name, description, type_str, param_option, is_homogeneous, min_arity, differentiation_category);
-          },
+          }),
           py::arg("name"),
           py::arg("type_str"),
           py::arg("description") = "",
@@ -245,18 +238,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   op_schema
       .def(
-          "__init__",
-          [](OpSchema& self,
-             std::string name,
-             std::string domain,
-             int since_version,
-             std::string doc,
-             std::vector<OpSchema::FormalParameter> inputs,
-             std::vector<OpSchema::FormalParameter> outputs,
-             std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
-             std::vector<OpSchema::Attribute> attributes) {
-            // Inplace construct the OpSchema object to where self is, which is pre-allocated by pybind.
-            new (&self) OpSchema();
+          py::init([](std::string name,
+                      std::string domain,
+                      int since_version,
+                      std::string doc,
+                      std::vector<OpSchema::FormalParameter> inputs,
+                      std::vector<OpSchema::FormalParameter> outputs,
+                      std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
+                      std::vector<OpSchema::Attribute> attributes) {
+            auto self = OpSchema();
 
             self.SetName(name).SetDomain(domain).SinceVersion(since_version).SetDoc(doc);
             // Add inputs and outputs
@@ -298,7 +288,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             }
 
             self.Finalize();
-          },
+
+            return self;
+          }),
           py::arg("name"),
           py::arg("domain"),
           py::arg("since_version"),
