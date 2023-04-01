@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # pylint: disable=C0415,R0912,R0913,R0914,R0915
 """
 Automates the generation of ONNX operators.
@@ -56,7 +60,7 @@ def _get_diff_template():  # type: ignore
             """
         <div id="{{ div_name }}"></div>
         <link rel="stylesheet" type="text/css" href="../_static/diff2html.min.css" />
-        <script type="text/javascript" src="../_static/diff2html-ui.min.js"></script>
+        <script type="text/javascript" src="../_static/diff2html-ui-slim.min.js"></script>
         <script>
         const diffString = `
         --- a/{{ op_name }}{{ version1 }}
@@ -107,7 +111,7 @@ def _get_ops_template():  # type: ignore
         * **name**: `{{sch.name}} (GitHub) <{{build_doc_url(sch)}}{{sch.name}}>`_
         * **domain**: **{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}**
         * **since_version**: **{{sch.since_version}}**
-        * **function**: {{sch.has_function}}
+        * **function**: {{sch.has_function or sch.has_context_dependent_function}}
         * **support_level**: {{sch.support_level}}
         * **shape inference**: {{sch.has_type_and_shape_inference_function}}
 

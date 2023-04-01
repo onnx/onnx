@@ -1,3 +1,7 @@
+.. Copyright (c) ONNX Project Contributors
+..
+.. SPDX-License-Identifier: Apache-2.0
+
 .. _l-function-expect:
 
 Sample operator test code
