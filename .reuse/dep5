@@ -117,3 +117,12 @@ License: Apache-2.0
 Files: onnx/defs/**/*.cc onnx/defs/**/*.h
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
+
+Files: onnx/reference/ops/aionnxml/*py
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/defs/*.cc onnx/defs/*.h
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
