@@ -192,10 +192,10 @@ class TestFormalParameter(unittest.TestCase):
             name,
             type_str,
             description,
-            param_option,
-            is_homogeneous,
-            min_arity,
-            differentiation_category,
+            param_option=param_option,
+            is_homogeneous=is_homogeneous,
+            min_arity=min_arity,
+            differentiation_category=differentiation_category,
         )
 
         self.assertEqual(formal_parameter.name, name)

@@ -14,6 +14,7 @@ class OpSchema:
         domain: str,
         since_version: int,
         doc: str = "",
+        *,
         inputs: Sequence[OpSchema.FormalParameter] = (),
         outputs: Sequence[OpSchema.FormalParameter] = (),
         type_constraints: Sequence[tuple[str, Sequence[str], str]] = (),
@@ -105,6 +106,7 @@ class OpSchema:
             name: str,
             type_str: str,
             description: str = "",
+            *,
             param_option: OpSchema.FormalParameterOption = OpSchema.FormalParameterOption.Single,  # noqa: F821
             is_homogeneous: bool = True,
             min_arity: int = 1,
@@ -149,6 +151,7 @@ class OpSchema:
             name: str,
             type: OpSchema.AttrType,
             description: str = "",
+            *,
             required: bool = True,
         ) -> None: ...
         @property

@@ -162,6 +162,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::arg("name"),
           py::arg("type"),
           py::arg("description") = "",
+          py::kw_only(),
           py::arg("required") = true)
       .def_readonly("name", &OpSchema::Attribute::name)
       .def_readonly("description", &OpSchema::Attribute::description)
@@ -203,6 +204,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::arg("name"),
           py::arg("type_str"),
           py::arg("description") = "",
+          py::kw_only(),
           py::arg("param_option") = OpSchema::Single,
           py::arg("is_homogeneous") = true,
           py::arg("min_arity") = 1,
@@ -301,6 +303,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::arg("domain"),
           py::arg("since_version"),
           py::arg("doc") = "",
+          py::kw_only(),
           py::arg("inputs") = std::vector<OpSchema::FormalParameter>{},
           py::arg("outputs") = std::vector<OpSchema::FormalParameter>{},
           py::arg("type_constraints") = std::vector<std::tuple<
