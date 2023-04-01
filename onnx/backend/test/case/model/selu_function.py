@@ -62,7 +62,6 @@ class SeluFunction(Base):
 
         expect(model, inputs=[x], outputs=[y[0]], name="test_selu_function")
 
-
     @staticmethod
     def export() -> None:
         default_alpha = 1.67326319217681884765625
