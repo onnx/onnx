@@ -129,3 +129,7 @@ License: Apache-2.0
 Files: cmake/ONNXConfig*.in CMakeLists.txt cmake/*cmake cmake/
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
+
+Files: .vscode/settings.json docs/docsgen/source/_templates/layout.html docs/docsgen/source/_templates/sidebar-nav-bs.html docs/images/onnx_hub_arch.svg docs/onnx-horizontal-color.png tools/protoc-gen-mypy.sh.in
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
