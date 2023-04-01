@@ -14,7 +14,7 @@ COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
 
-Files: .github/**/*.md
+Files: .github/**/*.md * .github/pull_request_template.md
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
@@ -126,6 +126,6 @@ Files: onnx/defs/*.cc onnx/defs/*.h
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: cmake/ONNXConfig*.in CMakeLists.txt
+Files: cmake/ONNXConfig*.in CMakeLists.txt cmake/*cmake cmake/
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
