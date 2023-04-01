@@ -110,6 +110,10 @@ Files: MANIFEST.in VERSION_NUMBER CODE_OF_CONDUCT.md CODEOWNERS pyproject.toml r
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: onnx/onnx_cpp2py_export/*pyi
+Files: onnx/onnx_cpp2py_export/*pyi onnx/py.typed
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/defs/**/*.cc onnx/defs/**/*.h
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
