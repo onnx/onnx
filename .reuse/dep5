@@ -74,7 +74,7 @@ COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
 
-Files: onnx/onnx-operators*.proto*
+Files: onnx/onnx-operators* onnx/onnx-ml* onnx/onnx-data* onnx/onnx*
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
