@@ -296,6 +296,11 @@ class OpSchema final {
   OpSchema(std::string name, std::string file, int line)
       : name_(std::move(name)), file_(std::move(file)), line_(line), support_(SupportType::COMMON) {}
 
+  OpSchema(const OpSchema&) = default;
+  OpSchema(OpSchema&&) = default;
+  OpSchema operator=(const OpSchema&) = delete;
+  OpSchema operator=(OpSchema&&) = delete;
+
   /**
    * @brief Returns the file that the op schema is registered from.
    */
