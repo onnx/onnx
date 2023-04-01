@@ -105,3 +105,7 @@ License: Apache-2.0
 Files: onnx/examples/*ipynb
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
+
+Files: MANIFEST.in VERSION_NUMBER CODE_OF_CONDUCT.md CODEOWNERS pyproject.toml requirements-dev.txt requirements-release.txt requirements.txt 
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
