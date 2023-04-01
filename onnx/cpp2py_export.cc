@@ -50,7 +50,7 @@ std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> ParseProto
     result[kv.first] = &values[i];
     i++;
   }
-  return make_pair(move(values), result);
+  return std::make_pair(std::move(values), result);
 }
 
 std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
@@ -253,11 +253,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              std::vector<OpSchema::FormalParameter> outputs,
              std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
              std::vector<OpSchema::Attribute> attributes) {
-            auto schema = OpSchema().SetName(name).SetDomain(domain).SinceVersion(since_version).SetDoc(doc);
+            // Inplace construct the OpSchema object to where self is, which is pre-allocated by pybind.
+            new (&self) OpSchema();
+
+            self.SetName(name).SetDomain(domain).SinceVersion(since_version).SetDoc(doc);
             // Add inputs and outputs
             for (auto i = 0; i < inputs.size(); ++i) {
-              const auto& input = inputs[i];
-              schema = schema.Input(
+              const OpSchema::FormalParameter& input = inputs[i];
+              self.Input(
                   i,
                   input.GetName(),
                   input.GetDescription(),
@@ -268,8 +271,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                   input.GetDifferentiationCategory());
             }
             for (auto i = 0; i < outputs.size(); ++i) {
-              const auto& output = outputs[i];
-              schema = schema.Output(
+              const OpSchema::FormalParameter& output = outputs[i];
+              self.Output(
                   i,
                   output.GetName(),
                   output.GetDescription(),
@@ -285,16 +288,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               std::vector<std::string> constraints;
               std::string description;
               tie(type_str, constraints, description) = type_constraint;
-              schema = schema.TypeConstraint(type_str, constraints, description);
+              self.TypeConstraint(type_str, constraints, description);
             }
             // Add attributes
             for (const auto& attribute : attributes) {
-              schema = schema.Attr(attribute);
+              self.Attr(attribute);
             }
 
-            schema.Finalize();
-
-            new (&self) OpSchema(schema);
+            self.Finalize();
           },
           py::arg("name"),
           py::arg("domain"),

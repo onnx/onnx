@@ -438,8 +438,8 @@ class OpSchema final {
           required(false),
           default_value(std::move(default_value_)) {}
 
-    std::string name;
-    std::string description;
+    const std::string name;
+    const std::string description;
     AttributeProto::AttributeType type;
     bool required;
     AttributeProto default_value;
