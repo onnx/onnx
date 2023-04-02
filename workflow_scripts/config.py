@@ -1,5 +1,3 @@
-# Copyright (c) ONNX Project Contributors
-#
 # SPDX-License-Identifier: Apache-2.0
 
 # (1) TODO: Fix https://github.com/onnx/onnx/issues/4101
