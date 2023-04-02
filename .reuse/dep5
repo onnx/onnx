@@ -122,7 +122,7 @@ Files: onnx/reference/ops/aionnxml/*py
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: onnx/defs/*.cc onnx/defs/*.h
+Files: onnx/defs/*.cc onnx/defs/*.h onnx/gen_proto.py
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
