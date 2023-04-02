@@ -133,3 +133,11 @@ License: Apache-2.0
 Files: .vscode/settings.json docs/docsgen/source/_templates/layout.html docs/docsgen/source/_templates/sidebar-nav-bs.html docs/images/onnx_hub_arch.svg docs/onnx-horizontal-color.png tools/protoc-gen-mypy.sh.in
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
+
+Files: .vscode/settings.json docs/docsgen/source/_templates/layout.html docs/docsgen/source/_templates/sidebar-nav-bs.html docs/images/onnx_hub_arch.svg docs/onnx-horizontal-color.png tools/protoc-gen-mypy.sh.in
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
+Files: onnx/gen_proto.py tools/protoc-gen-mypy.bat onnx/reference/op_run.py
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
