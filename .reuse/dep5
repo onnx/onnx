@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: onnx
-Upstream-Contact:  <>
+Upstream-Contact: onnx-technical-discuss@lists.lfaidata.foundation
 Source: onnx.ai
 
 # Sample paragraph, commented out:
