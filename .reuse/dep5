@@ -143,6 +143,6 @@ COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
 # remove that after regeneration of proto files
-Files: onnx/backend/sample/ops/abs.py
+Files: onnx/backend/sample/ops/abs.py onnx/gen_proto.py
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
