@@ -29,7 +29,12 @@ class TestSchema(unittest.TestCase):
 
 
 class TestOpSchema(unittest.TestCase):
-    def test_init_is_successful(self) -> None:
+    def test_init(self):
+        # Test that the constructor creates an OpSchema object
+        schema = defs.OpSchema("test_op", "test_domain", 1)
+        self.assertIsInstance(schema, defs.OpSchema)
+
+    def test_init_with_inputs(self) -> None:
         op_schema = defs.OpSchema(
             "test_op",
             "test_domain",
@@ -91,7 +96,7 @@ class TestOpSchema(unittest.TestCase):
         )
         self.assertEqual(op_schema.attributes["attr1"].description, "attr1 description")
 
-    def test_init_is_successful_without_optional_arguments(self) -> None:
+    def test_init_without_optional_arguments(self) -> None:
         op_schema = defs.OpSchema("test_op", "test_domain", 1)
         self.assertEqual(op_schema.name, "test_op")
         self.assertEqual(op_schema.domain, "test_domain")
@@ -101,11 +106,6 @@ class TestOpSchema(unittest.TestCase):
         self.assertEqual(len(op_schema.type_constraints), 0)
 
     # ChatGPT generated tests
-    def test_constructor(self):
-        # Test that the constructor creates an OpSchema object
-        schema = defs.OpSchema("test_op", "test_domain", 1)
-        self.assertIsInstance(schema, defs.OpSchema)
-
     def test_name(self):
         # Test that the name parameter is required and is a string
         with self.assertRaises(TypeError):
@@ -222,7 +222,7 @@ class TestTypeConstraintParam(unittest.TestCase):
             ("tuple", "T", ("tensor(float)", "tensor(int64)"), "Test description"),
         ]
     )
-    def test_init_is_successful(
+    def test_init(
         self,
         _: str,
         type_param_str: str,
@@ -247,6 +247,16 @@ class TestAttribute(unittest.TestCase):
         self.assertEqual(attribute.name, name)
         self.assertEqual(attribute.type, type_)
         self.assertEqual(attribute.description, description)
+
+    def test_init_with_default_value(self):
+        default_value = (
+            defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
+        )
+        self.assertIsInstance(default_value, onnx.AttributeProto)
+        attribute = defs.OpSchema.Attribute("attr1", default_value, "attr1 description")
+        self.assertEqual(default_value, attribute.default_value)
+        self.assertEqual("attr1", attribute.name)
+        self.assertEqual("attr1 description", attribute.description)
 
 
 if __name__ == "__main__":

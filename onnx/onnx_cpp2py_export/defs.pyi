@@ -146,6 +146,7 @@ class OpSchema:
         TYPE_PROTOS: "OpSchema.AttrType" = ...
 
     class Attribute:
+        @overload
         def __init__(
             self,
             name: str,
@@ -153,6 +154,13 @@ class OpSchema:
             description: str = "",
             *,
             required: bool = True,
+        ) -> None: ...
+        @overload
+        def __init__(
+            self,
+            name: str,
+            default_value: AttributeProto,
+            description: str = "",
         ) -> None: ...
         @property
         def name(self) -> str: ...

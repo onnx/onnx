@@ -149,16 +149,28 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def(
-          py::init(
-              [](std::string name, AttributeProto::AttributeType type, const std::string& description, bool required) {
-                // Use a lambda to swap the order of the arguments to match the Python API
-                return OpSchema::Attribute(name, description, type, required);
-              }),
+          py::init([](std::string name, AttributeProto::AttributeType type, std::string description, bool required) {
+            // Construct an attribute.
+            // Use a lambda to swap the order of the arguments to match the Python API
+            return OpSchema::Attribute(name, description, type, required);
+          }),
           py::arg("name"),
           py::arg("type"),
           py::arg("description") = "",
           py::kw_only(),
           py::arg("required") = true)
+      .def(
+          py::init([](std::string name, const py::object& default_value, std::string description) {
+            // Construct an attribute with a default value.
+            // Attributes with default values are not required
+            auto bytes = default_value.attr("SerializeToString")().cast<py::bytes>();
+            AttributeProto proto{};
+            ParseProtoFromPyBytes(&proto, bytes);
+            return OpSchema::Attribute(name, description, proto);
+          }),
+          py::arg("name"),
+          py::arg("default_value"), // type: onnx.AttributeProto
+          py::arg("description") = "")
       .def_readonly("name", &OpSchema::Attribute::name)
       .def_readonly("description", &OpSchema::Attribute::description)
       .def_readonly("type", &OpSchema::Attribute::type)
