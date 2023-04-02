@@ -1,5 +1,3 @@
-# Copyright (c) ONNX Project Contributors
-#
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,W0221
 
