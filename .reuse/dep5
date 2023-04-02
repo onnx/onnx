@@ -141,3 +141,8 @@ License: Apache-2.0
 Files: onnx/gen_proto.py tools/protoc-gen-mypy.bat onnx/reference/op_run.py
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
+
+# remove that after regeneration of proto files
+Files: onnx/backend/sample/ops/abs.py
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
