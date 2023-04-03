@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0302,R0912
 import collections.abc
@@ -656,6 +658,15 @@ def get_attribute_value(attr: AttributeProto) -> Any:
     if attr.type == AttributeProto.TYPE_PROTOS:
         return list(attr.type_protos)
     raise ValueError(f"Unsupported ONNX attribute: {attr}")
+
+
+def get_node_attr_value(node: NodeProto, attr_name: str) -> Any:
+    matching = [x for x in node.attribute if x.name == attr_name]
+    if len(matching) > 1:
+        raise ValueError(f"Node has multiple attributes with name {attr_name}")
+    if len(matching) < 1:
+        raise ValueError(f"Node has no attribute with name {attr_name}")
+    return get_attribute_value(matching[0])
 
 
 def make_empty_tensor_value_info(name: str) -> ValueInfoProto:

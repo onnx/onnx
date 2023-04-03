@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -492,6 +492,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   parser.def("parse_model", Parse<ModelProto>);
   parser.def("parse_graph", Parse<GraphProto>);
   parser.def("parse_function", Parse<FunctionProto>);
+  parser.def("parse_node", Parse<NodeProto>);
 
   // Submodule `printer`
   auto printer = onnx_cpp2py_export.def_submodule("printer");
