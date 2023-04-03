@@ -51,3 +51,19 @@ def parse_function(function_text: str) -> onnx.FunctionProto:
         function_proto.ParseFromString(function_proto_str)
         return function_proto
     raise ParseError(msg)
+
+
+def parse_node(node_text: str) -> onnx.NodeProto:
+    """Parse a string to build a NodeProto.
+
+    Arguments:
+        node_text: formatted string
+    Returns:
+        NodeProto
+    """
+    (success, msg, node_proto_str) = C.parse_node(node_text)
+    if success:
+        node_proto = onnx.NodeProto()
+        node_proto.ParseFromString(node_proto_str)
+        return node_proto
+    raise ParseError(msg)
