@@ -94,8 +94,7 @@ jobs:
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != '3.11'
       run: |
-        python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt
-        python -m pip install dist/*manylinux2014_x86_64.whl
+        python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime
         export ORT_MAX_IR_SUPPORTED_VERSION=8
         export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
