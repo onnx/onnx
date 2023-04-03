@@ -522,7 +522,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void replaceAttrRefs(NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+  void replaceAttrRefs(NodeProto& n, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
     auto& attributes = *n.mutable_attribute();
     for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
       auto& attr = *attr_iter;
@@ -551,13 +551,13 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void replaceAttrRefs(GraphProto& graph, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+  void replaceAttrRefs(GraphProto& graph, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
     for (auto& n : *graph.mutable_node()) {
       replaceAttrRefs(n, attr_map);
     }
   }
 
-  void process(const NodeProto& n, std::unordered_map<std::string, const AttributeProto*> attr_map) {
+  void process(const NodeProto& n, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
     NodeProto copy_n(n);
     replaceAttrRefs(copy_n, attr_map);
     process(copy_n);
@@ -569,18 +569,24 @@ class ShapeInferenceImplBase {
     reuse_constant_tensors = false;
 
     // Get a temporary tensor-shape map
+    const int num_actual_inputs = static_cast<int>(ctx.getNumInputs());
     const auto num_func_inputs = func_proto.input_size();
     std::vector<TypeProto> types_cache(num_func_inputs);
     for (int i = 0; i < num_func_inputs; ++i) {
-      if (ctx.getInputType(i) == nullptr) {
-        fail_type_inference("Input ", i, " type is missing.");
-      }
-      types_cache[i] = *ctx.getInputType(i); // TODO: investigate whether we can remove cache
-      value_types_by_name[func_proto.input().Get(i)] = &types_cache[i];
+      auto& parameter_name = func_proto.input().Get(i);
+      auto* type_ptr = (i < num_actual_inputs) ? ctx.getInputType(i) : nullptr;
+      // nullptr is valid, and indicates a missing optional input
+      if (type_ptr != nullptr) {
+        // Use a temporary copy of original type.
+        // TODO: investigate whether we can eliminate use of temporary copy
+        types_cache[i] = *type_ptr;
+        value_types_by_name[parameter_name] = &types_cache[i];
+      } else
+        value_types_by_name[parameter_name] = nullptr;
     }
 
     // Create a temporary initializer value map
-    for (int i = 0; i < static_cast<int>(ctx.getNumInputs()) && i < num_func_inputs; ++i) {
+    for (int i = 0; i < num_actual_inputs && i < num_func_inputs; ++i) {
       const TypeProto* type = ctx.getInputType(i);
       if (type->value_case() == TypeProto::kTensorType && ctx.getInputData(i) != nullptr) {
         input_data_by_name[func_proto.input().Get(i)] = ctx.getInputData(i);
