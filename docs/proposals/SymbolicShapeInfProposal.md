@@ -1,3 +1,9 @@
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Proposal - Symbolic Shape Inference And Partial Data Propagation  
 
 *Note: This proposal was accepted and implemented in ONNX 1.10. Following PRs implemented this proposal: 3518, 3551, 3593, 3580*

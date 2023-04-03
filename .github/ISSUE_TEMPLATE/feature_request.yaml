@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Feature request
 description: Create a feature request for a functionality that does not currently exist in the ONNX.
 title: "[Feature request] "

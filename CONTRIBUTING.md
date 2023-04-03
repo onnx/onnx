@@ -1,3 +1,7 @@
+<!--
+Copyright (c) ONNX Project Contributors
+-->
+
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
 # ONNX Community Involvement and Contribution Guidelines
@@ -31,7 +35,7 @@ ONNX has adopted the [DCO](https://en.wikipedia.org/wiki/Developer_Certificate_o
 
 DCO is provided by including a sign-off-by line in commit messages. Using the `-s` flag for `git commit` will automatically append this line. For example, running `git commit -s -m 'commit info.'` it will produce a commit that has the message `commit info. Signed-off-by: My Name <my_email@my_company.com>`. The DCO bot will ensure commits are signed with an email address that matches the commit author before they are eligible to be merged.
 
-If you are using a GUI like the GitHub web site or GitHub Desktop, you'll need to append the `Signed-off-by: My Name <my_email@my_company.com>` manually to each commit message.
+If you are using a GUI like the GitHub web site or GitHub Desktop, you'll need to append the `Signed-off-by: My Name <my_email@my_company.com>` manually to each commit message. For the onnx organization [sign-off](https://github.blog/changelog/2022-06-08-admins-can-require-sign-off-on-web-based-commits/) for web based commits is enabled. When this is activated you will see "Sign off and propose changes" instead of "Propose changes" when you are editing files directly at github. It is recommended to set this setting for your own fork as well. Since in the review process commits are made on this fork.
 
 NOTE: the sign-off is needed for each commit in the PR, not at the PR level.
 
