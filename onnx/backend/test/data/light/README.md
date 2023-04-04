@@ -1,3 +1,9 @@
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Light models
 
 The models in this folder were created by replacing
