@@ -557,7 +557,7 @@ OpSchema& OpSchema::Input(int n, FormalParameter formal_parameter) {
   if (inputs_.size() <= static_cast<size_t>(n)) {
     inputs_.resize(n + 1);
   }
-  inputs_[n] = formal_parameter;
+  inputs_[n] = std::move(formal_parameter);
   return *this;
 }
 
@@ -614,7 +614,7 @@ OpSchema& OpSchema::Output(int n, FormalParameter formal_parameter) {
   if (outputs_.size() <= static_cast<size_t>(n)) {
     outputs_.resize(n + 1);
   }
-  outputs_[n] = formal_parameter;
+  outputs_[n] = std::move(formal_parameter);
   return *this;
 }
 
