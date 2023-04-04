@@ -86,5 +86,14 @@ jobs:
 
       rm -rf .setuptools-cmake-build
 
+      python -m pip install -q onnxruntime
+      set ORT_MAX_IR_SUPPORTED_VERSION=8
+      set ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
+      set ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+      pytest
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "pytest failed when testing onnx with onnxruntime"
+        EXIT 1
+      )
 
     displayName: Install and test ONNX
