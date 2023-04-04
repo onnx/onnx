@@ -204,7 +204,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                       OpSchema::DifferentiationCategory differentiation_category) {
             // Use a lambda to swap the order of the arguments to match the Python API
             return OpSchema::FormalParameter(
-                std::move(name), description, std::move(type_str), param_option, is_homogeneous, min_arity, differentiation_category);
+                std::move(name),
+                description,
+                std::move(type_str),
+                param_option,
+                is_homogeneous,
+                min_arity,
+                differentiation_category);
           }),
           py::arg("name"),
           py::arg("type_str"),
@@ -263,31 +269,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             self.SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
             // Add inputs and outputs
             for (auto i = 0; i < inputs.size(); ++i) {
-              const OpSchema::FormalParameter& input = inputs[i];
-              self.Input(
-                  i,
-                  input.GetName(),
-                  input.GetDescription(),
-                  input.GetTypeStr(),
-                  input.GetOption(),
-                  input.GetIsHomogeneous(),
-                  input.GetMinArity(),
-                  input.GetDifferentiationCategory());
+              self.Input(i, inputs[i]);
             }
             for (auto i = 0; i < outputs.size(); ++i) {
-              const OpSchema::FormalParameter& output = outputs[i];
-              self.Output(
-                  i,
-                  output.GetName(),
-                  output.GetDescription(),
-                  output.GetTypeStr(),
-                  output.GetOption(),
-                  output.GetIsHomogeneous(),
-                  output.GetMinArity(),
-                  output.GetDifferentiationCategory());
+              self.Output(i, outputs[i]);
             }
             // Add type constraints
-            for (const auto& type_constraint : type_constraints) {
+            for (auto& type_constraint : type_constraints) {
               std::string type_str;
               std::vector<std::string> constraints;
               std::string description;

@@ -494,6 +494,8 @@ class OpSchema final {
     std::string description;
   };
 
+  OpSchema& Input(int n, FormalParameter formal_parameter);
+
   // Grammar for type strings used in Input(), Output().
   // <type> ::= <data_type> |
   //            tensor(<data_type>) |
@@ -540,6 +542,8 @@ class OpSchema final {
       bool is_homogeneous = true,
       int min_arity = 1,
       DifferentiationCategory differentiation_category = Unknown);
+
+  OpSchema& Output(int n, FormalParameter formal_parameter);
 
   OpSchema& Output(
       int n,
