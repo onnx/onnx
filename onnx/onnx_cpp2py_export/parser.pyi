@@ -23,3 +23,11 @@ def parse_function(function: str) -> Tuple[bool, bytes, bytes]:
     Otherwise, error-message contains a string describing the parse error.
     """
     ...
+
+def parse_node(node: str) -> Tuple[bool, bytes, bytes]:
+    """
+    Returns (success-flag, error-message, serialized-proto).
+    If success-flag is true, then serialized-proto contains the parsed NodeProto.
+    Otherwise, error-message contains a string describing the parse error.
+    """
+    ...

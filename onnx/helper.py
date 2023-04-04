@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0302,R0912
 import collections.abc
@@ -541,48 +543,30 @@ def make_optional(
     return optional
 
 
-def _to_bytes_or_false(val: Union[str, bytes]) -> Union[bytes, bool]:
-    """An internal graph to convert the input to a bytes or to False.
-
-    The criteria for conversion is as follows and should be python 2 and 3
-    compatible:
-    - If val is py2 str or py3 bytes: return bytes
-    - If val is py2 unicode or py3 str: return val.decode('utf-8')
-    - Otherwise, return False
-    """
-    if isinstance(val, bytes):
-        return val
-    try:
-        return val.encode("utf-8")
-    except AttributeError:
-        return False
+def _to_bytes(value: Union[str, bytes]) -> bytes:
+    """Coerce a string (or bytes) value into UTF-8 bytes."""
+    return value if isinstance(value, bytes) else value.encode("utf-8")
 
 
 def make_attribute(  # pylint: disable=too-many-statements
     key: str, value: Any, doc_string: Optional[str] = None
-) -> AttributeProto:  # pylint: disable=too-many-statements
+) -> AttributeProto:
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
     attr.name = key
     if doc_string:
         attr.doc_string = doc_string
 
-    is_iterable = isinstance(value, collections.abc.Iterable)
-    bytes_or_false = _to_bytes_or_false(value)
-    # First, singular cases
-    # float
-    if isinstance(value, float):
-        attr.f = value
-        attr.type = AttributeProto.FLOAT
-    # integer
-    elif isinstance(value, numbers.Integral):
-        attr.i = cast(int, value)
+    # Singular cases
+    if isinstance(value, numbers.Integral):
+        attr.i = int(value)
         attr.type = AttributeProto.INT
-    # string
-    elif bytes_or_false is not False:
-        if not isinstance(bytes_or_false, bytes):
-            raise TypeError(f"bytes_or_false must be an instance of {bytes}.")
-        attr.s = bytes_or_false
+    elif isinstance(value, numbers.Real):
+        attr.f = float(value)
+        attr.type = AttributeProto.FLOAT
+    elif isinstance(value, (str, bytes)):
+        # Encode strings into utf-8
+        attr.s = _to_bytes(value)
         attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
@@ -596,40 +580,37 @@ def make_attribute(  # pylint: disable=too-many-statements
     elif isinstance(value, TypeProto):
         attr.tp.CopyFrom(value)
         attr.type = AttributeProto.TYPE_PROTO
-    # third, iterable cases
-    elif is_iterable:
-        byte_array = [_to_bytes_or_false(v) for v in value]
-        if all(isinstance(v, numbers.Integral) for v in value):
-            # Turn np.int32/64 into Python built-in int.
-            attr.ints.extend(int(v) for v in value)
+    # Iterable cases
+    elif isinstance(value, collections.abc.Iterable):
+        value = list(value)
+        types = {type(v) for v in value}
+        if all(issubclass(t, numbers.Integral) for t in types):
+            attr.ints.extend(value)
             attr.type = AttributeProto.INTS
-        elif all(isinstance(v, numbers.Real) for v in value):
-            # Since ints and floats are members of Real, this allows a mix of ints and floats
-            # (and converts the ints to floats).
-            attr.floats.extend(float(v) for v in value)
+        elif all(issubclass(t, numbers.Real) for t in types):
+            attr.floats.extend(value)
             attr.type = AttributeProto.FLOATS
-        elif all(map(lambda bytes_or_false: bytes_or_false is not False, byte_array)):
-            attr.strings.extend(cast(List[bytes], byte_array))
+        elif all(issubclass(t, (str, bytes)) for t in types):
+            attr.strings.extend(_to_bytes(v) for v in value)
             attr.type = AttributeProto.STRINGS
-        elif all(isinstance(v, TensorProto) for v in value):
+        elif all(issubclass(t, TensorProto) for t in types):
             attr.tensors.extend(value)
             attr.type = AttributeProto.TENSORS
-        elif all(isinstance(v, SparseTensorProto) for v in value):
+        elif all(issubclass(t, SparseTensorProto) for t in types):
             attr.sparse_tensors.extend(value)
             attr.type = AttributeProto.SPARSE_TENSORS
-        elif all(isinstance(v, GraphProto) for v in value):
+        elif all(issubclass(t, GraphProto) for t in types):
             attr.graphs.extend(value)
             attr.type = AttributeProto.GRAPHS
-        elif all(isinstance(tp, TypeProto) for tp in value):
+        elif all(issubclass(t, TypeProto) for t in types):
             attr.type_protos.extend(value)
             attr.type = AttributeProto.TYPE_PROTOS
         else:
             raise ValueError(
-                "You passed in an iterable attribute but I cannot figure out "
-                "its applicable type."
+                "Could not infer the attribute type from the elements of the passed Iterable value."
             )
     else:
-        raise TypeError(f'value "{value}" is not valid attribute data type.')
+        raise TypeError(f"'{value}' is not an accepted attribute value.")
     return attr
 
 
@@ -677,6 +658,15 @@ def get_attribute_value(attr: AttributeProto) -> Any:
     if attr.type == AttributeProto.TYPE_PROTOS:
         return list(attr.type_protos)
     raise ValueError(f"Unsupported ONNX attribute: {attr}")
+
+
+def get_node_attr_value(node: NodeProto, attr_name: str) -> Any:
+    matching = [x for x in node.attribute if x.name == attr_name]
+    if len(matching) > 1:
+        raise ValueError(f"Node has multiple attributes with name {attr_name}")
+    if len(matching) < 1:
+        raise ValueError(f"Node has no attribute with name {attr_name}")
+    return get_attribute_value(matching[0])
 
 
 def make_empty_tensor_value_info(name: str) -> ValueInfoProto:

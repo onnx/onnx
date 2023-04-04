@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0902,R0912,R0913,R0914,R0915
 from io import BytesIO
@@ -143,6 +145,13 @@ class ReferenceEvaluator:
 
             def _run(self, ...):
                 ...
+
+        An operator may be different in a later opset. In that case,
+        a new implementation needs to be registered. `Pad_11`, `Pad_18`.
+        `Pad_11` is the implementation chose for opset in [11, 17].
+        `Pad_18` is selected for any greater opset. Both classes must be
+        imported into file `_op_list.py` to register their existence to the
+        runtime.
     """
 
     def __init__(  # type: ignore

@@ -432,6 +432,8 @@ class OnnxParser : public ParserBase {
   Status Parse(OpsetIdList& opsets);
 
   bool NextIsType();
+
+  bool NextIsIdentifier();
 };
 
 } // namespace ONNX_NAMESPACE
