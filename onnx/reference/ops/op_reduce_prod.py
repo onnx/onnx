@@ -11,7 +11,11 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 class ReduceProd_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
         axes = tuple(axes) if axes is not None else None
-        return (np.prod(data, axis=axes, keepdims=keepdims, dtype=data.dtype),)
+        res = np.prod(data, axis=axes, keepdims=keepdims, dtype=data.dtype)
+        if keepdims == 0 and not isinstance(res, np.ndarray):
+            # The runtime must return a numpy array of a single float.
+            res = np.array(res)
+        return (res,)
 
 
 class ReduceProd_18(OpRunReduceNumpy):
@@ -21,4 +25,8 @@ class ReduceProd_18(OpRunReduceNumpy):
 
         axes = self.handle_axes(axes)
         keepdims = keepdims != 0  # type: ignore
-        return (np.prod(data, axis=axes, keepdims=keepdims, dtype=data.dtype),)
+        res = np.prod(data, axis=axes, keepdims=keepdims, dtype=data.dtype)
+        if not keepdims and not isinstance(res, np.ndarray):
+            # The runtime must return a numpy array of a single float.
+            res = np.array(res)
+        return (res,)

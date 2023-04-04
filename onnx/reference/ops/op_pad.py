@@ -29,7 +29,7 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
     if mode == "constant":
         return np.pad(
             data, pad_width=pad_width, mode=mode, constant_values=constant_values
-        )
+        ).astype(data.dtype)
     return np.pad(data, pad_width=pad_width, mode=mode).astype(data.dtype)
 
 
