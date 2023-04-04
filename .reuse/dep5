@@ -61,6 +61,10 @@ Files: onnx/backend/test/data/light/*.onnx
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
+Files: onnx/backend/test/data/light/*.pb
+COPYRIGHT: Copyright (c) ONNX Project Contributors
+License: Apache-2.0
+
 Files: onnx/backend/test/data/real/**/*.json
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
