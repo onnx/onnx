@@ -152,7 +152,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::init([](std::string name, AttributeProto::AttributeType type, std::string description, bool required) {
             // Construct an attribute.
             // Use a lambda to swap the order of the arguments to match the Python API
-            return OpSchema::Attribute(name, description, type, required);
+            return OpSchema::Attribute(std::move(name), std::move(description), type, required);
           }),
           py::arg("name"),
           py::arg("type"),
@@ -166,7 +166,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             auto bytes = default_value.attr("SerializeToString")().cast<py::bytes>();
             AttributeProto proto{};
             ParseProtoFromPyBytes(&proto, bytes);
-            return OpSchema::Attribute(name, description, proto);
+            return OpSchema::Attribute(std::move(name), std::move(description), std::move(proto));
           }),
           py::arg("name"),
           py::arg("default_value"), // type: onnx.AttributeProto
@@ -204,7 +204,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                       OpSchema::DifferentiationCategory differentiation_category) {
             // Use a lambda to swap the order of the arguments to match the Python API
             return OpSchema::FormalParameter(
-                name, description, type_str, param_option, is_homogeneous, min_arity, differentiation_category);
+                std::move(name), description, std::move(type_str), param_option, is_homogeneous, min_arity, differentiation_category);
           }),
           py::arg("name"),
           py::arg("type_str"),
@@ -260,7 +260,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                       std::vector<OpSchema::Attribute> attributes) {
             auto self = OpSchema();
 
-            self.SetName(name).SetDomain(domain).SinceVersion(since_version).SetDoc(doc);
+            self.SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
             // Add inputs and outputs
             for (auto i = 0; i < inputs.size(); ++i) {
               const OpSchema::FormalParameter& input = inputs[i];
@@ -295,8 +295,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               self.TypeConstraint(type_str, constraints, description);
             }
             // Add attributes
-            for (const auto& attribute : attributes) {
-              self.Attr(attribute);
+            for (auto& attribute : attributes) {
+              self.Attr(std::move(attribute));
             }
 
             self.Finalize();
