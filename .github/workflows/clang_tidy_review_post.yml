@@ -1,0 +1,15 @@
+# This standalone CI is needed for commenting in PRs
+name: Post clang-tidy review comments
+
+on:
+  workflow_run:
+    # The name field of the lint action
+    workflows: ["Lint"]
+    types:
+      - completed
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ZedThree/clang-tidy-review/post@ddfe311e5d2ee5ea096cedc21adcbdb83c32f62b # v0.12.1
