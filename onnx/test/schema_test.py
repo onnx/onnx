@@ -105,7 +105,6 @@ class TestOpSchema(unittest.TestCase):
         self.assertEqual(len(op_schema.outputs), 0)
         self.assertEqual(len(op_schema.type_constraints), 0)
 
-    # ChatGPT generated tests
     def test_name(self):
         # Test that the name parameter is required and is a string
         with self.assertRaises(TypeError):
