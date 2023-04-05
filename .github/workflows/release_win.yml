@@ -132,8 +132,7 @@ jobs:
       if: matrix.python-version != '3.11'
       run: |
         cd onnx
-        python -m pip uninstall -y onnx protobuf numpy && python -m pip install -q -r requirements-release.txt
-        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime
         $Env:ORT_MAX_IR_SUPPORTED_VERSION=8
         $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3

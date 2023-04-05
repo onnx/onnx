@@ -1,4 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 import onnx
 import onnx.onnx_cpp2py_export.parser as C  # noqa: N812
 
@@ -57,7 +60,7 @@ def parse_node(node_text: str) -> onnx.NodeProto:
     """Parse a string to build a NodeProto.
 
     Arguments:
-        node_text (string): formatted string
+        node_text: formatted string
     Returns:
         NodeProto
     """
