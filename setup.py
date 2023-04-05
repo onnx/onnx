@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import glob
@@ -24,7 +26,7 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, "onnx")
 TP_DIR = os.path.join(TOP_DIR, "third_party")
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, ".setuptools-cmake-build")
-PACKAGE_NAME = "onnx"
+PACKAGE_NAME = "onnx-protobufv21"
 
 WINDOWS = os.name == "nt"
 

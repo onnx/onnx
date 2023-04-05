@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -194,6 +196,12 @@ TEST(ParserTest, AttributeTest) {
 )ONNX");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_GRAPH);
   EXPECT_EQ(attr.g().node_size(), 2);
+
+  Parse(attr, "type = float[3]");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_TYPE_PROTO);
+  EXPECT_TRUE(attr.tp().has_tensor_type());
+  int float_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_FLOAT);
+  EXPECT_EQ(attr.tp().tensor_type().elem_type(), float_type);
 }
 
 TEST(ParserTest, AttrListTest) {

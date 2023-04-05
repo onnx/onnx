@@ -41,7 +41,7 @@ jobs:
 
   - script: |
       conda create --yes --quiet --name py$(python.version) python=$(python.version)
-      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf=3.20
+      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf==3.21.5
     displayName: Create Anaconda environment
 
   - script: |
@@ -87,4 +87,24 @@ jobs:
       rm -rf .setuptools-cmake-build
 
 
+      conda remove libprotobuf
+      conda install libprotobuf=3.20
+      python -m pip install protobuf==3.20.2
+      pytest
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "pytest failed when testing onnx with libprotobuf=3.20"
+        EXIT 1
+      )
+
+      python -m pip install -q onnxruntime
+      set ORT_MAX_IR_SUPPORTED_VERSION=8
+      set ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
+      set ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+      pytest
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "pytest failed when testing onnx with onnxruntime"
+        EXIT 1
+      )
+
     displayName: Install and test ONNX
+
