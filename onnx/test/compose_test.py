@@ -308,7 +308,9 @@ class TestComposeFunctions(unittest.TestCase):
 
             # B20 <-> B21 not connected. They should still be present
             # in the inputs and outputs of the combined graph
-            self.assertEqual(["A0", "A1", "_A", "B21"], [elem.name for elem in g4.input])
+            self.assertEqual(
+                ["A0", "A1", "_A", "B21"], [elem.name for elem in g4.input]
+            )
             self.assertEqual(["B20", "D0"], [elem.name for elem in g4.output])
 
         io_map = [("B00", "B01"), ("B10", "B11")]
