@@ -408,6 +408,7 @@ class TestComposeFunctions(unittest.TestCase):
         m3 = compose.merge_models(m1, m2, io_map=io_map)
         checker.check_model(m3)
 
+    # FIXME: This function should be removed, as tests should not contain a copy of the tested logic.
     def _test_add_prefix(  # pylint: disable=too-many-branches
         self,
         rename_nodes: bool = False,
