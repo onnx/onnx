@@ -494,8 +494,6 @@ class OpSchema final {
     std::string description;
   };
 
-  OpSchema& Input(int n, FormalParameter formal_parameter);
-
   // Grammar for type strings used in Input(), Output().
   // <type> ::= <data_type> |
   //            tensor(<data_type>) |
@@ -522,6 +520,8 @@ class OpSchema final {
   // (represented as "") in the graph even though the later inputs have values.
   // It's useful for complex situation when there are several independent
   // optional inputs.
+  OpSchema& Input(int n, FormalParameter formal_parameter);
+
   OpSchema& Input(
       int n,
       std::string name,
