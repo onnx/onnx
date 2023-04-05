@@ -11,9 +11,13 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 class ReduceL1_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
         axes = tuple(axes) if axes is not None else None
-        return (
-            np.sum(np.abs(data), axis=axes, keepdims=keepdims).astype(dtype=data.dtype),
+        res = np.sum(np.abs(data), axis=axes, keepdims=keepdims).astype(
+            dtype=data.dtype
         )
+        if keepdims == 0 and not isinstance(res, np.ndarray):
+            # The runtime must return a numpy array of a single float.
+            res = np.array(res)
+        return (res,)
 
 
 class ReduceL1_18(OpRunReduceNumpy):
@@ -23,6 +27,10 @@ class ReduceL1_18(OpRunReduceNumpy):
 
         axes = self.handle_axes(axes)
         keepdims = keepdims != 0  # type: ignore
-        return (
-            np.sum(np.abs(data), axis=axes, keepdims=keepdims).astype(dtype=data.dtype),
+        res = np.sum(np.abs(data), axis=axes, keepdims=keepdims).astype(
+            dtype=data.dtype
         )
+        if keepdims == 0 and not isinstance(res, np.ndarray):
+            # The runtime must return a numpy array of a single float.
+            res = np.array(res)
+        return (res,)

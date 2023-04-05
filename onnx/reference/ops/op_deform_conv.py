@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,R0915,R1702,W0221
 
@@ -98,7 +100,7 @@ def _deform_conv_implementation(  # type: ignore
                             w_coord = bw + stw * j
                             # (h_coord, w_coord) is coord of top left elem of kernel
 
-                            kernel = np.copy(kernel_pos_wrt_first_elem).astype(np.float)
+                            kernel = np.copy(kernel_pos_wrt_first_elem).astype(float)
                             kernel[:, :, 0] += (
                                 h_coord
                                 + offset[batch_idx, offset_group_idx, :, :, 0, i, j]

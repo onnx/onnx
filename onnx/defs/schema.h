@@ -520,6 +520,8 @@ class OpSchema final {
   // (represented as "") in the graph even though the later inputs have values.
   // It's useful for complex situation when there are several independent
   // optional inputs.
+  OpSchema& Input(int n, FormalParameter formal_parameter);
+
   OpSchema& Input(
       int n,
       std::string name,
@@ -540,6 +542,8 @@ class OpSchema final {
       bool is_homogeneous = true,
       int min_arity = 1,
       DifferentiationCategory differentiation_category = Unknown);
+
+  OpSchema& Output(int n, FormalParameter formal_parameter);
 
   OpSchema& Output(
       int n,
@@ -784,6 +788,10 @@ class OpSchema final {
 
   const std::vector<TypeConstraintParam>& typeConstraintParams() const {
     return type_constraint_params_;
+  }
+
+  const TypeConstraintMap& typeConstraintMap() const {
+    return type_constraints_;
   }
 
   const std::string& Name() const {
