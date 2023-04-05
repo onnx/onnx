@@ -6,6 +6,9 @@ name: REUSE Compliance Check
 
 on: [push, pull_request]
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
