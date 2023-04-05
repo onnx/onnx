@@ -150,7 +150,7 @@ def _get_ops_template():  # type: ignore
         }} and {{sch.max_input}} inputs.
         {% endif %}
         {% for ii, inp in enumerate(sch.inputs) %}
-        * **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.typeStr}}**:
+        * **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.type_str}}**:
         {{text_wrap(inp.description, 2)}}{% endfor %}
         {% endif %}
         {% if sch.outputs %}
@@ -161,7 +161,7 @@ def _get_ops_template():  # type: ignore
         }} and {{sch.max_output}} outputs.
         {% endif %}
         {% for ii, out in enumerate(sch.outputs) %}
-        * **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.typeStr}}**:
+        * **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.type_str}}**:
         {{text_wrap(out.description, 2)}}{% endfor %}
         {% endif %}
         {% if sch.type_constraints %}
@@ -388,7 +388,7 @@ def get_rst_doc(  # type: ignore
             opts.append("optional")
         elif OpSchema.FormalParameterOption.Variadic == obj.option:
             opts.append("variadic")
-        if getattr(obj, "isHomogeneous", False):
+        if getattr(obj, "is_homogeneous", False):
             opts.append("heterogeneous")
         if opts:
             return f" ({', '.join(opts)})"
