@@ -83,7 +83,7 @@ def generate_formal_parameter_tags(formal_parameter: OpSchema.FormalParameter) -
     if OpSchema.FormalParameterOption.Optional == formal_parameter.option:
         tags = ["optional"]
     elif OpSchema.FormalParameterOption.Variadic == formal_parameter.option:
-        if formal_parameter.isHomogeneous:
+        if formal_parameter.is_homogeneous:
             tags = ["variadic"]
         else:
             tags = ["variadic", "heterogeneous"]
@@ -93,9 +93,9 @@ def generate_formal_parameter_tags(formal_parameter: OpSchema.FormalParameter) -
     non_differentiable: OpSchema.DifferentiationCategory = (
         OpSchema.DifferentiationCategory.NonDifferentiable
     )
-    if differentiable == formal_parameter.differentiationCategory:
+    if differentiable == formal_parameter.differentiation_category:
         tags.append("differentiable")
-    elif non_differentiable == formal_parameter.differentiationCategory:
+    elif non_differentiable == formal_parameter.differentiation_category:
         tags.append("non-differentiable")
 
     return "" if len(tags) == 0 else " (" + ", ".join(tags) + ")"
@@ -182,7 +182,7 @@ def display_schema(  # pylint: disable=too-many-branches,too-many-statements
         s += "<dl>\n"
         for input_ in schema.inputs:
             option_str = generate_formal_parameter_tags(input_)
-            s += f"<dt><tt>{input_.name}</tt>{option_str} : {input_.typeStr}</dt>\n"
+            s += f"<dt><tt>{input_.name}</tt>{option_str} : {input_.type_str}</dt>\n"
             s += f"<dd>{input_.description}</dd>\n"
         s += "</dl>\n"
 
@@ -196,7 +196,7 @@ def display_schema(  # pylint: disable=too-many-branches,too-many-statements
         s += "<dl>\n"
         for output in schema.outputs:
             option_str = generate_formal_parameter_tags(output)
-            s += f"<dt><tt>{output.name}</tt>{option_str} : {output.typeStr}</dt>\n"
+            s += f"<dt><tt>{output.name}</tt>{option_str} : {output.type_str}</dt>\n"
             s += f"<dd>{output.description}</dd>\n"
         s += "</dl>\n"
 
