@@ -641,7 +641,6 @@ OpSchema& OpSchema::Output(
           is_homogeneous,
           min_arity,
           differentiation_category));
-  return *this;
 }
 
 OpSchema& OpSchema::Output(
