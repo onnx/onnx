@@ -15,8 +15,8 @@ import shlex
 import shutil
 import subprocess
 import sys
+import sysconfig
 import textwrap
-from distutils import sysconfig
 
 import setuptools
 import setuptools.command.build_ext
@@ -94,6 +94,16 @@ def cd(path):
         os.chdir(orig_path)
 
 
+def get_ext_suffix():
+    if sys.version_info < (3, 8) and sys.platform == "win32":
+        # Workaround for https://bugs.python.org/issue39825
+        # Reference: https://github.com/pytorch/pytorch/commit/4b96fc060b0cb810965b5c8c08bc862a69965667
+        import distutils
+
+        return distutils.sysconfig.get_config_var("EXT_SUFFIX")
+    return sysconfig.get_config_var("EXT_SUFFIX")
+
+
 ################################################################################
 # Customized commands
 ################################################################################
@@ -162,12 +172,12 @@ class CmakeBuild(setuptools.Command):
             # configure
             cmake_args = [
                 CMAKE,
-                f"-DPYTHON_INCLUDE_DIR={sysconfig.get_python_inc()}",
+                f"-DPYTHON_INCLUDE_DIR={sysconfig.get_path('include')}",
                 f"-DPYTHON_EXECUTABLE={sys.executable}",
                 "-DBUILD_ONNX_PYTHON=ON",
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
-                f"-DPY_EXT_SUFFIX={sysconfig.get_config_var('EXT_SUFFIX') or ''}",
+                f"-DPY_EXT_SUFFIX={get_ext_suffix() or ''}",
             ]
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
@@ -234,7 +244,6 @@ class BuildPy(setuptools.command.build_py.build_py):
         for src in generated_python_files:
             dst = os.path.join(TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
             self.copy_file(src, dst)
-        # TODO (https://github.com/pypa/setuptools/issues/3606)
         # Review the command customizations to enable editable_mode
         self.editable_mode = False
         return setuptools.command.build_py.build_py.run(self)
