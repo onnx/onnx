@@ -236,7 +236,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const OpSchema::FormalParameter& self) {
             auto warnings = py::module::import("warnings");
             warnings.attr("warn")(
-                "OpSchema.FormalParameter.typeStr is deprecated. Use OpSchema.FormalParameter.type_str instead.");
+                "OpSchema.FormalParameter.typeStr is deprecated and will be removed in 1.16. "
+                "Use OpSchema.FormalParameter.type_str instead.");
             return self.GetTypeStr();
           })
       .def_property_readonly(
@@ -244,13 +245,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const OpSchema::FormalParameter& self) {
             auto warnings = py::module::import("warnings");
             warnings.attr("warn")(
-                "OpSchema.FormalParameter.isHomogeneous is deprecated. Use OpSchema.FormalParameter.is_homogeneous instead.");
+                "OpSchema.FormalParameter.isHomogeneous is deprecated and will be removed in 1.16. "
+                "Use OpSchema.FormalParameter.is_homogeneous instead.");
             return self.GetIsHomogeneous();
           })
       .def_property_readonly("differentiationCategory", [](const OpSchema::FormalParameter& self) {
         auto warnings = py::module::import("warnings");
         warnings.attr("warn")(
-            "OpSchema.FormalParameter.differentiationCategory is deprecated. Use OpSchema.FormalParameter.differentiation_category instead.");
+            "OpSchema.FormalParameter.differentiationCategory is deprecated and will be removed in 1.16. "
+            "Use OpSchema.FormalParameter.differentiation_category instead.");
         return self.GetDifferentiationCategory();
       });
 
