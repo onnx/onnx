@@ -10,27 +10,27 @@ jobs:
       py39:
         python.version: '3.9'
         onnx_ml: 0
-        onnx_debug: 0
+        build_type: 'Release'
         onnx_lite: 0
       py38:
         python.version: '3.8'
         onnx_ml: 0
-        onnx_debug: 0
+        build_type: 'Release'
         onnx_lite: 1
       py38-ml:
         python.version: '3.8'
         onnx_ml: 1
-        onnx_debug: 0
+        build_type: 'Release'
         onnx_lite: 1
       py38-ml-debug:
         python.version: '3.8'
         onnx_ml: 1
-        onnx_debug: 1
+        build_type: 'Debug'
         onnx_lite: 0
       py37-ml-debug:
         python.version: '3.7'
         onnx_ml: 1
-        onnx_debug: 1
+        build_type: 'Debug'
         onnx_lite: 0
     maxParallel: 6
 
@@ -42,12 +42,10 @@ jobs:
   - script: |
       # Install Protobuf from source
       export NUM_CORES=`sysctl -n hw.logicalcpu`
-      if [ '$(onnx_debug)' == '1' ]; then
+      if [ '$(build_type)' == 'Debug' ]; then
         export DEBUG=1
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install Debug
-      else
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
       fi
+      source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
 
       git submodule update --init --recursive
       python -m pip install -q --upgrade pip
@@ -61,7 +59,6 @@ jobs:
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
-      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       python setup.py install
     displayName: 'Install dependencies and ONNX'
 
