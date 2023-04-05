@@ -141,10 +141,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (input_type == nullptr) {
             fail_type_inference("Input type is null. Input must have Type information.");
           }
-          if (input_type->has_optional_type() && !input_type->optional_type().has_elem_type()) {
-            fail_type_inference("Optional-type input must contain an element with type information.");
+          if (input_type->has_optional_type()) {
+            if (!input_type->optional_type().has_elem_type()) {
+              fail_type_inference("Optional-type input must contain an element with type information.");
+            }
+            ctx.getOutputType(0)->CopyFrom(input_type->optional_type().elem_type());
+          } else {
+            propagateShapeAndTypeFromFirstInput(ctx);
           }
-          ctx.getOutputType(0)->CopyFrom(input_type->optional_type().elem_type());
         }));
 
 } // namespace ONNX_NAMESPACE

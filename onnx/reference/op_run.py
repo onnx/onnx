@@ -118,7 +118,7 @@ def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
     """
     Hosts a sparse tensor.
     """
-    shape = tuple(d for d in att.dims)
+    shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
     return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
 
 
@@ -133,7 +133,7 @@ class OpRun(ABC):
     """
     Ancestor to all operators in this subfolder.
 
-    :param onnx_node: :epkg:`onnx` node
+    :param onnx_node: `onnx` node
     :param run_params: additional parameters such as `verbose`, `opsets`
         (it can be more than one if the operator has a subgraph),
         `log` for a logging function
@@ -166,12 +166,20 @@ class OpRun(ABC):
     ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
+        for att in ["opsets", "new_ops"]:
+            if att not in run_params:
+                raise RuntimeError(
+                    f"Attribute {att!r} must be in run_params, only "
+                    f"{list(sorted(run_params))} was found."
+                )
         if "log" not in run_params:
             raise KeyError("run_params must contains key 'log'.")
         self.onnx_node = onnx_node
         self.run_params = run_params
         if schema is None:
-            if self.__class__.__name__ in _schemas:
+            if hasattr(self.__class__, "op_schema"):
+                self._schema = self.__class__.op_schema
+            elif self.__class__.__name__ in _schemas:
                 self._schema = _schemas[self.__class__.__name__]
             elif onnx_node.op_type in _schemas:
                 self._schema = _schemas[onnx_node.op_type]
@@ -179,6 +187,7 @@ class OpRun(ABC):
                 self._schema = None  # type: ignore
         else:
             self._schema = schema
+        self.has_subgraph = False
         self._load_attributes()
 
     def _log(self, pattern, *args):  # type: ignore
@@ -191,12 +200,16 @@ class OpRun(ABC):
         Converts an attribute value into a python value.
         """
         if att.type == AttributeProto.GRAPH:
-            from .reference_evaluator import ReferenceEvaluator  # type: ignore
+            from onnx.reference.reference_evaluator import (
+                ReferenceEvaluator,  # type: ignore
+            )
 
+            new_ops = self.run_params.get("new_ops", None)
             return ReferenceEvaluator(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
+                new_ops=None if new_ops is None else new_ops.values(),
             )
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
@@ -212,6 +225,10 @@ class OpRun(ABC):
             f"domain {self.onnx_node.domain!r}\n{att}\n{ref_att}."
         )
 
+    @staticmethod
+    def _evaluate_subgraph(context, value, attributes):
+        return value.run(None, context or {}, attributes=attributes)
+
     def _load_attributes(self) -> None:
         "Checks and loads attributes."
         self.has_linked_attribute = False
@@ -226,10 +243,14 @@ class OpRun(ABC):
             setattr(self, name, value)
             added_attributes.append(name)
             if att.type == AttributeProto.GRAPH:
+                self.has_subgraph = True
+                self.has_linked_attribute |= value.has_linked_attribute  # type: ignore
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, value=value: value.run(None, context or {}),
+                    lambda context, value=value, attributes=None: OpRun._evaluate_subgraph(
+                        context, value, attributes
+                    ),
                 )
 
         if self._schema and self.onnx_node.op_type not in {"Constant"}:
@@ -387,6 +408,12 @@ class OpRun(ABC):
                     f"Attribute {att!r} is missing in operator {self.__class__.__name__!r}."
                 )
             kwargs[att] = getattr(self, att)
+        if self.has_subgraph:
+            if self.has_linked_attribute and len(linked_attributes) == 0:
+                raise RuntimeError(
+                    f"A subgraph has linked attribute but none was given to {type(self)}."
+                )
+            kwargs["attributes"] = linked_attributes
         if context is not None:
             kwargs["context"] = context
         try:
@@ -484,7 +511,12 @@ class OpRun(ABC):
                 print(pattern % tuple(args))
 
         node = cls.make_node(n_inputs, n_outputs, **kwargs)
-        run_params = dict(verbose=verbose, log=log_function)
+        run_params = dict(
+            verbose=verbose,
+            log=log_function,
+            new_ops=None,
+            opsets={"": onnx_opset_version()},
+        )
         cl = cls(node, run_params)
         return cl
 

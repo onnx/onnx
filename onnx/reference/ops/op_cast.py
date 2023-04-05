@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
@@ -26,9 +28,11 @@ def cast_to(x, to):
         xf = x.astype(np.float32).ravel()
         y = np.empty(xf.shape, dtype=bfloat16).ravel()
         for i in range(y.shape[0]):
-            el = float32_to_bfloat16(xf[i], truncate=True)
+            el = float32_to_bfloat16(xf[i], truncate=True)  # type: ignore[assignment]
             y[i] = el
         return y.reshape(x.shape)
+    if to == TensorProto.STRING:
+        return x.astype(np.str_)
 
     dtype = tensor_dtype_to_np_dtype(to)
     return x.astype(dtype)

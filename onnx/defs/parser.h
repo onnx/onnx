@@ -386,6 +386,8 @@ class OnnxParser : public ParserBase {
 
   Status Parse(AttributeProto& attr);
 
+  Status Parse(AttributeProto& attr, std::string& name);
+
   Status Parse(AttrList& attrlist);
 
   Status Parse(NodeProto& node);
@@ -411,6 +413,10 @@ class OnnxParser : public ParserBase {
 
   Status Parse(char open, IdList& idlist, char close);
 
+  Status Parse(IdList& idlist, AttrList& attrlist);
+
+  Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
+
   Status ParseSingleAttributeValue(AttributeProto& attr);
 
   Status Parse(ValueInfoProto& valueinfo);
@@ -426,6 +432,8 @@ class OnnxParser : public ParserBase {
   Status Parse(OpsetIdList& opsets);
 
   bool NextIsType();
+
+  bool NextIsIdentifier();
 };
 
 } // namespace ONNX_NAMESPACE

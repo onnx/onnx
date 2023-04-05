@@ -27,9 +27,10 @@ std::function<void(OpSchema&)> ReduceDocGenerator_opset13_18(
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
-Computes the {name} of the input tensor's element along the provided axes. The resulting
+Computes the {name} of the input tensor's elements along the provided axes. The resulting
 tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-the resulting tensor has the reduced dimension pruned.
+the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+valid.
 
 The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
 False instead of True.)DOC";

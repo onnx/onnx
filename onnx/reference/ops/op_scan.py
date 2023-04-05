@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0914,W0221,W0613
 
@@ -94,7 +96,8 @@ class Scan(OpRun):
         scan_input_axes=None,
         scan_input_directions=None,
         scan_output_axes=None,
-        scan_output_directions,
+        scan_output_directions=None,
+        attributes=None,
     ):
         # TODO: support overridden attributes.
         (

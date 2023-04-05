@@ -1,9 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0200,R0912,R0913,R0914,R0915,R0916,R1702,W0221
 
 import numpy as np
 
-from ._op_common_pool import CommonPool
+from onnx.reference.ops._op_common_pool import CommonPool
 
 
 class MaxPool(CommonPool):
@@ -184,7 +186,6 @@ class MaxPool(CommonPool):
         strides,
         output_spatial_shape,
     ):
-
         global_pooling = False
         y_dims = x.shape[:2] + tuple(output_spatial_shape)
         y = np.zeros(y_dims, dtype=x.dtype)
@@ -241,7 +242,6 @@ class MaxPool(CommonPool):
         strides,
         output_spatial_shape,
     ):
-
         global_pooling = False
         y_dims = x.shape[:2] + tuple(output_spatial_shape)
         y = np.zeros(y_dims, dtype=x.dtype)
@@ -319,7 +319,6 @@ class MaxPool(CommonPool):
         strides,
         output_spatial_shape,
     ):
-
         global_pooling = False
         y_dims = x.shape[:2] + tuple(output_spatial_shape)
         y = np.zeros(y_dims, dtype=x.dtype)

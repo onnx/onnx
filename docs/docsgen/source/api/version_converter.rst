@@ -2,8 +2,6 @@
 onnx.version_converter
 ======================
 
-.. contents::
-    :local:
 
 convert_version
 +++++++++++++++

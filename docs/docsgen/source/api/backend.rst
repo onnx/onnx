@@ -1,9 +1,6 @@
 onnx.backend
 ============
 
-.. contents::
-    :local:
-
 Backend
 +++++++
 

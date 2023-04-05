@@ -2,8 +2,6 @@
 onnx.external_data_helper
 =========================
 
-.. contents::
-    :local:
 
 convert_model_from_external_data
 ++++++++++++++++++++++++++++++++

@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -35,15 +37,6 @@ struct Tensor final {
 
   bool is_raw_data_;
   std::string raw_data_;
-
-  template <typename F, typename T>
-  void bin_func(const F& f, T* ptr, const T* a_ptr);
-
-  template <typename F, typename T>
-  void un_func(const F& f, T* ptr);
-
-  template <typename T>
-  void scale_dim(T* ptr, const T* s_ptr);
 
  public:
   Tensor()
@@ -108,7 +101,11 @@ struct Tensor final {
   std::vector<int64_t>& sizes() {
     return sizes_;
   }
-
+  /// if tensor is a scalar, the sizes is empty, but the element number is actually 1.
+  /// size_from_dim() cannot handle this case, while elem_num() handles it correctly
+  int64_t elem_num() const {
+    return std::accumulate(sizes_.begin(), sizes_.end(), (int64_t)1, std::multiplies<int64_t>{});
+  }
   int64_t size_from_dim(int dim) const {
     if (dim < 0) {
       dim += (int)sizes_.size();
@@ -222,48 +219,24 @@ struct Tensor final {
   bool is_raw_data() const {
     return is_raw_data_;
   }
-
-  // this += a
-  // Supported for
-  // FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
-  // UINT32, UINT64, DOUBLE,
-  // TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
-  void add(const Tensor& a);
-
-  // this -= a
-  // Supported for
-  // FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
-  // UINT32, UINT64, DOUBLE
-  // TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
-  void subtract(const Tensor& a);
-
-  // this *= a
-  // Supported for
-  // FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
-  // UINT32, UINT64, DOUBLE
-  // TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
-  void multiply(const Tensor& a);
-
-  // this /= a
-  // Supported for
-  // FLOAT, INT8, INT16, INT32, UINT8, UINT16, INT64,
-  // UINT32, UINT64, DOUBLE
-  // TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
-  void divide(const Tensor& a);
-
-  // Element-wise square root of This
-  // Supported for
-  // FLOAT, DOUBLE,
-  // TODO: Support for FLOAT16
-  void sqrt();
-
-  // Element wise scaling of tensor s
-  // s is one dimensional, has size M, where M is size of first dimension of tensor
-  // s must have has data type corresponding to this
-  // Supported for
-  // FLOAT16, FLOAT, DOUBLE
-  void scale_by_first_dim(const Tensor& s);
 };
+
+template <>
+inline std::string* Tensor::data<std::string>() {
+  ONNX_ASSERTM(
+      !is_raw_data(),
+      "data type is string. string content is required to be stored in repeated bytes string_data field."
+      "raw_data type cannot be string.");
+  return string_data_.data();
+}
+template <>
+inline const std::string* Tensor::data<std::string>() const {
+  ONNX_ASSERTM(
+      !is_raw_data(),
+      "data type is string. string content is required to be stored in repeated bytes string_data field."
+      "raw_data type cannot be string.");
+  return string_data_.data();
+}
 
 #define define_data(type, field)                             \
   template <>                                                \
@@ -289,126 +262,6 @@ define_data(double, double_data_);
 define_data(int32_t, int32_data_);
 define_data(int64_t, int64_data_);
 define_data(uint64_t, uint64_data_);
-define_data(std::string, string_data_);
 #undef define_data
-
-template <typename F, typename T>
-inline void Tensor::bin_func(const F& f, T* ptr, const T* a_ptr) {
-  const int64_t num_elements = size_from_dim(0);
-  for (int64_t i = 0; i < num_elements; ++i) {
-    ptr[i] = f(ptr[i], a_ptr[i]);
-  }
-}
-
-template <typename F, typename T>
-inline void Tensor::un_func(const F& f, T* ptr) {
-  const int64_t num_elements = size_from_dim(0);
-  for (int64_t i = 0; i < num_elements; ++i) {
-    ptr[i] = f(ptr[i]);
-  }
-}
-
-template <typename T>
-inline void Tensor::scale_dim(T* ptr, const T* s_ptr) {
-  int64_t elems_per_first_dim = size_from_dim(1);
-  int64_t first_dim_size = sizes_[0];
-  int64_t counter = 0;
-  for (int64_t i = 0; i < first_dim_size; ++i) {
-    for (int64_t j = 0; j < elems_per_first_dim; ++j) {
-      ptr[counter++] *= s_ptr[i];
-    }
-  }
-}
-
-#define APPLY_BINARY_FUNCTION(op_name, f)                                  \
-  inline void Tensor::op_name(const Tensor& other) {                       \
-    TENSOR_ASSERTM(                                                        \
-        other.elem_type() == elem_type_,                                   \
-        "Tensor types do not match: %s != %s",                             \
-        to_string(elem_type_).c_str(),                                     \
-        " vs. ",                                                           \
-        to_string(other.elem_type()).c_str());                             \
-    TENSOR_ASSERTM(other.sizes() == sizes_, "Tensor sizes do not match."); \
-    switch (elem_type_) {                                                  \
-      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {                   \
-        bin_func(f<float>(), data<float>(), other.data<float>());          \
-        break;                                                             \
-      }                                                                    \
-      case ONNX_NAMESPACE::TensorProto_DataType_BOOL:                      \
-      case ONNX_NAMESPACE::TensorProto_DataType_INT8:                      \
-      case ONNX_NAMESPACE::TensorProto_DataType_INT16:                     \
-      case ONNX_NAMESPACE::TensorProto_DataType_INT32:                     \
-      case ONNX_NAMESPACE::TensorProto_DataType_UINT8:                     \
-      case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {                  \
-        bin_func(f<int32_t>(), data<int32_t>(), other.data<int32_t>());    \
-        break;                                                             \
-      }                                                                    \
-      case ONNX_NAMESPACE::TensorProto_DataType_INT64: {                   \
-        bin_func(f<int64_t>(), data<int64_t>(), other.data<int64_t>());    \
-        break;                                                             \
-      }                                                                    \
-      case ONNX_NAMESPACE::TensorProto_DataType_UINT32:                    \
-      case ONNX_NAMESPACE::TensorProto_DataType_UINT64: {                  \
-        bin_func(f<uint64_t>(), data<uint64_t>(), other.data<uint64_t>()); \
-        break;                                                             \
-      }                                                                    \
-      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {                  \
-        bin_func(f<double>(), data<double>(), other.data<double>());       \
-        break;                                                             \
-      }                                                                    \
-      default:                                                             \
-        TENSOR_ASSERTM(                                                    \
-            false,                                                         \
-            "Operation %s not supported for data type %s",                 \
-            #op_name,                                                      \
-            " not supported for data type ",                               \
-            to_string(elem_type_).c_str());                                \
-    }                                                                      \
-  }
-
-APPLY_BINARY_FUNCTION(add, std::plus)
-APPLY_BINARY_FUNCTION(subtract, std::minus)
-APPLY_BINARY_FUNCTION(multiply, std::multiplies)
-APPLY_BINARY_FUNCTION(divide, std::divides)
-
-#undef APPLY_BINARY_FUNCTION
-
-inline void Tensor::sqrt() {
-  switch (elem_type_) {
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
-      un_func<float (*)(float), float>(std::sqrt, data<float>());
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
-      un_func<double (*)(double), double>(std::sqrt, data<double>());
-      break;
-    }
-    default:
-      TENSOR_ASSERTM(false, "Operation sqrt not supported for data type %s", to_string(elem_type_).c_str());
-  }
-}
-
-inline void Tensor::scale_by_first_dim(const Tensor& other) {
-  ONNX_ASSERT(sizes_.size() > 1 && other.sizes().size() == 1 && other.sizes()[0] == sizes_[0]);
-  ONNX_ASSERT(other.elem_type() == elem_type_);
-
-  switch (elem_type_) {
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
-      scale_dim(data<float>(), other.data<float>());
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
-      scale_dim(data<int32_t>(), other.data<int32_t>());
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
-      scale_dim(data<double>(), other.data<double>());
-      break;
-    }
-    default:
-      TENSOR_ASSERTM(
-          false, "Operation scale_by_first_dim not supported for data type %s", to_string(elem_type_).c_str());
-  }
-}
 
 } // namespace ONNX_NAMESPACE

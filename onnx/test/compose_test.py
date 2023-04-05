@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
@@ -69,7 +71,7 @@ def _make_sparse_tensor(name: str) -> SparseTensorProto:
     return helper.make_sparse_tensor(values_tensor, indices_tensor, dense_shape)
 
 
-m1_def = """
+M1_DEF = """
     <
         ir_version: 7,
         opset_import: [ "": 10, "com.microsoft": 1]
@@ -82,7 +84,7 @@ m1_def = """
     }
     """
 
-m2_def = """
+M2_DEF = """
     <
         ir_version: 7,
         opset_import: [ "": 10, "com.microsoft": 1]
@@ -147,7 +149,7 @@ class TestComposeFunctions(unittest.TestCase):
             )
 
         io_map = [("B00", "B01"), ("B10", "B11"), ("B20", "B21")]
-        self._test_merge_models(m1_def, m2_def, io_map, check_expectations)
+        self._test_merge_models(M1_DEF, M2_DEF, io_map, check_expectations)
 
     def test_case_connect_same_output_twice(self) -> None:
         """
@@ -156,6 +158,7 @@ class TestComposeFunctions(unittest.TestCase):
         """
 
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
+            del g2  # Unused
             self.assertEqual(g3.input, g1.input)
             self.assertEqual(["B10", "B20", "D0"], [elem.name for elem in g3.output])
             self.assertEqual(
@@ -164,7 +167,7 @@ class TestComposeFunctions(unittest.TestCase):
             )
 
         io_map = [("B00", "B01"), ("B00", "B11"), ("B00", "B21")]
-        self._test_merge_models(m1_def, m2_def, io_map, check_expectations)
+        self._test_merge_models(M1_DEF, M2_DEF, io_map, check_expectations)
 
     def test_case_connect_same_output_drop_outputs(self) -> None:
         """
@@ -173,6 +176,7 @@ class TestComposeFunctions(unittest.TestCase):
         """
 
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
+            del g2  # Unused
             self.assertEqual(g3.input, g1.input)
             self.assertEqual(["D0"], [elem.name for elem in g3.output])
             self.assertEqual(
@@ -182,7 +186,7 @@ class TestComposeFunctions(unittest.TestCase):
         io_map = [("B00", "B01"), ("B00", "B11"), ("B00", "B21")]
         outputs = ["D0"]
         self._test_merge_models(
-            m1_def, m2_def, io_map, check_expectations, outputs=outputs
+            M1_DEF, M2_DEF, io_map, check_expectations, outputs=outputs
         )
 
     def test_case_connect_same_input_output_name(self) -> None:
@@ -214,6 +218,8 @@ class TestComposeFunctions(unittest.TestCase):
         io_map = [("B", "B")]
 
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
+            del g1, g2  # Unused
+
             self.assertEqual(["A"], [elem.name for elem in g3.input])
             self.assertEqual(["C"], [elem.name for elem in g3.output])
 
@@ -249,6 +255,8 @@ class TestComposeFunctions(unittest.TestCase):
         io_map = [("A1", "B2")]
 
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
+            del g1, g2  # Unused
+
             self.assertEqual(["A0"], [elem.name for elem in g3.input])
             self.assertEqual(["B3"], [elem.name for elem in g3.output])
             self.assertEqual(["Add", "Sub"], [elem.op_type for elem in g3.node])
@@ -278,6 +286,8 @@ class TestComposeFunctions(unittest.TestCase):
         io_map = [("C", "A")]
 
         def check_expectations(g1: GraphProto, g2: GraphProto, g3: GraphProto) -> None:
+            del g1, g2  # Unused
+
             self.assertEqual(["m1/A", "m1/B", "m2/B"], [elem.name for elem in g3.input])
             self.assertEqual(["m2/C"], [elem.name for elem in g3.output])
             self.assertEqual(["Add", "Add"], [elem.op_type for elem in g3.node])
@@ -294,19 +304,21 @@ class TestComposeFunctions(unittest.TestCase):
         """
 
         def check_expectations(g1: GraphProto, g2: GraphProto, g4: GraphProto) -> None:
+            del g1, g2  # Unused
+
             # B20 <-> B21 not connected. They should still be present
             # in the inputs and outputs of the combined graph
             self.assertEqual(["A0", "A1", "B21"], [elem.name for elem in g4.input])
             self.assertEqual(["B20", "D0"], [elem.name for elem in g4.output])
 
         io_map = [("B00", "B01"), ("B10", "B11")]
-        self._test_merge_models(m1_def, m2_def, io_map, check_expectations)
+        self._test_merge_models(M1_DEF, M2_DEF, io_map, check_expectations)
 
     def test_merge_models_with_metadata_props(self) -> None:
-        m1 = _load_model(m1_def)
+        m1 = _load_model(M1_DEF)
         helper.set_model_props(m1, {"p1": "v1", "p2": "v2"})
 
-        m2 = _load_model(m2_def)
+        m2 = _load_model(M2_DEF)
         helper.set_model_props(m2, {"p3": "v3", "p4": "v4"})
 
         io_map = [("B00", "B01")]
@@ -326,7 +338,7 @@ class TestComposeFunctions(unittest.TestCase):
         """
         Tests that providing a non existing output/input name in the io_map argument produces an error.
         """
-        m1, m2 = _load_model(m1_def), _load_model(m2_def)
+        m1, m2 = _load_model(M1_DEF), _load_model(M2_DEF)
 
         self.assertRaises(
             ValueError,
@@ -377,10 +389,8 @@ class TestComposeFunctions(unittest.TestCase):
         )
 
     def test_error_opset_import_mismatch(self) -> None:
-        """
-        Tests that providing models with different operator set imported produces an error
-        """
-        m1, m2 = _load_model(m1_def), _load_model(m2_def)
+        """Tests that providing models with different operator set imported produces an error."""
+        m1, m2 = _load_model(M1_DEF), _load_model(M2_DEF)
         m1 = helper.make_model(
             m1.graph, producer_name="test", opset_imports=[helper.make_opsetid("", 10)]
         )
@@ -396,7 +406,7 @@ class TestComposeFunctions(unittest.TestCase):
         m3 = compose.merge_models(m1, m2, io_map=io_map)
         checker.check_model(m3)
 
-    def _test_add_prefix(
+    def _test_add_prefix(  # pylint: disable=too-many-branches
         self,
         rename_nodes: bool = False,
         rename_edges: bool = False,
@@ -406,7 +416,7 @@ class TestComposeFunctions(unittest.TestCase):
         rename_value_infos: bool = False,
         inplace: bool = False,
     ) -> None:
-        m1 = _load_model(m1_def)
+        m1 = _load_model(M1_DEF)
 
         prefix = "pre/"
 
@@ -537,6 +547,53 @@ class TestComposeFunctions(unittest.TestCase):
         """
         self._test_add_prefix(rename_outputs=True)
 
+    def test_add_prefix_attribute_subgraph(self) -> None:
+        """
+        Tests prefixing attribute's subgraph. Relevant subgraph should be renamed as well
+        """
+        C = helper.make_tensor_value_info("C", TensorProto.BOOL, [1])
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [None, 1])
+        Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [None, 1])
+        Z = helper.make_tensor_value_info("Z", TensorProto.FLOAT, [None, 1])
+        Out = helper.make_tensor_value_info("Out", TensorProto.FLOAT, [None, 1])
+
+        XY = helper.make_node("Mul", inputs=["X", "Y"], outputs=["XY"])
+        add = helper.make_node("Add", inputs=["XY", "Z"], outputs=["Out"])
+        sub = helper.make_node("Sub", inputs=["XY", "Z"], outputs=["Out"])
+
+        cond = helper.make_node(
+            "If",
+            inputs=["C"],
+            outputs=["Out"],
+            then_branch=helper.make_graph(
+                nodes=[add], name="then", inputs=[], outputs=[Out]
+            ),
+            else_branch=helper.make_graph(
+                nodes=[sub], name="else", inputs=[], outputs=[Out]
+            ),
+        )
+        graph = helper.make_graph(
+            nodes=[XY, cond], name="graph", inputs=[C, X, Y, Z], outputs=[Out]
+        )
+        prefix = "prefix."
+        prefixed_graph = compose.add_prefix_graph(graph, prefix)
+        checker.check_graph(prefixed_graph)
+        for n1, n0 in zip(prefixed_graph.node, graph.node):
+            self.assertEqual(_prefixed(prefix, n0.name), n1.name)
+            for attribute1, attribute0 in zip(n1.attribute, n0.attribute):
+                if attribute1.g:
+                    for subgraph_n1, subgraph_n0 in zip(
+                        attribute1.g.node, attribute0.g.node
+                    ):
+                        for input_n1, input_n0 in zip(
+                            subgraph_n1.input, subgraph_n0.input
+                        ):
+                            self.assertEqual(_prefixed(prefix, input_n0), input_n1)
+                        for output_n1, output_n0 in zip(
+                            subgraph_n1.output, subgraph_n0.output
+                        ):
+                            self.assertEqual(_prefixed(prefix, output_n0), output_n1)
+
     def test_add_prefix_all(self) -> None:
         """
         Tests prefixing all names in the graph
@@ -554,7 +611,7 @@ class TestComposeFunctions(unittest.TestCase):
         Tests expanding output dimensions. The resulting graph should have the same output names,
         but with one more dimension at the specified index.
         """
-        m1 = _load_model(m1_def)
+        m1 = _load_model(M1_DEF)
 
         def _check_model(m1: ModelProto, m2: ModelProto, dim_idx: int) -> None:
             for out_g2, out_g1 in zip(m2.graph.output, m1.graph.output):

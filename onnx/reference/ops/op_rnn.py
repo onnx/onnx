@@ -1,9 +1,10 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,W0221,W0613
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -132,20 +133,13 @@ class CommonRNN(OpRun):
             Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
 
+        Y = Y.astype(X.dtype)
         return (Y,) if self.n_outputs == 1 else (Y, Y_h)
 
 
 class RNN_7(CommonRNN):
-
     pass
 
 
 class RNN_14(CommonRNN):
-
     pass
-
-
-if onnx_opset_version() >= 14:
-    RNN = RNN_14
-else:
-    RNN = RNN_7  # type: ignore

@@ -1,15 +1,15 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-from ._op_common_indices import _get_indices, _is_out
+from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 
 
 def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strides):  # type: ignore
-
     output_height, output_width = output_shape
     kernel_height, kernel_width = kernel_shape
     dilation_height, dilation_width = dilations
@@ -106,7 +106,6 @@ def _col2im_naive_implementation_2d(res, image_shape, kernel_shape, dilations, p
 
 
 def _col2im_shape_check(X, output_shape, kernel_shape, dilations, pads, strides):  # type: ignore
-
     n_input_plane = X.shape[0]
 
     kernel_size = np.prod(kernel_shape)

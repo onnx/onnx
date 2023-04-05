@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0914,W0221
 
@@ -26,7 +28,7 @@ class Loop(OpRun):
         """
         return True
 
-    def _run(self, M, cond, *args, context=None, body=None):  # type: ignore
+    def _run(self, M, cond, *args, context=None, body=None, attributes=None):  # type: ignore
         if len(args) > 0:
             v_initial = args[0]
             args = args[1:]
@@ -57,7 +59,7 @@ class Loop(OpRun):
                 inputs[body.input_names[0]] = np.array(it, dtype=M.dtype)  # type: ignore
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
-            outputs = self._run_body(inputs)  # type: ignore
+            outputs = self._run_body(inputs, attributes=attributes)  # type: ignore
             if self.K > 0:
                 for k in range(self.K):
                     k_carried_away[k].append(outputs[-self.K + k])

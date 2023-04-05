@@ -1,4 +1,8 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 Open Neural Network Exchange Intermediate Representation (ONNX IR) Specification
 =========
@@ -192,6 +196,7 @@ name|string|The name of the function
 domain|string|The domain to which this function belongs
 doc_string|string|Human-readable documentation for this function. Markdown is allowed.
 attribute|string[]|The attribute parameters of the function
+attribute_proto|Attribute[]| (IR version 9+) The attribute parameters with default values of the function. A function attribute shall be represented either as a string attribute or an Attribute, not both.
 input|string[]|The input parameters of the function
 output|string[]|The output parameters of the function.
 node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
@@ -201,8 +206,8 @@ The name and domain serve to identify the operator uniquely. An opset version is
 identified in a FunctionProto, but it is implicitly determined by the opset version of the domain
 included in the model.
 
-The input, output, and attribute constitute the signature part of the operator. No type information
-is explicitly included in the signature.
+The input, output, attribute, and attribute_proto (added in IR version 9) constitute the signature part of the operator. No type information
+is explicitly included in the signature. The attribute_proto field describes attribute parameters of the function along with their default-value (when not specified by an call-site node), while the attribute field lists attribute parameters without a default-value. The names in these two lists must be distinct. When an attribute-parameter of the function is used in a node within the function, it is replaced by the actual parameter value specified for the attribute at a call-site node (of the function) when such a attribute is specified, and it is replaced by the default-value if the attribute has a default-value specified, and it is omitted otherwise.
 
 The opset_import and node fields describe the implementation of the function.
 
@@ -342,6 +347,8 @@ For each variadic operator input, N or more node inputs must be specified where 
 
 #### Optional Inputs and Outputs
 
+**Pre IR-8**
+
 Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
 Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs.
@@ -349,6 +356,18 @@ Some operators have outputs that are optional. When an actual output parameter o
 There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
 
 Each node referring to an operator with optional outputs MUST provide a name for each output that is computed and MUST NOT provide names for outputs that are not computed.
+
+Optional inputs and outputs of the above kind are referred to as _static-optional_.
+
+**IR-8 Version and Later**
+
+IR-8 introduced a new type-constructor to represent _dynamic-optional_ inputs and outputs,
+in addition to the earlier static-optional version described above. A dynamic-optional INT64
+tensor is a distinct type from an INT64 tensor type. In contrast, a static-optional INT64
+tensor does not have a distinct type, it has the same type as a INT64 tensor.
+The ops _Optional_ and _OptionalGetElement_ must be explicitly used to convert between
+the dynamic-optional type and the underlying non-optional type.
+The dynamic-optional allows for more expressiveness than static-optional.
 
 #### External Tensor Data
 

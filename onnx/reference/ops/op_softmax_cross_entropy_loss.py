@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,W0221
 
@@ -73,8 +75,9 @@ def softmaxcrossentropy(  # type: ignore
     elif reduction == "sum":
         loss = np.sum(loss)
 
+    loss = loss.astype(x.dtype)
     if get_log_prob is True:
-        return loss, log_prob
+        return loss, log_prob.astype(x.dtype)  # type: ignore[union-attr]
     return (loss,)
 
 

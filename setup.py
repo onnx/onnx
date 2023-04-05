@@ -1,8 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import glob
 import multiprocessing
 import os
+import pathlib
 import platform
 import shlex
 import subprocess
@@ -23,7 +26,7 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, "onnx")
 TP_DIR = os.path.join(TOP_DIR, "third_party")
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, ".setuptools-cmake-build")
-PACKAGE_NAME = "onnx"
+PACKAGE_NAME = "onnx-protobufv21"
 
 WINDOWS = os.name == "nt"
 
@@ -113,7 +116,7 @@ class ONNXCommand(setuptools.Command):
         pass
 
 
-class create_version(ONNXCommand):
+class CreateVersion(ONNXCommand):
     def run(self):
         with open(os.path.join(SRC_DIR, "version.py"), "w") as f:
             f.write(
@@ -131,7 +134,7 @@ class create_version(ONNXCommand):
             )
 
 
-class cmake_build(setuptools.Command):
+class CmakeBuild(setuptools.Command):
     """
     Compiles everything when `python setup.py build` is run using cmake.
 
@@ -156,9 +159,9 @@ class cmake_build(setuptools.Command):
         self.jobs = multiprocessing.cpu_count() if self.jobs is None else int(self.jobs)
 
     def run(self):
-        if cmake_build.built:
+        if CmakeBuild.built:
             return
-        cmake_build.built = True
+        CmakeBuild.built = True
         if not os.path.exists(CMAKE_BUILD_DIR):
             os.makedirs(CMAKE_BUILD_DIR)
 
@@ -227,7 +230,7 @@ class cmake_build(setuptools.Command):
             subprocess.check_call(build_args)
 
 
-class build_py(setuptools.command.build_py.build_py):
+class BuildPy(setuptools.command.build_py.build_py):
     def run(self):
         self.run_command("create_version")
         self.run_command("cmake_build")
@@ -245,13 +248,13 @@ class build_py(setuptools.command.build_py.build_py):
         return setuptools.command.build_py.build_py.run(self)
 
 
-class develop(setuptools.command.develop.develop):
+class Develop(setuptools.command.develop.develop):
     def run(self):
         self.run_command("build_py")
         setuptools.command.develop.develop.run(self)
 
 
-class build_ext(setuptools.command.build_ext.build_ext):
+class BuildExt(setuptools.command.build_ext.build_ext):
     def run(self):
         self.run_command("cmake_build")
         setuptools.command.build_ext.build_ext.run(self)
@@ -274,27 +277,12 @@ class build_ext(setuptools.command.build_ext.build_ext):
             self.copy_file(src, dst)
 
 
-class mypy_type_check(ONNXCommand):
-    description = "Run MyPy type checker"
-
-    def run(self):
-        """Run command."""
-        onnx_script = os.path.realpath(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "tools/mypy-onnx.py"
-            )
-        )
-        returncode = subprocess.call([sys.executable, onnx_script])
-        sys.exit(returncode)
-
-
-cmdclass = {
-    "create_version": create_version,
-    "cmake_build": cmake_build,
-    "build_py": build_py,
-    "develop": develop,
-    "build_ext": build_ext,
-    "typecheck": mypy_type_check,
+CMDCLASS = {
+    "create_version": CreateVersion,
+    "cmake_build": CmakeBuild,
+    "build_py": BuildPy,
+    "develop": Develop,
+    "build_ext": BuildExt,
 }
 
 ################################################################################
@@ -343,12 +331,8 @@ tests_require.append("nbval")
 tests_require.append("tabulate")
 
 extras_require["lint"] = [
-    "clang-format==13.0.0",
-    "flake8>=5.0.2",
-    "mypy>=0.971",
-    "types-protobuf==3.18.4",
-    "black>=22.3",
-    "isort[colors]>=5.10",
+    "lintrunner>=0.10.0",
+    "lintrunner-adapters>=0.3",
 ]
 
 ################################################################################
@@ -359,10 +343,10 @@ setuptools.setup(
     name=PACKAGE_NAME,
     version=VersionInfo.version,
     description="Open Neural Network Exchange",
-    long_description=open("README.md").read(),
+    long_description=pathlib.Path("README.md").read_text(),
     long_description_content_type="text/markdown",
     ext_modules=ext_modules,
-    cmdclass=cmdclass,
+    cmdclass=CMDCLASS,
     packages=packages,
     license="Apache License v2.0",
     include_package_data=True,

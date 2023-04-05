@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# Copyright (c) ONNX Project Contributors
+
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy
@@ -32,7 +36,10 @@ except ImportError as e:
 d: Any = d_typed
 
 GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is generated
-HEADER = f"# {GENERATED} by generate_proto_mypy_stubs.py.  Do not edit!\n"
+HEADER = (
+    f"# {GENERATED} by protoc-gen-mypy.py.  Do not edit!\n"
+    + "# mypy: disable-error-code=override\n"
+)
 
 
 class Descriptors:

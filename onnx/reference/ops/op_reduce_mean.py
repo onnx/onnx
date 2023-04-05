@@ -1,18 +1,21 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
-
-from ._op import OpRunReduceNumpy
+from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 class ReduceMean_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
-        if axes is not None:
-            axes = tuple(axes)
-        return (np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype),)
+        axes = tuple(axes) if axes is not None else None
+        res = np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype)
+        if keepdims == 0 and not isinstance(res, np.ndarray):
+            # The runtime must return a numpy array of a single float.
+            res = np.array(res)
+        return (res,)
 
 
 class ReduceMean_18(OpRunReduceNumpy):
@@ -23,16 +26,12 @@ class ReduceMean_18(OpRunReduceNumpy):
         axes = self.handle_axes(axes)
         keepdims = keepdims != 0  # type: ignore
         try:
-            return (
-                np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype),  # type: ignore
-            )
+            res = np.mean(data, axis=axes, keepdims=keepdims, dtype=data.dtype)  # type: ignore
+            if keepdims == 0 and not isinstance(res, np.ndarray):
+                # The runtime must return a numpy array of a single float.
+                res = np.array(res)
+            return (res,)  # type: ignore
         except TypeError as e:
             raise TypeError(
                 f"Unable to reduce shape {data.shape!r} with axes={axes!r} and keepdims={keepdims}."
             ) from e
-
-
-if onnx_opset_version() >= 18:
-    ReduceMean = ReduceMean_18
-else:
-    ReduceMean = ReduceMean_1  # type: ignore

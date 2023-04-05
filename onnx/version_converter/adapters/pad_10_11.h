@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -27,6 +29,8 @@ class Pad_10_11 final : public Adapter {
     node->removeAttribute(kpads);
     // Turn value attribute into input
     if (!node->hasAttribute(kmode) || node->s(kmode) == "constant") {
+      if (!node->hasAttribute(kvalue))
+        node->f_(kvalue, 0.);
       Tensor t_value;
       t_value.elem_type() = TensorProto_DataType_FLOAT;
       auto& data_value = t_value.floats();

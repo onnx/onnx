@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -5,9 +7,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class Col2Im(Base):
@@ -204,7 +205,7 @@ class Col2Im(Base):
             [
                 [
                     [
-                        [8.0, 21.0, 24.0, 27.0, 14.0],  # (1, 1, 5, 5)
+                        [8.0, 21.0, 24.0, 27.0, 24.0],  # (1, 1, 5, 5)
                         [38.0, 66.0, 69.0, 72.0, 54.0],
                         [68.0, 111.0, 114.0, 117.0, 84.0],
                         [98.0, 156.0, 159.0, 162.0, 114.0],

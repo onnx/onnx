@@ -3,7 +3,6 @@
  */
 
 // Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
 
 #pragma once
 

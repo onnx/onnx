@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import itertools
@@ -5,9 +7,8 @@ import itertools
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class Transpose(Base):
@@ -29,17 +30,17 @@ class Transpose(Base):
         data = np.random.random_sample(shape).astype(np.float32)
         permutations = list(itertools.permutations(np.arange(len(shape))))
 
-        for i in range(len(permutations)):
+        for i, permutation in enumerate(permutations):
             node = onnx.helper.make_node(
                 "Transpose",
                 inputs=["data"],
                 outputs=["transposed"],
-                perm=permutations[i],
+                perm=permutation,
             )
-            transposed = np.transpose(data, permutations[i])
+            transposed = np.transpose(data, permutation)
             expect(
                 node,
                 inputs=[data],
                 outputs=[transposed],
-                name="test_transpose_all_permutations_" + str(i),
+                name=f"test_transpose_all_permutations_{i}",
             )

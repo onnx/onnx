@@ -1,9 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
 import numpy as np
 
-from ._op import OpRunBinaryComparison
+from onnx.reference.ops._op import OpRunBinaryComparison
 
 
 class Greater(OpRunBinaryComparison):

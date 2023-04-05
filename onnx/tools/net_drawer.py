@@ -1,7 +1,9 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # A library and utility for drawing ONNX nets. Most of this implementation has
 # been borrowed from the caffe2 implementation
-# https://github.com/caffe2/caffe2/blob/master/caffe2/python/net_drawer.py
+# https://github.com/pytorch/pytorch/blob/master/caffe2/python/net_drawer.py
 #
 # The script takes two required arguments:
 #   -input: a path to a serialized ModelProto .pb file.
@@ -45,14 +47,16 @@ def _form_and_sanitize_docstring(s: str) -> str:
     return url
 
 
-def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProducer:
-    def ReallyGetOpNode(op: NodeProto, op_id: int) -> pydot.Node:
+def GetOpNodeProducer(  # noqa: N802
+    embed_docstring: bool = False, **kwargs: Any
+) -> _NodeProducer:
+    def really_get_op_node(op: NodeProto, op_id: int) -> pydot.Node:
         if op.name:
-            node_name = "%s/%s (op#%d)" % (op.name, op.op_type, op_id)
+            node_name = f"{op.name}/{op.op_type} (op#{op_id})"
         else:
-            node_name = "%s (op#%d)" % (op.op_type, op_id)
-        for i, input in enumerate(op.input):
-            node_name += "\n input" + str(i) + " " + input
+            node_name = f"{op.op_type} (op#{op_id})"
+        for i, input_ in enumerate(op.input):
+            node_name += "\n input" + str(i) + " " + input_
         for i, output in enumerate(op.output):
             node_name += "\n output" + str(i) + " " + output
         node = pydot.Node(node_name, **kwargs)
@@ -61,10 +65,10 @@ def GetOpNodeProducer(embed_docstring: bool = False, **kwargs: Any) -> _NodeProd
             node.set_URL(url)
         return node
 
-    return ReallyGetOpNode
+    return really_get_op_node
 
 
-def GetPydotGraph(
+def GetPydotGraph(  # noqa: N802
     graph: GraphProto,
     name: Optional[str] = None,
     rankdir: str = "LR",

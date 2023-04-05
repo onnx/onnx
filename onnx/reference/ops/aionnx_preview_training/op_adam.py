@@ -1,9 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,W0221
 
 import numpy as np
 
-from ._op_run_training import OpRunTraining
+from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
 def _apply_adam(  # type: ignore

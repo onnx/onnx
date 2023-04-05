@@ -106,6 +106,32 @@ Status OnnxParser::Parse(char open, IdList& idlist, char close) {
   return Status::OK();
 }
 
+Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
+  idlist.Clear();
+  attrlist.Clear();
+  do {
+    std::string id;
+    ParseIdentifier(id);
+    auto next = NextChar();
+    if (next == ':' || next == '=')
+      Parse(*attrlist.Add(), id);
+    else
+      *idlist.Add() = id;
+  } while (Matches(','));
+  return Status::OK();
+}
+
+Status OnnxParser::Parse(char open, IdList& idlist, AttrList& attrlist, char close) {
+  if (Matches(open)) {
+    PARSE(idlist, attrlist);
+    MATCH(close);
+  } else {
+    idlist.Clear();
+    attrlist.Clear();
+  }
+  return Status::OK();
+}
+
 Status OnnxParser::Parse(TensorShapeProto& shape) {
   shape.clear_dim();
   do {
@@ -366,10 +392,26 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   return Status::OK();
 }
 
+bool OnnxParser::NextIsIdentifier() {
+  std::string id("");
+  (void)PeekIdentifier(id);
+  return !(id.empty());
+}
+
 bool OnnxParser::NextIsType() {
   std::string id("");
   (void)PeekIdentifier(id);
-  return (PrimitiveTypeNameMap::IsTypeName(id));
+  if (PrimitiveTypeNameMap::IsTypeName(id))
+    return true;
+  switch (KeyWordMap::Lookup(id)) {
+    case KeyWordMap::KeyWord::SEQ_TYPE:
+    case KeyWordMap::KeyWord::MAP_TYPE:
+    case KeyWordMap::KeyWord::OPTIONAL_TYPE:
+    case KeyWordMap::KeyWord::SPARSE_TENSOR_TYPE:
+      return true;
+    default:
+      return false;
+  }
 }
 
 Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
@@ -377,8 +419,19 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
   auto next = NextChar();
   if (isalpha(next) || next == '_') {
     if (NextIsType()) {
-      attr.set_type(AttributeProto_AttributeType_TENSOR);
-      Parse(*attr.mutable_t());
+      TypeProto typeProto;
+      Parse(typeProto);
+      next = NextChar();
+      if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
+        attr.set_type(AttributeProto_AttributeType_TENSOR);
+        auto& tensorProto = *attr.mutable_t();
+        ParseOptionalIdentifier(*tensorProto.mutable_name());
+        (void)Matches('='); // Optional, to unify handling of initializers
+        Parse(tensorProto, typeProto);
+      } else {
+        attr.set_type(AttributeProto_AttributeType_TYPE_PROTO);
+        attr.mutable_tp()->CopyFrom(typeProto);
+      }
     } else {
       attr.set_type(AttributeProto_AttributeType_GRAPH);
       Parse(*attr.mutable_g());
@@ -414,6 +467,10 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   attr.Clear();
   std::string name;
   CHECK_PARSER_STATUS(ParseIdentifier(name));
+  return Parse(attr, name);
+}
+
+Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   attr.set_name(name);
   if (Matches(':')) {
     CHECK_PARSER_STATUS(ParseIdentifier(name));
@@ -549,7 +606,7 @@ Status OnnxParser::Parse(FunctionProto& fn) {
   ParseIdentifier(id);
   fn.set_name(id);
 
-  PARSE('<', *fn.mutable_attribute(), '>');
+  PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>');
   PARSE('(', *fn.mutable_input(), ')');
   MATCH('=');
   MATCH('>', false);

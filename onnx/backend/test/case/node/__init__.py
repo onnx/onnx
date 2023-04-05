@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
@@ -7,18 +9,16 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 
 import onnx
+from onnx.backend.test.case.test_case import TestCase
+from onnx.backend.test.case.utils import import_recursive
 from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
     GraphProto,
     ModelProto,
     NodeProto,
-    OperatorSetIdProto,
     TypeProto,
 )
-
-from ..test_case import TestCase
-from ..utils import import_recursive
 
 _NodeTestCases = []
 _TargetOpType = None
@@ -131,7 +131,7 @@ def function_testcase_helper(
 ) -> Tuple[List[Tuple[List[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, node.domain)
+    schema = onnx.defs.get_schema(test_op, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
     # opset versions include the op's since_version and other opset versions
@@ -270,7 +270,7 @@ def expect(
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
         produce_opset_version = onnx.defs.get_schema(
-            node.op_type, node.domain
+            node.op_type, domain=node.domain
         ).since_version
         kwargs["opset_imports"] = [
             onnx.helper.make_operatorsetid(node.domain, produce_opset_version)
@@ -299,11 +299,12 @@ def expect(
     ) -> List[TypeProto]:
         if node_inputs:
             if node_inputs[0] != "":
-                return [present_value_info[0].type] + merge(
-                    node_inputs[1:], present_value_info[1:]
-                )
+                return [
+                    present_value_info[0].type,
+                    *merge(node_inputs[1:], present_value_info[1:]),
+                ]
             else:
-                return [TypeProto()] + merge(node_inputs[1:], present_value_info)
+                return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
         return []
 
     merged_types = merge(list(node.input), inputs_vi)

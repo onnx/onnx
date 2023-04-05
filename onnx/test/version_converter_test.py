@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import struct
@@ -1835,6 +1837,37 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == to_opset
         assert len(converted_model.graph.node[0].attribute) == 1
 
+    # Test Pad Adapter: 10 -> 11
+    def test_pad_10_11(self) -> None:
+        pads = (0, 1, 2, 0, 2, 1)
+        nodes = [helper.make_node("Pad", ["X"], ["Y"], pads=pads)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5, 5))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
+
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[1].op_type == "Pad"
+        assert converted_model.opset_import[0].version == 11
+
+    def test_pad_with_value_10_11(self) -> None:
+        pads = (0, 1, 2, 0, 2, 1)
+        nodes = [helper.make_node("Pad", ["X"], ["Y"], pads=pads, value=1.0)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5, 5))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
+
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[1].op_type == "Pad"
+        assert converted_model.opset_import[0].version == 11
+
     # Test that subgraphs are converted
     def test_if_subgraph_10_11(self) -> None:
         from_opset = 10
@@ -1929,6 +1962,27 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == 12
+
+    def test_softmax_12_13(self) -> None:
+        axis = 0
+        nodes = [helper.make_node("Softmax", ["X"], ["Y"], axis=axis)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 3))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2, 3))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 11), 13)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Shape"
+        assert converted_model.graph.node[1].op_type == "Flatten"
+        assert converted_model.graph.node[1].attribute[0].name == "axis"
+        assert converted_model.graph.node[1].attribute[0].i == axis
+        assert converted_model.graph.node[2].op_type == "Softmax"
+        assert converted_model.graph.node[2].attribute[0].name == "axis"
+        assert converted_model.graph.node[2].attribute[0].i == -1
+        assert converted_model.graph.node[3].op_type == "Reshape"
+        assert converted_model.opset_import[0].version == 13
 
 
 if __name__ == "__main__":

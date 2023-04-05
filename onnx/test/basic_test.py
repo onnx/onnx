@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import io
@@ -52,9 +54,8 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input is a file name
         try:
-            fi = tempfile.NamedTemporaryFile(delete=False)
-            onnx.save_model(proto, fi)
-            fi.close()
+            with tempfile.NamedTemporaryFile(delete=False) as fi:
+                onnx.save_model(proto, fi)
 
             loaded_proto = onnx.load_model(fi.name, cls)
             self.assertEqual(proto, loaded_proto)
@@ -79,9 +80,8 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input is a file name
         try:
-            tfile = tempfile.NamedTemporaryFile(delete=False)
-            onnx.save_tensor(proto, tfile)
-            tfile.close()
+            with tempfile.NamedTemporaryFile(delete=False) as tfile:
+                onnx.save_tensor(proto, tfile)
 
             loaded_proto = onnx.load_tensor(tfile.name, cls)
             self.assertEqual(proto, loaded_proto)
@@ -90,11 +90,11 @@ class TestBasicFunctions(unittest.TestCase):
 
     def test_existence(self) -> None:
         try:
-            AttributeProto
-            NodeProto
-            GraphProto
-            ModelProto
-        except Exception as e:
+            AttributeProto  # pylint: disable=pointless-statement
+            NodeProto  # pylint: disable=pointless-statement
+            GraphProto  # pylint: disable=pointless-statement
+            ModelProto  # pylint: disable=pointless-statement
+        except Exception as e:  # pylint: disable=broad-except
             self.fail(f"Did not find proper onnx protobufs. Error is: {e}")
 
     def test_version_exists(self) -> None:

@@ -1193,11 +1193,9 @@ This version of the operator has been available since version 1 of the default O
     ]
     axis = 1,
     output = [
-        [
-            [1.0, 1.9],
-            [2.3, 3.9],
-            [4.5, 5.9],
-        ],
+        [[1.0, 1.9]],
+        [[2.3, 3.9]],
+        [[4.5, 5.9]],
     ]
   ```
 
@@ -10380,11 +10378,11 @@ This version of the operator has been available since version 11 of the default 
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled
 
@@ -10394,12 +10392,12 @@ This version of the operator has been available since version 11 of the default 
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
    The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
 
@@ -10449,16 +10447,16 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="BitShift-11"></a>**BitShift-11**</a>
 
   Bitwise shift operator performs element-wise operation. For each input element, if the
-   attribute "direction" is "RIGHT", this operator moves its binary representation toward
-   the right side so that the input value is effectively decreased. If the attribute "direction"
-   is "LEFT", bits of binary representation moves toward the left side, which results the
-   increase of its actual value. The input X is the tensor to be shifted and another input
-   Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
-   and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
-   X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
+  attribute "direction" is "RIGHT", this operator moves its binary representation toward
+  the right side so that the input value is effectively decreased. If the attribute "direction"
+  is "LEFT", bits of binary representation moves toward the left side, which results the
+  increase of its actual value. The input X is the tensor to be shifted and another input
+  Y specifies the amounts of shifting. For example, if "direction" is "Right", X is [1, 4],
+  and S is [1, 1], the corresponding output Z would be [0, 2]. If "direction" is "LEFT" with
+  X=[1, 2] and S=[1, 2], the corresponding output Y would be [2, 8].
 
-   Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
-   not necessarily identical.
+  Because this operator supports Numpy-style broadcasting, X's and Y's shapes are
+  not necessarily identical.
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -10969,24 +10967,29 @@ This version of the operator has been available since version 11 of the default 
   Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
   Scale is calculated as:
   ```
-   y_scale = (max(x) - min(x))/(qmax - qmin)
-   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
-   * data range is adjusted to include 0.
+  y_scale = (max(x) - min(x))/(qmax - qmin)
   ```
+
+  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * data range is adjusted to include 0.
+
   Zero point is calculated as:
   ```
   intermediate_zero_point = qmin - min(x)/y_scale
   y_zero_point = cast(round(saturate(itermediate_zero_point)))
+  ```
+
   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
   * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
   * rounding to nearest ties to even.
-  ```
+
   Data quantization formula is:
   ```
   y = saturate (round (x / y_scale) + y_zero_point)
+  ```
+
   * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
   * rounding to nearest ties to even.
-  ```
 
 #### Version
 
@@ -11132,7 +11135,7 @@ This version of the operator has been available since version 11 of the default 
   Let
   k = indices[i_{0}, ..., i_{q-1}]
   Then
-  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
+  output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
 
   ```
     data = [
@@ -11145,11 +11148,9 @@ This version of the operator has been available since version 11 of the default 
     ]
     axis = 1,
     output = [
-        [
-            [1.0, 1.9],
-            [2.3, 3.9],
-            [4.5, 5.9],
-        ],
+        [[1.0, 1.9]],
+        [[2.3, 3.9]],
+        [[4.5, 5.9]],
     ]
   ```
 
@@ -12168,28 +12169,33 @@ This version of the operator has been available since version 11 of the default 
   Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
   up to `limit` (exclusive).
 
-  The number of elements in the output of range is computed as below-
+  The number of elements in the output of range is computed as below:
 
-  `number_of_elements = max( ceil( (limit - start) / delta ) , 0 )`
+  ```
+  number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
+  ```
 
-  The pseudocode determining the contents of the output is shown below-
+  The pseudocode determining the contents of the output is shown below:
 
-  `for(int i=0; i<number_of_elements; ++i)`
+  ```
+  for(int i=0; i<number_of_elements; ++i) {
+    output[i] =  start + (i * delta);
+  }
+  ```
 
-  `{`
+  Example 1
 
-  `    output[i] =  start + (i * delta);  `
-
-  `}`
-
-  `Example 1`
+  ```
   Inputs: start = 3, limit = 9, delta = 3
   Output: [3, 6]
+  ```
 
-  `Example 2`
+  Example 2
+
+  ```
   Inputs: start = 10, limit = 4, delta = -2
   Output: [10, 8, 6]
-
+  ```
 
 #### Version
 
@@ -13550,16 +13556,18 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="SplitToSequence-11"></a>**SplitToSequence-11**</a>
 
-  Split a tensor into a sequence of tensors, along the specified
-  'axis'. Lengths of the parts can be specified using argument 'split'.
+  Split a tensor into a sequence of tensors, along the specified 'axis'.
+  Lengths of the parts can be specified using the optional argument 'split'.
+  If the argument `split' is not specified, a default scalar value of 1
+  is used as the value of `split'.
   'split' must contain only positive numbers.
   'split' is either a scalar (tensor of empty shape), or a 1-D tensor.
-  If 'split' is a scalar, then 'input' will be split into equally sized chunks(if possible).
-  Last chunk will be smaller if the 'input' size along the given axis 'axis' is not divisible
-  by 'split'.
-  Otherwise, the tensor is split into 'size(split)' chunks, with lengths of the parts on 'axis'
-  specified in 'split'. In this scenario, the sum of entries in 'split' must be equal to the
-  dimension size of input tensor on 'axis'.
+  If 'split' is a scalar, then 'input' will be split into chunks all of size 'split'
+  if possible. The last chunk alone may be smaller than 'split' if the 'input' size
+  along the given axis 'axis' is not divisible by 'split'.
+  If 'split' is a 1-dimensional tensor, the input tensor is split into 'size(split)' chunks,
+  with lengths of the parts on 'axis' specified in 'split'. In this scenario, the sum of entries
+  in 'split' must be equal to the dimension size of input tensor on 'axis'.
 
 #### Version
 
@@ -13644,18 +13652,19 @@ This version of the operator has been available since version 11 of the default 
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
   shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
-    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
-      which contains the values of the top k elements along the specified axis
-    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
-     contains the indices of the top k elements (original indices from the input
-     tensor).
 
-  If "largest" is 1 (the default value) then the k largest elements are returned.
-  If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
-  If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+  * Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+    which contains the values of the top k elements along the specified axis
+  * Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+    contains the indices of the top k elements (original indices from the input
+    tensor).
+
+  * If "largest" is 1 (the default value) then the k largest elements are returned.
+  * If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+  * If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
 
   Given two equivalent values, this operator uses the indices along the axis as
-   a tiebreaker. That is, the element with the lower index will appear first.
+  a tiebreaker. That is, the element with the lower index will appear first.
 
 #### Version
 
@@ -13715,67 +13724,89 @@ This version of the operator has been available since version 11 of the default 
   https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
 
   Example 1:
-    input_X = [2, 1, 1, 3, 4, 3]
-    attribute_sorted = 0
-    attribute_axis = None
-    output_Y = [2, 1, 3, 4]
-    output_indices = [0, 1, 3, 4]
-    output_inverse_indices = [0, 1, 1, 2, 3, 2]
-    output_counts = [1, 2, 2, 1]
+  ```
+  input_X = [2, 1, 1, 3, 4, 3]
+  attribute_sorted = 0
+  attribute_axis = None
+  output_Y = [2, 1, 3, 4]
+  output_indices = [0, 1, 3, 4]
+  output_inverse_indices = [0, 1, 1, 2, 3, 2]
+  output_counts = [1, 2, 2, 1]
+  ```
 
   Example 2:
-    input_X = [[1, 3], [2, 3]]
-    attribute_sorted = 1
-    attribute_axis = None
-    output_Y = [1, 2, 3]
-    output_indices = [0, 2, 1]
-    output_inverse_indices = [0, 2, 1, 2]
-    output_counts = [1, 1, 2]
+  ```
+  input_X = [[1, 3], [2, 3]]
+  attribute_sorted = 1
+  attribute_axis = None
+  output_Y = [1, 2, 3]
+  output_indices = [0, 2, 1]
+  output_inverse_indices = [0, 2, 1, 2]
+  output_counts = [1, 1, 2]
+  ```
 
   Example 3:
-    input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
-    attribute_sorted = 1
-    attribute_axis = 0
-    output_Y = [[1, 0, 0], [2, 3, 4]]
-    output_indices = [0, 2]
-    output_inverse_indices = [0, 0, 1]
-    output_counts = [2, 1]
+  ```
+  input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
+  attribute_sorted = 1
+  attribute_axis = 0
+  output_Y = [[1, 0, 0], [2, 3, 4]]
+  output_indices = [0, 2]
+  output_inverse_indices = [0, 0, 1]
+  output_counts = [2, 1]
+  ```
 
   Example 4:
-    input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
-               [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
-    attribute_sorted = 1
-    attribute_axis = 1
+  ```
+  input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
+              [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
+  attribute_sorted = 1
+  attribute_axis = 1
+  ```
 
-    intermediate data are presented below for better understanding:
+  intermediate data are presented below for better understanding:
+  there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
+  ```
+  A: [[1, 1], [1, 1]],
+     [[0, 1], [0, 1]],
+     [[2, 1], [2, 1]],
+     [[0, 1], [0, 1]].
+  ```
 
-    there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
-    A: [[1, 1], [1, 1]],
-       [[0, 1], [0, 1]],
-       [[2, 1], [2, 1]],
-       [[0, 1], [0, 1]].
+  there are 3 unique subtensors:
+  ```
+  [[1, 1], [1, 1]],
+  [[0, 1], [0, 1]],
+  [[2, 1], [2, 1]].
+  ```
 
-    there are 3 unique subtensors:
-    [[1, 1], [1, 1]],
-    [[0, 1], [0, 1]],
-    [[2, 1], [2, 1]].
+  sorted unique subtensors:
+  ```
+  B: [[0, 1], [0, 1]],
+     [[1, 1], [1, 1]],
+     [[2, 1], [2, 1]].
+  ```
 
-    sorted unique subtensors:
-    B: [[0, 1], [0, 1]],
-       [[1, 1], [1, 1]],
-       [[2, 1], [2, 1]].
+  output_Y is constructed from B:
+  ```
+  [[[0. 1.], [1. 1.], [2. 1.]],
+   [[0. 1.], [1. 1.], [2. 1.]]]
+  ```
 
-    output_Y is constructed from B:
-    [[[0. 1.], [1. 1.], [2. 1.]],
-     [[0. 1.], [1. 1.], [2. 1.]]]
+  output_indices is to map from B to A:
+  ```
+  [1, 0, 2]
+  ```
 
-    output_indices is to map from B to A:
-    [1, 0, 2]
+  output_inverse_indices is to map from A to B:
+  ```
+  [1, 0, 2, 0]
+  ```
 
-    output_inverse_indices is to map from A to B:
-    [1, 0, 2, 0]
-
-    output_counts = [2 1 1]
+  output_counts:
+  ```
+  [2, 1, 1]
+  ```
 
 #### Version
 
@@ -14140,9 +14171,11 @@ This version of the operator has been available since version 12 of the default 
 
 ### <a name="Einsum-12"></a>**Einsum-12**</a>
 
-  An einsum of the form ```term1, term2 -> output-term``` produces an output tensor using the following equation
+  An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
-  ```output[output-term] = reduce-sum( input1[term1] * input2[term] )```
+  ```
+  output[output-term] = reduce-sum( input1[term1] * input2[term] )
+  ```
 
   where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
   that do not occur in the output-term.
@@ -14441,11 +14474,7 @@ This version of the operator has been available since version 12 of the default 
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled
-
-   ```
-   * pad_shape[i] is sum of pads along axis i
-   ```
+   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
@@ -15033,7 +15062,7 @@ This version of the operator has been available since version 13 of the default 
   * Casting from fixed point to:
     * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
     * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
-  signed types). For example, 200 (int16) -> -56 (int8).
+      signed types). For example, 200 (int16) -> -56 (int8).
     * bool: zero to False; nonzero to True.
   * Casting from bool to:
     * floating point: `{1.0, 0.0}`.
@@ -15232,26 +15261,22 @@ This version of the operator has been available since version 13 of the default 
   In the DCR mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: depth, column, and then row. The output y is computed from the input x as below:
 
+  ```
   b, c, h, w = x.shape
-
   tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
-
   tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-
   y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
-
+  ```
 
   In the CRD mode, elements along the depth dimension from the input tensor are rearranged in the
   following order: column, row, and the depth. The output y is computed from the input x as below:
 
+  ```
   b, c, h, w = x.shape
-
   tmp = np.reshape(x, [b, c // (blocksize ** 2), blocksize, blocksize, h, w])
-
   tmp = np.transpose(tmp, [0, 1, 4, 2, 5, 3])
-
   y = np.reshape(tmp, [b, c // (blocksize ** 2), h * blocksize, w * blocksize])
-
+  ```
 
 #### Version
 
@@ -15290,9 +15315,9 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="DequantizeLinear-13"></a>**DequantizeLinear-13**</a>
 
   The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
-  The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' must have same shape, and can be either a scalar
+  The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
   for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-  'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,
+  `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
   there's no zero point (zero point is supposed to be 0).
 
 #### Version
@@ -15628,56 +15653,49 @@ This version of the operator has been available since version 13 of the default 
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
 
-  axis = 0 :
-
-  Let
-  k = indices[i_{0}, ..., i_{q-1}]
-  Then
-  output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]
+  If `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
+  then `output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]`:
 
   ```
-    data = [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
-    indices = [
-        [0, 1],
-        [1, 2],
-    ]
-    output = [
-        [
-            [1.0, 1.2],
-            [2.3, 3.4],
-        ],
-        [
-            [2.3, 3.4],
-            [4.5, 5.7],
-        ],
-    ]
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+  indices = [
+      [0, 1],
+      [1, 2],
+  ]
+  output = [
+      [
+          [1.0, 1.2],
+          [2.3, 3.4],
+      ],
+      [
+          [2.3, 3.4],
+          [4.5, 5.7],
+      ],
+  ]
   ```
-  axis = 1 :
 
-  Let
-  k = indices[i_{0}, ..., i_{q-1}]
-  Then
-  output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]
+  If `axis = 1`, let `k = indices[i_{0}, ..., i_{q-1}]`
+  then `output[j_{0}, i_{0}, ..., i_{q-1}, j_{1}, ..., j_{r-2}] = input[j_{0}, k, j_{1}, ..., j_{r-2}]`:
 
   ```
-    data = [
-        [1.0, 1.2, 1.9],
-        [2.3, 3.4, 3.9],
-        [4.5, 5.7, 5.9],
-    ]
-    indices = [
-        [0, 2],
-    ]
-    axis = 1,
-    output = [
-            [[1.0, 1.9]],
-            [[2.3, 3.9]],
-            [[4.5, 5.9]],
-    ]
+  data = [
+      [1.0, 1.2, 1.9],
+      [2.3, 3.4, 3.9],
+      [4.5, 5.7, 5.9],
+  ]
+  indices = [
+      [0, 2],
+  ]
+  axis = 1,
+  output = [
+          [[1.0, 1.9]],
+          [[2.3, 3.9]],
+          [[4.5, 5.9]],
+  ]
   ```
 
 #### Version
@@ -15729,45 +15747,45 @@ This version of the operator has been available since version 13 of the default 
   For instance, in the 3-D case (r = 3), the output produced is determined
   by the following equations:
   ```
-    out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
-    out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
-    out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
+  out[i][j][k] = input[index[i][j][k]][j][k] if axis = 0,
+  out[i][j][k] = input[i][index[i][j][k]][k] if axis = 1,
+  out[i][j][k] = input[i][j][index[i][j][k]] if axis = 2,
   ```
 
   This operator is also the inverse of ScatterElements. It is similar to Torch's gather operation.
 
   Example 1:
   ```
-    data = [
-        [1, 2],
-        [3, 4],
-    ]
-    indices = [
-        [0, 0],
-        [1, 0],
-    ]
-    axis = 1
-    output = [
-        [1, 1],
-        [4, 3],
-    ]
+  data = [
+      [1, 2],
+      [3, 4],
+  ]
+  indices = [
+      [0, 0],
+      [1, 0],
+  ]
+  axis = 1
+  output = [
+      [1, 1],
+      [4, 3],
+  ]
   ```
   Example 2:
   ```
-    data = [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-    ]
-    indices = [
-        [1, 2, 0],
-        [2, 0, 0],
-    ]
-    axis = 0
-    output = [
-        [4, 8, 3],
-        [7, 2, 3],
-    ]
+  data = [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9],
+  ]
+  indices = [
+      [1, 2, 0],
+      [2, 0, 0],
+  ]
+  axis = 0
+  output = [
+      [4, 8, 3],
+      [7, 2, 3],
+  ]
   ```
 
 #### Version
@@ -15939,9 +15957,8 @@ This version of the operator has been available since version 13 of the default 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
-  A' = transpose(A) if transA else A
-
-  B' = transpose(B) if transB else B
+  * A' = transpose(A) if transA else A
+  * B' = transpose(B) if transB else B
 
   Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
   input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
@@ -16178,14 +16195,14 @@ This version of the operator has been available since version 13 of the default 
 
   Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
   It normalizes over local input regions.
-  The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
-  of shape (N x C x D1 x D2, ..., Dk), its region is
-  {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
+  The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
+  of shape `(N x C x D1 x D2, ..., Dk)`, its region is
+  `{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}`.
 
-  square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
-  where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
+  `square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2)`,
+  where `max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))`.
 
-  Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
+  `Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta`
 
 #### Version
 
@@ -16610,7 +16627,7 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="MeanVarianceNormalization-13"></a>**MeanVarianceNormalization-13**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+        on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
 
 #### Version
 
@@ -16678,16 +16695,16 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="Mod-13"></a>**Mod-13**</a>
 
   Performs element-wise binary modulus (with Numpy-style broadcasting support).
-      The sign of the remainder is the same as that of the Divisor.
+    The sign of the remainder is the same as that of the Divisor.
 
-      Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-      (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-      This attribute is set to 0 by default causing the behavior to be like integer mod.
-      Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
+    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
+    This attribute is set to 0 by default causing the behavior to be like integer mod.
+    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
 
-      If the input type is floating point, then `fmod` attribute must be set to 1.
+    If the input type is floating point, then `fmod` attribute must be set to 1.
 
-      In case of dividend being zero, the results will be platform dependent.
+    In case of dividend being zero, the results will be platform dependent.
 
     This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
@@ -16798,85 +16815,100 @@ This version of the operator has been available since version 13 of the default 
   or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
   The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
 
-      loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+  ```
+  loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+  ```
 
   When an optional "weight" is provided, the sample loss is calculated as:
 
-      loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+  ```
+  loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+  ```
 
   loss is zero for the case when target-value equals ignore_index.
 
-      loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+  ```
+  loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+  ```
 
   If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
   If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
 
-      mean(loss), if "weight" is not provided,
+  ```
+  mean(loss), if "weight" is not provided,
+  ```
 
   or if weight is provided,
 
-      sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+  ```
+  sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+  ```
 
-  If "reduction" attribute is set to "sum", the output is a scalar:
-      sum(loss).
+  If "reduction" attribute is set to "sum", the output is a scalar: `sum(loss)`.
 
   See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
 
   Example 1:
 
-      // negative log likelihood loss, "none" reduction
-      N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-               [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-      target = [[2, 1], [0, 2]]
+  ```
+  // negative log likelihood loss, "none" reduction
+  N, C, d1 = 2, 3, 2
+  input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+            [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+  target = [[2, 1], [0, 2]]
 
-      loss = np.zeros((N, d1))
-      for n in range(N):
-          for d_1 in range(d1):
-              c = target[n][d_1]
-              loss[n][d_1] = -input[n][c][d_1]
+  loss = np.zeros((N, d1))
+  for n in range(N):
+      for d_1 in range(d1):
+          c = target[n][d_1]
+          loss[n][d_1] = -input[n][c][d_1]
 
-      // print(loss)
-      // [[-3. -2.]
-      //  [-0. -2.]]
+  // print(loss)
+  // [[-3. -2.]
+  //  [-0. -2.]]
+  ```
 
   Example 2:
 
-      // weighted negative log likelihood loss, sum reduction
-      N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-              [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-      target = [[2, 1], [0, 2]]
-      weight = [0.2, 0.3, 0.1]
-      loss = np.zeros((N, d1))
-      for n in range(N):
-          for d_1 in range(d1):
-              c = target[n][d_1]
-              loss[n][d_1] = -input[n][c][d_1] * weight[c]
+  ```
+  // weighted negative log likelihood loss, sum reduction
+  N, C, d1 = 2, 3, 2
+  input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+          [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+  target = [[2, 1], [0, 2]]
+  weight = [0.2, 0.3, 0.1]
+  loss = np.zeros((N, d1))
+  for n in range(N):
+      for d_1 in range(d1):
+          c = target[n][d_1]
+          loss[n][d_1] = -input[n][c][d_1] * weight[c]
 
-      loss = np.sum(loss)
-      // print(loss)
-      // -1.1
+  loss = np.sum(loss)
+  // print(loss)
+  // -1.1
+  ```
 
   Example 3:
 
-      // weighted negative log likelihood loss, mean reduction
-      N, C, d1 = 2, 3, 2
-      input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-              [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-      target = [[2, 1], [0, 2]]
-      weight = [0.2, 0.3, 0.1]
-      loss = np.zeros((N, d1))
-      weight_total = 0
-      for n in range(N):
-          for d_1 in range(d1):
-              c = target[n][d_1]
-              loss[n][d_1] = -input[n][c][d_1] * weight[c]
-              weight_total = weight_total + weight[c]
+  ```
+  // weighted negative log likelihood loss, mean reduction
+  N, C, d1 = 2, 3, 2
+  input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+          [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+  target = [[2, 1], [0, 2]]
+  weight = [0.2, 0.3, 0.1]
+  loss = np.zeros((N, d1))
+  weight_total = 0
+  for n in range(N):
+      for d_1 in range(d1):
+          c = target[n][d_1]
+          loss[n][d_1] = -input[n][c][d_1] * weight[c]
+          weight_total = weight_total + weight[c]
 
-      loss = np.sum(loss) / weight_total
-      // print(loss)
-      // -1.57
+  loss = np.sum(loss) / weight_total
+  // print(loss)
+  // -1.57
+  ```
 
 #### Version
 
@@ -17180,9 +17212,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL1-13"></a>**ReduceL1-13**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulting
+  Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -17223,9 +17256,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceL2-13"></a>**ReduceL2-13**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulting
+  Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -17266,9 +17300,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSum-13"></a>**ReduceLogSum-13**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulting
+  Computes the log sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -17309,9 +17344,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceLogSumExp-13"></a>**ReduceLogSumExp-13**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
+  Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -17352,9 +17388,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMax-13"></a>**ReduceMax-13**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulting
+  Computes the max of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -17395,9 +17432,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMean-13"></a>**ReduceMean-13**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulting
+  Computes the mean of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -17438,9 +17476,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceMin-13"></a>**ReduceMin-13**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulting
+  Computes the min of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -17481,9 +17520,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceProd-13"></a>**ReduceProd-13**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulting
+  Computes the product of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -17524,9 +17564,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSum-13"></a>**ReduceSum-13**</a>
 
-  Computes the sum of the input tensor's element along the provided axes. The resulting
+  Computes the sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -17569,9 +17610,10 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="ReduceSumSquare-13"></a>**ReduceSumSquare-13**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulting
+  Computes the sum square of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -18093,27 +18135,34 @@ This version of the operator has been available since version 13 of the default 
   in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
 
   Example 1:
-    data = [
-        [1, 2, 3, 4],
-        [5, 6, 7, 8],
-    ]
-    axes = [0, 1]
-    starts = [1, 0]
-    ends = [2, 3]
-    steps = [1, 2]
-    result = [
-        [5, 7],
-    ]
+
+  ```
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  axes = [0, 1]
+  starts = [1, 0]
+  ends = [2, 3]
+  steps = [1, 2]
+  result = [
+      [5, 7],
+  ]
+  ```
+
   Example 2:
-    data = [
-        [1, 2, 3, 4],
-        [5, 6, 7, 8],
-    ]
-    starts = [0, 1]
-    ends = [-1, 1000]
-    result = [
-        [2, 3, 4],
-    ]
+
+  ```
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  starts = [0, 1]
+  ends = [-1, 1000]
+  result = [
+      [2, 3, 4],
+  ]
+  ```
 
 #### Version
 
@@ -18206,29 +18255,38 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
   the loss tensor L may have (N, D1, D2, ..., Dk) as its shape and L[i,][j_1][j_2]...[j_k] denotes a scalar element in L.
   After L is available, this operator can optionally do a reduction operator.
 
-  shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
-          with K >= 1 in case of K-dimensional loss.
-  shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
-          with K >= 1 in case of K-dimensional loss.
+  * shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk),
+    with K >= 1 in case of K-dimensional loss.
+  * shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
+    with K >= 1 in case of K-dimensional loss.
 
   The loss for one sample, l_i, can caculated as follows:
-      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+  ```
+  l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
+  ```
   or
-      l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+  ```
+  l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
+  ```
 
   loss is zero for the case when label-value equals ignore_index.
-      l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
+  ```
+  l[i][d1][d2]...[dk]  = 0, when labels[n][d1][d2]...[dk] = ignore_index
+  ```
 
   where:
-      p = Softmax(scores)
-      y = Log(p)
-      c = labels[i][d1][d2]...[dk]
+  ```
+  p = Softmax(scores)
+  y = Log(p)
+  c = labels[i][d1][d2]...[dk]
+  ```
 
   Finally, L is optionally reduced:
-  If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
-  If reduction = 'sum', the output is scalar: Sum(L).
-  If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: ReduceSum(L) / ReduceSum(W),
-  where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
+
+  * If reduction = 'none', the output is L with shape (N, D1, D2, ..., Dk).
+  * If reduction = 'sum', the output is scalar: Sum(L).
+  * If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is provided: `ReduceSum(L) / ReduceSum(W)`,
+    where tensor W is of shape `(N, D1, D2, ..., Dk)` and `W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]]`.
 
 #### Version
 
@@ -18586,15 +18644,13 @@ This version of the operator has been available since version 13 of the default 
   Insert single-dimensional entries to the shape of an input tensor (`data`).
   Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
 
-  For example:
-    Given an input tensor (`data`) of shape [3, 4, 5], then
-    Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
+  For example, given an input tensor (`data`) of shape [3, 4, 5], then
+  Unsqueeze(data, axes=[0, 4]) outputs a tensor (`expanded`) containing same data as `data` but with shape [1, 3, 4, 5, 1].
 
   The input `axes` should not contain any duplicate entries. It is an error if it contains duplicates.
   The rank of the output tensor (`output_rank`) is the rank of the input tensor (`data`) plus the number of values in `axes`.
   Each value in `axes` should be within the (inclusive) range [-output_rank , output_rank - 1].
   The order of values in `axes` does not matter and can come in any order.
-
 
 #### Version
 
@@ -18854,73 +18910,47 @@ This version of the operator has been available since version 14 of the default 
 
   Notations:
 
-  `X` - input tensor
-
-  `z` - update gate
-
-  `r` - reset gate
-
-  `h` - hidden gate
-
-  `t` - time step (t-1 means previous time step)
-
-  `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-
-  `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-
-  `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-
-  `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-
-  `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-
-  `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-
-  `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-
-  `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-
-  `H` - Hidden state
-
-  `num_directions` - 2 if direction == bidirectional else 1
+  * `X` - input tensor
+  * `z` - update gate
+  * `r` - reset gate
+  * `h` - hidden gate
+  * `t` - time step (t-1 means previous time step)
+  * `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
+  * `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
+  * `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
+  * `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
+  * `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
+  * `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
+  * `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
+  * `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
+  * `H` - Hidden state
+  * `num_directions` - 2 if direction == bidirectional else 1
 
   Activation functions:
 
-    Relu(x)                - max(0, x)
+  * Relu(x)                - max(0, x)
+  * Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  * Sigmoid(x)             - 1/(1 + e^{-x})
 
-    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  NOTE:
+    Below are optional
 
-    Sigmoid(x)             - 1/(1 + e^{-x})
-
-    (NOTE: Below are optional)
-
-    Affine(x)              - alpha*x + beta
-
-    LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-    ThresholdedRelu(x)     - x if x >= alpha else 0
-
-    ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-    Softsign(x)            - x/(1 + |x|)
-
-    Softplus(x)            - log(1 + e^x)
+  * Affine(x)              - alpha * x + beta
+  * LeakyRelu(x)           - x if x >= 0 else alpha * x
+  * ThresholdedRelu(x)     - x if x >= alpha else 0
+  * ScaledTanh(x)          - alpha * Tanh(beta * x)
+  * HardSigmoid(x)         - min(max(alpha * x + beta, 0), 1)
+  * Elu(x)                 - x if x >= 0 else alpha * (e^x - 1)
+  * Softsign(x)            - x/(1 + |x|)
+  * Softplus(x)            - log(1 + e^x)
 
   Equations (Default: f=Sigmoid, g=Tanh):
 
-    - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
-
-    - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
-
-    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
-
-    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
-
-    - Ht = (1 - zt) (.) ht + zt (.) Ht-1
+  * zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
+  * rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
+  * ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
+  * ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
+  * Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -19050,81 +19080,50 @@ This version of the operator has been available since version 14 of the default 
 
   Notations:
 
-  `X` - input tensor
-
-  `i` - input gate
-
-  `o` - output gate
-
-  `f` - forget gate
-
-  `c` - cell gate
-
-  `t` - time step (t-1 means previous time step)
-
-  `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
-
-  `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
-
-  `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
-
-  `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-
-  `P[iof]`  - P peephole weight vector for input, output, and forget gates
-
-  `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
-
-  `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
-
-  `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
-
-  `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-
-  `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-
-  `H` - Hidden state
-
-  `num_directions` - 2 if direction == bidirectional else 1
+  * `X` - input tensor
+  * `i` - input gate
+  * `o` - output gate
+  * `f` - forget gate
+  * `c` - cell gate
+  * `t` - time step (t-1 means previous time step)
+  * `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
+  * `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
+  * `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
+  * `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
+  * `P[iof]`  - P peephole weight vector for input, output, and forget gates
+  * `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
+  * `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
+  * `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
+  * `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
+  * `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
+  * `H` - Hidden state
+  * `num_directions` - 2 if direction == bidirectional else 1
 
   Activation functions:
 
-    Relu(x)                - max(0, x)
+  * Relu(x)                - max(0, x)
+  * Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  * Sigmoid(x)             - 1/(1 + e^{-x})
 
-    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  NOTE: Below are optional
 
-    Sigmoid(x)             - 1/(1 + e^{-x})
-
-    (NOTE: Below are optional)
-
-    Affine(x)              - alpha*x + beta
-
-    LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-    ThresholdedRelu(x)     - x if x >= alpha else 0
-
-    ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-    Softsign(x)            - x/(1 + |x|)
-
-    Softplus(x)            - log(1 + e^x)
+  * Affine(x)              - alpha*x + beta
+  * LeakyRelu(x)           - x if x >= 0 else alpha * x
+  * ThresholdedRelu(x)     - x if x >= alpha else 0
+  * ScaledTanh(x)          - alpha*Tanh(beta*x)
+  * HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
+  * Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  * Softsign(x)            - x/(1 + |x|)
+  * Softplus(x)            - log(1 + e^x)
 
   Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
-    - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
-
-    - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
-
-    - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
-
-    - Ct = ft (.) Ct-1 + it (.) ct
-
-    - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
-
-    - Ht = ot (.) h(Ct)
+  * it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
+  * ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
+  * ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
+  * Ct = ft (.) Ct-1 + it (.) ct
+  * ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
+  * Ht = ot (.) h(Ct)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -19235,61 +19234,40 @@ This version of the operator has been available since version 14 of the default 
 
   Notations:
 
-  `X` - input tensor
-
-  `i` - input gate
-
-  `t` - time step (t-1 means previous time step)
-
-  `Wi` - W parameter weight matrix for input gate
-
-  `Ri` - R recurrence weight matrix for input gate
-
-  `Wbi` - W parameter bias vector for input gate
-
-  `Rbi` - R parameter bias vector for input gate
-
-  `WBi` - W parameter weight matrix for backward input gate
-
-  `RBi` - R recurrence weight matrix for backward input gate
-
-  `WBbi` - WR bias vectors for backward input gate
-
-  `RBbi` - RR bias vectors for backward input gate
-
-  `H` - Hidden state
-
-  `num_directions` - 2 if direction == bidirectional else 1
+  * `X` - input tensor
+  * `i` - input gate
+  * `t` - time step (t-1 means previous time step)
+  * `Wi` - W parameter weight matrix for input gate
+  * `Ri` - R recurrence weight matrix for input gate
+  * `Wbi` - W parameter bias vector for input gate
+  * `Rbi` - R parameter bias vector for input gate
+  * `WBi` - W parameter weight matrix for backward input gate
+  * `RBi` - R recurrence weight matrix for backward input gate
+  * `WBbi` - WR bias vectors for backward input gate
+  * `RBbi` - RR bias vectors for backward input gate
+  * `H` - Hidden state
+  * `num_directions` - 2 if direction == bidirectional else 1
 
   Activation functions:
 
-    Relu(x)                - max(0, x)
+  * Relu(x)                - max(0, x)
+  * Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  * Sigmoid(x)             - 1/(1 + e^{-x})
 
-    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  NOTE: Below are optional
 
-    Sigmoid(x)             - 1/(1 + e^{-x})
-
-    (NOTE: Below are optional)
-
-    Affine(x)              - alpha*x + beta
-
-    LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-    ThresholdedRelu(x)     - x if x >= alpha else 0
-
-    ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-    Softsign(x)            - x/(1 + |x|)
-
-    Softplus(x)            - log(1 + e^x)
+  * Affine(x)              - alpha*x + beta
+  * LeakyRelu(x)           - x if x >= 0 else alpha * x
+  * ThresholdedRelu(x)     - x if x >= alpha else 0
+  * ScaledTanh(x)          - alpha*Tanh(beta*x)
+  * HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
+  * Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  * Softsign(x)            - x/(1 + |x|)
+  * Softplus(x)            - log(1 + e^x)
 
   Equations (Default: f=Tanh):
 
-    - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
+  * Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -19527,8 +19505,8 @@ This version of the operator has been available since version 14 of the default 
   and the running statistics in training mode (training_mode=True).
   There are multiple cases for the number of outputs, which we list below:
 
-  Output case #1: Y, running_mean, running_var (training_mode=True)
-  Output case #2: Y (training_mode=False)
+  * Output case #1: Y, running_mean, running_var (training_mode=True)
+  * Output case #2: Y (training_mode=False)
 
   When training_mode=False, extra outputs are invalid.
   The outputs are updated as follows when training_mode=True:
@@ -19537,17 +19515,15 @@ This version of the operator has been available since version 14 of the default 
   running_var = input_var * momentum + current_var * (1 - momentum)
 
   Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-
+  ```
   where:
-
+  ```
   current_mean = ReduceMean(X, axis=all_except_channel_index)
   current_var =  ReduceVar(X, axis=all_except_channel_index)
-
-  Notice that ReduceVar refers to the population variance, and it equals to
-  sum(sqrd(x_i - x_avg)) / N
-  where N is the population size (this formula does not use sample size N - 1).
-
   ```
+  Notice that `ReduceVar` refers to the population variance, and it equals to
+  `sum(sqrd(x_i - x_avg)) / N`
+  where `N` is the population size (this formula does not use sample size `N - 1`).
 
   The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
 
@@ -19844,23 +19820,32 @@ This version of the operator has been available since version 15 of the default 
   value of r, and specifying any start value < -r is equivalent to specifying a start
   value of 0.
 
-  For example:
+  Examples:
+
+  ```
   Input tensor with shape: [2, 3, 4]
   No attributes specified.
   Output: [2, 3, 4]
+  ```
 
+  ```
   Input tensor with shape: [2, 3, 4]
   start: -1
   Output: [4]
+  ```
 
+  ```
   Input tensor with shape: [2, 3, 4]
   end: -1
   Output: [2, 3]
+  ```
 
+  ```
   Input tensor with shape: [2, 3, 4]
   start: 1
   end: 2
   Output: [3]
+  ```
 
 #### Version
 
@@ -20066,9 +20051,6 @@ This version of the operator has been available since version 16 of the default 
   output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
   `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
 
-  **History**
-  - Version 16 adds bfloat16 to the types allowed.
-
 #### Version
 
 This version of the operator has been available since version 16 of the default ONNX operator set.
@@ -20153,32 +20135,32 @@ This version of the operator has been available since version 16 of the default 
   This table summarizes the operating modes of this operator with equivalent
   C-style code:
 
-      Operator inputs defined as (max_trip_count, condition_var).
+  Operator inputs defined as (max_trip_count, condition_var).
 
-      input ("", ""):
+  * input ("", ""):
           for (int i=0; ; ++i) {
             cond = ... // Note this value is ignored, but is required in the body
           }
 
-      input ("", cond) // Note this is analogous to a while loop
+  * input ("", cond) // Note this is analogous to a while loop
           bool cond = ...;
           for (int i=0; cond; ++i) {
             cond = ...;
           }
 
-      input ("", 1) // Note this is analogous to a do-while loop
+  * input ("", 1) // Note this is analogous to a do-while loop
           bool cond = true
           for (int i=0; cond; ++i) {
             cond = ...;
           }
 
-      input (trip_count, "") // Note this is analogous to a for loop
+  * input (trip_count, "") // Note this is analogous to a for loop
           int trip_count = ...
           for (int i=0; i < trip_count; ++i) {
             cond = ...; // ignored
           }
 
-      input (trip_count, cond)
+  * input (trip_count, cond)
           int trip_count = ...;
           bool cond = ...;
           for (int i=0; i < trip_count && cond; ++i) {
@@ -20320,9 +20302,6 @@ This version of the operator has been available since version 16 of the default 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-
-  **History**
-  - Version 16 adds bfloat16 to the types allowed.
   This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -20797,9 +20776,6 @@ This version of the operator has been available since version 16 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
-  **History**
-  - Version 16 adds bfloat16 to the types allowed (for the second and third parameter).
-
 #### Version
 
 This version of the operator has been available since version 16 of the default ONNX operator set.
@@ -20904,7 +20880,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector.If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=0 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N-1 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
+<dd>The Fourier Transform of the input vector.If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=2 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
 </dl>
 
 #### Type Constraints
@@ -21423,10 +21399,10 @@ This version of the operator has been available since version 18 of the default 
   but it only supports *batched* multi-dimensional image tensors.
   Another implementation in Python with N-dimension support can be found at https://github.com/f-dangel/unfoldNd/.
 
-  NOTE: Although specifying image_shape looks redundant because it could be calculated from
-        convolution formulas, it is required as input for more advanced scenarios as explained
-        at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
-
+  NOTE:
+    Although specifying image_shape looks redundant because it could be calculated from
+    convolution formulas, it is required as input for more advanced scenarios as explained
+    at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
 
 #### Version
 
@@ -21538,11 +21514,7 @@ This version of the operator has been available since version 18 of the default 
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled
-
-   ```
-   * pad_shape[i] is sum of pads along axis i
-   ```
+   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
@@ -21714,68 +21686,68 @@ This version of the operator has been available since version 18 of the default 
 
 
   Example 1 (`constant` mode):
-    Insert 0 pads to the beginning of the second dimension.
 
-    data =
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
+  Insert 0 pads to the beginning of the second dimension.
 
-    pads = [0, 2, 0, 0]
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
 
-    mode = 'constant'
+  pads = [0, 2, 0, 0]
 
-    constant_value = 0.0
+  mode = 'constant'
 
-    output =
-    [
-        [0.0, 0.0, 1.0, 1.2],
-        [0.0, 0.0, 2.3, 3.4],
-        [0.0, 0.0, 4.5, 5.7],
-    ]
+  constant_value = 0.0
 
+  output = [
+      [0.0, 0.0, 1.0, 1.2],
+      [0.0, 0.0, 2.3, 3.4],
+      [0.0, 0.0, 4.5, 5.7],
+  ]
+  ```
 
   Example 2 (`reflect` mode):
-    data =
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
 
-    pads = [0, 2, 0, 0]
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
 
-    mode = 'reflect'
+  pads = [0, 2, 0, 0]
 
-    output =
-    [
-        [1.0, 1.2, 1.0, 1.2],
-        [2.3, 3.4, 2.3, 3.4],
-        [4.5, 5.7, 4.5, 5.7],
-    ]
+  mode = 'reflect'
 
+  output = [
+      [1.0, 1.2, 1.0, 1.2],
+      [2.3, 3.4, 2.3, 3.4],
+      [4.5, 5.7, 4.5, 5.7],
+  ]
+  ```
 
   Example 3 (`edge` mode):
-    data =
-    [
-        [1.0, 1.2],
-        [2.3, 3.4],
-        [4.5, 5.7],
-    ]
 
-    pads = [0, 2, 0, 0]
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
 
-    mode = 'edge'
+  pads = [0, 2, 0, 0]
 
-    output =
-    [
-        [1.0, 1.0, 1.0, 1.2],
-        [2.3, 2.3, 2.3, 3.4],
-        [4.5, 4.5, 4.5, 5.7],
-    ]
+  mode = 'edge'
 
+  output = [
+      [1.0, 1.0, 1.0, 1.2],
+      [2.3, 2.3, 2.3, 3.4],
+      [4.5, 4.5, 4.5, 5.7],
+  ]
+  ```
 
 #### Version
 
@@ -21819,9 +21791,10 @@ This version of the operator has been available since version 18 of the default 
 
 ### <a name="ReduceL1-18"></a>**ReduceL1-18**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulting
+  Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -21864,9 +21837,10 @@ This version of the operator has been available since version 18 of the default 
 
 ### <a name="ReduceL2-18"></a>**ReduceL2-18**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulting
+  Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -21909,9 +21883,10 @@ This version of the operator has been available since version 18 of the default 
 
 ### <a name="ReduceLogSum-18"></a>**ReduceLogSum-18**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulting
+  Computes the log sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -21954,9 +21929,10 @@ This version of the operator has been available since version 18 of the default 
 
 ### <a name="ReduceLogSumExp-18"></a>**ReduceLogSumExp-18**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
+  Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -21999,9 +21975,10 @@ This version of the operator has been available since version 18 of the default 
 
 ### <a name="ReduceMax-18"></a>**ReduceMax-18**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulting
+  Computes the max of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -22044,9 +22021,10 @@ This version of the operator has been available since version 18 of the default 
 
 ### <a name="ReduceMean-18"></a>**ReduceMean-18**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulting
+  Computes the mean of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -22089,9 +22067,10 @@ This version of the operator has been available since version 18 of the default 
 
 ### <a name="ReduceMin-18"></a>**ReduceMin-18**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulting
+  Computes the min of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -22134,9 +22113,10 @@ This version of the operator has been available since version 18 of the default 
 
 ### <a name="ReduceProd-18"></a>**ReduceProd-18**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulting
+  Computes the product of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -22179,9 +22159,10 @@ This version of the operator has been available since version 18 of the default 
 
 ### <a name="ReduceSumSquare-18"></a>**ReduceSumSquare-18**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulting
+  Computes the sum square of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -22345,16 +22326,15 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
   then indices[idx1] != indices[idx2]. For instance, in a 2-D tensor case, the update
   corresponding to the [i][j] entry is performed as below:
   ```
-    output[indices[i][j]][j] = updates[i][j] if axis = 0,
-    output[i][indices[i][j]] = updates[i][j] if axis = 1,
+  output[indices[i][j]][j] = updates[i][j] if axis = 0,
+  output[i][indices[i][j]] = updates[i][j] if axis = 1,
   ```
   When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
   ```
-    output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-    output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
+  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
   ```
-  where the `f` is +/*/max/min as specified.
-
+  where the `f` is `+`, `*`, `max` or `min` as specified.
 
   This operator is the inverse of GatherElements. It is similar to Torch's Scatter operation.
 
@@ -22362,32 +22342,32 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
 
   Example 1:
   ```
-    data = [
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0],
-    ]
-    indices = [
-        [1, 0, 2],
-        [0, 2, 1],
-    ]
-    updates = [
-        [1.0, 1.1, 1.2],
-        [2.0, 2.1, 2.2],
-    ]
-    output = [
-        [2.0, 1.1, 0.0]
-        [1.0, 0.0, 2.2]
-        [0.0, 2.1, 1.2]
-    ]
+  data = [
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+      [0.0, 0.0, 0.0],
+  ]
+  indices = [
+      [1, 0, 2],
+      [0, 2, 1],
+  ]
+  updates = [
+      [1.0, 1.1, 1.2],
+      [2.0, 2.1, 2.2],
+  ]
+  output = [
+      [2.0, 1.1, 0.0]
+      [1.0, 0.0, 2.2]
+      [0.0, 2.1, 1.2]
+  ]
   ```
   Example 2:
   ```
-    data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
-    indices = [[1, 3]]
-    updates = [[1.1, 2.1]]
-    axis = 1
-    output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+  data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+  indices = [[1, 3]]
+  updates = [[1.1, 2.1]]
+  axis = 1
+  output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
   ```
 
 #### Version
@@ -22439,7 +22419,7 @@ This version of the operator has been available since version 18 of the default 
   is the same as the shape of `data`.
 
   `indices` is an integer tensor. Let k denote indices.shape[-1], the last dimension in the shape of `indices`.
-   `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
+  `indices` is treated as a (q-1)-dimensional tensor of k-tuples, where each k-tuple is a partial-index into `data`.
   Hence, k can be a value at most the rank of `data`. When k equals rank(data), each update entry specifies an
   update to a single element of the tensor. When k is less than rank(data) each update entry specifies an
   update to a slice of the tensor. Index values are allowed to be negative, as per the usual
@@ -22455,10 +22435,12 @@ This version of the operator has been available since version 18 of the default 
 
   The `output` is calculated via the following equation:
 
-      output = np.copy(data)
-      update_indices = indices.shape[:-1]
-      for idx in np.ndindex(update_indices):
-          output[indices[idx]] = updates[idx]
+  ```
+  output = np.copy(data)
+  update_indices = indices.shape[:-1]
+  for idx in np.ndindex(update_indices):
+      output[indices[idx]] = updates[idx]
+  ```
 
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
@@ -22470,12 +22452,14 @@ This version of the operator has been available since version 18 of the default 
   then indices[idx1] != indices[idx2]. This ensures that the output value does not depend on the iteration order.
   When `reduction` is set to some reduction function `f`, `output` is calculated as follows:
 
-      output = np.copy(data)
-      update_indices = indices.shape[:-1]
-      for idx in np.ndindex(update_indices):
-          output[indices[idx]] = f(output[indices[idx]], updates[idx])
+  ```
+  output = np.copy(data)
+  update_indices = indices.shape[:-1]
+  for idx in np.ndindex(update_indices):
+      output[indices[idx]] = f(output[indices[idx]], updates[idx])
+  ```
 
-  where the `f` is +/*/max/min as specified.
+  where the `f` is `+`, `*`, `max` or `min` as specified.
 
   This operator is the inverse of GatherND.
 
@@ -22483,25 +22467,25 @@ This version of the operator has been available since version 18 of the default 
 
   Example 1:
   ```
-    data    = [1, 2, 3, 4, 5, 6, 7, 8]
-    indices = [[4], [3], [1], [7]]
-    updates = [9, 10, 11, 12]
-    output  = [1, 11, 3, 10, 9, 6, 7, 12]
+  data    = [1, 2, 3, 4, 5, 6, 7, 8]
+  indices = [[4], [3], [1], [7]]
+  updates = [9, 10, 11, 12]
+  output  = [1, 11, 3, 10, 9, 6, 7, 12]
   ```
 
   Example 2:
   ```
-    data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-               [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
-               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
-    indices = [[0], [2]]
-    updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-               [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
-    output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-               [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
-               [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
-               [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  data    = [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]],
+              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
+  indices = [[0], [2]]
+  updates = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]]
+  output  = [[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+              [[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]],
+              [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
+              [[8, 7, 6, 5], [4, 3, 2, 1], [1, 2, 3, 4], [5, 6, 7, 8]]]
   ```
 
 #### Version
@@ -22582,6 +22566,445 @@ This version of the operator has been available since version 18 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+## Version 19 of the default ONNX operator set
+### <a name="AveragePool-19"></a>**AveragePool-19**</a>
+
+  AveragePool consumes an input tensor X and applies average pooling across
+   the tensor according to kernel sizes, stride sizes, and pad lengths.
+   average pooling consisting of computing the average on all values of a
+   subset of the input tensor according to the kernel size and downsampling the
+   data into the output tensor Y for further processing. The output spatial shape will be following:
+   ```
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   or
+   ```
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   ```
+   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   ```
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+   ```
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   ```
+   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
+
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that `output_shape[i] = ceil(input_shape[i] / strides[i])` for each axis `i`. The padding is split between the two sides equally or almost equally (depending on whether it is even or odd). In case the padding is an odd number, the extra padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.</dd>
+<dt><tt>ceil_mode</tt> : int (default is 0)</dt>
+<dd>Whether to use ceil or floor (default) to compute the output shape.</dd>
+<dt><tt>count_include_pad</tt> : int (default is 0)</dt>
+<dd>Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dd>The size of the kernel along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. If not present, the stride defaults to 1 along each spatial axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="DeformConv-19"></a>**DeformConv-19**</a>
+
+  Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
+  This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of the kernel. Default is 1 along each axis.</dd>
+<dt><tt>group</tt> : int (default is 1)</dt>
+<dd>Number of groups the input and output channels, C and oC, are divided into. C and oC must both be divisible by group. Default is 1.</dd>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>Shape of the convolution kernel. If not present, it is inferred from the shape of input W.</dd>
+<dt><tt>offset_group</tt> : int (default is 1)</dt>
+<dd>Number of groups of offset. C must be divisible by offset_group. Default is 1.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and end along each spatial axis. The values represent the number of pixels added to the beginning and end of the corresponding axis and can take any nonnegative value. The format should be as follows: [x1_begin, x2_begin, ..., x1_end, x2_end, ...], where xi_begin is the number of pixels added at the beginning of axis `i` and xi_end is the number of pixels added at the end of axis `i`. Default is 0 along each axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. Default is 1 along each axis.</dd>
+</dl>
+
+#### Inputs (3 - 5)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor. For 2D image data, it has shape (N, C, H, W) where N is the batch size, C is the number of input channels, and H and W are the height and width. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes. Most common use cases have n = 2 or 3.</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>Weight tensor that will be used in the convolutions. It has shape (oC, C/group, kH, kW), where oC is the number of output channels and kH and kW are the kernel height and width. For more than 2 dimensions, it has shape (oC, C/group, k1, k2, ... , kn).</dd>
+<dt><tt>offset</tt> : T</dt>
+<dd>Offset tensor denoting the offset for the sampling locations in the convolution kernel. It has shape (N, offset_group * kH * kW * 2, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Use linear interpolationfor fractional offset values. Sampling locations outside of the padded input tensor gives zero.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>Optional 1D bias of length oC to be added to the convolution. Default is a tensor of zeros.</dd>
+<dt><tt>mask</tt> (optional) : T</dt>
+<dd>The mask tensor to be applied to each position in the convolution kernel. It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Default is a tensor of ones.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor that contains the result of convolution. It has shape (N, oC, oH, oW) for 2D data or (N, oC, o1, o2, ..., on) for nD data</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Equal-19"></a>**Equal-19**</a>
+
+  Returns the tensor resulted from performing the `equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> (non-differentiable) : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> (non-differentiable) : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(string)</dt>
+<dd>Constrain input types to all (non-complex) tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrain output to boolean tensor.</dd>
+</dl>
+
+### <a name="Pad-19"></a>**Pad-19**</a>
+
+  Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
+  a padded tensor (`output`) is generated.
+
+  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+
+  1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
+
+  2) `reflect` - pads with the reflection of the vector mirrored on the first and last values of the vector along each axis
+
+  3) `edge` - pads with the edge values of array
+
+  4) `wrap` - wrap-around padding as if the data tensor forms a torus
+
+
+  Example 1 (`constant` mode):
+
+  Insert 0 pads to the beginning of the second dimension.
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'constant'
+
+  constant_value = 0.0
+
+  output = [
+      [0.0, 0.0, 1.0, 1.2],
+      [0.0, 0.0, 2.3, 3.4],
+      [0.0, 0.0, 4.5, 5.7],
+  ]
+  ```
+
+  Example 2 (`reflect` mode):
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'reflect'
+
+  output = [
+      [1.0, 1.2, 1.0, 1.2],
+      [2.3, 3.4, 2.3, 3.4],
+      [4.5, 5.7, 4.5, 5.7],
+  ]
+  ```
+
+  Example 3 (`edge` mode):
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [0, 2, 0, 0]
+
+  mode = 'edge'
+
+  output = [
+      [1.0, 1.0, 1.0, 1.2],
+      [2.3, 2.3, 2.3, 3.4],
+      [4.5, 4.5, 4.5, 5.7],
+  ]
+  ```
+
+  Example 4 (`wrap` mode):
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [2, 1, 1, 1]
+
+  mode = 'wrap'
+
+  output = [
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
+      [1.2, 1.0, 1.2, 1.0],
+  ]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is constant)</dt>
+<dd>Supported modes: `constant`(default), `reflect`, `edge`, `wrap`</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>data</tt> (differentiable) : T</dt>
+<dd>Input tensor.</dd>
+<dt><tt>pads</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>Tensor of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. `pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number of elements in the `axes` input or the input rank if `axes` are not provided explicitly. `pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and xi_end, the number of pad values added at the end of axis `axes[i]`.</dd>
+<dt><tt>constant_value</tt> (optional, non-differentiable) : T</dt>
+<dd>(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, empty string or False).</dd>
+<dt><tt>axes</tt> (optional, non-differentiable) : Tind</dt>
+<dd>1-D tensor of axes that `pads` apply to. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Tensor after padding.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+### <a name="Resize-19"></a>**Resize-19**</a>
+
+  Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
+  Each dimension value of the output tensor is:
+  ```
+  output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)
+  ```
+  if input \"sizes\" is not specified.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>antialias</tt> : int (default is 0)</dt>
+<dd>If set to 1, "linear" and "cubic" interpolation modes will use an antialiasing filter when downscaling. Antialiasing is achieved by stretching the resampling filter by a factor max(1, 1 / scale), which means that when downsampling, more input pixels contribute to an output pixel.</dd>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>If provided, it specifies a subset of axes that 'roi', 'scales' and 'sizes' refer to. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Non-specified dimensions are interpreted as non-resizable. Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
+<dt><tt>coordinate_transformation_mode</tt> : string (default is half_pixel)</dt>
+<dd>
+This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor.
+
+The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example.
+Denote `x_resized` as the coordinate of axis x in the resized tensor,
+ `x_original` as the coordinate of axis x in the original tensor,
+ `length_original` as the length of the original tensor in axis x,
+ `length_resized` as the length of the resized tensor in axis x,
+ `scale = length_resized / length_original`,
+ `output_width` the target length on the axis x which can be a fractional number when it is calculated out of a scale factor,
+ and `output_width_int` the effective output width as an integer.
+
+if coordinate_transformation_mode is `"half_pixel"`,
+```
+x_original = (x_resized + 0.5) / scale - 0.5
+```
+
+if coordinate_transformation_mode is `"half_pixel_symmetric"`,
+```
+adjustment = output_width_int / output_width
+center = input_width / 2
+offset = center * (1 - adjustment)
+x_ori = offset + (x + 0.5) / scale - 0.5
+```
+
+if coordinate_transformation_mode is `"pytorch_half_pixel"`,
+```
+x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0
+```
+
+if coordinate_transformation_mode is `"align_corners"`,
+```
+x_original = x_resized * (length_original - 1) / (length_resized - 1)
+```
+
+if coordinate_transformation_mode is `"asymmetric"`,
+```
+x_original = x_resized / scale
+```
+
+if coordinate_transformation_mode is `"tf_crop_and_resize"`,
+```
+x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1)
+```
+.</dd>
+<dt><tt>cubic_coeff_a</tt> : float (default is -0.75)</dt>
+<dd>The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in some cases of TensorFlow) and -0.75 (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details. This attribute is valid only if mode is "cubic".</dd>
+<dt><tt>exclude_outside</tt> : int (default is 0)</dt>
+<dd>If set to 1, the weight of sampling locations outside the tensor will be set to 0 and the weight will be renormalized so that their sum is 1.0. The default value is 0.</dd>
+<dt><tt>extrapolation_value</tt> : float (default is 0.0)</dt>
+<dd>When coordinate_transformation_mode is "tf_crop_and_resize" and x_original is outside the range [0, length_original - 1], this value is used as the corresponding output value. Default is 0.0f.</dd>
+<dt><tt>keep_aspect_ratio_policy</tt> : string (default is stretch)</dt>
+<dd>
+This attribute describes how to interpret the `sizes` input with regard to keeping the original aspect ratio of the input, and it is not applicable when
+the `scales` input is used.
+
+Given a set of `sizes`, associated with a subset of `axes` (explicitly provided or default), and assuming `d = axes[i]`, with `i` being the index of the provided `sizes`.
+
+If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disregarded, and the input is resized to the specified size:
+`out_size[d] = sizes[i]`
+
+If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio:
+```
+scale = Min(sizes[i] / in_size[d])
+out_size[d] = round_int(scale * in_size[i])
+```
+
+If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio:
+```
+scale = Max(sizes[i] / in_size[d])
+out_size[d] = round_int(scale * in_size[i])
+```
+
+For non-resizable axes (those not specified in `axes`), the output size will be equal to the input size.
+
+Note: `round_int` stands for computing the nearest integer value, rounding halfway cases up.</dd>
+<dt><tt>mode</tt> : string (default is nearest)</dt>
+<dd>Three interpolation modes: "nearest" (default), "linear" and "cubic". The "linear" mode includes linear interpolation for 1D tensor and N-linear interpolation for N-D tensor (for example, bilinear interpolation for 2D tensor). The "cubic" mode includes cubic interpolation for 1D tensor and N-cubic interpolation for N-D tensor (for example, bicubic interpolation for 2D tensor).</dd>
+<dt><tt>nearest_mode</tt> : string (default is round_prefer_floor)</dt>
+<dd>Four modes: "round_prefer_floor" (default, as known as round half down), "round_prefer_ceil" (as known as round half up), "floor", "ceil". Only used by nearest interpolation. It indicates how to get "nearest" pixel in input tensor from x_original, so this attribute is valid only if "mode" is "nearest".</dd>
+</dl>
+
+#### Inputs (1 - 4)
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T1</dt>
+<dd>N-D tensor</dd>
+<dt><tt>roi</tt> (optional, non-differentiable) : T2</dt>
+<dd>1-D tensor given as [start1, ..., startN, end1, ..., endN], where N is the rank of X or the length of axes, if provided. The RoIs' coordinates are normalized in the coordinate system of the input image. It only takes effect when coordinate_transformation_mode is "tf_crop_and_resize"</dd>
+<dt><tt>scales</tt> (optional, non-differentiable) : tensor(float)</dt>
+<dd>The scale array along each dimension. It takes value greater than 0. If it's less than 1, it's sampling down, otherwise, it's upsampling. The number of elements of 'scales' should be the same as the rank of input 'X' or the length of 'axes', if provided. One of 'scales' and 'sizes' MUST be specified and it is an error if both are specified. If 'sizes' is needed, the user can use an empty string as the name of 'scales' in this operator's input list.</dd>
+<dt><tt>sizes</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Target size of the output tensor. Its interpretation depends on the 'keep_aspect_ratio_policy' value.The number of elements of 'sizes' should be the same as the rank of input 'X', or the length of 'axes', if provided. Only one of 'scales' and 'sizes' can be specified. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T1</dt>
+<dd>N-D tensor after resizing</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain roi type to float or double.</dd>
 </dl>
 
 # ai.onnx.preview.training

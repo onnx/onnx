@@ -1,10 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
 from typing import Dict, List, Tuple
 
-from .base import Snippets
-from .utils import import_recursive
+from onnx.backend.test.case.base import Snippets
+from onnx.backend.test.case.utils import import_recursive
 
 
 def collect_snippets() -> Dict[str, List[Tuple[str, str]]]:

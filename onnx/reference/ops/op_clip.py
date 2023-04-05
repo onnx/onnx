@@ -1,9 +1,10 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0622,W0622,W0221
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -26,9 +27,3 @@ class Clip_11(OpRun):
             return (data,)
         res = np.clip(data, amin, amax)
         return (res,) if res.dtype == data.dtype else (res.astype(data.dtype),)
-
-
-if onnx_opset_version() >= 11:
-    Clip = Clip_11
-else:
-    Clip = Clip_6  # type: ignore

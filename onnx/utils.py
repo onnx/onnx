@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import os
@@ -22,7 +24,7 @@ class Extractor:
 
     def _collect_new_io_core(self, original_io, io_names_to_extract):  # type: ignore
         original_io_map = self._build_name2obj_dict(original_io)
-        original_io_names = set(original_io_map.keys())
+        original_io_names = set(original_io_map)
         s_io_names_to_extract = set(io_names_to_extract)
         io_names_to_keep = s_io_names_to_extract & original_io_names
         new_io_names_to_add = s_io_names_to_extract - original_io_names
@@ -69,7 +71,7 @@ class Extractor:
         input_names: List[str],
         output_names: List[str],
     ) -> List[NodeProto]:
-        reachable_nodes = list()  # type: ignore
+        reachable_nodes = []  # type: ignore[var-annotated]
         for name in output_names:
             self._dfs_search_reachable_nodes(name, input_names, reachable_nodes)
         # needs to be topology sorted.
@@ -120,10 +122,18 @@ class Extractor:
             for name in node.output:
                 all_tensors_name.add(name)
 
-        initializer = [self.wmap[t] for t in self.wmap.keys() if t in all_tensors_name]
-        value_info = [self.vimap[t] for t in self.vimap.keys() if t in all_tensors_name]
-        assert len(self.graph.sparse_initializer) == 0
-        assert len(self.graph.quantization_annotation) == 0
+        initializer = [self.wmap[t] for t in self.wmap if t in all_tensors_name]
+        value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_name]
+        len_sparse_initializer = len(self.graph.sparse_initializer)
+        if len_sparse_initializer != 0:
+            raise ValueError(
+                f"len_sparse_initializer is {len_sparse_initializer}, it must be 0."
+            )
+        len_quantization_annotation = len(self.graph.quantization_annotation)
+        if len_quantization_annotation != 0:
+            raise ValueError(
+                f"len_quantization_annotation is {len_quantization_annotation}, it must be 0."
+            )
         return initializer, value_info
 
     def _make_model(

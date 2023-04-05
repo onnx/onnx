@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -298,7 +298,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const std::string& op_type, const int max_inclusive_version, const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
             if (!schema) {
-              fail_schema("No schema registered for '" + op_type + "'!");
+              fail_schema(
+                  "No schema registered for '" + op_type + "' version '" + std::to_string(max_inclusive_version) +
+                  "' and domain '" + domain + "'!");
             }
             return *schema;
           },
@@ -311,7 +313,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const std::string& op_type, const std::string& domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, domain);
             if (!schema) {
-              fail_schema("No schema registered for '" + op_type + "'!");
+              fail_schema("No schema registered for '" + op_type + "' and domain '" + domain + "'!");
             }
             return *schema;
           },
@@ -370,6 +372,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     ParseProtoFromPyBytes(&proto, bytes);
     checker::LexicalScopeContext lex_ctx;
     checker::check_node(proto, ctx, lex_ctx);
+  });
+
+  checker.def("check_function", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+    FunctionProto proto{};
+    ParseProtoFromPyBytes(&proto, bytes);
+    checker::check_function(proto, ctx, checker::LexicalScopeContext());
   });
 
   checker.def("check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
@@ -442,6 +450,41 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
       });
 
+  shape_inference.def(
+      "infer_function_output_types",
+      [](const py::bytes& function_proto_bytes,
+         const std::vector<py::bytes> input_types_bytes,
+         const std::vector<py::bytes> attributes_bytes) -> std::vector<py::bytes> {
+        FunctionProto proto{};
+        ParseProtoFromPyBytes(&proto, function_proto_bytes);
+
+        std::vector<TypeProto> input_types;
+        input_types.reserve(input_types_bytes.size());
+        for (const py::bytes& bytes : input_types_bytes) {
+          TypeProto type;
+          ParseProtoFromPyBytes(&type, bytes);
+          input_types.push_back(type);
+        }
+
+        std::vector<AttributeProto> attributes;
+        attributes.reserve(attributes_bytes.size());
+        for (const py::bytes& bytes : attributes_bytes) {
+          AttributeProto attr;
+          ParseProtoFromPyBytes(&attr, bytes);
+          attributes.push_back(attr);
+        }
+
+        std::vector<TypeProto> output_types = shape_inference::InferFunctionOutputTypes(proto, input_types, attributes);
+        std::vector<py::bytes> result;
+        result.reserve(output_types.size());
+        for (auto& type_proto : output_types) {
+          std::string out;
+          type_proto.SerializeToString(&out);
+          result.push_back(py::bytes(out));
+        }
+        return result;
+      });
+
   // Submodule `parser`
   auto parser = onnx_cpp2py_export.def_submodule("parser");
   parser.doc() = "Parser submodule";
@@ -449,6 +492,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   parser.def("parse_model", Parse<ModelProto>);
   parser.def("parse_graph", Parse<GraphProto>);
   parser.def("parse_function", Parse<FunctionProto>);
+  parser.def("parse_node", Parse<NodeProto>);
 
   // Submodule `printer`
   auto printer = onnx_cpp2py_export.def_submodule("printer");

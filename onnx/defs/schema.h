@@ -786,6 +786,10 @@ class OpSchema final {
     return type_constraint_params_;
   }
 
+  const TypeConstraintMap& typeConstraintMap() const {
+    return type_constraints_;
+  }
+
   const std::string& Name() const {
     return name_;
   }
@@ -966,7 +970,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 18);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 19);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 3);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
@@ -1033,6 +1037,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         auto& op_name = op_schema.Name();
         auto& op_domain = op_schema.domain();
         auto ver = op_schema.SinceVersion();
+        if (OpSchema::kUninitializedSinceVersion == ver) {
+          op_schema.SinceVersion(1);
+          ver = op_schema.SinceVersion();
+        }
         // Stops because the opset_version is higher than opset_version_to_load
         if (opset_version_to_load != 0 && ver > opset_version_to_load) {
           return;

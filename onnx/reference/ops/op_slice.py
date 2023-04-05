@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,W0221
 
@@ -5,9 +7,7 @@ from typing import Optional
 
 import numpy as np
 
-from onnx.defs import onnx_opset_version
-
-from ._op import OpRun
+from onnx.reference.ops._op import OpRun
 
 
 def _slice(
@@ -73,9 +73,3 @@ class Slice_1(SliceCommon):
 
     def _run(self, data, axes=None, ends=None, starts=None):  # type: ignore
         return SliceCommon._run(self, data, starts, ends, axes)
-
-
-if onnx_opset_version() >= 10:
-    Slice = Slice_10
-else:
-    Slice = Slice_1  # type: ignore

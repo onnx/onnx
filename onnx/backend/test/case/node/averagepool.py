@@ -1,12 +1,17 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
-from .pool_op_common import get_output_shape, get_pad_shape, pool
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
+from onnx.backend.test.case.node.pool_op_common import (
+    get_output_shape,
+    get_pad_shape,
+    pool,
+)
 
 
 class AveragePool(Base):
@@ -455,3 +460,23 @@ class AveragePool(Base):
         y = np.array([[[[6, 7.5], [12, 13.5]]]]).astype(np.float32)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_ceil")
+
+    @staticmethod
+    def export_averagepool_2d_dilations() -> None:
+        """
+        input_shape: [1, 1, 4, 4]
+        output_shape: [1, 1, 2, 2]
+        """
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=[3, 3],
+            strides=[1, 1],
+            dilations=[2, 2],
+            ceil_mode=True,
+        )
+        x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+        y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
+
+        expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
