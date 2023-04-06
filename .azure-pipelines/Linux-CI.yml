@@ -130,7 +130,7 @@ jobs:
       if [ '$(documentation)' == '1' ]; then
         source venv/bin/activate
         pip install -r docs/docsgen/source/requirements.txt
-        cd docs/docsgen && make text -j auto
+        cd docs/docsgen && make text
       fi
     displayName: Test documentation
     continueOnError: true  # the documentation generates errors due to operators documentation
