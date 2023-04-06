@@ -204,6 +204,34 @@ class TestModelInference(unittest.TestCase):
             """
         self._check_shape(model, [4, 4], [8, 8, 8])
 
+    def test_mi_optional_attribute(self):
+        """Test promotion of optional attribute parameters to optional values"""
+        model = """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 19, "local" : 1]
+            >
+            main (int64[128] x) => (y, z) {
+                y = local.mul (x)
+                z = local.mul <alpha = 2> (x)
+            }
+            <
+                opset_import: [ "" : 19 ],
+                domain: "local"
+            >
+            mul <alpha> (x) => (y) {
+                alpha_opt = Optional <value_int : int = @alpha, type = int64> ()
+                cond = OptionalHasElement(alpha_opt)
+                y = If (cond) <
+                    then_branch = g1 () => (y_then) {
+                        alpha_val = OptionalGetElement (alpha_opt)
+                        y_then = Mul (alpha_val, x)
+                    },
+                    else_branch = g2 () => (y_else) { y_else = Identity (x) }
+                >
+            }
+            """
+        self._check_shape(model, [128], [128])
 
 if __name__ == "__main__":
     unittest.main()

@@ -83,4 +83,56 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->CopyFrom(input_type->optional_type().elem_type());
         }));
 
+static const char* Optional_ver15_doc = R"DOC(
+Constructs an optional-type value containing either an empty optional of a certain type specified by the attribute,
+or a non-empty value containing the input element.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Optional,
+    15,
+    OpSchema()
+        .SetDoc(Optional_ver15_doc)
+        .Input(0, "input", "The input element.", "V", OpSchema::Optional)
+        .Attr("type", "Type of the element in the optional output", AttributeProto::TYPE_PROTO, OPTIONAL_VALUE)
+        .Output(0, "output", "The optional output enclosing the input element.", "O")
+        .TypeConstraint(
+            "V",
+            []() {
+              auto t = OpSchema::all_tensor_types();
+              auto s = OpSchema::all_tensor_sequence_types();
+              t.insert(t.end(), s.begin(), s.end());
+              return t;
+            }(),
+            "Constrain input type to all tensor and sequence types.")
+        .TypeConstraint(
+            "O",
+            OpSchema::all_optional_types(),
+            "Constrain output type to all optional tensor or optional sequence types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          const size_t numOutputs = ctx.getNumOutputs();
+          if (numOutputs != 1) {
+            fail_type_inference("Optional is expected to have an output.");
+          }
+
+          const size_t numInputs = ctx.getNumInputs();
+          const auto* attr_proto = ctx.getAttribute("type");
+
+          if ((numInputs == 0) && (attr_proto != nullptr)) {
+            if (!attr_proto->has_tp())
+              fail_type_inference("Attribute 'type' should be a TypeProto and it should specify a type.");
+            auto attr_tp = attr_proto->tp();
+
+            ctx.getOutputType(0)->mutable_optional_type()->mutable_elem_type()->CopyFrom(attr_tp);
+          } else if (numInputs == 1) {
+            auto input_type = ctx.getInputType(0);
+            if (input_type == nullptr) {
+              fail_type_inference("Input type is null. Type information is expected for the input.");
+            }
+            ctx.getOutputType(0)->mutable_optional_type()->mutable_elem_type()->CopyFrom(*input_type);
+          } else {
+            fail_type_inference("Optional is expected to have either an input or the type attribute set.");
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
