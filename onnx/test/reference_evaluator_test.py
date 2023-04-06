@@ -3119,6 +3119,134 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(expected1.tolist(), got[0].tolist())
         self.assertEqual(expected2.tolist(), got[1].tolist())
 
+    def test_float8_4_types(self):
+        x = np.array(
+            [
+                0.4068359375,
+                352,
+                416,
+                336,
+                304,
+                272,
+                -248,
+                -100,
+                1e-4,
+                1e-2,
+                416,
+                432,
+                1e5,
+                np.inf,
+                -np.inf,
+                np.nan,
+            ],
+            dtype=np.float32,
+        )
+        expected = {
+            TensorProto.FLOAT8E4M3FN: np.array(
+                [
+                    0.40625,
+                    352.0,
+                    416.0,
+                    320.0,
+                    320.0,
+                    256.0,
+                    -256.0,
+                    -96.0,
+                    0.0,
+                    0.009765625,
+                    416.0,
+                    448.0,
+                    448.0,
+                    448.0,
+                    -448.0,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+            TensorProto.FLOAT8E4M3FNUZ: np.array(
+                [
+                    0.40625,
+                    240.0,
+                    240.0,
+                    240.0,
+                    240.0,
+                    240.0,
+                    -240.0,
+                    -104.0,
+                    0.0,
+                    0.009765625,
+                    240.0,
+                    240.0,
+                    240.0,
+                    240.0,
+                    -240.0,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+            TensorProto.FLOAT8E5M2: np.array(
+                [
+                    0.4375,
+                    384.0,
+                    384.0,
+                    320.0,
+                    320.0,
+                    256.0,
+                    -256.0,
+                    -96.0,
+                    0.0001068115234375,
+                    0.009765625,
+                    384.0,
+                    448.0,
+                    57344.0,
+                    57344.0,
+                    -57344.0,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+            TensorProto.FLOAT8E5M2FNUZ: np.array(
+                [
+                    4.3750000e-01,
+                    3.8400000e02,
+                    4.4800000e02,
+                    3.2000000e02,
+                    3.2000000e02,
+                    2.5600000e02,
+                    -2.5600000e02,
+                    -9.6000000e01,
+                    1.0681152e-04,
+                    9.7656250e-03,
+                    4.4800000e02,
+                    4.4800000e02,
+                    5.7344000e04,
+                    5.7344000e04,
+                    -5.7344000e04,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+        }
+
+        def model_cast_cast(to):
+            X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+            Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+            node1 = make_node("Cast", ["X"], ["T"], to=to)
+            node2 = make_node("Cast", ["T"], ["Y"], to=TensorProto.FLOAT)
+            graph = make_graph([node1, node2], "lr", [X], [Y])
+            onnx_model = make_model(graph)
+            check_model(onnx_model)
+            return onnx_model
+
+        for to, expect in expected.items():
+            with self.subTest(to=to):
+                onnx_model = model_cast_cast(to)
+                ref = ReferenceEvaluator(onnx_model)
+                y = ref.run(None, {"X": x})[0]
+                assert_allclose(expect, y)
+                self.assertEqual(expect.shape, y.shape)
+                self.assertEqual(expect.dtype, y.dtype)
+
     def test_cast_bfloat16_output(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.BFLOAT16, [None])
@@ -3166,7 +3294,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
-        expected = np.array([0, 1, 2, 896, 208], dtype=np.float32)
+        expected = np.array([0, 1, 2, 896, 192], dtype=np.float32)
         got = ref.run(None, {"X": data})
         assert_allclose(expected, got[0])
 
