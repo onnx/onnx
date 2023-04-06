@@ -12404,7 +12404,7 @@ x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
 y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
 y = make_tensor(
-    "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104]
+    "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96]
 )
 
 expect(
