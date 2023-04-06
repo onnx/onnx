@@ -76,7 +76,7 @@ M1_DEF = """
         ir_version: 7,
         opset_import: [ "": 10, "com.microsoft": 1]
     >
-    agraph (float[N, M] A0, float[N, M] A1) => (float[N, M] B00, float[N, M] B10, float[N, M] B20)
+    agraph (float[N, M] A0, float[N, M] A1, float[N, M] _A) => (float[N, M] B00, float[N, M] B10, float[N, M] B20)
     {
         B00 = Add(A0, A1)
         B10 = Sub(A0, A1)
@@ -308,7 +308,9 @@ class TestComposeFunctions(unittest.TestCase):
 
             # B20 <-> B21 not connected. They should still be present
             # in the inputs and outputs of the combined graph
-            self.assertEqual(["A0", "A1", "B21"], [elem.name for elem in g4.input])
+            self.assertEqual(
+                ["A0", "A1", "_A", "B21"], [elem.name for elem in g4.input]
+            )
             self.assertEqual(["B20", "D0"], [elem.name for elem in g4.output])
 
         io_map = [("B00", "B01"), ("B10", "B11")]
@@ -406,6 +408,7 @@ class TestComposeFunctions(unittest.TestCase):
         m3 = compose.merge_models(m1, m2, io_map=io_map)
         checker.check_model(m3)
 
+    # FIXME: This function should be removed, as tests should not contain a copy of the tested logic.
     def _test_add_prefix(  # pylint: disable=too-many-branches
         self,
         rename_nodes: bool = False,
@@ -464,13 +467,12 @@ class TestComposeFunctions(unittest.TestCase):
                         name_mapping[e] = _prefixed(prefix, e)
                     for e in n.output:
                         name_mapping[e] = _prefixed(prefix, e)
-            else:
-                if rename_inputs:
-                    for elem in g_in.input:
-                        name_mapping[elem.name] = _prefixed(prefix, elem.name)
-                if rename_outputs:
-                    for elem in g_in.output:
-                        name_mapping[elem.name] = _prefixed(prefix, elem.name)
+            if rename_inputs:
+                for elem in g_in.input:
+                    name_mapping[elem.name] = _prefixed(prefix, elem.name)
+            if rename_outputs:
+                for elem in g_in.output:
+                    name_mapping[elem.name] = _prefixed(prefix, elem.name)
 
             if rename_initializers:
                 for init in g_in.initializer:

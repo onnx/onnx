@@ -1,10 +1,25 @@
-from typing import Dict, Optional, Sequence, Set, Tuple, overload
+"""Submodule containing all the ONNX schema definitions."""
+from __future__ import annotations
+
+from typing import Optional, Sequence, overload
 
 from onnx import AttributeProto, FunctionProto
 
 class SchemaError(Exception): ...
 
 class OpSchema:
+    def __init__(
+        self,
+        name: str,
+        domain: str,
+        since_version: int,
+        doc: str = "",
+        *,
+        inputs: Sequence[OpSchema.FormalParameter] = (),
+        outputs: Sequence[OpSchema.FormalParameter] = (),
+        type_constraints: Sequence[tuple[str, Sequence[str], str]] = (),
+        attributes: Sequence[OpSchema.Attribute] = (),
+    ) -> None: ...
     @property
     def file(self) -> str: ...
     @property
@@ -30,7 +45,7 @@ class OpSchema:
     @property
     def max_output(self) -> int: ...
     @property
-    def attributes(self) -> Dict[str, Attribute]: ...
+    def attributes(self) -> dict[str, Attribute]: ...
     @property
     def inputs(self) -> Sequence[FormalParameter]: ...
     @property
@@ -43,18 +58,31 @@ class OpSchema:
     def has_data_propagation_function(self) -> bool: ...
     @staticmethod
     def is_infinite(v: int) -> bool: ...
-    def consumed(self, schema: OpSchema, i: int) -> Tuple[UseType, int]: ...
+    def consumed(self, schema: OpSchema, i: int) -> tuple[UseType, int]: ...
     def _infer_node_outputs(
         self,
         node_proto: bytes,
-        value_types: Dict[str, bytes],
-        input_data: Dict[str, bytes],
-        input_sparse_data: Dict[str, bytes],
-    ) -> Dict[str, bytes]: ...
+        value_types: dict[str, bytes],
+        input_data: dict[str, bytes],
+        input_sparse_data: dict[str, bytes],
+    ) -> dict[str, bytes]: ...
     @property
     def function_body(self) -> FunctionProto: ...
 
     class TypeConstraintParam:
+        def __init__(
+            self,
+            type_param_str: str,
+            allowed_type_strs: Sequence[str],
+            description: str = "",
+        ) -> None:
+            """Type constraint parameter.
+
+            Args:
+                type_param_str: Type parameter string, for example, "T", "T1", etc.
+                allowed_type_strs: Allowed type strings for this type parameter. E.g. ["tensor(float)"].
+                description: Type parameter description.
+            """
         @property
         def type_param_str(self) -> str: ...
         @property
@@ -73,20 +101,33 @@ class OpSchema:
         NonDifferentiable: "OpSchema.DifferentiationCategory" = ...
 
     class FormalParameter:
+        def __init__(
+            self,
+            name: str,
+            type_str: str,
+            description: str = "",
+            *,
+            param_option: OpSchema.FormalParameterOption = OpSchema.FormalParameterOption.Single,  # noqa: F821
+            is_homogeneous: bool = True,
+            min_arity: int = 1,
+            differentiation_category: OpSchema.DifferentiationCategory = OpSchema.DifferentiationCategory.Unknown,  # noqa: F821
+        ) -> None: ...
         @property
         def name(self) -> str: ...
         @property
-        def types(self) -> Set[str]: ...
+        def types(self) -> set[str]: ...
         @property
-        def typeStr(self) -> str: ...
+        def type_str(self) -> str: ...
         @property
         def description(self) -> str: ...
         @property
         def option(self) -> OpSchema.FormalParameterOption: ...
         @property
-        def isHomogeneous(self) -> bool: ...
+        def is_homogeneous(self) -> bool: ...
         @property
-        def differentiationCategory(self) -> OpSchema.DifferentiationCategory: ...
+        def min_arity(self) -> int: ...
+        @property
+        def differentiation_category(self) -> OpSchema.DifferentiationCategory: ...
 
     class AttrType:
         FLOAT: "OpSchema.AttrType" = ...
@@ -105,6 +146,22 @@ class OpSchema:
         TYPE_PROTOS: "OpSchema.AttrType" = ...
 
     class Attribute:
+        @overload
+        def __init__(
+            self,
+            name: str,
+            type: OpSchema.AttrType,
+            description: str = "",
+            *,
+            required: bool = True,
+        ) -> None: ...
+        @overload
+        def __init__(
+            self,
+            name: str,
+            default_value: AttributeProto,
+            description: str = "",
+        ) -> None: ...
         @property
         def name(self) -> str: ...
         @property
@@ -126,7 +183,7 @@ class OpSchema:
         CONSUME_ENFORCED: "OpSchema.UseType" = ...
 
 def has_schema(op_type: str) -> bool: ...
-def schema_version_map() -> Dict[str, Tuple[int, int]]: ...
+def schema_version_map() -> dict[str, tuple[int, int]]: ...
 @overload
 def get_schema(
     op_type: str, max_inclusive_version: int, domain: str = ""
