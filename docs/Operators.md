@@ -99,7 +99,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Not">Not</a>|<a href="Changelog.md#Not-1">1</a>|
 |<a href="#OneHot">OneHot</a>|<a href="Changelog.md#OneHot-11">11</a>, <a href="Changelog.md#OneHot-9">9</a>|
 |<a href="#Optional">Optional</a>|<a href="Changelog.md#Optional-15">15</a>|
-|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
+|<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-19">19</a>, <a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
 |<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
@@ -16966,18 +16966,39 @@ This version of the operator has been available since version 15 of the default 
 
   If the input is a tensor or sequence type, it returns the input.
   If the input is an optional type, it outputs the element in the input.
-  It is an error if the input is an empty optional-type (i.e. does not have an element) and the behavior is undefined in this case.
+  It is a runtime error if the input is an empty optional-type
+  (i.e. does not have an element) and the behavior is undefined in this case.
+  The operator supports both static-optional and dynamic-optional inputs
+  as a way to handle both categories of optional inputs uniformly.
+  Thus, a call to this operator is permitted to have no inputs statically,
+  though it will be a run-time error. In this special case, the attribute
+  'type' can be used to indicate the output type to enable type-inference.
+  This edge case is allowed to use the following code-pattern, where the
+  call to OptionalGetElement will not be invoked if no value is available.
+  ```
+    if OptionalHasElement(x)
+      ... use OptionalGetElement(x) ...
+    else
+      ... do something else ...
+  ```
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 19 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#OptionalGetElement-15">15</a>
+Other versions of this operator: <a href="Changelog.md#OptionalGetElement-15">15</a>, <a href="Changelog.md#OptionalGetElement-18">18</a>
 
-#### Inputs
+#### Attributes
 
 <dl>
-<dt><tt>input</tt> : O</dt>
+<dt><tt>type</tt> : type_proto</dt>
+<dd>Type of the element in the optional output</dd>
+</dl>
+
+#### Inputs (0 - 1)
+
+<dl>
+<dt><tt>input</tt> (optional) : O</dt>
 <dd>The optional input.</dd>
 </dl>
 
