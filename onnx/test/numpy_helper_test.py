@@ -276,7 +276,7 @@ class TestNumpyHelper(unittest.TestCase):
         x = np.float32(np.inf)
         to = helper.float32_to_float8e4m3(x, uz=True)
         back = numpy_helper.float8e4m3_to_float32(to, uz=True)
-        self.assertEqual(back, 224)
+        self.assertEqual(back, 240)
 
         x = np.float32(np.inf)
         to = helper.float32_to_float8e4m3(x, uz=True, saturate=False)
@@ -286,7 +286,7 @@ class TestNumpyHelper(unittest.TestCase):
         x = np.float32(-np.inf)
         to = helper.float32_to_float8e4m3(x, uz=True)
         back = numpy_helper.float8e4m3_to_float32(to, uz=True)
-        self.assertEqual(back, -224)
+        self.assertEqual(back, -240)
 
         x = np.float32(-np.inf)
         to = helper.float32_to_float8e4m3(x, uz=True, saturate=False)
