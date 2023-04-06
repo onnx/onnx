@@ -3754,7 +3754,7 @@ for from_type, to_type in test_cases:
 
   Ceil takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the ceil is, y = ceil(x), is applied to
-  the tensor elementwise.
+  the tensor elementwise. If x is integral, +0, -0, NaN,  or infinite, x itself is returned.
 
 #### Version
 
@@ -8465,7 +8465,7 @@ expect(node, inputs=[a], outputs=[b], name="test_flatten_default_axis")
 
   Floor takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the floor is, y = floor(x), is applied to
-  the tensor elementwise.
+  the tensor elementwise. If x is integral, +0, -0, NaN,  or infinite, x itself is returned.
 
 #### Version
 
@@ -24384,6 +24384,7 @@ expect(
   Round takes one input Tensor and rounds the values, element-wise, meaning
   it finds the nearest integer for each value.
   In case of halfs, the rule is to round them to the nearest even integer.
+  If input x is integral, +0, -0, NaN,  or infinite, x itself is returned.
   The output tensor has the same shape and type as the input.
 
   Examples:
