@@ -3237,6 +3237,52 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = _expected(data, alpha, beta, bias, size)
         self.assertEqual(len(expected), len(got[0]))
 
+    @parameterized.parameterized.expand(
+        [
+            ("ReduceSum",),
+            ("ReduceL1",),
+            ("ReduceL2",),
+            ("ReduceMin",),
+            ("ReduceMax",),
+            ("ReduceProd",),
+            ("ReduceSumSquare",),
+        ]
+    )
+    def test_reduce_op_no_axis(self, op):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        data = np.arange(6).reshape((1, 3, 2)).astype(np.float32)
+        nodes = [make_node(op, ["X"], ["Y"], keepdims=0)]
+        model = make_model(make_graph(nodes, "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"X": data})
+        r = got[0]
+        self.assertIsInstance(r, np.ndarray)
+        self.assertEqual(r.shape, tuple())
+
+    @parameterized.parameterized.expand([(1,), (2,), (3,), (4,), (5,), (6,)])
+    def test_pad(self, dim):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        V = make_tensor_value_info("V", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        value = np.array([-5], dtype=np.float32)
+
+        node = make_node("Pad", inputs=["X", "P", "V"], outputs=["Y"], mode="constant")
+        model = make_model(make_graph([node], "g", [X, P, V], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.array([1], dtype=np.float32).reshape((1,) * dim)
+
+        p = np.array([1, 1] * dim, dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        self.assertEqual(got.shape, (3,) * dim)
+        self.assertEqual(got.dtype, np.float32)
+
+        p = np.repeat([7, 3], dim).astype(np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        self.assertEqual(got.shape, (11,) * dim)
+        self.assertEqual(got.dtype, np.float32)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/shape_inference/implementation.h"
 #include <fstream>
@@ -41,7 +41,7 @@ std::string GetValueCaseString(const TypeProto& type) {
 
 std::string GetElemTypeString(const TypeProto_Tensor& type) {
 #ifndef ONNX_USE_LITE_PROTO
-  const std::string type_str = TensorProto::DataType_Name(static_cast<TensorProto_DataType>(type.elem_type()));
+  std::string type_str = TensorProto::DataType_Name(static_cast<TensorProto_DataType>(type.elem_type()));
   if (!type_str.empty()) {
     return type_str;
   }
@@ -51,7 +51,7 @@ std::string GetElemTypeString(const TypeProto_Tensor& type) {
 
 std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
 #ifndef ONNX_USE_LITE_PROTO
-  const std::string type_str = TensorProto::DataType_Name(static_cast<TensorProto_DataType>(type.elem_type()));
+  std::string type_str = TensorProto::DataType_Name(static_cast<TensorProto_DataType>(type.elem_type()));
   if (!type_str.empty()) {
     return type_str;
   }
@@ -1013,7 +1013,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   return graph_output_types;
 }
 
-std::string GetErrorWithNodeInfo(const NodeProto& n, std::runtime_error err) {
+std::string GetErrorWithNodeInfo(const NodeProto& n, const std::runtime_error& err) {
   std::string op_name = n.has_name() ? (", node name: " + n.name()) : "";
   return "(op_type:" + n.op_type() + op_name + "): " + err.what();
 }

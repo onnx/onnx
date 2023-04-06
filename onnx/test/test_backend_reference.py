@@ -25,19 +25,25 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
         self._session = session
 
     def run(self, inputs, **kwargs):
+        if isinstance(inputs, numpy.ndarray):
+            inputs = [inputs]
         if isinstance(inputs, list):
-            feeds = {}
-            for i, inp in enumerate(self._session.input_names):
-                if i >= len(inputs):
-                    break
-                feeds[inp] = inputs[i]
+            if len(inputs) == len(self._session.input_names):
+                feeds = dict(zip(self._session.input_names, inputs))
+            else:
+                feeds = {}
+                pos_inputs = 0
+                for inp, tshape in zip(
+                    self._session.input_names, self._session.input_types
+                ):
+                    shape = tuple(d.dim_value for d in tshape.tensor_type.shape.dim)
+                    if shape == inputs[pos_inputs].shape:
+                        feeds[inp] = inputs[pos_inputs]
+                        pos_inputs += 1
+                        if pos_inputs >= len(inputs):
+                            break
         elif isinstance(inputs, dict):
             feeds = inputs
-        elif isinstance(inputs, numpy.ndarray):
-            names = self._session.input_names
-            if len(names) != 1:
-                raise RuntimeError(f"Expecting one input not {len(names)}.")
-            feeds = {names[0]: inputs}
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
         outs = self._session.run(None, feeds)

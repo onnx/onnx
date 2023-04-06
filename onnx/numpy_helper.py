@@ -1,4 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 # pylint: disable=C3001,isinstance-second-argument-not-valid-type
 
 import sys
