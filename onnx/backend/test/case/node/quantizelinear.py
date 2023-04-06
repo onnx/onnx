@@ -75,7 +75,7 @@ class QuantizeLinear(Base):
         y_scale = np.float32(2)
         y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
         y = make_tensor(
-            "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104]
+            "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96]
         )
 
         expect(
