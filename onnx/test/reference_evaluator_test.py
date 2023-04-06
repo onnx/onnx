@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
 # pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
@@ -10,12 +12,13 @@ You can run a specific test by using the following syntax.
 """
 
 import itertools
+import math
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
+from os import getenv
 from textwrap import dedent
-from typing import Any, List
 
 import numpy as np  # type: ignore
 import parameterized
@@ -29,6 +32,7 @@ from onnx.helper import (
     make_function,
     make_graph,
     make_model,
+    make_model_gen_version,
     make_node,
     make_opsetid,
     make_sequence_type_proto,
@@ -50,14 +54,23 @@ from onnx.reference.ops.op_col2im import (
     col2im_naive_implementation,
 )
 
+# TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
+# For now, bump the version in CIs whenever there is a new onnxruntime release
+ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
+ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
+    getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
+)
+
 
 def skip_if_no_onnxruntime(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
             import onnxruntime  # pylint: disable=W0611
+
+            del onnxruntime
         except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed")  # noqa
+            raise unittest.SkipTest("onnxruntime not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -68,8 +81,10 @@ def skip_if_no_torch(fn):
     def wrapper(*args, **kwargs):
         try:
             import torch  # pylint: disable=W0611
+
+            del torch
         except ImportError:
-            raise unittest.SkipTest("torch not installed")  # noqa
+            raise unittest.SkipTest("torch not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -80,8 +95,10 @@ def skip_if_no_torchvision(fn):
     def wrapper(*args, **kwargs):
         try:
             import torchvision  # pylint: disable=W0611
+
+            del torchvision
         except ImportError:
-            raise unittest.SkipTest("torchvision not installed")  # noqa
+            raise unittest.SkipTest("torchvision not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -92,6 +109,26 @@ def make_sequence_value_info(name, elem_type, shape):
         return make_tensor_sequence_value_info(name, elem_type, shape)
     s_type = make_sequence_type_proto(elem_type)
     return make_value_info(name, s_type, shape)
+
+
+def run_ort_inference(onnx_model):
+    import onnxruntime as ort
+
+    onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+    for opset in onnx_model.opset_import:
+        if opset.domain in ("", "ai.onnx"):
+            onnx_domain_opset = opset.version
+            break
+    # The new IR or opset version is not supported by onnxruntime yet
+    if (
+        onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
+        or onnx_domain_opset > ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+    ):
+        return None
+
+    return ort.InferenceSession(
+        onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
+    )
 
 
 class TestReferenceEvaluator(unittest.TestCase):
@@ -1024,7 +1061,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     def test_custom_node(self):
         class _InvAlpha:
-
             op_domain = "custom"
 
             def __init__(self, onnx_node, run_params):  # type: ignore
@@ -1034,12 +1070,11 @@ class TestReferenceEvaluator(unittest.TestCase):
             def _run(self, x):  # type: ignore
                 return (1 / (x + self.alpha),)
 
-        class InvAlpha_(OpRun):
+        class InvAlpha2(OpRun):
             def _run(self, x):  # type: ignore
                 return (1 / (x + self.alpha),)
 
         class InvAlpha(OpRun):
-
             op_domain = "custom"
 
             def _run(self, x, alpha=None):  # type: ignore
@@ -1061,11 +1096,11 @@ class TestReferenceEvaluator(unittest.TestCase):
         with self.assertRaises(TypeError):
             ReferenceEvaluator(onnx_model, new_ops=[_InvAlpha])
 
-        node1 = make_node("InvAlpha_", ["X"], ["Y"], alpha=0.5, domain="custom")
+        node1 = make_node("InvAlpha2", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
         with self.assertRaises(NotImplementedError):
-            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha_])
+            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha2])
 
         node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
@@ -1302,8 +1337,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @skip_if_no_onnxruntime
     def test_conv(self):
-        import onnxruntime as ort
-
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None, None, None])
@@ -1317,11 +1350,10 @@ class TestReferenceEvaluator(unittest.TestCase):
             strides=[2, 2],
         )
         graph = make_graph([node], "g", [X, W, B], [Y])
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-
-        sess1 = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
+        sess1 = run_ort_inference(onnx_model)
+        if sess1 is None:
+            return
         sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 5, 6
@@ -1339,8 +1371,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @skip_if_no_onnxruntime
     def test_qlinearconv(self):
-        import onnxruntime as ort
-
         x = make_tensor_value_info("x", TensorProto.UINT8, [None, None, None, None])
         w = make_tensor_value_info("w", TensorProto.UINT8, [None, None, None, None])
         y = make_tensor_value_info("y", TensorProto.UINT8, [None, None, None, None])
@@ -1371,11 +1401,11 @@ class TestReferenceEvaluator(unittest.TestCase):
             [x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point],
             [y],
         )
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
 
-        sess1 = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        sess1 = run_ort_inference(onnx_model)
+        if sess1 is None:
+            return
         sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 3, 3
@@ -1503,15 +1533,15 @@ class TestReferenceEvaluator(unittest.TestCase):
             graph, opset_imports=[make_opsetid("", 16), make_opsetid("experimental", 1)]
         )
         graph_conv = make_graph([node], "g", [X, W], [Y1])
-        onnx_model_conv = make_model(graph_conv, opset_imports=[make_opsetid("", 16)])
+        onnx_model_conv = make_model_gen_version(
+            graph_conv, opset_imports=[make_opsetid("", 16)]
+        )
         sess = ReferenceEvaluator(onnx_model)
 
         try:
-            import onnxruntime as ort
-
-            sess_conv = ort.InferenceSession(
-                onnx_model_conv.SerializeToString(), providers=["CPUExecutionProvider"]
-            )
+            sess_conv = run_ort_inference(onnx_model_conv)
+            if sess_conv is None:
+                return
         except ImportError:
             sess_conv = None
 
@@ -1522,11 +1552,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 X = np.zeros((1, 1, sH, sW), dtype=np.float32)
                 X[0, 0, i, j] = 1.0
                 W = np.zeros(
-                    (
-                        1,
-                        1,
-                    )
-                    + kernel_shape,
+                    (1, 1, *kernel_shape),
                     dtype=np.float32,
                 )
                 W[0, 0, :, :] = np.minimum(
@@ -1677,7 +1703,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
     def test_col2im_2d(self):
-
         data = np.zeros([6, 28], dtype=np.float32)
         data[0][0] = 1.0
         image_shape, kernel_shape, dilations, pads, stride = (
@@ -2297,18 +2322,15 @@ class TestReferenceEvaluator(unittest.TestCase):
             mode=mode,
         )
         graph = make_graph([node], "g", [X, rois, IS], [Y])
-        return make_model(graph, opset_imports=[make_opsetid("", 17)])
+        return make_model_gen_version(graph, opset_imports=[make_opsetid("", 17)])
 
     def common_test_roi_align(self, mode):
-        import onnxruntime as ort
-
         onnx_model = self.get_roi_align_model(mode)
         X, batch_indices, rois = get_roi_align_input_values()
         feeds = {"X": X, "rois": rois, "I": batch_indices}
-
-        sess = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        sess = run_ort_inference(onnx_model)
+        if sess is None:
+            return
         expected = sess.run(None, feeds)
         ref = ReferenceEvaluator(onnx_model)
         got = ref.run(None, feeds)
@@ -2845,7 +2867,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         ]
     )
     def test_mvn(self, opset: int, ref_opset: int = 13):
-
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         nodes = [
@@ -3020,6 +3041,87 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(len(expected[0]), len(got[0]))
         for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
+
+    def test_lrn(self):
+        def _expected(x, alpha, beta, bias, size):
+            square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+            for n, c, h, w in np.ndindex(x.shape):
+                square_sum[n, c, h, w] = sum(
+                    x[
+                        n,
+                        max(0, c - int(math.floor((size - 1) / 2))) : min(
+                            5, c + int(math.ceil((size - 1) / 2)) + 1
+                        ),
+                        h,
+                        w,
+                    ]
+                    ** 2
+                )
+            y = x / ((bias + (alpha / size) * square_sum) ** beta)
+            return y
+
+        # keepdims is ignored in that case
+        alpha = 0.0002
+        beta = 0.5
+        bias = 2.0
+        size = 3
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [5, 5, 50, 50])
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [
+            make_node("LRN", ["X"], ["Z"], alpha=alpha, beta=beta, bias=bias, size=size)
+        ]
+        model = make_model(make_graph(nodes, "g", [X], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.random.rand(5, 5, 5, 5).astype(np.float32)
+        got = ref.run(None, {"X": data})
+        expected = _expected(data, alpha, beta, bias, size)
+        self.assertEqual(len(expected), len(got[0]))
+
+    @parameterized.parameterized.expand(
+        [
+            ("ReduceSum",),
+            ("ReduceL1",),
+            ("ReduceL2",),
+            ("ReduceMin",),
+            ("ReduceMax",),
+            ("ReduceProd",),
+            ("ReduceSumSquare",),
+        ]
+    )
+    def test_reduce_op_no_axis(self, op):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        data = np.arange(6).reshape((1, 3, 2)).astype(np.float32)
+        nodes = [make_node(op, ["X"], ["Y"], keepdims=0)]
+        model = make_model(make_graph(nodes, "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"X": data})
+        r = got[0]
+        self.assertIsInstance(r, np.ndarray)
+        self.assertEqual(r.shape, tuple())
+
+    @parameterized.parameterized.expand([(1,), (2,), (3,), (4,), (5,), (6,)])
+    def test_pad(self, dim):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        V = make_tensor_value_info("V", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        value = np.array([-5], dtype=np.float32)
+
+        node = make_node("Pad", inputs=["X", "P", "V"], outputs=["Y"], mode="constant")
+        model = make_model(make_graph([node], "g", [X, P, V], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.array([1], dtype=np.float32).reshape((1,) * dim)
+
+        p = np.array([1, 1] * dim, dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        self.assertEqual(got.shape, (3,) * dim)
+        self.assertEqual(got.dtype, np.float32)
+
+        p = np.repeat([7, 3], dim).astype(np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        self.assertEqual(got.shape, (11,) * dim)
+        self.assertEqual(got.dtype, np.float32)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,W0221,W0613
 
@@ -122,7 +124,7 @@ class CommonGRU(OpRun):
 
         Y, Y_h = self._step(X, R, B, W, H_0, num_directions=num_directions)
         Y = Y.astype(X.dtype)
-        return (Y,) if self.n_outputs == 1 else (Y, Y_h)
+        return (Y,) if self.n_outputs == 1 else (Y, Y_h.astype(X.dtype))
 
 
 class GRU(CommonGRU):

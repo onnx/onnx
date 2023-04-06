@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # pylint: disable=C0415,R0912,R0913,R0914,R0915
 """
 Automates the generation of ONNX operators.
@@ -26,7 +30,7 @@ from onnx.onnx_cpp2py_export.defs import (  # pylint: disable=E1101,E0611,E0401
 def get_template():  # type: ignore
     try:
         from jinja2 import Template
-    except ImportError:  # pragma no cover
+    except ImportError:
 
         class Template:  # type: ignore
             "Docstring template"
@@ -56,7 +60,7 @@ def _get_diff_template():  # type: ignore
             """
         <div id="{{ div_name }}"></div>
         <link rel="stylesheet" type="text/css" href="../_static/diff2html.min.css" />
-        <script type="text/javascript" src="../_static/diff2html-ui.min.js"></script>
+        <script type="text/javascript" src="../_static/diff2html-ui-slim.min.js"></script>
         <script>
         const diffString = `
         --- a/{{ op_name }}{{ version1 }}
@@ -107,7 +111,7 @@ def _get_ops_template():  # type: ignore
         * **name**: `{{sch.name}} (GitHub) <{{build_doc_url(sch)}}{{sch.name}}>`_
         * **domain**: **{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}**
         * **since_version**: **{{sch.since_version}}**
-        * **function**: {{sch.has_function}}
+        * **function**: {{sch.has_function or sch.has_context_dependent_function}}
         * **support_level**: {{sch.support_level}}
         * **shape inference**: {{sch.has_type_and_shape_inference_function}}
 
@@ -146,7 +150,7 @@ def _get_ops_template():  # type: ignore
         }} and {{sch.max_input}} inputs.
         {% endif %}
         {% for ii, inp in enumerate(sch.inputs) %}
-        * **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.typeStr}}**:
+        * **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.type_str}}**:
         {{text_wrap(inp.description, 2)}}{% endfor %}
         {% endif %}
         {% if sch.outputs %}
@@ -157,7 +161,7 @@ def _get_ops_template():  # type: ignore
         }} and {{sch.max_output}} outputs.
         {% endif %}
         {% for ii, out in enumerate(sch.outputs) %}
-        * **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.typeStr}}**:
+        * **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.type_str}}**:
         {{text_wrap(out.description, 2)}}{% endfor %}
         {% endif %}
         {% if sch.type_constraints %}
@@ -384,7 +388,7 @@ def get_rst_doc(  # type: ignore
             opts.append("optional")
         elif OpSchema.FormalParameterOption.Variadic == obj.option:
             opts.append("variadic")
-        if getattr(obj, "isHomogeneous", False):
+        if getattr(obj, "is_homogeneous", False):
             opts.append("heterogeneous")
         if opts:
             return f" ({', '.join(opts)})"
@@ -401,8 +405,9 @@ def get_rst_doc(  # type: ignore
             name = str(ii)
         name = f"**{name}** in ("
         if const.allowed_type_strs:
-            text = ",\n  ".join(sorted(const.allowed_type_strs))
-            name += "\n  " + text + "\n  )"
+            types = [f"``{type_str}``" for type_str in sorted(const.allowed_type_strs)]
+            text = ", ".join(types)
+            name += " " + text + " )"
         return name
 
     def getname(obj, i):
@@ -885,9 +890,6 @@ def onnx_documentation_folder(folder, title="ONNX Operators", flog=None, max_ops
                 "=" * len(main),
                 main,
                 "=" * len(main),
-                "",
-                ".. contents::",
-                "    :local:",
                 "",
                 doc,
             ]

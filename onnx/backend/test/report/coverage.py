@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import csv
@@ -42,7 +44,7 @@ class NodeCoverage:
         if self.op_type is None:
             self.op_type = node.op_type
             assert self.op_type is not None
-            self.schema = defs.get_schema(self.op_type, node.domain)
+            self.schema = defs.get_schema(self.op_type, domain=node.domain)
 
         for attr in node.attribute:
             self.attr_coverages[attr.name].add(attr)

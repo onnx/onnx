@@ -1,12 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 # pylint: disable=unidiomatic-typecheck
 
 from typing import Dict, List, MutableMapping, Optional, Set, Tuple
 
-from onnx import GraphProto, ModelProto
-from onnx import TensorProto as tp
-from onnx import checker, helper, utils
+from onnx import GraphProto, ModelProto, TensorProto, checker, helper, utils
 
 
 def check_overlapping_names(
@@ -465,13 +465,13 @@ def add_prefix_graph(  # pylint: disable=too-many-branches
                 name_map[e] = _prefixed(prefix, e)
             for e in n.output:
                 name_map[e] = _prefixed(prefix, e)
-    else:
-        if rename_outputs:
-            for entry in g.output:
-                name_map[entry.name] = _prefixed(prefix, entry.name)
-        if rename_inputs:
-            for entry in g.input:
-                name_map[entry.name] = _prefixed(prefix, entry.name)
+
+    if rename_inputs:
+        for entry in g.input:
+            name_map[entry.name] = _prefixed(prefix, entry.name)
+    if rename_outputs:
+        for entry in g.output:
+            name_map[entry.name] = _prefixed(prefix, entry.name)
 
     if rename_nodes:
         for n in g.node:
@@ -650,7 +650,7 @@ def expand_out_dim_graph(
             name=f"{expand_dim_k}-constant",
             value=helper.make_tensor(
                 name=f"{expand_dim_k}-value",
-                data_type=tp.INT64,
+                data_type=TensorProto.INT64,
                 dims=[
                     1,
                 ],

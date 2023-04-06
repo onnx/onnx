@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 172/185 (92.97%, 5 generators excluded) common operators.
+Node tests have covered 173/186 (93.01%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -1041,7 +1041,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### AveragePool
-There are 13 test cases, listed as following:
+There are 14 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
@@ -1125,6 +1125,30 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_default")
+```
+
+</details>
+<details>
+<summary>averagepool_2d_dilations</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[3, 3],
+    strides=[1, 1],
+    dilations=[2, 2],
+    ceil_mode=True,
+)
+x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
 ```
 
 </details>
@@ -1851,14 +1875,14 @@ node = onnx.helper.make_node(
 )
 
 # 2d
-x = np.random.randn(3, 4).astype(np.int32)
-y = np.random.randn(3, 4).astype(np.int32)
+x = create_random_int((3, 4), np.int32)
+y = create_random_int((3, 4), np.int32)
 z = np.bitwise_and(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i32_2d")
 
 # 3d
-x = np.random.randn(3, 4, 5).astype(np.int16)
-y = np.random.randn(3, 4, 5).astype(np.int16)
+x = create_random_int((3, 4, 5), np.int16)
+y = create_random_int((3, 4, 5), np.int16)
 z = np.bitwise_and(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i16_3d")
 ```
@@ -1875,16 +1899,16 @@ node = onnx.helper.make_node(
 )
 
 # 3d vs 1d
-x = np.random.randn(3, 4, 5).astype(np.uint64)
-y = np.random.randn(5).astype(np.uint64)
+x = create_random_int((3, 4, 5), np.uint64)
+y = create_random_int((5,), np.uint64)
 z = np.bitwise_and(x, y)
 expect(
     node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui64_bcast_3v1d"
 )
 
 # 4d vs 3d
-x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
-y = np.random.randn(4, 5, 6).astype(np.uint8)
+x = create_random_int((3, 4, 5, 6), np.uint8)
+y = create_random_int((4, 5, 6), np.uint8)
 z = np.bitwise_and(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui8_bcast_4v3d")
 ```
@@ -1905,17 +1929,17 @@ node = onnx.helper.make_node(
 )
 
 # 2d
-x = np.random.randn(3, 4).astype(np.int32)
+x = create_random_int((3, 4), np.int32)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_2d")
 
 # 3d
-x = np.random.randn(3, 4, 5).astype(np.uint16)
+x = create_random_int((3, 4, 5), np.uint16)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
 
 # 4d
-x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+x = create_random_int((3, 4, 5, 6), np.uint8)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_4d")
 ```
@@ -1935,14 +1959,14 @@ node = onnx.helper.make_node(
     outputs=["bitwiseor"],
 )
 # 2d
-x = np.random.randn(3, 4).astype(np.int32)
-y = np.random.randn(3, 4).astype(np.int32)
+x = create_random_int((3, 4), np.int32)
+y = create_random_int((3, 4), np.int32)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_i32_2d")
 
 # 4d
-x = np.random.randn(3, 4, 5, 6).astype(np.int8)
-y = np.random.randn(3, 4, 5, 6).astype(np.int8)
+x = create_random_int((3, 4, 5, 6), np.int8)
+y = create_random_int((3, 4, 5, 6), np.int8)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_i16_4d")
 ```
@@ -1959,14 +1983,14 @@ node = onnx.helper.make_node(
 )
 
 # 3d vs 1d
-x = np.random.randn(3, 4, 5).astype(np.uint64)
-y = np.random.randn(5).astype(np.uint64)
+x = create_random_int((3, 4, 5), np.uint64)
+y = create_random_int((5,), np.uint64)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui64_bcast_3v1d")
 
 # 4d vs 3d
-x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
-y = np.random.randn(4, 5, 6).astype(np.uint8)
+x = create_random_int((3, 4, 5, 6), np.uint8)
+y = create_random_int((4, 5, 6), np.uint8)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui8_bcast_4v3d")
 ```
@@ -1987,16 +2011,16 @@ node = onnx.helper.make_node(
 )
 
 # 3d vs 1d
-x = np.random.randn(3, 4, 5).astype(np.uint64)
-y = np.random.randn(5).astype(np.uint64)
+x = create_random_int((3, 4, 5), np.uint64)
+y = create_random_int((5,), np.uint64)
 z = np.bitwise_xor(x, y)
 expect(
     node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui64_bcast_3v1d"
 )
 
 # 4d vs 3d
-x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
-y = np.random.randn(4, 5, 6).astype(np.uint8)
+x = create_random_int((3, 4, 5, 6), np.uint8)
+y = create_random_int((4, 5, 6), np.uint8)
 z = np.bitwise_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui8_bcast_4v3d")
 ```
@@ -2013,14 +2037,14 @@ node = onnx.helper.make_node(
 )
 
 # 2d
-x = np.random.randn(3, 4).astype(np.int32)
-y = np.random.randn(3, 4).astype(np.int32)
+x = create_random_int((3, 4), np.int32)
+y = create_random_int((3, 4), np.int32)
 z = np.bitwise_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i32_2d")
 
 # 3d
-x = np.random.randn(3, 4, 5).astype(np.int16)
-y = np.random.randn(3, 4, 5).astype(np.int16)
+x = create_random_int((3, 4, 5), np.int16)
+y = create_random_int((3, 4, 5), np.int16)
 z = np.bitwise_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i16_3d")
 ```
@@ -2093,7 +2117,7 @@ test_cases = [
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -2116,7 +2140,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -2143,11 +2167,11 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -2231,7 +2255,7 @@ test_cases = [
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -2254,7 +2278,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -2281,11 +2305,11 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -2417,7 +2441,7 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
 
 
 ### CenterCropPad
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>center_crop_pad_crop</summary>
 
@@ -2510,6 +2534,32 @@ expect(
     inputs=[x, shape],
     outputs=[y],
     name="test_center_crop_pad_crop_axes_hwc",
+)
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_negative_axes_hwc</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CenterCropPad",
+    inputs=["x", "shape"],
+    outputs=["y"],
+    axes=[-3, -2],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([10, 9, 3], dtype=np.float32)
+y[:, :8, :] = x[5:15, :, :]
+
+expect(
+    node,
+    inputs=[x, shape],
+    outputs=[y],
+    name="test_center_crop_pad_crop_negative_axes_hwc",
 )
 ```
 
@@ -3282,7 +3332,6 @@ There are 3 test cases, listed as following:
 <summary>conv</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -3370,7 +3419,6 @@ expect(
 <summary>conv_with_autopad_same</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -3416,7 +3464,6 @@ expect(node, inputs=[x, W], outputs=[y], name="test_conv_with_autopad_same")
 <summary>conv_with_strides</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -3546,7 +3593,6 @@ There are 2 test cases, listed as following:
 <summary>with_padding</summary>
 
 ```python
-
 x = (
     np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
     .astype(np.uint8)
@@ -3582,7 +3628,6 @@ expect(
 <summary>without_padding</summary>
 
 ```python
-
 x = (
     np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
     .astype(np.uint8)
@@ -4217,6 +4262,181 @@ y = np.fft.ifft(x, axis=0)
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
+```
+
+</details>
+
+
+### DeformConv
+There are 3 test cases, listed as following:
+<details>
+<summary>deformconv</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+
+# Convolution with padding
+offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
+offset_with_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_with_padding[
+    0, 5, 1, 2
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [1, 2]
+
+node_with_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_with_padding"],
+    outputs=["Y_with_padding"],
+    kernel_shape=[2, 2],
+    pads=[1, 1, 1, 1],
+)
+Y_with_padding = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 2.0],  # (1, 1, 4, 4) output tensor
+                [3.0, 8.0, 11.9, 7.0],
+                [9.0, 20.0, 24.0, 13.0],
+                [6.0, 13.0, 15.0, 8.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_with_padding,
+    inputs=[X, W, offset_with_padding],
+    outputs=[Y_with_padding],
+    name="test_basic_deform_conv_with_padding",
+)
+
+# Convolution without padding
+offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset_without_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_without_padding[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+node_without_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_without_padding"],
+    outputs=["Y_without_padding"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y_without_padding = np.array(
+    [
+        [
+            [
+                [9.5, 11.9],  # (1, 1, 2, 2) output tensor
+                [20.0, 24.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_without_padding,
+    inputs=[X, W, offset_without_padding],
+    outputs=[Y_without_padding],
+    name="test_basic_deform_conv_without_padding",
+)
+```
+
+</details>
+<details>
+<summary>deformconv_with_mask_bias</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+B = np.ones((1,), dtype=np.float32)
+
+offset = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+mask = np.ones((1, 4, 2, 2), dtype=np.float32)
+mask[0, 2, 1, 1] = 0.2  # [1, 0] element of kernel at output position [1, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset", "B", "mask"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y = np.array(
+    [
+        [
+            [
+                [10.5, 12.9],  # (1, 1, 2, 2) output tensor
+                [21.0, 19.4],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset, B, mask],
+    outputs=[Y],
+    name="test_deform_conv_with_mask_bias",
+)
+```
+
+</details>
+<details>
+<summary>deformconv_with_multiple_offset_groups</summary>
+
+```python
+X = np.zeros((1, 2, 3, 3), dtype=np.float32)
+X[0, 0] = np.reshape(np.arange(9).astype(np.float32), (3, 3))
+X[0, 1] = np.reshape(np.arange(8, -1, -1).astype(np.float32), (3, 3))
+X.shape = (1, 2, 3, 3)
+W = np.ones((1, 2, 2, 2), dtype=np.float32)
+
+offset = np.zeros((1, 16, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
+offset[
+    0, 13, 0, 1
+] = (
+    -0.1
+)  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+    offset_group=2,
+)
+Y = np.array(
+    [
+        [
+            [
+                [33.5, 32.1],  # (1, 1, 2, 2) output tensor
+                [32.0, 32.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset],
+    outputs=[Y],
+    name="test_deform_conv_with_multiple_offset_groups",
+)
 ```
 
 </details>
@@ -4890,7 +5110,7 @@ expect(node, inputs=[x], outputs=[y], name="test_elu_default")
 
 
 ### Equal
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>equal</summary>
 
@@ -4922,6 +5142,38 @@ x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
 y = (np.random.randn(5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_equal_bcast")
+```
+
+</details>
+<details>
+<summary>equal_string</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Equal",
+    inputs=["x", "y"],
+    outputs=["z"],
+)
+x = np.array(["string1", "string2"], dtype=np.dtype(object))
+y = np.array(["string1", "string3"], dtype=np.dtype(object))
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_string")
+```
+
+</details>
+<details>
+<summary>equal_string_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Equal",
+    inputs=["x", "y"],
+    outputs=["z"],
+)
+x = np.array(["string1", "string2"], dtype=np.dtype(object))
+y = np.array(["string1"], dtype=np.dtype(object))
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_string_broadcast")
 ```
 
 </details>
@@ -5223,7 +5475,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R, layout=layout)
+gru = GRUHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = gru.step()
 expect(
     node,
@@ -5256,7 +5508,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R)
+gru = GRUHelper(X=input, W=W, R=R)
 _, Y_h = gru.step()
 expect(
     node,
@@ -5302,7 +5554,7 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRUHelper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
 expect(
     node,
@@ -5347,7 +5599,7 @@ W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRUHelper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
 expect(
     node,
@@ -5820,7 +6072,6 @@ expect(node, inputs=[x], outputs=[y], name="test_globalaveragepool")
 <summary>globalaveragepool_precomputed</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalAveragePool",
     inputs=["x"],
@@ -5850,7 +6101,6 @@ There are 2 test cases, listed as following:
 <summary>globalmaxpool</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalMaxPool",
     inputs=["x"],
@@ -5866,7 +6116,6 @@ expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool")
 <summary>globalmaxpool_precomputed</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalMaxPool",
     inputs=["x"],
@@ -7166,7 +7415,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, layout=layout)
+lstm = LSTMHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = lstm.step()
 expect(
     node,
@@ -7199,7 +7448,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R)
+lstm = LSTMHelper(X=input, W=W, R=R)
 _, Y_h = lstm.step()
 expect(
     node,
@@ -7245,7 +7494,7 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
+lstm = LSTMHelper(X=input, W=W, R=R, B=B)
 _, Y_h = lstm.step()
 expect(
     node,
@@ -7292,7 +7541,7 @@ P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(
     np.float32
 )
 
-lstm = LSTM_Helper(
+lstm = LSTMHelper(
     X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h
 )
 _, Y_h = lstm.step()
@@ -11355,7 +11604,7 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
 
 ### Pad
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>constant_pad</summary>
 
@@ -11405,10 +11654,40 @@ expect(
 
 </details>
 <details>
-<summary>reflection_and_edge_pad</summary>
+<summary>constant_pad_negative_axes</summary>
 
 ```python
-for mode in ["edge", "reflect"]:
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "value", "axes"], outputs=["y"], mode="constant"
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(
+    np.int64
+)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([-3, -1], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    "constant",
+    1.2,
+    [-3, -1],
+)
+
+expect(
+    node,
+    inputs=[x, pads, value, axes],
+    outputs=[y],
+    name="test_constant_pad_negative_axes",
+)
+```
+
+</details>
+<details>
+<summary>reflection_edge_and_wrap_pad</summary>
+
+```python
+for mode in ["edge", "reflect", "wrap"]:
     node = onnx.helper.make_node(
         "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
     )
@@ -11814,7 +12093,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R, layout=layout)
+rnn = RNNHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = rnn.step()
 expect(
     node,
@@ -11842,7 +12121,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R)
+rnn = RNNHelper(X=input, W=W, R=R)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -11881,7 +12160,7 @@ W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
 R_B = np.zeros((1, hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNNHelper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -11921,7 +12200,7 @@ W_B = np.random.randn(1, hidden_size).astype(np.float32)
 R_B = np.random.randn(1, hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNNHelper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -13823,7 +14102,7 @@ for test_name, shape in test_cases.items():
 
 
 ### Resize
-There are 37 test cases, listed as following:
+There are 39 test cases, listed as following:
 <details>
 <summary>resize_downsample_scales_cubic</summary>
 
@@ -14126,6 +14405,38 @@ expect(
     inputs=[data, scales],
     outputs=[output],
     name="test_resize_downsample_scales_linear_antialias",
+)
+```
+
+</details>
+<details>
+<summary>resize_downsample_scales_linear_half_pixel_symmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Resize",
+    inputs=["X", "", "scales"],
+    outputs=["Y"],
+    mode="linear",
+    coordinate_transformation_mode="half_pixel_symmetric",
+)
+
+data = np.array([[[[1, 2, 3, 4]]]], dtype=np.float32)
+scales = np.array([1.0, 1.0, 1.0, 0.6], dtype=np.float32)
+
+# [[[[1.6666667, 3.3333333]]]]
+output = interpolate_nd(
+    data,
+    lambda x, _: linear_coeffs(x),
+    scale_factors=scales,
+    coordinate_transformation_mode="half_pixel_symmetric",
+).astype(np.float32)
+
+expect(
+    node,
+    inputs=[data, scales],
+    outputs=[output],
+    name="test_resize_downsample_scales_linear_half_pixel_symmetric",
 )
 ```
 
@@ -15010,6 +15321,41 @@ expect(
     inputs=[data, scales],
     outputs=[output],
     name="test_resize_upsample_scales_linear_align_corners",
+)
+```
+
+</details>
+<details>
+<summary>resize_upsample_scales_linear_half_pixel_symmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Resize",
+    inputs=["X", "", "scales"],
+    outputs=["Y"],
+    mode="linear",
+    coordinate_transformation_mode="half_pixel_symmetric",
+)
+
+data = np.array([[[[1, 2], [3, 4]]]], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.3, 2.94], dtype=np.float32)
+
+# [[[[1.        , 1.15986395, 1.5       , 1.84013605, 2.        ],
+#    [1.56521738, 1.72508133, 2.06521738, 2.40535343, 2.56521738],
+#    [2.43478262, 2.59464657, 2.93478262, 3.27491867, 3.43478262],
+#    [3.        , 3.15986395, 3.5       , 3.84013605, 4.        ]]]]
+output = interpolate_nd(
+    data,
+    lambda x, _: linear_coeffs(x),
+    scale_factors=scales,
+    coordinate_transformation_mode="half_pixel_symmetric",
+).astype(np.float32)
+
+expect(
+    node,
+    inputs=[data, scales],
+    outputs=[output],
+    name="test_resize_upsample_scales_linear_half_pixel_symmetric",
 )
 ```
 
@@ -21304,12 +21650,17 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 # Model Test Coverage
 ## bvlc_alexnet
 
-bvlc_alexnet has 24 nodes. Of these, 24 are covered by node tests (100.0%)
+bvlc_alexnet has 40 nodes. Of these, 40 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
+</details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
 
@@ -21357,18 +21708,19 @@ strides: 1
 
 ## densenet121
 
-densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
+densenet121 has 1746 nodes. Of these, 1746 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 1
 pads: 1
 strides: 1
@@ -21384,6 +21736,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21436,18 +21793,19 @@ strides: 1
 
 ## inception_v1
 
-inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
+inception_v1 has 237 nodes. Of these, 237 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 2
 pads: 2
 strides: 2
@@ -21463,6 +21821,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21515,18 +21878,19 @@ strides: 2
 
 ## inception_v2
 
-inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
+inception_v2 has 916 nodes. Of these, 916 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21542,6 +21906,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21594,18 +21963,19 @@ strides: 2
 
 ## resnet50
 
-resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
+resnet50 has 415 nodes. Of these, 415 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21621,6 +21991,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21673,18 +22048,19 @@ strides: 2
 
 ## shufflenet
 
-shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
+shufflenet has 446 nodes. Of these, 446 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21700,6 +22076,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21757,18 +22138,19 @@ perm: 1
 
 ## squeezenet_old
 
-squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
+squeezenet_old has 105 nodes. Of these, 105 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21784,6 +22166,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21841,18 +22228,19 @@ perm: 1
 
 ## vgg19
 
-vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
+vgg19 has 82 nodes. Of these, 82 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21868,6 +22256,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21925,18 +22318,19 @@ perm: 1
 
 ## zfnet512
 
-zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
+zfnet512 has 38 nodes. Of these, 38 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
 <details>
-<summary>AveragePool: 3 out of 6 attributes covered</summary>
+<summary>AveragePool: 3 out of 7 attributes covered</summary>
 
 auto_pad: 0
 ceil_mode: 0
 count_include_pad: 0
+dilations: 0
 kernel_shape: 3
 pads: 3
 strides: 2
@@ -21952,6 +22346,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>

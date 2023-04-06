@@ -13,6 +13,10 @@ on:
 # Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
 env:
   MACOSX_DEPLOYMENT_TARGET: 10.12
+  
+permissions:
+  contents: read
+
 
 jobs:
   build:
@@ -25,7 +29,7 @@ jobs:
         target-architecture: ['x86_64', 'universal2']
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
     - name: Checkout submodules
       shell: bash
       run: |
@@ -33,7 +37,7 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.host-architecture }}
@@ -71,14 +75,16 @@ jobs:
       run: |
         pytest
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
       with:
         name: wheels
         path: dist
 
-    - name: Upload wheel to TestPyPI weekly
+    - name: Upload wheel to TestPyPI/PyPI weekly
       if: github.event_name == 'schedule' # Only triggered by weekly event
       run: |
+        twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
+        # TODO: stop uploading to TestPyPI after future ONNX 1.14
         twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy
@@ -102,23 +108,27 @@ jobs:
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
 
+    # Only triggered by weekly event on certain CI
+    - name: Build and upload source distribution to PyPI weekly
+      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'x86_64'
+      run: |
+        # Build and upload source distribution to PyPI
+        git clean -xdf
+        python setup.py sdist --weekly_build
+        twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
+
+        # Test weekly source distribution from PyPI
+        python -m pip uninstall -y onnx
+        python -m pip install setuptools
+        python -m pip install --index-url https://upload.pypi.org/legacy/ --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly
+        pytest
+
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != '3.11'
       run: |
+        python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime
-        python onnx/test/test_with_ort.py
-
-    # Only triggered by weekly event on certain CI
-    - name: Build and upload source distribution to TestPyPI weekly
-      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'x86_64'
-      run: |
-        # Build and upload source distribution to TestPyPI
-        git clean -xdf
-        python setup.py sdist --weekly_build
-        twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
-
-        # Test source distribution from TestPyPI
-        python -m pip uninstall -y onnx
-        python -m pip install setuptools
-        python -m pip install --index-url https://test.pypi.org/simple --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly
+        export ORT_MAX_IR_SUPPORTED_VERSION=8
+        export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
+        export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
         pytest

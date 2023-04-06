@@ -1,4 +1,8 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
@@ -79,9 +83,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
    * https://github.com/onnx/tensorflow-onnx
    * https://github.com/onnx/sklearn-onnx
    * https://github.com/onnx/onnxmltools
-   * https://github.com/onnx/keras-onnx
    * https://github.com/onnx/onnx-tensorrt
-   * https://github.com/onnx/onnx-coreml
 
 
 **Source distribution verification**
@@ -102,8 +104,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 ## After PyPI Release
 
 **Release summary**
-* Upload the source distribution, `.tar.gz` and `.zip`, in the release summary.
-* Create release in github with the right tag and upload the release summary along with .tar.gz and .zip
+* Create release summary in github with the right tag and upload the release summary along with .tar.gz and .zip (these compressed files will be auto-generated after publishing the release summary).
 
 **Announce**
 * Announce in slack, for instance, `onnx-general` channel.

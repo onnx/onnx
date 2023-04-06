@@ -10,8 +10,6 @@ to create them instead of directly instantiated them.
 Every structure can be printed with function `print` and is rendered
 as a json string.
 
-.. contents::
-    :local:
 
 AttributeProto
 ++++++++++++++

@@ -1,4 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 import itertools
 from typing import Sequence
 
@@ -67,7 +70,7 @@ def pool(
     p: int = 1,
 ) -> np.ndarray:
     spatial_size = len(x_shape) - 2
-    y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))
+    y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)])
 
     def lp_pool_p(x):
         return lp_pool(x, p)

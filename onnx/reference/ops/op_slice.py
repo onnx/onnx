@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,W0221
 
@@ -5,7 +7,7 @@ from typing import Optional
 
 import numpy as np
 
-from ._op import OpRun
+from onnx.reference.ops._op import OpRun
 
 
 def _slice(

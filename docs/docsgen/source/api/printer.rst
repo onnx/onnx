@@ -1,8 +1,6 @@
 onnx.printer
 ============
 
-.. contents::
-    :local:
 
 to_text
 +++++++

@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
@@ -25,7 +27,6 @@ class CommonReshape(OpRun):
 
 
 class Reshape_5(CommonReshape):
-
     pass
 
 

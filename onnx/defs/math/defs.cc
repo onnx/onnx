@@ -219,7 +219,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Floor_ver13_doc = R"DOC(
 Floor takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the floor is, y = floor(x), is applied to
-the tensor elementwise.
+the tensor elementwise. If x is integral, +0, -0, NaN,  or infinite, x itself is returned.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -238,7 +238,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Ceil_ver13_doc = R"DOC(
 Ceil takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the ceil is, y = ceil(x), is applied to
-the tensor elementwise.
+the tensor elementwise. If x is integral, +0, -0, NaN,  or infinite, x itself is returned.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1137,14 +1137,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
-        {
-          exp_x = Exp (X)
-          one = Constant <value = float {1.0}>()
-          exp_x_add_one = Add (exp_x, one)
-          Y = Log (exp_x_add_one)
-        }
-        )ONNX"));
+        .FunctionBody(
+            R"ONNX(
+            {
+              exp_x = Exp (X)
+              one = Constant <value = float {1.0}>()
+              one_cast = CastLike (one, X)
+              exp_x_add_one = Add (exp_x, one_cast)
+              Y = Log (exp_x_add_one)
+            }
+            )ONNX",
+            18));
 
 static const char* Gemm_ver13_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
@@ -2114,6 +2117,7 @@ static const char* Round_ver11_doc = R"DOC(
 Round takes one input Tensor and rounds the values, element-wise, meaning
 it finds the nearest integer for each value.
 In case of halfs, the rule is to round them to the nearest even integer.
+If input x is integral, +0, -0, NaN,  or infinite, x itself is returned.
 The output tensor has the same shape and type as the input.
 
 Examples:
@@ -3464,17 +3468,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
-          if (is_onesided) {
-            dft_size = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
-          }
+          int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
 
           auto n_dfts = static_cast<int64_t>((signal_size - dft_size) / static_cast<float>(frame_step_value)) + 1;
 
           // The output has the following shape: [batch_size][frames][dft_unique_bins][2]
           ONNX_NAMESPACE::TensorShapeProto result_shape_proto;
-          result_shape_proto.add_dim()->set_dim_value(input_shape.dim(0).dim_value()); // batch size
+          auto batch_dim = result_shape_proto.add_dim();
+
+          if (input_shape.dim(0).has_dim_value()) {
+            batch_dim->set_dim_value(input_shape.dim(0).dim_value()); // batch size
+          }
+
           result_shape_proto.add_dim()->set_dim_value(n_dfts);
-          result_shape_proto.add_dim()->set_dim_value(dft_size);
+          result_shape_proto.add_dim()->set_dim_value(dft_unique_bins);
           result_shape_proto.add_dim()->set_dim_value(2);
           updateOutputShape(ctx, 0, result_shape_proto);
         }));

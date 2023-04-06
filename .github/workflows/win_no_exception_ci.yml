@@ -6,6 +6,9 @@ on:
    pull_request:
     branches: [ main, rel-* ]
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
@@ -15,7 +18,7 @@ jobs:
         architecture: ['x64']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@v2
+      uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v2.6.0
       with:
          path: ./onnx
 
@@ -28,13 +31,13 @@ jobs:
          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@1ff57057b5cfdc39105cd07a01d78e9b0ea0c14c # v1.3.1
       with:
         msbuild-architecture: ${{ matrix.architecture }}
 

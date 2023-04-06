@@ -1,11 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,R0915,R1702,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-from .op_col2im import col2im_naive_implementation
+from onnx.reference.ops.op_col2im import col2im_naive_implementation
 
 
 class ConvTranspose(OpRun):
@@ -85,7 +86,6 @@ class ConvTranspose(OpRun):
         # N x C x H x W = X.shape
         # C x M/group x k1 x k2 = W.shape
         if group == 1:
-
             for image_id in range(X.shape[0]):
                 w_t = w_reshaped[0].T
                 gemm = np.matmul(w_t, X[image_id].reshape((k, n)))

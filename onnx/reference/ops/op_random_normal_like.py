@@ -1,9 +1,10 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,W0221
 
 from onnx.helper import np_dtype_to_tensor_dtype
-
-from ._op_common_random import _CommonRandom
+from onnx.reference.ops._op_common_random import _CommonRandom
 
 
 class RandomNormalLike(_CommonRandom):

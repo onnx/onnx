@@ -2,8 +2,6 @@
 onnx.utils
 ==========
 
-.. contents::
-    :local:
 
 Extractor
 +++++++++

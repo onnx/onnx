@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
@@ -49,7 +51,7 @@ def _gather_nd_impl(
     for batch_dim in range(reshaped_indices.shape[0]):
         for outer_dim in range(reshaped_indices.shape[1]):
             gather_index = tuple(reshaped_indices[batch_dim][outer_dim])
-            output_data_buffer.append(reshaped_data[(batch_dim,) + gather_index])
+            output_data_buffer.append(reshaped_data[(batch_dim, *gather_index)])
     return (np.asarray(output_data_buffer, dtype=data.dtype).reshape(output_shape),)
 
 

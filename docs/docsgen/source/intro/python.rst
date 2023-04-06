@@ -7,10 +7,6 @@ Next sections highlight the main functions used to build
 an ONNX graph with the :ref:`Python API <l-python-onnx-api>`
 *onnx* offers.
 
-.. contents::
-    :local:
-    :depth: 1
-
 .. _l-onnx-linear-regression-onnx-api:
 
 A simple example: a linear regression
@@ -596,6 +592,7 @@ in a matrix based on the sign, returns 1 or -1.
     opset = onnx_model.opset_import.add()
     opset.domain = ''
     opset.version = 15
+    onnx_model.ir_version = 8
 
     # Save.
     with open("onnx_if_sign.onnx", "wb") as f:
@@ -1101,7 +1098,7 @@ pipeline.
     opset_import {
     domain: ""
     version: 15
-    }    
+    }
 
 This way is used to create small models but it is rarely used
 in converting libraries.
@@ -1509,6 +1506,9 @@ This case is still puzzling.
         graph = make_graph([node1, node2], 'example', [X, A], [Y])
 
         onnx_model = make_model(graph, opset_imports=opset_imports)
+        # Let models runnable by onnxruntime with a released ir_version
+        onnx_model.ir_version = 8
+
         return onnx_model
 
     print("----------- case 1: 2D x 2D -> 2D")

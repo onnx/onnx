@@ -22,7 +22,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Asinh">Asinh</a>|<a href="Changelog.md#Asinh-9">9</a>|
 |<a href="#Atan">Atan</a>|<a href="Changelog.md#Atan-7">7</a>|
 |<a href="#Atanh">Atanh</a>|<a href="Changelog.md#Atanh-9">9</a>|
-|<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
+|<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-19">19</a>, <a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
 |<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
 |<a href="#BitwiseAnd">BitwiseAnd</a>|<a href="Changelog.md#BitwiseAnd-18">18</a>|
@@ -44,13 +44,14 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-9">9</a>|
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-17">17</a>|
+|<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-19">19</a>|
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
 |<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-12">12</a>|
-|<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
+|<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-19">19</a>, <a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
 |<a href="#Expand">Expand</a>|<a href="Changelog.md#Expand-13">13</a>, <a href="Changelog.md#Expand-8">8</a>|
@@ -101,7 +102,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
-|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
+|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
@@ -118,7 +119,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-18">18</a>, <a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
 |<a href="#ReduceSum">ReduceSum</a>|<a href="Changelog.md#ReduceSum-13">13</a>, <a href="Changelog.md#ReduceSum-11">11</a>, <a href="Changelog.md#ReduceSum-1">1</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
-|<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
+|<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-19">19</a>, <a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
@@ -195,7 +196,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|18|
 |<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|13, 18|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
-|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|1|
+|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|18|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|18|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
 
@@ -275,7 +276,7 @@ import numpy as np
 
 
 def abs(input: np.ndarray) -> np.ndarray:
-    return np.abs(input)
+    return np.abs(input)  # type: ignore[no-any-return]
 
 ```
 
@@ -1497,9 +1498,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 19 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#AveragePool-1">1</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-10">10</a>
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">1</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-11">11</a>
 
 #### Attributes
 
@@ -1510,6 +1511,8 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">1</a>, <a 
 <dd>Whether to use ceil or floor (default) to compute the output shape.</dd>
 <dt><tt>count_include_pad</tt> : int (default is 0)</dt>
 <dd>Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.</dd>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -1629,6 +1632,32 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_default")
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_dilations</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[3, 3],
+    strides=[1, 1],
+    dilations=[2, 2],
+    ceil_mode=True,
+)
+x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
 ```
 
 </details>
@@ -2623,14 +2652,14 @@ node = onnx.helper.make_node(
 )
 
 # 2d
-x = np.random.randn(3, 4).astype(np.int32)
-y = np.random.randn(3, 4).astype(np.int32)
+x = create_random_int((3, 4), np.int32)
+y = create_random_int((3, 4), np.int32)
 z = np.bitwise_and(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i32_2d")
 
 # 3d
-x = np.random.randn(3, 4, 5).astype(np.int16)
-y = np.random.randn(3, 4, 5).astype(np.int16)
+x = create_random_int((3, 4, 5), np.int16)
+y = create_random_int((3, 4, 5), np.int16)
 z = np.bitwise_and(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_i16_3d")
 ```
@@ -2649,16 +2678,16 @@ node = onnx.helper.make_node(
 )
 
 # 3d vs 1d
-x = np.random.randn(3, 4, 5).astype(np.uint64)
-y = np.random.randn(5).astype(np.uint64)
+x = create_random_int((3, 4, 5), np.uint64)
+y = create_random_int((5,), np.uint64)
 z = np.bitwise_and(x, y)
 expect(
     node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui64_bcast_3v1d"
 )
 
 # 4d vs 3d
-x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
-y = np.random.randn(4, 5, 6).astype(np.uint8)
+x = create_random_int((3, 4, 5, 6), np.uint8)
+y = create_random_int((4, 5, 6), np.uint8)
 z = np.bitwise_and(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_and_ui8_bcast_4v3d")
 ```
@@ -2709,17 +2738,17 @@ node = onnx.helper.make_node(
 )
 
 # 2d
-x = np.random.randn(3, 4).astype(np.int32)
+x = create_random_int((3, 4), np.int32)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_2d")
 
 # 3d
-x = np.random.randn(3, 4, 5).astype(np.uint16)
+x = create_random_int((3, 4, 5), np.uint16)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_3d")
 
 # 4d
-x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
+x = create_random_int((3, 4, 5, 6), np.uint8)
 y = np.bitwise_not(x)
 expect(node, inputs=[x], outputs=[y], name="test_bitwise_not_4d")
 ```
@@ -2774,14 +2803,14 @@ node = onnx.helper.make_node(
     outputs=["bitwiseor"],
 )
 # 2d
-x = np.random.randn(3, 4).astype(np.int32)
-y = np.random.randn(3, 4).astype(np.int32)
+x = create_random_int((3, 4), np.int32)
+y = create_random_int((3, 4), np.int32)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_i32_2d")
 
 # 4d
-x = np.random.randn(3, 4, 5, 6).astype(np.int8)
-y = np.random.randn(3, 4, 5, 6).astype(np.int8)
+x = create_random_int((3, 4, 5, 6), np.int8)
+y = create_random_int((3, 4, 5, 6), np.int8)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_i16_4d")
 ```
@@ -2800,14 +2829,14 @@ node = onnx.helper.make_node(
 )
 
 # 3d vs 1d
-x = np.random.randn(3, 4, 5).astype(np.uint64)
-y = np.random.randn(5).astype(np.uint64)
+x = create_random_int((3, 4, 5), np.uint64)
+y = create_random_int((5,), np.uint64)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui64_bcast_3v1d")
 
 # 4d vs 3d
-x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
-y = np.random.randn(4, 5, 6).astype(np.uint8)
+x = create_random_int((3, 4, 5, 6), np.uint8)
+y = create_random_int((4, 5, 6), np.uint8)
 z = np.bitwise_or(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_or_ui8_bcast_4v3d")
 ```
@@ -2863,16 +2892,16 @@ node = onnx.helper.make_node(
 )
 
 # 3d vs 1d
-x = np.random.randn(3, 4, 5).astype(np.uint64)
-y = np.random.randn(5).astype(np.uint64)
+x = create_random_int((3, 4, 5), np.uint64)
+y = create_random_int((5,), np.uint64)
 z = np.bitwise_xor(x, y)
 expect(
     node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui64_bcast_3v1d"
 )
 
 # 4d vs 3d
-x = np.random.randn(3, 4, 5, 6).astype(np.uint8)
-y = np.random.randn(4, 5, 6).astype(np.uint8)
+x = create_random_int((3, 4, 5, 6), np.uint8)
+y = create_random_int((4, 5, 6), np.uint8)
 z = np.bitwise_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_ui8_bcast_4v3d")
 ```
@@ -2891,14 +2920,14 @@ node = onnx.helper.make_node(
 )
 
 # 2d
-x = np.random.randn(3, 4).astype(np.int32)
-y = np.random.randn(3, 4).astype(np.int32)
+x = create_random_int((3, 4), np.int32)
+y = create_random_int((3, 4), np.int32)
 z = np.bitwise_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i32_2d")
 
 # 3d
-x = np.random.randn(3, 4, 5).astype(np.int16)
-y = np.random.randn(3, 4, 5).astype(np.int16)
+x = create_random_int((3, 4, 5), np.int16)
+y = create_random_int((3, 4, 5), np.int16)
 z = np.bitwise_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_bitwise_xor_i16_3d")
 ```
@@ -3087,7 +3116,7 @@ test_cases = [
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -3110,7 +3139,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -3137,11 +3166,11 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -3261,7 +3290,7 @@ test_cases = [
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -3284,7 +3313,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -3311,11 +3340,11 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -3380,7 +3409,7 @@ for from_type, to_type in test_cases:
 
   Ceil takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the ceil is, y = ceil(x), is applied to
-  the tensor elementwise.
+  the tensor elementwise. If x is integral, +0, -0, NaN,  or infinite, x itself is returned.
 
 #### Version
 
@@ -3671,6 +3700,34 @@ expect(
     inputs=[x, shape],
     outputs=[y],
     name="test_center_crop_pad_crop_axes_hwc",
+)
+```
+
+</details>
+
+
+<details>
+<summary>center_crop_pad_crop_negative_axes_hwc</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CenterCropPad",
+    inputs=["x", "shape"],
+    outputs=["y"],
+    axes=[-3, -2],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([10, 9, 3], dtype=np.float32)
+y[:, :8, :] = x[5:15, :, :]
+
+expect(
+    node,
+    inputs=[x, shape],
+    outputs=[y],
+    name="test_center_crop_pad_crop_negative_axes_hwc",
 )
 ```
 
@@ -4831,7 +4888,6 @@ Other versions of this operator: <a href="Changelog.md#Conv-1">1</a>
 <summary>conv</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -4921,7 +4977,6 @@ expect(
 <summary>conv_with_autopad_same</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -4969,7 +5024,6 @@ expect(node, inputs=[x, W], outputs=[y], name="test_conv_with_autopad_same")
 <summary>conv_with_strides</summary>
 
 ```python
-
 x = np.array(
     [
         [
@@ -5157,7 +5211,6 @@ This version of the operator has been available since version 10 of the default 
 <summary>with_padding</summary>
 
 ```python
-
 x = (
     np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
     .astype(np.uint8)
@@ -5195,7 +5248,6 @@ expect(
 <summary>without_padding</summary>
 
 ```python
-
 x = (
     np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
     .astype(np.uint8)
@@ -6093,6 +6145,241 @@ y = np.fft.ifft(x, axis=0)
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
+```
+
+</details>
+
+
+### <a name="DeformConv"></a><a name="deformconv">**DeformConv**</a>
+
+  Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
+  This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
+
+#### Version
+
+This version of the operator has been available since version 19 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>Dilation value along each spatial axis of the kernel. Default is 1 along each axis.</dd>
+<dt><tt>group</tt> : int (default is 1)</dt>
+<dd>Number of groups the input and output channels, C and oC, are divided into. C and oC must both be divisible by group. Default is 1.</dd>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>Shape of the convolution kernel. If not present, it is inferred from the shape of input W.</dd>
+<dt><tt>offset_group</tt> : int (default is 1)</dt>
+<dd>Number of groups of offset. C must be divisible by offset_group. Default is 1.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and end along each spatial axis. The values represent the number of pixels added to the beginning and end of the corresponding axis and can take any nonnegative value. The format should be as follows: [x1_begin, x2_begin, ..., x1_end, x2_end, ...], where xi_begin is the number of pixels added at the beginning of axis `i` and xi_end is the number of pixels added at the end of axis `i`. Default is 0 along each axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each spatial axis. Default is 1 along each axis.</dd>
+</dl>
+
+#### Inputs (3 - 5)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor. For 2D image data, it has shape (N, C, H, W) where N is the batch size, C is the number of input channels, and H and W are the height and width. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes. Most common use cases have n = 2 or 3.</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>Weight tensor that will be used in the convolutions. It has shape (oC, C/group, kH, kW), where oC is the number of output channels and kH and kW are the kernel height and width. For more than 2 dimensions, it has shape (oC, C/group, k1, k2, ... , kn).</dd>
+<dt><tt>offset</tt> : T</dt>
+<dd>Offset tensor denoting the offset for the sampling locations in the convolution kernel. It has shape (N, offset_group * kH * kW * 2, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Use linear interpolationfor fractional offset values. Sampling locations outside of the padded input tensor gives zero.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>Optional 1D bias of length oC to be added to the convolution. Default is a tensor of zeros.</dd>
+<dt><tt>mask</tt> (optional) : T</dt>
+<dd>The mask tensor to be applied to each position in the convolution kernel. It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or (N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Default is a tensor of ones.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor that contains the result of convolution. It has shape (N, oC, oH, oW) for 2D data or (N, oC, o1, o2, ..., on) for nD data</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>deformconv</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+
+# Convolution with padding
+offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
+offset_with_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_with_padding[
+    0, 5, 1, 2
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [1, 2]
+
+node_with_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_with_padding"],
+    outputs=["Y_with_padding"],
+    kernel_shape=[2, 2],
+    pads=[1, 1, 1, 1],
+)
+Y_with_padding = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 2.0],  # (1, 1, 4, 4) output tensor
+                [3.0, 8.0, 11.9, 7.0],
+                [9.0, 20.0, 24.0, 13.0],
+                [6.0, 13.0, 15.0, 8.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_with_padding,
+    inputs=[X, W, offset_with_padding],
+    outputs=[Y_with_padding],
+    name="test_basic_deform_conv_with_padding",
+)
+
+# Convolution without padding
+offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset_without_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_without_padding[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+node_without_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_without_padding"],
+    outputs=["Y_without_padding"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y_without_padding = np.array(
+    [
+        [
+            [
+                [9.5, 11.9],  # (1, 1, 2, 2) output tensor
+                [20.0, 24.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_without_padding,
+    inputs=[X, W, offset_without_padding],
+    outputs=[Y_without_padding],
+    name="test_basic_deform_conv_without_padding",
+)
+```
+
+</details>
+
+
+<details>
+<summary>deformconv_with_mask_bias</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+B = np.ones((1,), dtype=np.float32)
+
+offset = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+mask = np.ones((1, 4, 2, 2), dtype=np.float32)
+mask[0, 2, 1, 1] = 0.2  # [1, 0] element of kernel at output position [1, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset", "B", "mask"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y = np.array(
+    [
+        [
+            [
+                [10.5, 12.9],  # (1, 1, 2, 2) output tensor
+                [21.0, 19.4],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset, B, mask],
+    outputs=[Y],
+    name="test_deform_conv_with_mask_bias",
+)
+```
+
+</details>
+
+
+<details>
+<summary>deformconv_with_multiple_offset_groups</summary>
+
+```python
+X = np.zeros((1, 2, 3, 3), dtype=np.float32)
+X[0, 0] = np.reshape(np.arange(9).astype(np.float32), (3, 3))
+X[0, 1] = np.reshape(np.arange(8, -1, -1).astype(np.float32), (3, 3))
+X.shape = (1, 2, 3, 3)
+W = np.ones((1, 2, 2, 2), dtype=np.float32)
+
+offset = np.zeros((1, 16, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
+offset[
+    0, 13, 0, 1
+] = (
+    -0.1
+)  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+    offset_group=2,
+)
+Y = np.array(
+    [
+        [
+            [
+                [33.5, 32.1],  # (1, 1, 2, 2) output tensor
+                [32.0, 32.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset],
+    outputs=[Y],
+    name="test_deform_conv_with_multiple_offset_groups",
+)
 ```
 
 </details>
@@ -7221,9 +7508,9 @@ expect(node, inputs=[x], outputs=[y], name="test_elu_default")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 19 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-13">13</a>
 
 #### Inputs
 
@@ -7244,8 +7531,8 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input types to all numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(string)</dt>
+<dd>Constrain input types to all (non-complex) tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrain output to boolean tensor.</dd>
 </dl>
@@ -7286,6 +7573,42 @@ x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
 y = (np.random.randn(5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_equal_bcast")
+```
+
+</details>
+
+
+<details>
+<summary>equal_string</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Equal",
+    inputs=["x", "y"],
+    outputs=["z"],
+)
+x = np.array(["string1", "string2"], dtype=np.dtype(object))
+y = np.array(["string1", "string3"], dtype=np.dtype(object))
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_string")
+```
+
+</details>
+
+
+<details>
+<summary>equal_string_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Equal",
+    inputs=["x", "y"],
+    outputs=["z"],
+)
+x = np.array(["string1", "string2"], dtype=np.dtype(object))
+y = np.array(["string1"], dtype=np.dtype(object))
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_string_broadcast")
 ```
 
 </details>
@@ -7741,7 +8064,7 @@ expect(node, inputs=[a], outputs=[b], name="test_flatten_default_axis")
 
   Floor takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the floor is, y = floor(x), is applied to
-  the tensor elementwise.
+  the tensor elementwise. If x is integral, +0, -0, NaN,  or infinite, x itself is returned.
 
 #### Version
 
@@ -7937,7 +8260,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R, layout=layout)
+gru = GRUHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = gru.step()
 expect(
     node,
@@ -7972,7 +8295,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-gru = GRU_Helper(X=input, W=W, R=R)
+gru = GRUHelper(X=input, W=W, R=R)
 _, Y_h = gru.step()
 expect(
     node,
@@ -8020,7 +8343,7 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRUHelper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
 expect(
     node,
@@ -8067,7 +8390,7 @@ W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-gru = GRU_Helper(X=input, W=W, R=R, B=B)
+gru = GRUHelper(X=input, W=W, R=R, B=B)
 _, Y_h = gru.step()
 expect(
     node,
@@ -8982,7 +9305,6 @@ expect(node, inputs=[x], outputs=[y], name="test_globalaveragepool")
 <summary>globalaveragepool_precomputed</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalAveragePool",
     inputs=["x"],
@@ -9085,7 +9407,6 @@ This version of the operator has been available since version 1 of the default O
 <summary>globalmaxpool</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalMaxPool",
     inputs=["x"],
@@ -9103,7 +9424,6 @@ expect(node, inputs=[x], outputs=[y], name="test_globalmaxpool")
 <summary>globalmaxpool_precomputed</summary>
 
 ```python
-
 node = onnx.helper.make_node(
     "GlobalMaxPool",
     inputs=["x"],
@@ -11094,7 +11414,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, layout=layout)
+lstm = LSTMHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = lstm.step()
 expect(
     node,
@@ -11129,7 +11449,7 @@ R = weight_scale * np.ones(
     (1, number_of_gates * hidden_size, hidden_size)
 ).astype(np.float32)
 
-lstm = LSTM_Helper(X=input, W=W, R=R)
+lstm = LSTMHelper(X=input, W=W, R=R)
 _, Y_h = lstm.step()
 expect(
     node,
@@ -11177,7 +11497,7 @@ W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(
 R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
-lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
+lstm = LSTMHelper(X=input, W=W, R=R, B=B)
 _, Y_h = lstm.step()
 expect(
     node,
@@ -11226,7 +11546,7 @@ P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(
     np.float32
 )
 
-lstm = LSTM_Helper(
+lstm = LSTMHelper(
     X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h
 )
 _, Y_h = lstm.step()
@@ -17083,6 +17403,8 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
   3) `edge` - pads with the edge values of array
 
+  4) `wrap` - wrap-around padding as if the data tensor forms a torus
+
 
   Example 1 (`constant` mode):
 
@@ -17148,17 +17470,40 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
   ]
   ```
 
+  Example 4 (`wrap` mode):
+
+  ```
+  data = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+
+  pads = [2, 1, 1, 1]
+
+  mode = 'wrap'
+
+  output = [
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
+      [1.2, 1.0, 1.2, 1.0],
+      [3.4, 2.3, 3.4, 2.3],
+      [5.7, 4.5, 5.7, 4.5],
+      [1.2, 1.0, 1.2, 1.0],
+  ]
+  ```
+
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 19 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-18">18</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>mode</tt> : string (default is constant)</dt>
-<dd>Supported modes: `constant`(default), `reflect`, `edge`</dd>
+<dd>Supported modes: `constant`(default), `reflect`, `edge`, `wrap`</dd>
 </dl>
 
 #### Inputs (2 - 4)
@@ -17246,10 +17591,42 @@ expect(
 
 
 <details>
-<summary>reflection_and_edge_pad</summary>
+<summary>constant_pad_negative_axes</summary>
 
 ```python
-for mode in ["edge", "reflect"]:
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "value", "axes"], outputs=["y"], mode="constant"
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(
+    np.int64
+)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([-3, -1], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    "constant",
+    1.2,
+    [-3, -1],
+)
+
+expect(
+    node,
+    inputs=[x, pads, value, axes],
+    outputs=[y],
+    name="test_constant_pad_negative_axes",
+)
+```
+
+</details>
+
+
+<details>
+<summary>reflection_edge_and_wrap_pad</summary>
+
+```python
+for mode in ["edge", "reflect", "wrap"]:
     node = onnx.helper.make_node(
         "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
     )
@@ -17986,7 +18363,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R, layout=layout)
+rnn = RNNHelper(X=input, W=W, R=R, layout=layout)
 Y, Y_h = rnn.step()
 expect(
     node,
@@ -18016,7 +18393,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
-rnn = RNN_Helper(X=input, W=W, R=R)
+rnn = RNNHelper(X=input, W=W, R=R)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -18057,7 +18434,7 @@ W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
 R_B = np.zeros((1, hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNNHelper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -18099,7 +18476,7 @@ W_B = np.random.randn(1, hidden_size).astype(np.float32)
 R_B = np.random.randn(1, hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+rnn = RNNHelper(X=input, W=W, R=R, B=B)
 _, Y_h = rnn.step()
 expect(
     node,
@@ -18488,9 +18865,10 @@ expect(node, inputs=[x], outputs=[y], name="test_reciprocal")
 
 ### <a name="ReduceL1"></a><a name="reducel1">**ReduceL1**</a>
 
-  Computes the L1 norm of the input tensor's element along the provided axes. The resulting
+  Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -18715,9 +19093,10 @@ expect(
 
 ### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
 
-  Computes the L2 norm of the input tensor's element along the provided axes. The resulting
+  Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -18960,9 +19339,10 @@ expect(
 
 ### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
 
-  Computes the log sum of the input tensor's element along the provided axes. The resulting
+  Computes the log sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -19095,9 +19475,10 @@ expect(
 
 ### <a name="ReduceLogSumExp"></a><a name="reducelogsumexp">**ReduceLogSumExp**</a>
 
-  Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
+  Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -19325,9 +19706,10 @@ expect(
 
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
-  Computes the max of the input tensor's element along the provided axes. The resulting
+  Computes the max of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -19555,9 +19937,10 @@ expect(
 
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
 
-  Computes the mean of the input tensor's element along the provided axes. The resulting
+  Computes the mean of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -19791,9 +20174,10 @@ expect(
 
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
-  Computes the min of the input tensor's element along the provided axes. The resulting
+  Computes the min of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -20024,9 +20408,10 @@ expect(
 
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
 
-  Computes the product of the input tensor's element along the provided axes. The resulting
+  Computes the product of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -20249,9 +20634,10 @@ expect(
 
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
-  Computes the sum of the input tensor's element along the provided axes. The resulting
+  Computes the sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -20514,9 +20900,10 @@ expect(
 
 ### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
 
-  Computes the sum square of the input tensor's element along the provided axes. The resulting
+  Computes the sum square of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-  the resulting tensor has the reduced dimension pruned.
+  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+  valid.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -20926,15 +21313,17 @@ for test_name, shape in test_cases.items():
 ### <a name="Resize"></a><a name="resize">**Resize**</a>
 
   Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
-  Each dimension value of the output tensor is: <br/>
-    `output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)` <br/>
+  Each dimension value of the output tensor is:
+  ```
+  output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)
+  ```
   if input \"sizes\" is not specified.
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 19 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Resize-10">10</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Resize-10">10</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-18">18</a>
 
 #### Attributes
 
@@ -20945,25 +21334,49 @@ Other versions of this operator: <a href="Changelog.md#Resize-10">10</a>, <a hre
 <dd>If provided, it specifies a subset of axes that 'roi', 'scales' and 'sizes' refer to. If not provided, all axes are assumed [0, 1, ..., r-1], where r = rank(data). Non-specified dimensions are interpreted as non-resizable. Negative value means counting dimensions from the back. Accepted range is [-r, r-1], where r = rank(data). Behavior is undefined if an axis is repeated.</dd>
 <dt><tt>coordinate_transformation_mode</tt> : string (default is half_pixel)</dt>
 <dd>
-This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
+This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor.
 
 The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example.
-Denote x_resized as the coordinate of axis x in the resized tensor, x_original as the coordinate of axis x in the original tensor, `length_original` as the length of the original tensor in axis x, length_resized as the length of the resized tensor in axis x, roi_x = (start_x, end_x) of the axis x in input "roi", `scale = length_resized / length_original`, <br/>
+Denote `x_resized` as the coordinate of axis x in the resized tensor,
+ `x_original` as the coordinate of axis x in the original tensor,
+ `length_original` as the length of the original tensor in axis x,
+ `length_resized` as the length of the resized tensor in axis x,
+ `scale = length_resized / length_original`,
+ `output_width` the target length on the axis x which can be a fractional number when it is calculated out of a scale factor,
+ and `output_width_int` the effective output width as an integer.
 
-if coordinate_transformation_mode is `"half_pixel"`, <br/>
-`x_original = (x_resized + 0.5) / scale - 0.5` <br/>
+if coordinate_transformation_mode is `"half_pixel"`,
+```
+x_original = (x_resized + 0.5) / scale - 0.5
+```
 
-if coordinate_transformation_mode is `"pytorch_half_pixel"`, <br/>
-`x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0` <br/>
+if coordinate_transformation_mode is `"half_pixel_symmetric"`,
+```
+adjustment = output_width_int / output_width
+center = input_width / 2
+offset = center * (1 - adjustment)
+x_ori = offset + (x + 0.5) / scale - 0.5
+```
 
-if coordinate_transformation_mode is `"align_corners"`, <br/>
-`x_original = x_resized * (length_original - 1) / (length_resized - 1)` <br/>
+if coordinate_transformation_mode is `"pytorch_half_pixel"`,
+```
+x_original = length_resized > 1 ? (x_resized + 0.5) / scale - 0.5 : 0
+```
 
-if coordinate_transformation_mode is `"asymmetric"`, <br/>
-`x_original = x_resized / scale` <br/>
+if coordinate_transformation_mode is `"align_corners"`,
+```
+x_original = x_resized * (length_original - 1) / (length_resized - 1)
+```
 
-if coordinate_transformation_mode is `"tf_crop_and_resize"`, <br/>
-`x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1)`
+if coordinate_transformation_mode is `"asymmetric"`,
+```
+x_original = x_resized / scale
+```
+
+if coordinate_transformation_mode is `"tf_crop_and_resize"`,
+```
+x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * (end_x - start_x) * (length_original - 1) / (length_resized - 1) : 0.5 * (start_x + end_x) * (length_original - 1)
+```
 .</dd>
 <dt><tt>cubic_coeff_a</tt> : float (default is -0.75)</dt>
 <dd>The coefficient 'a' used in cubic interpolation. Two common choice are -0.5 (in some cases of TensorFlow) and -0.75 (in PyTorch). Check out Equation (4) in https://ieeexplore.ieee.org/document/1163711 for the details. This attribute is valid only if mode is "cubic".</dd>
@@ -20974,20 +21387,24 @@ if coordinate_transformation_mode is `"tf_crop_and_resize"`, <br/>
 <dt><tt>keep_aspect_ratio_policy</tt> : string (default is stretch)</dt>
 <dd>
 This attribute describes how to interpret the `sizes` input with regard to keeping the original aspect ratio of the input, and it is not applicable when
-the `scales` input is used. <br/>
+the `scales` input is used.
 
-Given a set of `sizes`, associated with a subset of `axes` (explicitly provided or default), and assuming `d = axes[i]`, with `i` being the index of the provided `sizes`. <br/>
+Given a set of `sizes`, associated with a subset of `axes` (explicitly provided or default), and assuming `d = axes[i]`, with `i` being the index of the provided `sizes`.
 
-If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disregarded, and the input is resized to the specified size: <br/>
-`out_size[d] = sizes[i]` <br/>
+If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disregarded, and the input is resized to the specified size:
+`out_size[d] = sizes[i]`
 
-If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio: <br/>
-`scale = Min(sizes[i] / in_size[d])` <br/>
-`out_size[d] = round_int(scale * in_size[i])` <br/>
+If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio:
+```
+scale = Min(sizes[i] / in_size[d])
+out_size[d] = round_int(scale * in_size[i])
+```
 
-If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio: <br/>
-`scale = Max(sizes[i] / in_size[d])` <br/>
-`out_size[d] = round_int(scale * in_size[i])` <br/>
+If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio:
+```
+scale = Max(sizes[i] / in_size[d])
+out_size[d] = round_int(scale * in_size[i])
+```
 
 For non-resizable axes (those not specified in `axes`), the output size will be equal to the input size.
 
@@ -21344,6 +21761,40 @@ expect(
     inputs=[data, scales],
     outputs=[output],
     name="test_resize_downsample_scales_linear_antialias",
+)
+```
+
+</details>
+
+
+<details>
+<summary>resize_downsample_scales_linear_half_pixel_symmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Resize",
+    inputs=["X", "", "scales"],
+    outputs=["Y"],
+    mode="linear",
+    coordinate_transformation_mode="half_pixel_symmetric",
+)
+
+data = np.array([[[[1, 2, 3, 4]]]], dtype=np.float32)
+scales = np.array([1.0, 1.0, 1.0, 0.6], dtype=np.float32)
+
+# [[[[1.6666667, 3.3333333]]]]
+output = interpolate_nd(
+    data,
+    lambda x, _: linear_coeffs(x),
+    scale_factors=scales,
+    coordinate_transformation_mode="half_pixel_symmetric",
+).astype(np.float32)
+
+expect(
+    node,
+    inputs=[data, scales],
+    outputs=[output],
+    name="test_resize_downsample_scales_linear_half_pixel_symmetric",
 )
 ```
 
@@ -22264,6 +22715,43 @@ expect(
     inputs=[data, scales],
     outputs=[output],
     name="test_resize_upsample_scales_linear_align_corners",
+)
+```
+
+</details>
+
+
+<details>
+<summary>resize_upsample_scales_linear_half_pixel_symmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Resize",
+    inputs=["X", "", "scales"],
+    outputs=["Y"],
+    mode="linear",
+    coordinate_transformation_mode="half_pixel_symmetric",
+)
+
+data = np.array([[[[1, 2], [3, 4]]]], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.3, 2.94], dtype=np.float32)
+
+# [[[[1.        , 1.15986395, 1.5       , 1.84013605, 2.        ],
+#    [1.56521738, 1.72508133, 2.06521738, 2.40535343, 2.56521738],
+#    [2.43478262, 2.59464657, 2.93478262, 3.27491867, 3.43478262],
+#    [3.        , 3.15986395, 3.5       , 3.84013605, 4.        ]]]]
+output = interpolate_nd(
+    data,
+    lambda x, _: linear_coeffs(x),
+    scale_factors=scales,
+    coordinate_transformation_mode="half_pixel_symmetric",
+).astype(np.float32)
+
+expect(
+    node,
+    inputs=[data, scales],
+    outputs=[output],
+    name="test_resize_upsample_scales_linear_half_pixel_symmetric",
 )
 ```
 
@@ -23433,6 +23921,7 @@ expect(
   Round takes one input Tensor and rounds the values, element-wise, meaning
   it finds the nearest integer for each value.
   In case of halfs, the rule is to round them to the nearest even integer.
+  If input x is integral, +0, -0, NaN,  or infinite, x itself is returned.
   The output tensor has the same shape and type as the input.
 
   Examples:

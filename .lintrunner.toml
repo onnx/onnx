@@ -34,9 +34,10 @@
 # new adapter following examples in https://github.com/justinchuby/lintrunner-adapters.
 
 [[linter]]
-code = 'FLAKE8'
+code = 'RUFF'
 include_patterns = [
     '**/*.py',
+    '**/*.pyi',
 ]
 exclude_patterns = [
     '*_pb2*',
@@ -48,8 +49,8 @@ command = [
     '-m',
     'lintrunner_adapters',
     'run',
-    'flake8_linter',
-    '--',
+    'ruff_linter',
+    '--config=pyproject.toml',
     '@{{PATHSFILE}}'
 ]
 init_command = [
@@ -59,16 +60,45 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'flake8==5.0.4',
-    'flake8-bugbear==22.10.27',
-    'flake8-pyi==22.10.0',
-    'dlint==0.13.0',
+    'ruff==0.0.252',
 ]
+
+[[linter]]
+code = 'RUFF-FIX'
+include_patterns = [
+    '**/*.py',
+    '**/*.pyi',
+]
+exclude_patterns = [
+    '*_pb2*',
+    '.setuptools-cmake-build/*',
+    'docs/**',
+]
+command = [
+    'python',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'ruff_fix_linter',
+    '--config=pyproject.toml',
+    '@{{PATHSFILE}}'
+]
+init_command = [
+    'python',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'pip_init',
+    '--dry-run={{DRYRUN}}',
+    'ruff==0.0.252',
+]
+is_formatter = true
 
 [[linter]]
 code = 'MYPY'
 include_patterns = [
     'onnx/**/*.py',
+    'tools/**/*.py',
 ]
 exclude_patterns = [
     'onnx/backend/test/**',
@@ -126,7 +156,7 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'black==22.10.0',
+    'black==23.1.0',
     'isort==5.10.1',
 ]
 is_formatter = true

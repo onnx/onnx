@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# Copyright (c) ONNX Project Contributors
+
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy

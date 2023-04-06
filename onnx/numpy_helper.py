@@ -1,8 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 # pylint: disable=C3001,isinstance-second-argument-not-valid-type
 
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -411,3 +414,36 @@ def convert_endian(tensor: TensorProto) -> None:
     tensor.raw_data = (
         np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
     )
+
+
+def create_random_int(
+    input_shape: Tuple[int], dtype: np.dtype, seed: int = 1
+) -> np.ndarray:
+    """
+    Create random integer array for backend/test/case/node.
+
+    Args:
+        input_shape: specify the shape for the returned integer array.
+        dtype: specify the NumPy data type for the returned integer array.
+        seed: (optional) the seed for np.random.
+
+    Returns:
+        np.ndarray: the created random integer array.
+    """
+    np.random.seed(seed)
+    if dtype in (
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+    ):
+        # the range of np.random.randint is int32; set a fixed boundary if overflow
+        end = min(np.iinfo(dtype).max, np.iinfo(np.int32).max)
+        start = max(np.iinfo(dtype).min, np.iinfo(np.int32).min)
+        return np.random.randint(start, end, size=input_shape).astype(dtype)
+    else:
+        raise TypeError(f"{dtype} is not supported by create_random_int.")

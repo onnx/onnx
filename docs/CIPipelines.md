@@ -1,4 +1,8 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 ## ONNX CI Pipelines
 
@@ -20,7 +24,7 @@
 
   * (1) When the release CIs will run:
     * After a PR has been merged into main/rel-* branch
-    * Run weekly (Sunday midnight) and release Python wheel to [onnx-weekly](https://test.pypi.org/project/onnx-weekly/) package on TestPyPI.
+    * Run weekly (Sunday midnight) and release Python wheel to [onnx-weekly](https://pypi.org/project/onnx-weekly/) package on PyPI.
     * Any PR targeting rel-* branch
     * To manually run them, add a PR label "run release CIs" (only maintainers have permission).
   * (2) Minimum supported versions are listed [here](/requirements.txt).

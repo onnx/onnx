@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C3001,R0912,R0913,R0914,R0915,W0108,W0221
 
@@ -16,13 +18,24 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
         // and so on
     """
     if reduction == "add":
-        f = lambda x, y: x + y  # noqa
+
+        def f(x, y):
+            return x + y
+
     elif reduction == "min":
-        f = lambda x, y: min(x, y)  # noqa
+
+        def f(x, y):
+            return min(x, y)
+
     elif reduction == "max":
-        f = lambda x, y: max(x, y)  # noqa
+
+        def f(x, y):
+            return max(x, y)
+
     else:
-        f = lambda x, y: y  # noqa
+
+        def f(x, y):  # pylint: disable=unused-argument
+            return y
 
     if axis < 0:
         axis = data.ndim + axis

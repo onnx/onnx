@@ -1,9 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221,R0913,R0914
 
 import numpy as np
 
-from ._op_common_pool import CommonPool
+from onnx.reference.ops._op_common_pool import CommonPool
 
 
 class LpPool(CommonPool):
