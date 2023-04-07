@@ -6,10 +6,18 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 
+from onnx import TensorProto
 from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
 from onnx.helper import make_node
 from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
+from onnx.reference.custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+)
 
 
 def _split_class_name(name):  # type: ignore
@@ -122,6 +130,42 @@ def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
     return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
 
 
+def to_array_extended(tensor: TensorProto) -> np.ndarray:
+    """
+    Similar to :func:`to_array` but deals with bfloat16,
+    float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz.
+    """
+    elem_type = tensor.data_type
+    if elem_type == TensorProto.BFLOAT16:
+        data = tensor.int32_data
+        shape = tuple(tensor.dims)
+        y = np.empty(shape, dtype=bfloat16).ravel()
+        for i, d in enumerate(data):
+            y[i] = d
+        return y.reshape(shape)
+
+    if elem_type in (
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+    ):
+        m = {
+            TensorProto.FLOAT8E4M3FN: float8e4m3fn,
+            TensorProto.FLOAT8E4M3FNUZ: float8e4m3fnuz,
+            TensorProto.FLOAT8E5M2: float8e5m2,
+            TensorProto.FLOAT8E5M2FNUZ: float8e5m2fnuz,
+        }
+
+        data = tensor.int32_data
+        shape = tuple(tensor.dims)
+        y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
+        for i, d in enumerate(data):
+            y[i] = d
+        return y.reshape(shape)
+    return to_array(tensor)
+
+
 class Graph:
     __slots__ = ["g"]
 
@@ -155,8 +199,8 @@ class OpRun(ABC):
         ],
         AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
         AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
-        AttributeProto.TENSOR: lambda att: to_array(att.t),
-        AttributeProto.TENSORS: lambda att: [to_array(t) for t in att.tensors],
+        AttributeProto.TENSOR: lambda att: to_array_extended(att.t),
+        AttributeProto.TENSORS: lambda att: [to_array_extended(t) for t in att.tensors],
         AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
         AttributeProto.TYPE_PROTOS: lambda att: [OnnxType(t) for t in att.type_protos],
     }
