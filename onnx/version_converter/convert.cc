@@ -73,13 +73,15 @@ void DefaultVersionConverter::convert_graph(
       debug(std::string("Finding schema for ") + std::string(cur_op->kind().toString()));
       const std::string op_name = cur_op->kind().toString();
       if (op_name == "ConstantFill") {
-        std::cerr
-            << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
-               "Please be advised the converted model may not be working properly if target runtime does not support this "
-               "experimental op."
-            << std::endl;
+        if (DEBUG)
+          std::cerr
+              << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
+                 "Please be advised the converted model may not be working properly if target runtime does not support this "
+                 "experimental op."
+              << std::endl;
       } else if (cur_op->domain() != "" && cur_op->domain() != "ai.onnx") {
-        std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << std::endl;
+        if (DEBUG)
+          std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << std::endl;
       } else if (op_name != "Undefined" && op_name != "Captured") {
         auto& op_domain_map = all_schemas.at(op_name);
         OpSetID curr_id(curr_version);
