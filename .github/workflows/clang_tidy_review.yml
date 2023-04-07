@@ -1,4 +1,4 @@
-name: optional_clang_tidy_review
+name: Optional_Clang_Tidy_Review
 
 on:
   pull_request:

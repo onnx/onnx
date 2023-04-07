@@ -4,7 +4,7 @@ name: Post clang-tidy review comments
 on:
   workflow_run:
     # The name field of the lint action
-    workflows: ["optional_clang_tidy_review"]
+    workflows: ["Optional_Clang_Tidy_Review"]
     types:
       - completed
 
