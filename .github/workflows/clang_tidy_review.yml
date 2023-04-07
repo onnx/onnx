@@ -21,9 +21,9 @@ jobs:
       - name: clang-tidy review
         uses: ZedThree/clang-tidy-review@4f11cae8aa5a0866738de40c1f6443b1a01d5642 # v0.12.2
         with:
+          apt_packages: "libprotobuf-dev protobuf-compiler"
           cmake_command: "cmake -S . -B .setuptools-cmake-build -DCMAKE_EXPORT_COMPILE_COMMANDS=on"
           build_dir: ".setuptools-cmake-build"
-          apt_packages: "libprotobuf-dev protobuf-compiler"
           exclude: "/third_party/*"
           split_workflow: true
       - uses: ZedThree/clang-tidy-review/upload@4f11cae8aa5a0866738de40c1f6443b1a01d5642 # v0.12.2
