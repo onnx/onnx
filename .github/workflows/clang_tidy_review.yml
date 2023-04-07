@@ -3,6 +3,9 @@ name: optional_clang_tidy_review
 on:
   pull_request:
     branches: [ "main", rel-* ]
+    paths:
+      - "**.cc"
+      - "**.h"
   workflow_dispatch:
 
 permissions:  # set top-level default permissions as security best practice
