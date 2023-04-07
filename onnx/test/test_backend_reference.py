@@ -109,6 +109,23 @@ backend_test.exclude(
 # The following tests are about deprecated operators.
 backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
 
+# The following tests are using types not supported by numpy.
+# They could be if method to_array is extended to support custom
+# types the same as the reference implementation does
+# (see onnx.reference.op_run.to_array_extended).
+backend_test.exclude(
+    "(test_cast_FLOAT_to_FLOAT8"
+    "|test_cast_FLOAT16_to_FLOAT8"
+    "|test_castlike_FLOAT_to_FLOAT8"
+    "|test_castlike_FLOAT16_to_FLOAT8"
+    "|test_cast_no_saturate_FLOAT_to_FLOAT8"
+    "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
+    "|test_cast_BFLOAT16_to_FLOAT"
+    "|test_castlike_BFLOAT16_to_FLOAT"
+    "|test_quantizelinear_e4m3"
+    "|test_quantizelinear_e5m2"
+    ")"
+)
 
 # The following tests are using types not supported by NumPy.
 # They could be if method to_array is extended to support custom
