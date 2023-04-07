@@ -22672,7 +22672,7 @@ This version of the operator has been available since version 19 of the default 
     * fixed point: undefined if OOR.
     * bool: +/- 0.0 to False; all else to True.
   * Casting from fixed point to:
-    *  floating point: +/- infinity if OOR. (+ infinity in the case of uint)
+    * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
     * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
       signed types). For example, 200 (int16) -> -56 (int8).
     * bool: zero to False; nonzero to True.
