@@ -38,13 +38,11 @@ In more detail, the conversion among numerical types should follow these rules
 if the destination type is not a float 8 type.
 
 * Casting from floating point to:
-  * floating point: +/- highest value if OOR (out of range),
-    infinities are converted to NaN if infinity is not available
+  * floating point: +/- infinity if OOR (out of range).
   * fixed point: undefined if OOR.
   * bool: +/- 0.0 to False; all else to True.
 * Casting from fixed point to:
-  * floating point: +/- highest value if OOR (out of range),
-    infinities are converted to NaN if infinity is not available
+  *  floating point: +/- infinity if OOR. (+ infinity in the case of uint)
   * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
     signed types). For example, 200 (int16) -> -56 (int8).
   * bool: zero to False; nonzero to True.
@@ -63,8 +61,7 @@ the target mantissa width.
 | 0 | 0 | 0 | 0 | 0 |
 |-0 | -0 | 0 | -0 | 0 |
 | NaN | NaN | NaN | NaN | NaN |
-| Inf | FLT_MAX | NaN | FLT_MAX | NaN |
-| -Inf | -FLT_MAX | NaN | -FLT_MAX | NaN |
+| +/- Inf | +/- FLT_MAX | NaN | FLT_MAX | NaN |
 | [x] > FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX |
 | [x] < -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
 | else | RNE | RNE | RNE | RNE |
@@ -77,8 +74,7 @@ The rules then become:
 | 0 | 0 | 0 | 0 | 0 |
 |-0 | -0 | 0 | -0 | 0 |
 | NaN | NaN | NaN | NaN | NaN |
-| Inf | NaN | NaN | Inf | NaN |
-| -Inf | -NaN | NaN | -Inf | NaN |
+| +/- Inf | NaN | NaN | +/- Inf | NaN |
 | [x] > FLT_MAX | NaN | NaN | Inf | NaN |
 | [x] < -FLT_MAX | NaN | NaN | -Inf | NaN |
 | else | RNE | RNE | RNE | RNE |
