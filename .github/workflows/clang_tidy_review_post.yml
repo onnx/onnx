@@ -7,13 +7,12 @@ on:
     workflows: ["optional_clang_tidy_review"]
     types:
       - completed
-  workflow_dispatch:
 
 permissions:  # set top-level default permissions as security best practice
   contents: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
