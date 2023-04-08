@@ -6,22 +6,32 @@
 
 #include <functional>
 
+#include "onnx/common/assertions.h"
 #include "onnx/inliner/inliner.h"
 
 namespace ONNX_NAMESPACE {
-namespace Inliner {
+namespace inliner {
 
 // Attribute lookup function. Returns nullptr if attribute is not found.
 using AttributeLookupFunction = std::function<const AttributeProto*(const std::string& name)>;
 
-class Inliner {
+using AttributeMap = std::unordered_map<std::string, const AttributeProto*>;
+
+// Function lookup function. Returns true iff lookup is successful, in which case
+// the found FunctionProto is copied into *return_value. The opset version is not
+// a parameter since it is determined by the domain for a given model.
+using FunctionResolver =
+    std::function<bool(const std::string& domain, const std::string& op, FunctionProto* return_value)>;
+
+using FunctionMap = std::unordered_map<std::string, const FunctionProto*>;
+
+class Specializer {
  private:
   std::string prefix;
   AttributeLookupFunction attr_map;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
 
-  Inliner(std::string prefix_, AttributeLookupFunction attr_map_) : prefix(prefix_),
-                                                                               attr_map(attr_map_) {
+  Specializer(std::string prefix_, AttributeLookupFunction attr_map_) : prefix(prefix_), attr_map(attr_map_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
   }
@@ -36,7 +46,8 @@ class Inliner {
   }
 
   void rename(std::string& name, bool is_new_def) {
-    if (name.empty()) return;
+    if (name.empty())
+      return;
     for (auto i = rename_scopes.size(); i > 0; --i) {
       const auto& map = rename_scopes[i - 1];
       auto iter = map.find(name);
@@ -52,13 +63,15 @@ class Inliner {
   }
 
   template <bool isOutput>
-  void bind(google::protobuf::RepeatedPtrField<string>& formals, const google::protobuf::RepeatedPtrField<string>& actuals) {
+  void bind(
+      google::protobuf::RepeatedPtrField<std::string>& formals,
+      const google::protobuf::RepeatedPtrField<std::string>& actuals) {
     // Every formal parameter name FP should be replace by the corresponding actual parameter name AP.
     // However, if AP is empty, it is a missing optional parameter. This does not make any difference
     // for inputs. However, for outputs we use a unique dummy name to handle the case that it
     // is used in an output-context where it is not optional.
-    ORT_ENFORCE(actuals.size() <= formals.size(),
-                "Number of actual parameters cannot exceed number of formal parameters");
+    ONNX_ASSERTM(
+        actuals.size() <= formals.size(), "Number of actual parameters cannot exceed number of formal parameters");
     auto& current_scope = rename_scopes.back();
     int i = 0;
     for (; i < actuals.size(); ++i) {
@@ -97,11 +110,11 @@ class Inliner {
       if (!attr.ref_attr_name().empty()) {
         // Attribute-references must be replaced by the corresponding attribute-value in the call-node
         // if the call-node contains the attribute. Otherwise, this attribute must be removed.
-        auto entry = attr_map.find(attr.ref_attr_name());
-        if (entry != attr_map.cend()) {
+        auto* attr_val = attr_map(attr.ref_attr_name());
+        if (attr_val != nullptr) {
           // Copy value of attribute, but retain original name:
           std::string name = attr.name();
-          attr = entry->second;
+          attr = *attr_val;
           attr.set_name(name);
         } else {
           attr_iter = attributes.erase(attr_iter);
@@ -134,16 +147,69 @@ class Inliner {
 
  public:
   // The main specialization method: specialize a FunctionProto for a particular call-site.
-  static void specialize(const NodeProto& callnode, FunctionProto& callee, AttributeLookupFunction attr_map, std::string unique_prefix) {
-    Inliner inliner(unique_prefix, attr_map);
+  static void specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_prefix) {
+    AttributeMap map;
+    for (auto& attr : callnode.attribute()) {
+      map[attr.name()] = &attr;
+    }
+    auto lookup = [&](const std::string& name) -> const AttributeProto* {
+      auto iter = map.find(name);
+      return (iter != map.end()) ? iter->second : nullptr;
+    };
+    Specializer specializer(unique_prefix, lookup);
 
-    inliner.bind<false>(*callee.mutable_input(), callnode.input());
-    inliner.bind<true>(*callee.mutable_output(), callnode.output());
+    specializer.bind<false>(*callee.mutable_input(), callnode.input());
+    specializer.bind<true>(*callee.mutable_output(), callnode.output());
 
     for (auto& n : *callee.mutable_node())
-      inliner.transform(n);
+      specializer.transform(n);
   }
 };
 
-}  // namespace Inliner
-}  // namespace ONNX_NAMESPACE
+void inline_functions(ModelProto& model, FunctionResolver resolver) {
+  auto* graph = model.mutable_graph();
+  auto* nodes = graph->mutable_node();
+  google::protobuf::RepeatedPtrField<NodeProto> original_nodes;
+  // Move all nodes into original_nodes
+  original_nodes.Swap(nodes);
+  std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
+    FunctionProto callee;
+    if (resolver(node.domain(), node.op_type(), &callee)) {
+      // Rename and specialize called function body
+      Specializer::specialize(node, callee, "aha");
+      // Append nodes of called function
+      for (auto& callee_node : *callee.mutable_node())
+        append_node(callee_node);
+    } else {
+      // Append node without inlining.
+      nodes->Add(std::move(node));
+    }
+  };
+  for (auto& node : original_nodes) {
+    append_node(node);
+  }
+}
+
+void inline_local_functions(ModelProto& model) {
+  FunctionMap map;
+
+  for (auto& function : model.functions()) {
+    auto name = function.domain() + "::" + function.name();
+    map[name] = &function;
+  }
+
+  auto get_function = [&](const std::string& domain, const std::string& op, FunctionProto* return_value) -> bool {
+    auto iter = map.find(domain + "::" + op);
+    if (iter != map.end()) {
+      *return_value = *iter->second;
+      return true;
+    }
+    return false;
+  };
+
+  inline_functions(model, get_function);
+  model.clear_functions();
+}
+
+} // namespace inliner
+} // namespace ONNX_NAMESPACE
