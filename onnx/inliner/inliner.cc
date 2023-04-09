@@ -27,19 +27,21 @@ using FunctionMap = std::unordered_map<std::string, const FunctionProto*>;
 
 class Specializer {
  private:
-  std::string prefix;
+  std::string suffix;
   AttributeLookupFunction attr_map;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
 
-  Specializer(std::string prefix_, AttributeLookupFunction attr_map_) : prefix(prefix_), attr_map(attr_map_) {
+  Specializer(std::string suffix_, AttributeLookupFunction attr_map_) : suffix(suffix_), attr_map(attr_map_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
   }
 
   // Replace given name with a unique version of the name, and cache the
   // renaming-binding in current scope.
+  // TODO: Currently, we assume appending the suffix will make the name unique.
+  // Need to add checks to ensure that there is no accidental collision of names.
   void make_unique(std::string& name) {
-    auto new_name = prefix + name;
+    auto new_name = name + suffix;
     auto& current_scope = rename_scopes.back();
     current_scope[name] = new_name;
     name = new_name;
@@ -79,14 +81,14 @@ class Specializer {
       std::string rename_as = actuals.Get(i);
       if constexpr (isOutput)
         if (rename_as.empty())
-          rename_as = prefix + formal;
+          rename_as = formal + suffix;
       current_scope[formal] = rename_as;
       if (!rename_as.empty())
         formal = rename_as;
     }
     for (; i < formals.size(); ++i) {
       std::string& formal = *formals.Mutable(i);
-      std::string rename_as = isOutput ? prefix + formal : std::string("");
+      std::string rename_as = isOutput ? formal + suffix : std::string("");
       current_scope[formal] = rename_as;
       if (!rename_as.empty())
         formal = rename_as;
@@ -96,7 +98,7 @@ class Specializer {
   // Process a node:
   void transform(NodeProto& n) {
     if (!n.name().empty())
-      n.set_name(prefix + n.name());
+      n.set_name(n.name() + suffix);
 
     for (auto& x : *n.mutable_input()) {
       rename(x, false);
@@ -147,7 +149,7 @@ class Specializer {
 
  public:
   // The main specialization method: specialize a FunctionProto for a particular call-site.
-  static void specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_prefix) {
+  static void specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix) {
     AttributeMap map;
     for (auto& attr : callnode.attribute()) {
       map[attr.name()] = &attr;
@@ -156,7 +158,7 @@ class Specializer {
       auto iter = map.find(name);
       return (iter != map.end()) ? iter->second : nullptr;
     };
-    Specializer specializer(unique_prefix, lookup);
+    Specializer specializer(unique_suffix, lookup);
 
     specializer.bind<false>(*callee.mutable_input(), callnode.input());
     specializer.bind<true>(*callee.mutable_output(), callnode.output());
@@ -172,11 +174,15 @@ void inline_functions(ModelProto& model, FunctionResolver resolver) {
   google::protobuf::RepeatedPtrField<NodeProto> original_nodes;
   // Move all nodes into original_nodes
   original_nodes.Swap(nodes);
+  int inline_count = 0;
   std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
     FunctionProto callee;
     if (resolver(node.domain(), node.op_type(), &callee)) {
+      // TODO: We don't yet check for or handle mismatches between opsets
+      // required by called function and containing model.
+
       // Rename and specialize called function body
-      Specializer::specialize(node, callee, "aha");
+      Specializer::specialize(node, callee, "__" + std::to_string(++inline_count));
       // Append nodes of called function
       for (auto& callee_node : *callee.mutable_node())
         append_node(callee_node);
