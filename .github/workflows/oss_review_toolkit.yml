@@ -1,3 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+on: [push, pull_request]
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 jobs:
   ort:
     runs-on: ubuntu-latest
