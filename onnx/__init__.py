@@ -28,6 +28,7 @@ from onnx.onnx_pb import (
     IR_VERSION_2019_3_18,
     IR_VERSION_2019_9_19,
     IR_VERSION_2020_5_8,
+    IR_VERSION_2021_7_30,
     ModelProto,
     NodeProto,
     OperatorSetIdProto,
