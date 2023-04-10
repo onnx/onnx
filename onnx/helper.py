@@ -71,6 +71,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.12.0", 8, 17, 3, 1),
     ("1.13.0", 8, 18, 3, 1),
     ("1.13.1", 8, 18, 3, 1),
+    ("1.14.0", 9, 19, 3, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
