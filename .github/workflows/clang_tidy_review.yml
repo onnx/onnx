@@ -1,0 +1,32 @@
+name: Optional_Clang_Tidy_Review
+
+on:
+  pull_request:
+    branches: [ "main", rel-* ]
+    paths:
+      - "**.cc"
+      - "**.h"
+  workflow_dispatch:
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+      # Pleaes note that it won't cause any failure here; it will only post comments in PRs
+      - name: clang-tidy review
+        uses: ZedThree/clang-tidy-review@4f11cae8aa5a0866738de40c1f6443b1a01d5642 # v0.12.2
+        with:
+          apt_packages: "libprotobuf-dev,protobuf-compiler"
+          cmake_command: "cmake -S . -B .setuptools-cmake-build -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          build_dir: ".setuptools-cmake-build"
+          exclude: "/third_party/*"
+          split_workflow: true
+      - uses: ZedThree/clang-tidy-review/upload@4f11cae8aa5a0866738de40c1f6443b1a01d5642 # v0.12.2
