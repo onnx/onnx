@@ -188,7 +188,9 @@ void inline_functions(ModelProto& model, FunctionResolver resolver) {
         append_node(callee_node);
     } else {
       // Append node without inlining.
-      nodes->Add(std::move(node));
+      // TODO: use std::move instead of copying. Use of move doesn't seem to work with
+      // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
+      *nodes->Add() = node;
     }
   };
   for (auto& node : original_nodes) {
