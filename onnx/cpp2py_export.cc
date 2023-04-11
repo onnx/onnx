@@ -14,10 +14,10 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
+#include "onnx/inliner/inliner.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
-#include "onnx/inliner/inliner.h"
 
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
