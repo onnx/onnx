@@ -2403,7 +2403,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The \"cubic\" mode also includes N-cubic interpolation modes following the same rules. The \"nearest\" mode rounds "
             "to the nearest even index when the sampling point falls halfway between two indices.",
             AttributeProto::STRING,
-            std::string("bilinear"))
+            std::string("linear"))
         .Attr(
             "padding_mode",
             "Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. "

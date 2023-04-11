@@ -46,10 +46,6 @@ class GridSample(OpRun):
 
     def _gs_denormalize_coordinates(self, n, dims, align_corners: bool):
         x = np.zeros(len(n), dtype=np.float32)
-        # for i in range(len(n)):
-        #     x[i] = self._gs_denormalize(
-        #         n=n[i], length=dims[i], align_corners=align_corners
-        #     )
         for i, (v, dim) in enumerate(zip(n, dims)):
             x[i] = self._gs_denormalize(n=v, length=dim, align_corners=align_corners)
         return x
@@ -368,12 +364,12 @@ class GridSample(OpRun):
                         )
                         print("v: ", Y[n][c][tuple(ox)])
 
-                    if mode == "bilinear":
+                    if mode == "linear":
                         Y[n][c][tuple(ox)] = self._gs_linear_interpolation_nd_with_x(
                             data=X_data, x=x, border=border, padding_mode=padding_mode
                         )
 
-                    if mode == "bicubic":
+                    if mode == "cubic":
                         Y[n][c][tuple(ox)] = self._gs_cubic_interpolation_nd_with_x(
                             data=X_data, x=x, border=border, padding_mode=padding_mode
                         )

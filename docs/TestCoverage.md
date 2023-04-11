@@ -6691,7 +6691,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     padding_mode="zeros",
     align_corners=0,
 )
@@ -6820,7 +6820,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bilinear = np.array(
@@ -6840,7 +6840,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -6878,7 +6878,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bicubic = np.array(
@@ -6951,7 +6951,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=0,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -6971,7 +6971,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -6992,7 +6992,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
     align_corners=0,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -7019,7 +7019,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -7231,7 +7231,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=0,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -7268,7 +7268,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]

@@ -7310,7 +7310,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "GridSample",
                     ["x", "grid"],
                     ["y"],
-                    mode="bilinear",
+                    mode="linear",
                     padding_mode="border",
                 )
             ],
@@ -7332,7 +7332,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "GridSample",
                     ["x", "grid"],
                     ["y"],
-                    mode="bilinear",
+                    mode="linear",
                     padding_mode="border",
                 )
             ],

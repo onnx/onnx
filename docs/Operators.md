@@ -10046,7 +10046,7 @@ Other versions of this operator: <a href="Changelog.md#GridSample-16">16</a>
 <dl>
 <dt><tt>align_corners</tt> : int (default is 0)</dt>
 <dd>If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels (voxels, etc.). If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels (voxels, etc.), making the sampling more resolution agnostic.</dd>
-<dt><tt>mode</tt> : string (default is bilinear)</dt>
+<dt><tt>mode</tt> : string (default is linear)</dt>
 <dd>Three interpolation modes: linear (default), nearest and cubic. The "linear" mode includes linear and N-linear interpolation modes depending on the number of spatial dimensions of the input tensor (i.e. linear for 1 spatial dimension, bilinear for 2 spatial dimensions, etc.). The "cubic" mode also includes N-cubic interpolation modes following the same rules. The "nearest" mode rounds to the nearest even index when the sampling point falls halfway between two indices.</dd>
 <dt><tt>padding_mode</tt> : string (default is zeros)</dt>
 <dd>Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. zeros: use 0 for out-of-bound grid locations, border: use border values for out-of-bound grid locations, reflection: use values at locations reflected by the border for out-of-bound grid locations. If index 0 represents the margin pixel, the reflected value at index -1 will be the same as the value at index 1. For location far away from the border, it will keep being reflected until becoming in bound. If pixel location x = -3.5 reflects by border -1 and becomes x' = 1.5, then reflects by border 1 and becomes x'' = 0.5.</dd>
@@ -10088,7 +10088,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     padding_mode="zeros",
     align_corners=0,
 )
@@ -10219,7 +10219,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bilinear = np.array(
@@ -10239,7 +10239,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -10277,7 +10277,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bicubic = np.array(
@@ -10350,7 +10350,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=0,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -10370,7 +10370,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -10391,7 +10391,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
     align_corners=0,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -10418,7 +10418,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -10634,7 +10634,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=0,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -10671,7 +10671,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
