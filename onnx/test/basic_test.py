@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import io
-import os
 import tempfile
 import unittest
 
@@ -36,57 +35,55 @@ class TestBasicFunctions(unittest.TestCase):
         )
         return tensor
 
-    def test_save_and_load_model(self) -> None:
+    def test_save_and_load_model_when_input_is_string(self) -> None:
         proto = self._simple_model()
-        cls = ModelProto
-        proto_string = onnx._serialize(proto)
+        proto_string = onnx._serialize(proto, "protobuf")
 
         # Test if input is string
         loaded_proto = onnx.load_model_from_string(proto_string)
         self.assertEqual(proto, loaded_proto)
 
+    def test_save_and_load_model_when_input_has_read_function(self) -> None:
         # Test if input has a read function
+        proto = self._simple_model()
+        proto_string = onnx._serialize(proto, "protobuf")
         f = io.BytesIO()
         onnx.save_model(proto_string, f)
-        f = io.BytesIO(f.getvalue())
-        loaded_proto = onnx.load_model(f, cls)
+        loaded_proto = onnx.load_model(io.BytesIO(f.getvalue()))
         self.assertEqual(proto, loaded_proto)
 
+    def test_save_and_load_model_when_input_is_file_name(self) -> None:
         # Test if input is a file name
-        try:
-            with tempfile.NamedTemporaryFile(delete=False) as fi:
-                onnx.save_model(proto, fi)
-
-            loaded_proto = onnx.load_model(fi.name, cls)
+        proto = self._simple_model()
+        with tempfile.NamedTemporaryFile() as f:
+            onnx.save_model(proto, f)
+            loaded_proto = onnx.load_model(f.name)
             self.assertEqual(proto, loaded_proto)
-        finally:
-            os.remove(fi.name)
 
-    def test_save_and_load_tensor(self) -> None:
+    def test_save_and_load_tensor_when_input_is_string(self) -> None:
         proto = self._simple_tensor()
-        cls = TensorProto
-        proto_string = onnx._serialize(proto)
+        proto_string = onnx._serialize(proto, "protobuf")
 
         # Test if input is string
         loaded_proto = onnx.load_tensor_from_string(proto_string)
         self.assertEqual(proto, loaded_proto)
 
+    def test_save_and_load_tensor_when_input_has_read_function(self) -> None:
         # Test if input has a read function
+        proto = self._simple_tensor()
+        proto_string = onnx._serialize(proto, "protobuf")
         f = io.BytesIO()
-        onnx.save_tensor(loaded_proto, f)
-        f = io.BytesIO(f.getvalue())
-        loaded_proto = onnx.load_tensor(f, cls)
+        onnx.save_tensor(onnx.load_tensor_from_string(proto_string), f)
+        loaded_proto = onnx.load_tensor(io.BytesIO(f.getvalue()))
         self.assertEqual(proto, loaded_proto)
 
+    def test_save_and_load_tensor_when_input_is_file_name(self) -> None:
         # Test if input is a file name
-        try:
-            with tempfile.NamedTemporaryFile(delete=False) as tfile:
-                onnx.save_tensor(proto, tfile)
-
-            loaded_proto = onnx.load_tensor(tfile.name, cls)
+        proto = self._simple_tensor()
+        with tempfile.NamedTemporaryFile() as f:
+            onnx.save_tensor(proto, f)
+            loaded_proto = onnx.load_tensor(f.name)
             self.assertEqual(proto, loaded_proto)
-        finally:
-            os.remove(tfile.name)
 
     def test_existence(self) -> None:
         try:

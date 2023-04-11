@@ -98,7 +98,9 @@ def _get_file_path(f: Union[IO[bytes], str]) -> Optional[str]:
     return None
 
 
-def _serialize(proto: Union[bytes, google.protobuf.message.Message], format_: _SupportedFormat) -> bytes:
+def _serialize(
+    proto: Union[bytes, google.protobuf.message.Message], format_: _SupportedFormat
+) -> bytes:
     """Serialize a in-memory proto to bytes.
 
     Args:
@@ -289,7 +291,11 @@ def save_model(
     _save_bytes(serialized, f)
 
 
-def save_tensor(proto: TensorProto, f: Union[IO[bytes], str]) -> None:
+def save_tensor(
+    proto: TensorProto,
+    f: Union[IO[bytes], str],
+    format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+) -> None:
     """
     Saves the TensorProto to the specified path.
 
@@ -298,7 +304,7 @@ def save_tensor(proto: TensorProto, f: Union[IO[bytes], str]) -> None:
         f: can be a file-like object (has "write" function) or a string containing a file name
         format: The serialization format. Can be one of :py:const:`_SupportedFormat`. Default is "protobuf".
     """
-    serialized = _serialize(proto)
+    serialized = _serialize(proto, format)
     _save_bytes(serialized, f)
 
 
