@@ -9,7 +9,7 @@
 namespace ONNX_NAMESPACE {
 namespace inliner {
 
-void inline_local_functions (ModelProto& model);
+void inline_local_functions(ModelProto& model);
 
-}  // namespace Inliner
-}  // namespace ONNX_NAMESPACE
+} // namespace inliner
+} // namespace ONNX_NAMESPACE
