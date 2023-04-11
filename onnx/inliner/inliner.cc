@@ -79,7 +79,7 @@ class Specializer {
     for (; i < actuals.size(); ++i) {
       std::string& formal = *formals.Mutable(i);
       std::string rename_as = actuals.Get(i);
-      if constexpr (isOutput)
+      if (isOutput)
         if (rename_as.empty())
           rename_as = formal + suffix;
       current_scope[formal] = rename_as;
