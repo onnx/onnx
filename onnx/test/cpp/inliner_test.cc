@@ -103,5 +103,26 @@ bar (x) => (y) {
   ASSERT_EQ(num_functions, 0);
 }
 
+TEST(FunctionInliner, Renaming) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+agraph (float[N] X) => (float[N] Y)
+{
+  temp = local.foo (X)
+  temp__1 = Mul (temp, temp)
+  Y = Abs (temp__1)
+}
+
+<opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+foo (x) => (y) {
+  temp = Add(x, x)
+  y = Neg (temp)
+}
+)ONNX";
+
+  ModelProto model;
+  inline_functions(model, code);
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE
