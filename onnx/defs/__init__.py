@@ -64,19 +64,17 @@ OpSchema.Attribute.default_value = _attribute_default_value  # type: ignore
 
 
 def _op_schema_repr(self) -> str:
-    return textwrap.dedent(
-        f"""\
-        OpSchema(
-            name={self.name!r},
-            domain={self.domain!r},
-            since_version={self.since_version!r},
-            doc={self.doc!r},
-            type_constraints={self.type_constraints!r},
-            inputs={self.inputs!r},
-            outputs={self.outputs!r},
-            attributes={self.attributes!r}
-        )"""
-    )
+    return f"""\
+OpSchema(
+    name={self.name!r},
+    domain={self.domain!r},
+    since_version={self.since_version!r},
+    doc={self.doc!r},
+    type_constraints={self.type_constraints!r},
+    inputs={self.inputs!r},
+    outputs={self.outputs!r},
+    attributes={self.attributes!r}
+)"""
 
 
 OpSchema.__repr__ = _op_schema_repr  # type: ignore
