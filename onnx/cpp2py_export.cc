@@ -561,7 +561,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   inliner.def("inline_local_functions", [](const py::bytes& bytes) {
     ModelProto model{};
     ParseProtoFromPyBytes(&model, bytes);
-    inliner::inline_local_functions(model);
+    inliner::InlineLocalFunctions(model);
     std::string out;
     model.SerializeToString(&out);
     return py::bytes(out);

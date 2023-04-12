@@ -91,7 +91,7 @@ class Specializer {
     rename_scopes.emplace_back();
   }
 
-  std::string make_unique(const std::string& name) {
+  std::string MakeUnique(const std::string& name) {
     return generator.CreateNew(name + suffix);
   }
 
@@ -99,14 +99,14 @@ class Specializer {
   // renaming-binding in current scope.
   // TODO: Currently, we assume appending the suffix will make the name unique.
   // Need to add checks to ensure that there is no accidental collision of names.
-  void rename(std::string& name) {
-    auto new_name = make_unique(name);
+  void Rename(std::string& name) {
+    auto new_name = MakeUnique(name);
     auto& current_scope = rename_scopes.back();
     current_scope[name] = new_name;
     name = new_name;
   }
 
-  void lookup_rename(std::string& name, bool is_new_def) {
+  void LookupOrRename(std::string& name, bool is_new_def) {
     if (name.empty())
       return;
     for (auto i = rename_scopes.size(); i > 0; --i) {
@@ -118,13 +118,13 @@ class Specializer {
       }
     }
     if (is_new_def) {
-      rename(name);
+      Rename(name);
     }
     // Otherwise, it is a reference to an outer-scope variable that should not be renamed.
   }
 
   template <bool isOutput>
-  void bind(
+  void Bind(
       google::protobuf::RepeatedPtrField<std::string>& formals,
       const google::protobuf::RepeatedPtrField<std::string>& actuals) {
     // Every formal parameter name FP should be replace by the corresponding actual parameter name AP.
@@ -140,14 +140,14 @@ class Specializer {
       std::string rename_as = actuals.Get(i);
       if (isOutput)
         if (rename_as.empty())
-          rename_as = make_unique(formal);
+          rename_as = MakeUnique(formal);
       current_scope[formal] = rename_as;
       if (!rename_as.empty())
         formal = rename_as;
     }
     for (; i < formals.size(); ++i) {
       std::string& formal = *formals.Mutable(i);
-      std::string rename_as = isOutput ? make_unique(formal) : std::string("");
+      std::string rename_as = isOutput ? MakeUnique(formal) : std::string("");
       current_scope[formal] = rename_as;
       if (!rename_as.empty())
         formal = rename_as;
@@ -155,15 +155,15 @@ class Specializer {
   }
 
   // Process a node:
-  void transform(NodeProto& n) {
+  void Transform(NodeProto& n) {
     if (!n.name().empty())
-      n.set_name(make_unique(n.name()));
+      n.set_name(MakeUnique(n.name()));
 
     for (auto& x : *n.mutable_input()) {
-      lookup_rename(x, false);
+      LookupOrRename(x, false);
     }
     for (auto& y : *n.mutable_output()) {
-      lookup_rename(y, true);
+      LookupOrRename(y, true);
     }
     auto& attributes = *n.mutable_attribute();
     for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
@@ -184,31 +184,31 @@ class Specializer {
       }
       // Subgraphs must be recursively processed.
       if (attr.has_g()) {
-        transform(*attr.mutable_g());
+        Transform(*attr.mutable_g());
       }
       for (auto& graph : *attr.mutable_graphs())
-        transform(graph);
+        Transform(graph);
       ++attr_iter;
     }
   }
 
   // Process a sub-graph, contained as an attribute in a control-flow op node.
-  void transform(GraphProto& graph) {
+  void Transform(GraphProto& graph) {
     rename_scopes.emplace_back();
     for (auto& x : *graph.mutable_input())
-      rename(*x.mutable_name());
+      Rename(*x.mutable_name());
     for (auto& init : *graph.mutable_initializer())
-      rename(*init.mutable_name());
+      Rename(*init.mutable_name());
     for (auto& y : *graph.mutable_output())
-      rename(*y.mutable_name());
+      Rename(*y.mutable_name());
     for (auto& n : *graph.mutable_node())
-      transform(n);
+      Transform(n);
     rename_scopes.pop_back();
   }
 
  public:
   // The main specialization method: specialize a FunctionProto for a particular call-site.
-  static void specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
+  static void Specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
     AttributeMap map;
     for (auto& attr : callnode.attribute()) {
       map[attr.name()] = &attr;
@@ -219,15 +219,15 @@ class Specializer {
     };
     Specializer specializer(unique_suffix, generator, lookup);
 
-    specializer.bind<false>(*callee.mutable_input(), callnode.input());
-    specializer.bind<true>(*callee.mutable_output(), callnode.output());
+    specializer.Bind<false>(*callee.mutable_input(), callnode.input());
+    specializer.Bind<true>(*callee.mutable_output(), callnode.output());
 
     for (auto& n : *callee.mutable_node())
-      specializer.transform(n);
+      specializer.Transform(n);
   }
 };
 
-void inline_functions(ModelProto& model, FunctionResolver resolver) {
+void InlineFunctions(ModelProto& model, FunctionResolver resolver) {
   auto* graph = model.mutable_graph();
 
   NameGenerator name_generator;
@@ -246,7 +246,7 @@ void inline_functions(ModelProto& model, FunctionResolver resolver) {
       // required by called function and containing model.
 
       // Rename and specialize called function body
-      Specializer::specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
+      Specializer::Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
       // Append nodes of called function
       for (auto& callee_node : *callee.mutable_node())
         append_node(callee_node);
@@ -262,7 +262,7 @@ void inline_functions(ModelProto& model, FunctionResolver resolver) {
   }
 }
 
-void inline_local_functions(ModelProto& model) {
+void InlineLocalFunctions(ModelProto& model) {
   FunctionMap map;
 
   for (auto& function : model.functions()) {
@@ -279,7 +279,7 @@ void inline_local_functions(ModelProto& model) {
     return false;
   };
 
-  inline_functions(model, get_function);
+  InlineFunctions(model, get_function);
   model.clear_functions();
 }
 

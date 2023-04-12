@@ -17,7 +17,7 @@
 namespace ONNX_NAMESPACE {
 namespace Test {
 
-static void inline_functions(ModelProto& model, const char* input) {
+static void InlineFunctions(ModelProto& model, const char* input) {
   OnnxParser parser(input);
   auto status = parser.Parse(model);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -26,11 +26,9 @@ static void inline_functions(ModelProto& model, const char* input) {
   checker::check_model(model);
   shape_inference::InferShapes(model);
 
-  std::cout << ProtoToString(model) << "\n";
-
-  inliner::inline_local_functions(model);
-
-  std::cout << ProtoToString(model) << "\n";
+  // std::cout << ProtoToString(model) << "\n";
+  inliner::InlineLocalFunctions(model);
+  // std::cout << ProtoToString(model) << "\n";
   shape_inference::InferShapes(model);
 }
 
@@ -68,7 +66,7 @@ square (x) => (y) {
 )ONNX";
 
   ModelProto model;
-  inline_functions(model, code);
+  InlineFunctions(model, code);
   auto num_nodes = model.graph().node_size();
   ASSERT_EQ(num_nodes, 4);
   auto num_functions = model.functions_size();
@@ -96,7 +94,7 @@ bar (x) => (y) {
 )ONNX";
 
   ModelProto model;
-  inline_functions(model, code);
+  InlineFunctions(model, code);
   auto num_nodes = model.graph().node_size();
   ASSERT_EQ(num_nodes, 2);
   auto num_functions = model.functions_size();
@@ -121,7 +119,7 @@ foo (x) => (y) {
 )ONNX";
 
   ModelProto model;
-  inline_functions(model, code);
+  InlineFunctions(model, code);
 }
 
 } // namespace Test
