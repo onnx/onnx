@@ -781,26 +781,13 @@ class OpSchema final {
 
   static const std::vector<std::string>& all_tensor_sequence_types_ir9() {
     static const std::vector<std::string> all_tensor_sequence_types_ir4 = {
-        "seq(tensor(uint8))",
-        "seq(tensor(uint16))",
-        "seq(tensor(uint32))",
-        "seq(tensor(uint64))",
-        "seq(tensor(int8))",
-        "seq(tensor(int16))",
-        "seq(tensor(int32))",
-        "seq(tensor(int64))",
-        "seq(tensor(bfloat16))",
-        "seq(tensor(float16))",
-        "seq(tensor(float))",
-        "seq(tensor(double))",
-        "seq(tensor(string))",
-        "seq(tensor(bool))",
-        "seq(tensor(complex64))",
-        "seq(tensor(complex128))",
-        "seq(tensor(float8e4m3fn))",
-        "seq(tensor(float8e4m3fnuz))",
-        "seq(tensor(float8e5m2))",
-        "seq(tensor(float8e5m2fnuz))"};
+        "seq(tensor(uint8))",      "seq(tensor(uint16))",        "seq(tensor(uint32))",
+        "seq(tensor(uint64))",     "seq(tensor(int8))",          "seq(tensor(int16))",
+        "seq(tensor(int32))",      "seq(tensor(int64))",         "seq(tensor(bfloat16))",
+        "seq(tensor(float16))",    "seq(tensor(float))",         "seq(tensor(double))",
+        "seq(tensor(string))",     "seq(tensor(bool))",          "seq(tensor(complex64))",
+        "seq(tensor(complex128))", "seq(tensor(float8e4m3fn))",  "seq(tensor(float8e4m3fnuz))",
+        "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))"};
     return all_tensor_sequence_types_ir4;
   }
 
