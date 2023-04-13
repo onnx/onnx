@@ -48,7 +48,7 @@ struct OpsetMap : public OpsetMapBase {
       if ((iter != this->end()) && (iter->second != pair.version()))
         result.push_back(pair.domain());
     }
-    return std::move(result);
+    return result;
   }
 };
 
