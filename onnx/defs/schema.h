@@ -10,6 +10,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <memory>
 #include <ostream>
 #include <set>
