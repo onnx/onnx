@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import io
+import os
 import tempfile
 import unittest
 
@@ -55,9 +56,10 @@ class TestBasicFunctions(unittest.TestCase):
     def test_save_and_load_model_when_input_is_file_name(self) -> None:
         # Test if input is a file name
         proto = self._simple_model()
-        with tempfile.NamedTemporaryFile() as f:
-            onnx.save_model(proto, f)
-            loaded_proto = onnx.load_model(f.name)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = os.path.join(temp_dir, "model.onnx")
+            onnx.save_model(proto, model_path)
+            loaded_proto = onnx.load_model(model_path)
             self.assertEqual(proto, loaded_proto)
 
     def test_save_and_load_tensor_when_input_is_string(self) -> None:
@@ -80,9 +82,10 @@ class TestBasicFunctions(unittest.TestCase):
     def test_save_and_load_tensor_when_input_is_file_name(self) -> None:
         # Test if input is a file name
         proto = self._simple_tensor()
-        with tempfile.NamedTemporaryFile() as f:
-            onnx.save_tensor(proto, f)
-            loaded_proto = onnx.load_tensor(f.name)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = os.path.join(temp_dir, "model.onnx")
+            onnx.save_tensor(proto, model_path)
+            loaded_proto = onnx.load_tensor(model_path)
             self.assertEqual(proto, loaded_proto)
 
     def test_existence(self) -> None:
