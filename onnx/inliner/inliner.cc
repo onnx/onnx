@@ -23,7 +23,34 @@ using AttributeMap = std::unordered_map<std::string, const AttributeProto*>;
 using FunctionResolver =
     std::function<bool(const std::string& domain, const std::string& op, FunctionProto* return_value)>;
 
-using FunctionMap = std::unordered_map<std::string, const FunctionProto*>;
+// We use a string of the form "domain::name" as the id for a function.
+using FunctionId = std::string;
+
+FunctionId GetFunctionId(const FunctionProto& function) {
+  return function.domain() + "::" + function.name();
+}
+
+using FunctionMap = std::unordered_map<FunctionId, const FunctionProto*>;
+
+using OpsetMapBase = std::unordered_map<std::string, int64_t>;
+
+struct OpsetMap : public OpsetMapBase {
+  OpsetMap(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
+    for (const auto& pair : list) {
+      (*this)[pair.domain()] = pair.version();
+    }
+  }
+
+  std::vector<std::string> Mismatches(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
+    std::vector<std::string> result;
+    for (const auto& pair : list) {
+      auto iter = this->find(pair.domain());
+      if ((iter != this->end()) && (iter->second != pair.version()))
+        result.push_back(pair.domain());
+    }
+    return std::move(result);
+  }
+};
 
 class NameGenerator {
  public:
@@ -45,7 +72,7 @@ class NameGenerator {
     existing_names_.insert(name);
   }
 
-  void AddAllNames (const GraphProto& graph) {
+  void AddAllNames(const GraphProto& graph) {
     for (const auto& x : graph.input())
       Add(x.name());
     for (const auto& x : graph.initializer())
@@ -57,7 +84,7 @@ class NameGenerator {
 
     for (const auto& node : graph.node()) {
       // We use a single name-space for node names and variable names, to keep name-generation simple.
-      Add (node.name());
+      Add(node.name());
       for (const std::string& name : node.input()) {
         Add(name);
       }
@@ -86,7 +113,8 @@ class Specializer {
   AttributeLookupFunction attr_map;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
 
-  Specializer(std::string suffix_, NameGenerator& generator_,  AttributeLookupFunction attr_map_) : suffix(suffix_), generator(generator_), attr_map(attr_map_) {
+  Specializer(std::string suffix_, NameGenerator& generator_, AttributeLookupFunction attr_map_)
+      : suffix(suffix_), generator(generator_), attr_map(attr_map_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
   }
@@ -208,7 +236,8 @@ class Specializer {
 
  public:
   // The main specialization method: specialize a FunctionProto for a particular call-site.
-  static void Specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
+  static void
+  Specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
     AttributeMap map;
     for (auto& attr : callnode.attribute()) {
       map[attr.name()] = &attr;
@@ -242,9 +271,6 @@ void InlineFunctions(ModelProto& model, FunctionResolver resolver) {
   std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
     FunctionProto callee;
     if (resolver(node.domain(), node.op_type(), &callee)) {
-      // TODO: We don't yet check for or handle mismatches between opsets
-      // required by called function and containing model.
-
       // Rename and specialize called function body
       Specializer::Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
       // Append nodes of called function
@@ -263,11 +289,14 @@ void InlineFunctions(ModelProto& model, FunctionResolver resolver) {
 }
 
 void InlineLocalFunctions(ModelProto& model) {
+  OpsetMap model_imports(model.opset_import());
   FunctionMap map;
 
   for (auto& function : model.functions()) {
-    auto name = function.domain() + "::" + function.name();
-    map[name] = &function;
+    auto mismatches = model_imports.Mismatches(function.opset_import());
+    if (mismatches.empty()) {
+      map[GetFunctionId(function)] = &function;
+    }
   }
 
   auto get_function = [&](const std::string& domain, const std::string& op, FunctionProto* return_value) -> bool {
@@ -280,7 +309,16 @@ void InlineLocalFunctions(ModelProto& model) {
   };
 
   InlineFunctions(model, get_function);
-  model.clear_functions();
+
+  // Remove all model-local functions. We do not remove functions with a mis-matched
+  // opset version. They need to be handled some other way, eg., using a version-adapter.
+  auto* local_functions = model.mutable_functions();
+  for (auto it = local_functions->begin(); it != local_functions->end();) {
+    if (map.count(GetFunctionId(*it)) > 0)
+      it = local_functions->erase(it);
+    else
+      ++it;
+  }
 }
 
 } // namespace inliner
