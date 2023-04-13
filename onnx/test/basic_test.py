@@ -90,10 +90,10 @@ class TestBasicFunctions(unittest.TestCase):
 
     def test_existence(self) -> None:
         try:
-            AttributeProto  # pylint: disable=pointless-statement
-            NodeProto  # pylint: disable=pointless-statement
-            GraphProto  # pylint: disable=pointless-statement
-            ModelProto  # pylint: disable=pointless-statement
+            _ = AttributeProto
+            _ = NodeProto
+            _ = GraphProto
+            _ = ModelProto
         except Exception as e:  # pylint: disable=broad-except
             self.fail(f"Did not find proper onnx protobufs. Error is: {e}")
 

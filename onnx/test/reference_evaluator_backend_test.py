@@ -203,11 +203,12 @@ class OnnxBackendTest:
                 outputs = OnnxBackendTest._sort(
                     c for c in pb if c.startswith("output_")
                 )
-                t = dict(
-                    inputs=OnnxBackendTest._load(full, inputs),
-                    outputs=OnnxBackendTest._load(full, outputs),
+                self.tests.append(
+                    {
+                        "inputs": OnnxBackendTest._load(full, inputs),
+                        "outputs": OnnxBackendTest._load(full, outputs),
+                    }
                 )
-                self.tests.append(t)
 
     @property
     def name(self):
