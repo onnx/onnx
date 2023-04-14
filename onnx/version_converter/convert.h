@@ -546,10 +546,13 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("Constant", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Identity", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("If", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Loop", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Pad", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Reshape", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Resize", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Scan", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Shape", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
   }
