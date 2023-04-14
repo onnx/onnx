@@ -843,7 +843,7 @@ class OpSchema final {
     return all_optional_types;
   }
 
-  // Deprecated function, use all_optional_types_ir4 instread. It will be removed in onnx==1.15.0.
+  // Deprecated function, use all_optional_types_ir4 instead. It will be removed in onnx==1.15.0.
   static const std::vector<std::string>& all_optional_types_with_bfloat() {
     return all_optional_types_ir4();
   }
