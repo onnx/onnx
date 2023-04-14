@@ -55,6 +55,7 @@ disable = [
     "import-error",
     "line-too-long",
     "no-name-in-module",
+    "use-dict-literal",     # Dict literals are sometimes preferable when creating kwargs
     "useless-return",
 ]
 
