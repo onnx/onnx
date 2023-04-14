@@ -341,7 +341,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             } else if (targetShape[i] == 0) {
               // Check if data input has a shape and if the index i is within
               // its bounds. If these conditions are satisfied, any dimension
-              // value/param should be propogated. If dimension value cannot be
+              // value/param should be propagated. If dimension value cannot be
               // inferred, set the corresponding  unresolvedZeros flag to true.
               unresolvedZeros[i] = true;
               if (dataInputTensorType.has_shape()) {
@@ -460,7 +460,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             } else if (targetShape[i] == 0) {
               // Check if data input has a shape and if the index i is within
               // its bounds. If these conditions are satisfied, any dimension
-              // value/param should be propogated. If dimension value cannot be
+              // value/param should be propagated. If dimension value cannot be
               // inferred, set the corresponding  unresolvedZeros flag to true.
               unresolvedZeros[i] = true;
               if (dataInputTensorType.has_shape()) {
@@ -5009,7 +5009,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               } else if (dim_value == 0) {
                 // Check if data input has a shape and if the index i is within
                 // its bounds. If these conditions are satisfied, any dimension
-                // value/param should be propogated. If dimension value cannot be
+                // value/param should be propagated. If dimension value cannot be
                 // inferred, set the corresponding  unresolvedZeros flag to true.
                 // If allowzero is set however, do not propagate values, since output
                 // dimension is explicitly zero.
