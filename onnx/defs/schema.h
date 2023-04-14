@@ -606,7 +606,7 @@ class OpSchema final {
     return numeric_types_for_math_reduction_ir4;
   }
 
-  // Deprecated function, use numeric_types_for_math_reduction_ir4 instread. It will be removed in onnx==1.15.0.
+  // Deprecated function, use numeric_types_for_math_reduction_ir4 instead. It will be removed in onnx==1.15.0.
   static const std::vector<std::string>& numeric_types_for_math_reduction_with_bfloat() {
     return numeric_types_for_math_reduction_ir4();
   }
