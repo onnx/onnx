@@ -606,6 +606,11 @@ class OpSchema final {
     return numeric_types_for_math_reduction_ir4;
   }
 
+  // Deprecated function, use numeric_types_for_math_reduction_ir4 instread. It will be removed in onnx==1.15.0.
+  static const std::vector<std::string>& numeric_types_for_math_reduction_with_bfloat() {
+    return numeric_types_for_math_reduction_ir4();
+  }
+
   static const std::vector<std::string>& numeric_types_for_math_reduction() {
     static const std::vector<std::string> numeric_types_for_math_reduction = {
         "tensor(uint32)",
@@ -654,6 +659,11 @@ class OpSchema final {
         "tensor(double)",
         "tensor(bfloat16)"};
     return all_numeric_types_ir4;
+  }
+
+  // Deprecated function, use all_numeric_types_ir4 instread. It will be removed in onnx==1.15.0.
+  static const std::vector<std::string>& all_numeric_types_with_bfloat() {
+    return all_numeric_types_ir4();
   }
 
   static const std::vector<std::string>& all_numeric_types() {
@@ -729,6 +739,11 @@ class OpSchema final {
     return all_tensor_types_ir4;
   }
 
+  // Deprecated function, use all_tensor_types_ir4 instread. It will be removed in onnx==1.15.0.
+  static const std::vector<std::string>& all_tensor_types_with_bfloat() {
+    return all_tensor_types_ir4();
+  }
+
   static const std::vector<std::string>& all_tensor_types_ir9() {
     static const std::vector<std::string> all_tensor_types_ir9 = {
         "tensor(uint8)",        "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",
@@ -780,6 +795,11 @@ class OpSchema final {
     return all_tensor_sequence_types_ir4;
   }
 
+  // Deprecated function, use all_tensor_sequence_types_ir4 instread. It will be removed in onnx==1.15.0.
+  static const std::vector<std::string>& all_tensor_sequence_types_with_bfloat() {
+    return all_tensor_sequence_types_ir4();
+  }
+
   static const std::vector<std::string>& all_tensor_sequence_types_ir9() {
     static const std::vector<std::string> all_tensor_sequence_types_ir4 = {
         "seq(tensor(uint8))",      "seq(tensor(uint16))",        "seq(tensor(uint32))",
@@ -823,6 +843,10 @@ class OpSchema final {
     return all_optional_types;
   }
 
+  // Deprecated function, use all_optional_types_ir4 instread. It will be removed in onnx==1.15.0.
+  static const std::vector<std::string>& all_optional_types_with_bfloat() {
+    return all_optional_types_ir4();
+  }
   static const std::vector<std::string>& all_optional_types_ir9() {
     static const std::vector<std::string> all_optional_types = {
         "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
