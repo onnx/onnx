@@ -105,7 +105,7 @@ def _serialize(
 
     Args:
         proto: An in-memory proto, such as a ModelProto, TensorProto, etc
-        format: The serialization format. Can be one of :py:const:`_SupportedFormat`.
+        format: The serialization format.
 
     Returns:
         Serialized proto in bytes.
@@ -178,7 +178,7 @@ def load_model(
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
-        format: The serialization format. Can be one of :py:const:`_SupportedFormat`. Default is "protobuf".
+        format: The serialization format. Default is "protobuf".
         load_external_data: Whether to load the external data.
             Set to True if the data is under the same directory of the model.
             If not, users need to call :func:`load_external_data_for_model`
@@ -206,7 +206,7 @@ def load_tensor(
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
-        format: The serialization format. Can be one of :py:const:`_SupportedFormat`. Default is "protobuf".
+        format: The serialization format. Default is "protobuf".
 
     Returns:
         Loaded in-memory TensorProto.
@@ -222,7 +222,7 @@ def load_model_from_string(
 
     Args:
         s: a string, which contains serialized ModelProto
-        format: The serialization format. Can be one of :py:const:`_SupportedFormat`. Default is "protobuf".
+        format: The serialization format. Default is "protobuf".
 
     Returns:
         Loaded in-memory ModelProto.
@@ -238,7 +238,7 @@ def load_tensor_from_string(
 
     Args:
         s: a string, which contains serialized TensorProto
-        format: The serialization format. Can be one of :py:const:`_SupportedFormat`. Default is "protobuf".
+        format: The serialization format. Default is "protobuf".
 
     Returns:
         Loaded in-memory TensorProto.
@@ -262,7 +262,7 @@ def save_model(
     Args:
         proto: should be a in-memory ModelProto
         f: can be a file-like object (has "write" function) or a string containing a file name
-        format: The serialization format. Can be one of :py:const:`_SupportedFormat`. Default is "protobuf".
+        format: The serialization format. Default is "protobuf".
         save_as_external_data: If true, save tensors to external file(s).
         all_tensors_to_one_file: Effective only if save_as_external_data is True.
             If true, save all tensors to one external file specified by location.
@@ -305,7 +305,7 @@ def save_tensor(
     Args:
         proto: should be a in-memory TensorProto
         f: can be a file-like object (has "write" function) or a string containing a file name
-        format: The serialization format. Can be one of :py:const:`_SupportedFormat`. Default is "protobuf".
+        format: The serialization format. Default is "protobuf".
     """
     serialized = _serialize(proto, format)
     _save_bytes(serialized, f)
