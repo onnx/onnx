@@ -14879,7 +14879,7 @@ This version of the operator has been available since version 12 of the default 
 ### <a name="Abs-13"></a>**Abs-13**</a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the absolute is, y = abs(x), is applied to
+  (Tensor<T>) where absolute value, y = abs(x), is applied to
   the tensor elementwise.
 
 #### Version
