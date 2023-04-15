@@ -70,7 +70,7 @@ from onnx import (
 )
 
 # Supported model formats that can be loaded from and saved to
-_SupportedFormat = Union[Literal["protobuf"], Literal["textproto"]]
+_SupportedFormat = Literal["protobuf", "textproto"]
 
 
 def _load_bytes(f: Union[IO[bytes], str]) -> bytes:
@@ -99,7 +99,7 @@ def _get_file_path(f: Union[IO[bytes], str]) -> Optional[str]:
 
 
 def _serialize(
-    proto: Union[bytes, google.protobuf.message.Message], format_: _SupportedFormat
+    proto: google.protobuf.message.Message, format_: _SupportedFormat
 ) -> bytes:
     """Serialize a in-memory proto to bytes.
 
@@ -110,26 +110,26 @@ def _serialize(
     Returns:
         Serialized proto in bytes.
     """
-    if isinstance(proto, bytes):
-        return proto
-    if format_ == "textformat":
+    if format_ == "textproto":
         return google.protobuf.text_format.MessageToString(proto).encode("utf-8")
 
-    assert format_ == "protobuf"
-    if hasattr(proto, "SerializeToString") and callable(proto.SerializeToString):
-        try:
-            result = proto.SerializeToString()
-        except ValueError as e:
-            if proto.ByteSize() >= checker.MAXIMUM_PROTOBUF:
-                raise ValueError(
-                    "The proto size is larger than the 2 GB limit. "
-                    "Please use save_as_external_data to save tensors separately from the model file."
-                ) from e
-            raise
-        return result  # type: ignore
-    raise TypeError(
-        f"No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}"
-    )
+    if format_ == "protobuf":
+        if hasattr(proto, "SerializeToString") and callable(proto.SerializeToString):
+            try:
+                result = proto.SerializeToString()
+            except ValueError as e:
+                if proto.ByteSize() >= checker.MAXIMUM_PROTOBUF:
+                    raise ValueError(
+                        "The proto size is larger than the 2 GB limit. "
+                        "Please use save_as_external_data to save tensors separately from the model file."
+                    ) from e
+                raise
+            return result  # type: ignore
+        raise TypeError(
+            f"No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}"
+        )
+
+    raise ValueError(f"format can only be one of {_SupportedFormat}, not '{format_}'")
 
 
 _Proto = TypeVar("_Proto", bound=google.protobuf.message.Message)
@@ -156,13 +156,16 @@ def _deserialize(s: bytes, proto: _Proto, format_: _SupportedFormat) -> _Proto:
 
     if format_ == "textproto":
         google.protobuf.text_format.Parse(s.decode("utf-8"), proto)
-    else:
-        assert format_ == "protobuf"
+    elif format_ == "protobuf":
         decoded = typing.cast(Optional[int], proto.ParseFromString(s))
         if decoded is not None and decoded != len(s):
             raise google.protobuf.message.DecodeError(
                 f"Protobuf decoding consumed too few bytes: {decoded} out of {len(s)}"
             )
+    else:
+        raise ValueError(
+            f"format can only be one of {_SupportedFormat}, not '{format_}'"
+        )
     return proto
 
 
