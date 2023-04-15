@@ -89,7 +89,8 @@ class StringNormalizer(OpRun):
                 pylocale.setlocale(pylocale.LC_ALL, slocale)
             except pylocale.Error as e:
                 warnings.warn(
-                    f"Unknown local setting {slocale!r} (current: {pylocale.getlocale()!r}) - {e!r}."
+                    f"Unknown local setting {slocale!r} (current: {pylocale.getlocale()!r}) - {e!r}.",
+                    stacklevel=1,
                 )
         cout[:] = cin[:]
 
