@@ -36,11 +36,11 @@ max_opsets = {
 # -- General configuration ---------------------------------------------------
 
 extensions = [
+    "myst_parser",
     "onnx_sphinx",
     "sphinx_copybutton",
     "sphinx_exec_code",
     "sphinx_tabs.tabs",
-    "sphinx.ext.autodoc",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
