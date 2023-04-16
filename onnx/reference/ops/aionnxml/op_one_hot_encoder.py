@@ -32,9 +32,7 @@ class OneHotEncoder(OpRunAiOnnxMl):
                     if j >= 0:
                         res[a, i, j] = 1.0
         else:
-            raise RuntimeError(
-                f"This operator is not implemented " f"for " f"shape {x.shape}."
-            )
+            raise RuntimeError(f"This operator is not implemented shape {x.shape}.")
 
         if not zeros:
             red = res.sum(axis=len(res.shape) - 1)

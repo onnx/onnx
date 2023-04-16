@@ -67,6 +67,7 @@ select = [
     "F", # Pyflakes
     "W", # pycodestyle
     "B", # flake8-bugbear
+    "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
     "NPY", # modern numpy
     "YTT", # flake8-2020

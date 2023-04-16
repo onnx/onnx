@@ -35,10 +35,11 @@ except ImportError as e:
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet
 d: Any = d_typed
 
-GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is generated
+# Split the string so phabricator doesn't think this file is generated
+GENERATED = "@ge" + "nerated"  # noqa: ISC003
 HEADER = (
     f"# {GENERATED} by protoc-gen-mypy.py.  Do not edit!\n"
-    + "# mypy: disable-error-code=override\n"
+    "# mypy: disable-error-code=override\n"
 )
 
 

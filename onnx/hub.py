@@ -263,8 +263,10 @@ def load(
         if not downloaded_sha == selected_model.model_sha:
             raise AssertionError(
                 (
-                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {selected_model.model_sha}."
-                    + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
+                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} "
+                    f"while checksum should be {selected_model.model_sha}. "
+                    "The model in the hub may have been updated. Use force_reload to "
+                    "download the model from the model hub."
                 )
             )
 
@@ -332,8 +334,10 @@ def download_model_with_test_data(
         if not downloaded_sha == model_with_data_sha:
             raise AssertionError(
                 (
-                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {model_with_data_sha}."
-                    + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
+                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} "
+                    f"while checksum should be {model_with_data_sha}. "
+                    "The model in the hub may have been updated. Use force_reload to "
+                    "download the model from the model hub."
                 )
             )
 
