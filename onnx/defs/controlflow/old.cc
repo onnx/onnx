@@ -1007,7 +1007,7 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
       if (is_loop_state_var) {
         // shape may change across iterations so ignore.
       } else {
-        // propogate shape
+        // propagate shape
         if (subgraph_output_type->tensor_type().has_shape()) {
           // per iteration output. first dimension will be number of iterations
           // but we don't know that value yet
@@ -1278,7 +1278,7 @@ void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
       if (is_loop_state_var) {
         // shape may change across iterations so ignore.
       } else {
-        // propogate shape
+        // propagate shape
         if (subgraph_output_type->tensor_type().has_shape()) {
           // per iteration output. first dimension will be number of iterations
           // but we don't know that value yet
@@ -2080,7 +2080,7 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
       if (is_loop_state_var) {
         // shape may change across iterations so ignore.
       } else {
-        // propogate shape
+        // propagate shape
         if (subgraph_output_type->tensor_type().has_shape()) {
           // per iteration output. first dimension will be number of iterations
           // but we don't know that value yet
