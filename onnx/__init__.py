@@ -2,6 +2,67 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+__all__ = [
+    # Constants
+    "ONNX_ML",
+    "IR_VERSION",
+    "IR_VERSION_2017_10_10",
+    "IR_VERSION_2017_10_30",
+    "IR_VERSION_2017_11_3",
+    "IR_VERSION_2019_1_22",
+    "IR_VERSION_2019_3_18",
+    "IR_VERSION_2019_9_19",
+    "IR_VERSION_2020_5_8",
+    "IR_VERSION_2021_7_30",
+    "EXPERIMENTAL",
+    "STABLE",
+    # Modules
+    "checker",
+    "compose",
+    "defs",
+    "gen_proto",
+    "helper",
+    "hub",
+    "mapping",
+    "numpy_helper",
+    "parser",
+    "printer",
+    "shape_inference",
+    "utils",
+    "version_converter",
+    # Proto classes
+    "AttributeProto",
+    "FunctionProto",
+    "GraphProto",
+    "MapProto",
+    "ModelProto",
+    "NodeProto",
+    "OperatorProto",
+    "OperatorSetIdProto",
+    "OperatorSetProto",
+    "OperatorStatus",
+    "OptionalProto",
+    "SequenceProto",
+    "SparseTensorProto",
+    "StringStringEntryProto",
+    "TensorAnnotation",
+    "TensorProto",
+    "TensorShapeProto",
+    "TrainingInfoProto",
+    "TypeProto",
+    "ValueInfoProto",
+    "Version",
+    # Utility functions
+    "convert_model_to_external_data",
+    "load_external_data_for_model",
+    "load_model_from_string",
+    "load_model",
+    "load_tensor_from_string",
+    "load_tensor",
+    "save_model",
+    "save_tensor",
+    "write_external_data_tensors",
+]
 # isort:skip_file
 import os
 import typing
