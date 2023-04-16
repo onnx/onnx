@@ -155,7 +155,8 @@ def _get_ops_template():
         {% endif %}
         {% endfor %}
         """
-        )
+        ),
+        autoescape=False,
     )
 
 
@@ -314,9 +315,6 @@ def get_markdown_doc(
     """
     Returns a documentation in Markdown format
     for all :class:`OnnxOperator`.
-
-    The function relies on module `jinja2` or replaces it
-    with a simple rendering if not present.
 
     :param op_name: operator name of None for all
     :param domain: domain
@@ -587,7 +585,7 @@ def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, versio
             pieces.append(name)
 
         if show_diff_toc:
-            # End to toctree
+            # End the toctree
             pieces.append("```")
 
         pieces.extend(["", doc_parts[i]])
