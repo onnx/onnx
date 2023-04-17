@@ -2,7 +2,7 @@
 furo
 markupsafe
 matplotlib
-myst-parser
+myst-parser[linkify]
 onnx
 onnxruntime
 pillow
