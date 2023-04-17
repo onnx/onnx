@@ -261,7 +261,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* Reshape_ver14_doc = R"DOC(
+static const char* Reshape_ver19_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
 At most one dimension of the new shape can be -1. In this case, the value is
@@ -281,7 +281,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     19,
     OpSchema()
-        .SetDoc(Reshape_ver14_doc)
+        .SetDoc(Reshape_ver19_doc)
         .Attr(
             "allowzero",
             "(Optional) By default, when any value in the 'shape' input is equal to zero "
@@ -301,7 +301,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::NonDifferentiable)
         .Output(0, "reshaped", "Reshaped data.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir9(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
