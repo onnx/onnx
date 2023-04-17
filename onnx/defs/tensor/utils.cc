@@ -366,7 +366,7 @@ std::function<void(OpSchema&)> PadDocGenerator(const char* description, const ch
 
     schema.Output(0, "output", "Tensor after padding.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.TypeConstraint(
-        "T", OpSchema::all_tensor_types_with_bfloat(), "Constrain input and output types to all tensor types.");
+        "T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.");
     schema.TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference
