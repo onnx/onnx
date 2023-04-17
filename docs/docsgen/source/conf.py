@@ -54,6 +54,20 @@ extensions = [
     "sphinx.ext.viewcode",
 ]
 
+myst_enable_extensions = [
+    "amsmath",
+    "colon_fence",
+    "dollarmath",
+    "fieldlist",
+    "html_admonition",
+    "html_image",
+    "linkify",
+    "smartquotes",
+    "strikethrough",
+    "substitution",
+    "tasklist",
+]
+
 coverage_show_missing_items = True
 exclude_patterns = []
 graphviz_output_format = "svg"
