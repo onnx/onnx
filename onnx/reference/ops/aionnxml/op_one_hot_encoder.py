@@ -40,7 +40,7 @@ class OneHotEncoder(OpRunAiOnnxMl):
                 rows = []
                 for i, val in enumerate(red):
                     if val == 0:
-                        rows.append(dict(row=i, value=x[i]))
+                        rows.append({"row": i, "value": x[i]})
                         if len(rows) > 5:
                             break
                 msg = "\n".join(str(_) for _ in rows)

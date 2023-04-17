@@ -63,17 +63,20 @@ disable = [
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
 target-version = "py37"
 select = [
+    "B", # flake8-bugbear
+    "C4", # flake8-comprehensions
     "E", # pycodestyle
     "F", # Pyflakes
-    "W", # pycodestyle
-    "B", # flake8-bugbear
+    "G", # flake8-logging-format
     "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
     "NPY", # modern numpy
-    "YTT", # flake8-2020
     "RUF", # Ruff-specific rules
-    "TID252", # Relative imports
     "SIM", # flake8-simplify
+    "TID252", # Relative imports
+    "UP", # pyupgrade
+    "W", # pycodestyle
+    "YTT", # flake8-2020
 ]
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
@@ -90,7 +93,7 @@ ignore = [
 ]
 ignore-init-module-imports = true
 unfixable = [
-    "F401", # Unused imports
+    "SIM112", # Envvars should not be modified
 ]
 
 [tool.ruff.flake8-tidy-imports]

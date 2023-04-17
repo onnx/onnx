@@ -3040,7 +3040,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
         got = ref.run(None, {"X": data})
-        expected = [list(data[:, :, i] for i in range(data.shape[2]))]
+        expected = [[data[:, :, i] for i in range(data.shape[2])]]
         self.assertEqual(len(expected[0]), len(got[0]))
         for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
@@ -3386,7 +3386,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"X": data})
         r = got[0]
         self.assertIsInstance(r, np.ndarray)
-        self.assertEqual(r.shape, tuple())
+        self.assertEqual(r.shape, ())
 
     @parameterized.parameterized.expand([(1,), (2,), (3,), (4,), (5,), (6,)])
     def test_pad(self, dim):
