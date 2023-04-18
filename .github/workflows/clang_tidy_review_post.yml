@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: ZedThree/clang-tidy-review/post@4f11cae8aa5a0866738de40c1f6443b1a01d5642 # v0.12.2
+      - uses: ZedThree/clang-tidy-review/post@fix-split-post-metadata
         with:
           lgtm_comment_body: ""
           # Use annotations instead of comments
