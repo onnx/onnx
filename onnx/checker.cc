@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/checker.h"
 #include "onnx/common/file_utils.h"
@@ -257,6 +257,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
       case TensorProto::BFLOAT16:
+      case TensorProto::FLOAT8E4M3FN:
+      case TensorProto::FLOAT8E4M3FNUZ:
+      case TensorProto::FLOAT8E5M2:
+      case TensorProto::FLOAT8E5M2FNUZ:
         check_field(int32_data);
         break;
 
@@ -967,7 +971,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
     fail_check("The model does not have an ir_version set properly.");
   }
   if (model.ir_version() > IR_VERSION) {
-    fail_check("Your model ir_version is higher than the checker's.");
+    fail_check("Your model ir_version ", model.ir_version(), " is higher than the checker's (", IR_VERSION, ").");
   }
   if (model.metadata_props_size() > 1) {
     std::unordered_set<std::string> keys;

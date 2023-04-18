@@ -25,19 +25,25 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
         self._session = session
 
     def run(self, inputs, **kwargs):
+        if isinstance(inputs, numpy.ndarray):
+            inputs = [inputs]
         if isinstance(inputs, list):
-            feeds = {}
-            for i, inp in enumerate(self._session.input_names):
-                if i >= len(inputs):
-                    break
-                feeds[inp] = inputs[i]
+            if len(inputs) == len(self._session.input_names):
+                feeds = dict(zip(self._session.input_names, inputs))
+            else:
+                feeds = {}
+                pos_inputs = 0
+                for inp, tshape in zip(
+                    self._session.input_names, self._session.input_types
+                ):
+                    shape = tuple(d.dim_value for d in tshape.tensor_type.shape.dim)
+                    if shape == inputs[pos_inputs].shape:
+                        feeds[inp] = inputs[pos_inputs]
+                        pos_inputs += 1
+                        if pos_inputs >= len(inputs):
+                            break
         elif isinstance(inputs, dict):
             feeds = inputs
-        elif isinstance(inputs, numpy.ndarray):
-            names = self._session.input_names
-            if len(names) != 1:
-                raise RuntimeError(f"Expecting one input not {len(names)}.")
-            feeds = {names[0]: inputs}
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
         outs = self._session.run(None, feeds)
@@ -103,6 +109,23 @@ backend_test.exclude(
 # The following tests are about deprecated operators.
 backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
 
+# The following tests are using types not supported by numpy.
+# They could be if method to_array is extended to support custom
+# types the same as the reference implementation does
+# (see onnx.reference.op_run.to_array_extended).
+backend_test.exclude(
+    "(test_cast_FLOAT_to_FLOAT8"
+    "|test_cast_FLOAT16_to_FLOAT8"
+    "|test_castlike_FLOAT_to_FLOAT8"
+    "|test_castlike_FLOAT16_to_FLOAT8"
+    "|test_cast_no_saturate_FLOAT_to_FLOAT8"
+    "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
+    "|test_cast_BFLOAT16_to_FLOAT"
+    "|test_castlike_BFLOAT16_to_FLOAT"
+    "|test_quantizelinear_e4m3"
+    "|test_quantizelinear_e5m2"
+    ")"
+)
 
 # The following tests are using types not supported by NumPy.
 # They could be if method to_array is extended to support custom

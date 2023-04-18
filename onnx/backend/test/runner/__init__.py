@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 from __future__ import annotations
@@ -299,8 +301,8 @@ class Runner:
             add_device_test(device)
 
     @staticmethod
-    def generate_random_data(
-        x: ValueInfoProto, seed: int = 0, name: str = ""
+    def generate_dummy_data(
+        x: ValueInfoProto, seed: int = 0, name: str = "", random: bool = False
     ) -> np.ndarray:
         """
         Generates a random tensor based on the input definition.
@@ -319,8 +321,11 @@ class Runner:
             d.dim_value if d.HasField("dim_value") else 1
             for d in x.type.tensor_type.shape.dim
         )
-        gen = np.random.default_rng(seed=seed)
-        return gen.random(shape, np.float32)
+        if random:
+            gen = np.random.default_rng(seed=seed)
+            return gen.random(shape, np.float32)
+        n = np.prod(shape)
+        return (np.arange(n).reshape(shape) / n).astype(np.float32)
 
     def _add_model_test(self, model_test: TestCase, kind: str) -> None:
         # model is loaded at runtime, note sometimes it could even
@@ -386,10 +391,10 @@ class Runner:
                 # python implementation is slow (such as test_bvlc_alexnet).
                 with open(model_pb_path, "rb") as f:
                     onx = onnx.load(f)
+
                 test_data_set = os.path.join(model_dir, "test_data_set_0")
                 if not os.path.exists(test_data_set):
                     os.mkdir(test_data_set)
-                ref = onnx.reference.ReferenceEvaluator(onx)
                 feeds = {}
                 inits = set(i.name for i in onx.graph.initializer)
                 n_input = 0
@@ -401,25 +406,35 @@ class Runner:
                     inputs.append(name)
                     n_input += 1
                     x = onx.graph.input[i]
-                    value = self.generate_random_data(
-                        x, seed=0, name=model_test.model_name
+                    value = self.generate_dummy_data(
+                        x, seed=0, name=model_test.model_name, random=False
                     )
                     feeds[x.name] = value
                     with open(name, "wb") as f:
                         f.write(onnx.numpy_helper.from_array(value).SerializeToString())
 
-                outputs = ref.run(None, feeds)
-                ref_outputs = []
-                for i, o in enumerate(outputs):
-                    name = os.path.join(test_data_set, f"output_{i}.pb")
-                    ref_outputs.append(name)
-                    with open(name, "wb") as f:
-                        f.write(onnx.numpy_helper.from_array(o).SerializeToString())
+                # loads expected output if any available
+                prefix = os.path.splitext(model_pb_path)[0]
+                expected_outputs = []
+                for i in range(len(onx.graph.output)):
+                    name = f"{prefix}_output_{i}.pb"
+                    if os.path.exists(name):
+                        expected_outputs.append(name)
+                        continue
+                    expected_outputs = None
+                    break
 
-                outputs = list(prepared_model.run(inputs))
-                self.assert_similar_outputs(
-                    outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
-                )
+                if expected_outputs is None:
+                    ref = onnx.reference.ReferenceEvaluator(onx)
+                    outputs = ref.run(None, feeds)
+                    for i, o in enumerate(outputs):
+                        name = os.path.join(test_data_set, f"output_{i}.pb")
+                        with open(name, "wb") as f:
+                            f.write(onnx.numpy_helper.from_array(o).SerializeToString())
+                else:
+                    for i, o in enumerate(expected_outputs):
+                        name = os.path.join(test_data_set, f"output_{i}.pb")
+                        shutil.copy(o, name)
             else:
                 # TODO after converting all npz files to protobuf, we can delete this.
                 for test_data_npz in glob.glob(
