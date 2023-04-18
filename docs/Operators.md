@@ -213,7 +213,7 @@ For an operator input/output's differentiability, it can be differentiable,
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the absolute is, y = abs(x), is applied to
+  (Tensor<T>) where absolute value, y = abs(x), is applied to
   the tensor elementwise.
 
 #### Version
@@ -21692,7 +21692,7 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
