@@ -126,7 +126,7 @@ The type of the output tensor is integer.)DOC";
         1,
         OpSchema::NonDifferentiable);
     schema.TypeConstraint(
-        "T", OpSchema::all_numeric_types_with_bfloat(), "Constrain input and output types to all numeric tensors.");
+        "T", OpSchema::all_numeric_types_ir4(), "Constrain input and output types to all numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
       updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);

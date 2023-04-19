@@ -32,6 +32,7 @@
 # To read more about lintrunner, see [wiki](https://github.com/pytorch/pytorch/wiki/lintrunner).
 # To update an existing linting rule or create a new one, modify this file or create a
 # new adapter following examples in https://github.com/justinchuby/lintrunner-adapters.
+merge_base_with = 'main'
 
 [[linter]]
 code = 'RUFF'
@@ -60,7 +61,7 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'ruff==0.0.252',
+    '--requirement=requirements-lintrunner.txt',
 ]
 
 [[linter]]
@@ -90,7 +91,7 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'ruff==0.0.252',
+    '--requirement=requirements-lintrunner.txt',
 ]
 is_formatter = true
 
@@ -125,8 +126,7 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'mypy==1.0.0',
-    'types-protobuf==3.20.4',
+    '--requirement=requirements-lintrunner.txt',
 ]
 
 [[linter]]
@@ -156,8 +156,7 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'black==23.1.0',
-    'isort==5.10.1',
+    '--requirement=requirements-lintrunner.txt',
 ]
 is_formatter = true
 
@@ -209,7 +208,7 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'clang-format==13.0.0',
+    '--requirement=requirements-lintrunner.txt',
 ]
 is_formatter = true
 
@@ -246,7 +245,7 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'pylint==2.15.5',
+    '--requirement=requirements-lintrunner.txt',
 ]
 
 [[linter]]
@@ -282,5 +281,5 @@ init_command = [
     'run',
     'pip_init',
     '--dry-run={{DRYRUN}}',
-    'editorconfig-checker==2.6.2',
+    '--requirement=requirements-lintrunner.txt',
 ]
