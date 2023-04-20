@@ -26,9 +26,9 @@ static void InlineFunctions(ModelProto& model, const char* input) {
   checker::check_model(model);
   shape_inference::InferShapes(model);
 
-  std::cout << ProtoToString(model) << "\n";
+  std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
   inliner::InlineLocalFunctions(model);
-  std::cout << ProtoToString(model) << "\n";
+  std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
   shape_inference::InferShapes(model);
 }
 
@@ -145,19 +145,35 @@ bar (x) => (y) {
   ModelProto model;
   InlineFunctions(model, code);
 
-  // The first node's call, to foo, must not be inlined.
+  // The first node's call, to foo, must be inlined.
   auto& first_node = model.graph().node(0);
   // Check that it is still a call to foo
-  ASSERT_EQ(first_node.op_type(), "foo");
+  ASSERT_EQ(first_node.op_type(), "Add");
 
   // The second node's call, to bar, must be inlined.
   auto& second_node = model.graph().node(1);
   // Check that it is a call to Add
   ASSERT_EQ(second_node.op_type(), "Add");
 
-  // The non-inlined foo must still be in the function list.
-  ASSERT_EQ(model.functions_size(), 1);
-  ASSERT_EQ(model.functions(0).name(), "foo");
+  ASSERT_EQ(model.functions_size(), 0);
+}
+
+TEST(FunctionInliner, VersionConversion) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
+agraph (float[N,M] X) => (float[N,M] Y)
+{
+  Y = local.foo (X)
+}
+
+<opset_import: [ "" : 17], domain: "local">
+foo (x) => (y) {
+  y = ReduceLogSum <axes = [0]> (x)
+}
+)ONNX";
+
+  ModelProto model;
+  InlineFunctions(model, code);
 }
 
 } // namespace Test

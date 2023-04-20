@@ -7,7 +7,10 @@
 #include <functional>
 
 #include "onnx/common/assertions.h"
+#include "onnx/common/constants.h"
+#include "onnx/common/interned_strings.h"
 #include "onnx/inliner/inliner.h"
+#include "onnx/version_converter/convert.h"
 
 namespace ONNX_NAMESPACE {
 namespace inliner {
@@ -26,27 +29,33 @@ using FunctionResolver =
 // We use a string of the form "domain::name" as the id for a function.
 using FunctionId = std::string;
 
-FunctionId GetFunctionId(const FunctionProto& function) {
-  return function.domain() + "::" + function.name();
+FunctionId GetFunctionId(const std::string& domain, const std::string& op) {
+  return NormalizeDomain(domain) + "::" + op;
 }
 
-using FunctionMap = std::unordered_map<FunctionId, const FunctionProto*>;
+FunctionId GetFunctionId(const FunctionProto& function) {
+  return GetFunctionId(function.domain(), function.name());
+}
+
+FunctionId GetCalleeId(const NodeProto& node) {
+  return GetFunctionId(node.domain(), node.op_type());
+}
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 
 struct OpsetMap : public OpsetMapBase {
   OpsetMap(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
     for (const auto& pair : list) {
-      (*this)[pair.domain()] = pair.version();
+      (*this)[NormalizeDomain(pair.domain())] = pair.version();
     }
   }
 
-  std::vector<std::string> Mismatches(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
-    std::vector<std::string> result;
+  OpsetMapBase Mismatches(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
+    OpsetMapBase result;
     for (const auto& pair : list) {
-      auto iter = this->find(pair.domain());
+      auto iter = this->find(NormalizeDomain(pair.domain()));
       if ((iter != this->end()) && (iter->second != pair.version()))
-        result.push_back(pair.domain());
+        result.insert(*iter);
     }
     return result;
   }
@@ -256,7 +265,134 @@ class Specializer {
   }
 };
 
-void InlineFunctions(ModelProto& model, FunctionResolver resolver) {
+
+using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
+
+struct NodeVisitor {
+  std::function<bool(const NodeProto&)> process_node;
+
+  NodeVisitor(std::function<bool(const NodeProto&)> process_node_fun) : process_node(process_node_fun) {}
+
+  void VisitGraph (const GraphProto& graph) {
+    for (auto& node : graph.node())
+      VisitNode(node);
+  }
+
+  void VisitNode (const NodeProto& node) {
+    if (ProcessNode(node)) {
+      for (auto& attr: node.attribute()) {
+        if (attr.has_g()) {
+          VisitGraph (attr.g());
+        }
+        for (auto& graph : attr.graphs())
+          VisitGraph(graph);
+      }
+    }
+  }
+
+  bool ProcessNode (const NodeProto& node) {
+    return process_node(node);
+  }
+};
+
+// Identify the set of all "input" variables used by a given node.
+// This includes the variables listed as node.input, as well as
+// implicit inputs referred to in any graph-valued-attribute of the node.
+std::vector<std::string> GetUsedVars (const NodeProto& node) {
+  std::vector<std::string> result;
+  result.reserve(node.input_size());
+  auto process_node = [&] (const NodeProto& n) -> bool {
+    for (auto& var: node.input()) {
+      if (! var.empty()) {
+        result.push_back(var);
+      }
+      return true; // process sub-graphs
+    }
+  };
+  NodeVisitor visitor(process_node);
+  visitor.ProcessNode(node);
+  return result;
+}
+
+using ConstNodeMap = std::unordered_map<std::string, const NodeProto *>;
+
+ConstNodeMap FindConstantNodes (const GraphProto& graph) {
+  ConstNodeMap result;
+  for (const NodeProto& node: graph.node()) {
+    if (IsOnnxDomain(node.domain()) && (node.op_type() == "Constant")) {
+      result[node.output(0)] = &node;
+    }
+  }
+  return result;
+}
+
+const TypeProto& GetType (const ModelProto& model, std::string var) {
+  for (auto& vi: model.graph().value_info()) {
+    if (vi.name() == var)
+      return vi.type();
+  }
+  for (auto& vi: model.graph().input()) {
+    if (vi.name() == var)
+      return vi.type();
+  }
+  ONNX_ASSERTM(false, "Type unknown for ", var);
+}
+
+void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto& function, int target_version) {
+  ModelProto function_as_model;
+  function_as_model.set_ir_version (model.ir_version());
+  *function_as_model.mutable_opset_import() = function.opset_import();
+
+  GraphProto& graph = *function_as_model.mutable_graph();
+  // The graph's inputs are all the variables used in the call_node.
+  auto used_vars = GetUsedVars (call_node);
+  auto constant_node_map = FindConstantNodes(model.graph());
+
+  RepeatedNodeProto& function_nodes = *function.mutable_node();
+  RepeatedNodeProto& nodes = *graph.mutable_node();
+  nodes.Reserve(function_nodes.size() + used_vars.size());
+
+  auto* inputs =  graph.mutable_input();
+  for (const auto& var : used_vars) {
+    auto* new_input = inputs->Add();
+    new_input->set_name(var);
+    *new_input->mutable_type() = GetType(model, var);
+    // Create a copy of constants used by the call_node.
+    // We do not handle initializers-as-constants for now.
+    auto it = constant_node_map.find(var);
+    if (it != constant_node_map.end()) {
+      *nodes.Add() = *(it->second);
+    }
+  }
+
+  // outputs: from call_node node outputs
+  auto* outputs =  graph.mutable_output();
+  for (const auto& var : call_node.output()) {
+    if (! var.empty()) {
+      auto* new_output = outputs->Add();
+      new_output->set_name(var);
+      *new_output->mutable_type() = GetType(model, var);
+    }
+  }
+
+  // TODO: Use std::move when it is fully supported on all protobuf platforms used
+  for (auto& function_node : function_nodes)
+    *nodes.Add() = function_node;
+  function_nodes.Clear();
+
+  auto converted = ONNX_NAMESPACE::version_conversion::ConvertVersion(function_as_model, target_version);
+
+  function_nodes.Swap(converted.mutable_graph()->mutable_node());
+
+  // Append new initializers to main graph initializers
+  auto& added_initializer = converted.graph().initializer();
+  model.mutable_graph()->mutable_initializer()->Add(added_initializer.begin(), added_initializer.end());
+}
+
+constexpr int64_t kNoConversion = -1;
+using FunctionMap = std::unordered_map<FunctionId, std::pair<const FunctionProto*, int64_t>>;
+
+void InlineFunctions(ModelProto& model, FunctionMap map) {
   auto* graph = model.mutable_graph();
 
   NameGenerator name_generator;
@@ -270,9 +406,14 @@ void InlineFunctions(ModelProto& model, FunctionResolver resolver) {
   int inline_count = 0;
   std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
     FunctionProto callee;
-    if (resolver(node.domain(), node.op_type(), &callee)) {
+    auto iter = map.find(GetCalleeId(node));
+    if (iter != map.end()) {
+      callee = *iter->second.first;
+      int64_t target_version = iter->second.second;
       // Rename and specialize called function body
       Specializer::Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
+      if (target_version != kNoConversion)
+        ConvertVersion(model, node, callee, target_version);
       // Append nodes of called function
       for (auto& callee_node : *callee.mutable_node())
         append_node(callee_node);
@@ -288,27 +429,41 @@ void InlineFunctions(ModelProto& model, FunctionResolver resolver) {
   }
 }
 
+
 void InlineLocalFunctions(ModelProto& model) {
   OpsetMap model_imports(model.opset_import());
   FunctionMap map;
 
+  // For every function, we check if there is a mismatch between the opset versions
+  // required for the function and the model. If there is no mismatch, we can inline
+  // this function. If there is a mismatch only for the standard ONNX domain, we
+  // can inline after version-conversion (if the version-conversion is successful).
+  // Otherwise, we cannot inline, since currently version-conversion supports only
+  // standard ONNX domain.
+
   for (auto& function : model.functions()) {
     auto mismatches = model_imports.Mismatches(function.opset_import());
+    auto iter = mismatches.find(ONNX_DOMAIN);
+    int64_t target_onnx_version = kNoConversion;
+    if (iter != mismatches.end()) {
+      target_onnx_version = iter->second;
+      mismatches.erase(iter);
+    }
     if (mismatches.empty()) {
-      map[GetFunctionId(function)] = &function;
+      map[GetFunctionId(function)] = std::pair(&function, target_onnx_version);
     }
   }
 
-  auto get_function = [&](const std::string& domain, const std::string& op, FunctionProto* return_value) -> bool {
-    auto iter = map.find(domain + "::" + op);
-    if (iter != map.end()) {
-      *return_value = *iter->second;
-      return true;
-    }
-    return false;
-  };
+  // auto get_function = [&](const std::string& domain, const std::string& op, FunctionProto* return_value) -> bool {
+  //   auto iter = map.find(GetFunctionId(domain, op));
+  //   if (iter != map.end()) {
+  //     *return_value = *iter->second;
+  //     return true;
+  //   }
+  //   return false;
+  // };
 
-  InlineFunctions(model, get_function);
+  InlineFunctions(model, map);
 
   // Remove all model-local functions. We do not remove functions with a mis-matched
   // opset version. They need to be handled some other way, eg., using a version-adapter.
@@ -320,6 +475,7 @@ void InlineLocalFunctions(ModelProto& model) {
       ++it;
   }
 }
+
 
 } // namespace inliner
 } // namespace ONNX_NAMESPACE
