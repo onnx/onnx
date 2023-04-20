@@ -22,8 +22,7 @@ def run_lfs_install():
     result = subprocess.run(
         ["git", "lfs", "install"],
         cwd=CWD_PATH,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
     )
     print(f"Git LFS install completed with return code= {result.returncode}")
 
@@ -43,8 +42,7 @@ def run_lfs_prune():
     result = subprocess.run(
         ["git", "lfs", "prune"],
         cwd=CWD_PATH,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
     )
     print(f"LFS prune completed with return code= {result.returncode}")
 

@@ -35,9 +35,9 @@ class StringNormalizer(OpRun):
         else:
             raw_stops = set(stopwords)
             if case_change_action == "LOWER":
-                stops = set(w.lower() for w in stopwords)
+                stops = {w.lower() for w in stopwords}
             elif case_change_action == "UPPER":
-                stops = set(w.upper() for w in stopwords)
+                stops = {w.upper() for w in stopwords}
             else:
                 stops = set(stopwords)
         res = np.empty(x.shape, dtype=x.dtype)

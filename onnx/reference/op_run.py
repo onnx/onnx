@@ -214,7 +214,7 @@ class OpRun(ABC):
             if att not in run_params:
                 raise RuntimeError(
                     f"Attribute {att!r} must be in run_params, only "
-                    f"{list(sorted(run_params))} was found."
+                    f"{sorted(run_params)} was found."
                 )
         if "log" not in run_params:
             raise KeyError("run_params must contains key 'log'.")
@@ -468,7 +468,7 @@ class OpRun(ABC):
         except (TypeError, AttributeError) as e:
             raise TypeError(
                 f"Issues with types {[type(_) for _ in args]} and attributes "
-                f"{list(sorted(kwargs))} and linked attributes={list(sorted(overridden_attributes))} "
+                f"{sorted(kwargs)} and linked attributes={sorted(overridden_attributes)} "
                 f"(operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
@@ -480,7 +480,7 @@ class OpRun(ABC):
             raise ValueError(
                 f"Method '_run' of class {self.__class__.__name__!r} does not return any result."
             )
-        if any(map(lambda t: isinstance(t, tuple), res)):
+        if any(isinstance(t, tuple) for t in res):
             dtypes = [type(t) for t in res]
             raise TypeError(
                 f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
@@ -555,12 +555,12 @@ class OpRun(ABC):
                 print(pattern % tuple(args))
 
         node = cls.make_node(n_inputs, n_outputs, **kwargs)
-        run_params = dict(
-            verbose=verbose,
-            log=log_function,
-            new_ops=None,
-            opsets={"": onnx_opset_version()},
-        )
+        run_params = {
+            "verbose": verbose,
+            "log": log_function,
+            "new_ops": None,
+            "opsets": {"": onnx_opset_version()},
+        }
         cl = cls(node, run_params)
         return cl
 
