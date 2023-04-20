@@ -29,7 +29,7 @@ load
 
 .. autofunction:: onnx.hub.load
 
-load_composite
-++++++++++++++
+load_composite_model
+++++++++++++++++++++
 
 .. autofunction:: onnx.hub.load_composite_model

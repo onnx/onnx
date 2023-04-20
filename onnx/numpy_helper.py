@@ -199,7 +199,7 @@ def to_array(  # pylint: disable=too-many-branches
 
     if tensor.data_type == TensorProto.STRING:
         utf8_strings = getattr(tensor, storage_field)
-        ss = list(s.decode("utf-8") for s in utf8_strings)
+        ss = [s.decode("utf-8") for s in utf8_strings]
         return np.asarray(ss).astype(np_dtype).reshape(dims)
 
     # Load raw data from external tensor if it exists
