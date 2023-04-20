@@ -404,9 +404,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
 
 class TestHelperTensorFunctions(unittest.TestCase):
     def test_make_string_tensor(self) -> None:
-        string_list = list(
-            s.encode("utf-8") for s in ["Amy", "Billy", "Cindy", "David"]
-        )
+        string_list = [s.encode("utf-8") for s in ["Amy", "Billy", "Cindy", "David"]]
         tensor = helper.make_tensor(
             name="test",
             data_type=TensorProto.STRING,

@@ -116,7 +116,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
                     labels = np.array([d.get(i, 0) for i in labels], dtype=np.int64)
                 else:
                     raise NotImplementedError(
-                        f"classlabels_int64s={classlabels_int64s}, " f"not supported."
+                        f"classlabels_int64s={classlabels_int64s}, not supported."
                     )
             else:
                 labels = np.array(
@@ -125,7 +125,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
         elif classlabels_strings is not None:
             if len(classlabels_strings) == 1:
                 raise NotImplementedError(
-                    f"classlabels_strings={classlabels_strings}, " f"not supported."
+                    f"classlabels_strings={classlabels_strings}, not supported."
                 )
             labels = np.array([classlabels_strings[i] for i in labels])
 
