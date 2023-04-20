@@ -1476,22 +1476,22 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
    The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
 
@@ -1649,12 +1649,24 @@ node = onnx.helper.make_node(
     "AveragePool",
     inputs=["x"],
     outputs=["y"],
-    kernel_shape=[3, 3],
+    kernel_shape=[2, 2],
     strides=[1, 1],
     dilations=[2, 2],
     ceil_mode=True,
 )
-x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+x = np.array(
+    [
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [13, 14, 15, 16],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
 y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
