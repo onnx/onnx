@@ -27,6 +27,10 @@ except ImportError:
     InferenceSession = None
     ort_version = None
 
+    def get_available_providers():
+        return []
+
+
 # The following just executes a backend based on InferenceSession through the backend test
 
 
