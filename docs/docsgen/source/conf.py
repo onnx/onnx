@@ -48,8 +48,8 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.graphviz",
     "sphinx.ext.ifconfig",
-    "sphinx.ext.imgmath",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
 ]

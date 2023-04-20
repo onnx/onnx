@@ -262,10 +262,10 @@ def load(
         downloaded_sha = hashlib.sha256(model_bytes).hexdigest()
         if not downloaded_sha == selected_model.model_sha:
             raise AssertionError(
-                (
-                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {selected_model.model_sha}."
-                    + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
-                )
+                f"The cached model {selected_model.model} has SHA256 {downloaded_sha} "
+                f"while checksum should be {selected_model.model_sha}. "
+                "The model in the hub may have been updated. Use force_reload to "
+                "download the model from the model hub."
             )
 
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
@@ -331,10 +331,10 @@ def download_model_with_test_data(
         downloaded_sha = hashlib.sha256(model_with_data_bytes).hexdigest()
         if not downloaded_sha == model_with_data_sha:
             raise AssertionError(
-                (
-                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {model_with_data_sha}."
-                    + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
-                )
+                f"The cached model {selected_model.model} has SHA256 {downloaded_sha} "
+                f"while checksum should be {model_with_data_sha}. "
+                "The model in the hub may have been updated. Use force_reload to "
+                "download the model from the model hub."
             )
 
     with tarfile.open(local_model_with_data_path) as model_with_data_zipped:
