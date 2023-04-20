@@ -19,8 +19,9 @@ from onnx import ModelProto
 from onnx.backend.base import Device, DeviceType
 
 try:
-    from onnxruntime import get_available_providers, InferenceSession
+    from onnxruntime import InferenceSession
     from onnxruntime import __version__ as ort_version
+    from onnxruntime import get_available_providers
     from onnxruntime.capi.onnxruntime_pybind11_state import InvalidArgument
 except ImportError:
     # onnxruntime is not installed, all tests are skipped.
@@ -108,11 +109,11 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
         except InvalidArgument as e:
             if "Unsupported model IR version" in str(e):
                 model.ir_version -= 1
-                return cls.create_inference_session(model)
+                return cls.create_inference_session(model, device)
             if "Current official support for domain ai.onnx is till opset" in str(e):
                 new_model = cls.convert_version_opset_before(model)
                 if new_model is not None:
-                    return cls.create_inference_session(new_model)
+                    return cls.create_inference_session(new_model, device)
             raise e
 
     @classmethod

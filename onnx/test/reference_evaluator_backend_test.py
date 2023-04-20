@@ -668,7 +668,9 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     return
 
                 te.run(
-                    lambda obj: InferenceSession(obj.SerializeToString()),
+                    lambda obj: InferenceSession(
+                        obj.SerializeToString(), providers=["CPUExecutionProvider"]
+                    ),
                     lambda *a, **b: TestOnnxBackEndWithReferenceEvaluator.run_fct(
                         *a, verbose=1, **b
                     ),
