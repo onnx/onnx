@@ -313,7 +313,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "AveragePool",
             "average",
             "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
-            false,
+            true,
             false))
         .Attr(
             "dilations",
