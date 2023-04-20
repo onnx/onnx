@@ -471,12 +471,24 @@ class AveragePool(Base):
             "AveragePool",
             inputs=["x"],
             outputs=["y"],
-            kernel_shape=[3, 3],
+            kernel_shape=[2, 2],
             strides=[1, 1],
             dilations=[2, 2],
             ceil_mode=True,
         )
-        x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+        x = np.array(
+            [
+                [
+                    [
+                        [1, 2, 3, 4],
+                        [5, 6, 7, 8],
+                        [9, 10, 11, 12],
+                        [13, 14, 15, 16],
+                    ]
+                ]
+            ]
+        ).astype(np.float32)
+
         y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
