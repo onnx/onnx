@@ -588,10 +588,12 @@ class ShapeInferenceImplBase {
     // Create a temporary initializer value map
     for (int i = 0; i < num_actual_inputs && i < num_func_inputs; ++i) {
       const TypeProto* type = ctx.getInputType(i);
-      if (type->value_case() == TypeProto::kTensorType && ctx.getInputData(i) != nullptr) {
-        input_data_by_name[func_proto.input().Get(i)] = ctx.getInputData(i);
-      } else if (type->value_case() == TypeProto::kSparseTensorType && ctx.getInputSparseData(i) != nullptr) {
-        input_sparse_data_by_name[func_proto.input().Get(i)] = ctx.getInputSparseData(i);
+      if (type != nullptr) {
+        if (type->value_case() == TypeProto::kTensorType && ctx.getInputData(i) != nullptr) {
+          input_data_by_name[func_proto.input().Get(i)] = ctx.getInputData(i);
+        } else if (type->value_case() == TypeProto::kSparseTensorType && ctx.getInputSparseData(i) != nullptr) {
+          input_sparse_data_by_name[func_proto.input().Get(i)] = ctx.getInputSparseData(i);
+        }
       }
     }
 
@@ -866,7 +868,14 @@ struct FunctionInferenceContext : public InferenceContext {
   }
 
   const TypeProto* getInputType(size_t index) const override {
-    return (index < input_types_.size()) ? &input_types_[index] : nullptr;
+    // We should return nullptr for missing optional parameters.
+    // An uninitialized TypeProto() is used for missing optional parameters, and
+    // is mapped to a nullptr here.
+    if (index >= input_types_.size())
+      return nullptr;
+    if (input_types_[index].value_case() == TypeProto::ValueCase::VALUE_NOT_SET)
+      return nullptr;
+    return &input_types_[index];
   }
 
   TypeProto* getOutputType(size_t index) override {
