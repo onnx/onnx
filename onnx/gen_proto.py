@@ -222,7 +222,7 @@ def main() -> None:
         "-p",
         "--package",
         default="onnx",
-        help="package name in the generated proto files" " (default: %(default)s)",
+        help="package name in the generated proto files (default: %(default)s)",
     )
     parser.add_argument("-m", "--ml", action="store_true", help="ML mode")
     parser.add_argument(
@@ -244,7 +244,7 @@ def main() -> None:
         "stems",
         nargs="*",
         default=["onnx", "onnx-operators", "onnx-data"],
-        help="list of .in.proto file stems " "(default: %(default)s)",
+        help="list of .in.proto file stems (default: %(default)s)",
     )
     args = parser.parse_args()
 
