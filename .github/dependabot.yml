@@ -26,4 +26,14 @@ updates:
     labels:
       - "dependencies"
       - "github_actions"
+      - "run release CIs"      
+      
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
       - "run release CIs"
+      
