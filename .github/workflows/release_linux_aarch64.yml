@@ -24,10 +24,10 @@ jobs:
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
-      img: docker://quay.io/pypa/manylinux2014_aarch64:latest@sha256:a2d8ba969c23fb91e383b99f62324769944fe2518404b56b186037bab7ad1117
+      img: quay.io/pypa/manylinux2014_aarch64
 
     steps:
-    - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
     - name: Checkout submodules
       shell: bash
       run: |
