@@ -335,6 +335,10 @@ const TypeProto& GetType (const ModelProto& model, std::string var) {
     if (vi.name() == var)
       return vi.type();
   }
+  for (auto& vi: model.graph().output()) {
+    if (vi.name() == var)
+      return vi.type();
+  }
   ONNX_ASSERTM(false, "Type unknown for ", var);
 }
 
