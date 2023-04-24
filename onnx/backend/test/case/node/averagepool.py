@@ -476,6 +476,8 @@ class AveragePool(Base):
             dilations=[2, 2],
             ceil_mode=True,
         )
+
+        # input shape: [1, 1, 4, 4]
         x = np.array(
             [
                 [
