@@ -68,6 +68,6 @@ class If(OpRun):
                 inits = [i.name for i in br.obj.graph.initializer]
                 raise RuntimeError(  # pragma: no cover
                     f"Output {i!r} (branch={branch!r}, name={names[i]!r}) is None, "
-                    f"available inputs={list(sorted(context))}, initializers={inits}."
+                    f"available inputs={sorted(context)}, initializers={inits}."
                 )
         return final

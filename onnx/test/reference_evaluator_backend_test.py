@@ -409,11 +409,11 @@ class OnnxBackendTest:
                 f"Unexpected number of output (test {index}, folder {self.folder!r}), "
                 f"got {len(got)}, expected {len(expected)}."
             )
-        res = dict(
-            inputs=self.tests[index]["inputs"],
-            expected=self.tests[index]["outputs"],
-            results=got,
-        )
+        res = {
+            "inputs": self.tests[index]["inputs"],
+            "expected": self.tests[index]["outputs"],
+            "results": got,
+        }
         for i, (e, o) in enumerate(zip(expected, got)):
             if self.is_random():
                 if e.dtype != o.dtype:

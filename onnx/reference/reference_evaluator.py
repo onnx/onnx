@@ -313,7 +313,7 @@ class ReferenceEvaluator:
             )
         if name not in self.all_types_:
             raise RuntimeError(
-                f"Unable to return type for name {name!r}, it was not found in {list(sorted(self.all_types_))}."
+                f"Unable to return type for name {name!r}, it was not found in {sorted(self.all_types_)}."
             )
         return self.all_types_[name]
 
@@ -422,7 +422,7 @@ class ReferenceEvaluator:
             return load_op(node.domain, node.op_type, version, custom=impl)
         raise NotImplementedError(
             f"Node type {node.op_type!r} from domain {node.domain!r} "
-            f"is unknown, known functions: {list(sorted(self.functions_))}."
+            f"is unknown, known functions: {sorted(self.functions_)}."
         )
 
     def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Dict[str, Any] = None):  # type: ignore
@@ -473,7 +473,7 @@ class ReferenceEvaluator:
         for name in output_names:
             if name not in results:
                 raise RuntimeError(
-                    f"Unable to find output name {name!r} in {list(sorted(results))}, proto is\n{self.proto_}"
+                    f"Unable to find output name {name!r} in {sorted(results)}, proto is\n{self.proto_}"
                 )
             list_results.append(results[name])
         return list_results

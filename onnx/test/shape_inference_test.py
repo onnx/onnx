@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -39,10 +39,10 @@ from onnx.parser import parse_graph
 class TestShapeInferenceHelper(unittest.TestCase):
     def _make_graph(
         self,
-        seed_values: Sequence[Union[str, Tuple[str, TensorProto.DataType, Any]]],
-        nodes: List[NodeProto],
-        value_info: List[ValueInfoProto],
-        initializer: Optional[Sequence[TensorProto]] = None,
+        seed_values: Sequence[str | tuple[str, TensorProto.DataType, Any]],
+        nodes: list[NodeProto],
+        value_info: list[ValueInfoProto],
+        initializer: Sequence[TensorProto] | None = None,
     ) -> GraphProto:
         if initializer is None:
             initializer = []
@@ -97,14 +97,14 @@ class TestShapeInferenceHelper(unittest.TestCase):
         return inferred_model
 
     def _assert_inferred(
-        self, graph: GraphProto, vis: List[ValueInfoProto], **kwargs: Any
+        self, graph: GraphProto, vis: list[ValueInfoProto], **kwargs: Any
     ) -> None:
         names_in_vis = {x.name for x in vis}
-        vis = list(x for x in graph.value_info if x.name not in names_in_vis) + vis
+        vis = [x for x in graph.value_info if x.name not in names_in_vis] + vis
         inferred_model = self._inferred(graph, **kwargs)
         inferred_vis = list(inferred_model.graph.value_info)
-        vis = list(sorted(vis, key=lambda x: x.name))
-        inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))  # type: ignore
+        vis = sorted(vis, key=lambda x: x.name)
+        inferred_vis = sorted(inferred_vis, key=lambda x: x.name)  # type: ignore
         assert len(vis) == len(inferred_vis)
         for v, inferred_v in zip(vis, inferred_vis):
             self._compare_value_infos(v.type, inferred_v.type)
@@ -2433,7 +2433,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, tuple())]
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, ())]
         )
 
     def test_reduce_op_shape_negative_axis(self) -> None:
@@ -8702,7 +8702,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         for axes_shape, expected in [
             ((2,), 2),
-            (tuple(), "unk__0"),
+            ((), "unk__0"),
             (("N",), "N"),
         ]:
             graph = self._make_graph(
