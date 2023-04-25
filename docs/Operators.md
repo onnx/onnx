@@ -213,7 +213,7 @@ For an operator input/output's differentiability, it can be differentiable,
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the absolute is, y = abs(x), is applied to
+  (Tensor<T>) where absolute value, y = abs(x), is applied to
   the tensor elementwise.
 
 #### Version
@@ -4912,12 +4912,12 @@ for test_case, values_ in test_cases.items():
     for i in range(len(values[0].shape)):
         in_args = ["value" + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
-            "Concat", inputs=[s for s in in_args], outputs=["output"], axis=i
+            "Concat", inputs=list(in_args), outputs=["output"], axis=i
         )
         output = np.concatenate(values, i)
         expect(
             node,
-            inputs=[v for v in values],
+            inputs=list(values),
             outputs=[output],
             name="test_concat_" + test_case + "_axis_" + str(i),
         )
@@ -4925,12 +4925,12 @@ for test_case, values_ in test_cases.items():
     for i in range(-len(values[0].shape), 0):
         in_args = ["value" + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
-            "Concat", inputs=[s for s in in_args], outputs=["output"], axis=i
+            "Concat", inputs=list(in_args), outputs=["output"], axis=i
         )
         output = np.concatenate(values, i)
         expect(
             node,
-            inputs=[v for v in values],
+            inputs=list(values),
             outputs=[output],
             name="test_concat_" + test_case + "_axis_negative_" + str(abs(i)),
         )
@@ -21692,7 +21692,7 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -29434,7 +29434,7 @@ node = onnx.helper.make_node(
     keepdims=0,
 )
 
-expected_outputs = [list(data[:, i] for i in range(data.shape[1]))]
+expected_outputs = [[data[:, i] for i in range(data.shape[1])]]
 
 expect(
     node,
@@ -31660,9 +31660,9 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 
 # prepare index mapping from sorted to unsorted
 argsorted_indices = np.argsort(indices)
-inverse_indices_map = {
-    i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))
-}
+inverse_indices_map = dict(
+    zip(argsorted_indices, np.arange(len(argsorted_indices)))
+)
 
 indices = indices[argsorted_indices]
 y = np.take(x, indices, axis=0)
