@@ -21,11 +21,16 @@ from onnx.backend.base import Device, DeviceType
 try:
     from onnxruntime import InferenceSession
     from onnxruntime import __version__ as ort_version
+    from onnxruntime import get_available_providers
     from onnxruntime.capi.onnxruntime_pybind11_state import InvalidArgument
 except ImportError:
     # onnxruntime is not installed, all tests are skipped.
     InferenceSession = None
     ort_version = None
+
+    def get_available_providers():
+        return []
+
 
 # The following just executes a backend based on InferenceSession through the backend test
 
@@ -60,6 +65,8 @@ class InferenceSessionBackendRep(onnx.backend.base.BackendRep):
 
 
 class InferenceSessionBackend(onnx.backend.base.Backend):
+    providers = set(get_available_providers())
+
     @classmethod
     def is_opset_supported(cls, model):  # pylint: disable=unused-argument
         return True, ""
@@ -67,7 +74,11 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
     @classmethod
     def supports_device(cls, device: str) -> bool:
         d = Device(device)
-        return d.type == DeviceType.CPU  # type: ignore[no-any-return]
+        if d.type == DeviceType.CPU and "CPUExecutionProvider" in cls.providers:
+            return True
+        if d.type == DeviceType.CUDA and "CUDAExecutionProvider" in cls.providers:
+            return True
+        return False
 
     @classmethod
     def convert_version_opset_before(cls, model):
@@ -86,17 +97,23 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
             return model
 
     @classmethod
-    def create_inference_session(cls, model):
+    def create_inference_session(cls, model, device):
+        if device == "CPU":
+            providers = ["CPUExecutionProvider"]
+        elif device == "CUDA":
+            providers = ["CUDAExecutionProvider"]
+        else:
+            raise ValueError(f"Unexepcted device {device!r}.")
         try:
-            return InferenceSession(model.SerializeToString())
+            return InferenceSession(model.SerializeToString(), providers=providers)
         except InvalidArgument as e:
             if "Unsupported model IR version" in str(e):
                 model.ir_version -= 1
-                return cls.create_inference_session(model)
+                return cls.create_inference_session(model, device)
             if "Current official support for domain ai.onnx is till opset" in str(e):
                 new_model = cls.convert_version_opset_before(model)
                 if new_model is not None:
-                    return cls.create_inference_session(new_model)
+                    return cls.create_inference_session(new_model, device)
             raise e
 
     @classmethod
@@ -108,7 +125,7 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
         if isinstance(model, InferenceSession):
             return InferenceSessionBackendRep(model)
         if isinstance(model, (str, bytes, ModelProto)):
-            inf = cls.create_inference_session(model)
+            inf = cls.create_inference_session(model, device)
             return cls.prepare(inf, device, **kwargs)
         raise TypeError(f"Unexpected type {type(model)} for model.")
 
@@ -160,6 +177,16 @@ backend_test.exclude(
     "|simple_rnn_batchwise"  # Batchwise recurrent operations (layout == 1) are not supported.
     "|sub_uint8"
     "|gradient_of_add"
+    "|test_batchnorm_epsilon_training_mode"  # Training mode does not support BN opset 14 (or higher) yet.
+    "|test_batchnorm_example_training_mode"  # Training mode does not support BN opset 14 (or higher) yet.
+    "|_to_FLOAT8E4M3FN"  # No corresponding Numpy type for Tensor Type.
+    "|_to_FLOAT8E5M2"  # No corresponding Numpy type for Tensor Type.
+    "|cast_FLOAT8E"  # No corresponding Numpy type for Tensor Type.
+    "|castlike_FLOAT8E"  # No corresponding Numpy type for Tensor Type.
+    "|test_dequantizelinear_axis"  # y_scale must be a scalar or 1D tensor of size 1.
+    "|test_dequantizelinear"  # No corresponding Numpy type for Tensor Type.
+    "|test_quantizelinear_axis"  # y_scale must be a scalar or 1D tensor of size 1.
+    "|test_quantizelinear"  # No corresponding Numpy type for Tensor Type.
     ")"
 )
 
@@ -206,17 +233,18 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
     # version should be 1.15 but there is no development version number.
     backend_test.exclude(
         "("
-        "averagepool_2d_dilations"
+        "averagepool"
         "|deform_conv"
-        "|equal_string"
         "|optional_get_element_optional_sequence"
         "|identity_opt"
         "|half_pixel_symmetric"
-        "|wrap_pad"
+        "|_pad_"
+        "|_resize_"
+        "|_size_"
         ")"
     )
 
-if sys.version_info[:2] < (3, 8) or Version(numpy.__version__) >= Version("1.23.5"):
+if sys.version_info[:2] < (3, 8) or Version(numpy.__version__) < Version("1.23.5"):
     # Version 1.21.5 causes segmentation faults.
     # onnxruntime should be tested with the same numpy API
     # onnxruntime was compiled with.
