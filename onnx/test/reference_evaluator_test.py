@@ -57,7 +57,7 @@ from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
 )
-from onnx.reference.ops.op_conv import _conv_implementation, Conv
+from onnx.reference.ops.op_conv import Conv, _conv_implementation
 from onnx.reference.ops_optimized import Conv as ConvOptimized
 from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_im2col
 
