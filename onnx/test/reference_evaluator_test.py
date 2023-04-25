@@ -57,7 +57,10 @@ from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
 )
-from onnx.reference.ops.op_conv import _conv_implementation, _conv_implementation_im2col
+from onnx.reference.ops.op_conv import _conv_implementation, Conv
+from onnx.reference.ops_optimized import Conv as ConvOptimized
+from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_im2col
+
 
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
 # For now, bump the version in CIs whenever there is a new onnxruntime release
@@ -1426,7 +1429,12 @@ class TestReferenceEvaluator(unittest.TestCase):
         sess1 = run_ort_inference(onnx_model)
         if sess1 is None:
             return
-        sess2 = ReferenceEvaluator(onnx_model)
+        sess2 = ReferenceEvaluator(onnx_model, optimized=False)
+        self.assertIsInstance(sess2.rt_nodes_[0], Conv)
+        sess3 = ReferenceEvaluator(onnx_model, new_ops=[ConvOptimized], optimized=False)
+        self.assertIsInstance(sess3.rt_nodes_[0], ConvOptimized)
+        sess4 = ReferenceEvaluator(onnx_model, optimized=True)
+        self.assertIsInstance(sess4.rt_nodes_[0], ConvOptimized)
 
         sH, sW = 5, 6
         for i in range(sH):
@@ -1440,6 +1448,10 @@ class TestReferenceEvaluator(unittest.TestCase):
                 expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
                 got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
                 assert_allclose(expected, got)
+                got3 = sess3.run(None, {"X": X, "W": W, "B": B})[0]
+                assert_allclose(expected, got3)
+                got4 = sess4.run(None, {"X": X, "W": W, "B": B})[0]
+                assert_allclose(expected, got4)
 
     @skip_if_no_onnxruntime
     def test_qlinearconv(self):
