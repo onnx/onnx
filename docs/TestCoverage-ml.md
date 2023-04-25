@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 0/18 (0.00%, 0 generators excluded) common operators.
+Node tests have covered 2/18 (11.11%, 0 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -16,15 +16,59 @@ Node tests have covered 0/0 (N/A) experimental operators.
 * [No Cover Experimental Operators](#no-cover-experimental-operators)
 
 ## &#x1F49A;Covered Common Operators
+### ArrayFeatureExtractor
+There are 1 test cases, listed as following:
+<details>
+<summary>arrayfeatureextractor</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ArrayFeatureExtractor",
+    inputs=["x", "y"],
+    outputs=["z"],
+    domain="ai.onnx.ml",
+)
+
+x = np.arange(12).reshape((3, 4)).astype(np.float32)
+y = np.array([0, 1], dtype=np.int64)
+z = np.array([[0, 4, 8], [1, 5, 9]], dtype=np.float32).T
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[z],
+    name="test_ai_onnx_ml_array_feature_extractor",
+)
+```
+
+</details>
+
+
+### Binarizer
+There are 1 test cases, listed as following:
+<details>
+<summary>binarizer</summary>
+
+```python
+threshold = 1.0
+node = onnx.helper.make_node(
+    "Binarizer",
+    inputs=["X"],
+    outputs=["Y"],
+    threshold=threshold,
+    domain="ai.onnx.ml",
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = compute_binarizer(x, threshold)[0]
+
+expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
+```
+
+</details>
+
+
 <br/>
 
 ## &#x1F494;No Cover Common Operators
-### ArrayFeatureExtractor (call for test cases)
-
-
-### Binarizer (call for test cases)
-
-
 ### CastMap (call for test cases)
 
 

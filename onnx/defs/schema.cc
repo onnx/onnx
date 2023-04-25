@@ -553,6 +553,14 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
   return *this;
 }
 
+OpSchema& OpSchema::Input(int n, FormalParameter formal_parameter) {
+  if (inputs_.size() <= static_cast<size_t>(n)) {
+    inputs_.resize(n + 1);
+  }
+  inputs_[n] = std::move(formal_parameter);
+  return *this;
+}
+
 OpSchema& OpSchema::Input(
     int n,
     std::string name,
@@ -562,22 +570,20 @@ OpSchema& OpSchema::Input(
     bool is_homogeneous,
     int min_arity,
     DifferentiationCategory differentiation_category) {
-  if (int(inputs_.size()) <= n) {
-    inputs_.resize(n + 1);
-  }
-  inputs_[n] = FormalParameter(
-      std::move(name),
+  return Input(
+      n,
+      FormalParameter(
+          std::move(name),
 #ifndef __ONNX_NO_DOC_STRINGS
-      description,
+          description,
 #else
-      std::string(),
+          std::string(),
 #endif
-      std::move(type_str),
-      param_option,
-      is_homogeneous,
-      min_arity,
-      differentiation_category);
-  return *this;
+          std::move(type_str),
+          param_option,
+          is_homogeneous,
+          min_arity,
+          differentiation_category));
 }
 
 OpSchema& OpSchema::Input(
@@ -604,6 +610,14 @@ OpSchema& OpSchema::Input(
       differentiation_category);
 }
 
+OpSchema& OpSchema::Output(int n, FormalParameter formal_parameter) {
+  if (outputs_.size() <= static_cast<size_t>(n)) {
+    outputs_.resize(n + 1);
+  }
+  outputs_[n] = std::move(formal_parameter);
+  return *this;
+}
+
 OpSchema& OpSchema::Output(
     int n,
     std::string name,
@@ -613,22 +627,20 @@ OpSchema& OpSchema::Output(
     bool is_homogeneous,
     int min_arity,
     DifferentiationCategory differentiation_category) {
-  if (int(outputs_.size()) <= n) {
-    outputs_.resize(n + 1);
-  }
-  outputs_[n] = FormalParameter(
-      std::move(name),
+  return Output(
+      n,
+      FormalParameter(
+          std::move(name),
 #ifndef __ONNX_NO_DOC_STRINGS
-      description,
+          description,
 #else
-      std::string(),
+          std::string(),
 #endif
-      std::move(type_str),
-      param_option,
-      is_homogeneous,
-      min_arity,
-      differentiation_category);
-  return *this;
+          std::move(type_str),
+          param_option,
+          is_homogeneous,
+          min_arity,
+          differentiation_category));
 }
 
 OpSchema& OpSchema::Output(
@@ -824,11 +836,15 @@ OpSchema& OpSchema::FunctionBody(
 }
 
 const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool validate) const {
-  if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
-    requested_opset_version = since_version_;
+  if (opset_version_to_function_body_.empty())
+    return nullptr;
+  // Return latest FunctionProto when opset version request is not set
+  if (requested_opset_version == OpSchema::kUninitializedSinceVersion) {
+    return opset_version_to_function_body_.rbegin()->second.get();
+  }
   std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it =
       opset_version_to_function_body_.upper_bound(requested_opset_version);
-  if (!opset_version_to_function_body_.empty() && it != opset_version_to_function_body_.begin()) {
+  if (it != opset_version_to_function_body_.begin()) {
     --it;
     int function_since_version = it->first;
     const FunctionProto* function = it->second.get();

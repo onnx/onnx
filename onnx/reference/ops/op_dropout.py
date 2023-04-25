@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
@@ -6,7 +8,6 @@ from typing import Optional, Tuple
 import numpy as np
 from numpy.random import RandomState  # type: ignore
 
-from onnx.defs import onnx_opset_version
 from onnx.reference.op_run import OpRun
 
 
@@ -62,9 +63,3 @@ class Dropout_12(DropoutBase):
         return self._private_run(
             X, seed=seed, ratio=ratio, training_mode=training_mode  # type: ignore
         )
-
-
-if onnx_opset_version() >= 12:
-    Dropout = Dropout_12
-else:
-    Dropout = Dropout_7  # type: ignore

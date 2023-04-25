@@ -34,7 +34,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
         OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
-        OpSchema::numeric_types_for_math_reduction_with_bfloat(),
+        OpSchema::numeric_types_for_math_reduction_ir4(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);

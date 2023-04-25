@@ -4,33 +4,33 @@ trigger:
 jobs:
 - job: 'Test'
   pool:
-    vmImage: 'Ubuntu-18.04'
+    vmImage: 'Ubuntu-20.04'
   strategy:
     matrix:
       py39-ml-debug:
         python.version: '3.9'
         onnx_ml: 1
-        onnx_debug: 1
+        build_type: 'Debug'
         documentation: 0
       py38:
         python.version: '3.8'
         onnx_ml: 0
-        onnx_debug: 0
+        build_type: 'Release'
         documentation: 0
       py38-ml:
         python.version: '3.8'
         onnx_ml: 1
-        onnx_debug: 0
+        build_type: 'Release'
         documentation: 1
       py37:
         python.version: '3.7'
         onnx_ml: 0
-        onnx_debug: 0
+        build_type: 'Release'
         documentation: 0
       py37-ml:
         python.version: '3.7'
         onnx_ml: 1
-        onnx_debug: 0
+        build_type: 'Release'
         documentation: 0
     maxParallel: 6
 
@@ -48,29 +48,29 @@ jobs:
       sudo apt-get install libprotobuf-dev protobuf-compiler
       python -m pip install -q --upgrade pip
       python -m pip install -q -r requirements-release.txt
+      # still test protobuf==3.20.2 at least in a CI
+      python -m pip install protobuf==3.20.2
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
 
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
-      if [ '$(onnx_debug)' == '1' ]; then
+      if [ '$(build_type)' == 'Debug' ]; then
         export DEBUG=1
       fi
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
       fi
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
-      python setup.py --quiet install
+      # enable more sanitizer
+      export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+      python setup.py install
     displayName: 'Install ONNX and dependencies'
 
   - script: |
       source venv/bin/activate
 
-      # check line endings to be UNIX
-      find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
-      git status
-      git diff --exit-code
+      python -m pip install -q -r requirements-dev.txt
 
       # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py
@@ -91,7 +91,7 @@ jobs:
       ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
-      pytest
+      pytest -sv
       if [ $? -ne 0 ]; then
         echo "pytest failed"
         exit 1
@@ -130,7 +130,7 @@ jobs:
       if [ '$(documentation)' == '1' ]; then
         source venv/bin/activate
         pip install -r docs/docsgen/source/requirements.txt
-        cd docs/docsgen && make text -j auto
+        cd docs/docsgen && make text
       fi
     displayName: Test documentation
     continueOnError: true  # the documentation generates errors due to operators documentation

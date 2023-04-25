@@ -5,7 +5,7 @@ title: ''
 labels: 'question'
 assignees: ''
 
- 
+
 
 ---
 # Ask a Question
@@ -16,8 +16,8 @@ assignees: ''
 ### Further information
 - Relevant Area: <!--e.g., model usage, backend, best practices, converters, shape_inference, version_converter, training, test, operators, IR, ONNX Hub, data preprocessing, CI pipelines. -->
 
-- Is this issue related to a specific model?  
-**Model name**: <!-- *e.g. mnist* -->  
+- Is this issue related to a specific model?
+**Model name**: <!-- *e.g. mnist* -->
 **Model opset**: <!-- *e.g. 17* -->
 
 ### Notes

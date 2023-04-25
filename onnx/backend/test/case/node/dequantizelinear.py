@@ -1,11 +1,14 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx import TensorProto
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
+from onnx.helper import make_tensor
 
 
 class DequantizeLinear(Base):
@@ -60,4 +63,44 @@ class DequantizeLinear(Base):
             inputs=[x, x_scale, x_zero_point],
             outputs=[y],
             name="test_dequantizelinear_axis",
+        )
+
+    @staticmethod
+    def export_e4m3fn() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale"],
+            outputs=["y"],
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+        x_scale = np.float32(2)
+        y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale],
+            outputs=[y],
+            name="test_dequantizelinear_e4m3fn",
+        )
+
+    @staticmethod
+    def export_e5m2() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale"],
+            outputs=["y"],
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
+        x_scale = np.float32(2)
+        y = np.array([0.0, 1.0, 2.0, 98304.0, 192.0], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale],
+            outputs=[y],
+            name="test_dequantizelinear_e5m2",
         )

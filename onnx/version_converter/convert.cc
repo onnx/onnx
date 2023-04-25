@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -71,13 +73,17 @@ void DefaultVersionConverter::convert_graph(
       debug(std::string("Finding schema for ") + std::string(cur_op->kind().toString()));
       const std::string op_name = cur_op->kind().toString();
       if (op_name == "ConstantFill") {
-        std::cerr
-            << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
-               "Please be advised the converted model may not be working properly if target runtime does not support this "
-               "experimental op."
-            << std::endl;
+        if (DEBUG) {
+          std::cerr
+              << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
+                 "Please be advised the converted model may not be working properly if target runtime does not support this "
+                 "experimental op."
+              << std::endl;
+        }
       } else if (cur_op->domain() != "" && cur_op->domain() != "ai.onnx") {
-        std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << std::endl;
+        if (DEBUG) {
+          std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << std::endl;
+        }
       } else if (op_name != "Undefined" && op_name != "Captured") {
         auto& op_domain_map = all_schemas.at(op_name);
         OpSetID curr_id(curr_version);
@@ -87,8 +93,9 @@ void DefaultVersionConverter::convert_graph(
           auto& op_adapter = adapter_lookup(cur_op, curr_id, next_id);
           // If adapter_lookup returns null, no adapter is present.
           // Error thrown by adapter_lookup
-          if (DEBUG)
+          if (DEBUG) {
             std::cerr << "Applying adapter" << std::endl;
+          }
           // adapt should handle replacing node in graph
           cur_op = op_adapter.adapt(g, cur_op);
           it = graph_node_list_iterator(cur_op, kNextDirection);

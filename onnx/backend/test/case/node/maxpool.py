@@ -1,12 +1,17 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
-from .pool_op_common import get_output_shape, get_pad_shape, pool
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
+from onnx.backend.test.case.node.pool_op_common import (
+    get_output_shape,
+    get_pad_shape,
+    pool,
+)
 
 
 class MaxPool(Base):

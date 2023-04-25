@@ -8,16 +8,16 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* Constant_ver13_doc = R"DOC(
+static const char* Constant_ver19_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
-    13,
+    19,
     OpSchema()
-        .SetDoc(Constant_ver13_doc)
+        .SetDoc(Constant_ver19_doc)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -55,10 +55,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRINGS,
             false)
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Constrain input and output types to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir9(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto* value = ctx.getAttribute("value");
           auto* sparse_value = ctx.getAttribute("sparse_value");
@@ -541,28 +538,33 @@ static const char* Range_ver11_doc = R"DOC(
 Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
 up to `limit` (exclusive).
 
-The number of elements in the output of range is computed as below-
+The number of elements in the output of range is computed as below:
 
-`number_of_elements = max( ceil( (limit - start) / delta ) , 0 )`
+```
+number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
+```
 
-The pseudocode determining the contents of the output is shown below-
+The pseudocode determining the contents of the output is shown below:
 
-`for(int i=0; i<number_of_elements; ++i)`
+```
+for(int i=0; i<number_of_elements; ++i) {
+  output[i] =  start + (i * delta);
+}
+```
 
-`{`
+Example 1
 
-`    output[i] =  start + (i * delta);  `
-
-`}`
-
-`Example 1`
+```
 Inputs: start = 3, limit = 9, delta = 3
 Output: [3, 6]
+```
 
-`Example 2`
+Example 2
+
+```
 Inputs: start = 10, limit = 4, delta = -2
 Output: [10, 8, 6]
-
+```
 )DOC";
 
 template <typename T>

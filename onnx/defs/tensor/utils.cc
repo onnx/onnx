@@ -3,6 +3,7 @@
  */
 
 #include "onnx/defs/tensor/utils.h"
+#include <numeric>
 
 namespace ONNX_NAMESPACE {
 void resizeShapeInferenceHelper(
@@ -164,6 +165,9 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   std::vector<int64_t> axes;
   if (axes_attr) {
     axes = RetrieveValues<int64_t>(*axes_attr);
+    checkAxesRange(axes, rank_x);
+    adjustNegativeAxes(axes, rank_x);
+    checkDuplicateAxes(axes, rank_x);
   }
   if (hasSizesInput) {
     if (!axes.empty()) {
@@ -174,14 +178,6 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
             ") does not match the number of axes (",
             axes.size(),
             ").");
-      }
-
-      std::vector<bool> tmp(rank_x, false);
-      for (auto axis : axes) {
-        if (tmp[axis]) {
-          fail_shape_inference("Repeated axis: ", axis);
-        }
-        tmp[axis] = true;
       }
     } else {
       // sizes_data contains scales for all axes
@@ -245,6 +241,10 @@ void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
       fail_shape_inference("Input 'scales' must have float element type.");
     }
   } // nullptr != scales
+}
+
+void resizeShapeInference_opset18_to_19(InferenceContext& ctx) {
+  resizeShapeInferenceVersioned(ctx, 19);
 }
 
 void resizeShapeInference_opset13_to_18(InferenceContext& ctx) {
@@ -322,4 +322,126 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
   }
 }
 
+std::function<void(OpSchema&)> PadDocGenerator(const char* description, const char* mode_description) {
+  return [=](OpSchema& schema) {
+    schema.SetDoc(description);
+    schema.Attr("mode", mode_description, AttributeProto::STRING, std::string("constant"));
+    schema.Input(0, "data", "Input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
+    schema.Input(
+        1,
+        "pads",
+        "Tensor of integers indicating the number of padding elements to add or remove (if negative) "
+        "at the beginning and end of each axis. For 2D input tensor, it is the number of pixels. "
+        "`pads` should be a 1D tensor of shape [2 * num_axes] where `num_axes` refers to the number "
+        "of elements in the `axes` input or the input rank if `axes` are not provided explicitly. "
+        "`pads` format should be: [x1_begin, x2_begin, ..., x1_end, x2_end,...], "
+        "where xi_begin is the number of pad values added at the beginning of axis `axes[i]` and "
+        "xi_end, the number of pad values added at the end of axis `axes[i]`.",
+        "tensor(int64)",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+    schema.Input(
+        2,
+        "constant_value",
+        "(Optional) A scalar value to be used if the mode chosen is `constant` (by default it is 0, "
+        "empty string or False).",
+        "T",
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+    schema.Input(
+        3,
+        "axes",
+        "1-D tensor of axes that `pads` apply to. Negative value means counting dimensions "
+        "from the back. Accepted range is [-r, r-1] where r = rank(data). Behavior is undefined if an "
+        "axis is repeated. If not provided, all axes are assumed (`[0, 1, ..., input_rank-1]`).",
+        "Tind",
+        OpSchema::Optional,
+        true,
+        1,
+        OpSchema::NonDifferentiable);
+
+    schema.Output(0, "output", "Tensor after padding.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
+    schema.TypeConstraint(
+        "T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.");
+    schema.TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // Type inference
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      // Shape inference needs the input data shape
+      if (!hasNInputShapes(ctx, 1)) {
+        return;
+      }
+      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto input_rank = input_shape.dim_size();
+
+      std::vector<int64_t> axes;
+      if (hasInputShape(ctx, 3)) { //'axes' input
+        auto axes_initializer = ctx.getInputData(3);
+        if (axes_initializer == nullptr)
+          return; // can't do shape inference then
+
+        axes = ParseData<int64_t>(axes_initializer);
+        checkAxesRange(axes, input_rank);
+        adjustNegativeAxes(axes, input_rank);
+        checkDuplicateAxes(axes, input_rank);
+      } else {
+        axes.resize(input_rank);
+        std::iota(axes.begin(), axes.end(), 0);
+      }
+
+      int num_axes = axes.size();
+      auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+      // Populating default dims
+      std::vector<TensorShapeProto_Dimension*> out_dims(input_rank);
+      for (int i = 0; i < input_rank; ++i) {
+        out_dims[i] = output_shape->add_dim();
+      }
+
+      // Shape Inference if
+      //     1. 'pads' are available.
+      // and 2. 'axes' are available, or default.
+      const TensorProto* pads_initializer = ctx.getInputData(1);
+      if (nullptr != pads_initializer && !axes.empty()) {
+        if (pads_initializer->dims_size() != 1 || pads_initializer->data_type() != TensorProto::INT64) {
+          fail_shape_inference("'pads' input must be a 1D (shape: [2 * num_axes]) tensor of type int64");
+        }
+
+        const auto& pads_data = ParseData<int64_t>(pads_initializer);
+        if (pads_data.size() != static_cast<size_t>(2 * num_axes)) {
+          fail_shape_inference(
+              "Pads has incorrect number of values. Expected 2 * ",
+              num_axes,
+              " values. Got ",
+              pads_data.size(),
+              " values.");
+        }
+
+        // Set default dim values
+        for (int i = 0; i < input_rank; ++i) {
+          const auto& input_dim = input_shape.dim(i);
+          if (input_dim.has_dim_value()) {
+            out_dims[i]->set_dim_value(input_dim.dim_value());
+          }
+        }
+
+        for (int i = 0; i < num_axes; ++i) {
+          auto axis = axes[i];
+          const auto& input_dim = input_shape.dim(axis);
+          auto& out_dim = *out_dims[axis];
+          auto total_pad = pads_data[i] + pads_data[num_axes + i];
+          if (input_dim.has_dim_value()) {
+            out_dim.set_dim_value(input_dim.dim_value() + total_pad);
+          } else if (total_pad == 0) {
+            out_dim = input_dim;
+          }
+        }
+      }
+    });
+  };
+};
 } // namespace ONNX_NAMESPACE

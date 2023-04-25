@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
@@ -7,18 +9,17 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 
 import onnx
+from onnx.backend.test.case.test_case import TestCase
+from onnx.backend.test.case.utils import import_recursive
 from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
     GraphProto,
     ModelProto,
     NodeProto,
-    OperatorSetIdProto,
+    TensorProto,
     TypeProto,
 )
-
-from ..test_case import TestCase
-from ..utils import import_recursive
 
 _NodeTestCases = []
 _TargetOpType = None
@@ -93,7 +94,7 @@ def _rename_edges_helper(
 def function_expand_helper(
     node: NodeProto, function_proto: FunctionProto, op_prefix: str
 ) -> List[NodeProto]:
-    io_names_map = dict()
+    io_names_map = {}
     attribute_map = {a.name: a for a in node.attribute}
 
     for idx in range(len(function_proto.input)):
@@ -131,7 +132,7 @@ def function_testcase_helper(
 ) -> Tuple[List[Tuple[List[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, node.domain)
+    schema = onnx.defs.get_schema(test_op, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
     # opset versions include the op's since_version and other opset versions
@@ -182,6 +183,10 @@ def _extract_value_info(
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
             type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+        elif isinstance(input, TensorProto):
+            elem_type = input.data_type
+            shape = tuple(input.dims)
+            type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
         else:
             elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
             shape = input.shape
@@ -230,8 +235,8 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # the latest opset vesion that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
-    inputs: Sequence[np.ndarray],
-    outputs: Sequence[np.ndarray],
+    inputs: Sequence[Union[np.ndarray, TensorProto]],
+    outputs: Sequence[Union[np.ndarray, TensorProto]],
     name: str,
     **kwargs: Any,
 ) -> None:
@@ -270,7 +275,7 @@ def expect(
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
         produce_opset_version = onnx.defs.get_schema(
-            node.op_type, node.domain
+            node.op_type, domain=node.domain
         ).since_version
         kwargs["opset_imports"] = [
             onnx.helper.make_operatorsetid(node.domain, produce_opset_version)
@@ -299,11 +304,12 @@ def expect(
     ) -> List[TypeProto]:
         if node_inputs:
             if node_inputs[0] != "":
-                return [present_value_info[0].type] + merge(
-                    node_inputs[1:], present_value_info[1:]
-                )
+                return [
+                    present_value_info[0].type,
+                    *merge(node_inputs[1:], present_value_info[1:]),
+                ]
             else:
-                return [TypeProto()] + merge(node_inputs[1:], present_value_info)
+                return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
         return []
 
     merged_types = merge(list(node.input), inputs_vi)

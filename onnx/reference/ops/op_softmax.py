@@ -1,9 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
 import numpy as np
 
-from ._op import OpRunUnaryNum
+from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Softmax(OpRunUnaryNum):
@@ -12,4 +14,4 @@ class Softmax(OpRunUnaryNum):
         tmp = X - X.max(axis=axis, keepdims=1)  # type: ignore
         Y = np.exp(tmp)
         Y /= Y.sum(axis=axis, keepdims=1)  # type: ignore
-        return (Y,)
+        return (Y.astype(X.dtype),)

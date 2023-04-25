@@ -1,5 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221,W0613
+# pylint: disable=R0913,R0914,W0221,W0613
 
 from onnx.reference.op_run import OpRun
 
@@ -21,30 +23,36 @@ class If(OpRun):
         """
         return True
 
-    def _run(self, cond, context=None, else_branch=None, then_branch=None):  # type: ignore
-
+    def _run(self, cond, context=None, else_branch=None, then_branch=None, attributes=None):  # type: ignore
         if len(cond.shape) > 0:
-            if all(cond):
+            try:
+                evaluated_condition = all(cond)
+            except ValueError as e:
+                raise ValueError(
+                    f"Unable to evaluate the condition with {type(cond)}, "
+                    f"shape={cond.shape}, dtype={cond.dtype}."
+                ) from e
+            if evaluated_condition:
                 self._log("  -- then> {%r}", context)
-                outputs = self._run_then_branch(context)  # type: ignore
+                outputs = self._run_then_branch(context, attributes=attributes)  # type: ignore
                 self._log("  -- then<")
                 final = tuple(outputs)
                 branch = "then"
             else:
                 self._log("  -- else> {%r}", context)
-                outputs = self._run_else_branch(context)  # type: ignore
+                outputs = self._run_else_branch(context, attributes=attributes)  # type: ignore
                 self._log("  -- else<")
                 final = tuple(outputs)
                 branch = "else"
         elif cond:
             self._log("  -- then> {%r}", context)
-            outputs = self._run_then_branch(context)  # type: ignore
+            outputs = self._run_then_branch(context, attributes=attributes)  # type: ignore
             self._log("  -- then<")
             final = tuple(outputs)
             branch = "then"
         else:
             self._log("  -- else> {%r}", context)
-            outputs = self._run_else_branch(context)  # type: ignore
+            outputs = self._run_else_branch(context, attributes=attributes)  # type: ignore
             self._log("  -- else<")
             final = tuple(outputs)
             branch = "else"
@@ -60,6 +68,6 @@ class If(OpRun):
                 inits = [i.name for i in br.obj.graph.initializer]
                 raise RuntimeError(  # pragma: no cover
                     f"Output {i!r} (branch={branch!r}, name={names[i]!r}) is None, "
-                    f"available inputs={list(sorted(context))}, initializers={inits}."
+                    f"available inputs={sorted(context)}, initializers={inits}."
                 )
         return final

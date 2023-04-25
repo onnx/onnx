@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,R0915,R1702,R1716,W0221
 
@@ -212,4 +214,4 @@ class GridSample(OpRun):
                             dx = x - x0 - 1
                             dy = y - y0 - 1
                             Y[n, c, oy, ox] = self._gs_bicubic_interpolate(p, dx, dy)
-        return (Y,)
+        return (Y.astype(X.dtype),)

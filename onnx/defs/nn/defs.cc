@@ -220,11 +220,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  ```
  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
  ```
- if ceil_mode is enabled
-
- ```
- * pad_shape[i] is sum of pads along axis i
- ```
+ if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```
@@ -311,7 +307,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
 
 ONNX_OPERATOR_SET_SCHEMA(
     AveragePool,
-    11,
+    19,
     OpSchema()
         .FillUsing(PoolOpSchemaGenerator(
             "AveragePool",
@@ -319,6 +315,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
             false,
             false))
+        .Attr(
+            "dilations",
+            "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
         .Attr(
             "count_include_pad",
             "Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.",
@@ -557,11 +558,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
  ```
  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
  ```
- if ceil_mode is enabled
-
- ```
- * pad_shape[i] is sum of pads along axis i
- ```
+ if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```
@@ -1371,6 +1368,104 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 11, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
+static const char* DeformConv_ver19_doc = R"DOC(
+Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
+This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    DeformConv,
+    19,
+    OpSchema()
+        .SetDoc(DeformConv_ver19_doc)
+        .Input(
+            0,
+            "X",
+            "Input data tensor. For 2D image data, it has shape (N, C, H, W) where N is the batch size, "
+            "C is the number of input channels, and H and W are the height and width. "
+            "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
+            "D1 to Dn are the spatial dimension sizes. Most common use cases have n = 2 or 3.",
+            "T")
+        .Input(
+            1,
+            "W",
+            "Weight tensor that will be used in the convolutions. It has shape (oC, C/group, kH, kW), "
+            "where oC is the number of output channels and kH and kW are the kernel height and width. "
+            "For more than 2 dimensions, it has shape (oC, C/group, k1, k2, ... , kn).",
+            "T")
+        .Input(
+            2,
+            "offset",
+            "Offset tensor denoting the offset for the sampling locations in the convolution kernel. "
+            "It has shape (N, offset_group * kH * kW * 2, oH, oW) for 2D data or "
+            "(N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Use linear interpolation"
+            "for fractional offset values. Sampling locations outside of the padded input tensor gives zero.",
+            "T")
+        .Input(
+            3,
+            "B",
+            "Optional 1D bias of length oC to be added to the convolution. Default is a tensor of zeros.",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "mask",
+            "The mask tensor to be applied to each position in the convolution kernel. "
+            "It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or "
+            "(N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Default is a "
+            "tensor of ones.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "Y",
+            "Output data tensor that contains the result of convolution. It has shape (N, oC, oH, oW) "
+            "for 2D data or (N, oC, o1, o2, ..., on) for nD data",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .Attr(
+            "dilations",
+            "Dilation value along each spatial axis of the kernel. Default is 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "group",
+            "Number of groups the input and output channels, C and oC, are divided into. C and oC must both "
+            "be divisible by group. Default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "kernel_shape",
+            "Shape of the convolution kernel. If not present, it is inferred from the shape of input W.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "offset_group",
+            "Number of groups of offset. C must be divisible by offset_group. Default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "pads",
+            "Padding for the beginning and end along each spatial axis. The values represent the number of pixels "
+            "added to the beginning and end of the corresponding axis and can take any nonnegative value. "
+            "The format should be as follows: [x1_begin, x2_begin, ..., x1_end, x2_end, ...], where xi_begin "
+            "is the number of pixels added at the beginning of axis `i` and xi_end is the number of pixels "
+            "added at the end of axis `i`. Default is 0 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "strides",
+            "Stride along each spatial axis. Default is 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          convPoolShapeInference(ctx, true, false, 0, 1);
+        }));
+
 // For GlobalPool operations.
 void globalPoolTypeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1507,8 +1602,8 @@ statistics in inference mode (training_mode=False, default),
 and the running statistics in training mode (training_mode=True).
 There are multiple cases for the number of outputs, which we list below:
 
-Output case #1: Y, running_mean, running_var (training_mode=True)
-Output case #2: Y (training_mode=False)
+* Output case #1: Y, running_mean, running_var (training_mode=True)
+* Output case #2: Y (training_mode=False)
 
 When training_mode=False, extra outputs are invalid.
 The outputs are updated as follows when training_mode=True:
@@ -1517,17 +1612,15 @@ running_mean = input_mean * momentum + current_mean * (1 - momentum)
 running_var = input_var * momentum + current_var * (1 - momentum)
 
 Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-
+```
 where:
-
+```
 current_mean = ReduceMean(X, axis=all_except_channel_index)
 current_var =  ReduceVar(X, axis=all_except_channel_index)
-
-Notice that ReduceVar refers to the population variance, and it equals to
-sum(sqrd(x_i - x_avg)) / N
-where N is the population size (this formula does not use sample size N - 1).
-
 ```
+Notice that `ReduceVar` refers to the population variance, and it equals to
+`sum(sqrd(x_i - x_avg)) / N`
+where `N` is the population size (this formula does not use sample size `N - 1`).
 
 The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
 
@@ -1919,10 +2012,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Constrain input and output to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output to all tensor types.")
         .Attr(
             "axis",
             "Indicate up to which input dimensions "
@@ -1953,14 +2043,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* LRN_ver13_doc = R"DOC(
 Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
 It normalizes over local input regions.
-The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
-of shape (N x C x D1 x D2, ..., Dk), its region is
-{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
+The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
+of shape `(N x C x D1 x D2, ..., Dk)`, its region is
+`{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}`.
 
-square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
-where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
+`square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2)`,
+where `max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))`.
 
-Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
+`Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta`
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2204,7 +2294,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* mvn_ver13_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
-      on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
+      on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
 )DOC";
 
 static const std::vector<int64_t> mvn_default_axes = {0, 2, 3};
@@ -2361,10 +2451,10 @@ Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/gener
 but it only supports *batched* multi-dimensional image tensors.
 Another implementation in Python with N-dimension support can be found at https://github.com/f-dangel/unfoldNd/.
 
-NOTE: Although specifying image_shape looks redundant because it could be calculated from
-      convolution formulas, it is required as input for more advanced scenarios as explained
-      at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
-
+NOTE:
+  Although specifying image_shape looks redundant because it could be calculated from
+  convolution formulas, it is required as input for more advanced scenarios as explained
+  at PyTorch's implementation (https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/Col2Im.cpp#L10)
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2443,7 +2533,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_with_bfloat(),
+            OpSchema::all_tensor_types_ir4(),
             "Constrain input and output types to all numeric tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { col2imShapeInference(ctx); }));
 
@@ -2676,20 +2766,20 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* GroupNormalization_ver18_doc = R"DOC(
-A GroupNormalization function. Carries out group normalization as described in 
-the paper https://arxiv.org/abs/1803.08494 
+A GroupNormalization function. Carries out group normalization as described in
+the paper https://arxiv.org/abs/1803.08494
 
 This operator transforms input according to
 ```
 y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
 ```
-where the mean and variance are computed per instance per group of channels, and 
-`scale` and `bias` should be specified for each group of channels. The number of 
-groups `num_groups` should be divisible by the number of channels so that there are 
+where the mean and variance are computed per instance per group of channels, and
+`scale` and `bias` should be specified for each group of channels. The number of
+groups `num_groups` should be divisible by the number of channels so that there are
 an equal number of channels per group.
 
-When the number of groups is the same as the number of channels, this operator is 
-equivalent to InstanceNormalization. When there is only one group, this operator 
+When the number of groups is the same as the number of channels, this operator is
+equivalent to InstanceNormalization. When there is only one group, this operator
 is equivalent to LayerNormalization.
 )DOC";
 

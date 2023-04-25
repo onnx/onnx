@@ -1,3 +1,7 @@
+<!--
+Copyright (c) ONNX Project Contributors
+-->
+
 <!--- SPDX-License-Identifier: Apache-2.0 -->
 
 # ONNX release management
@@ -68,4 +72,3 @@ Distribution
 
 The distribution of files follows the basic procedures described in
 [Creating Releases](https://help.github.com/articles/creating-releases/).
-

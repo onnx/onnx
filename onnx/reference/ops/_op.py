@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Any, Dict
@@ -163,22 +165,27 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
                     self.axes = None
                 else:
                     self.axes = tuple(self.axes)
-            elif self.axes in [[], tuple()]:
+            elif self.axes in [[], ()]:
                 self.axes = None
             elif isinstance(self.axes, list):
                 self.axes = tuple(self.axes)
 
     def is_axes_empty(self, axes):
-        return axes is None or len(axes.shape) == 0 or axes.shape[0] == 0
+        return axes is None
 
     def handle_axes(self, axes):
-        if (
-            axes is not None and len(axes.shape) > 0 and axes.shape[0] > 0
-        ) and not isinstance(axes, int):
-            if isinstance(axes, np.ndarray) and len(axes.shape) == 0:
-                axes = int(axes)
-            else:
-                axes = tuple(axes.ravel().tolist()) if len(axes) > 0 else None
-        if isinstance(axes, np.ndarray) and (len(axes.shape) == 0 or 0 in axes.shape):
-            axes = None
-        return axes
+        if isinstance(axes, tuple):
+            if len(axes) == 0:
+                return None
+            return axes
+        if axes is None:
+            return None
+        if isinstance(axes, (int, tuple)):
+            return axes
+        if not isinstance(axes, np.ndarray):
+            raise TypeError(f"axes must be an array, not {type(axes)}.")
+        if len(axes.shape) == 0:
+            return int(axes)
+        if 0 in axes.shape:
+            return None
+        return tuple(axes.ravel().tolist())

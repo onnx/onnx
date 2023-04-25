@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0902,R0912,R0913,R0914,R0915,R1702,W0221
 
@@ -25,7 +27,7 @@ class PreCalc:
 
 class RoiAlign(OpRun):
     @staticmethod
-    def PreCalcForBilinearInterpolate(  # type: ignore
+    def pre_calc_for_bilinear_interpolate(  # type: ignore
         height: int,
         width: int,
         pooled_height: int,
@@ -114,7 +116,7 @@ class RoiAlign(OpRun):
                         pre_calc_index += 1
 
     @staticmethod
-    def RoiAlignForward(  # type: ignore
+    def roi_align_forward(  # type: ignore
         output_shape: Tuple[int, int, int, int],
         bottom_data,
         spatial_scale,
@@ -181,7 +183,7 @@ class RoiAlign(OpRun):
                     roi_bin_grid_h * roi_bin_grid_w * pooled_width * pooled_height
                 )
             ]
-            RoiAlign.PreCalcForBilinearInterpolate(
+            RoiAlign.pre_calc_for_bilinear_interpolate(
                 height,
                 width,
                 pooled_height,
@@ -233,20 +235,12 @@ class RoiAlign(OpRun):
                                 for _ix in range(roi_bin_grid_w):
                                     pc = pre_calc[pre_calc_index]
                                     val = max(
-                                        max(
-                                            max(
-                                                pc.w1
-                                                * bottom_data[
-                                                    offset_bottom_data + pc.pos1
-                                                ],
-                                                pc.w2
-                                                * bottom_data[
-                                                    offset_bottom_data + pc.pos2
-                                                ],
-                                            ),
-                                            pc.w3
-                                            * bottom_data[offset_bottom_data + pc.pos3],
-                                        ),
+                                        pc.w1
+                                        * bottom_data[offset_bottom_data + pc.pos1],
+                                        pc.w2
+                                        * bottom_data[offset_bottom_data + pc.pos2],
+                                        pc.w3
+                                        * bottom_data[offset_bottom_data + pc.pos3],
                                         pc.w4
                                         * bottom_data[offset_bottom_data + pc.pos4],
                                     )
@@ -285,7 +279,7 @@ class RoiAlign(OpRun):
         y_dims = (num_rois, num_channels, output_height, output_width)
         Y = np.empty(y_dims, dtype=X.dtype).flatten()
 
-        self.RoiAlignForward(
+        self.roi_align_forward(
             y_dims,
             X.flatten(),
             spatial_scale,
@@ -299,4 +293,4 @@ class RoiAlign(OpRun):
             coordinate_transformation_mode.lower() == "half_pixel",
             batch_indices.flatten(),
         )
-        return (Y.reshape((y_dims)),)
+        return (Y.reshape(y_dims).astype(X.dtype),)

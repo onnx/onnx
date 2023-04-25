@@ -8,14 +8,14 @@
 namespace ONNX_NAMESPACE {
 std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit) {
   if (supports8bit) {
-    auto data_types = OpSchema::numeric_types_for_math_reduction_with_bfloat();
+    auto data_types = OpSchema::numeric_types_for_math_reduction_ir4();
     data_types.push_back("tensor(uint8)");
     data_types.push_back("tensor(int8)");
 
     return data_types;
   }
 
-  return OpSchema::numeric_types_for_math_reduction_with_bfloat();
+  return OpSchema::numeric_types_for_math_reduction_ir4();
 }
 
 std::function<void(OpSchema&)> ReduceDocGenerator_opset13_18(
@@ -27,9 +27,10 @@ std::function<void(OpSchema&)> ReduceDocGenerator_opset13_18(
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
-Computes the {name} of the input tensor's element along the provided axes. The resulting
+Computes the {name} of the input tensor's elements along the provided axes. The resulting
 tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
-the resulting tensor has the reduced dimension pruned.
+the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
+valid.
 
 The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
 False instead of True.)DOC";

@@ -1,37 +1,48 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# This file is for testing ONNX with ONNXRuntime during ONNX Release
-# Create a general scenario to use ONNXRuntime with ONNX
+# This file is for testing ONNX with ONNX Runtime
+# Create a general scenario to use ONNX Runtime with ONNX
 # pylint: disable=C0415
+import unittest
 
 
-def example_test_with_ort() -> None:
-    import numpy
-    import numpy.random
-    import onnxruntime as rt
-    from onnxruntime.datasets import get_example
+class TestONNXRuntime(unittest.TestCase):
+    def test_with_ort_example(self) -> None:
+        try:
+            import onnxruntime  # pylint: disable=W0611
 
-    import onnx
+            del onnxruntime
+        except ImportError:
+            raise unittest.SkipTest("onnxruntime not installed") from None
 
-    # get certain example model from ORT
-    example1 = get_example("sigmoid.onnx")
+        from numpy import float32, random
+        from onnxruntime import InferenceSession
+        from onnxruntime.datasets import get_example
 
-    # test ONNX functions
-    model = onnx.load(example1)
-    onnx.checker.check_model(model)
-    onnx.checker.check_model(model, True)
-    inferred_model = onnx.shape_inference.infer_shapes(model, True)
-    temp_filename = "temp.onnx"
-    onnx.save(inferred_model, temp_filename)
+        from onnx import checker, load, shape_inference, version_converter
 
-    # test ONNXRuntime functions
-    sess = rt.InferenceSession(temp_filename)
-    input_name = sess.get_inputs()[0].name
-    output_name = sess.get_outputs()[0].name
-    x = numpy.random.random((3, 4, 5))
-    x = x.astype(numpy.float32)
+        # get certain example model from ORT using opset 9
+        example1 = get_example("sigmoid.onnx")
 
-    sess.run([output_name], {input_name: x})
+        # test ONNX functions
+        model = load(example1)
+        checker.check_model(model)
+        checker.check_model(model, full_check=True)
+        inferred_model = shape_inference.infer_shapes(
+            model, check_type=True, strict_mode=True, data_prop=True
+        )
+        converted_model = version_converter.convert_version(inferred_model, 10)
+
+        # test ONNX Runtime functions
+        sess = InferenceSession(converted_model.SerializeToString())
+        input_name = sess.get_inputs()[0].name
+        output_name = sess.get_outputs()[0].name
+        x = random.random((3, 4, 5))
+        x = x.astype(float32)
+
+        sess.run([output_name], {input_name: x})
 
 
 if __name__ == "__main__":
-    example_test_with_ort()
+    unittest.main()

@@ -1,9 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
 import numpy as np
 
-from .op_softmax import Softmax
+from onnx.reference.ops.op_softmax import Softmax
 
 
 class LogSoftmax(Softmax):

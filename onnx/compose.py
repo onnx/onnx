@@ -1,10 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, MutableMapping, Optional, Set, Tuple
+# pylint: disable=unidiomatic-typecheck
 
-from onnx import GraphProto, ModelProto
-from onnx import TensorProto as tp
-from onnx import checker, helper, utils
+from typing import Dict, List, MutableMapping, Optional, Set, Tuple
+
+from onnx import GraphProto, ModelProto, TensorProto, checker, helper, utils
 
 
 def check_overlapping_names(
@@ -76,7 +78,7 @@ def check_overlapping_names(
     return result
 
 
-def merge_graphs(
+def merge_graphs(  # pylint: disable=too-many-branches,too-many-statements
     g1: GraphProto,
     g2: GraphProto,
     io_map: List[Tuple[str, str]],
@@ -208,9 +210,9 @@ def merge_graphs(
     # Connecting outputs of the first graph with the inputs of the second
     for node_idx in range(g2_nodes_begin, g2_nodes_end):
         node = g.node[node_idx]
-        for index, name in enumerate(node.input):
-            if name in reversed_io_map:
-                node.input[index] = reversed_io_map[name]
+        for index, name_ in enumerate(node.input):
+            if name_ in reversed_io_map:
+                node.input[index] = reversed_io_map[name_]
 
     if inputs:
         input_set = set(inputs)
@@ -263,7 +265,7 @@ def merge_graphs(
     return g
 
 
-def merge_models(
+def merge_models(  # pylint: disable=too-many-branches
     m1: ModelProto,
     m2: ModelProto,
     io_map: List[Tuple[str, str]],
@@ -325,9 +327,7 @@ def merge_models(
     ir_version = m1.ir_version
 
     opset_import_map: MutableMapping[str, int] = {}
-    opset_imports = [entry for entry in m1.opset_import] + [
-        entry for entry in m2.opset_import
-    ]
+    opset_imports = list(m1.opset_import) + list(m2.opset_import)
 
     for entry in opset_imports:
         if entry.domain in opset_import_map:
@@ -411,7 +411,7 @@ def merge_models(
     return model
 
 
-def add_prefix_graph(
+def add_prefix_graph(  # pylint: disable=too-many-branches
     graph: GraphProto,
     prefix: str,
     rename_nodes: Optional[bool] = True,
@@ -421,6 +421,7 @@ def add_prefix_graph(
     rename_initializers: Optional[bool] = True,
     rename_value_infos: Optional[bool] = True,
     inplace: Optional[bool] = False,
+    name_map: Optional[Dict[str, str]] = None,
 ) -> GraphProto:
     """Adds a prefix to names of elements in a graph: nodes, edges, inputs, outputs,
     initializers, sparse initializer, value infos.
@@ -439,6 +440,7 @@ def add_prefix_graph(
         rename_value_infos (bool): Whether to prefix value info names
         inplace (bool): If True, mutates the graph directly.
                         Otherwise, a copy will be created
+        name_map: (Dict): shared name_map in subgraph
 
     Returns:
         GraphProto
@@ -455,24 +457,30 @@ def add_prefix_graph(
     def _prefixed(prefix: str, name: str) -> str:
         return prefix + name if len(name) > 0 else name
 
-    name_map = {}
+    if name_map is None:
+        name_map = {}
     if rename_edges:
         for n in g.node:
             for e in n.input:
                 name_map[e] = _prefixed(prefix, e)
             for e in n.output:
                 name_map[e] = _prefixed(prefix, e)
-    else:
-        if rename_outputs:
-            for entry in g.output:
-                name_map[entry.name] = _prefixed(prefix, entry.name)
-        if rename_inputs:
-            for entry in g.input:
-                name_map[entry.name] = _prefixed(prefix, entry.name)
+
+    if rename_inputs:
+        for entry in g.input:
+            name_map[entry.name] = _prefixed(prefix, entry.name)
+    if rename_outputs:
+        for entry in g.output:
+            name_map[entry.name] = _prefixed(prefix, entry.name)
 
     if rename_nodes:
         for n in g.node:
             n.name = _prefixed(prefix, n.name)
+            for attribute in n.attribute:
+                if attribute.g:
+                    add_prefix_graph(
+                        attribute.g, prefix, inplace=True, name_map=name_map
+                    )
 
     if rename_initializers:
         for init in g.initializer:
@@ -490,12 +498,12 @@ def add_prefix_graph(
             name_map[entry.name] = _prefixed(prefix, entry.name)
 
     for n in g.node:
-        for i in range(len(n.output)):
+        for i, output in enumerate(n.output):
             if n.output[i] in name_map:
-                n.output[i] = name_map[n.output[i]]
-        for i in range(len(n.input)):
+                n.output[i] = name_map[output]
+        for i, input_ in enumerate(n.input):
             if n.input[i] in name_map:
-                n.input[i] = name_map[n.input[i]]
+                n.input[i] = name_map[input_]
 
     for in_desc in g.input:
         if in_desc.name in name_map:
@@ -626,12 +634,12 @@ def expand_out_dim_graph(
     orig_out_names = [output.name for output in g.output]
 
     for n in g.node:
-        for i in range(len(n.output)):
-            if n.output[i] in orig_out_names:
-                n.output[i] = n.output[i] + f"_collapsed_dim_{dim_idx}"
-        for i in range(len(n.input)):
-            if n.input[i] in orig_out_names:
-                n.input[i] = n.input[i] + f"_collapsed_dim_{dim_idx}"
+        for i, out in enumerate(n.output):
+            if out in orig_out_names:
+                n.output[i] = out + f"_collapsed_dim_{dim_idx}"
+        for i, inp in enumerate(n.input):
+            if inp in orig_out_names:
+                n.input[i] = inp + f"_collapsed_dim_{dim_idx}"
 
     expand_dim_k = g.name + "_expand_out_dim_idx"
     g.node.append(
@@ -642,7 +650,7 @@ def expand_out_dim_graph(
             name=f"{expand_dim_k}-constant",
             value=helper.make_tensor(
                 name=f"{expand_dim_k}-value",
-                data_type=tp.INT64,
+                data_type=TensorProto.INT64,
                 dims=[
                     1,
                 ],

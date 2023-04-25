@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,W0221
 
@@ -33,9 +35,9 @@ class StringNormalizer(OpRun):
         else:
             raw_stops = set(stopwords)
             if case_change_action == "LOWER":
-                stops = set(w.lower() for w in stopwords)
+                stops = {w.lower() for w in stopwords}
             elif case_change_action == "UPPER":
-                stops = set(w.upper() for w in stopwords)
+                stops = {w.upper() for w in stopwords}
             else:
                 stops = set(stopwords)
         res = np.empty(x.shape, dtype=x.dtype)
@@ -87,7 +89,8 @@ class StringNormalizer(OpRun):
                 pylocale.setlocale(pylocale.LC_ALL, slocale)
             except pylocale.Error as e:
                 warnings.warn(
-                    f"Unknown local setting {slocale!r} (current: {pylocale.getlocale()!r}) - {e!r}."
+                    f"Unknown local setting {slocale!r} (current: {pylocale.getlocale()!r}) - {e!r}.",
+                    stacklevel=1,
                 )
         cout[:] = cin[:]
 
@@ -129,7 +132,7 @@ class StringNormalizer(OpRun):
         """
         Transforms accentuated unicode symbols into their simple counterpart.
         Source: `sklearn/feature_extraction/text.py
-        <https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/
+        <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/
         feature_extraction/text.py#L115>`_.
 
         :param s: string

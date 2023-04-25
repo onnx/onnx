@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,6 +10,7 @@
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/parser.h"
+#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
@@ -102,6 +105,174 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
   ++counter;
 }
 
+// Testing the function-definitions provided for function-ops in ONNX schema registry.
+// We type-check the function-definition for all possible input-typings, as permitted
+// by the op-schema. Since the type-checking is dependent on attribute-values, we specify
+// the attribute-values for which we want to do the testing down below.
+
+// The set of attribute-values (for testing a function) is represented using a vector.
+using AttributeValues = std::vector<AttributeProto>;
+
+// FunctionOpAttributeMap: Used to implement a map from OpSchema to a set of AttributeValues
+// (implemented as a vector). The testing will be done for each attribute-values specified.
+
+struct FunctionOpAttributeMap {
+  std::unordered_map<std::string, std::vector<AttributeValues>> map;
+
+  std::string key(std::string domain, std::string opname, int opset_version) const {
+    return domain + ":" + opname + ":" + std::to_string(opset_version);
+  }
+
+  void addTestCase(const std::string& opname, int opset_version, std::initializer_list<const char*> attributes) {
+    auto& schema_test_cases = map[key("", opname, opset_version)];
+    schema_test_cases.push_back(AttributeValues());
+    auto& test_case = schema_test_cases.back();
+    for (auto attr_text : attributes) {
+      test_case.push_back(AttributeProto());
+      OnnxParser::Parse(test_case.back(), attr_text);
+    }
+  }
+
+  FunctionOpAttributeMap() {
+    addTestCase("Elu", 6, {"alpha = 1.0"});
+    addTestCase("LeakyRelu", 16, {"alpha = 0.1"});
+    addTestCase("HardSigmoid", 6, {"alpha = 0.2", "beta=0.5"});
+    addTestCase("Selu", 6, {"alpha = 1.6", "gamma=1.05"});
+    addTestCase("ReduceL1", 18, {}); // Use default-value for attributes
+    addTestCase("ReduceL1", 18, {"keepdims = 0"});
+    addTestCase("ReduceL1", 18, {"noop_with_empty_axes = 1"});
+    addTestCase("ReduceL2", 18, {});
+    addTestCase("ReduceL2", 18, {"noop_with_empty_axes = 1", "keepdims = 0"});
+    addTestCase("ReduceSumSquare", 18, {});
+    addTestCase("ReduceLogSumExp", 18, {});
+    addTestCase("ThresholdedRelu", 10, {"alpha = 0.9"});
+    addTestCase("HannWindow", 17, {"output_datatype = 1", "periodic = 1"});
+    addTestCase("HammingWindow", 17, {"output_datatype = 1", "periodic = 1"});
+    addTestCase("BlackmanWindow", 17, {"output_datatype = 1", "periodic = 1"});
+    addTestCase("MeanValueNormalization", 13, {});
+
+    // The following test-cases fails, correctly so: Some clarification/changes required
+    // to handle unsigned integers or similar issues:
+    // addTestCase("Shrink", 9, {"bias = 0.0", "lambd = 0.5"});
+    // addTestCase("ReduceLogSum", 18, {});
+    // addTestCase("Range", 11, {});
+
+    // The following test-case fails because the checker doesn't support handling of
+    // default-values of attributes of function-ops
+    // addTestCase("ThresholdedRelu", 10, {});
+  }
+
+  const std::vector<AttributeValues>& getTestCases(const OpSchema& schema) {
+    auto key_value = key(schema.domain(), schema.Name(), schema.SinceVersion());
+    auto it = map.find(key_value);
+    if (it != map.end())
+      return it->second;
+    if (schema.attributes().size() == 0) {
+      // Test with no-attributes
+      map[key_value].push_back(std::vector<AttributeProto>());
+    }
+    return map[key_value];
+  }
+
+  static FunctionOpAttributeMap& instance() {
+    static FunctionOpAttributeMap _instance;
+    return _instance;
+  }
+};
+
+struct FunctionTypeChecker {
+  const OpSchema& schema;
+  const FunctionProto& function_proto;
+  const std::vector<AttributeValues>* attribute_cases;
+
+  FunctionTypeChecker(const OpSchema& op_schema, const FunctionProto& proto)
+      : schema(op_schema), function_proto(proto) {
+    attribute_cases = &FunctionOpAttributeMap::instance().getTestCases(op_schema);
+  }
+
+  // Binds each type-variable in schema to a type-value
+  std::unordered_map<std::string, DataType> typeVarBindings;
+
+  std::vector<std::string> errors;
+
+  void recordError(const std::string& error, AttributeValues attrs) {
+    std::ostringstream ostr;
+    ostr << "Type checking failed for instantiation " << schema.Name() << ":" << schema.SinceVersion() << " {";
+    for (auto& pair : typeVarBindings) {
+      ostr << pair.first << " = " << *pair.second << ", ";
+    }
+    for (auto& attr : attrs) {
+      ostr << attr << ", ";
+    }
+    ostr << "}\n" << error << "\n";
+    errors.push_back(ostr.str());
+  }
+
+  void recordSuccess(AttributeValues attrs) {
+    std::cout << "Type checking succeeded for instantiation " << schema.Name() << ":" << schema.SinceVersion() << " {";
+    for (auto& pair : typeVarBindings) {
+      std::cout << pair.first << " = " << *pair.second << ", ";
+    }
+    for (auto& attr : attrs) {
+      std::cout << attr << ", ";
+    }
+    std::cout << "}\n";
+  }
+
+  // forTypeVar: This is used to iterate through all possible bindings of type-values
+  // to all type-variables used in the op schema, and invoke the type-checker for
+  // each possible instantiation.
+  void forTypeVar(int i) {
+    auto& typeConstraintVector = schema.typeConstraintParams();
+    if (i < typeConstraintVector.size()) {
+      std::string typeVar = typeConstraintVector[i].type_param_str;
+      auto& values = schema.typeConstraintMap().at(typeVar).first;
+      for (auto typeValue : values) {
+        typeVarBindings[typeVar] = typeValue;
+        // Now, process remaining type-variables
+        forTypeVar(i + 1);
+      }
+    } else {
+      // Generated a complete instantiation of type-values to all type-variables.
+      // Now, check for this instantiation.
+      typeCheckBinding();
+    }
+  }
+
+  // typeCheckBinding: Type-check the function-body for the current type-instantiation
+  void typeCheckBinding() {
+    std::vector<TypeProto> input_types;
+    for (const auto& input : schema.inputs()) {
+      DataType datatype = (1 == input.GetTypes().size())
+          ?
+          // Select the single possible type
+          (*(input.GetTypes().begin()))
+          :
+          // Select the type bound to the type-var in current instantiation
+          typeVarBindings[input.GetTypeStr()];
+      input_types.push_back(Utils::DataTypeUtils::ToTypeProto(datatype));
+    }
+
+    for (auto& attribute_vals : *attribute_cases) {
+      ONNX_TRY {
+        auto output_types = shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
+      }
+      ONNX_CATCH(ONNX_NAMESPACE::InferenceError & e) {
+        ONNX_HANDLE_EXCEPTION(([&]() { recordError(e.what(), attribute_vals); }));
+      }
+    }
+  }
+
+  std::string checkAll() {
+    if (attribute_cases->size() > 0)
+      forTypeVar(0);
+    std::string all_errors = "";
+    for (const std::string& error : errors)
+      all_errors += error;
+    return all_errors;
+  }
+};
+
 void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int& counter) {
   // Verify function proto is valid
   if (!function_proto) {
@@ -128,6 +299,11 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int
   // Verify function op has compatible Type constraints defined in
   // op and function body.
   VerifyTypeConstraint(op, function_proto, counter);
+
+  FunctionTypeChecker type_checker(op, *function_proto);
+  auto type_errors = type_checker.checkAll();
+  auto success = (type_errors == "");
+  ASSERT_TRUE(success) << type_errors;
 }
 
 // Verify registered ops with function body has compatible

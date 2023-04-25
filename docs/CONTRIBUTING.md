@@ -1,4 +1,8 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # Development
 
@@ -10,9 +14,11 @@ Then, after you have made changes to Python and C++ files:
 - `C++ files`: you need to install these again to trigger the native extension build.
 
 Assuming build succeed in the initial step, simply running
-```
+
+```sh
 pip install -e .
 ```
+
 from onnx root dir should work.
 
 ## Folder structure
@@ -33,7 +39,7 @@ from onnx root dir should work.
 
 [Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh these docs, run the following commands from the repo root and commit the results. Note `ONNX_ML=0` updates Operators.md whereas `ONNX_ML=1` updates Operators-ml.md:
 
-```
+```pwsh
 # Windows
 set ONNX_ML=0
 # UNIX
@@ -51,26 +57,39 @@ Before proposing a new operator, please read [the tutorial](AddNewOp.md).
 # Code style
 
 We use flake8, mypy, and clang-format for checking code format.
-*Note: You'll find the versions of these tools in `setup.py`.*
-You can run these checks by:
 
-```
-pip install -e .[lint]
+To run the checks locally, install `lintrunner` and the linters with
 
-./tools/style.sh
+```sh
+pip install lintrunner lintrunner-adapters
+lintrunner init
 ```
+
+Then lint with
+
+```sh
+lintrunner
+```
+
+format with
+
+```sh
+lintrunner -a
+```
+
+Run `lintrunner --help` and see the `.lintrunner.toml` file for more usage examples, as well as how to create new linters.
 
 # Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
 
-```
+```sh
 pip install pytest nbval
 ```
 
 After installing pytest, run from the root of the repo:
 
-```
+```sh
 pytest
 ```
 
@@ -78,7 +97,7 @@ to begin the tests.
 
 You'll need to regenerate test coverage too, by running this command from the root of the repo:
 
-```
+```sh
 python onnx\backend\test\stat_coverage.py
 ```
 
@@ -89,42 +108,29 @@ Some functionalities are tested with googletest. Those tests are listed in `test
 To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e .`.
 
 ### Linux and MacOS
+
 The cpp tests require dynamically linking to built libraries.
 
-```bash
+```sh
 export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
 .setuptools-cmake-build/onnx_gtests
 ```
 
 ### Windows
-```bat
+
+```pwsh
 # If you set DEBUG=1, use `.setuptools-cmake-build\Debug\onnx_gtests.exe` instead
 .setuptools-cmake-build\Release\onnx_gtests.exe
 ```
 
-# Static typing (mypy)
-
-We use [mypy](http://mypy-lang.org/) to run static type checks on the onnx code base. To check that your code passes, you'll first need to install the mypy type checker. If you're using python 3, call from your onnx source folder:
-
-```
-pip install -e .[lint]
-```
-
-*Note: You'll find the version we're currently using in `setup.py`.*
-
-After having installed mypy, you can run the type checks:
-
-```
-python setup.py typecheck
-```
 # CI Pipelines
 
-Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipelines.md). Passing [Lint Python CI](../.github/workflows/lint.yaml) is not required but recommended.
+Every PR needs to pass CIs before merge. CI pipelines details are [here](CIPipelines.md).
 
 # Other developer documentation
 
-* [How to implement ONNX backend (ONNX to something converter)](ImplementingAnOnnxBackend.md)
-* [Backend test infrastructure and how to add tests](OnnxBackendTest.md)
+- [How to implement ONNX backend (ONNX to something converter)](ImplementingAnOnnxBackend.md)
+- [Backend test infrastructure and how to add tests](OnnxBackendTest.md)
 
 # License
 

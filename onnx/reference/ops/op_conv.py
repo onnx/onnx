@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,R0915,R1702,W0221
 
@@ -146,7 +148,7 @@ def _conv_implementation_im2col(  # type: ignore
                     td += cv.shape[1]
                 res.append((b, cv))
 
-        new_shape = [X.shape[0]] + list(res[0][1].shape[1:])
+        new_shape = [X.shape[0], *list(res[0][1].shape[1:])]
         new_shape[1] = td
         final = np.zeros(tuple(new_shape), dtype=res[0][1].dtype)
         p = 0
@@ -165,7 +167,7 @@ def _conv_implementation_im2col(  # type: ignore
     c2 = im2col(X, kernel_shape, dilations, pads, strides)
     w_shape = W.shape[: -len(kernel_shape) :] + (-1,)
     w_reshaped = W.reshape(w_shape)
-    perm = [len(w_shape) - 1] + list(range(len(w_shape) - 1))
+    perm = [len(w_shape) - 1, *list(range(len(w_shape) - 1))]
     w_perm = np.transpose(w_reshaped, perm)
     mul = np.matmul(c2, w_perm)
     if B is not None:
@@ -223,7 +225,7 @@ def _conv_implementation(  # type: ignore
                     td += cv.shape[1]
                 res.append((b, cv))
 
-        new_shape = [X.shape[0]] + list(res[0][1].shape[1:])
+        new_shape = [X.shape[0], *list(res[0][1].shape[1:])]
         new_shape[1] = td
         final = np.zeros(tuple(new_shape), dtype=res[0][1].dtype)
         p = 0
@@ -285,13 +287,14 @@ def _conv_implementation(  # type: ignore
         oh = -1 * (kh % 2)
         bh = -h0
         eh = h_out * sth
-        res = np.zeros((X.shape[0], W.shape[0]) + (h_out,))
+        res = np.zeros((X.shape[0], W.shape[0]) + (h_out,))  # type: ignore[assignment]
         if B is not None:
             res[:, :, :] += B.reshape((1, -1, 1))  # type: ignore
 
         for n in range(0, sN):
             for nw in range(W.shape[0]):
                 for c in range(0, sC):
+                    w = W[nw : nw + 1, c : c + 1]
                     for io in range(bh, eh, sth):
                         hr = (io - bh) // sth
                         if hr >= h_out:
@@ -299,18 +302,21 @@ def _conv_implementation(  # type: ignore
                         i = io + kh % 2
                         ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
                         img = X[n : n + 1, c : c + 1, ih1:ih2]
-                        w = W[nw : nw + 1, c : c + 1]
                         if img.shape != w.shape:
                             jh1, jh2 = max(-oh - i, 0), min(kh, kh + sH - (i + oh + kh))
-                            w = w[:1, :1, jh1:jh2]
-                            if img.shape != w.shape:
+                            w_ = w[:1, :1, jh1:jh2]
+                            if img.shape != w_.shape:
                                 raise RuntimeError(
-                                    f"Unexpected shape {img.shape} != {w.shape}, oh={oh}, "
+                                    f"Unexpected shape {img.shape} != {w_.shape}, oh={oh}, "
                                     f"i={i}, kh={kh}, sH={sH}, sth={sth}."
                                 )
-                            s = (img * w).sum()
+                            s = np.dot(img.reshape((1, -1)), w_.reshape((-1, 1)))[
+                                0, 0
+                            ]  # (img * w_).sum()
                         else:
-                            s = (img * w).sum()
+                            s = np.dot(img.reshape((1, -1)), w.reshape((-1, 1)))[
+                                0, 0
+                            ]  # (img * w).sum()
                         res[n, nw, hr] += s  # type: ignore
 
         return res
@@ -328,24 +334,27 @@ def _conv_implementation(  # type: ignore
         oh, ow = -1 * (kh % 2), -1 * (kw % 2)
         bh, bw = -h0, -w0
         eh, ew = h_out * sth, w_out * stw
-        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out))
+        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out))  # type: ignore[assignment]
         if B is not None:
             res[:, :, :, :] = B.reshape((1, -1, 1, 1))  # type: ignore
 
         for n in range(0, sN):
             for nw in range(W.shape[0]):
                 for c in range(0, sC):
+                    w = W[nw : nw + 1, c : c + 1]
                     for io in range(bh, eh, sth):
+                        hr = (io - bh) // sth
+                        if hr >= h_out:
+                            continue
+                        i = io + kh % 2
+                        ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
                         for jo in range(bw, ew, stw):
-                            hr, wr = (io - bh) // sth, (jo - bw) // stw
-                            if hr >= h_out or wr >= w_out:
+                            wr = (jo - bw) // stw
+                            if wr >= w_out:
                                 continue
-                            i = io + kh % 2
                             j = jo + kw % 2
-                            ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
                             iw1, iw2 = max(0, j + ow), min(j + ow + kw, sW)
                             img = X[n : n + 1, c : c + 1, ih1:ih2, iw1:iw2]
-                            w = W[nw : nw + 1, c : c + 1]
                             if img.shape != w.shape:
                                 jh1, jh2 = max(-oh - i, 0), min(
                                     kh, kh + sH - (i + oh + kh)
@@ -353,15 +362,19 @@ def _conv_implementation(  # type: ignore
                                 jw1, jw2 = max(-ow - j, 0), min(
                                     kw, kw + sW - (j + ow + kw)
                                 )
-                                w = w[:1, :1, jh1:jh2, jw1:jw2]
-                                if img.shape != w.shape:
+                                w_ = w[:1, :1, jh1:jh2, jw1:jw2]
+                                if img.shape != w_.shape:
                                     raise RuntimeError(
-                                        f"Unexpected shape {img.shape} != {w.shape}, oh={oh}, ow={ow}, "
+                                        f"Unexpected shape {img.shape} != {w_.shape}, oh={oh}, ow={ow}, "
                                         f"i={i}, j={j}, kh={kh}, kw={kw}, sH={sH}, sW={sW}, sth={sth}, stw={stw}."
                                     )
-                                s = (img * w).sum()
+                                s = np.dot(img.reshape((1, -1)), w_.reshape((-1, 1)))[
+                                    0, 0
+                                ]  # (img * w_).sum()
                             else:
-                                s = (img * w).sum()
+                                s = np.dot(img.reshape((1, -1)), w.reshape((-1, 1)))[
+                                    0, 0
+                                ]  # (img * w).sum()
                             res[n, nw, hr, wr] += s  # type: ignore
 
         return res
@@ -379,31 +392,33 @@ def _conv_implementation(  # type: ignore
         oh, ow, oz = -1 * (kh % 2), -1 * (kw % 2), -1 * (kz % 2)
         bh, bw, bz = -h0, -w0, -z0
         eh, ew, ez = h_out * sth, w_out * stw, z_out * stz
-        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out, z_out))
+        res = np.zeros((X.shape[0], W.shape[0]) + (h_out, w_out, z_out))  # type: ignore[assignment]
         if B is not None:
             res[:, :, :, :, :] = B.reshape((1, -1, 1, 1, 1))  # type: ignore
 
         for n in range(0, sN):
             for nw in range(W.shape[0]):
                 for c in range(0, sC):
+                    w = W[nw : nw + 1, c : c + 1]
                     for io in range(bh, eh, sth):
+                        hr = (io - bh) // sth
+                        if hr >= h_out:
+                            continue
+                        i = io + kh % 2
+                        ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
                         for jo in range(bw, ew, stw):
+                            wr = (jo - bw) // stw
+                            if wr >= w_out:
+                                continue
+                            j = jo + kw % 2
+                            iw1, iw2 = max(0, j + ow), min(j + ow + kw, sW)
                             for zo in range(bz, ez, stz):
-                                hr, wr, zr = (
-                                    (io - bh) // sth,
-                                    (jo - bw) // stw,
-                                    (zo - bz) // stz,
-                                )
-                                if hr >= h_out or wr >= w_out or zr >= z_out:
+                                zr = (zo - bz) // stz
+                                if zr >= z_out:
                                     continue
-                                i = io + kh % 2
-                                j = jo + kw % 2
                                 z = zo + kz % 2
-                                ih1, ih2 = max(0, i + oh), min(i + oh + kh, sH)
-                                iw1, iw2 = max(0, j + ow), min(j + ow + kw, sW)
                                 iz1, iz2 = max(0, z + oz), min(z + oz + kz, sZ)
                                 img = X[n : n + 1, c : c + 1, ih1:ih2, iw1:iw2, iz1:iz2]
-                                w = W[nw : nw + 1, c : c + 1]
                                 if img.shape != w.shape:
                                     jh1, jh2 = max(-oh - i, 0), min(
                                         kh, kh + sH - (i + oh + kh)
@@ -414,16 +429,24 @@ def _conv_implementation(  # type: ignore
                                     jz1, jz2 = max(-oz - z, 0), min(
                                         kz, kz + sZ - (z + oz + kz)
                                     )
-                                    w = w[:1, :1, jh1:jh2, jw1:jw2, jz1:jz2]
-                                    if img.shape != w.shape:
+                                    w_ = w[:1, :1, jh1:jh2, jw1:jw2, jz1:jz2]
+                                    if img.shape != w_.shape:
                                         raise RuntimeError(
-                                            f"Unexpected shape {img.shape} != {w.shape}, oh={oh}, ow={ow}, oz={oz}, "
+                                            f"Unexpected shape {img.shape} != {w_.shape}, oh={oh}, ow={ow}, oz={oz}, "
                                             f"i={i}, j={j}, z={z}, kh={kh}, kw={kw}, kz={kz}, "
                                             f"sH={sH}, sW={sW}, sZ={sZ}, sth={sth}, stw={stw}, stz={stz}."
                                         )
-                                    s = (img * w).sum()
+                                    s = np.dot(
+                                        img.reshape((1, -1)), w_.reshape((-1, 1))
+                                    )[
+                                        0, 0
+                                    ]  # (img * w_).sum()
                                 else:
-                                    s = (img * w).sum()
+                                    s = np.dot(
+                                        img.reshape((1, -1)), w.reshape((-1, 1))
+                                    )[
+                                        0, 0
+                                    ]  # (img * w).sum()
                                 res[n, nw, hr, wr, zr] += s  # type: ignore
 
         return res
@@ -454,5 +477,5 @@ class Conv(OpRun):
         return (
             _conv_implementation(
                 X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
-            ),
+            ).astype(X.dtype),
         )

@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
@@ -9,7 +11,7 @@ from onnx.reference.op_run import OpRun
 class PRelu(OpRun):
     def _run(self, x, slope):  # type: ignore
         try:
-            return (np.where(x > 0, x, x * slope),)
+            return (np.where(x > 0, x, x * slope).astype(x.dtype),)
         except ValueError as e:
             # Broadcast did not work according to numpy.
             # The logic is then the following, if slope has d elements,
@@ -28,5 +30,5 @@ class PRelu(OpRun):
                         new_shape.append(1)
                 if n == 1:
                     xs = x * slope.reshape(tuple(new_shape))
-                    return (np.where(x > 0, x, xs),)
+                    return (np.where(x > 0, x, xs).astype(x.dtype),)
             raise e

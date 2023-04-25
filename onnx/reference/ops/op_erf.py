@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
@@ -5,7 +7,7 @@ from math import erf
 
 import numpy as np
 
-from ._op import OpRunUnaryNum
+from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Erf(OpRunUnaryNum):

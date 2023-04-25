@@ -1,11 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
-
-from .op_conv import _conv_implementation
+from onnx.reference.ops.op_conv import _conv_implementation
 
 
 class QLinearConv(OpRun):
