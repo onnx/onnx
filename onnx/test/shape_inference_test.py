@@ -1655,7 +1655,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
         )
 
     def test_average_pool_with_same_upper_padding_and_stride_and_dilation(self) -> None:
