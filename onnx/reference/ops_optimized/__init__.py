@@ -7,4 +7,4 @@
 from onnx.reference.ops_optimized.op_conv_optimized import Conv
 
 
-__all__ = [conv]
+__all__ = [Conv]
