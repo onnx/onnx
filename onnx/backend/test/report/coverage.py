@@ -201,7 +201,7 @@ class Coverage:
                     existing_nodes[node_name][str(backend)] = "Passed!"
                 else:
                     existing_nodes[node_name][str(backend)] = "Failed!"
-            summaries: Dict[Any, Any] = dict()
+            summaries: Dict[Any, Any] = {}
             if "Summary" in existing_nodes:
                 summaries = existing_nodes["Summary"]
                 del existing_nodes["Summary"]

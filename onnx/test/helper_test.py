@@ -391,6 +391,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 16)], 8)
         test([("", 17)], 8)
         test([("", 18)], 8)
+        test([("", 19)], 9)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
@@ -403,9 +404,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
 
 class TestHelperTensorFunctions(unittest.TestCase):
     def test_make_string_tensor(self) -> None:
-        string_list = list(
-            s.encode("utf-8") for s in ["Amy", "Billy", "Cindy", "David"]
-        )
+        string_list = [s.encode("utf-8") for s in ["Amy", "Billy", "Cindy", "David"]]
         tensor = helper.make_tensor(
             name="test",
             data_type=TensorProto.STRING,
@@ -465,6 +464,38 @@ class TestHelperTensorFunctions(unittest.TestCase):
         self.assertEqual(tensor.name, "test")
         np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
 
+    def test_make_float8e4m3fn_tensor(self) -> None:
+        y = helper.make_tensor(
+            "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 50000, 10.1]
+        )
+        ynp = numpy_helper.to_array(y)
+        expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
+        np.testing.assert_equal(expected, ynp)
+
+    def test_make_float8e4m3fnuz_tensor(self) -> None:
+        y = helper.make_tensor(
+            "zero_point", TensorProto.FLOAT8E4M3FNUZ, [5], [0, 0.5, 1, 50000, 10.1]
+        )
+        ynp = numpy_helper.to_array(y)
+        expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
+        np.testing.assert_equal(expected, ynp)
+
+    def test_make_float8e5m2_tensor(self) -> None:
+        y = helper.make_tensor(
+            "zero_point", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 50000, 96]
+        )
+        ynp = numpy_helper.to_array(y)
+        expected = np.array([0, 0.5, 1, 49152, 96], dtype=np.float32)
+        np.testing.assert_equal(expected, ynp)
+
+    def test_make_float8e5m2fnuz_tensor(self) -> None:
+        y = helper.make_tensor(
+            "zero_point", TensorProto.FLOAT8E5M2FNUZ, [5], [0, 0.5, 1, 50000, 96]
+        )
+        ynp = numpy_helper.to_array(y)
+        expected = np.array([0, 0.5, 1, 49152, 96], dtype=np.float32)
+        np.testing.assert_equal(expected, ynp)
+
     def test_make_bfloat16_tensor_raw(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
         np_array = np.array(
@@ -517,6 +548,71 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(tensor.name, "test")
         np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
+
+    def test_make_float8e4m3fn_tensor_raw(self) -> None:
+        expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
+        f8 = np.array(
+            [helper.float32_to_float8e4m3(x) for x in expected], dtype=np.uint8
+        )
+        packed_values = f8.tobytes()
+        y = helper.make_tensor(
+            name="test",
+            data_type=TensorProto.FLOAT8E4M3FN,
+            dims=list(expected.shape),
+            vals=packed_values,
+            raw=True,
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(expected, ynp)
+
+    def test_make_float8e4m3fnuz_tensor_raw(self) -> None:
+        expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
+        f8 = np.array(
+            [helper.float32_to_float8e4m3(x, uz=True) for x in expected], dtype=np.uint8
+        )
+        packed_values = f8.tobytes()
+        y = helper.make_tensor(
+            name="test",
+            data_type=TensorProto.FLOAT8E4M3FNUZ,
+            dims=list(expected.shape),
+            vals=packed_values,
+            raw=True,
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(expected, ynp)
+
+    def test_make_float8e5m2_tensor_raw(self) -> None:
+        expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
+        f8 = np.array(
+            [helper.float32_to_float8e5m2(x) for x in expected], dtype=np.uint8
+        )
+        packed_values = f8.tobytes()
+        y = helper.make_tensor(
+            name="test",
+            data_type=TensorProto.FLOAT8E5M2,
+            dims=list(expected.shape),
+            vals=packed_values,
+            raw=True,
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(expected, ynp)
+
+    def test_make_float8e5m2fnuz_tensor_raw(self) -> None:
+        expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
+        f8 = np.array(
+            [helper.float32_to_float8e5m2(x, fn=True, uz=True) for x in expected],
+            dtype=np.uint8,
+        )
+        packed_values = f8.tobytes()
+        y = helper.make_tensor(
+            name="test",
+            data_type=TensorProto.FLOAT8E5M2FNUZ,
+            dims=list(expected.shape),
+            vals=packed_values,
+            raw=True,
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(expected, ynp)
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
@@ -691,6 +787,10 @@ class TestPrintableGraph(unittest.TestCase):
         if t
         not in {
             TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
             TensorProto.STRING,
             TensorProto.COMPLEX64,
             TensorProto.COMPLEX128,
@@ -713,7 +813,15 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
     [
         t
         for t in helper.get_all_tensor_dtypes()
-        if t not in {TensorProto.BFLOAT16, TensorProto.STRING}
+        if t
+        not in {
+            TensorProto.BFLOAT16,
+            TensorProto.STRING,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+        }
     ],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )

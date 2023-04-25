@@ -23,7 +23,7 @@ jobs:
         architecture: ['x64']
 
     steps:
-    - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
+    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
     - name: Checkout submodules
       shell: bash
       run: |
@@ -32,7 +32,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@3faddefb4c02470d61266571df739b19e3a006be 
+      uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b 
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -43,7 +43,7 @@ jobs:
         python -m pip install -q -r requirements-release.txt
 
     - name: Build manylinux2014_x86_64
-      uses: docker://quay.io/pypa/manylinux2014_x86_64
+      uses: docker://quay.io/pypa/manylinux2014_x86_64:latest@sha256:085b7c2c1bcb45b936e5478fe24a5142b0519e242a0104142fd50d569d6cb922
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}

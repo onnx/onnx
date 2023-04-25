@@ -234,7 +234,7 @@ class NonMaxSuppression(OpRun):
                             BoxInfo(class_scores[box_index], box_index)
                         )
 
-                sorted_boxes = list(sorted(candidate_boxes))
+                sorted_boxes = sorted(candidate_boxes)
 
                 selected_boxes_inside_class = []  # type: ignore
                 # Get the next box with top score, filter by iou_threshold.

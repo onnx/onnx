@@ -150,12 +150,12 @@ def gen_model_test_coverage(
 ) -> None:
     f.write("# Model Test Coverage\n")
     # Process schemas
-    schema_dict = dict()
+    schema_dict = {}
     for schema in schemas:
         schema_dict[schema.name] = schema
     # Load models from each model test using Runner.prepare_model_data
     # Need to grab associated nodes
-    attrs: Dict[str, Dict[str, List[Any]]] = dict()
+    attrs: Dict[str, Dict[str, List[Any]]] = {}
     model_paths: List[Any] = []
     for rt in load_model_tests(kind="real"):
         if rt.url.startswith("onnx/backend/test/data/light/"):
@@ -192,7 +192,7 @@ def gen_model_test_coverage(
                 # Iterate through and store each node's attributes
                 for attr in node.attribute:
                     if node.op_type not in attrs:
-                        attrs[node.op_type] = dict()
+                        attrs[node.op_type] = {}
                     if attr.name not in attrs[node.op_type]:
                         attrs[node.op_type][attr.name] = []
                     if attr.type == AttributeProto.FLOAT:

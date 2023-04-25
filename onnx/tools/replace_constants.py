@@ -316,7 +316,7 @@ def replace_initializer_by_constant_of_shape(
             op_set = model.opset_import.add()  # pylint: disable=E1101
             if oimp.domain == "" and oimp.version < 11 and use_range:
                 raise RuntimeError(
-                    f"Range was introduced in " f"opset 11 but opset is {oimp.version}."
+                    f"Range was introduced in opset 11 but opset is {oimp.version}."
                 )
             if oimp.domain == "" and oimp.version < 9:
                 raise RuntimeError(
