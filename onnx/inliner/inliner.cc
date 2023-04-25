@@ -12,6 +12,8 @@
 namespace ONNX_NAMESPACE {
 namespace inliner {
 
+namespace { // internal/private API
+
 // Attribute lookup function. Returns nullptr if attribute is not found.
 using AttributeLookupFunction = std::function<const AttributeProto*(const std::string& name)>;
 
@@ -287,6 +289,10 @@ void InlineFunctions(ModelProto& model, FunctionResolver resolver) {
     append_node(node);
   }
 }
+
+}
+
+// Public API implementation:
 
 void InlineLocalFunctions(ModelProto& model) {
   OpsetMap model_imports(model.opset_import());
