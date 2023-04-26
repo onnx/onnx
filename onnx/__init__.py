@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 __all__ = [
     # Constants
     "ONNX_ML",
@@ -64,7 +66,6 @@ __all__ = [
     "write_external_data_tensors",
 ]
 # isort:skip_file
-from __future__ import annotations
 
 import os
 import typing
@@ -134,7 +135,7 @@ from onnx import (
 _SupportedFormat = Literal["protobuf", "textproto"]
 
 
-def _load_bytes(f: Union[IO[bytes], str]) -> bytes:
+def _load_bytes(f: IO[bytes] | str) -> bytes:
     if hasattr(f, "read") and callable(typing.cast(IO[bytes], f).read):
         content = typing.cast(IO[bytes], f).read()
     else:
@@ -143,7 +144,7 @@ def _load_bytes(f: Union[IO[bytes], str]) -> bytes:
     return content
 
 
-def _save_bytes(content: bytes, f: Union[IO[bytes], str]) -> None:
+def _save_bytes(content: bytes, f: IO[bytes] | str) -> None:
     if hasattr(f, "write") and callable(typing.cast(IO[bytes], f).write):
         typing.cast(IO[bytes], f).write(content)
     else:
@@ -151,7 +152,7 @@ def _save_bytes(content: bytes, f: Union[IO[bytes], str]) -> None:
             writable.write(content)
 
 
-def _get_file_path(f: Union[IO[bytes], str]) -> Optional[str]:
+def _get_file_path(f: IO[bytes] | str) -> str | None:
     if isinstance(f, str):
         return os.path.abspath(f)
     if hasattr(f, "name"):
@@ -231,7 +232,7 @@ def _deserialize(s: bytes, proto: _Proto, format_: _SupportedFormat) -> _Proto:
 
 
 def load_model(
-    f: Union[IO[bytes], str],
+    f: IO[bytes] | str,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
     load_external_data: bool = True,
 ) -> ModelProto:
@@ -260,7 +261,7 @@ def load_model(
 
 
 def load_tensor(
-    f: Union[IO[bytes], str],
+    f: IO[bytes] | str,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
 ) -> TensorProto:
     """Loads a serialized TensorProto into memory.
@@ -308,12 +309,12 @@ def load_tensor_from_string(
 
 
 def save_model(
-    proto: Union[ModelProto, bytes],
-    f: Union[IO[bytes], str],
+    proto: ModelProto | bytes,
+    f: IO[bytes] | str,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
     save_as_external_data: bool = False,
     all_tensors_to_one_file: bool = True,
-    location: Optional[str] = None,
+    location: str | None = None,
     size_threshold: int = 1024,
     convert_attribute: bool = False,
 ) -> None:
@@ -357,7 +358,7 @@ def save_model(
 
 def save_tensor(
     proto: TensorProto,
-    f: Union[IO[bytes], str],
+    f: IO[bytes] | str,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
 ) -> None:
     """
