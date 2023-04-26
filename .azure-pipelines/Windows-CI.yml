@@ -88,7 +88,7 @@ jobs:
 
 
       conda remove libprotobuf
-      conda install libprotobuf=3.20
+      conda install -y -c conda-forge libprotobuf=3.20
       python -m pip install protobuf==3.20.2
       pytest
       IF NOT %ERRORLEVEL% EQU 0 (
