@@ -100,11 +100,15 @@ jobs:
 
   - script: |
       call activate py$(python.version)
-      conda install -y -c conda-forge libprotobuf=3.20
       python -m pip install protobuf==3.20.2
+      conda install -y -c conda-forge libprotobuf=3.20
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "failed during installing conda Protobuf"
+        EXIT 1
+      )
       pytest
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "pytest failed when testing onnx with libprotobuf=3.20"
         EXIT 1
       )
-    displayName: Test Protobuf 3.20
+    displayName: Test conda 3.20
