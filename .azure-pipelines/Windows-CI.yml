@@ -96,6 +96,10 @@ jobs:
         EXIT 1
       )
 
+    displayName: Install and test ONNX
+
+  - script: |
+      call activate py$(python.version)
       conda install -y -c conda-forge libprotobuf=3.20
       python -m pip install protobuf==3.20.2
       pytest
@@ -103,6 +107,4 @@ jobs:
         @echo "pytest failed when testing onnx with libprotobuf=3.20"
         EXIT 1
       )
-
-    displayName: Install and test ONNX
-
+    displayName: Test Protobuf 3.20
