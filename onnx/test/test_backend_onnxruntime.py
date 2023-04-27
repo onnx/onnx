@@ -241,6 +241,8 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|_pad_"
         "|_resize_"
         "|_size_"
+        "|equal_string"
+        "|equal_string_broadcast"
         ")"
     )
 
