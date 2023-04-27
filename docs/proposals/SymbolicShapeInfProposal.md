@@ -120,7 +120,7 @@ class OpSchema final {
   }  
 
   DataPropagationFunction GetDataPropagationFunction() const {
-    return partial_data_propagation_function_ ? partial_data_propagation_function_ : dummyDataPropogator;  
+    return partial_data_propagation_function_ ? partial_data_propagation_function_ : dummyDataPropagator;  
   }  
 } 
 

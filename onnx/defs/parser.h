@@ -88,6 +88,10 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["complex64"] = TensorProto_DataType_COMPLEX64;
     map_["complex128"] = TensorProto_DataType_COMPLEX128;
     map_["bfloat16"] = TensorProto_DataType_BFLOAT16;
+    map_["float8e4m3fn"] = TensorProto_DataType_FLOAT8E4M3FN;
+    map_["float8e4m3fnuz"] = TensorProto_DataType_FLOAT8E4M3FNUZ;
+    map_["float8e5m2"] = TensorProto_DataType_FLOAT8E5M2;
+    map_["float8e5m2fnuz"] = TensorProto_DataType_FLOAT8E5M2FNUZ;
   }
 
   static bool IsTypeName(const std::string& dtype) {

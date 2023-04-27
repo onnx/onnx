@@ -12,7 +12,7 @@ class Unsqueeze_1(OpRun):
     def _run(self, data, axes=None):  # type: ignore
         if isinstance(axes, np.ndarray):
             axes = tuple(axes)
-        elif axes in [[], tuple()]:
+        elif axes in [[], ()]:
             axes = None
         elif isinstance(axes, list):
             axes = tuple(axes)

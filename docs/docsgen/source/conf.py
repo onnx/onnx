@@ -36,11 +36,11 @@ max_opsets = {
 # -- General configuration ---------------------------------------------------
 
 extensions = [
+    "myst_parser",
     "onnx_sphinx",
     "sphinx_copybutton",
     "sphinx_exec_code",
     "sphinx_tabs.tabs",
-    "sphinx.ext.autodoc",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.coverage",
@@ -48,10 +48,24 @@ extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.graphviz",
     "sphinx.ext.ifconfig",
-    "sphinx.ext.imgmath",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+]
+
+myst_enable_extensions = [
+    "amsmath",
+    "colon_fence",
+    "dollarmath",
+    "fieldlist",
+    "html_admonition",
+    "html_image",
+    "linkify",
+    "smartquotes",
+    "strikethrough",
+    "substitution",
+    "tasklist",
 ]
 
 coverage_show_missing_items = True
