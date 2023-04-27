@@ -161,7 +161,7 @@ def _get_file_path(f: IO[bytes] | str) -> str | None:
 
 
 def _serialize(
-    proto: google.protobuf.message.Message, format_: _SupportedFormat
+    proto: google.protobuf.message.Message, format_: _SupportedFormat, encoding: str
 ) -> bytes:
     """Serialize a in-memory proto to bytes.
 
@@ -173,7 +173,7 @@ def _serialize(
         Serialized proto in bytes.
     """
     if format_ == "textproto":
-        return google.protobuf.text_format.MessageToString(proto).encode("utf-8")
+        return google.protobuf.text_format.MessageToString(proto).encode(encoding)
 
     if format_ == "protobuf":
         if hasattr(proto, "SerializeToString") and callable(proto.SerializeToString):
@@ -197,7 +197,9 @@ def _serialize(
 _Proto = TypeVar("_Proto", bound=google.protobuf.message.Message)
 
 
-def _deserialize(s: bytes, proto: _Proto, format_: _SupportedFormat) -> _Proto:
+def _deserialize(
+    s: bytes, proto: _Proto, format_: _SupportedFormat, encoding: str
+) -> _Proto:
     """Parse bytes into a in-memory proto.
 
     Args:
@@ -217,7 +219,7 @@ def _deserialize(s: bytes, proto: _Proto, format_: _SupportedFormat) -> _Proto:
         raise TypeError(f"No ParseFromString method is detected. Type is {type(proto)}")
 
     if format_ == "textproto":
-        google.protobuf.text_format.Parse(s.decode("utf-8"), proto)
+        google.protobuf.text_format.Parse(s.decode(encoding), proto)
     elif format_ == "protobuf":
         decoded = typing.cast(Optional[int], proto.ParseFromString(s))
         if decoded is not None and decoded != len(s):
@@ -263,55 +265,63 @@ def load_model(
 def load_tensor(
     f: IO[bytes] | str,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+    encoding: str = "utf-8",
 ) -> TensorProto:
     """Loads a serialized TensorProto into memory.
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
         format: The serialization format. Default is "protobuf".
+        encoding: The encoding of the file when format is a text format. Default is "utf-8".
 
     Returns:
         Loaded in-memory TensorProto.
     """
-    return load_tensor_from_string(_load_bytes(f), format)
+    return load_tensor_from_string(_load_bytes(f), format, encoding)
 
 
 def load_model_from_string(
     s: bytes,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+    encoding: str = "utf-8",
 ) -> ModelProto:
     """Loads a binary string (bytes) that contains serialized ModelProto.
 
     Args:
         s: a string, which contains serialized ModelProto
         format: The serialization format. Default is "protobuf".
+        encoding: The encoding of the bytes when format is a text format. Default is "utf-8".
 
     Returns:
         Loaded in-memory ModelProto.
     """
-    return _deserialize(s, ModelProto(), format)
+    return _deserialize(s, ModelProto(), format, encoding)
 
 
 def load_tensor_from_string(
     s: bytes,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+    encoding: str = "utf-8",
 ) -> TensorProto:
     """Loads a binary string (bytes) that contains serialized TensorProto.
 
     Args:
         s: a string, which contains serialized TensorProto
         format: The serialization format. Default is "protobuf".
+        encoding: The encoding of the bytes when format is a text format. Default is "utf-8".
 
     Returns:
         Loaded in-memory TensorProto.
     """
-    return _deserialize(s, TensorProto(), format)
+    return _deserialize(s, TensorProto(), format, encoding)
 
 
 def save_model(
     proto: ModelProto | bytes,
     f: IO[bytes] | str,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+    *,
+    encoding: str = "utf-8",
     save_as_external_data: bool = False,
     all_tensors_to_one_file: bool = True,
     location: str | None = None,
@@ -325,6 +335,7 @@ def save_model(
         proto: should be a in-memory ModelProto
         f: can be a file-like object (has "write" function) or a string containing a file name
         format: The serialization format. Default is "protobuf".
+        encoding: The encoding of the file when format is a text format. Default is "utf-8".
         save_as_external_data: If true, save tensors to external file(s).
         all_tensors_to_one_file: Effective only if save_as_external_data is True.
             If true, save all tensors to one external file specified by location.
@@ -340,7 +351,7 @@ def save_model(
             If false, convert only non-attribute tensors to external data
     """
     if isinstance(proto, bytes):
-        proto = _deserialize(proto, ModelProto(), format_="protobuf")
+        proto = _deserialize(proto, ModelProto(), "protobuf", encoding)
 
     if save_as_external_data:
         convert_model_to_external_data(
@@ -352,7 +363,7 @@ def save_model(
         basepath = os.path.dirname(model_filepath)
         proto = write_external_data_tensors(proto, basepath)
 
-    serialized = _serialize(proto, format)
+    serialized = _serialize(proto, format, encoding)
     _save_bytes(serialized, f)
 
 
@@ -360,6 +371,7 @@ def save_tensor(
     proto: TensorProto,
     f: IO[bytes] | str,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+    encoding: str = "utf-8",
 ) -> None:
     """
     Saves the TensorProto to the specified path.
@@ -368,8 +380,9 @@ def save_tensor(
         proto: should be a in-memory TensorProto
         f: can be a file-like object (has "write" function) or a string containing a file name
         format: The serialization format. Default is "protobuf".
+        encoding: The encoding of the file when format is a text format. Default is "utf-8".
     """
-    serialized = _serialize(proto, format)
+    serialized = _serialize(proto, format, encoding)
     _save_bytes(serialized, f)
 
 
