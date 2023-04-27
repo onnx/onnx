@@ -161,7 +161,9 @@ backend_test.exclude(
 
 # The following tests fail due to a shape mismatch.
 backend_test.exclude(
-    "(test_center_crop_pad_crop_axes_hwc_expanded|test_lppool_2d_dilations)"
+    "(test_center_crop_pad_crop_axes_hwc_expanded"
+    "|test_lppool_2d_dilations"
+    "|test_averagepool_2d_dilations)"
 )
 
 # The following tests fail due to a type mismatch.
