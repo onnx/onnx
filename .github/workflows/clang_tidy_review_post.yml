@@ -9,7 +9,8 @@ on:
       - completed
 
 permissions:
-  pull-requests: write
+  checks: read|write
+  pull-requests: read|write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
