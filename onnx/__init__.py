@@ -69,12 +69,11 @@ __all__ = [
 
 import os
 import typing
-from typing import Union, IO, Optional, TypeVar
+from typing import IO
 
-import google.protobuf.message
-import google.protobuf.text_format
 from typing_extensions import Literal
 
+from onnx import serialization
 from onnx.onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import (
     load_external_data_for_model,
@@ -160,79 +159,6 @@ def _get_file_path(f: IO[bytes] | str) -> str | None:
     return None
 
 
-def _serialize(
-    proto: google.protobuf.message.Message, format_: _SupportedFormat, encoding: str
-) -> bytes:
-    """Serialize a in-memory proto to bytes.
-
-    Args:
-        proto: An in-memory proto, such as a ModelProto, TensorProto, etc
-        format: The serialization format.
-
-    Returns:
-        Serialized proto in bytes.
-    """
-    if format_ == "textproto":
-        return google.protobuf.text_format.MessageToString(proto).encode(encoding)
-
-    if format_ == "protobuf":
-        if hasattr(proto, "SerializeToString") and callable(proto.SerializeToString):
-            try:
-                result = proto.SerializeToString()
-            except ValueError as e:
-                if proto.ByteSize() >= checker.MAXIMUM_PROTOBUF:
-                    raise ValueError(
-                        "The proto size is larger than the 2 GB limit. "
-                        "Please use save_as_external_data to save tensors separately from the model file."
-                    ) from e
-                raise
-            return result  # type: ignore
-        raise TypeError(
-            f"No SerializeToString method is detected. Neither proto is a str.\ntype is {type(proto)}"
-        )
-
-    raise ValueError(f"format can only be one of {_SupportedFormat}, not '{format_}'")
-
-
-_Proto = TypeVar("_Proto", bound=google.protobuf.message.Message)
-
-
-def _deserialize(
-    s: bytes, proto: _Proto, format_: _SupportedFormat, encoding: str
-) -> _Proto:
-    """Parse bytes into a in-memory proto.
-
-    Args:
-        s: bytes containing serialized proto
-        proto: a in-memory proto object
-
-    Returns:
-        The proto instance filled in by `s`.
-
-    Raises:
-        TypeError: if `proto` is not a protobuf message.
-    """
-    if not isinstance(s, bytes):
-        raise TypeError(f"Parameter 's' must be bytes, but got type: {type(s)}")
-
-    if not (hasattr(proto, "ParseFromString") and callable(proto.ParseFromString)):
-        raise TypeError(f"No ParseFromString method is detected. Type is {type(proto)}")
-
-    if format_ == "textproto":
-        google.protobuf.text_format.Parse(s.decode(encoding), proto)
-    elif format_ == "protobuf":
-        decoded = typing.cast(Optional[int], proto.ParseFromString(s))
-        if decoded is not None and decoded != len(s):
-            raise google.protobuf.message.DecodeError(
-                f"Protobuf decoding consumed too few bytes: {decoded} out of {len(s)}"
-            )
-    else:
-        raise ValueError(
-            f"format can only be one of {_SupportedFormat}, not '{format_}'"
-        )
-    return proto
-
-
 def load_model(
     f: IO[bytes] | str,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
@@ -281,7 +207,7 @@ def load_tensor(
 
 
 def load_model_from_string(
-    s: bytes,
+    s: bytes | str,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
     encoding: str = "utf-8",
 ) -> ModelProto:
@@ -295,7 +221,10 @@ def load_model_from_string(
     Returns:
         Loaded in-memory ModelProto.
     """
-    return _deserialize(s, ModelProto(), format, encoding)
+    serialization.check_serialization_format(format)
+    return serialization.registered_serializers[format].deserialize(
+        s, ModelProto(), encoding=encoding
+    )
 
 
 def load_tensor_from_string(
@@ -313,7 +242,10 @@ def load_tensor_from_string(
     Returns:
         Loaded in-memory TensorProto.
     """
-    return _deserialize(s, TensorProto(), format, encoding)
+    serialization.check_serialization_format(format)
+    return serialization.registered_serializers[format].deserialize(
+        s, TensorProto(), encoding=encoding
+    )
 
 
 def save_model(
@@ -350,8 +282,11 @@ def save_model(
             If true, convert all tensors to external data
             If false, convert only non-attribute tensors to external data
     """
+    serialization.check_serialization_format(format)
     if isinstance(proto, bytes):
-        proto = _deserialize(proto, ModelProto(), "protobuf", encoding)
+        proto = serialization.registered_serializers["protobuf"].deserialize(
+            proto, ModelProto(), encoding=encoding
+        )
 
     if save_as_external_data:
         convert_model_to_external_data(
@@ -363,7 +298,7 @@ def save_model(
         basepath = os.path.dirname(model_filepath)
         proto = write_external_data_tensors(proto, basepath)
 
-    serialized = _serialize(proto, format, encoding)
+    serialized = serialization.registered_serializers[format].serialize(proto, encoding)
     _save_bytes(serialized, f)
 
 
@@ -382,7 +317,8 @@ def save_tensor(
         format: The serialization format. Default is "protobuf".
         encoding: The encoding of the file when format is a text format. Default is "utf-8".
     """
-    serialized = _serialize(proto, format, encoding)
+    serialization.check_serialization_format(format)
+    serialized = serialization.registered_serializers[format].serialize(proto, encoding)
     _save_bytes(serialized, f)
 
 
