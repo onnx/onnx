@@ -294,7 +294,7 @@ void InlineFunctions(ModelProto& model, FunctionResolver resolver) {
   }
 }
 
-}
+} // namespace
 
 // Public API implementation:
 
