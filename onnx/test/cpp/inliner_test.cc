@@ -26,9 +26,9 @@ static void InlineFunctions(ModelProto& model, const char* input) {
   checker::check_model(model);
   shape_inference::InferShapes(model);
 
-  std::cout << ProtoToString(model) << "\n";
+  // std::cout << ProtoToString(model) << "\n";
   inliner::InlineLocalFunctions(model);
-  std::cout << ProtoToString(model) << "\n";
+  // std::cout << ProtoToString(model) << "\n";
 
   // The following will ensure basic sanity checks hold after inlining, including
   // absence of duplicate names (multiple assignments to same name).
