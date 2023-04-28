@@ -121,14 +121,18 @@ class Specializer {
     rename_scopes.emplace_back();
   }
 
+  // We use a two-level renaming scheme to generate names for variables when inlined in the
+  // main graph. First, we add a suffix (specific to the call-site being inlined).
+  // Thus, "temp" in called-function becomes "temp__1" for the first inlined function-call
+  // and "temp__2" for the second inlined function-call. In addition, there is a subsequent
+  // iterative check that ensures that this names does not clash with any pre-existing names,
+  // and tries another counter-based suffix in the case of a clash, stopping when successful.
   std::string MakeUnique(const std::string& name) {
     return generator.CreateNew(name + suffix);
   }
 
   // Replace given name with a unique version of the name, and cache the
   // renaming-binding in current scope.
-  // TODO: Currently, we assume appending the suffix will make the name unique.
-  // Need to add checks to ensure that there is no accidental collision of names.
   void Rename(std::string& name) {
     auto new_name = MakeUnique(name);
     auto& current_scope = rename_scopes.back();
