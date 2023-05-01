@@ -150,7 +150,9 @@ class TestShapeInferenceHelper(unittest.TestCase):
         elif vi_type.HasField("map_type"):
             assert inferred_vi_type.HasField("map_type")
             assert vi_type.map_type.key_type == vi_type.map_type.key_type
-            self._compare_value_infos(vi_type.map_type.value_type, inferred_vi_type.map_type.value_type)
+            self._compare_value_infos(
+                vi_type.map_type.value_type, inferred_vi_type.map_type.value_type
+            )
         elif vi_type == onnx.TypeProto():
             assert inferred_vi_type == onnx.TypeProto()
         else:
@@ -8793,10 +8795,16 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         typ = onnx.TypeProto()
         typ.map_type.key_type = onnx.TensorProto.INT64
-        typ.map_type.value_type.CopyFrom(onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ()))
+        typ.map_type.value_type.CopyFrom(
+            onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ())
+        )
         self._assert_inferred(
             graph,
-            [onnx.helper.make_value_info("output", onnx.helper.make_sequence_type_proto(typ))],
+            [
+                onnx.helper.make_value_info(
+                    "output", onnx.helper.make_sequence_type_proto(typ)
+                )
+            ],
             opset_imports=[
                 make_opsetid(ONNX_ML_DOMAIN, 1),
                 make_opsetid(ONNX_DOMAIN, 18),
