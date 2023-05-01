@@ -8770,6 +8770,33 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    def test_zip_map(self) -> None:
+        graph = self._make_graph(
+            [("input", TensorProto.INT64, ("N", 3))],
+            [
+                make_node(
+                    "ZipMap",
+                    ["input"],
+                    ["output"],
+                    cats_int64s=[1, 2, 3],
+                    domain="ai.onnx.ml",
+                )
+            ],
+            [],
+        )
+        typ = onnx.TypeProto()
+        # typ.map_type.key_type = onnx.TensorProto.INT64
+        # typ.map_type.value_type = onnx.helper.make_tensor_type_proto()
+        self._assert_inferred(
+            graph,
+            [onnx.helper.make_value_info("output", typ)],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 3),
+                make_opsetid(ONNX_DOMAIN, 18),
+            ],
+        )
+
     def test_compress_without_axis(self) -> None:
         graph = self._make_graph(
             [
