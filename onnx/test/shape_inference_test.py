@@ -8793,12 +8793,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         typ = onnx.TypeProto()
         typ.map_type.key_type = onnx.TensorProto.INT64
-        typ.map_type.value_type.CopyFrom(onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, None))
+        typ.map_type.value_type.CopyFrom(onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ()))
         self._assert_inferred(
             graph,
             [onnx.helper.make_value_info("output", onnx.helper.make_sequence_type_proto(typ))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 3),
+                make_opsetid(ONNX_ML_DOMAIN, 1),
                 make_opsetid(ONNX_DOMAIN, 18),
             ],
         )

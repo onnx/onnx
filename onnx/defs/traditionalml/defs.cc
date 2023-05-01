@@ -1080,7 +1080,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           auto output_value_tensor_type = output_map_type->mutable_value_type()->mutable_tensor_type();
           output_value_tensor_type->set_elem_type(TensorProto::FLOAT);
           output_value_tensor_type->mutable_shape(); // Initialize to scalar
-          if(ctx.getInputShape(0).dim_size() != 1 && ctx.getInputShape(0).dim_size() != 2) {
+          if(getInputShape(ctx, 0).dim_size() != 1 && getInputShape(ctx, 0).dim_size() != 2) {
             fail_shape_inference("ZipMap input shape should be 1D or 2D.")
           }
           if (result && !classlabels_strings.empty()) {
