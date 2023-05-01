@@ -147,6 +147,12 @@ class TestShapeInferenceHelper(unittest.TestCase):
             vi = vi_type.optional_type.elem_type
             inferred_vi = inferred_vi_type.optional_type.elem_type
             self._compare_value_infos(vi, inferred_vi)
+        elif vi_type.HasField("map_type"):
+            assert inferred_vi_type.HasField("map_type")
+            assert vi_type.map_type.key_type == vi_type.map_type.key_type
+            self._compare_value_infos(vi_type.map_type.value_type, inferred_vi_type.map_type.value_type)
+        elif vi_type == onnx.TypeProto():
+            assert inferred_vi_type == onnx.TypeProto()
         else:
             raise NotImplementedError(
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type)
@@ -8773,24 +8779,24 @@ class TestShapeInference(TestShapeInferenceHelper):
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_zip_map(self) -> None:
         graph = self._make_graph(
-            [("input", TensorProto.INT64, ("N", 3))],
+            [("input", TensorProto.FLOAT, ("N", 3))],
             [
                 make_node(
                     "ZipMap",
                     ["input"],
                     ["output"],
-                    cats_int64s=[1, 2, 3],
+                    classlabels_int64s=[1, 2, 3],
                     domain="ai.onnx.ml",
                 )
             ],
             [],
         )
         typ = onnx.TypeProto()
-        # typ.map_type.key_type = onnx.TensorProto.INT64
-        # typ.map_type.value_type = onnx.helper.make_tensor_type_proto()
+        typ.map_type.key_type = onnx.TensorProto.INT64
+        typ.map_type.value_type.CopyFrom(onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, None))
         self._assert_inferred(
             graph,
-            [onnx.helper.make_value_info("output", typ)],
+            [onnx.helper.make_value_info("output", onnx.helper.make_sequence_type_proto(typ))],
             opset_imports=[
                 make_opsetid(ONNX_ML_DOMAIN, 3),
                 make_opsetid(ONNX_DOMAIN, 18),
