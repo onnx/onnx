@@ -69,6 +69,7 @@ SKIP_TESTS = {
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
     "test_lppool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
+    "test_averagepool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
 }
 
 if version(npver) < version("1.21.5"):
@@ -408,11 +409,11 @@ class OnnxBackendTest:
                 f"Unexpected number of output (test {index}, folder {self.folder!r}), "
                 f"got {len(got)}, expected {len(expected)}."
             )
-        res = dict(
-            inputs=self.tests[index]["inputs"],
-            expected=self.tests[index]["outputs"],
-            results=got,
-        )
+        res = {
+            "inputs": self.tests[index]["inputs"],
+            "expected": self.tests[index]["outputs"],
+            "results": got,
+        }
         for i, (e, o) in enumerate(zip(expected, got)):
             if self.is_random():
                 if e.dtype != o.dtype:
@@ -668,7 +669,9 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     return
 
                 te.run(
-                    lambda obj: InferenceSession(obj.SerializeToString()),
+                    lambda obj: InferenceSession(
+                        obj.SerializeToString(), providers=["CPUExecutionProvider"]
+                    ),
                     lambda *a, **b: TestOnnxBackEndWithReferenceEvaluator.run_fct(
                         *a, verbose=1, **b
                     ),
