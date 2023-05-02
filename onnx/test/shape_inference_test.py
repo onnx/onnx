@@ -8780,6 +8780,15 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_zip_map(self) -> None:
+        params = (
+            ({"classlabels_int64s": [1, 2, 3]}, onnx.TensorProto.INT64), 
+            ({"classlabels_strings": ["a", "b", "c"]}, onnx.TensorProto.STRING), 
+        )
+        for attrs, input_type in params:
+            with self.subTest(attrs=attrs, input_type=input_type):
+                self.zip_map_test_case(attrs, input_type)
+
+    def zip_map_test_case(self, attrs, input_type) -> None:
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, ("N", 3))],
             [
@@ -8787,14 +8796,14 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "ZipMap",
                     ["input"],
                     ["output"],
-                    classlabels_int64s=[1, 2, 3],
+                    **attrs,
                     domain="ai.onnx.ml",
                 )
             ],
             [],
         )
         typ = onnx.TypeProto()
-        typ.map_type.key_type = onnx.TensorProto.INT64
+        typ.map_type.key_type = input_type
         typ.map_type.value_type.CopyFrom(
             onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ())
         )
