@@ -7,28 +7,28 @@ jobs:
     vmImage: 'macOS-11'
   strategy:
     matrix:
-      py39:
-        python.version: '3.9'
+      py311:
+        python.version: '3.11'
         onnx_ml: 0
         build_type: 'Release'
         onnx_lite: 0
-      py38:
-        python.version: '3.8'
+      py310:
+        python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
         onnx_lite: 1
-      py38-ml:
-        python.version: '3.8'
+      py39-ml:
+        python.version: '3.9'
         onnx_ml: 1
         build_type: 'Release'
         onnx_lite: 1
-      py38-ml-debug:
-        python.version: '3.8'
+      py39-ml-debug:
+        python.version: '3.9'
         onnx_ml: 1
         build_type: 'Debug'
         onnx_lite: 0
-      py37-ml-debug:
-        python.version: '3.7'
+      py38-ml-debug:
+        python.version: '3.8'
         onnx_ml: 1
         build_type: 'Debug'
         onnx_lite: 0

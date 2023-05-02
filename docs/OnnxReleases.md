@@ -64,7 +64,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
   * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
   * Utilize the following matrix to check:
 
-    |   | 3.7 | 3.8 | 3.9 | 3.10 |
+    |   | 3.8 | 3.9 | 3.10 | 3.11 |
     -- | -- | -- | -- | -- |
     Linux |   |   |   |   |
     Windows |   |   |   |   |

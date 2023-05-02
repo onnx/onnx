@@ -8,24 +8,24 @@ jobs:
     vmImage: 'windows-2019'
   strategy:
     matrix:
+      py311:
+        python.version: '3.11'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+      py310_verify_proto:
+        python.version: '3.10'
+        onnx_ml: 0
+        onnx_verify_proto: 1
       py39:
         python.version: '3.9'
         onnx_ml: 0
         onnx_verify_proto: 0
-      py39_verify_proto:
-        python.version: '3.9'
-        onnx_ml: 0
-        onnx_verify_proto: 1
       py38:
         python.version: '3.8'
         onnx_ml: 0
         onnx_verify_proto: 0
-      py37:
-        python.version: '3.7'
-        onnx_ml: 0
-        onnx_verify_proto: 0
-      py37_onnx_ml:
-        python.version: '3.7'
+      py38_onnx_ml:
+        python.version: '3.8'
         onnx_ml: 1
         onnx_verify_proto: 0
     maxParallel: 4

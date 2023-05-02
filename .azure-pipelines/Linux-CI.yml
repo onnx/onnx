@@ -7,11 +7,21 @@ jobs:
     vmImage: 'Ubuntu-20.04'
   strategy:
     matrix:
-      py39-ml-debug:
-        python.version: '3.9'
+      py311-ml-debug:
+        python.version: '3.11'
         onnx_ml: 1
         build_type: 'Debug'
         documentation: 0
+      py310:
+        python.version: '3.10'
+        onnx_ml: 0
+        build_type: 'Release'
+        documentation: 0
+      py39-ml:
+        python.version: '3.9'
+        onnx_ml: 1
+        build_type: 'Release'
+        documentation: 1
       py38:
         python.version: '3.8'
         onnx_ml: 0
@@ -19,16 +29,6 @@ jobs:
         documentation: 0
       py38-ml:
         python.version: '3.8'
-        onnx_ml: 1
-        build_type: 'Release'
-        documentation: 1
-      py37:
-        python.version: '3.7'
-        onnx_ml: 0
-        build_type: 'Release'
-        documentation: 0
-      py37-ml:
-        python.version: '3.7'
         onnx_ml: 1
         build_type: 'Release'
         documentation: 0
