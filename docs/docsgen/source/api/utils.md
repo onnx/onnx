@@ -1,15 +1,14 @@
+# onnx.utils
 
-onnx.utils
-==========
+## Extractor
 
-
-Extractor
-+++++++++
-
+```{eval-rst}
 .. autoclass:: onnx.utils.Extractor
     :members:
+```
 
-extract_model
-+++++++++++++
+## extract_model
 
+```{eval-rst}
 .. autofunction:: onnx.utils.extract_model
+```

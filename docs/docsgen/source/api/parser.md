@@ -1,19 +1,19 @@
-onnx.parser
-===========
+# onnx.parser
 
+## parse_function
 
-parse_function
-++++++++++++++
-
+```{eval-rst}
 .. autofunction:: onnx.parser.parse_function
+```
 
-parse_graph
-+++++++++++
+## parse_graph
 
+```{eval-rst}
 .. autofunction:: onnx.parser.parse_graph
+```
 
-parse_model
-+++++++++++
+## parse_model
 
+```{eval-rst}
 .. autofunction:: onnx.parser.parse_model
-
+```
