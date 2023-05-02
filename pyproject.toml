@@ -41,7 +41,7 @@ ignore_errors = true
 
 [tool.black]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = ["py37", "py38", "py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311"]
 
 [tool.isort]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
@@ -61,7 +61,7 @@ disable = [
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py37"
+target-version = "py38"
 select = [
     "B", # flake8-bugbear
     "C4", # flake8-comprehensions
