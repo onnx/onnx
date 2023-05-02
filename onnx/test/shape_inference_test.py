@@ -8781,8 +8781,8 @@ class TestShapeInference(TestShapeInferenceHelper):
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_zip_map(self) -> None:
         params = (
-            ({"classlabels_int64s": [1, 2, 3]}, onnx.TensorProto.INT64), 
-            ({"classlabels_strings": ["a", "b", "c"]}, onnx.TensorProto.STRING), 
+            ({"classlabels_int64s": [1, 2, 3]}, onnx.TensorProto.INT64),
+            ({"classlabels_strings": ["a", "b", "c"]}, onnx.TensorProto.STRING),
         )
         for attrs, input_type in params:
             with self.subTest(attrs=attrs, input_type=input_type):
