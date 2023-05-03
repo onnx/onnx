@@ -46,8 +46,8 @@ jobs:
       source venv/bin/activate
 
       sudo apt-get install libprotobuf-dev protobuf-compiler
-      python -m pip install -q --upgrade pip
-      python -m pip install -q -r requirements-release.txt
+      python -m pip install --upgrade pip
+      python -m pip install -r requirements-release.txt
       # still test protobuf==3.20.2 at least in a CI
       python -m pip install protobuf==3.20.2
 
@@ -64,13 +64,13 @@ jobs:
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       # enable more sanitizer
       export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
-      python setup.py install
+      pip install -e .
     displayName: 'Install ONNX and dependencies'
 
   - script: |
       source venv/bin/activate
 
-      python -m pip install -q -r requirements-dev.txt
+      python -m pip install -r requirements-dev.txt
 
       # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py

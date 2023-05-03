@@ -75,6 +75,4 @@ def load_op(
     return cl
 
 
-_registered_operators: Optional[
-    Dict[str, Dict[Union[int, None], OpRunTraining]]
-] = None
+_registered_operators: Optional[Dict[str, Dict[Union[int, None], OpRunTraining]]] = None
