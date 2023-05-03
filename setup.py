@@ -219,6 +219,17 @@ class CmakeBuild(setuptools.Command):
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."
                 )
+            if "PYTHONPATH" in os.environ:
+                # To solve problem that the extra PYTHONPATH env variable added by pip.
+                segs = os.environ["PYTHONPATH"].split(":")
+                new_paths = []
+                for path in segs:
+                    if path not in sys.path:
+                        new_paths.append(path)
+                if len(new_paths) == 0:
+                    del os.environ["PYTHONPATH"]
+                else:
+                    os.environ["PYTHONPATH"] = ":".join(new_paths)
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, "--build", os.curdir]
