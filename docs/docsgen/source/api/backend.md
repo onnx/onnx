@@ -1,31 +1,35 @@
-onnx.backend
-============
+# onnx.backend
 
-Backend
-+++++++
+## Backend
 
+```{eval-rst}
 .. autoclass:: onnx.backend.base.Backend
     :members:
+```
 
-BackendRep
-++++++++++
+## BackendRep
 
+```{eval-rst}
 .. autoclass:: onnx.backend.base.BackendRep
     :members:
+```
 
-Device
-++++++
+## Device
 
+```{eval-rst}
 .. autoclass:: onnx.backend.base.Device
     :members:
+```
 
-DeviceType
-++++++++++
+## DeviceType
 
+```{eval-rst}
 .. autoclass:: onnx.backend.base.DeviceType
     :members:
+```
 
-load_model_tests
-++++++++++++++++
+## load_model_tests
 
+```{eval-rst}
 .. autofunction:: onnx.backend.test.loader.load_model_tests
+```
