@@ -33,7 +33,6 @@ module = [
     'onnx.onnx_pb',
     'onnx.onnx_pb2',
     'onnx.onnx_ml_pb2',
-    'onnx.onnx_ml_pb2',
     'onnx.onnx_operators_pb',
     'onnx.onnx_operators_ml_pb2',
 ]

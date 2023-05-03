@@ -63,6 +63,12 @@ jobs:
     displayName: 'Install dependencies and ONNX'
 
   - script: |
+      pytest
+      if [ $? -ne 0 ]; then
+        echo "pytest failed"
+        exit 1
+      fi
+
       # check auto-gen files up-to-date
       python onnx/defs/gen_doc.py
       python onnx/gen_proto.py -l
@@ -81,12 +87,6 @@ jobs:
       # in a private namespace.
       ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
-
-      pytest
-      if [ $? -ne 0 ]; then
-        echo "pytest failed"
-        exit 1
-      fi
 
       # onnx c++ API tests
       export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"

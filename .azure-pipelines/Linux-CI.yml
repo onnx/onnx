@@ -70,6 +70,12 @@ jobs:
   - script: |
       source venv/bin/activate
 
+      pytest -sv
+      if [ $? -ne 0 ]; then
+        echo "pytest failed"
+        exit 1
+      fi
+
       python -m pip install -r requirements-dev.txt
 
       # check auto-gen files up-to-date
@@ -90,12 +96,6 @@ jobs:
       # in a private namespace.
       ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
       ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
-
-      pytest -sv
-      if [ $? -ne 0 ]; then
-        echo "pytest failed"
-        exit 1
-      fi
 
       # onnx c++ API tests
       export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
