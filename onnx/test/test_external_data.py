@@ -11,7 +11,6 @@ from typing import Any
 
 import numpy as np
 import parameterized
-from typing_extensions import Literal
 
 import onnx
 from onnx import ModelProto, TensorProto, checker, helper, shape_inference
@@ -31,7 +30,7 @@ class TestLoadExternalDataBase(unittest.TestCase):
     Subclasses should be parameterized with a serialization format.
     """
 
-    serialization_format: Literal["protobuf", "textproto"] = "protobuf"
+    serialization_format: str = "protobuf"
 
     def setUp(self) -> None:
         self._temp_dir_obj = (
@@ -214,7 +213,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
     ]
 )
 class TestSaveAllTensorsAsExternalData(unittest.TestCase):
-    serialization_format: Literal["protobuf", "textproto"] = "protobuf"
+    serialization_format: str = "protobuf"
 
     def setUp(self) -> None:
         self._temp_dir_obj = (
@@ -518,7 +517,7 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
     ]
 )
 class TestExternalDataToArray(unittest.TestCase):
-    serialization_format: Literal["protobuf", "textproto"] = "protobuf"
+    serialization_format: str = "protobuf"
 
     def setUp(self) -> None:
         self._temp_dir_obj = (
