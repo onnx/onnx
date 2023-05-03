@@ -22,6 +22,7 @@
 #include "onnx/version_converter/adapters/extend_supported_types.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
+#include "onnx/version_converter/adapters/gridsample_19_20.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -43,7 +44,6 @@
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
-#include "onnx/version_converter/adapters/gridsample_19_20.h"
 
 #include "onnx/version_converter/adapters/transformers.h"
 

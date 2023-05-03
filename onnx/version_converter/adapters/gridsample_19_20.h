@@ -16,13 +16,10 @@ class GridSample_19_20 final : public Adapter {
   explicit GridSample_19_20() : Adapter("GridSample", OpSetID(19), OpSetID(20)) {}
 
   void adapt_gridsample_19_20(std::shared_ptr<Graph>, Node* node) const {
-
-    if (node->s(kmode) == "bilinear")
-    {
+    if (node->s(kmode) == "bilinear") {
       node->s_(kmode, "linear");
     }
-    if (node->s(kmode) == "bicubic")
-    {
+    if (node->s(kmode) == "bicubic") {
       node->s_(kmode, "cubic");
     }
   }
