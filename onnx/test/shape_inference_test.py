@@ -8802,10 +8802,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        typ = onnx.TypeProto()
-        typ.map_type.key_type = input_type
-        typ.map_type.value_type.CopyFrom(
-            onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ())
+        typ = onnx.helper.make_map_type_proto(
+            input_type, onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ())
         )
         self._assert_inferred(
             graph,
