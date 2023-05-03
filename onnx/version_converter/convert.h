@@ -43,6 +43,7 @@
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
+#include "onnx/version_converter/adapters/gridsample_19_20.h"
 
 #include "onnx/version_converter/adapters/transformers.h"
 
@@ -557,7 +558,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
 
     /******** 19 -> 20 ********/
-    registerAdapter(make_unique<CompatibleAdapter>("GridSample", OpSetID(19), OpSetID(20)));
+    registerAdapter(make_unique<GridSample_19_20>());
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
