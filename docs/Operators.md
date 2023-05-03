@@ -67,7 +67,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#GlobalLpPool">GlobalLpPool</a>|<a href="Changelog.md#GlobalLpPool-2">2</a>, <a href="Changelog.md#GlobalLpPool-1">1</a>|
 |<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-1">1</a>|
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
-|<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-19">19</a>, <a href="Changelog.md#GridSample-16">16</a>|
+|<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-20">20</a>, <a href="Changelog.md#GridSample-16">16</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-19">19</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
 |<a href="#If">If</a>|<a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
@@ -10037,7 +10037,7 @@ Other versions of this operator: <a href="Changelog.md#GreaterOrEqual-12">12</a>
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#GridSample-16">16</a>
 

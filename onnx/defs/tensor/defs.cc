@@ -2370,7 +2370,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Resize_ver19_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
 
-static const char* GridSample_ver19_doc = R"DOC(
+static const char* GridSample_ver20_doc = R"DOC(
 Given an input X and a flow-field grid, computes the output Y using X values and pixel locations from the grid.
 For spatial input X with shape (N, C, H, W), the grid will have shape (N, H_out, W_out, 2),
 the output Y will have shape (N, C, H_out, W_out). For volumetric input X with shape (N, C, D, H, W),
@@ -2393,7 +2393,7 @@ See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/stable/ge
 
 ONNX_OPERATOR_SET_SCHEMA(
     GridSample,
-    19,
+    20,
     OpSchema()
         .Attr(
             "mode",
@@ -2465,7 +2465,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain grid types to float tensors.")
-        .SetDoc(GridSample_ver19_doc)
+        .SetDoc(GridSample_ver20_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
 ONNX_OPERATOR_SET_SCHEMA(

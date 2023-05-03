@@ -545,7 +545,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("CastLike", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Constant", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(18), OpSetID(19)));
-    registerAdapter(make_unique<CompatibleAdapter>("GridSample", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Identity", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("If", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Loop", OpSetID(18), OpSetID(19)));
@@ -556,6 +555,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("Scan", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Shape", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
+
+    /******** 19 -> 20 ********/
+    registerAdapter(make_unique<CompatibleAdapter>("GridSample", OpSetID(19), OpSetID(20)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
