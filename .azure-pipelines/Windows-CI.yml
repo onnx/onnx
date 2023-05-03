@@ -54,7 +54,7 @@ jobs:
       set ONNX_ML=$(onnx_ml)
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
 
-      python setup.py -q install
+      python setup.py install
       pytest
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "pytest failed"

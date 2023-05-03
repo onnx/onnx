@@ -48,8 +48,8 @@ jobs:
       source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
 
       git submodule update --init --recursive
-      python -m pip install -q --upgrade pip setuptools
-      python -m pip install -q -r requirements-release.txt
+      python -m pip install --upgrade pip setuptools
+      python -m pip install -r requirements-release.txt
 
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1

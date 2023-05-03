@@ -4,8 +4,7 @@
 # pylint: disable=C0415,R0912,W0611,W0603
 
 import textwrap
-from typing import Any, Dict, Union
-from typing import Optional as TOptional
+from typing import Any, Dict, Optional, Union
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
@@ -76,6 +75,6 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[
+_registered_operators: Optional[
     Dict[str, Dict[Union[int, None], OpRunTraining]]
 ] = None
