@@ -131,7 +131,9 @@ from onnx import (
 )
 
 # Supported model formats that can be loaded from and saved to
-_SupportedFormat = Literal["protobuf", "textproto"]
+# The literals are formats with built-in support. But we also allow users to
+# register their own formats. So we allow str as well.
+_SupportedFormat = Literal["protobuf", "textproto"] | str
 
 
 def _load_bytes(f: IO[bytes] | str) -> bytes:
@@ -168,7 +170,8 @@ def load_model(
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
-        format: The serialization format. Default is "protobuf".
+        format: The serialization format. Default is "protobuf". The encoding is
+            assumed to be "utf-8" when the format is a text format.
         load_external_data: Whether to load the external data.
             Set to True if the data is under the same directory of the model.
             If not, users need to call :func:`load_external_data_for_model`
@@ -196,7 +199,8 @@ def load_tensor(
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
-        format: The serialization format. Default is "protobuf".
+        format: The serialization format. Default is "protobuf". The encoding is
+            assumed to be "utf-8" when the format is a text format.
 
     Returns:
         Loaded in-memory TensorProto.
@@ -212,13 +216,14 @@ def load_model_from_string(
 
     Args:
         s: a string, which contains serialized ModelProto
-        format: The serialization format. Default is "protobuf".
+        format: The serialization format. Default is "protobuf". The encoding is
+            assumed to be "utf-8" when the format is a text format.
         encoding: The encoding of the bytes when format is a text format. Default is "utf-8".
 
     Returns:
         Loaded in-memory ModelProto.
     """
-    return serialization.registry.get(format).deserialize(s, ModelProto())
+    return serialization.registry.get(format).deserialize_proto(s, ModelProto())
 
 
 def load_tensor_from_string(
@@ -229,12 +234,13 @@ def load_tensor_from_string(
 
     Args:
         s: a string, which contains serialized TensorProto
-        format: The serialization format. Default is "protobuf".
+        format: The serialization format. Default is "protobuf". The encoding is
+            assumed to be "utf-8" when the format is a text format.
 
     Returns:
         Loaded in-memory TensorProto.
     """
-    return serialization.registry.get(format).deserialize(s, TensorProto())
+    return serialization.registry.get(format).deserialize_proto(s, TensorProto())
 
 
 def save_model(
@@ -254,7 +260,8 @@ def save_model(
     Args:
         proto: should be a in-memory ModelProto
         f: can be a file-like object (has "write" function) or a string containing a file name
-        format: The serialization format. Default is "protobuf".
+        format: The serialization format. Default is "protobuf". The encoding is
+            assumed to be "utf-8" when the format is a text format.
         save_as_external_data: If true, save tensors to external file(s).
         all_tensors_to_one_file: Effective only if save_as_external_data is True.
             If true, save all tensors to one external file specified by location.
@@ -270,7 +277,9 @@ def save_model(
             If false, convert only non-attribute tensors to external data
     """
     if isinstance(proto, bytes):
-        proto = serialization.registry.get("protobuf").deserialize(proto, ModelProto())
+        proto = serialization.registry.get("protobuf").deserialize_proto(
+            proto, ModelProto()
+        )
 
     if save_as_external_data:
         convert_model_to_external_data(
@@ -282,7 +291,7 @@ def save_model(
         basepath = os.path.dirname(model_filepath)
         proto = write_external_data_tensors(proto, basepath)
 
-    serialized = serialization.registry.get(format).serialize(proto)
+    serialized = serialization.registry.get(format).serialize_proto(proto)
     _save_bytes(serialized, f)
 
 
@@ -297,9 +306,10 @@ def save_tensor(
     Args:
         proto: should be a in-memory TensorProto
         f: can be a file-like object (has "write" function) or a string containing a file name
-        format: The serialization format. Default is "protobuf".
+        format: The serialization format. Default is "protobuf". The encoding is
+            assumed to be "utf-8" when the format is a text format.
     """
-    serialized = serialization.registry.get(format).serialize(proto)
+    serialized = serialization.registry.get(format).serialize_proto(proto)
     _save_bytes(serialized, f)
 
 

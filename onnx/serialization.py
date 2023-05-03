@@ -9,12 +9,12 @@ __all__ = [
     "registry",
 ]
 
-import abc
 import typing
 from typing import Any, Collection, Optional, TypeVar
 
 import google.protobuf.message
 import google.protobuf.text_format
+from typing_extensions import Protocol
 
 import onnx
 
@@ -23,17 +23,20 @@ _Proto = TypeVar("_Proto", bound=google.protobuf.message.Message)
 _ENCODING = "utf-8"
 
 
-class ProtoSerializer(abc.ABC):
+class ProtoSerializer(Protocol):
     """A serializer-deserializer to and from in-memory Protocol Buffers representations."""
 
     supported_formats: Collection[str]
 
-    @abc.abstractmethod
-    def serialize(self, proto: _Proto) -> Any:
+    # NOTE: The methods defined are serialize_proto and deserialize_proto and not the
+    # more generic serialize and deserialize to leave space for future protocols
+    # that are defined to serialize/deserialize the ONNX in memory IR.
+    # This way a class can implement both protocols.
+
+    def serialize_proto(self, proto: _Proto) -> Any:
         """Serialize a in-memory proto to a serialized data type."""
 
-    @abc.abstractmethod
-    def deserialize(self, serialized: Any, proto: _Proto) -> _Proto:
+    def deserialize_proto(self, serialized: Any, proto: _Proto) -> _Proto:
         """Parse a serialized data type into a in-memory proto."""
 
 
@@ -70,7 +73,7 @@ class _ProtobufSerializer(ProtoSerializer):
 
     supported_formats = ("protobuf",)
 
-    def serialize(self, proto: _Proto) -> bytes:
+    def serialize_proto(self, proto: _Proto) -> bytes:
         if hasattr(proto, "SerializeToString") and callable(proto.SerializeToString):
             try:
                 result = proto.SerializeToString()
@@ -86,7 +89,7 @@ class _ProtobufSerializer(ProtoSerializer):
             f"No SerializeToString method is detected.\ntype is {type(proto)}"
         )
 
-    def deserialize(self, serialized: bytes, proto: _Proto) -> _Proto:
+    def deserialize_proto(self, serialized: bytes, proto: _Proto) -> _Proto:
         if not isinstance(serialized, bytes):
             raise TypeError(
                 f"Parameter 'serialized' must be bytes, but got type: {type(serialized)}"
@@ -104,11 +107,11 @@ class _TextProtoSerializer(ProtoSerializer):
 
     supported_formats = ("textproto",)
 
-    def serialize(self, proto: _Proto) -> bytes | str:
+    def serialize_proto(self, proto: _Proto) -> bytes | str:
         textproto = google.protobuf.text_format.MessageToString(proto)
         return textproto.encode(_ENCODING)
 
-    def deserialize(self, serialized: bytes | str, proto: _Proto) -> _Proto:
+    def deserialize_proto(self, serialized: bytes | str, proto: _Proto) -> _Proto:
         if not isinstance(serialized, (bytes, str)):
             raise TypeError(
                 f"Parameter 'serialized' must be bytes or str, but got type: {type(serialized)}"
