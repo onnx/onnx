@@ -332,19 +332,10 @@ class GridSample(OpRun):
                         n=nx, dims=dims, align_corners=align_corners
                     )
                     if mode == "nearest":
-                        if num_dims == 2:
-                            # PyTorch GridSample 2D uses std::nearbyint.
-                            # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/cpu/zmath.h#L182
-                            x = np.rint(x)  # nearbyintf(x) round to the nearest even.
-                        elif num_dims == 3:
-                            # PyTorch GridSample 3D uses std::round.
-                            # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/GridSampler.cpp#L177
-                            x = self._cpp_std_round(x)
-                        else:
-                            # Use np.rint for now, since PyTorch does not have implementation for other dimensions anyway.
-                            x = np.rint(x)
+                        # PyTorch round the index to nearest even.
+                        # https://github.com/pytorch/pytorch/pull/97000
+                        x = np.rint(x)
                     # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/GridSampler.h#L142
-                    # Vectorize this later.
                     for i, v in enumerate(x):
                         x_min = border[i]
                         x_max = border[i + num_dims]
