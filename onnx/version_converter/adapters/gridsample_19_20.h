@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// Adapter for TopK in default domain from version 9 to 10
+// Adapter for GridSample in default domain from version 19 to 20
 
 #pragma once
 
