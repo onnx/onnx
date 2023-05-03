@@ -219,7 +219,10 @@ class CmakeBuild(setuptools.Command):
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."
                 )
-            if "PYTHONPATH" in os.environ and "pip-build-env" in os.environ["PYTHONPATH"]:
+            if (
+                "PYTHONPATH" in os.environ
+                and "pip-build-env" in os.environ["PYTHONPATH"]
+            ):
                 # When the users use `pip install -e .` to install onnx and
                 # the cmake executable is a python entry script, there will be
                 # `Fix ModuleNotFoundError: No module named 'cmake'` from the cmake script.
