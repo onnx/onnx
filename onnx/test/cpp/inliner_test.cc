@@ -29,6 +29,10 @@ static void InlineFunctions(ModelProto& model, const char* input) {
   std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
   inliner::InlineLocalFunctions(model);
   std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
+
+  // The following will ensure basic sanity checks hold after inlining, including
+  // absence of duplicate names (multiple assignments to same name).
+  checker::check_model(model);
   shape_inference::InferShapes(model);
 }
 
@@ -119,6 +123,31 @@ foo (x) => (y) {
 )ONNX";
 
   ModelProto model;
+  // Check that renaming handles accidental collision of names: when "temp" in "foo" is
+  // inlined, it will be renamed into something distinct from "temp" and "temp__1" as
+  // both these names occur in the main graph.
+  InlineFunctions(model, code);
+}
+
+TEST(FunctionInliner, TwoCallsToSameFunction) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+agraph (float[N] X) => (float[N] Y)
+{
+  temp = local.foo (X)
+  Y = local.foo (temp)
+}
+
+<opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+foo (x) => (y) {
+  temp = Add(x, x)
+  y = Neg (temp)
+}
+)ONNX";
+
+  ModelProto model;
+  // The call below will check that multiple assignments to same name does not happen
+  // after inlining two calls to same function.
   InlineFunctions(model, code);
 }
 

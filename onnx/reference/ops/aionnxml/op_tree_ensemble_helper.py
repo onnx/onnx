@@ -41,7 +41,7 @@ class TreeEnsemble:
         for name, value in kwargs.items():
             self.atts.add(name, value)
 
-        self.tree_ids = list(sorted(set(self.atts.nodes_treeids)))  # type: ignore
+        self.tree_ids = sorted(set(self.atts.nodes_treeids))  # type: ignore
         self.root_index = {
             tid: len(self.atts.nodes_treeids) for tid in self.tree_ids  # type: ignore
         }
