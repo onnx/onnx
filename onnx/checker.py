@@ -113,7 +113,7 @@ def check_sparse_tensor(
     C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
-def check_model(model: Union[ModelProto, str, bytes], full_check: bool = False) -> None:
+def check_model(model: Union[ModelProto, str, bytes], full_check: bool = False, skip_opset_compatibility_check: bool = False) -> None:
     """Check the consistency of a model. An exception is raised if the test fails.
 
     Arguments:
@@ -122,7 +122,7 @@ def check_model(model: Union[ModelProto, str, bytes], full_check: bool = False) 
     """
     # If model is a path instead of ModelProto
     if isinstance(model, str):
-        C.check_model_path(model, full_check)
+        C.check_model_path(model, full_check, skip_opset_compatibility_check)
     else:
         protobuf_string = (
             model if isinstance(model, bytes) else model.SerializeToString()

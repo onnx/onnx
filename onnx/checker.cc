@@ -942,7 +942,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
     // check whether the opset version imported for a domain by function and model are
     // compatible
-    // check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
+    if (!ctx_copy.skip_opset_compatibility_check())
+      check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
     if (check_is_experimental_op(node)) {
       used_experimental_ops.insert(node.op_type());
     }
@@ -1009,7 +1010,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   }
 }
 
-void check_model(const std::string& model_path, bool full_check) {
+void check_model(const std::string& model_path, bool full_check, bool skip_opset_compatibility_check) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -1020,6 +1021,7 @@ void check_model(const std::string& model_path, bool full_check) {
     model_dir = model_path.substr(0, pos + 1);
   }
   ctx.set_model_dir(model_dir);
+  ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   check_model(model, ctx);
 
   if (full_check) {
@@ -1028,8 +1030,9 @@ void check_model(const std::string& model_path, bool full_check) {
   }
 }
 
-void check_model(const ModelProto& model, bool full_check) {
+void check_model(const ModelProto& model, bool full_check, bool skip_opset_compatibility_check) {
   CheckerContext ctx;
+  ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   check_model(model, ctx);
   if (full_check) {
     ShapeInferenceOptions options{true, 1, false};

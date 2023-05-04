@@ -23,7 +23,7 @@ static void InlineFunctions(ModelProto& model, const char* input) {
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
 
-  checker::check_model(model);
+  checker::check_model(model, false, true);
   shape_inference::InferShapes(model);
 
   std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
@@ -32,8 +32,8 @@ static void InlineFunctions(ModelProto& model, const char* input) {
 
   // The following will ensure basic sanity checks hold after inlining, including
   // absence of duplicate names (multiple assignments to same name).
-  checker::check_model(model);
-  shape_inference::InferShapes(model);
+  checker::check_model(model, true, true);
+  // shape_inference::InferShapes(model);
 }
 
 TEST(FunctionInliner, BasicTest) {
