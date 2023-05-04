@@ -1,10 +1,10 @@
+# onnx.numpy_helper
 
-onnx.numpy_helper
-=================
-
-
+```{eval-rst}
 .. currentmodule:: onnx.numpy_helper
+```
 
+```{eval-rst}
 .. autosummary::
 
     bfloat16_to_float32
@@ -19,51 +19,74 @@ onnx.numpy_helper
     to_list
     to_optional
 
+```
 
-.. _l-numpy-helper-onnx-array:
+(l-numpy-helper-onnx-array)=
 
-array
-+++++
+## array
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.from_array
+```
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.to_array
+```
 
-sequence
-++++++++
+## sequence
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.to_list
+```
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.from_list
+```
 
-dictionary
-++++++++++
+## dictionary
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.to_dict
+```
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.from_dict
+```
 
-optional
-++++++++
+## optional
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.to_optional
+```
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.from_optional
+```
 
-tools
-+++++
+## tools
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.convert_endian
+```
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.combine_pairs_to_complex
-    
+```
+
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.create_random_int
+```
 
-cast
-++++
+## cast
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.bfloat16_to_float32
+```
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.float8e4m3_to_float32
+```
 
+```{eval-rst}
 .. autofunction:: onnx.numpy_helper.float8e5m2_to_float32
+```
