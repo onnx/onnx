@@ -132,7 +132,7 @@ def _load_bytes(f: Union[IO[bytes], str, os.PathLike]) -> bytes:
         content = typing.cast(IO[bytes], f).read()
     else:
         f = typing.cast(Union[str, os.PathLike], f)
-        with open(os.fspath(f), "rb") as readable:
+        with open(f, "rb") as readable:
             content = readable.read()
     return content
 
@@ -142,7 +142,7 @@ def _save_bytes(content: bytes, f: Union[IO[bytes], str, os.PathLike]) -> None:
         typing.cast(IO[bytes], f).write(content)
     else:
         f = typing.cast(Union[str, os.PathLike], f)
-        with open(os.fspath(f), "wb") as writable:
+        with open(f, "wb") as writable:
             writable.write(content)
 
 
@@ -220,7 +220,7 @@ def load_model(
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
-        format: for future usen or a pathlike object
+        format or a pathlike object: for future use
         load_external_data: Whether to load the external data.
             Set to True if the data is under the same directory of the model.
             If not, users need to call :func:`load_external_data_for_model`
@@ -249,7 +249,7 @@ def load_tensor(
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
-        format: for future use or a pathlike object
+        format or a pathlike object: for future use
 
     Returns:
         Loaded in-memory TensorProto.
@@ -348,8 +348,8 @@ def save_tensor(proto: TensorProto, f: Union[IO[bytes], str, os.PathLike]) -> No
 
     Args:
         proto: should be a in-memory TensorProto
-        f: can be a file-like object (has "write" function) or a string 
-        containing a file name format: for future use or a pathlike object
+        f: can be a file-like object (has "write" function) or a string
+        containing a file name format  or a pathlike object: for future use
     """
     serialized = _serialize(proto)
     _save_bytes(serialized, f)
