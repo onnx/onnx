@@ -127,25 +127,27 @@ from onnx import (
 )
 
 
-def _load_bytes(f: Union[IO[bytes], str]) -> bytes:
+def _load_bytes(f: Union[IO[bytes], str, os.PathLike]) -> bytes:
     if hasattr(f, "read") and callable(typing.cast(IO[bytes], f).read):
         content = typing.cast(IO[bytes], f).read()
     else:
-        with open(typing.cast(str, f), "rb") as readable:
+        f = typing.cast(Union[str, os.PathLike], f)
+        with open(os.fspath(f), "rb") as readable:
             content = readable.read()
     return content
 
 
-def _save_bytes(content: bytes, f: Union[IO[bytes], str]) -> None:
+def _save_bytes(content: bytes, f: Union[IO[bytes], str, os.PathLike]) -> None:
     if hasattr(f, "write") and callable(typing.cast(IO[bytes], f).write):
         typing.cast(IO[bytes], f).write(content)
     else:
-        with open(typing.cast(str, f), "wb") as writable:
+        f = typing.cast(Union[str, os.PathLike], f)
+        with open(os.fspath(f), "wb") as writable:
             writable.write(content)
 
 
-def _get_file_path(f: Union[IO[bytes], str]) -> Optional[str]:
-    if isinstance(f, str):
+def _get_file_path(f: Union[IO[bytes], str, os.PathLike]) -> Optional[str]:
+    if isinstance(f, (str, os.PathLike)):
         return os.path.abspath(f)
     if hasattr(f, "name"):
         return os.path.abspath(f.name)
@@ -210,7 +212,7 @@ def _deserialize(s: bytes, proto: _Proto) -> _Proto:
 
 
 def load_model(
-    f: Union[IO[bytes], str],
+    f: Union[IO[bytes], str, os.PathLike],
     format: Optional[Any] = None,  # pylint: disable=redefined-builtin
     load_external_data: bool = True,
 ) -> ModelProto:
@@ -218,7 +220,7 @@ def load_model(
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
-        format: for future use
+        format: for future usen or a pathlike object
         load_external_data: Whether to load the external data.
             Set to True if the data is under the same directory of the model.
             If not, users need to call :func:`load_external_data_for_model`
@@ -240,14 +242,14 @@ def load_model(
 
 
 def load_tensor(
-    f: Union[IO[bytes], str],
+    f: Union[IO[bytes], str, os.PathLike],
     format: Optional[Any] = None,  # pylint: disable=redefined-builtin
 ) -> TensorProto:
     """Loads a serialized TensorProto into memory.
 
     Args:
         f: can be a file-like object (has "read" function) or a string containing a file name
-        format: for future use
+        format: for future use or a pathlike object
 
     Returns:
         Loaded in-memory TensorProto.
@@ -292,7 +294,7 @@ def load_tensor_from_string(
 
 def save_model(
     proto: Union[ModelProto, bytes],
-    f: Union[IO[bytes], str],
+    f: Union[IO[bytes], str, os.PathLike],
     format: Optional[Any] = None,  # pylint: disable=redefined-builtin
     save_as_external_data: bool = False,
     all_tensors_to_one_file: bool = True,
@@ -305,7 +307,8 @@ def save_model(
 
     Args:
         proto: should be a in-memory ModelProto
-        f: can be a file-like object (has "write" function) or a string containing a file name format for future use
+        f: can be a file-like object (has "write" function) or a string containing
+        a file name format for future use or a pathlike object
         save_as_external_data: If true, save tensors to external file(s).
         all_tensors_to_one_file: Effective only if save_as_external_data is True.
             If true, save all tensors to one external file specified by location.
@@ -339,14 +342,14 @@ def save_model(
     _save_bytes(serialized, f)
 
 
-def save_tensor(proto: TensorProto, f: Union[IO[bytes], str]) -> None:
+def save_tensor(proto: TensorProto, f: Union[IO[bytes], str, os.PathLike]) -> None:
     """
     Saves the TensorProto to the specified path.
 
     Args:
         proto: should be a in-memory TensorProto
-        f: can be a file-like object (has "write" function) or a string containing a file name
-        format: for future use
+        f: can be a file-like object (has "write" function) or a string 
+        containing a file name format: for future use or a pathlike object
     """
     serialized = _serialize(proto)
     _save_bytes(serialized, f)
