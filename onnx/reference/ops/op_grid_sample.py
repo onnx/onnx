@@ -353,16 +353,19 @@ class GridSample(OpRun):
                             border=border,
                             padding_mode=padding_mode,
                         )
-                        print("v: ", Y[n][c][tuple(ox)])
 
-                    if mode == "linear":
+                    elif mode == "linear":
                         Y[n][c][tuple(ox)] = self._gs_linear_interpolation_nd_with_x(
                             data=X_data, x=x, border=border, padding_mode=padding_mode
                         )
 
-                    if mode == "cubic":
+                    elif mode == "cubic":
                         Y[n][c][tuple(ox)] = self._gs_cubic_interpolation_nd_with_x(
                             data=X_data, x=x, border=border, padding_mode=padding_mode
+                        )
+                    else:
+                        raise RuntimeError(
+                            "GridSample interpolation only supports nearest, linear, and cubic modes."
                         )
 
         return (Y.astype(X.dtype),)
