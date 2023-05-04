@@ -218,7 +218,6 @@ def load_model_from_string(
         s: a string, which contains serialized ModelProto
         format: The serialization format. Default is "protobuf". The encoding is
             assumed to be "utf-8" when the format is a text format.
-        encoding: The encoding of the bytes when format is a text format. Default is "utf-8".
 
     Returns:
         Loaded in-memory ModelProto.
