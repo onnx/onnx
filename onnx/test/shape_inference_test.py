@@ -8803,7 +8803,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         typ = onnx.helper.make_map_type_proto(
-            input_type, onnx.helper.make_tensor_type_proto(onnx.TensorProto.FLOAT, ())
+            input_type, onnx.helper.make_tensor_type_proto(TensorProto.FLOAT, ())
         )
         self._assert_inferred(
             graph,
