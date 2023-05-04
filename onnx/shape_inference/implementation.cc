@@ -196,6 +196,9 @@ void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_typ
     mergeShapesAndTypes(
         inferred_type.optional_type().elem_type(), existing_type->mutable_optional_type()->mutable_elem_type());
   } else if (inferred_val_case == TypeProto::kMapType) {
+    if (existing_type->map_type().key_type() == TensorProto::UNDEFINED) {
+      existing_type->mutable_map_type()->set_key_type(inferred_type.map_type().key_type());
+    }
     mergeShapesAndTypes(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type());
   }
 }
