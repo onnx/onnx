@@ -106,7 +106,7 @@ class _TextProtoSerializer(ProtoSerializer):
 
     supported_formats = ("textproto",)
 
-    def serialize_proto(self, proto: _Proto) -> bytes | str:
+    def serialize_proto(self, proto: _Proto) -> bytes:
         textproto = google.protobuf.text_format.MessageToString(proto)
         return textproto.encode(_ENCODING)
 
