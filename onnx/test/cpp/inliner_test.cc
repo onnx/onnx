@@ -203,6 +203,12 @@ foo (x) => (y) {
 
   ModelProto model;
   InlineFunctions(model, code);
+  // Inlining ReduceLogSum (version 17) should convert it to ReduceLogSum (version 18)
+  // by promoting axes from attribute to input.
+  auto& node = model.graph().node(1);
+  ASSERT_EQ(node.op_type(), "ReduceLogSum");
+  ASSERT_EQ(node.input_size(), 2);
+  ASSERT_EQ(node.attribute_size(), 0);
 }
 
 } // namespace Test
