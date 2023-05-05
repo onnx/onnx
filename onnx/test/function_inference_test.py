@@ -76,7 +76,7 @@ class TestFunctionInference(TestShapeInferenceHelper):
         dtype_10 = onnx.helper.make_attribute("dtype", 10)
         self._check(code, [float_type_], [dtype_10], [float16_type_])
 
-    def test_fi_optional_input1(self):
+    def test_fi_optional_input(self):
         code = """
             <opset_import: [ "" : 18 ], domain: "local">
             DoReduce (x, axes) => (y) {
@@ -88,7 +88,6 @@ class TestFunctionInference(TestShapeInferenceHelper):
         # Or, we can pass in a default-value of TypeProto() for a missing optional parameter
         self._check(code, [float_type_, no_type_], [], [float_type_])
 
-    def test_fi_optional_input2(self):
         code = """
             <opset_import: [ "" : 18 ], domain: "local">
             Quantize (x, scale, zero_point) => (y) {
@@ -100,6 +99,18 @@ class TestFunctionInference(TestShapeInferenceHelper):
         self._check(code, [float_type_, float_type_, uint8_type_], [], [uint8_type_])
         # If the optional third parameter is omitted, the output type is uint8 (default).
         self._check(code, [float_type_, float_type_, no_type_], [], [uint8_type_])
+
+        code = """
+            <opset_import: [ "" : 18 ], domain: "local">
+            DoClip (x, min, max) => (y) {
+                y = Clip (x, min, max)
+            }
+        """
+        # A test-case with a non-trailing missing optional parameter
+        self._check(code, [float_type_, no_type_, float_type_], [], [float_type_])
+
+        # A failing test-case with a non-trailing missing optional parameter
+        self._check_fails(code, [float_type_, no_type_, int8_type_], [])
 
 
 if __name__ == "__main__":
