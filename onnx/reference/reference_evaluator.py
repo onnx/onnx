@@ -33,15 +33,18 @@ class ReferenceEvaluator:
     :param new_ops: this runtime can be used to test the implementations
         of new operators, *new_ops* is a list of classes
         derived from :class:`OpRun <onnx.reference.op_run.OpRun>`,
-        every class must define the static attribute `domain`
-    :param optimized: some operator have two implementations,
+        every class must define the static attribute `domain`,
+        there may be multiple implementations for the same operator,
+        the first one in the list is used.
+    :param optimized: some operators have two implementations,
         a naive one corresponding to definition of the mathematical
         definition of the operator, another one more efficient.
         This is the case for operator Conv. The naive version is ten times
         slower than the optimized one using a decomposition
         into *Conv = im2col + Gemm*. If True, all optimized
-        kernel are added in `new_ops` and are used instead of the
-        inner implementation.
+        kernels are added in `new_ops` and are used instead of the
+        inner implementation if list *new_ops* does not already contain
+        one.
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
@@ -259,9 +262,8 @@ class ReferenceEvaluator:
                     )
                 key = cl.op_domain, cl.__name__  # type: ignore
                 if key in self.new_ops_:
-                    raise ValueError(
-                        f"Operator {cl.__name__!r} from domain {cl.op_domain!r} already exsits."  # type: ignore
-                    )
+                    # Already an implementation, the first one is used.
+                    continue
                 self.new_ops_[key] = cl
         self._init()
 

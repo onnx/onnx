@@ -1179,9 +1179,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
-        with self.assertRaises(ValueError):
-            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha, InvAlpha])
-        sess = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        sess = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha, InvAlpha])
         got = sess.run(None, {"X": x})[0]
         expected = 1 / (x + 0.5)
         assert_allclose(expected, got)
