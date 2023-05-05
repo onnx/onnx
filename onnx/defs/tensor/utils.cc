@@ -59,6 +59,11 @@ void KeepAspectRatioHelper(
 void gridSampleShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
+  // If there is any input shape unknown, skip the shape inference.
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+
   // Grid sample input tensor indices.
   size_t const input_param = 0, grid_param = 1;
 
@@ -85,29 +90,31 @@ void gridSampleShapeInference(InferenceContext& ctx) {
         num_dims,
         ". ");
   }
-
-  // Don't know how to do this checking for the moment,
-  // because the grid shape can be a string or None.
-  // if (grid_shape.dim(num_dims - 1) != num_dims - 2)
-  // {
-  //   fail_shape_inference(
-  //       "The last dimension of the grid tensor must be the rank of the grid tensor - 2. ",
-  //       "Got grid tensor rank: ",
-  //       num_dims,
-  //       "Got the last dimension of the grid tensor: ",
-  //       grid_shape.dim(num_dims - 1),
-  //       ". ");
-  // }
+  auto const& last_dim = grid_shape.dim(num_dims - 1);
+  if (last_dim.has_dim_value() && (last_dim.dim_value() != num_dims - 2)) {
+    fail_shape_inference(
+        "The last dimension of the grid tensor must be the rank of the grid tensor - 2. ",
+        "Got grid tensor rank: ",
+        num_dims,
+        "Got the last dimension of the grid tensor: ",
+        last_dim.dim_value(),
+        ". ");
+  }
 
   auto* output_shape = getOutputShape(ctx, 0);
-  // Not sure if there are better APIs to set the number of dimensions.
   // N
-  *(output_shape->add_dim()) = input_shape.dim(0);
+  Dim& N = *(output_shape->add_dim());
+  // The first call sets the dimension using the dimensions from input_shape.
+  unifyDim(input_shape.dim(0), N);
+  // The second call checks the dimension using the dimensions from grid_shape.
+  unifyDim(grid_shape.dim(0), N);
   // C
-  *(output_shape->add_dim()) = input_shape.dim(1);
-  // The rest of the dimensions
+  Dim& C = *(output_shape->add_dim());
+  unifyDim(input_shape.dim(1), C);
+  // Other Dimensions.
   for (int i = 0; i < num_dims - 2; ++i) {
-    *(output_shape->add_dim()) = grid_shape.dim(1 + i);
+    Dim& D = *(output_shape->add_dim());
+    unifyDim(grid_shape.dim(1 + i), D);
   }
 }
 
