@@ -11,5 +11,5 @@ setuptools
 twine
 # Dependencies for linting. Versions match those in setup.py.
 lintrunner>=0.10.7
-lintrunner-adapters>=0.7
+lintrunner-adapters>=0.8
 # Edit additional linter dependencies in requirements-lintrunner.txt
