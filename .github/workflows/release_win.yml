@@ -19,7 +19,9 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        # TODO: Freeze as 3.10.5 for now and use the latest 3.10 after future numpy upgrade in ONNX;
+        # related issue: https://github.com/actions/setup-python/issues/481
+        python-version: ['3.8', '3.9', '3.10.5', '3.11']
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
