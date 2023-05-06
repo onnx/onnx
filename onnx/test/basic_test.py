@@ -6,6 +6,7 @@ import io
 import os
 import tempfile
 import unittest
+from pathlib import Path
 
 import onnx
 from onnx import (
@@ -54,13 +55,18 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input is a file name
         try:
-            with tempfile.NamedTemporaryFile(delete=False) as fi:
-                onnx.save_model(proto, fi)
-
-            loaded_proto = onnx.load_model(fi.name, cls)
-            self.assertEqual(proto, loaded_proto)
+            with tempfile.NamedTemporaryFile(delete=False) as tfile:
+                self._assert_model_load_and_save(proto, cls, tfile)
+            self._assert_model_load_and_save(proto, cls, str(tfile.name))
+            self._assert_model_load_and_save(proto, cls, Path(tfile.name))
+            
         finally:
-            os.remove(fi.name)
+            os.remove(tfile.name)
+
+    def _assert_model_load_and_save(self, proto, model_class, filepath):
+        onnx.save_model(proto, filepath)
+        loaded_proto = onnx.load_model(filepath, model_class)
+        self.assertEqual(proto, loaded_proto)
 
     def test_save_and_load_tensor(self) -> None:
         proto = self._simple_tensor()
@@ -81,12 +87,17 @@ class TestBasicFunctions(unittest.TestCase):
         # Test if input is a file name
         try:
             with tempfile.NamedTemporaryFile(delete=False) as tfile:
-                onnx.save_tensor(proto, tfile)
+                self._assert_tensor_load_and_save(proto, cls, tfile)
+            self._assert_tensor_load_and_save(proto, cls, str(tfile.name))
+            self._assert_tensor_load_and_save(proto, cls, Path(tfile.name))
 
-            loaded_proto = onnx.load_tensor(tfile.name, cls)
-            self.assertEqual(proto, loaded_proto)
         finally:
             os.remove(tfile.name)
+
+    def _assert_tensor_load_and_save(self, proto, proto_class, proto_str_path):
+        onnx.save_tensor(proto, proto_str_path)
+        loaded_proto = onnx.load_tensor(proto_str_path, proto_class)
+        self.assertEqual(proto, loaded_proto)
 
     def test_existence(self) -> None:
         try:

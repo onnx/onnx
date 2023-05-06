@@ -2,6 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 import os
+from pathlib import Path
 import shutil
 import tempfile
 import unittest
@@ -478,9 +479,6 @@ class TestExternalDataToArray(unittest.TestCase):
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_dir)
 
-    def get_temp_model_filename(self) -> str:
-        return os.path.join(self.temp_dir, str(uuid.uuid4()) + ".onnx")
-
     def create_test_model(self) -> ModelProto:
         X = helper.make_tensor_value_info("X", TensorProto.FLOAT, self.large_data.shape)
         input_init = helper.make_tensor(
@@ -672,6 +670,16 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
         self.model_filename = self.create_test_model("C:/file.bin")
         with self.assertRaises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
+
+
+class TestSaveAllTensorsAsExternalDataWithPath(TestSaveAllTensorsAsExternalData):
+    def get_temp_model_filename(self) -> Path:
+        return Path(super().get_temp_model_filename())
+    
+class TestExternalDataToArrayWithPath(TestExternalDataToArray):
+    def setUp(self):
+        super().setUp()
+        self.model_file_path = Path(self.model_file_path)
 
 
 if __name__ == "__main__":
