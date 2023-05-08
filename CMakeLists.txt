@@ -160,7 +160,7 @@ else()
     Protobuf
     URL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
     URL_HASH SHA1=8919db17a1ea42c8afdfdf6f0c1ad21ac284e064
-    FIND_PACKAGE_ARGS 3.20.0...<4.22.0 NAMES Protobuf
+    FIND_PACKAGE_ARGS NAMES Protobuf
   )
   set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
   FetchContent_MakeAvailable(Protobuf)
