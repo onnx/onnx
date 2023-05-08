@@ -11,26 +11,31 @@ jobs:
         python.version: '3.11'
         onnx_ml: 0
         build_type: 'Release'
+        protobuf_type: 'External'
         onnx_lite: 0
       py310:
         python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
+        protobuf_type: 'External'
         onnx_lite: 1
       py39-ml:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Release'
+        protobuf_type: 'Internal'
         onnx_lite: 1
       py39-ml-debug:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Debug'
+        protobuf_type: 'InternalV22'
         onnx_lite: 0
       py38-ml-debug:
         python.version: '3.8'
         onnx_ml: 1
         build_type: 'Debug'
+        protobuf_type: 'External'
         onnx_lite: 0
     maxParallel: 6
 
@@ -45,7 +50,13 @@ jobs:
       if [ '$(build_type)' == 'Debug' ]; then
         export DEBUG=1
       fi
-      source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
+      if [ '$(protobuf_type)' == 'External' ]; then
+        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
+      elif [ '$(protobuf_type)' == 'Internal' ]; then
+        CMAKE_ARGS="-DONNX_USE_PROTOBUF_V22=OFF"
+      elif [ '$(protobuf_type)' == 'InternalV22' ]; then
+        CMAKE_ARGS="-DONNX_USE_PROTOBUF_V22=ON"
+      fi
 
       git submodule update --init --recursive
       python -m pip install --upgrade pip
@@ -55,7 +66,7 @@ jobs:
         export ONNX_ML=1
       fi
       export ONNX_BUILD_TESTS=1
-      export CMAKE_ARGS="-DONNX_WERROR=ON"
+      export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_WERROR=ON"
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
