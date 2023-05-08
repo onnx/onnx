@@ -10,6 +10,7 @@
 #include "onnx/common/constants.h"
 #include "onnx/common/interned_strings.h"
 #include "onnx/inliner/inliner.h"
+#include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
 namespace ONNX_NAMESPACE {
@@ -63,9 +64,52 @@ struct OpsetMap : public OpsetMapBase {
   }
 };
 
-class NameGenerator {
+using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
+
+// A visitor class for visiting all nodes and subgraphs in a graph.
+struct NodeVisitorBase {
+  void VisitGraph(const GraphProto& graph) {
+    if (ProcessGraph(graph))
+      for (auto& node : graph.node())
+        VisitNode(node);
+  }
+
+  void VisitNode(const NodeProto& node) {
+    if (ProcessNode(node)) {
+      for (auto& attr : node.attribute()) {
+        if (attr.has_g()) {
+          VisitGraph(attr.g());
+        }
+        for (auto& graph : attr.graphs())
+          VisitGraph(graph);
+      }
+    }
+  }
+
+  virtual bool ProcessGraph(const GraphProto& graph) {
+    return true;
+  }
+
+  virtual bool ProcessNode(const NodeProto& node) {
+    return true;
+  }
+};
+
+struct NodeVisitor : public NodeVisitorBase {
+  std::function<bool(const NodeProto&)> process_node;
+
+  NodeVisitor(std::function<bool(const NodeProto&)> process_node_fun) : process_node(process_node_fun) {}
+
+  bool ProcessNode(const NodeProto& node) override {
+    return process_node(node);
+  }
+};
+
+class NameGenerator : public NodeVisitorBase {
  public:
-  NameGenerator() : index_(0) {}
+  NameGenerator(const GraphProto& graph) : index_(0) {
+    VisitGraph(graph);
+  }
 
   // Creates a new unique name, based on a suggested name, and adds it to the set
   // of existing names. Returns the newly created name.
@@ -83,7 +127,7 @@ class NameGenerator {
     existing_names_.insert(name);
   }
 
-  void AddAllNames(const GraphProto& graph) {
+  bool ProcessGraph(const GraphProto& graph) override {
     for (const auto& x : graph.input())
       Add(x.name());
     for (const auto& x : graph.initializer())
@@ -92,24 +136,19 @@ class NameGenerator {
     // to produce better results for invalid graphs.
     for (const auto& x : graph.output())
       Add(x.name());
+    return true;
+  }
 
-    for (const auto& node : graph.node()) {
-      // We use a single name-space for node names and variable names, to keep name-generation simple.
-      Add(node.name());
-      for (const std::string& name : node.input()) {
-        Add(name);
-      }
-      for (const std::string& name : node.output()) {
-        Add(name);
-      }
-      for (const auto& attr : node.attribute()) {
-        if (attr.has_g()) {
-          AddAllNames(attr.g());
-        }
-        for (auto& graph : attr.graphs())
-          AddAllNames(graph);
-      }
+  bool ProcessNode(const NodeProto& node) override {
+    // We use a single name-space for node names and variable names, to keep name-generation simple.
+    Add(node.name());
+    for (const std::string& name : node.input()) {
+      Add(name);
     }
+    for (const std::string& name : node.output()) {
+      Add(name);
+    }
+    return true;
   }
 
  private:
@@ -271,60 +310,37 @@ class Specializer {
   }
 };
 
-
-using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
-
-struct NodeVisitor {
-  std::function<bool(const NodeProto&)> process_node;
-
-  NodeVisitor(std::function<bool(const NodeProto&)> process_node_fun) : process_node(process_node_fun) {}
-
-  void VisitGraph (const GraphProto& graph) {
-    for (auto& node : graph.node())
-      VisitNode(node);
-  }
-
-  void VisitNode (const NodeProto& node) {
-    if (ProcessNode(node)) {
-      for (auto& attr: node.attribute()) {
-        if (attr.has_g()) {
-          VisitGraph (attr.g());
-        }
-        for (auto& graph : attr.graphs())
-          VisitGraph(graph);
-      }
-    }
-  }
-
-  bool ProcessNode (const NodeProto& node) {
-    return process_node(node);
-  }
-};
-
 // Identify the set of all "input" variables used by a given node.
 // This includes the variables listed as node.input, as well as
 // implicit inputs referred to in any graph-valued-attribute of the node.
-std::vector<std::string> GetUsedVars (const NodeProto& node) {
+
+struct ComputeUsedVars : public NodeVisitorBase {
   std::vector<std::string> result;
-  result.reserve(node.input_size());
-  auto process_node = [&] (const NodeProto& n) -> bool {
-    for (auto& var: node.input()) {
-      if (! var.empty()) {
+
+  bool ProcessNode(const NodeProto& node) override {
+    for (auto& var : node.input()) {
+      if (!var.empty()) {
         result.push_back(var);
       }
-      return true; // process sub-graphs
     }
-  };
-  NodeVisitor visitor(process_node);
-  visitor.ProcessNode(node);
-  return result;
+    return true; // process sub-graphs
+  }
+
+  ComputeUsedVars(const NodeProto& node) {
+    result.reserve(node.input_size());
+    VisitNode(node);
+  }
+};
+
+std::vector<std::string> GetUsedVars(const NodeProto& node) {
+  return ComputeUsedVars(node).result;
 }
 
-using ConstNodeMap = std::unordered_map<std::string, const NodeProto *>;
+using ConstNodeMap = std::unordered_map<std::string, const NodeProto*>;
 
-ConstNodeMap FindConstantNodes (const GraphProto& graph) {
+ConstNodeMap FindConstantNodes(const GraphProto& graph) {
   ConstNodeMap result;
-  for (const NodeProto& node: graph.node()) {
+  for (const NodeProto& node : graph.node()) {
     if (IsOnnxDomain(node.domain()) && (node.op_type() == "Constant")) {
       result[node.output(0)] = &node;
     }
@@ -332,16 +348,16 @@ ConstNodeMap FindConstantNodes (const GraphProto& graph) {
   return result;
 }
 
-const TypeProto& GetType (const ModelProto& model, std::string var) {
-  for (auto& vi: model.graph().value_info()) {
+const TypeProto& GetType(const ModelProto& model, std::string var) {
+  for (auto& vi : model.graph().value_info()) {
     if (vi.name() == var)
       return vi.type();
   }
-  for (auto& vi: model.graph().input()) {
+  for (auto& vi : model.graph().input()) {
     if (vi.name() == var)
       return vi.type();
   }
-  for (auto& vi: model.graph().output()) {
+  for (auto& vi : model.graph().output()) {
     if (vi.name() == var)
       return vi.type();
   }
@@ -349,20 +365,22 @@ const TypeProto& GetType (const ModelProto& model, std::string var) {
 }
 
 void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto& function, int target_version) {
+  shape_inference::InferShapes(model);
+
   ModelProto function_as_model;
-  function_as_model.set_ir_version (model.ir_version());
+  function_as_model.set_ir_version(model.ir_version());
   *function_as_model.mutable_opset_import() = function.opset_import();
 
   GraphProto& graph = *function_as_model.mutable_graph();
   // The graph's inputs are all the variables used in the call_node.
-  auto used_vars = GetUsedVars (call_node);
+  auto used_vars = GetUsedVars(call_node);
   auto constant_node_map = FindConstantNodes(model.graph());
 
   RepeatedNodeProto& function_nodes = *function.mutable_node();
   RepeatedNodeProto& nodes = *graph.mutable_node();
   nodes.Reserve(function_nodes.size() + used_vars.size());
 
-  auto* inputs =  graph.mutable_input();
+  auto* inputs = graph.mutable_input();
   for (const auto& var : used_vars) {
     auto* new_input = inputs->Add();
     new_input->set_name(var);
@@ -376,9 +394,9 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
   }
 
   // outputs: from call_node node outputs
-  auto* outputs =  graph.mutable_output();
+  auto* outputs = graph.mutable_output();
   for (const auto& var : call_node.output()) {
-    if (! var.empty()) {
+    if (!var.empty()) {
       auto* new_output = outputs->Add();
       new_output->set_name(var);
       *new_output->mutable_type() = GetType(model, var);
@@ -405,8 +423,44 @@ using FunctionMap = std::unordered_map<FunctionId, std::pair<const FunctionProto
 void InlineFunctions(ModelProto& model, FunctionMap map) {
   auto* graph = model.mutable_graph();
 
-  NameGenerator name_generator;
-  name_generator.AddAllNames(*graph);
+  NameGenerator name_generator(*graph);
+
+  auto* nodes = graph->mutable_node();
+  google::protobuf::RepeatedPtrField<NodeProto> original_nodes;
+  // Move all nodes into original_nodes
+  original_nodes.Swap(nodes);
+
+  int inline_count = 0;
+  std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
+    FunctionProto callee;
+    auto iter = map.find(GetCalleeId(node));
+    if (iter != map.end()) {
+      callee = *iter->second.first;
+      int64_t target_version = iter->second.second;
+      ONNX_ASSERTM(
+          target_version == kNoConversion,
+          "Internal Error: This function should not be called for version conversion with inlining.");
+      // Rename and specialize called function body
+      Specializer::Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
+      // Append nodes of called function
+      for (auto& callee_node : *callee.mutable_node())
+        append_node(callee_node);
+    } else {
+      // Append node without inlining.
+      // TODO: use std::move instead of copying. Use of move doesn't seem to work with
+      // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
+      *nodes->Add() = node;
+    }
+  };
+  for (auto& node : original_nodes) {
+    append_node(node);
+  }
+}
+
+void InlineFunctionsWithVersionConversion(ModelProto& model, FunctionMap map) {
+  auto* graph = model.mutable_graph();
+
+  NameGenerator name_generator(*graph);
 
   auto* nodes = graph->mutable_node();
   google::protobuf::RepeatedPtrField<NodeProto> original_nodes;
@@ -467,16 +521,7 @@ void InlineLocalFunctions(ModelProto& model) {
     }
   }
 
-  // auto get_function = [&](const std::string& domain, const std::string& op, FunctionProto* return_value) -> bool {
-  //   auto iter = map.find(GetFunctionId(domain, op));
-  //   if (iter != map.end()) {
-  //     *return_value = *iter->second;
-  //     return true;
-  //   }
-  //   return false;
-  // };
-
-  InlineFunctions(model, map);
+  InlineFunctionsWithVersionConversion(model, map);
 
   // Remove all model-local functions. We do not remove functions with a mis-matched
   // opset version. They need to be handled some other way, eg., using a version-adapter.

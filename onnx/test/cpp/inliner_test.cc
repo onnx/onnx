@@ -26,9 +26,9 @@ static void InlineFunctions(ModelProto& model, const char* input) {
   checker::check_model(model, false, true);
   shape_inference::InferShapes(model);
 
-  std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
+  // std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
   inliner::InlineLocalFunctions(model);
-  std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
+  // std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
 
   // The following will ensure basic sanity checks hold after inlining, including
   // absence of duplicate names (multiple assignments to same name).
@@ -209,6 +209,45 @@ foo (x) => (y) {
   ASSERT_EQ(node.op_type(), "ReduceLogSum");
   ASSERT_EQ(node.input_size(), 2);
   ASSERT_EQ(node.attribute_size(), 0);
+}
+
+TEST(FunctionInliner, NestedVersionConversion) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
+agraph (float[N,M] X) => (float[N,M] Y)
+{
+  Y = local.foo (X)
+}
+
+<opset_import: [ "" : 17, "local" : 1], domain: "local">
+foo (x) => (y) {
+  t = ReduceLogSum <axes = [0]> (x)
+  y = local.bar (t)
+}
+
+<opset_import: [ "" : 17], domain: "local">
+bar (x) => (y) {
+  y = ReduceLogSum <axes = [1]> (x)
+}
+)ONNX";
+
+  ModelProto model;
+  InlineFunctions(model, code);
+  // Inlining ReduceLogSum (version 17) should convert it to ReduceLogSum (version 18)
+  // by promoting axes from attribute to input, with a preceding Constant node for
+  // the axes value.
+  // Check that both ReduceLogSum nodes have been converted.
+  ASSERT_EQ(model.graph().node_size(), 4);
+  ASSERT_EQ(model.graph().node(0).op_type(), "Constant");
+  auto& node = model.graph().node(1);
+  ASSERT_EQ(node.op_type(), "ReduceLogSum");
+  ASSERT_EQ(node.input_size(), 2);
+  ASSERT_EQ(node.attribute_size(), 0);
+  ASSERT_EQ(model.graph().node(2).op_type(), "Constant");
+  auto node2 = model.graph().node(3);
+  ASSERT_EQ(node2.op_type(), "ReduceLogSum");
+  ASSERT_EQ(node2.input_size(), 2);
+  ASSERT_EQ(node2.attribute_size(), 0);
 }
 
 } // namespace Test
