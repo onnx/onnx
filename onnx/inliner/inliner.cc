@@ -420,44 +420,7 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
 constexpr int64_t kNoConversion = -1;
 using FunctionMap = std::unordered_map<FunctionId, std::pair<const FunctionProto*, int64_t>>;
 
-void InlineFunctions(ModelProto& model, FunctionMap map) {
-  auto* graph = model.mutable_graph();
-
-  NameGenerator name_generator(*graph);
-
-  auto* nodes = graph->mutable_node();
-  google::protobuf::RepeatedPtrField<NodeProto> original_nodes;
-  // Move all nodes into original_nodes
-  original_nodes.Swap(nodes);
-
-  int inline_count = 0;
-  std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
-    FunctionProto callee;
-    auto iter = map.find(GetCalleeId(node));
-    if (iter != map.end()) {
-      callee = *iter->second.first;
-      int64_t target_version = iter->second.second;
-      ONNX_ASSERTM(
-          target_version == kNoConversion,
-          "Internal Error: This function should not be called for version conversion with inlining.");
-      // Rename and specialize called function body
-      Specializer::Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
-      // Append nodes of called function
-      for (auto& callee_node : *callee.mutable_node())
-        append_node(callee_node);
-    } else {
-      // Append node without inlining.
-      // TODO: use std::move instead of copying. Use of move doesn't seem to work with
-      // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
-      *nodes->Add() = node;
-    }
-  };
-  for (auto& node : original_nodes) {
-    append_node(node);
-  }
-}
-
-void InlineFunctionsWithVersionConversion(ModelProto& model, FunctionMap map) {
+void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
   auto* graph = model.mutable_graph();
 
   NameGenerator name_generator(*graph);
@@ -476,8 +439,14 @@ void InlineFunctionsWithVersionConversion(ModelProto& model, FunctionMap map) {
       int64_t target_version = iter->second.second;
       // Rename and specialize called function body
       Specializer::Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
-      if (target_version != kNoConversion)
+      if (target_version != kNoConversion) {
+        ONNX_ASSERTM(
+            convert_version,
+            "Internal Error: Inlining function ",
+            GetFunctionId(callee),
+            " requires version conversion, but convert_version is false.");
         ConvertVersion(model, node, callee, target_version);
+      }
       // Append nodes of called function
       for (auto& callee_node : *callee.mutable_node())
         append_node(callee_node);
@@ -497,7 +466,7 @@ void InlineFunctionsWithVersionConversion(ModelProto& model, FunctionMap map) {
 
 // Public API implementation:
 
-void InlineLocalFunctions(ModelProto& model) {
+void InlineLocalFunctions(ModelProto& model, bool convert_version) {
   OpsetMap model_imports(model.opset_import());
   FunctionMap map;
 
@@ -512,7 +481,7 @@ void InlineLocalFunctions(ModelProto& model) {
     auto mismatches = model_imports.Mismatches(function.opset_import());
     auto iter = mismatches.find(ONNX_DOMAIN);
     int64_t target_onnx_version = kNoConversion;
-    if (iter != mismatches.end()) {
+    if (convert_version && (iter != mismatches.end())) {
       target_onnx_version = iter->second;
       mismatches.erase(iter);
     }
@@ -521,7 +490,7 @@ void InlineLocalFunctions(ModelProto& model) {
     }
   }
 
-  InlineFunctionsWithVersionConversion(model, map);
+  InlineFunctions(model, map, convert_version);
 
   // Remove all model-local functions. We do not remove functions with a mis-matched
   // opset version. They need to be handled some other way, eg., using a version-adapter.

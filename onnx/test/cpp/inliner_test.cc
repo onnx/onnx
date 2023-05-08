@@ -27,7 +27,7 @@ static void InlineFunctions(ModelProto& model, const char* input) {
   shape_inference::InferShapes(model);
 
   // std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
-  inliner::InlineLocalFunctions(model);
+  inliner::InlineLocalFunctions(model, true);
   // std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
 
   // The following will ensure basic sanity checks hold after inlining, including
