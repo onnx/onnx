@@ -132,40 +132,6 @@ endif()
 # Build the libraries with -fPIC including the protobuf lib.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-message("Loading Dependencies URLs ...")
-if (ONNX_USE_PROTOBUF_V22)
-  # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.0
-  FetchContent_Declare(
-    Abseil_cpp
-    URL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz
-    URL_HASH SHA1=3b3a858ff8ddeb7120c0b76e56d38a480af8ca77
-  )
-  set(ABSL_PROPAGATE_CXX_STD 1)
-  set(abseil_BUILD_TESTING 0)
-  FetchContent_Populate(Abseil_cpp)
-  FetchContent_GetProperties(Abseil_cpp)
-  # ABSL_ROOT_DIR is required by Protobuf.
-  set(ABSL_ROOT_DIR ${abseil_cpp_SOURCE_DIR})
-  message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-  FetchContent_Declare(
-    Protobuf
-    URL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz
-    URL_HASH SHA1=310938afea334b98d7cf915b099ec5de5ae3b5c5
-    FIND_PACKAGE_ARGS 22.3.0...<23.0.0 NAMES Protobuf
-  )
-  set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
-  FetchContent_MakeAvailable(Protobuf Abseil_cpp)
-else()
-  FetchContent_Declare(
-    Protobuf
-    URL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
-    URL_HASH SHA1=8919db17a1ea42c8afdfdf6f0c1ad21ac284e064
-    FIND_PACKAGE_ARGS NAMES Protobuf
-  )
-  set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
-  FetchContent_MakeAvailable(Protobuf)
-endif()
-
 if(ONNX_BUILD_TESTS)
   list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
   include(googletest)
@@ -218,53 +184,99 @@ else()
               PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
               NO_DEFAULT_PATH)
     find_package(Protobuf REQUIRED)
-    message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
-    if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
-      # There are extra dependencies for protobuf.
-      find_package(absl REQUIRED)
-      find_package(utf8_range REQUIRED)
-      message(STATUS "absl_VERSION: ${absl_VERSION}")
-      set(protobuf_ABSL_USED_TARGETS
-        absl::absl_check
-        absl::absl_log
-        absl::algorithm
-        absl::base
-        absl::bind_front
-        absl::bits
-        absl::btree
-        absl::cleanup
-        absl::cord
-        absl::core_headers
-        absl::debugging
-        absl::die_if_null
-        absl::dynamic_annotations
-        absl::flags
-        absl::flat_hash_map
-        absl::flat_hash_set
-        absl::function_ref
-        absl::hash
-        absl::layout
-        absl::log_initialize
-        absl::log_severity
-        absl::memory
-        absl::node_hash_map
-        absl::node_hash_set
-        absl::optional
-        absl::span
-        absl::status
-        absl::statusor
-        absl::strings
-        absl::synchronization
-        absl::time
-        absl::type_traits
-        absl::utility
-        absl::variant
-        utf8_range::utf8_range
-        utf8_range::utf8_validity
-      )
-    else()
-      set(protobuf_ABSL_USED_TARGETS "")
+    if (ONNX_USE_PROTOBUF_V22 AND "${Protobuf_VERSION}" VERSION_LESS "4.22.0")
+      message(WARNING "ONNX_USE_PROTOBUF_V22 is set but found protobuf version: ${Protobuf_VERSION}")
     endif()
+  else()  # Protobuf_PROTOC_EXECUTABLE not found.
+    message("Loading Dependencies URLs ...")
+    if (ONNX_USE_PROTOBUF_V22)
+      # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.0
+      set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz)
+      set(AbseilSHA1 3b3a858ff8ddeb7120c0b76e56d38a480af8ca77)
+      FetchContent_Declare(
+        Abseil_cpp
+        URL ${AbseilURL}
+        URL_HASH SHA1=${AbseilSHA1}
+      )
+      set(ABSL_PROPAGATE_CXX_STD 1)
+      set(abseil_BUILD_TESTING 0)
+      message(STATUS "Download and build Abseil from ${AbseilURL}")
+      FetchContent_Populate(Abseil_cpp)
+      FetchContent_GetProperties(Abseil_cpp)
+      # ABSL_ROOT_DIR is required by Protobuf.
+      set(ABSL_ROOT_DIR ${abseil_cpp_SOURCE_DIR})
+      message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
+      set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
+      set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
+      FetchContent_Declare(
+        Protobuf
+        URL ${ProtobufURL}
+        URL_HASH SHA1=${ProtobufSHA1}
+      )
+      set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+      message(STATUS "Download and build Protobuf from ${ProtobufURL}")
+      FetchContent_MakeAvailable(Protobuf Abseil_cpp)
+    else()
+      set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz)
+      set(ProtobufSHA1 8919db17a1ea42c8afdfdf6f0c1ad21ac284e064)
+      FetchContent_Declare(
+        Protobuf
+        URL ${ProtobufURL}
+        URL_HASH SHA1=${ProtobufSHA1}
+      )
+      set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+      message(STATUS "Download and build Protobuf from ${ProtobufURL}")
+      FetchContent_MakeAvailable(Protobuf)
+    endif()
+    set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+    message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
+    message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
+  endif()
+  if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
+    # There are extra dependencies for protobuf.
+    find_package(absl REQUIRED)
+    find_package(utf8_range REQUIRED)
+    message(STATUS "absl_VERSION: ${absl_VERSION}")
+    set(protobuf_ABSL_USED_TARGETS
+      absl::absl_check
+      absl::absl_log
+      absl::algorithm
+      absl::base
+      absl::bind_front
+      absl::bits
+      absl::btree
+      absl::cleanup
+      absl::cord
+      absl::core_headers
+      absl::debugging
+      absl::die_if_null
+      absl::dynamic_annotations
+      absl::flags
+      absl::flat_hash_map
+      absl::flat_hash_set
+      absl::function_ref
+      absl::hash
+      absl::layout
+      absl::log_initialize
+      absl::log_severity
+      absl::memory
+      absl::node_hash_map
+      absl::node_hash_set
+      absl::optional
+      absl::span
+      absl::status
+      absl::statusor
+      absl::strings
+      absl::synchronization
+      absl::time
+      absl::type_traits
+      absl::utility
+      absl::variant
+      utf8_range::utf8_range
+      utf8_range::utf8_validity
+    )
+  else()
+    set(protobuf_ABSL_USED_TARGETS "")
   endif()
 endif()
 
