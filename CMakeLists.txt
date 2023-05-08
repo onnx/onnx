@@ -3,7 +3,6 @@
 cmake_minimum_required(VERSION 3.11)
 include(cmake/Utils.cmake)
 include(FetchContent)
-cmake_policy(SET CMP0135 NEW)
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "Build type not set - defaulting to Release")
