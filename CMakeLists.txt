@@ -129,6 +129,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
 endif()
 
+# Build the libraries with -fPIC including the protobuf lib.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 message("Loading Dependencies URLs ...")
 if (ONNX_USE_PROTOBUF_V22)
   # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.0
@@ -264,9 +267,6 @@ else()
     endif()
   endif()
 endif()
-
-# Build the libraries with -fPIC
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
