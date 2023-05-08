@@ -196,6 +196,9 @@ void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_typ
     mergeShapesAndTypes(
         inferred_type.optional_type().elem_type(), existing_type->mutable_optional_type()->mutable_elem_type());
   } else if (inferred_val_case == TypeProto::kMapType) {
+    if (existing_type->map_type().key_type() == TensorProto::UNDEFINED) {
+      existing_type->mutable_map_type()->set_key_type(inferred_type.map_type().key_type());
+    }
     mergeShapesAndTypes(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type());
   }
 }
@@ -229,6 +232,8 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
     MaterializeSymbolicShape(inferred_type->mutable_sequence_type()->mutable_elem_type(), symbol_table);
   } else if (inferred_val_case == TypeProto::kOptionalType) {
     MaterializeSymbolicShape(inferred_type->mutable_optional_type()->mutable_elem_type(), symbol_table);
+  } else if (inferred_val_case == TypeProto::kMapType) {
+    MaterializeSymbolicShape(inferred_type->mutable_map_type()->mutable_value_type(), symbol_table);
   } else {
     fail_shape_inference("type case unsupported for symbolic shape inference. inferred=", inferred_val_case);
   }
