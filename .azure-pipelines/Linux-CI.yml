@@ -50,6 +50,8 @@ jobs:
       python -m pip install -r requirements-release.txt
       # still test protobuf==3.20.2 at least in a CI
       python -m pip install protobuf==3.20.2
+      ls -l /usr/lib/x86_64-linux-gnu/libproto*
+      ls -l /usr/bin/protoc*
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
 
