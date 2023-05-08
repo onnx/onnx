@@ -1,6 +1,9 @@
-# Minimum CMake required
-cmake_minimum_required(VERSION 3.1)
+# Minimum CMake required.
+# FetchContent module requires 3.11.
+cmake_minimum_required(VERSION 3.11)
 include(cmake/Utils.cmake)
+include(FetchContent)
+cmake_policy(SET CMP0135 NEW)
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "Build type not set - defaulting to Release")
@@ -26,6 +29,7 @@ option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
+option(ONNX_USE_PROTOBUF_V22 "Use protobuf v22" OFF)
 
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
@@ -123,6 +127,40 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
+endif()
+
+message("Loading Dependencies URLs ...")
+if (ONNX_USE_PROTOBUF_V22)
+  # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.0
+  FetchContent_Declare(
+    Abseil_cpp
+    URL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz
+    URL_HASH SHA1=3b3a858ff8ddeb7120c0b76e56d38a480af8ca77
+  )
+  set(ABSL_PROPAGATE_CXX_STD 1)
+  set(abseil_BUILD_TESTING 0)
+  FetchContent_Populate(Abseil_cpp)
+  FetchContent_GetProperties(Abseil_cpp)
+  # ABSL_ROOT_DIR is required by Protobuf.
+  set(ABSL_ROOT_DIR ${abseil_cpp_SOURCE_DIR})
+  message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
+  FetchContent_Declare(
+    Protobuf
+    URL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz
+    URL_HASH SHA1=310938afea334b98d7cf915b099ec5de5ae3b5c5
+    FIND_PACKAGE_ARGS 22.3.0...<23.0.0 NAMES Protobuf
+  )
+  set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+  FetchContent_MakeAvailable(Protobuf Abseil_cpp)
+else()
+  FetchContent_Declare(
+    Protobuf
+    URL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
+    URL_HASH SHA1=8919db17a1ea42c8afdfdf6f0c1ad21ac284e064
+    FIND_PACKAGE_ARGS 3.21.0...<4.22.0 NAMES Protobuf
+  )
+  set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+  FetchContent_MakeAvailable(Protobuf)
 endif()
 
 if(ONNX_BUILD_TESTS)
