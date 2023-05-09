@@ -2371,19 +2371,200 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
 
 static const char* GridSample_ver16_doc = R"DOC(
-Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from `grid`.
-Currently, only spatial (4-D) inputs are supported. For input `X` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
-the output `Y` will have shape (N, C, H_out, W_out).
+GridSample is conceptually similar to gather_nd but allows access to data at non-integer
+coordinates by interpolating from nearby integer coordinates. GridSample also
+allows access at coordinates beyond the size of the input `X`.
 
-The tensor `X` contains values at centers of square pixels in a H by W 2-dimensional image.
-The tensor `grid` describes normalized positions where the output `Y` is to be computed
-using a specified interpolation method (the mode) and a padding mode (for grid positions falling outside the 2-dimensional image).
+Given a 4D `X` tensor with dimensions `[N,C,H,W] ` and a 4D `grid` tensor
+with dimensions `[N,W',H',2]`, the 4D output 'Y' tensor of `GridSample` has
+dimensions `[N,C,W',H']`. Conceptually, the output element at `[n,c,row',col']`
+equals `X[n,c,row,col]` where `(row, col)` is calculated from the 2-element
+vector `(x,y)` that is equal to `grid(n,row',col')`. Conceptually, that is what
+is going on. The details are more involved as described below.
 
-Elements in `grid[N, H_out, W_out]` are size-2 vectors specifying positions in the 2-dimensional space of `X`.
-They are used to interpolate output values of `Y[N, C, H_out, W_out]`.
+See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample). Currently, ONNX GridSample requires 4D tensors.
 
-The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
-See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
+#### Denormalization of coordinates depending on `align_corners`
+
+A coordinate vector is in-bounds if it stays within the dimension sizes of
+`X` in the height and width dimensions. A coordinate vector in GridSample is
+not required to be in-bounds. This section concerns in-bounds coordinate vectors
+while out-of-bounds coordinate vectors are handled in a later section.
+
+The in-bounds coordinate vectors in `grid` are normalized to the range `[-1,1]`.
+The indices of `X` are in a range `[0,W)` and `[0,H)`, respectively, so we
+need to denormalize the coordinates in `grid` to put them into a range more
+appropriate for indexing into `X`. The calculation to do the denormalization
+depends on the value of `align_corners`.
+
+If `align_corners` is `0` (i.e. `false`), then for the horizontal (left-right)
+dimension, `-1` refers to the left border of the left-most column of pixels while
+`1` refers to the right border of the right-most column of pixels. The formula for
+denormalization of a coordinate `x` is then:
+
+`denormalize(x, W, false) = ((x + 1) * W - 1) / 2` .
+
+If `align_corners` is `1` (i.e. `true`), then for the horizontal (left-right)
+dimension, `-1` refers to the center of the left-most column of pixels while `1`
+refers to the center of the right-most column of pixels. The formula for
+denormalization of a coordinate `x` is then:
+
+`denormalize(x, W, true) = (x + 1) * (W - 1) / 2` .
+
+The normalized coordinates in `grid` are notated as `(x, y)` while the
+denormalized coordinates used for lookups are notated as `(row, col)`, matching
+PyTorch's GridSample. The concept of `x` is horizontal (left-right) which
+corresponds to `col`, while `y` is vertical (up-down) which corresponds to
+`row`. So in order to do a lookup in `X` based on `(x, y)`, it is also
+necessary to swap the two coordinates in addition to denormalization. All
+together, the coordinate calculation is then:
+
+`(row, col) = (denormalize(y, H, align_corners), denormalize(x, W, align_corners))`
+
+where `y` goes first while in `grid` the ordering is `(x, y)` with `x` first. In
+other words, `grid` lists its coordinates in minor-to-major ordering (`y` and
+`row` are the major dimensions while `x` and `col` are minor). This is in
+contrast to e.g. `gather_nd` which uses the opposite ordering. So if `(-1, -1)`
+is the top-left corner, then `(-1, 1)` refers to the bottom-left corner, not the
+top-right corner.
+
+#### Interpolation of coordinates depending on `interpolation_mode`
+
+If the denormalized coordinates `(row, col)` are integer and in-bounds, then the
+value in the output at those coordinates is the value of `X` at those
+coordinates. If the denormalized coordinates are not integer, then the value is
+interpolated depending on the value of `interpolation_mode`.
+
+If `interpolation_mode` is `nearest`, then the value at those
+coordinates are the values in `X` of the nearest integer coordinates. This
+corresponds to the calculation
+
+`(row', col') = (round(row), round(col))` .
+
+If two integer points are equally close in a given dimension,
+corresponding to a coordinate ending in `.5`, then a rounding to the nearest
+even integer occurs.
+
+For example, if `(row, col)=(1.5,3.5)`, then the coordinates used for the lookup
+could be any one of `(1.0, 3.0)`, `(1.0, 4.0)`, `(2.0, 3.0)`, and `(2.0, 4.0)`.
+Whichever one of those a given version of an implementation picks, it must
+always make that same choice when given this same input.
+
+If `interpolation_mode` is `bilinear`, then the value at the output depends on a
+linear interpolation between the nearest four integer coordinates. The weight of
+the nearby integer points depends on the (Manhattan) distance to those points.
+In the horizontal (left-right) dimension, the weighting of the two nearest
+points to the left equals `frac(col)` which is the fractional part of `col`
+while the weighting of the two nearest points to the right equals `1 -
+frac(col)`.
+
+For example, if `(row, col) = (1.3, 3.9)` then the interpolated value is the
+matrix product:
+
+```math
+\text{Y[n,c,row',col'] } =
+\left(\begin{array}{c}
+0.9 & 0.1
+\end{array}\right)
+\left(\begin{array}{cc}
+\text{X[n,c,1,3]} & \text{X[n,c,1,4]} \\
+\text{X[n,c,2,3]} & \text{X[n,c,2,4]} \\
+\end{array}\right)
+\left(\begin{array}{cc}
+0.3 \\
+0.7 \\
+\end{array}\right)
+```
+
+If `interpolation_mode` is `bicubic` then it is a similar
+calculation as for linear interpolation, except the nearest 4x4 integer points
+(instead of 2x2) are sampled around `(row, col)` and therefore a 4D
+interpolation vector (instead of 2D) is required to reduce that down to a scalar in a similar matrix product as above. For bilinear interpolation, the
+interpolation vector for `col` is `(frac(col), 1-frac(col))` while for bicubic
+interpolation, the interpolation vector is:
+
+```math
+\left(\begin{array}{r}
+\alpha * (((x_0 - 5) * x_0 + 8) * x_0 - 4),\newline
+((\alpha + 2) * x_1 - (\alpha + 3)) * x_1 * x_1 + 1,\\
+((\alpha + 2) * x_2 - (\alpha + 3)) * x_2 * x_2 + 1,\\
+\alpha * (((x_3 - 5) * x_3 + 8) * x_3 - 4)
+\end{array}\right)
+\text{ for }
+\left(\begin{array}{c}
+x_0\\
+x_1\\
+x_2\\
+x_3\\
+\end{array}\right)
+=\left(\begin{array}{c}
+1+\text{frac(col)}\\
+\text{frac(col)}\\
+1-\text{frac(col)}\\
+2-\text{frac(col)}\\
+\end{array}\right)
+```
+
+The value of $`\alpha`$ is $-0.75$, which matches the default value for PyTorch.
+
+#### Handling of out-of-bounds coordinates depending on `padding_mode`
+
+The (normalized) coordinates in `grid` are not required to be in the range [-1,1]. Also, even
+if the normalized coordinates are within that range, in some cases the
+interpolation calculations described above will still need to access `X` at
+integer coordinates outside of the bounds of the `X` array. What happens in
+this case depends on the value of `padding_mode`.
+
+If `padding_mode` is `zeros`, then the value at all out-of-bounds integer
+coordinates is zero. This does not necessarily imply that normalized coordinates
+outside of `[-1,1]` will result in a zero value, since the interpolation may
+access some in-bounds values. For example, bicubic interpolation looks at the
+4x4 grid of nearest integer coordinates and some of those may be in-bounds.
+
+If `padding_mode` is `border`, then any out-of-bounds coordinates yield the
+value of the nearest in-bounds integer coordinate vector. There is always a
+unique in-bounds point that is closest, so there is not a question of what to do
+in case of a tie.
+
+If `padding_mode` is `reflection` then the values in `X` are mirrored
+repeatedly to create an infinite field of reflections that can be accessed at
+any coordinates. The axis of the initial reflection is in the borders at
+normalized coordinates `-1` and `1` and later reflections use the same axes of
+reflection just translated by `2` (i.e. the distance between `-1` and `1`). This
+implies that there are two different cases depending on the value of
+`align_corners`, as the denormalized values corresponding to `1` and `-1` depend
+on `align_corners`.
+
+If `padding_mode` is `reflection` and `align_corners` is `0` (i.e. `false`),
+then the reflection is through the outer border of the border pixels. The
+reflection in that axis then contains a copy of the border pixels. Thus the
+mirror of a sequence `1 2 3` across the left border (at `-1`) is then `3 2 1 1 2
+3`, duplicating the value `1` at the border.
+
+If `padding_mode` is `reflection` and `align_corners` is `1` (i.e. `true`), then
+the reflection is through the center of the border pixels. So then the
+out-of-bounds half of each border pixel is mirrored from the in-bounds half so
+that the pixel is not duplicated in its mirror. Thus the
+mirror of a sequence `1 2 3` across the left border (at `-1`) is then `3 2 1 2
+3` without a duplication of the `1` value.
+
+#### Precision and types
+
+The element type of `Y` is the same as the element type of `X`.
+All normalization and interpolation calculations must be
+performed using the same or higher precision as the precision of
+`X`. It is encouraged to use 32 bit floating point precision for this.
+
+If the normalized or denormalized coordinates in `grid`, or any
+intermediate number in the formulas above, are so large that they
+cannot be precisely represented in 32-bit floating point, then the
+result of where lookups are made depends on floating point rounding
+errors.  Implementations are expressly permitted to yield arbitrary
+results if any of these numbers `f` is so large that $`f==f+1`$. For a
+32 bit IEEE float, this number is 16,777,216. Even in this case, the
+same output should be computed consistently for a given input by any
+given version of an implementation, though this spec does not specify
+which output that should be.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2392,33 +2573,28 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "mode",
-            "Three interpolation modes: bilinear (default), nearest and bicubic.",
+            "This attribute must be one of the strings 'bilinear', 'nearest' and 'bicubic'.",
             AttributeProto::STRING,
             std::string("bilinear"))
         .Attr(
             "padding_mode",
-            "Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. "
-            "zeros: use 0 for out-of-bound grid locations, "
-            "border: use border values for out-of-bound grid locations, "
-            "reflection: use values at locations reflected by the border for out-of-bound grid locations. "
-            "If index 0 represents the margin pixel, the reflected value at index -1 will be the same as the value at index 1. "
-            "For location far away from the border, it will keep being reflected until becoming in bound. "
-            "If pixel location x = -3.5 reflects by border -1 and becomes x' = 1.5, then reflects by border 1 and becomes x'' = 0.5.",
+            "This attribute must be one of the strings 'zeros', 'border' and 'reflection'.",
             AttributeProto::STRING,
             std::string("zeros"))
         .Attr(
             "align_corners",
-            "If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. "
-            "If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.",
+            "This attribute must be either 0 or 1.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
             0,
             "X",
-            "4-D tensor of shape (N, C, H, W), "
-            "where N is the batch size, C is the numbers of channels, "
-            "H and W are the height and width of the input data.",
-            "T1",
+            "4-D tensor of shape (N, C, H, W), where N is the batch size, C is the "
+            "number of channels, H and W are the height and width of the input data. "
+            "This is the tensor that GridSample does lookups in to retrieve data that "
+            "is used to compute the output 'Y'. It is not allowed for N, C, H or W to "
+            "be zero.",
+            "T",
             OpSchema::Single,
             true,
             1,
@@ -2426,32 +2602,26 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "grid",
-            "Input offset, 4-D tensor of shape (N, H_out, W_out, 2), "
-            "where H_out and W_out are the height and width of grid and output, "
-            "Grid specifies the sampling pixel locations normalized by the input spatial dimensions. "
-            "Therefore, it should have most values in the range of [-1, 1]. "
-            "If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.",
-            "T2",
+            "4-D tensor of shape (N, H_out, W_out, 2), where H_out and W_out "
+            "are the height and width of grid and output. This is the tensor "
+            "that GridSample uses to determine where to do lookups in X. It "
+            "is not allowed for N, H_out or W_out to be zero.",
+            "T",
             OpSchema::Single,
             true,
             1,
             OpSchema::NonDifferentiable)
         .Output(
             0,
-            "Y",
-            "4-D tensor of shape (N, C, H_out, W_out) of sampled values. "
-            "For integer input types, intermediate values are computed as floating point and cast to integer at the end.",
-            "T1",
+            "output",
+            "4-D tensor of shape (N, C, H_out, W_out).",
+            "T",
             OpSchema::Single,
             true,
             1,
             OpSchema::Differentiable)
         .TypeConstraint(
-            "T1",
-            OpSchema::all_tensor_types(),
-            "Constrain input `X` and output `Y` types to all tensor types.")
-        .TypeConstraint(
-            "T2",
+            "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain grid types to float tensors.")
         .SetDoc(GridSample_ver16_doc)
