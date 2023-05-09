@@ -87,10 +87,12 @@ struct NodeVisitorBase {
   }
 
   virtual bool ProcessGraph(const GraphProto& graph) {
+    ONNX_UNUSED_PARAMETER(graph);
     return true;
   }
 
   virtual bool ProcessNode(const NodeProto& node) {
+    ONNX_UNUSED_PARAMETER(node);
     return true;
   }
 
@@ -488,7 +490,7 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
       mismatches.erase(iter);
     }
     if (mismatches.empty()) {
-      map[GetFunctionId(function)] = std::pair(&function, target_onnx_version);
+      map[GetFunctionId(function)] = std::pair<const FunctionProto*, int64_t>(&function, target_onnx_version);
     }
   }
 
