@@ -93,6 +93,8 @@ struct NodeVisitorBase {
   virtual bool ProcessNode(const NodeProto& node) {
     return true;
   }
+
+  virtual ~NodeVisitorBase() {}
 };
 
 struct NodeVisitor : public NodeVisitorBase {
@@ -361,7 +363,7 @@ const TypeProto& GetType(const ModelProto& model, std::string var) {
     if (vi.name() == var)
       return vi.type();
   }
-  ONNX_ASSERTM(false, "Type unknown for ", var);
+  ONNX_ASSERTM(false, "Type unknown for %s", var.c_str());
 }
 
 void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto& function, int target_version) {
@@ -442,9 +444,9 @@ void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
       if (target_version != kNoConversion) {
         ONNX_ASSERTM(
             convert_version,
-            "Internal Error: Inlining function ",
-            GetFunctionId(callee),
-            " requires version conversion, but convert_version is false.");
+            "Internal Error: Inlining function %s::%s requires version conversion, but convert_version is false.",
+            callee.domain().c_str(),
+            callee.name().c_str());
         ConvertVersion(model, node, callee, target_version);
       }
       // Append nodes of called function
