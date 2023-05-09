@@ -106,16 +106,6 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
-if(ONNX_WERROR)
-  if(MSVC)
-    string(APPEND CMAKE_CXX_FLAGS " /WX")
-    string(APPEND CMAKE_C_FLAGS " /WX")
-  else()
-    string(APPEND CMAKE_CXX_FLAGS " -Werror")
-    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
-  endif()
-endif()
-
 # find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
 # Use the following command in the future; now this is only compatible with the latest pybind11
 # find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
@@ -284,6 +274,17 @@ else()
     )
   else()
     set(protobuf_ABSL_USED_TARGETS "")
+  endif()
+endif()
+
+# Protobuf build would fail if ONNX_WERROR is on.
+if(ONNX_WERROR)
+  if(MSVC)
+    string(APPEND CMAKE_CXX_FLAGS " /WX")
+    string(APPEND CMAKE_C_FLAGS " /WX")
+  else()
+    string(APPEND CMAKE_CXX_FLAGS " -Werror")
+    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
   endif()
 endif()
 
