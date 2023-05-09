@@ -417,8 +417,8 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
   function_nodes.Swap(converted.mutable_graph()->mutable_node());
 
   // Append new initializers to main graph initializers
-  auto& added_initializer = converted.graph().initializer();
-  model.mutable_graph()->mutable_initializer()->Add(added_initializer.begin(), added_initializer.end());
+  for (auto& added_initializer : converted.graph().initializer())
+    *model.mutable_graph()->mutable_initializer()->Add() = added_initializer;
 }
 
 constexpr int64_t kNoConversion = -1;
