@@ -198,13 +198,13 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_transpose_scalar(self) -> None:
         graph = self._make_graph(
-            [("X", TensorProto.FLOAT, tuple())],
+            [("X", TensorProto.FLOAT, ())],
             [make_node("Transpose", ["X"], ["Y"])],
             [],
         )
 
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, tuple())]
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ())]
         )
 
     def test_transpose_partial(self) -> None:
