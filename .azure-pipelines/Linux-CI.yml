@@ -12,26 +12,31 @@ jobs:
         onnx_ml: 1
         build_type: 'Debug'
         documentation: 0
+        protobuf_type: 'External'
       py310:
         python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
         documentation: 0
+        protobuf_type: 'Internal'
       py39-ml:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Release'
         documentation: 1
+        protobuf_type: 'InternalV22'
       py38:
         python.version: '3.8'
         onnx_ml: 0
         build_type: 'Release'
         documentation: 0
+        protobuf_type: 'External'
       py38-ml:
         python.version: '3.8'
         onnx_ml: 1
         build_type: 'Release'
         documentation: 0
+        protobuf_type: 'Internal'
     maxParallel: 6
 
   steps:
@@ -45,13 +50,18 @@ jobs:
       python -m virtualenv venv
       source venv/bin/activate
 
-      sudo apt-get install libprotobuf-dev protobuf-compiler
+      if [ '$(protobuf_type)' == 'External' ]; then
+        sudo apt-get install libprotobuf-dev protobuf-compiler
+      elif [ '$(protobuf_type)' == 'Internal' ]; then
+        CMAKE_ARGS="-DONNX_USE_PROTOBUF_V22=OFF"
+      elif [ '$(protobuf_type)' == 'InternalV22' ]; then
+        CMAKE_ARGS="-DONNX_USE_PROTOBUF_V22=ON"
+      fi
+
       python -m pip install --upgrade pip
       python -m pip install -r requirements-release.txt
       # still test protobuf==3.20.2 at least in a CI
       python -m pip install protobuf==3.20.2
-      ls -l /usr/lib/x86_64-linux-gnu/libproto*
-      ls -l /usr/bin/protoc*
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
 
@@ -63,7 +73,7 @@ jobs:
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
       fi
-      export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+      export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       # enable more sanitizer
       export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
       pip install -e .

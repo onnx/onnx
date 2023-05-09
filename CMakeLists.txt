@@ -182,11 +182,19 @@ else()
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
               PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
               NO_DEFAULT_PATH)
-    find_package(Protobuf REQUIRED)
-    if (ONNX_USE_PROTOBUF_V22 AND "${Protobuf_VERSION}" VERSION_LESS "4.22.0")
-      message(WARNING "ONNX_USE_PROTOBUF_V22 is set but found protobuf version: ${Protobuf_VERSION}")
+    find_package(Protobuf)
+    if (Protobuf_FOUND)
+      if (ONNX_USE_PROTOBUF_V22 AND "${Protobuf_VERSION}" VERSION_LESS "4.22.0")
+        message(WARNING "ONNX_USE_PROTOBUF_V22 is set but found protobuf version: ${Protobuf_VERSION}")
+      endif()
+      set(Build_Protobuf OFF)
+    else()
+      set(Build_Protobuf ON)
     endif()
   else()  # Protobuf_PROTOC_EXECUTABLE not found.
+    set(Build_Protobuf ON)
+  endif()
+  if (Build_Protobuf)
     message("Loading Dependencies URLs ...")
     if (ONNX_USE_PROTOBUF_V22)
       # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.0
