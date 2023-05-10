@@ -1191,11 +1191,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          // If transposing a scalar, we still want to infer a 0 dimension output shape
-          if (!shape.dim_size()) {
-            auto output_type = ctx.getOutputType(0);
-            propagateShape(input_type, output_type);
-          }
+          getOutputShape(ctx, 0);
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           for (size_t i = 0; i < perm.size(); ++i) {
