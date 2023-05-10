@@ -560,10 +560,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto inliner = onnx_cpp2py_export.def_submodule("inliner");
   inliner.doc() = "Inliner submodule";
 
-  inliner.def("inline_local_functions", [](const py::bytes& bytes) {
+  inliner.def("inline_local_functions", [](const py::bytes& bytes, bool convert_version) {
     ModelProto model{};
     ParseProtoFromPyBytes(&model, bytes);
-    inliner::InlineLocalFunctions(model);
+    inliner::InlineLocalFunctions(model, convert_version);
     std::string out;
     model.SerializeToString(&out);
     return py::bytes(out);
