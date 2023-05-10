@@ -1,42 +1,45 @@
+(l-reference-implementation)=
 
-.. _l-reference-implementation:
+# onnx.reference
 
-onnx.reference
-==============
+## DefaultNone
 
-
-DefaultNone
-+++++++++++
-
+```{eval-rst}
 .. autoclass:: onnx.reference.op_run.DefaultNone
     :members:
+```
 
-Inference
-+++++++++
+## Inference
 
+```{eval-rst}
 .. autoclass:: onnx.reference.ReferenceEvaluator
     :members: input_names, output_names, opsets, run
+```
 
-OpFunction
-++++++++++
+## OpFunction
 
+```{eval-rst}
 .. autoclass:: onnx.reference.op_run.OpFunction
     :members: create, eval, input, output, implicit_inputs, domain, need_context, run, make_node
+```
 
-OpRun
-+++++
+## OpRun
 
+```{eval-rst}
 .. autoclass:: onnx.reference.op_run.OpRun
     :members: create, eval, input, output, implicit_inputs, domain, need_context, run, make_node
+```
 
-RuntimeTypeError
-++++++++++++++++
+## RuntimeTypeError
 
+```{eval-rst}
 .. autoclass:: onnx.reference.op_run.RuntimeTypeError
     :members:
+```
 
-SparseTensor
-++++++++++++
+## SparseTensor
 
+```{eval-rst}
 .. autoclass:: onnx.reference.op_run.SparseTensor
     :members:
+```

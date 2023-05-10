@@ -1,35 +1,31 @@
-
-================
-ONNX with Python
-================
+# ONNX with Python
 
 Next sections highlight the main functions used to build
-an ONNX graph with the :ref:`Python API <l-python-onnx-api>`
+an ONNX graph with the {ref}`Python API <l-python-onnx-api>`
 *onnx* offers.
 
-.. _l-onnx-linear-regression-onnx-api:
+(l-onnx-linear-regression-onnx-api)=
 
-A simple example: a linear regression
-=====================================
+## A simple example: a linear regression
 
 The linear regression is the most simple model
 in machine learning described by the following expression
-:math:`Y = XA + B`. We can see it as a function of three
-variables :math:`Y = f(X, A, B)` decomposed into
+$Y = XA + B$. We can see it as a function of three
+variables $Y = f(X, A, B)$ decomposed into
 `y = Add(MatMul(X, A), B)`. That what's we need to represent
 with ONNX operators. The first thing is to implement a function
-with :ref:`ONNX operators <l-onnx-operators>`.
+with {ref}`ONNX operators <l-onnx-operators>`.
 ONNX is strongly typed. Shape and type must be defined for both
 input and output of the function. That said, we need four functions
-to build the graph among the :ref:`l-onnx-make-function`:
+to build the graph among the {ref}`l-onnx-make-function`:
 
-* `make_tensor_value_info`: declares a variable (input or output)
+- `make_tensor_value_info`: declares a variable (input or output)
   given its shape and type
-* `make_node`: creates a node defined by an operation
+- `make_node`: creates a node defined by an operation
   (an operator type), its inputs and outputs
-* `make_graph`: a function to create an ONNX graph with
+- `make_graph`: a function to create an ONNX graph with
   the objects created by the two previous functions
-* `make_model`: a last function with merges the graph and
+- `make_model`: a last function with merges the graph and
   additional metadata
 
 All along the creation, we need to give a name to every input,
@@ -37,6 +33,7 @@ output of every node of the graph. Input and output of the graph
 are defined by onnx objects, strings are used to refer to
 intermediate results. This is how it looks like.
 
+```{eval-rst}
 .. exec_code::
 
     # imports
@@ -86,14 +83,17 @@ intermediate results. This is how it looks like.
 
     # the work is done, let's display it...
     print(onnx_model)
+```
 
-.. image:: images/dot_linreg.png
+```{image} images/dot_linreg.png
+```
 
 An empty shape (`None`) means any shape, a shape defined as `[None, None]`
 tells this object is a tensor with two dimensions without any further precision.
 The ONNX graph can also be inspected by looking into the fields
 of each object of the graph.
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import TensorProto
@@ -146,19 +146,21 @@ of each object of the graph.
     for node in onnx_model.graph.node:
         print("name=%r type=%r input=%r output=%r" % (
             node.name, node.op_type, node.input, node.output))
+```
 
 The tensor type is an integer (= 1). The following array gives the
 equivalent type with numpy.
 
+```{eval-rst}
 .. exec_code::
 
     import pprint
     from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
 
     pprint.pprint(TENSOR_TYPE_TO_NP_TYPE)
+```
 
-Serialization
-=============
+## Serialization
 
 ONNX is built on the top of protobuf. It adds the necessary definitions
 to describe a machine learning model and most of the time, ONNX is used
@@ -166,15 +168,15 @@ to serialize or deserialize a model. First section addresses this need.
 Second section introduces the serialization and deserialization of
 data such as tensors, sparse tensors...
 
-Model Serialization
-+++++++++++++++++++
+### Model Serialization
 
 The model needs to be saved to be deployed.
 ONNX is based on protobuf. It minimizes the space needed
-to save the graph on disk. Every object (see :ref:`l-onnx-classes`)
+to save the graph on disk. Every object (see {ref}`l-onnx-classes`)
 in onnx can be serialized with method `SerializeToString`. That's
 the case for the whole model.
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import TensorProto
@@ -202,9 +204,11 @@ the case for the whole model.
 
     # display
     print(onnx_model)
+```
 
 The graph can be restored with function `load`:
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import load
@@ -214,17 +218,18 @@ The graph can be restored with function `load`:
 
     # display
     print(onnx_model)
+```
 
 It looks exactly the same. Any model can be serialized this way
 unless they are bigger than 2 Gb. protobuf is limited to size
 smaller than this threshold. Next sections will show how to
 overcome that limit.
 
-Data Serialization
-++++++++++++++++++
+### Data Serialization
 
 The serialization of tensor usually happens like the following:
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -241,9 +246,11 @@ The serialization of tensor usually happens like the following:
 
     with open("saved_tensor.pb", "wb") as f:
         f.write(serialized_tensor)
+```
 
 And the deserialization like:
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import TensorProto
@@ -259,19 +266,23 @@ And the deserialization like:
 
     numpy_tensor = to_array(onnx_tensor)
     print(numpy_tensor)
+```
 
-The same schema can be used for but not limited to :ref:`l-tensorproto`:
+The same schema can be used for but not limited to {ref}`l-tensorproto`:
 
+```{eval-rst}
 .. exec_code::
 
     import onnx
     import pprint
     pprint.pprint([p for p in dir(onnx)
                    if p.endswith('Proto') and p[0] != '_'])
+```
 
 This code can be simplified with function *load_tensor_from_string*
-(see :ref:`l-onnx-load-data`).
+(see {ref}`l-onnx-load-data`).
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import load_tensor_from_string
@@ -280,11 +291,11 @@ This code can be simplified with function *load_tensor_from_string*
         serialized = f.read()
     proto = load_tensor_from_string(serialized)
     print(type(proto))
+```
 
-.. _l-onnx-linear-regression-onnx-api-init:
+(l-onnx-linear-regression-onnx-api-init)=
 
-Initializer, default value
-==========================
+## Initializer, default value
 
 The previous model assumed the coefficients of the linear regression
 were also input of the model. That's not very convenient. They should be
@@ -292,11 +303,12 @@ part of the model itself as constant or **initializer** to follow
 onnx semantic. Next example modifies the previous one to change inputs
 `A` and `B` into initializers. The package implements two functions to
 convert from numpy into onnx and the other way around
-(see :ref:`l-numpy-helper-onnx-array`).
+(see {ref}`l-numpy-helper-onnx-array`).
 
-* ``onnx.numpy_helper.to_array``: converts from onnx to numpy
-* ``onnx.numpy_helper.from_array``: converts from numpy to onnx
+- `onnx.numpy_helper.to_array`: converts from onnx to numpy
+- `onnx.numpy_helper.from_array`: converts from numpy to onnx
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -323,12 +335,15 @@ convert from numpy into onnx and the other way around
     check_model(onnx_model)
 
     print(onnx_model)
+```
 
-.. image:: images/dot_linreg2.png
+```{image} images/dot_linreg2.png
+```
 
 Again, it is possible to go through the onnx structure to check
 how the initializers look like.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -357,6 +372,7 @@ how the initializers look like.
     print('** initializer **')
     for init in onnx_model.graph.initializer:
         print(init)
+```
 
 The type is defined as integer as well with the same meaning.
 In this second example, there is only one input left.
@@ -365,15 +381,15 @@ they are optional: every initiliazer sharing the same name as input
 is considered as a default value. It replaces the input if this one
 is not given.
 
-Attributes
-==========
+## Attributes
 
-Some operators need attributes such as :ref:`l-onnx-doc-Transpose` operator.
-Let's build the graph for expression :math:`y = XA' + B` or
+Some operators need attributes such as {ref}`l-onnx-doc-Transpose` operator.
+Let's build the graph for expression $y = XA' + B$ or
 `y = Add(MatMul(X, Transpose(A)) + B)`. Transpose needs an attribute
 defining the permutation of axes: `perm=[1, 0]`. It is added
 as a named attribute in function `make_node`.
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import TensorProto
@@ -403,25 +419,29 @@ as a named attribute in function `make_node`.
 
     # the work is done, let's display it...
     print(onnx_model)
+```
 
-.. image:: images/dot_att.png
+```{image} images/dot_att.png
+```
 
 The whole list of *make* functions is the following. Many of them
-are described in section :ref:`l-onnx-make-function`.
+are described in section {ref}`l-onnx-make-function`.
 
+```{eval-rst}
 .. exec_code::
 
     import onnx
     import pprint
     pprint.pprint([k for k in dir(onnx.helper)
                    if k.startswith('make')])
+```
 
-Opset and metadata
-==================
+## Opset and metadata
 
 Let's load the ONNX file previously created and check
 what kind of metadata it has.
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import load
@@ -434,10 +454,12 @@ what kind of metadata it has.
                   'opset_import', 'producer_name', 'producer_version',
                   'training_info']:
         print(field, getattr(onnx_model, field))
+```
 
 Most of them are empty because it was not filled when the ONNX
 graph was created. Two of them have a value:
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import load
@@ -448,6 +470,7 @@ graph was created. Two of them have a value:
     print("ir_version:", onnx_model.ir_version)
     for opset in onnx_model.opset_import:
         print("opset domain=%r version=%r" % (opset.domain, opset.version))
+```
 
 `IR` defined the version of ONNX language.
 Opset defines the version of operators being used.
@@ -455,6 +478,7 @@ Without any precision, ONNX uses the latest version available
 coming from the installed package.
 Another one can be used.
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import load
@@ -469,6 +493,7 @@ Another one can be used.
 
     for opset in onnx_model.opset_import:
         print("opset domain=%r version=%r" % (opset.domain, opset.version))
+```
 
 Any opset can be used as long as all operators are defined
 the way ONNX specifies it. Version 5 of operator *Reshape*
@@ -481,6 +506,7 @@ to store information about the way the model was generated,
 a way to distinguish a model from another one with a version
 number.
 
+```{eval-rst}
 .. exec_code::
 
     from onnx import load, helper
@@ -498,29 +524,28 @@ number.
     helper.set_model_props(onnx_model, data)
 
     print(onnx_model)
+```
 
 Field `training_info` can be used to store additional graphs.
-See `training_tool_test.py
-<https://github.com/onnx/onnx/blob/main/onnx/test/training_tool_test.py>`_
+See [training_tool_test.py](https://github.com/onnx/onnx/blob/main/onnx/test/training_tool_test.py)
 to see how it works.
 
-Subgraph: test and loops
-========================
+## Subgraph: test and loops
 
 They are usually grouped in a category called *control flow*.
 It is usually better to avoid them as they are not as efficient
 as the matrix operation are much faster and optimized.
 
-If
-++
+### If
 
-A test can be implemented with operator :ref:`l-onnx-doc-If`.
+A test can be implemented with operator {ref}`l-onnx-doc-If`.
 It executes one subgraph or another depending on one
 boolean. This is not used very often as a function usually
 needs the result of many comparisons in a batch.
 The following example computes the sum of all floats
 in a matrix based on the sign, returns 1 or -1.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -611,30 +636,32 @@ in a matrix based on the sign, returns 1 or -1.
 
     # Some display.
     print(onnx_model)
+```
 
 The whole is easier to visualize with the following image.
 
-.. image:: images/dot_if_py.png
+```{image} images/dot_if_py.png
+```
 
 Both else and then branches are very simple.
 Node *If* could even be replaced with a node *Where* and
 that would be faster. It becomes interesting when both branches
 are bigger and skipping one is more efficient.
 
-Scan
-++++
+### Scan
 
-:ref:`l-onnx-doc-Scan` seems quite complex when reading the specifications.
+{ref}`l-onnx-doc-Scan` seems quite complex when reading the specifications.
 It is useful to loop over one dimension of a tensor and store
 the results in a preallocated tensor.
 
 The following example implements a classic nearest neighbors for
 a regression problem. The first step consists in computing the
 pairwise distances between the input features *X* and the training
-set *W*: :math:`dist(X,W) = (M_{ij}) = (\norm{X_i - W_j}^2)_{ij}`. It is
-followed by an operator :ref:`l-onnx-doc-TopK` which extracts the *k* nearest
+set *W*: $dist(X,W) = (M_{ij}) = (\norm{X_i - W_j}^2)_{ij}$. It is
+followed by an operator {ref}`l-onnx-doc-TopK` which extracts the *k* nearest
 neighbors.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -827,19 +854,21 @@ neighbors.
         f.write(onnx_model.SerializeToString())
 
     print(onnx_model)
+```
 
 Visually it looks like the following:
 
-.. image:: images/dot_scan_py.png
+```{image} images/dot_scan_py.png
+```
 
-The subgraph is executed by operator :ref:`l-onnx-doc-Scan`. In this case,
+The subgraph is executed by operator {ref}`l-onnx-doc-Scan`. In this case,
 there is one *scan* input meaning the operator only builds one output.
 
-::
-
-    node = make_node(
-        'Scan', ['X1', 'X2'], ['Y1', 'Y2'],
-        name='Sc_Scan', body=graph, num_scan_inputs=1, domain='')
+```
+node = make_node(
+    'Scan', ['X1', 'X2'], ['Y1', 'Y2'],
+    name='Sc_Scan', body=graph, num_scan_inputs=1, domain='')
+```
 
 At the first iteration, the subgraph gets *X1* and the first row of *X2*.
 The graph produces two outputs. The first one replaces *X1* in the next iteration,
@@ -847,11 +876,11 @@ the second one is store in a container to form *Y2*. At the second iteration,
 second input of the subgraph is the second row of *X2*.
 Here is a short summary. Green is the first iteration, blue the second.
 
-.. image:: images/scanop.png
-    :width: 400
+```{image} images/scanop.png
+:width: 400
+```
 
-Functions
-=========
+## Functions
 
 As mentioned in previous chapter, functions can be used to shorten
 the code to build the model and offer more possibilities to the runtime
@@ -863,12 +892,12 @@ Function `make_function` is used to define a function.
 It works like a graph with less types. It is more like a
 template. This API may evolve. It does not include initializers either.
 
-A function with no attribute
-++++++++++++++++++++++++++++
+### A function with no attribute
 
 That's the more simple case. Every input of the function is a dynamic
 object known at execution time.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -916,11 +945,12 @@ object known at execution time.
 
     # the work is done, let's display it...
     print(onnx_model)
+```
 
-A function with attributes
-++++++++++++++++++++++++++
+### A function with attributes
 
-.. index:: ref_attr_name
+```{index} ref_attr_name
+```
 
 The following functions are equivalent to the previous one except
 one input, *B*, was converted into an argument named *bias*.
@@ -929,6 +959,7 @@ Inside the function definition, a node *Constant* is created
 to insert the argument as a result. It is linked to the argument
 with the attribute `ref_attr_name`.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -990,9 +1021,9 @@ with the attribute `ref_attr_name`.
 
     # the work is done, let's display it...
     print(onnx_model)
+```
 
-Parsing
-=======
+## Parsing
 
 Module onnx provides a faster way to define a graph
 and is lot easier to read. That's easy to use when the graph is built
@@ -1000,117 +1031,117 @@ in a single function, less easy when the graph is built from many
 different functions converting each piece of a machine learning
 pipeline.
 
-::
+```
+import onnx.parser
+from onnx.checker import check_model
 
-    import onnx.parser
-    from onnx.checker import check_model
+input = '''
+    <
+        ir_version: 8,
+        opset_import: [ '' : 15]
+    >
+    agraph (float[I,J] X, float[I] A, float[I] B) => (float[I] Y) {
+        XA = MatMul(X, A)
+        Y = Add(XA, B)
+    }
+    '''
+onnx_model = onnx.parser.parse_model(input)
+check_model(onnx_model)
 
-    input = '''
-        <
-            ir_version: 8,
-            opset_import: [ '' : 15]
-        >
-        agraph (float[I,J] X, float[I] A, float[I] B) => (float[I] Y) {
-            XA = MatMul(X, A)
-            Y = Add(XA, B)
-        }
-        '''
-    onnx_model = onnx.parser.parse_model(input)
-    check_model(onnx_model)
+print(onnx_model)
+```
 
-    print(onnx_model)
-
-::
-
-    ir_version: 8
-    graph {
-    node {
-        input: "X"
-        input: "A"
-        output: "XA"
-        op_type: "MatMul"
-        domain: ""
-    }
-    node {
-        input: "XA"
-        input: "B"
-        output: "Y"
-        op_type: "Add"
-        domain: ""
-    }
-    name: "agraph"
-    input {
-        name: "X"
-        type {
-        tensor_type {
-            elem_type: 1
-            shape {
-            dim {
-                dim_param: "I"
-            }
-            dim {
-                dim_param: "J"
-            }
-            }
-        }
-        }
-    }
-    input {
-        name: "A"
-        type {
-        tensor_type {
-            elem_type: 1
-            shape {
-            dim {
-                dim_param: "I"
-            }
-            }
-        }
-        }
-    }
-    input {
-        name: "B"
-        type {
-        tensor_type {
-            elem_type: 1
-            shape {
-            dim {
-                dim_param: "I"
-            }
-            }
-        }
-        }
-    }
-    output {
-        name: "Y"
-        type {
-        tensor_type {
-            elem_type: 1
-            shape {
-            dim {
-                dim_param: "I"
-            }
-            }
-        }
-        }
-    }
-    }
-    opset_import {
+```
+ir_version: 8
+graph {
+node {
+    input: "X"
+    input: "A"
+    output: "XA"
+    op_type: "MatMul"
     domain: ""
-    version: 15
+}
+node {
+    input: "XA"
+    input: "B"
+    output: "Y"
+    op_type: "Add"
+    domain: ""
+}
+name: "agraph"
+input {
+    name: "X"
+    type {
+    tensor_type {
+        elem_type: 1
+        shape {
+        dim {
+            dim_param: "I"
+        }
+        dim {
+            dim_param: "J"
+        }
+        }
     }
+    }
+}
+input {
+    name: "A"
+    type {
+    tensor_type {
+        elem_type: 1
+        shape {
+        dim {
+            dim_param: "I"
+        }
+        }
+    }
+    }
+}
+input {
+    name: "B"
+    type {
+    tensor_type {
+        elem_type: 1
+        shape {
+        dim {
+            dim_param: "I"
+        }
+        }
+    }
+    }
+}
+output {
+    name: "Y"
+    type {
+    tensor_type {
+        elem_type: 1
+        shape {
+        dim {
+            dim_param: "I"
+        }
+        }
+    }
+    }
+}
+}
+opset_import {
+domain: ""
+version: 15
+}
+```
 
 This way is used to create small models but it is rarely used
 in converting libraries.
 
-Checker and Shape Inference
-===========================
+## Checker and Shape Inference
 
 onnx provides a function to check the model is valid.
 It checks input type or shapes whenever it can detect inconsistency.
-The following example multiplies two matrices of different types
+The following example adds two matrices of different types
 which is not allowed.
 
+```{eval-rst}
 .. exec_code::
 
     import onnx.parser
@@ -1131,6 +1162,7 @@ which is not allowed.
         onnx.checker.check_model(onnx_model)
     except Exception as e:
         print(e)
+```
 
 `check_model` raises an error due to that inconsistency.
 This work for all operators defined in the main domain or the ML domain.
@@ -1142,6 +1174,7 @@ If known, the runtime can estimate the memory consumption
 beforehand and optimize the computation. It can fuse some
 operators, it can do the computation inplace...
 
+```{eval-rst}
 .. exec_code::
 
     import onnx.parser
@@ -1161,9 +1194,10 @@ operators, it can do the computation inplace...
     inferred_model = shape_inference.infer_shapes(onnx_model)
 
     print(inferred_model)
+```
 
 There is a new attribute `value_info` which stores the inferred shapes.
-Letter `I` in ``dim_param: "I"`` can be seen as a variable. It depends on the inputs
+Letter `I` in `dim_param: "I"` can be seen as a variable. It depends on the inputs
 but the function is able to tell which intermediate result will share
 the same dimension.
 Shape inference does not work all the time. For example,
@@ -1171,25 +1205,24 @@ a Reshape operator. Shape inference only works if the shape is constant.
 If not constant, the shape cannot be easily inferred unless
 the following nodes expect specific shape.
 
-Evaluation and Runtime
-======================
+## Evaluation and Runtime
 
 The ONNX standard allows frameworks to export trained models in ONNX format,
 and enables inference using any backend that supports the ONNX format.
 *onnxruntime* is one efficient option. It is available in many platforms.
 It is optimized for fast inference. Its coverage can be tracked on
-`ONNX Backend Dashboard <https://onnx.ai/backend-scoreboard/>`_.
+[ONNX Backend Dashboard](https://onnx.ai/backend-scoreboard/).
 *onnx* implements a python runtime useful to help understand a model.
 It is not intended to be used for production and performance is not a goal.
 
-Evaluation of a linear regression
-+++++++++++++++++++++++++++++++++
+### Evaluation of a linear regression
 
-Full API is described at :ref:`l-reference-implementation`.
+Full API is described at {ref}`l-reference-implementation`.
 It takes a model (a *ModelProto*, a filename, ...).
 Method `run` returns the outputs for a given set of inputs
 specified in a dictionary.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -1218,13 +1251,14 @@ specified in a dictionary.
     feeds = {'X': x, 'A': a, 'B': b}
 
     print(sess.run(None, feeds))
+```
 
-Evaluation of a node
-++++++++++++++++++++
+### Evaluation of a node
 
 The evaluator can also evaluate a simple node to check how an operator
 behaves on a specific input.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -1241,11 +1275,11 @@ behaves on a specific input.
     feeds = {'X': x}
 
     print(sess.run(None, feeds))
+```
 
 Similar code would also work on *GraphProto* or *FunctionProto*.
 
-Evaluation Step by Step
-+++++++++++++++++++++++
+### Evaluation Step by Step
 
 A converting library takes an existing model trained with a machine
 learning framework (*pytorch*, *scikit-learn*, ...) and
@@ -1254,6 +1288,7 @@ on the first try and seeing intermediate results may help to find the
 part incorrectly converted. Parameter `verbose` displays information
 about intermediate results.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -1286,13 +1321,14 @@ about intermediate results.
         feeds = {'X': x, 'A': a, 'B': b}
 
         print(sess.run(None, feeds))
+```
 
-Evaluate a custom node
-++++++++++++++++++++++
+### Evaluate a custom node
 
 The following example still implements a linear regression
-but adds the identity matrix to *A*: :math:`Y = X(A + I) + B`.
+but adds the identity matrix to *A*: $Y = X(A + I) + B$.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -1325,11 +1361,13 @@ but adds the identity matrix to *A*: :math:`Y = X(A + I) + B`.
     feeds = {'X': x, 'A': a, 'B': b}
 
     print(sess.run(None, feeds))
+```
 
 What if we combine operators *EyeLike* and *Add* into *AddEyeLike* to
 make it more efficient. Next example replaces these two operators
 by a single one from domain `'optimized'`.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -1357,10 +1395,12 @@ by a single one from domain `'optimized'`.
     check_model(onnx_model)
     with open("linear_regression_improved.onnx", "wb") as f:
         f.write(onnx_model.SerializeToString())
+```
 
 We need to evaluate this model is equivalent to the first one.
 This requires an implementation for this particular node.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -1398,10 +1438,12 @@ This requires an implementation for this particular node.
     print(y0)
     print(y1)
     print(f"difference: {numpy.abs(y0 - y1).max()}")
+```
 
 Predictions are the same. Let's compare the performance
 on a matrix big enough to see a significant difference.
 
+```{eval-rst}
 .. exec_code::
 
     import timeit
@@ -1436,6 +1478,7 @@ on a matrix big enough to see a significant difference.
     print(f"difference: {numpy.abs(y0 - y1).max()}")
     print(f"time with EyeLike+Add: {timeit.timeit(lambda: sess0.run(None, feeds), number=1000)}")
     print(f"time with AddEyeLike: {timeit.timeit(lambda: sess1.run(None, feeds), number=1000)}")
+```
 
 It seems worth adding an optimized node in this case.
 This kind of optimization is usually called *fusion*.
@@ -1444,18 +1487,16 @@ Production usually relies on *onnxruntime* but since
 the optimization uses basic matrix operation, it should bring
 the same performance gain on any other runtime.
 
-Implementation details
-======================
+## Implementation details
 
-Python and C++
-++++++++++++++
+### Python and C++
 
 onnx relies on protobuf to define its type.
 You would assume that a python object is just a wrapper around
 a C pointer on the internal structure. Therefore, it should be
 possible to access internal data from a function receiving a python
 object of type `ModelProto`. But it is not. According to
-`Protobuf 4, changes <https://developers.google.com/protocol-buffers/docs/news/2022-05-06>`_,
+[Protobuf 4, changes](https://developers.google.com/protocol-buffers/docs/news/2022-05-06),
 this is no longer possible after version 4 and it is safer to assume the
 only way to get a hold on the content is to serialize the model
 into bytes, give it the C function, then deserialize it.
@@ -1463,8 +1504,7 @@ Functions like `check_model` or
 `shape_inference` are calling `SerializeToString` then
 `ParseFromString` before checking the model with a C code.
 
-Attributes and inputs
-+++++++++++++++++++++
+### Attributes and inputs
 
 There is a clear distinction between the two. Inputs are dynamic and
 may change at every execution. Attributes never changes and an optimizer
@@ -1473,14 +1513,14 @@ Therefore, it is impossible to turn an input into an attribute.
 And the operator *Constant* is the only operator changing an
 attribute into an input.
 
-Shape or no shape
-+++++++++++++++++
+### Shape or no shape
 
 onnx usually expects a shape for every input or output
 assuming the rank (or the number of dimensions) is known.
 What if we need to create a valid graph for every dimension?
 This case is still puzzling.
 
+```{eval-rst}
 .. exec_code::
 
     import numpy
@@ -1553,3 +1593,4 @@ This case is still puzzling.
         'A': numpy.random.randn(2).astype(numpy.float32)})
     print(res)
     print("----------- end")
+```
