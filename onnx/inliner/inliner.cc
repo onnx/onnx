@@ -419,6 +419,8 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
   // Append new initializers to main graph initializers
   for (auto& added_initializer : converted.graph().initializer())
     *model.mutable_graph()->mutable_initializer()->Add() = added_initializer;
+  for (auto& added_initializer : converted.graph().sparse_initializer())
+    *model.mutable_graph()->mutable_sparse_initializer()->Add() = added_initializer;
 }
 
 constexpr int64_t kNoConversion = -1;
