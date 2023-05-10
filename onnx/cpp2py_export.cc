@@ -14,6 +14,7 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
+#include "onnx/inliner/inliner.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
@@ -550,6 +551,19 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     auto result = version_conversion::ConvertVersion(proto, target);
     std::string out;
     result.SerializeToString(&out);
+    return py::bytes(out);
+  });
+
+  // Submodule `inliner`
+  auto inliner = onnx_cpp2py_export.def_submodule("inliner");
+  inliner.doc() = "Inliner submodule";
+
+  inliner.def("inline_local_functions", [](const py::bytes& bytes) {
+    ModelProto model{};
+    ParseProtoFromPyBytes(&model, bytes);
+    inliner::InlineLocalFunctions(model);
+    std::string out;
+    model.SerializeToString(&out);
     return py::bytes(out);
   });
 

@@ -62,13 +62,6 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Test the PyPI package installation with different combinations of various Python versions, Protobuf versions and platforms.
   * Python versions : Applicable python versions for the release.
   * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
-  * Utilize the following matrix to check:
-
-    |   | 3.8 | 3.9 | 3.10 | 3.11 |
-    -- | -- | -- | -- | -- |
-    Linux |   |   |   |   |
-    Windows |   |   |   |   |
-    Mac |   |   |   |   |
 
 
 * After installing the PyPI package, run `pytest` in the release branch.
@@ -123,3 +116,6 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 **Bump opset version for ai.onnx**
 * Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes. For example, this [demo PR](https://github.com/onnx/onnx/pull/4134/files).
+
+**Update IR TBD date if there is an IR bump in the release**
+* Update the latest IR TBD date in https://github.com/onnx/onnx/blob/main/onnx/onnx.in.proto and regenerate corresponding proto files in the main branch if there is an IR bump in the release.
