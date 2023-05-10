@@ -1,44 +1,42 @@
+(l-onnx-classes)=
 
-.. _l-onnx-classes:
-
-Protos
-======
+# Protos
 
 This structures are defined with protobuf in files `onnx/*.proto`.
-It is recommended to use function in module :ref:`l-mod-onnx-helper`
+It is recommended to use function in module {ref}`l-mod-onnx-helper`
 to create them instead of directly instantiated them.
 Every structure can be printed with function `print` and is rendered
 as a json string.
 
-
-AttributeProto
-++++++++++++++
+## AttributeProto
 
 This class is used to define an attribute of an operator
-defined itself ny a NodeProto. It is
+defined itself by a NodeProto. It is
 a named attribute containing either singular float, integer, string, graph,
 and tensor values, or repeated float, integer, string, graph, and tensor values.
 An AttributeProto MUST contain the name field, and *only one* of the
 following content fields, effectively enforcing a C/C++ union equivalent.
 
+```{eval-rst}
 .. autoclass:: onnx.AttributeProto
     :members:
+```
 
-.. _l-onnx-function-proto:
+(l-onnx-function-proto)=
 
-FunctionProto
-+++++++++++++
+## FunctionProto
 
 This defines a function. It is not a model but can
 be used to define custom operators used in a model.
 
+```{eval-rst}
 .. autoclass:: onnx.FunctionProto
     :members:
+```
 
-.. _l-onnx-graph-proto:
+(l-onnx-graph-proto)=
 
-GraphProto
-++++++++++
+## GraphProto
 
 This defines a graph or a set of nodes called from a loop or a test
 for example.
@@ -47,13 +45,14 @@ list of nodes that form a directed acyclic graph based on their inputs and outpu
 This is the equivalent of the *network* or *graph* in many deep learning
 frameworks.
 
+```{eval-rst}
 .. autoclass:: onnx.GraphProto
     :members:
+```
 
-.. _l-onnx-map-proto:
+(l-onnx-map-proto)=
 
-MapProto
-++++++++
+## MapProto
 
 This defines a map or a dictionary. It
 specifies an associative table, defined by keys and values.
@@ -62,13 +61,14 @@ INT64, UINT8, UINT16, UINT32, UINT64, or STRING) and values (of type TENSOR,
 SPARSE_TENSOR, SEQUENCE, or MAP). Key types and value types have to remain
 the same throughout the instantiation of the MapProto.
 
+```{eval-rst}
 .. autoclass:: onnx.MapProto
     :members:
+```
 
-.. _l-modelproto:
+(l-modelproto)=
 
-ModelProto
-++++++++++
+## ModelProto
 
 This defines a model. That is the type every converting library
 returns after converting a machine learned model.
@@ -76,13 +76,14 @@ ModelProto is a top-level file/container format for bundling a ML model and
 associating its computation graph with metadata.
 The semantics of the model are described by the associated GraphProto's.
 
+```{eval-rst}
 .. autoclass:: onnx.ModelProto
     :members:
+```
 
-.. _l-nodeproto:
+(l-nodeproto)=
 
-NodeProto
-+++++++++
+## NodeProto
 
 This defines an operator. A model is a combination of
 mathematical functions, each of them represented as an onnx operator,
@@ -92,13 +93,14 @@ commonly called a *layer* or *pipeline stage* in machine learning frameworks.
 For example, it can be a node of type *Conv* that takes in an image, a filter
 tensor and a bias tensor, and produces the convolved output.
 
+```{eval-rst}
 .. autoclass:: onnx.NodeProto
     :members:
+```
 
-.. _l-operatorproto:
+(l-operatorproto)=
 
-OperatorProto
-+++++++++++++
+## OperatorProto
 
 This class is rarely used by users.
 An OperatorProto represents the immutable specification of the signature
@@ -108,30 +110,32 @@ domain name for the set.
 Operators are uniquely identified by a three part identifier
 (domain, op_type, since_version) where
 
-* *domain* is the domain of an operator set that contains this operator specification.
-* *op_type* is the name of the operator as referenced by a NodeProto.op_type
-* *since_version* is the version of the operator set that this operator was initially declared in.
+- *domain* is the domain of an operator set that contains this operator specification.
+- *op_type* is the name of the operator as referenced by a NodeProto.op_type
+- *since_version* is the version of the operator set that this operator was initially declared in.
 
+```{eval-rst}
 .. autoclass:: onnx.OperatorProto
     :members:
+```
 
-.. _l-operatorsetidproto:
+(l-operatorsetidproto)=
 
-OperatorSetIdProto
-++++++++++++++++++
+## OperatorSetIdProto
 
 This is the type of attribute `opset_import` of class ModelProto.
 This attribute specifies the versions of operators used in the model.
 Every operator or node belongs to a domain. All operators for the same
 domain share the same version.
 
+```{eval-rst}
 .. autoclass:: onnx.OperatorSetIdProto
     :members:
+```
 
-.. _l-operatorsetproto:
+(l-operatorsetproto)=
 
-OperatorSetProto
-++++++++++++++++
+## OperatorSetProto
 
 An OperatorSetProto represents an immutable set of immutable operator specifications.
 The domain of the set (OperatorSetProto.domain) is a reverse-DNS name
@@ -142,26 +146,28 @@ Operator sets are uniquely identified by a two part identifier (domain, opset_ve
 Like ModelProto, OperatorSetProto is intended as a top-level file/wire format,
 and thus has the standard format headers in addition to the operator set information.
 
+```{eval-rst}
 .. autoclass:: onnx.OperatorSetProto
     :members:
+```
 
-.. _l-optionalproto:
+(l-optionalproto)=
 
-OptionalProto
-+++++++++++++
+## OptionalProto
 
 Some input or output of a model are optional. This class must
 be used in this case. An instance of class OptionalProto
 may contain or not an instance of type TensorProto, SparseTensorProto,
 SequenceProto, MapProto and OptionalProto.
 
+```{eval-rst}
 .. autoclass:: onnx.OptionalProto
     :members:
+```
 
-.. _l-onnx-sequence-proto:
+(l-onnx-sequence-proto)=
 
-SequenceProto
-+++++++++++++
+## SequenceProto
 
 This defines a dense, ordered, collection of elements that are of homogeneous types.
 Sequences can be made out of tensors, maps, or sequences.
@@ -175,16 +181,16 @@ shapes (all of rank 2), where *omitted* means the corresponding dimension has
 no symbolic/constant value. Finally, `Sequence<Tensor<float, omitted>>` means
 that the different tensors can have different ranks, when the *shape* itself
 is omitted from the tensor-type. For a more complete description, refer to
-`Static tensor shapes
-<https://github.com/onnx/onnx/blob/main/docs/IR.md#static-tensor-shapes>`_.
+[Static tensor shapes](https://github.com/onnx/onnx/blob/main/docs/IR.md#static-tensor-shapes).
 
+```{eval-rst}
 .. autoclass:: onnx.SequenceProto
     :members:
+```
 
-.. _l-onnx-sparsetensor-proto:
+(l-onnx-sparsetensor-proto)=
 
-SparseTensorProto
-+++++++++++++++++
+## SparseTensorProto
 
 This defines a sparse tensor.
 The sequence of non-default values are encoded as a tensor of shape `[NNZ]`.
@@ -192,50 +198,54 @@ The default-value is zero for numeric tensors, and empty-string for string tenso
 values must have a non-empty name present which serves as a name for SparseTensorProto
 when used in sparse_initializer list.
 
+```{eval-rst}
 .. autoclass:: onnx.SparseTensorProto
     :members:
+```
 
-.. _l-onnx-stringstringentry-proto:
+(l-onnx-stringstringentry-proto)=
 
-StringStringEntryProto
-++++++++++++++++++++++
+## StringStringEntryProto
 
 This is equivalent to a pair of strings.
 This is used to store metadata in ModelProto.
 
+```{eval-rst}
 .. autoclass:: onnx.StringStringEntryProto
     :members:
+```
 
-.. _l-tensorproto:
+(l-tensorproto)=
 
-TensorProto
-+++++++++++
+## TensorProto
 
 This defines a tensor. A tensor is fully described with a shape
 (see ShapeProto), the element type (see TypeProto), and the
 elements themselves. All available types are listed in
-:ref:`l-mod-onnx-mapping`.
+{ref}`l-mod-onnx-mapping`.
 
+```{eval-rst}
 .. autoclass:: onnx.TensorProto
     :members:
+```
 
-.. _l-tensorshapeproto:
+(l-tensorshapeproto)=
 
-TensorShapeProto
-++++++++++++++++
+## TensorShapeProto
 
 This defines the shape of a tensor or a sparse tensor.
 It is a list of dimensions. A dimension can be either an integer value
 or a symbolic variable. A symbolic variable represents an unknown
 dimension.
 
+```{eval-rst}
 .. autoclass:: onnx.TensorShapeProto
     :members:
+```
 
-.. _l-traininginfoproto:
+(l-traininginfoproto)=
 
-TrainingInfoProto
-+++++++++++++++++
+## TrainingInfoProto
 
 TrainingInfoProto stores information for training a model.
 In particular, this defines two functionalities: an initialization-step
@@ -254,27 +264,31 @@ may be immediately updated. If the targeted training algorithm contains
 consecutive update steps (such as block coordinate descent methods),
 the user needs to create a TrainingInfoProto for each step.
 
+```{eval-rst}
 .. autoclass:: onnx.TrainingInfoProto
     :members:
+```
 
-.. _l-typeproto:
+(l-typeproto)=
 
-TypeProto
-+++++++++
+## TypeProto
 
 This defines a type of a tensor which consists in an element type
 and a shape (ShapeProto).
 
+```{eval-rst}
 .. autoclass:: onnx.TypeProto
     :members:
+```
 
-.. _l-valueinfoproto:
+(l-valueinfoproto)=
 
-ValueInfoProto
-++++++++++++++
+## ValueInfoProto
 
 This defines a input or output type of a GraphProto.
 It contains a name, a type (TypeProto), and a documentation string.
 
+```{eval-rst}
 .. autoclass:: onnx.ValueInfoProto
     :members:
+```

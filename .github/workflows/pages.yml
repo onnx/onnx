@@ -29,7 +29,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
       - name: Setup Python
-        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b # v4.6.0
         with:
           python-version: '3.10'
       - name: Setup Pages
@@ -38,6 +38,7 @@ jobs:
         run: |
           python -m pip install --quiet --upgrade pip setuptools wheel
           python -m pip install -r docs/docsgen/source/requirements.txt
+          python -m pip install protobuf==3.20.2
       - name: Uninstall onnx
         run: python -m pip uninstall -y onnx
       - name: Install onnx development version
@@ -56,4 +57,4 @@ jobs:
           path: 'docs/docsgen/build/html'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@73e62e651178eeba977de2dc9f4c7645b3d01015 # v2.0.0
+        uses: actions/deploy-pages@af48cf94a42f2c634308b1c9dc0151830b6f190a # v2.0.1
