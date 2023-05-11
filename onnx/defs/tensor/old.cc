@@ -4243,9 +4243,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "depth",
-            "Scalar specifying the number of classes in one-hot tensor. This is also the size "
-            "of the one-hot dimension (specified by 'axis' attribute) added on in the output "
-            "tensor. The values in the 'indices' input tensor are expected to be "
+            "Scalar or rank 1 tensor containing exactly one element, specifying the number of classes "
+            "in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) "
+            "added on in the output tensor. The values in the 'indices' input tensor are expected to be "
             "in the range [0, depth). "
             "In case 'depth' is of non-integer type, it will be casted to int64 before use.",
             "T2")
