@@ -378,6 +378,7 @@ class ShapeInferenceImplBase {
         if (schema->has_type_and_shape_inference_function()) {
           schema->GetTypeAndShapeInferenceFunction()(ctx);
         } else if (schema->HasFunction()) {
+          std::unordered_map<std::string, TensorShapeProto> function_scope_shape_data;
           InferShapeForFunctionNode(
               *(schema->GetFunction()),
               schema_registry,
@@ -385,7 +386,7 @@ class ShapeInferenceImplBase {
               options,
               model_local_functions_map,
               symbol_table,
-              generated_shape_data_by_name);
+              &function_scope_shape_data);
         } else {
           // Continue with inference for remaining nodes
           return;
@@ -393,6 +394,7 @@ class ShapeInferenceImplBase {
       } else if (model_local_functions_map.size() > 0) {
         auto iter = model_local_functions_map.find(GetModelLocalFunctionsMapIdentifier(n.domain(), n.op_type()));
         if (iter != model_local_functions_map.end()) {
+          std::unordered_map<std::string, TensorShapeProto> function_scope_shape_data;
           InferShapeForFunctionNode(
               *(iter->second),
               schema_registry,
@@ -400,7 +402,7 @@ class ShapeInferenceImplBase {
               options,
               model_local_functions_map,
               symbol_table,
-              generated_shape_data_by_name);
+              &function_scope_shape_data);
         } else {
           has_unsupported_op = true;
           return;
