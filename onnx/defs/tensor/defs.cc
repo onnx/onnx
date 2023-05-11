@@ -2375,12 +2375,12 @@ Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` va
 For spatial input `X` with shape (N, C, H, W), the `grid` will have shape (N, H_out, W_out, 2),
 the output `Y` will have shape (N, C, H_out, W_out). For volumetric input `X` with shape (N, C, D, H, W),
 the `grid` will have shape (N, D_out, H_out, W_out, 3), the output `Y` will have shape (N, C, D_out, H_out, W_out).
-More generally, for an input `X` of rank r+2 with shape (N, C, d1, d2, …, dr),
-the `grid` will have shape (N, D1_out, D2_out, …, Dr_out, r), the output `Y` will have shape (N, C, D1_out, D2_out, …, Dr_out).
+More generally, for an input `X` of rank r+2 with shape (N, C, d1, d2, ..., dr),
+the `grid` will have shape (N, D1_out, D2_out, ..., Dr_out, r), the output `Y` will have shape (N, C, D1_out, D2_out, ..., Dr_out).
 
-The tensor `X` contains values at centers of square pixels (voxels, etc) locations such as (n, c, d1_in, d2_in, …, dr_in).
-The (n, d1_out, d2_out, …, dr_out, :) values from the tensor `grid` are the normalized positions for interpolating the values
-at the (n, c, d1_out, d2_out, …, dr_out) locations from the output tensor `Y` using a specified interpolation method (the mode)
+The tensor `X` contains values at centers of square pixels (voxels, etc) locations such as (n, c, d1_in, d2_in, ..., dr_in).
+The (n, d1_out, d2_out, ..., dr_out, :) values from the tensor `grid` are the normalized positions for interpolating the values
+at the (n, c, d1_out, d2_out, ..., dr_out) locations from the output tensor `Y` using a specified interpolation method (the mode)
 and a padding mode (for `grid` positions falling outside the 2-dimensional image).
 
 For example, the values in `grid[n, h_out, w_out, :]` are size-2 vectors specifying normalized positions in the 2-dimensional space of `X`.
@@ -2425,8 +2425,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "X",
-            "Input tensor of rank r+2 that has shape (N, C, D1, D2, …, Dr), where N is the batch size, "
-            "C is the number of channels, D1, D2, …, Dr are the spatial dimensions.",
+            "Input tensor of rank r+2 that has shape (N, C, D1, D2, ..., Dr), where N is the batch size, "
+            "C is the number of channels, D1, D2, ..., Dr are the spatial dimensions.",
             "T1",
             OpSchema::Single,
             true,
@@ -2435,7 +2435,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "grid",
-            "Input offset of shape (N, D1_out, D2_out, …, Dr_out, r), where D1_out, D2_out, …, "
+            "Input offset of shape (N, D1_out, D2_out, ..., Dr_out, r), where D1_out, D2_out, ..., "
             "Dr_out are the spatial dimensions of the grid and output, and r is the number of spatial dimensions. "
             "Grid specifies the sampling locations normalized by the input spatial dimensions. "
             "Therefore, it should have most values in the range of [-1, 1]. If the grid has values outside the range of [-1, 1], "
@@ -2450,7 +2450,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "Y",
-            "Output tensor of rank r+2 that has shape (N, C, D1_out, D2_out, …, Dr_out) of the sampled values. "
+            "Output tensor of rank r+2 that has shape (N, C, D1_out, D2_out, ..., Dr_out) of the sampled values. "
             "For integer input types, intermediate values are computed as floating point and cast to integer at the end.",
             "T1",
             OpSchema::Single,
