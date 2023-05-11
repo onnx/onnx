@@ -115,4 +115,5 @@ ban-relative-imports = "all"
 "onnx/reference/ops/aionnx_preview_training/__init__.py" = ["F401"]
 "onnx/reference/ops/aionnx_preview_training/_op_list.py" = ["F401"]
 "onnx/reference/ops/experimental/__init__.py" = ["F401"]
+"onnx/test/reference_evaluator_test.py"= ["C408"]  # dict(...) -> { ... }
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]

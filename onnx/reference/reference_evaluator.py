@@ -11,6 +11,7 @@ from onnx import load, numpy_helper
 from onnx.defs import onnx_opset_version
 from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
 from onnx.reference.op_run import OpRun, RuntimeContextError
+from onnx.reference.ops_optimized import optimized_operators
 
 
 class ReferenceEvaluator:
@@ -32,7 +33,18 @@ class ReferenceEvaluator:
     :param new_ops: this runtime can be used to test the implementations
         of new operators, *new_ops* is a list of classes
         derived from :class:`OpRun <onnx.reference.op_run.OpRun>`,
-        every class must define the static attribute `domain`
+        every class must define the static attribute `domain`,
+        there may be multiple implementations for the same operator,
+        the first one in the list is used.
+    :param optimized: some operators have two implementations,
+        a naive one corresponding to definition of the mathematical
+        definition of the operator, another one more efficient.
+        This is the case for operator Conv. The naive version is ten times
+        slower than the optimized one using a decomposition
+        into *Conv = im2col + Gemm*. If True, all optimized
+        kernels are added in `new_ops` and are used instead of the
+        inner implementation if list *new_ops* does not already contain
+        one.
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
@@ -161,7 +173,16 @@ class ReferenceEvaluator:
         functions: Optional[List[Union["ReferenceEvaluator", FunctionProto]]] = None,  # type: ignore
         verbose: int = 0,
         new_ops: Optional[List[OpRun]] = None,
+        optimized: bool = True,
     ):
+        if optimized:
+            if new_ops is None:
+                new_ops = optimized_operators.copy()
+            else:
+                set_new_ops = set(new_ops)
+                for op in optimized_operators:
+                    if op not in set_new_ops:
+                        new_ops.append(op)
         self.output_types_ = None
         self.input_types_ = None
         if isinstance(proto, str):
@@ -244,9 +265,8 @@ class ReferenceEvaluator:
                     )
                 key = cl.op_domain, cl.__name__  # type: ignore
                 if key in self.new_ops_:
-                    raise ValueError(
-                        f"Operator {cl.__name__!r} from domain {cl.op_domain!r} already exsits."  # type: ignore
-                    )
+                    # Already an implementation, the first one is used.
+                    continue
                 self.new_ops_[key] = cl
         self._init()
 
