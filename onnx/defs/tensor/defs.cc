@@ -520,7 +520,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          if (ctx.getInputType(0)->tensor_type().has_shape()) {
+          auto type = ctx.getInputType(0);
+          if (nullptr == type || !type->has_tensor_type()) {
+            return;
+          }
+          if (type->tensor_type().has_shape()) {
             auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
             int64_t rank = static_cast<int64_t>(input_shape.dim_size());
             int64_t start = getAttribute(ctx, "start", 0);
