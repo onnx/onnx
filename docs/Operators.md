@@ -3740,12 +3740,16 @@ for from_type, to_type in test_cases:
         outputs=["output"],
     )
     if input_type_proto and output_type_proto:
+        like_type_proto = onnx.helper.make_tensor_type_proto(
+            output_type_proto.tensor_type.elem_type, like.shape
+        )
+
         expect(
             node,
             inputs=[input, like],
             outputs=[output],
             name="test_castlike_" + from_type + "_to_" + to_type,
-            input_type_protos=[input_type_proto, output_type_proto],
+            input_type_protos=[input_type_proto, like_type_proto],
             output_type_protos=[output_type_proto],
         )
     else:

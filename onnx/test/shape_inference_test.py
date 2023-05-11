@@ -147,6 +147,14 @@ class TestShapeInferenceHelper(unittest.TestCase):
             vi = vi_type.optional_type.elem_type
             inferred_vi = inferred_vi_type.optional_type.elem_type
             self._compare_value_infos(vi, inferred_vi)
+        elif vi_type.HasField("map_type"):
+            assert inferred_vi_type.HasField("map_type")
+            assert vi_type.map_type.key_type == vi_type.map_type.key_type
+            self._compare_value_infos(
+                vi_type.map_type.value_type, inferred_vi_type.map_type.value_type
+            )
+        elif vi_type == onnx.TypeProto():
+            assert inferred_vi_type == onnx.TypeProto()
         else:
             raise NotImplementedError(
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type)
@@ -186,6 +194,17 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))]
+        )
+
+    def test_transpose_scalar(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, ())],
+            [make_node("Transpose", ["X"], ["Y"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ())]
         )
 
     def test_transpose_partial(self) -> None:
@@ -8764,6 +8783,46 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("output", TensorProto.FLOAT, (2, "N", 3, 4))],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 1),
+                make_opsetid(ONNX_DOMAIN, 18),
+            ],
+        )
+
+    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    def test_zip_map(self) -> None:
+        params = (
+            ({"classlabels_int64s": [1, 2, 3]}, onnx.TensorProto.INT64),
+            ({"classlabels_strings": ["a", "b", "c"]}, onnx.TensorProto.STRING),
+        )
+        for attrs, input_type in params:
+            with self.subTest(attrs=attrs, input_type=input_type):
+                self.zip_map_test_case(attrs, input_type)
+
+    def zip_map_test_case(self, attrs, input_type) -> None:
+        graph = self._make_graph(
+            [("input", TensorProto.FLOAT, ("N", 3))],
+            [
+                make_node(
+                    "ZipMap",
+                    ["input"],
+                    ["output"],
+                    **attrs,
+                    domain="ai.onnx.ml",
+                )
+            ],
+            [],
+        )
+        typ = onnx.helper.make_map_type_proto(
+            input_type, onnx.helper.make_tensor_type_proto(TensorProto.FLOAT, ())
+        )
+        self._assert_inferred(
+            graph,
+            [
+                onnx.helper.make_value_info(
+                    "output", onnx.helper.make_sequence_type_proto(typ)
+                )
+            ],
             opset_imports=[
                 make_opsetid(ONNX_ML_DOMAIN, 1),
                 make_opsetid(ONNX_DOMAIN, 18),
