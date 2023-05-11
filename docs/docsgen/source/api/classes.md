@@ -11,7 +11,7 @@ as a json string.
 ## AttributeProto
 
 This class is used to define an attribute of an operator
-defined itself ny a NodeProto. It is
+defined itself by a NodeProto. It is
 a named attribute containing either singular float, integer, string, graph,
 and tensor values, or repeated float, integer, string, graph, and tensor values.
 An AttributeProto MUST contain the name field, and *only one* of the
