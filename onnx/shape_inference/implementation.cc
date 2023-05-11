@@ -196,6 +196,9 @@ void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_typ
     mergeShapesAndTypes(
         inferred_type.optional_type().elem_type(), existing_type->mutable_optional_type()->mutable_elem_type());
   } else if (inferred_val_case == TypeProto::kMapType) {
+    if (existing_type->map_type().key_type() == TensorProto::UNDEFINED) {
+      existing_type->mutable_map_type()->set_key_type(inferred_type.map_type().key_type());
+    }
     mergeShapesAndTypes(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type());
   }
 }
@@ -229,6 +232,8 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
     MaterializeSymbolicShape(inferred_type->mutable_sequence_type()->mutable_elem_type(), symbol_table);
   } else if (inferred_val_case == TypeProto::kOptionalType) {
     MaterializeSymbolicShape(inferred_type->mutable_optional_type()->mutable_elem_type(), symbol_table);
+  } else if (inferred_val_case == TypeProto::kMapType) {
+    MaterializeSymbolicShape(inferred_type->mutable_map_type()->mutable_value_type(), symbol_table);
   } else {
     fail_shape_inference("type case unsupported for symbolic shape inference. inferred=", inferred_val_case);
   }
@@ -588,10 +593,12 @@ class ShapeInferenceImplBase {
     // Create a temporary initializer value map
     for (int i = 0; i < num_actual_inputs && i < num_func_inputs; ++i) {
       const TypeProto* type = ctx.getInputType(i);
-      if (type->value_case() == TypeProto::kTensorType && ctx.getInputData(i) != nullptr) {
-        input_data_by_name[func_proto.input().Get(i)] = ctx.getInputData(i);
-      } else if (type->value_case() == TypeProto::kSparseTensorType && ctx.getInputSparseData(i) != nullptr) {
-        input_sparse_data_by_name[func_proto.input().Get(i)] = ctx.getInputSparseData(i);
+      if (type != nullptr) {
+        if (type->value_case() == TypeProto::kTensorType && ctx.getInputData(i) != nullptr) {
+          input_data_by_name[func_proto.input().Get(i)] = ctx.getInputData(i);
+        } else if (type->value_case() == TypeProto::kSparseTensorType && ctx.getInputSparseData(i) != nullptr) {
+          input_sparse_data_by_name[func_proto.input().Get(i)] = ctx.getInputSparseData(i);
+        }
       }
     }
 
@@ -866,7 +873,14 @@ struct FunctionInferenceContext : public InferenceContext {
   }
 
   const TypeProto* getInputType(size_t index) const override {
-    return (index < input_types_.size()) ? &input_types_[index] : nullptr;
+    // We should return nullptr for missing optional parameters.
+    // An uninitialized TypeProto() is used for missing optional parameters, and
+    // is mapped to a nullptr here.
+    if (index >= input_types_.size())
+      return nullptr;
+    if (input_types_[index].value_case() == TypeProto::ValueCase::VALUE_NOT_SET)
+      return nullptr;
+    return &input_types_[index];
   }
 
   TypeProto* getOutputType(size_t index) override {
