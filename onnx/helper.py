@@ -820,7 +820,10 @@ def _to_bytes(value: Union[str, bytes]) -> bytes:
 
 
 def make_attribute(  # pylint: disable=too-many-statements
-    key: str, value: Any, doc_string: Optional[str] = None
+    key: str,
+    value: Any,
+    doc_string: Optional[str] = None,
+    attr_type: Optional[int] = None,
 ) -> AttributeProto:
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
@@ -854,34 +857,57 @@ def make_attribute(  # pylint: disable=too-many-statements
     # Iterable cases
     elif isinstance(value, collections.abc.Iterable):
         value = list(value)
-        types = {type(v) for v in value}
-        if all(issubclass(t, numbers.Integral) for t in types):
+        if len(value) == 0 and attr_type is None:
+            raise ValueError("Could not infer attribute type from empty iterator")
+        if attr_type is None:
+            types = {type(v) for v in value}
+            for exp_t, exp_enum in (
+                (numbers.Integral, AttributeProto.INTS),
+                (numbers.Real, AttributeProto.FLOATS),
+                ((str, bytes), AttributeProto.STRINGS),
+                (TensorProto, AttributeProto.TENSORS),
+                (SparseTensorProto, AttributeProto.SPARSE_TENSORS),
+                (GraphProto, AttributeProto.GRAPHS),
+                (TypeProto, AttributeProto.TYPE_PROTOS),
+            ):
+                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
+                    attr_type = exp_enum
+                    break
+            if attr_type is None:
+                raise ValueError(
+                    "Could not infer the attribute type from the elements of the passed Iterable value."
+                )
+
+        if attr_type == AttributeProto.INTS:
             attr.ints.extend(value)
             attr.type = AttributeProto.INTS
-        elif all(issubclass(t, numbers.Real) for t in types):
+        elif attr_type == AttributeProto.FLOATS:
             attr.floats.extend(value)
             attr.type = AttributeProto.FLOATS
-        elif all(issubclass(t, (str, bytes)) for t in types):
+        elif attr_type == AttributeProto.STRINGS:
             attr.strings.extend(_to_bytes(v) for v in value)
             attr.type = AttributeProto.STRINGS
-        elif all(issubclass(t, TensorProto) for t in types):
+        elif attr_type == AttributeProto.TENSORS:
             attr.tensors.extend(value)
             attr.type = AttributeProto.TENSORS
-        elif all(issubclass(t, SparseTensorProto) for t in types):
+        elif attr_type == AttributeProto.SPARSE_TENSORS:
             attr.sparse_tensors.extend(value)
             attr.type = AttributeProto.SPARSE_TENSORS
-        elif all(issubclass(t, GraphProto) for t in types):
+        elif attr_type == AttributeProto.GRAPHS:
             attr.graphs.extend(value)
             attr.type = AttributeProto.GRAPHS
-        elif all(issubclass(t, TypeProto) for t in types):
+        elif attr_type == AttributeProto.TYPE_PROTOS:
             attr.type_protos.extend(value)
             attr.type = AttributeProto.TYPE_PROTOS
         else:
-            raise ValueError(
-                "Could not infer the attribute type from the elements of the passed Iterable value."
-            )
+            raise AssertionError()  # Should not reach since `ValueError` must be raised in attr_type checking
     else:
         raise TypeError(f"'{value}' is not an accepted attribute value.")
+
+    if attr_type is not None and attr.type != attr_type:
+        raise TypeError(
+            f"Inferred attribute type {attr.type} mismatched with specified type {attr_type}"
+        )
     return attr
 
 
