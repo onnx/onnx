@@ -858,7 +858,9 @@ def make_attribute(  # pylint: disable=too-many-statements
     elif isinstance(value, collections.abc.Iterable):
         value = list(value)
         if len(value) == 0 and attr_type is None:
-            raise ValueError(f"Could not infer attribute `{key}` type from empty iterator")
+            raise ValueError(
+                f"Could not infer attribute `{key}` type from empty iterator"
+            )
         if attr_type is None:
             types = {type(v) for v in value}
             for exp_t, exp_enum in (
