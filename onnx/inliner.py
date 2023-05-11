@@ -18,7 +18,7 @@ def inline_local_functions(
     Returns:
         ModelProto with all calls to model-local functions inlined (recursively)
     """
-    result = C.inline_local_functions(model.SerializeToString())
+    result = C.inline_local_functions(model.SerializeToString(), convert_version)
     inlined_model = onnx.ModelProto()
     inlined_model.ParseFromString(result)
     return inlined_model
