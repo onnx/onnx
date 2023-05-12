@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import Any, Sequence, Union
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -87,7 +87,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         )
 
     def _inferred(
-        self, graph_or_model: Union[GraphProto, ModelProto], **kwargs: Any
+        self, graph_or_model: GraphProto | ModelProto, **kwargs: Any
     ) -> ModelProto:
         data_prop = kwargs.pop("data_prop", False)
         if isinstance(graph_or_model, GraphProto):
@@ -103,7 +103,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
 
     def _assert_inferred(
         self,
-        graph_or_model: Union[GraphProto, ModelProto],
+        graph_or_model: GraphProto | ModelProto,
         vis: list[ValueInfoProto],
         **kwargs: Any,
     ) -> None:
