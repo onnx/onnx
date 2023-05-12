@@ -19,9 +19,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        # TODO: Freeze as 3.10.5 for now and use the latest 3.10 after future numpy upgrade in ONNX;
-        # related issue: https://github.com/actions/setup-python/issues/481
-        python-version: ['3.7', '3.8', '3.9', '3.10.5', '3.11']
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
@@ -99,8 +97,8 @@ jobs:
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
-    # TODO: Remove one if condition after using consistent NumPy version for all Python versions
-    - name: Verify ONNX with the minimum supported numpy  (from requirements.txt)
+    # TODO: Remove if conditions in all release CIs after the minimum supported numpy is upgraded to 1.23.2 or higher
+    - name: Verify ONNX with the minimum supported numpy
       if: ${{ always() }}
       run: |
         cd onnx

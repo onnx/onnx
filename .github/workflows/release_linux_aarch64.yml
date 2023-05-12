@@ -104,6 +104,23 @@ jobs:
           pytest && \
           deactivate'
 
+    - name: Verify ONNX with the minimum supported numpy
+      if: ${{ always() }}
+      run: |
+        if ('${{ matrix.python-version }}' -eq '3.11') {
+          export minimum_numpy_version=1.23.2
+        } else {
+          export minimum_numpy_version=1.16.6
+        }
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          python -m pip uninstall -y onnx numpy && python -m pip install numpy==$minimum_numpy_version && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          pytest && \
+          deactivate'
+
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
       if: ${{ always() }}
       run: |

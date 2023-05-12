@@ -94,6 +94,17 @@ jobs:
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
 
+    - name: Verify ONNX with the minimum supported numpy
+      if: ${{ always() }}
+      run: |
+        if ('${{ matrix.python-version }}' -eq '3.11') {
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+        } else {
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+        }
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
+
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
