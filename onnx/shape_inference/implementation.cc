@@ -352,7 +352,7 @@ class ShapeInferenceImplBase {
       const NodeProto& caller,
       DataValueMap& callee_map,
       const FunctionProto& callee) {
-    auto num_inputs = min(caller.input_size(), callee.input_size());
+    auto num_inputs = (std::min)(caller.input_size(), callee.input_size());
     for (int i = 0; i < num_inputs; ++i) {
       const std::string& actual = caller.input(i);
       const std::string& formal = callee.input(i);
@@ -371,7 +371,7 @@ class ShapeInferenceImplBase {
       const FunctionProto& callee,
       DataValueMap& caller_map,
       const NodeProto& caller) {
-    auto num_outputs = min(caller.output_size(), callee.output_size());
+    auto num_outputs = (std::min)(caller.output_size(), callee.output_size());
     for (int i = 0; i < num_outputs; ++i) {
       const std::string& actual = caller.output(i);
       const std::string& formal = callee.output(i);
