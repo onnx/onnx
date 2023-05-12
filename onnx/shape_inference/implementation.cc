@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/shape_inference/implementation.h"
+#include <algorithm>
 #include <fstream>
 #include <list>
 #include "onnx/checker.h"
@@ -345,6 +346,56 @@ class ShapeInferenceImplBase {
     }
   }
 
+  // Initialize a DataValueMap for a called function from the DataValueMap of the caller
+  void bindValuesOnCall(
+      const DataValueMap& caller_map,
+      const NodeProto& caller,
+      DataValueMap& callee_map,
+      const FunctionProto& callee) {
+    auto num_inputs = min(caller.input_size(), callee.input_size());
+    for (int i = 0; i < num_inputs; ++i) {
+      const std::string& actual = caller.input(i);
+      const std::string& formal = callee.input(i);
+      if (!actual.empty()) {
+        auto it = caller_map.find(actual);
+        if (it != caller_map.end()) {
+          callee_map[formal] = it->second;
+        }
+      }
+    }
+  }
+
+  // Update a DataValueMap for a calling function from the DataValueMap of the callee
+  void bindValuesOnReturn(
+      const DataValueMap& callee_map,
+      const FunctionProto& callee,
+      DataValueMap& caller_map,
+      const NodeProto& caller) {
+    auto num_outputs = min(caller.output_size(), callee.output_size());
+    for (int i = 0; i < num_outputs; ++i) {
+      const std::string& actual = caller.output(i);
+      const std::string& formal = callee.output(i);
+      if (!actual.empty()) {
+        auto it = callee_map.find(formal);
+        if (it != callee_map.end()) {
+          caller_map[actual] = it->second;
+        }
+      }
+    }
+  }
+
+  void processCall(const NodeProto& caller, const FunctionProto& callee, InferenceContext& ctx) {
+    DataValueMap callee_value_map;
+    if (generated_shape_data_by_name != nullptr) {
+      bindValuesOnCall(*generated_shape_data_by_name, caller, callee_value_map, callee);
+    }
+    InferShapeForFunctionNode(
+        callee, schema_registry, ctx, options, model_local_functions_map, symbol_table, &callee_value_map);
+    if (generated_shape_data_by_name != nullptr) {
+      bindValuesOnReturn(callee_value_map, callee, *generated_shape_data_by_name, caller);
+    }
+  }
+
   void process(NodeProto& n) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -378,15 +429,7 @@ class ShapeInferenceImplBase {
         if (schema->has_type_and_shape_inference_function()) {
           schema->GetTypeAndShapeInferenceFunction()(ctx);
         } else if (schema->HasFunction()) {
-          std::unordered_map<std::string, TensorShapeProto> function_scope_shape_data;
-          InferShapeForFunctionNode(
-              *(schema->GetFunction()),
-              schema_registry,
-              ctx,
-              options,
-              model_local_functions_map,
-              symbol_table,
-              &function_scope_shape_data);
+          processCall(n, *(schema->GetFunction()), ctx);
         } else {
           // Continue with inference for remaining nodes
           return;
@@ -394,15 +437,7 @@ class ShapeInferenceImplBase {
       } else if (model_local_functions_map.size() > 0) {
         auto iter = model_local_functions_map.find(GetModelLocalFunctionsMapIdentifier(n.domain(), n.op_type()));
         if (iter != model_local_functions_map.end()) {
-          std::unordered_map<std::string, TensorShapeProto> function_scope_shape_data;
-          InferShapeForFunctionNode(
-              *(iter->second),
-              schema_registry,
-              ctx,
-              options,
-              model_local_functions_map,
-              symbol_table,
-              &function_scope_shape_data);
+          processCall(n, *(iter->second), ctx);
         } else {
           has_unsupported_op = true;
           return;
@@ -611,7 +646,7 @@ class ShapeInferenceImplBase {
       }
     }
 
-    for (auto& default_value: func_proto.attribute_proto()) {
+    for (auto& default_value : func_proto.attribute_proto()) {
       const std::string& name = default_value.name();
       const AttributeProto* value = ctx.getAttribute(name);
       attr_map[name] = (value != nullptr) ? value : &default_value;
@@ -645,7 +680,7 @@ class ShapeInferenceImplBase {
       SymbolTable* symbol_table_in,
       const ModelLocalFunctionsMap& model_local_functions_map_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
-      std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name_in = nullptr,
+      DataValueMap* generated_shape_data_by_name_in = nullptr,
       const int ir_version_in = IR_VERSION // default the latest one
       )
       : g(*g_in),
@@ -684,7 +719,7 @@ class ShapeInferenceImplBase {
   SymbolTable* symbol_table;
   const ModelLocalFunctionsMap& model_local_functions_map;
   const ISchemaRegistry* schema_registry;
-  std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name;
+  DataValueMap* generated_shape_data_by_name;
   int ir_version;
   GraphInferenceContext graph_inference_context;
 
@@ -713,10 +748,10 @@ static void InferShapesImpl(
     SymbolTable* symbol_table,
     const ModelLocalFunctionsMap& model_local_functions_map,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name = nullptr,
+    DataValueMap* generated_shape_data_by_name = nullptr,
     const int ir_version = IR_VERSION // default the latest one
 ) {
-  std::unordered_map<std::string, TensorShapeProto> empty;
+  DataValueMap empty;
   if (generated_shape_data_by_name == nullptr) {
     generated_shape_data_by_name = &empty;
   }
@@ -764,7 +799,7 @@ void InferShapes(
     ModelProto& m,
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options,
-    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
+    DataValueMap* generated_shape_data_by_name) {
   auto opset_imports = GetOpsetImportsFromProto(m);
   SymbolTableImpl symbol_table;
   ModelLocalFunctionsMap model_local_functions_by_id;
@@ -789,7 +824,7 @@ void InferShapes(
     const std::string& save_path,
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options,
-    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
+    DataValueMap* generated_shape_data_by_name) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
   InferShapes(model, schema_registry, options, generated_shape_data_by_name);
@@ -815,7 +850,7 @@ void InferShapeForFunctionNode(
     const ShapeInferenceOptions& options,
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
     SymbolTable* symbol_table,
-    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
+    DataValueMap* generated_shape_data_by_name) {
   GraphProto g;
   ShapeInferenceImplBase base(
       &g,
@@ -836,7 +871,7 @@ void InferShapeForFunctionNode(
     const ShapeInferenceOptions& options,
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
     SymbolTable* symbol_table,
-    std::unordered_map<std::string, TensorShapeProto>* generated_shape_data_by_name) {
+    DataValueMap* generated_shape_data_by_name) {
   auto opset_imports = GetOpsetImportsFromProto(function_proto);
   InferShapeForFunctionNode(
       function_proto,
