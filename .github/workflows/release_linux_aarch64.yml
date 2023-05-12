@@ -19,8 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # the different python versions for building wheels
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
+        python-version: [cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
