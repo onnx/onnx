@@ -228,7 +228,7 @@ backend_test.exclude(
     ")"
 )
 
-# The following tests are new with opset 19.
+# The following tests are new with opset 19 and 20.
 if ort_version is not None and Version(ort_version) < Version("1.16"):
     # version should be 1.15 but there is no development version number.
     backend_test.exclude(
@@ -243,6 +243,7 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|_size_"
         "|equal_string"
         "|equal_string_broadcast"
+        "|gridsample"
         ")"
     )
 
