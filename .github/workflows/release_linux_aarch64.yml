@@ -106,11 +106,11 @@ jobs:
     - name: Verify ONNX with the minimum supported numpy
       if: ${{ always() }}
       run: |
-        if ('${{ matrix.python-version }}' -eq '3.11') {
-          export minimum_numpy_version=1.23.2
-        } else {
-          export minimum_numpy_version=1.16.6
-        }
+        if [ '${{ matrix.python-version }}' == 'cp311-cp311' ]; then
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+        else
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+        fi
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
           bash -exc '\
