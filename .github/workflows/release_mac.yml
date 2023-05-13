@@ -97,10 +97,10 @@ jobs:
     - name: Verify ONNX with the minimum supported numpy
       if: ${{ always() }}
       run: |
-        if [ '${{ matrix.python-version }}' == '3.11' ]; then
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+        if [ '${{ matrix.python-version }}' == '3.8' || '${{ matrix.python-version }}' == '3.9']; then
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
         else
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.21.6
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
         fi
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
