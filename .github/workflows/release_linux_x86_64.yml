@@ -83,7 +83,7 @@ jobs:
         if [ '${{ matrix.python-version }}' == '3.11' ]; then
           python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
         else
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.20.3
         fi
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest

@@ -105,7 +105,7 @@ jobs:
         if ('${{ matrix.python-version }}' -eq '3.11') {
           python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
         } else {
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.20.3
         }
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
