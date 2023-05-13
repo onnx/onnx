@@ -1,15 +1,18 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 import os
 from pathlib import Path
 import shutil
 import tempfile
 import unittest
 import uuid
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
+import parameterized
 
 import onnx
 from onnx import ModelProto, TensorProto, checker, helper, shape_inference
@@ -24,20 +27,30 @@ from onnx.numpy_helper import from_array, to_array
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
+    """Base class for testing external data related behaviors.
+
+    Subclasses should be parameterized with a serialization format.
+    """
+
+    serialization_format: str = "protobuf"
+
     def setUp(self) -> None:
-        self.temp_dir: str = tempfile.mkdtemp()
+        self._temp_dir_obj = (
+            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+        )
+        self.temp_dir: str = self._temp_dir_obj.name
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model_filename = self.create_test_model()
 
     def tearDown(self) -> None:
-        shutil.rmtree(self.temp_dir)
+        self._temp_dir_obj.cleanup()
 
     def get_temp_model_filename(self) -> str:
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + ".onnx")
 
     def create_external_data_tensor(
-        self, value: List[Any], tensor_name: str, location: str = ""
+        self, value: list[Any], tensor_name: str, location: str = ""
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
@@ -81,59 +94,70 @@ class TestLoadExternalDataBase(unittest.TestCase):
         model = helper.make_model(graph)
 
         model_filename = os.path.join(self.temp_dir, "model.onnx")
-        with open(model_filename, "wb") as model_file:
-            model_file.write(model.SerializeToString())
+        onnx.save_model(model, model_filename, self.serialization_format)
 
         return model_filename
 
     def test_check_model(self) -> None:
+        if self.serialization_format != "protobuf":
+            self.skipTest(
+                "check_model supports protobuf only as binary when provided as a path"
+            )
         checker.check_model(self.model_filename)
 
 
+@parameterized.parameterized_class(
+    [
+        {"serialization_format": "protobuf"},
+        {"serialization_format": "textproto"},
+    ]
+)
 class TestLoadExternalData(TestLoadExternalDataBase):
     def test_load_external_data(self) -> None:
-        model = onnx.load_model(self.model_filename)
+        model = onnx.load_model(self.model_filename, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     def test_load_external_data_for_model(self) -> None:
-        model = onnx.load_model(self.model_filename, load_external_data=False)
+        model = onnx.load_model(
+            self.model_filename, self.serialization_format, load_external_data=False
+        )
         load_external_data_for_model(model, self.temp_dir)
         initializer_tensor = model.graph.initializer[0]
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     def test_save_external_data(self) -> None:
-        model = onnx.load_model(self.model_filename)
+        model = onnx.load_model(self.model_filename, self.serialization_format)
 
         temp_dir = os.path.join(self.temp_dir, "save_copy")
         os.mkdir(temp_dir)
         new_model_filename = os.path.join(temp_dir, "model.onnx")
-        onnx.save_model(model, new_model_filename)
+        onnx.save_model(model, new_model_filename, self.serialization_format)
 
-        new_model = onnx.load_model(new_model_filename)
+        new_model = onnx.load_model(new_model_filename, self.serialization_format)
         initializer_tensor = new_model.graph.initializer[0]
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = new_model.graph.node[0].attribute[0].t
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
 
+@parameterized.parameterized_class(
+    [
+        {"serialization_format": "protobuf"},
+        {"serialization_format": "textproto"},
+    ]
+)
 class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
     def create_external_data_tensors(
-        self, tensors_data: List[Tuple[List[Any], Any]]
-    ) -> List[TensorProto]:
+        self, tensors_data: list[tuple[list[Any], Any]]
+    ) -> list[TensorProto]:
         tensor_filename = "tensors.bin"
         tensors = []
 
@@ -160,44 +184,54 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         return tensors
 
     def test_load_external_single_file_data(self) -> None:
-        model = onnx.load_model(self.model_filename)
+        model = onnx.load_model(self.model_filename, self.serialization_format)
 
         initializer_tensor = model.graph.initializer[0]
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     def test_save_external_single_file_data(self) -> None:
-        model = onnx.load_model(self.model_filename)
+        model = onnx.load_model(self.model_filename, self.serialization_format)
 
         temp_dir = os.path.join(self.temp_dir, "save_copy")
         os.mkdir(temp_dir)
         new_model_filename = os.path.join(temp_dir, "model.onnx")
-        onnx.save_model(model, new_model_filename)
+        onnx.save_model(model, new_model_filename, self.serialization_format)
 
-        new_model = onnx.load_model(new_model_filename)
+        new_model = onnx.load_model(new_model_filename, self.serialization_format)
         initializer_tensor = new_model.graph.initializer[0]
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = new_model.graph.node[0].attribute[0].t
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
 
-class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
+@parameterized.parameterized_class(
+    [
+        {"serialization_format": "protobuf"},
+        {"serialization_format": "textproto"},
+    ]
+)
+class TestSaveAllTensorsAsExternalData(unittest.TestCase):
+    serialization_format: str = "protobuf"
+
     def setUp(self) -> None:
-        self.temp_dir: str = tempfile.mkdtemp()
+        self._temp_dir_obj = (
+            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+        )
+        self.temp_dir: str = self._temp_dir_obj.name
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model = self.create_test_model_proto()
 
+    def get_temp_model_filename(self):
+        return os.path.join(self.temp_dir, str(uuid.uuid4()) + ".onnx")
+
     def create_data_tensors(
-        self, tensors_data: List[Tuple[List[Any], Any]]
-    ) -> List[TensorProto]:
+        self, tensors_data: list[tuple[list[Any], Any]]
+    ) -> list[TensorProto]:
         tensors = []
         for value, tensor_name in tensors_data:
             tensor = from_array(np.array(value))
@@ -233,6 +267,10 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         )
         return helper.make_model(graph)
 
+    @unittest.skipIf(
+        serialization_format != "protobuf",
+        "check_model supports protobuf only when provided as a path",
+    )
     def test_check_model(self) -> None:
         checker.check_model(self.model)
 
@@ -240,23 +278,21 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         model_file_path = self.get_temp_model_filename()
 
         convert_model_to_external_data(self.model, size_threshold=1024)
-        onnx.save_model(self.model, model_file_path)
+        onnx.save_model(self.model, model_file_path, self.serialization_format)
 
-        model = onnx.load_model(model_file_path)
+        model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
         self.assertFalse(initializer_tensor.HasField("data_location"))
 
     def test_convert_model_to_external_data_without_size_threshold(self) -> None:
         model_file_path = self.get_temp_model_filename()
         convert_model_to_external_data(self.model, size_threshold=0)
-        onnx.save_model(self.model, model_file_path)
+        onnx.save_model(self.model, model_file_path, self.serialization_format)
 
-        model = onnx.load_model(model_file_path)
+        model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
         self.assertTrue(initializer_tensor.HasField("data_location"))
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
     def test_convert_model_to_external_data_from_one_file_with_location(self) -> None:
         model_file_path = self.get_temp_model_filename()
@@ -268,28 +304,26 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
             all_tensors_to_one_file=True,
             location=external_data_file,
         )
-        onnx.save_model(self.model, model_file_path)
+        onnx.save_model(self.model, model_file_path, self.serialization_format)
 
         self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, external_data_file)))
 
-        model = onnx.load_model(model_file_path)
+        model = onnx.load_model(model_file_path, self.serialization_format)
 
         # test convert model from external data
         convert_model_from_external_data(model)
         model_file_path = self.get_temp_model_filename()
-        onnx.save_model(model, model_file_path)
-        model = onnx.load_model(model_file_path)
+        onnx.save_model(model, model_file_path, self.serialization_format)
+        model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
         self.assertFalse(len(initializer_tensor.external_data))
         self.assertEqual(initializer_tensor.data_location, TensorProto.DEFAULT)
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = model.graph.node[0].attribute[0].t
         self.assertFalse(len(attribute_tensor.external_data))
         self.assertEqual(attribute_tensor.data_location, TensorProto.DEFAULT)
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     def test_convert_model_to_external_data_from_one_file_without_location_uses_model_name(
         self,
@@ -299,7 +333,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         convert_model_to_external_data(
             self.model, size_threshold=0, all_tensors_to_one_file=True
         )
-        onnx.save_model(self.model, model_file_path)
+        onnx.save_model(self.model, model_file_path, self.serialization_format)
 
         self.assertTrue(os.path.isfile(model_file_path))
         self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, model_file_path)))
@@ -315,7 +349,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
             all_tensors_to_one_file=False,
             convert_attribute=False,
         )
-        onnx.save_model(self.model, model_file_path)
+        onnx.save_model(self.model, model_file_path, self.serialization_format)
 
         self.assertTrue(os.path.isfile(model_file_path))
         self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "input_value")))
@@ -332,7 +366,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
             all_tensors_to_one_file=False,
             convert_attribute=True,
         )
-        onnx.save_model(self.model, model_file_path)
+        onnx.save_model(self.model, model_file_path, self.serialization_format)
 
         self.assertTrue(os.path.isfile(model_file_path))
         self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "input_value")))
@@ -349,12 +383,12 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
             convert_attribute=False,
             all_tensors_to_one_file=False,
         )
-        onnx.save_model(self.model, model_file_path)
+        onnx.save_model(self.model, model_file_path, self.serialization_format)
 
         self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "input_value")))
         self.assertFalse(os.path.isfile(os.path.join(self.temp_dir, "attribute_value")))
 
-        model = onnx.load_model(model_file_path)
+        model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
         self.assertTrue(initializer_tensor.HasField("data_location"))
 
@@ -367,28 +401,31 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         convert_model_to_external_data(
             self.model, size_threshold=0, convert_attribute=True
         )
-        onnx.save_model(self.model, model_file_path)
+        onnx.save_model(self.model, model_file_path, self.serialization_format)
 
-        model = onnx.load_model(model_file_path)
+        model = onnx.load_model(model_file_path, self.serialization_format)
 
         initializer_tensor = model.graph.initializer[0]
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
         self.assertTrue(initializer_tensor.HasField("data_location"))
 
         attribute_tensor = model.graph.node[0].attribute[0].t
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
         self.assertTrue(attribute_tensor.HasField("data_location"))
 
     def test_save_model_does_not_convert_to_external_data_and_saves_the_model(
         self,
     ) -> None:
         model_file_path = self.get_temp_model_filename()
-        onnx.save_model(self.model, model_file_path, save_as_external_data=False)
+        onnx.save_model(
+            self.model,
+            model_file_path,
+            self.serialization_format,
+            save_as_external_data=False,
+        )
         self.assertTrue(os.path.isfile(model_file_path))
 
-        model = onnx.load_model(model_file_path)
+        model = onnx.load_model(model_file_path, self.serialization_format)
         initializer_tensor = model.graph.initializer[0]
         self.assertFalse(initializer_tensor.HasField("data_location"))
 
@@ -400,6 +437,7 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         onnx.save_model(
             self.model,
             model_file_path,
+            self.serialization_format,
             save_as_external_data=True,
             all_tensors_to_one_file=True,
             location=None,
@@ -407,60 +445,66 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
             convert_attribute=False,
         )
 
-        model = onnx.load_model(model_file_path)
+        model = onnx.load_model(model_file_path, self.serialization_format)
 
         initializer_tensor = model.graph.initializer[0]
         self.assertTrue(initializer_tensor.HasField("data_location"))
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = model.graph.node[0].attribute[0].t
         self.assertFalse(attribute_tensor.HasField("data_location"))
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     def test_save_model_without_loading_external_data(self) -> None:
         model_file_path = self.get_temp_model_filename()
         onnx.save_model(
             self.model,
             model_file_path,
+            self.serialization_format,
             save_as_external_data=True,
             location=None,
             size_threshold=0,
             convert_attribute=False,
         )
         # Save without load_external_data
-        model = onnx.load_model(model_file_path, load_external_data=False)
+        model = onnx.load_model(
+            model_file_path, self.serialization_format, load_external_data=False
+        )
         onnx.save_model(
             model,
             model_file_path,
+            self.serialization_format,
             save_as_external_data=True,
             location=None,
             size_threshold=0,
             convert_attribute=False,
         )
         # Load the saved model again; Only works if the saved path is under the same directory
-        model = onnx.load_model(model_file_path)
+        model = onnx.load_model(model_file_path, self.serialization_format)
 
         initializer_tensor = model.graph.initializer[0]
         self.assertTrue(initializer_tensor.HasField("data_location"))
-        self.assertTrue(
-            np.allclose(to_array(initializer_tensor), self.initializer_value)
-        )
+        np.testing.assert_allclose(to_array(initializer_tensor), self.initializer_value)
 
         attribute_tensor = model.graph.node[0].attribute[0].t
         self.assertFalse(attribute_tensor.HasField("data_location"))
-        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+        np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     def test_save_model_with_existing_raw_data_should_override(self) -> None:
         model_file_path = self.get_temp_model_filename()
         original_raw_data = self.model.graph.initializer[0].raw_data
         onnx.save_model(
-            self.model, model_file_path, save_as_external_data=True, size_threshold=0
+            self.model,
+            model_file_path,
+            self.serialization_format,
+            save_as_external_data=True,
+            size_threshold=0,
         )
         self.assertTrue(os.path.isfile(model_file_path))
 
-        model = onnx.load_model(model_file_path, load_external_data=False)
+        model = onnx.load_model(
+            model_file_path, self.serialization_format, load_external_data=False
+        )
         initializer_tensor = model.graph.initializer[0]
         initializer_tensor.raw_data = b"dummpy_raw_data"
         # If raw_data and external tensor exist at the same time, override existing raw_data
@@ -468,16 +512,27 @@ class TestSaveAllTensorsAsExternalData(TestLoadExternalDataBase):
         self.assertEqual(initializer_tensor.raw_data, original_raw_data)
 
 
+@parameterized.parameterized_class(
+    [
+        {"serialization_format": "protobuf"},
+        {"serialization_format": "textproto"},
+    ]
+)
 class TestExternalDataToArray(unittest.TestCase):
+    serialization_format: str = "protobuf"
+
     def setUp(self) -> None:
-        self.temp_dir: str = tempfile.mkdtemp()
+        self._temp_dir_obj = (
+            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+        )
+        self.temp_dir: str = self._temp_dir_obj.name
         self.model_file_path: str = os.path.join(self.temp_dir, "model.onnx")
         self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
         self.small_data = (200, 300)
         self.model = self.create_test_model()
 
     def tearDown(self) -> None:
-        shutil.rmtree(self.temp_dir)
+        self._temp_dir_obj.cleanup()
 
     def create_test_model(self) -> ModelProto:
         X = helper.make_tensor_value_info("X", TensorProto.FLOAT, self.large_data.shape)
@@ -518,6 +573,10 @@ class TestExternalDataToArray(unittest.TestCase):
         model = helper.make_model(graph_def, producer_name="onnx-example")
         return model
 
+    @unittest.skipIf(
+        serialization_format != "protobuf",
+        "check_model supports protobuf only when provided as a path",
+    )
     def test_check_model(self) -> None:
         checker.check_model(self.model)
 
@@ -525,12 +584,13 @@ class TestExternalDataToArray(unittest.TestCase):
         onnx.save_model(
             self.model,
             self.model_file_path,
+            self.serialization_format,
             save_as_external_data=True,
             all_tensors_to_one_file=False,
             size_threshold=0,
         )
         model_without_external_data = onnx.load(
-            self.model_file_path, load_external_data=False
+            self.model_file_path, self.serialization_format, load_external_data=False
         )
         # Shape inference of Reshape uses ParseData
         # ParseData cannot handle external data and should throw the error as follows:
@@ -546,15 +606,18 @@ class TestExternalDataToArray(unittest.TestCase):
         onnx.save_model(
             self.model,
             self.model_file_path,
+            self.serialization_format,
             save_as_external_data=True,
             all_tensors_to_one_file=False,
             size_threshold=0,
         )
         # raw_data of external tensor is not loaded
-        model = onnx.load(self.model_file_path, load_external_data=False)
+        model = onnx.load(
+            self.model_file_path, self.serialization_format, load_external_data=False
+        )
         # Specify self.temp_dir to load external tensor
         loaded_large_data = to_array(model.graph.initializer[0], self.temp_dir)
-        self.assertTrue(np.allclose(loaded_large_data, self.large_data))
+        np.testing.assert_allclose(loaded_large_data, self.large_data)
 
     def test_save_model_with_external_data_multiple_times(self) -> None:
         # Test onnx.save should respectively handle typical tensor and external tensor properly
@@ -563,6 +626,7 @@ class TestExternalDataToArray(unittest.TestCase):
         onnx.save_model(
             self.model,
             self.model_file_path,
+            self.serialization_format,
             save_as_external_data=True,
             all_tensors_to_one_file=False,
             location=None,
@@ -570,23 +634,24 @@ class TestExternalDataToArray(unittest.TestCase):
             convert_attribute=True,
         )
         model_without_loading_external = onnx.load(
-            self.model_file_path, load_external_data=False
+            self.model_file_path, self.serialization_format, load_external_data=False
         )
         large_input_tensor = model_without_loading_external.graph.initializer[0]
         self.assertTrue(large_input_tensor.HasField("data_location"))
-        self.assertTrue(
-            np.allclose(to_array(large_input_tensor, self.temp_dir), self.large_data)
+        np.testing.assert_allclose(
+            to_array(large_input_tensor, self.temp_dir), self.large_data
         )
 
         small_shape_tensor = model_without_loading_external.graph.initializer[1]
         self.assertTrue(not small_shape_tensor.HasField("data_location"))
-        self.assertTrue(np.allclose(to_array(small_shape_tensor), self.small_data))
+        np.testing.assert_allclose(to_array(small_shape_tensor), self.small_data)
 
         # 2nd save: one tensor has raw_data (small); one external tensor (large)
         # Save them both as external tensors this time
         onnx.save_model(
             model_without_loading_external,
             self.model_file_path,
+            self.serialization_format,
             save_as_external_data=True,
             all_tensors_to_one_file=False,
             location=None,
@@ -595,18 +660,18 @@ class TestExternalDataToArray(unittest.TestCase):
         )
 
         model_without_loading_external = onnx.load(
-            self.model_file_path, load_external_data=False
+            self.model_file_path, self.serialization_format, load_external_data=False
         )
         large_input_tensor = model_without_loading_external.graph.initializer[0]
         self.assertTrue(large_input_tensor.HasField("data_location"))
-        self.assertTrue(
-            np.allclose(to_array(large_input_tensor, self.temp_dir), self.large_data)
+        np.testing.assert_allclose(
+            to_array(large_input_tensor, self.temp_dir), self.large_data
         )
 
         small_shape_tensor = model_without_loading_external.graph.initializer[1]
         self.assertTrue(small_shape_tensor.HasField("data_location"))
-        self.assertTrue(
-            np.allclose(to_array(small_shape_tensor, self.temp_dir), self.small_data)
+        np.testing.assert_allclose(
+            to_array(small_shape_tensor, self.temp_dir), self.small_data
         )
 
 
@@ -615,7 +680,7 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBa
     directory."""
 
     def create_external_data_tensor(
-        self, value: List[Any], tensor_name: str, location: str = ""
+        self, value: list[Any], tensor_name: str, location: str = ""
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name

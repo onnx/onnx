@@ -1138,7 +1138,7 @@ in converting libraries.
 
 onnx provides a function to check the model is valid.
 It checks input type or shapes whenever it can detect inconsistency.
-The following example multiplies two matrices of different types
+The following example adds two matrices of different types
 which is not allowed.
 
 ```{eval-rst}

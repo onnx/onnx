@@ -102,7 +102,7 @@ enum Version {
   // Deprecated since_version and operator status from FunctionProto
   IR_VERSION_2021_7_30 = 0x0000000000000008;
 
-  // IR VERSION 9 published on TBD
+  // IR VERSION 9 published on May 5, 2023
   // Added AttributeProto to FunctionProto so that default attribute values can be set.
   // Added FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ.
   IR_VERSION = 0x0000000000000009;
