@@ -2507,7 +2507,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "size",
-            "the target output image size with shape (N, C, H, W) for 2D or (N, C, D, H, W) for 3D",
+            "the target output image size (N, C, H, W) for 2D or (N, C, D, H, W) for 3D",
             "T2",
             OpSchema::Single,
             true,
@@ -2530,72 +2530,65 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(AffineGrid_ver20_doc)
         .FunctionBody(R"ONNX(
         {
+          int_zero = Constant<value_int: int=0>()
+          int_four = Constant<value_int: int=4>()
+
+          constant_align_corners = Constant<value_int: int=@align_corners>()
+          constant_align_corners_equal_zero = Equal (constant_align_corners, int_zero) 
+          
           size_ndim = Size (size)
-          N, C, H, W = Split <@num_outputs = size_ndim>(size)
-          zero_size = ConstantOfShape <value = float {0.0}> (size)
-          minus_one = Constant <value = float {1.0}>()
-          one = Constant <value = float {1.0}>()
-          two = Constant <value = float {2.0}>()
-          step_h = Div (two, H)
-          step_h_half = Div (step, two)
-          start_h = Add (minus_one, step_h_half)
-          grid_h_0 = Range (start, one, step)
-          grid_h_reshape = Reshape (grid_h_0, H, 1)
-          grid_h = Add (grid_h_reshape, zero_size)
+          condition_is_2d = Equal (size_ndim, int_four)
 
-          step_w = Div (two, W)
-          step_w_half = Div (step_w, two)
-          start_w = Add (minus_one, step_w_half)
-          grid_w_0 = Range (start, one, step)
-          grid_w = Add (grid_w_0, zero_size)
+          grid = If (constant_align_corners_equal_zero) <
+              then_branch = g1 () => (float[N, C, H, W, 2] grid_then) {
+                  minus_one = Constant <value = float {-1.0}>()
+                  zero = Constant <value = float {0.0}>()
+                  one = Constant <value = float {1.0}>()
+                  two = Constant <value = float {2.0}>()
+                  three = Constant <value = float {3.0}>()
 
+                  N, C, H, W = Split <num_outputs: int=4>(size)
+                  int_two = Constant<value_ints: int=[2]>()
+                  int_fours = Constant<value_ints: int=[4]>()
+                  constant_H_W_shape = Slice(size, int_two, int_fours) # [H, W]
+                  zero_size = ConstantOfShape (constant_H_W_shape)
+                  size_ones = Add (zero_size, one)
+                  H_float = CastLike (H, zero)
+                  step_h = Div (two, H_float) # 2/2 = 1
+                  step_h_half = Div (step_h, two) # 1/2 = 0.5
+                  start_h = Add (minus_one, step_h_half)  # -1 + 0.5 = -0.5
+                  grid_h_0 = Range (start_h, one, step_h) # [-0.5, 0.5]
+                  size_ones_transpose = Transpose (size_ones) # (3, 2)
+                  grid_h_1 = Mul(size_ones_transpose, grid_h_0)   # broadcast [-0.5, 0.5] of shape (2,) to shape (3, 2)
+                  grid_h = Transpose (grid_h_1)   # (2, 3)
 
-          builder.Const1D("h_end", h_end);
-          builder.Const1D("h_step", h_step);
-          builder.Const1D("w_start", w_start);
-          builder.Const1D("w_end", w_end);
-          builder.Const1D("w_step", w_step);
-          builder.Const("size", size);
-          builder.Const("shape_x_by_3", shape_x_by_3);
-          builder.Const("shape_N_by_3_by_3", shape_N_by_3_by_3);
-          builder.Add("size_zeros = ConstantOfShape (size)", "value", mktensor(0));
-          builder.Add("w_orginal_grid_range = Range (w_start, w_end, w_step)");
-          builder.Add("w_orginal_grid = Add (w_orginal_grid_range, size_zeros)");
-          builder.Add("h_orginal_grid_range = Range (h_start, h_end, h_step)");
-          builder.Add("h_orginal_grid_range_transposed = Transpose (h_orginal_grid_range)");
-          builder.Add("h_orginal_grid = Add (h_orginal_grid_range_transposed, size_zeros)");
-          builder.Add("size_ones = ConstantOfShape (size)", "value", mktensor(1.0f));
-          builder.Add("original_grid_seq = SequenceConstruct(w_orginal_grid, h_orginal_grid, size_ones)");
-          builder.Add("original_grid = ConcatFromSequence(original_grid_seq)");
-          builder.Add("original_grid_x_by_3 = Reshape(original_grid_seq, shape_x_by_3)");
-          builder.Add("rot_matrix = Reshape(theta, shape_N_by_3_by_3)");
-          builder.Add("grid_before_reshape = MatMul(rot_matrix, original_grid_x_by_3)");
-          builder.Add("grid = Reshape(grid_before_reshape, size)");
+                  W_float = CastLike (W, zero)
+                  step_w = Div (two, W_float)
+                  step_w_half = Div (step_w, two)
+                  start_w = Add (minus_one, step_w_half)
+                  grid_w_0 = Range (start_w, one, step_w)
+                  grid_w = Add (grid_w_0, zero_size)
+
+                  # make folowing a function (theta, grid_w, grid_h) =>  (grid)
+                  original_grid_seq = SequenceConstruct (grid_w, grid_h, size_ones)   
+                  original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
+                  constant_shape_x_by_3 = Constant <value_ints: ints = [6, 3]> ()
+                  original_grid_x_by_3 = Reshape (original_grid, constant_shape_x_by_3)
+                  original_grid_3_by_x = Transpose (original_grid_x_by_3)
+                  grid_before_reshape = MatMul (theta, original_grid_3_by_x)
+                  grid_shape = Constant <value_ints: ints = [1, 2, 3, 2]> ()
+                  grid_then = Reshape(grid_before_reshape, grid_shape)
+                  },
+              else_branch = g2 () => (float[N, C, H, W, 2] grid_else) { 
+                  grid_else_int = Identity(size)
+                  zero = Constant <value = float {0.0}>()
+                  grid_else = CastLike (grid_else_int, zero)
+                  }
+              >
         }
         )ONNX")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          size_t input_param = 0, grid_param = 1;
-
-          checkInputRank(ctx, input_param, 4);
-          checkInputRank(ctx, grid_param, 4);
-
-          // Output dimensions, initialized to an unknown-dimension-value
-          Dim N, C, H_out, W_out;
-
-          // Get value of N from dim 0 of input_param, if available
-          unifyInputDim(ctx, input_param, 0, N);
-          // Get value of C from dim 1 of input_param, if available
-          unifyInputDim(ctx, input_param, 1, C);
-
-          // Get value of H_out from dim 1 of grid_param, if available
-          unifyInputDim(ctx, grid_param, 1, H_out);
-          // Get value of W_out from dim 2 of grid_param, if available
-          unifyInputDim(ctx, grid_param, 2, W_out);
-
-          // set output shape:
-          updateOutputShape(ctx, 0, {N, C, H_out, W_out});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
