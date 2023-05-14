@@ -131,7 +131,7 @@ class TestBasicFunctions(unittest.TestCase):
           >
          agraph (float[N, DIM, DIM_PLUS_1] theta, int64[K] size) => (float[N, C, H, W, DIM] grid)
          {
-            grid = custom_domain.AffineGrid<align_corners=1>(theta, size)
+            grid = custom_domain.AffineGrid<align_corners=0>(theta, size)
          }
 
          <
@@ -294,25 +294,28 @@ class TestBasicFunctions(unittest.TestCase):
         inference_session = InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
         np.random.seed(42)
 
-        test_2d = False
+        test_2d = True
+        align_corners = False
         if test_2d:
-            N, C, H, W = 2, 3, 2, 3
+            N, C, H, W = 32, 3, 240, 512
             theta = np.random.randn(N, 2, 3).astype(np.float32)
             size = np.array([N, C, H, W], dtype=np.int64)
             res = inference_session.run(None, {"theta": theta, "size": size})
             print(res[0])
 
-            t_res = affine_grid(torch.from_numpy(theta), torch.Size((N, C, H, W)), align_corners=True)
+            t_res = affine_grid(torch.from_numpy(theta), torch.Size((N, C, H, W)), align_corners=align_corners)
             print(t_res)
+            np.testing.assert_allclose(res[0], t_res.numpy(), rtol=1e-04, atol=1e-04)
         else:
-            N, C, D, H, W = 1, 3, 2, 3, 4
+            N, C, D, H, W = 16, 3, 100, 300, 406
             theta = np.random.randn(N, 3, 4).astype(np.float32)
             size = np.array([N, C, D, H, W], dtype=np.int64)
             res = inference_session.run(None, {"theta": theta, "size": size})
             print(res[0])
 
-            t_res = affine_grid(torch.from_numpy(theta), torch.Size((N, C, D, H, W)), align_corners=True)
+            t_res = affine_grid(torch.from_numpy(theta), torch.Size((N, C, D, H, W)), align_corners=align_corners)
             print(t_res)
+            np.testing.assert_allclose(res[0], t_res.numpy(), rtol=1e-04, atol=1e-04)
 
 
     @parameterized.expand(

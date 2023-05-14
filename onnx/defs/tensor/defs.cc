@@ -2539,50 +2539,132 @@ ONNX_OPERATOR_SET_SCHEMA(
           size_ndim = Size (size)
           condition_is_2d = Equal (size_ndim, int_four)
 
-          grid = If (constant_align_corners_equal_zero) <
-              then_branch = g1 () => (float[N, C, H, W, 2] grid_then) {
+          grid = If (condition_is_2d) <
+              then_branch = g1 () => (float[N, H, W, 2] grid_2d_then) {
                   minus_one = Constant <value = float {-1.0}>()
                   zero = Constant <value = float {0.0}>()
                   one = Constant <value = float {1.0}>()
                   two = Constant <value = float {2.0}>()
-                  three = Constant <value = float {3.0}>()
-
                   N, C, H, W = Split <num_outputs: int=4>(size)
-                  int_two = Constant<value_ints: int=[2]>()
-                  int_fours = Constant<value_ints: int=[4]>()
-                  constant_H_W_shape = Slice(size, int_two, int_fours) # [H, W]
-                  zero_size = ConstantOfShape (constant_H_W_shape)
-                  size_ones = Add (zero_size, one)
-                  H_float = CastLike (H, zero)
-                  step_h = Div (two, H_float) # 2/2 = 1
-                  step_h_half = Div (step_h, two) # 1/2 = 0.5
-                  start_h = Add (minus_one, step_h_half)  # -1 + 0.5 = -0.5
-                  grid_h_0 = Range (start_h, one, step_h) # [-0.5, 0.5]
-                  size_ones_transpose = Transpose (size_ones) # (3, 2)
-                  grid_h_1 = Mul(size_ones_transpose, grid_h_0)   # broadcast [-0.5, 0.5] of shape (2,) to shape (3, 2)
-                  grid_h = Transpose (grid_h_1)   # (2, 3)
+                  int_two_1d = Constant<value_ints=[2]>()
+                  int_four_1d = Constant<value_ints=[4]>()
+                  constant_H_W_shape = Slice(size, int_two_1d, int_four_1d) # [N, C, H, W] => [H, W]
+                  zero_H_by_W = ConstantOfShape (constant_H_W_shape)
+                  ones_H_by_W = Add (zero_H_by_W, one)
 
+                  H_float = CastLike (H, zero)
                   W_float = CastLike (W, zero)
-                  step_w = Div (two, W_float)
-                  step_w_half = Div (step_w, two)
-                  start_w = Add (minus_one, step_w_half)
-                  grid_w_0 = Range (start_w, one, step_w)
-                  grid_w = Add (grid_w_0, zero_size)
+                  grid_h_0, grid_w_0 = If (constant_align_corners_equal_zero) <
+                      then_branch = h1 () => (float[H] grid_h_then, float[W] grid_w_then) {
+                          step_h = Div (two, H_float)
+                          step_w = Div (two, W_float)
+                          step_h_half = Div (step_h, two)
+                          start_h = Add (minus_one, step_h_half)
+                          grid_h_then = Range (start_h, one, step_h)
+
+                          step_w_half = Div (step_w, two)
+                          start_w = Add (minus_one, step_w_half)
+                          grid_w_then = Range (start_w, one, step_w)
+                      },
+                      else_branch = h2 () => (float[H] grid_h_else, float[W] grid_w_else) {
+                          H_float_nimus_one = Sub (H_float, one)
+                          W_float_nimus_one = Sub (W_float, one)
+                          step_h = Div (two, H_float_nimus_one)
+                          step_w = Div (two, W_float_nimus_one)
+                          epsilon = Constant <value = float {1e-6}>()
+                          one_plus_epsilon = Add (one, epsilon)
+                          grid_h_else = Range (minus_one, one_plus_epsilon, step_h)
+                          grid_w_else = Range (minus_one, one_plus_epsilon, step_w)
+                      }
+                  >
+                  size_ones_H_by_W_transpose = Transpose (ones_H_by_W) # (3, 2)
+                  grid_h_1 = Mul(size_ones_H_by_W_transpose, grid_h_0)
+                  grid_h = Transpose (grid_h_1)
+                  
+                  grid_w = Add (grid_w_0, zero_H_by_W)
 
                   # make folowing a function (theta, grid_w, grid_h) =>  (grid)
-                  original_grid_seq = SequenceConstruct (grid_w, grid_h, size_ones)   
+                  original_grid_seq = SequenceConstruct (grid_w, grid_h, ones_H_by_W)   
                   original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
-                  constant_shape_x_by_3 = Constant <value_ints: ints = [6, 3]> ()
-                  original_grid_x_by_3 = Reshape (original_grid, constant_shape_x_by_3)
-                  original_grid_3_by_x = Transpose (original_grid_x_by_3)
-                  grid_before_reshape = MatMul (theta, original_grid_3_by_x)
-                  grid_shape = Constant <value_ints: ints = [1, 2, 3, 2]> ()
-                  grid_then = Reshape(grid_before_reshape, grid_shape)
+                  constant_shape_HW_3 = Constant <value_ints: ints = [-1, 3]> ()
+                  original_grid_HW_3 = Reshape (original_grid, constant_shape_HW_3)
+                  original_grid_3_HW = Transpose (original_grid_HW_3)
+
+                  grid_N_2_HW = MatMul (theta, original_grid_3_HW)
+                  grid_N_HW_2 = Transpose <perm = [0, 2, 1]> (grid_N_2_HW)
+                  N_H_W_2_seq = SequenceConstruct (N, H, W, int_two_1d)
+                  N_H_W_2 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_H_W_2_seq)
+                  grid_2d_then = Reshape(grid_N_HW_2, N_H_W_2)
                   },
-              else_branch = g2 () => (float[N, C, H, W, 2] grid_else) { 
-                  grid_else_int = Identity(size)
+              else_branch = g2 () => (float[N, D, H, W, 3] grid_3d_else) {
+                  minus_one = Constant <value = float {-1.0}>()
                   zero = Constant <value = float {0.0}>()
-                  grid_else = CastLike (grid_else_int, zero)
+                  one = Constant <value = float {1.0}>()
+                  two = Constant <value = float {2.0}>()
+                  N, C, D, H, W = Split <num_outputs: int=5>(size)
+                  int_two_1d = Constant<value_ints=[2]>()
+                  int_three_1d = Constant<value_ints=[3]>()
+                  int_five_1d = Constant<value_ints=[5]>()
+                  constant_D_H_W_shape = Slice(size, int_two_1d, int_five_1d) # [N, C, D, H, W] => [D, H, W]
+                  zero_D_H_W = ConstantOfShape (constant_D_H_W_shape)
+                  ones_D_H_W = Add (zero_D_H_W, one)
+
+                  D_float = CastLike (D, zero)
+                  H_float = CastLike (H, zero)
+                  W_float = CastLike (W, zero)
+                  grid_d_0, grid_h_0, grid_w_0 = If (constant_align_corners_equal_zero) <
+                      then_branch = h1 () => (float[D] grid_d_then, float[H] grid_h_then, float[W] grid_w_then) {
+                          step_d = Div (two, D_float)
+                          step_h = Div (two, H_float)
+                          step_w = Div (two, W_float)
+
+                          step_d_half = Div (step_d, two)
+                          start_d = Add (minus_one, step_d_half)
+                          grid_d_then = Range (start_d, one, step_d)
+
+                          step_h_half = Div (step_h, two)
+                          start_h = Add (minus_one, step_h_half)
+                          grid_h_then = Range (start_h, one, step_h)
+
+                          step_w_half = Div (step_w, two)
+                          start_w = Add (minus_one, step_w_half)
+                          grid_w_then = Range (start_w, one, step_w)
+                      },
+                      else_branch = h2 () => (float[D] grid_d_else, float[H] grid_h_else, float[W] grid_w_else) {
+                          D_float_nimus_one = Sub (D_float, one)
+                          H_float_nimus_one = Sub (H_float, one)
+                          W_float_nimus_one = Sub (W_float, one)
+                          step_d = Div (two, D_float_nimus_one)
+                          step_h = Div (two, H_float_nimus_one)
+                          step_w = Div (two, W_float_nimus_one)
+                          epsilon = Constant <value = float {1e-6}>()
+                          one_plus_epsilon = Add (one, epsilon)
+                          grid_d_else = Range (minus_one, one_plus_epsilon, step_d)
+                          grid_h_else = Range (minus_one, one_plus_epsilon, step_h)
+                          grid_w_else = Range (minus_one, one_plus_epsilon, step_w)
+                      }
+                  >
+                  ones_H_W_D = Transpose <perm = [1, 2, 0]> (ones_D_H_W)
+                  grid_d_1 = Mul(ones_H_W_D, grid_d_0)
+                  grid_d = Transpose <perm = [2, 0, 1]>(grid_d_1)
+
+                  ones_D_W_H = Transpose <perm = [0, 2, 1]> (ones_D_H_W)
+                  grid_h_1 = Mul(ones_D_W_H, grid_h_0)
+                  grid_h = Transpose <perm = [0, 2, 1]>(grid_h_1)
+
+                  grid_w = Add (grid_w_0, zero_D_H_W)
+
+                  original_grid_seq = SequenceConstruct (grid_w, grid_h, grid_d, ones_D_H_W)
+                  original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
+                  constant_shape_DHW_4 = Constant <value_ints: ints = [-1, 4]> ()
+                  original_grid_DHW_4 = Reshape (original_grid, constant_shape_DHW_4)
+                  original_grid_4_DHW = Transpose (original_grid_DHW_4)
+
+                  grid_N_3_DHW = MatMul (theta, original_grid_4_DHW)
+                  grid_N_DHW_3 = Transpose <perm = [0, 2, 1]> (grid_N_3_DHW)
+                  N_D_H_W_3_seq = SequenceConstruct (N, D, H, W, int_three_1d)
+                  N_D_H_W_3 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_D_H_W_3_seq)
+                  grid_3d_else = Reshape(grid_N_DHW_3, N_D_H_W_3)
                   }
               >
         }

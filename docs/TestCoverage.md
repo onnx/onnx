@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 173/186 (93.01%, 5 generators excluded) common operators.
+Node tests have covered 174/187 (93.05%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -339,6 +339,79 @@ node = onnx.helper.make_node(
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
+```
+
+</details>
+
+
+### AffineGrid
+There are 2 test cases, listed as following:
+<details>
+<summary>2d</summary>
+
+```python
+angle = np.array([np.pi / 4, np.pi / 3])
+offset_x = np.array([5.0, 2.5])
+offset_y = np.array([-3.3, 1.1])
+shear_x = np.array([-0.5, 0.5])
+shear_y = np.array([0.3, -0.3])
+scale_x = np.array([2.2, 1.1])
+scale_y = np.array([3.1, 0.9])
+theta_2d = create_affine_matrix_2d(angle, offset_x, offset_y, shear_x, shear_y, scale_x, scale_y)
+N, C, W, H = len(angle), 3, 5, 6
+data_size = (W, H)
+for align_corners in [0, 1]:
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_2d, original_grid)
+
+    test_name = "test_affine_grid_2d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(node, inputs=[theta_2d, np.array([N, C, W, H])], outputs=[grid], name=test_name)
+```
+
+</details>
+<details>
+<summary>3d</summary>
+
+```python
+angle1 = np.array([np.pi / 4, np.pi / 3])
+angle2 = np.array([np.pi / 6, np.pi / 2])
+offset_x = np.array([5.0, 2.5])
+offset_y = np.array([-3.3, 1.1])
+offset_z = np.array([-1.1, 2.2])
+shear_x = np.array([-0.5, 0.5])
+shear_y = np.array([0.3, -0.3])
+shear_z = np.array([0.7, -0.2])
+scale_x = np.array([2.2, 1.1])
+scale_y = np.array([3.1, 0.9])
+scale_z = np.array([0.5, 1.5])
+
+theta_3d = create_affine_matrix_3d(angle1, angle2, offset_x, offset_y, offset_z, shear_x, shear_y, shear_z, scale_x, scale_y, scale_z)
+N, C, D, W, H = len(angle1), 3, 4, 5, 6
+data_size = (D, W, H)
+for align_corners in [0, 1]:
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_3d, original_grid)
+
+    test_name = "test_affine_grid_3d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(node, inputs=[theta_3d, np.array([N, C, D, W, H])], outputs=[grid], name=test_name)
 ```
 
 </details>
