@@ -129,9 +129,9 @@ class TestBasicFunctions(unittest.TestCase):
             model_version: 1,
             doc_string: "A test model for model local functions."
           >
-         agraph (float[N, 2, 3] theta, int64[4] size) => (float[N, C, H, W, 2] grid)
+         agraph (float[N, DIM, DIM_PLUS_1] theta, int64[K] size) => (float[N, C, H, W, DIM] grid)
          {
-            grid = custom_domain.AffineGrid<align_corners=0>(theta, size)
+            grid = custom_domain.AffineGrid<align_corners=1>(theta, size)
          }
 
          <
@@ -152,14 +152,12 @@ class TestBasicFunctions(unittest.TestCase):
                 size_ndim = Size (size)
                 condition_is_2d = Equal (size_ndim, int_four)
 
-                grid = If (constant_align_corners_equal_zero) <
-                    then_branch = g1 () => (float[N, C, H, W, 2] grid_then) {
+                grid = If (condition_is_2d) <
+                    then_branch = g1 () => (float[N, H, W, 2] grid_2d_then) {
                         minus_one = Constant <value = float {-1.0}>()
                         zero = Constant <value = float {0.0}>()
                         one = Constant <value = float {1.0}>()
                         two = Constant <value = float {2.0}>()
-                        three = Constant <value = float {3.0}>()
-
                         N, C, H, W = Split <num_outputs: int=4>(size)
                         int_two_1d = Constant<value_ints=[2]>()
                         int_four_1d = Constant<value_ints=[4]>()
@@ -168,19 +166,34 @@ class TestBasicFunctions(unittest.TestCase):
                         ones_H_by_W = Add (zero_H_by_W, one)
 
                         H_float = CastLike (H, zero)
-                        step_h = Div (two, H_float)
-                        step_h_half = Div (step_h, two)
-                        start_h = Add (minus_one, step_h_half)
-                        grid_h_0 = Range (start_h, one, step_h)
+                        W_float = CastLike (W, zero)
+                        grid_h_0, grid_w_0 = If (constant_align_corners_equal_zero) <
+                            then_branch = h1 () => (float[H] grid_h_then, float[W] grid_w_then) {
+                                step_h = Div (two, H_float)
+                                step_w = Div (two, W_float)
+                                step_h_half = Div (step_h, two)
+                                start_h = Add (minus_one, step_h_half)
+                                grid_h_then = Range (start_h, one, step_h)
+
+                                step_w_half = Div (step_w, two)
+                                start_w = Add (minus_one, step_w_half)
+                                grid_w_then = Range (start_w, one, step_w)
+                            },
+                            else_branch = h2 () => (float[H] grid_h_else, float[W] grid_w_else) {
+                                H_float_nimus_one = Sub (H_float, one)
+                                W_float_nimus_one = Sub (W_float, one)
+                                step_h = Div (two, H_float_nimus_one)
+                                step_w = Div (two, W_float_nimus_one)
+                                epsilon = Constant <value = float {1e-6}>()
+                                one_plus_epsilon = Add (one, epsilon)
+                                grid_h_else = Range (minus_one, one_plus_epsilon, step_h)
+                                grid_w_else = Range (minus_one, one_plus_epsilon, step_w)
+                            }
+                        >
                         size_ones_H_by_W_transpose = Transpose (ones_H_by_W) # (3, 2)
                         grid_h_1 = Mul(size_ones_H_by_W_transpose, grid_h_0)
                         grid_h = Transpose (grid_h_1)
-
-                        W_float = CastLike (W, zero)
-                        step_w = Div (two, W_float)
-                        step_w_half = Div (step_w, two)
-                        start_w = Add (minus_one, step_w_half)
-                        grid_w_0 = Range (start_w, one, step_w)
+                        
                         grid_w = Add (grid_w_0, zero_H_by_W)
 
                         # make folowing a function (theta, grid_w, grid_h) =>  (grid)
@@ -194,12 +207,77 @@ class TestBasicFunctions(unittest.TestCase):
                         grid_N_HW_2 = Transpose <perm = [0, 2, 1]> (grid_N_2_HW)
                         N_H_W_2_seq = SequenceConstruct (N, H, W, int_two_1d)
                         N_H_W_2 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_H_W_2_seq)
-                        grid_then = Reshape(grid_N_HW_2, N_H_W_2)
+                        grid_2d_then = Reshape(grid_N_HW_2, N_H_W_2)
                         },
-                    else_branch = g2 () => (float[N, C, H, W, 2] grid_else) { 
-                        grid_else_int = Identity(size)
+                    else_branch = g2 () => (float[N, D, H, W, 3] grid_3d_else) {
+                        minus_one = Constant <value = float {-1.0}>()
                         zero = Constant <value = float {0.0}>()
-                        grid_else = CastLike (grid_else_int, zero)
+                        one = Constant <value = float {1.0}>()
+                        two = Constant <value = float {2.0}>()
+                        N, C, D, H, W = Split <num_outputs: int=5>(size)
+                        int_two_1d = Constant<value_ints=[2]>()
+                        int_three_1d = Constant<value_ints=[3]>()
+                        int_five_1d = Constant<value_ints=[5]>()
+                        constant_D_H_W_shape = Slice(size, int_two_1d, int_five_1d) # [N, C, D, H, W] => [D, H, W]
+                        zero_D_H_W = ConstantOfShape (constant_D_H_W_shape)
+                        ones_D_H_W = Add (zero_D_H_W, one)
+
+                        D_float = CastLike (D, zero)
+                        H_float = CastLike (H, zero)
+                        W_float = CastLike (W, zero)
+                        grid_d_0, grid_h_0, grid_w_0 = If (constant_align_corners_equal_zero) <
+                            then_branch = h1 () => (float[D] grid_d_then, float[H] grid_h_then, float[W] grid_w_then) {
+                                step_d = Div (two, D_float)
+                                step_h = Div (two, H_float)
+                                step_w = Div (two, W_float)
+
+                                step_d_half = Div (step_d, two)
+                                start_d = Add (minus_one, step_d_half)
+                                grid_d_then = Range (start_d, one, step_d)
+
+                                step_h_half = Div (step_h, two)
+                                start_h = Add (minus_one, step_h_half)
+                                grid_h_then = Range (start_h, one, step_h)
+
+                                step_w_half = Div (step_w, two)
+                                start_w = Add (minus_one, step_w_half)
+                                grid_w_then = Range (start_w, one, step_w)
+                            },
+                            else_branch = h2 () => (float[D] grid_d_else, float[H] grid_h_else, float[W] grid_w_else) {
+                                D_float_nimus_one = Sub (D_float, one)
+                                H_float_nimus_one = Sub (H_float, one)
+                                W_float_nimus_one = Sub (W_float, one)
+                                step_d = Div (two, D_float_nimus_one)
+                                step_h = Div (two, H_float_nimus_one)
+                                step_w = Div (two, W_float_nimus_one)
+                                epsilon = Constant <value = float {1e-6}>()
+                                one_plus_epsilon = Add (one, epsilon)
+                                grid_d_else = Range (minus_one, one_plus_epsilon, step_d)
+                                grid_h_else = Range (minus_one, one_plus_epsilon, step_h)
+                                grid_w_else = Range (minus_one, one_plus_epsilon, step_w)
+                            }
+                        >
+                        ones_H_W_D = Transpose <perm = [1, 2, 0]> (ones_D_H_W)
+                        grid_d_1 = Mul(ones_H_W_D, grid_d_0)
+                        grid_d = Transpose <perm = [2, 0, 1]>(grid_d_1)
+
+                        ones_D_W_H = Transpose <perm = [0, 2, 1]> (ones_D_H_W)
+                        grid_h_1 = Mul(ones_D_W_H, grid_h_0)
+                        grid_h = Transpose <perm = [0, 2, 1]>(grid_h_1)
+
+                        grid_w = Add (grid_w_0, zero_D_H_W)
+
+                        original_grid_seq = SequenceConstruct (grid_w, grid_h, grid_d, ones_D_H_W)
+                        original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
+                        constant_shape_DHW_4 = Constant <value_ints: ints = [-1, 4]> ()
+                        original_grid_DHW_4 = Reshape (original_grid, constant_shape_DHW_4)
+                        original_grid_4_DHW = Transpose (original_grid_DHW_4)
+
+                        grid_N_3_DHW = MatMul (theta, original_grid_4_DHW)
+                        grid_N_DHW_3 = Transpose <perm = [0, 2, 1]> (grid_N_3_DHW)
+                        N_D_H_W_3_seq = SequenceConstruct (N, D, H, W, int_three_1d)
+                        N_D_H_W_3 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_D_H_W_3_seq)
+                        grid_3d_else = Reshape(grid_N_DHW_3, N_D_H_W_3)
                         }
                     >
            }
@@ -209,20 +287,32 @@ class TestBasicFunctions(unittest.TestCase):
         checker.check_model(model)
         onnx.save(model, "C:/Temp/affine_grid_test.onnx")
 
+        import torch
+        from torch.nn.functional import affine_grid
         import numpy as np
         from onnxruntime import InferenceSession
         inference_session = InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
         np.random.seed(42)
-        N, C, H, W = 2, 3, 2, 3
-        theta = np.random.randn(N, 2, 3).astype(np.float32)
-        size = np.array([N, C, H, W], dtype=np.int64)
-        res = inference_session.run(None, {"theta": theta, "size": size})
-        print(res[0])
 
-        import torch
-        from torch.nn.functional import affine_grid
-        t_res = affine_grid(torch.from_numpy(theta), torch.Size((N, C, H, W)), align_corners=False)
-        print(t_res)
+        test_2d = False
+        if test_2d:
+            N, C, H, W = 2, 3, 2, 3
+            theta = np.random.randn(N, 2, 3).astype(np.float32)
+            size = np.array([N, C, H, W], dtype=np.int64)
+            res = inference_session.run(None, {"theta": theta, "size": size})
+            print(res[0])
+
+            t_res = affine_grid(torch.from_numpy(theta), torch.Size((N, C, H, W)), align_corners=True)
+            print(t_res)
+        else:
+            N, C, D, H, W = 1, 3, 2, 3, 4
+            theta = np.random.randn(N, 3, 4).astype(np.float32)
+            size = np.array([N, C, D, H, W], dtype=np.int64)
+            res = inference_session.run(None, {"theta": theta, "size": size})
+            print(res[0])
+
+            t_res = affine_grid(torch.from_numpy(theta), torch.Size((N, C, D, H, W)), align_corners=True)
+            print(t_res)
 
 
     @parameterized.expand(
