@@ -81,10 +81,11 @@ jobs:
       if: ${{ always() }}
       run: |
         if [ '${{ matrix.python-version }}' == '3.8' || '${{ matrix.python-version }}' == '3.9']; then
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+          export minimum_numpy_version=1.16.6
         else
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+          export minimum_numpy_version=1.23.2
         fi
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$minimum_numpy_version
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 

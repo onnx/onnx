@@ -103,10 +103,11 @@ jobs:
       run: |
         cd onnx
         if ('${{ matrix.python-version }}' -eq '3.8' || '${{ matrix.python-version }}' -eq '3.9') {
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+          $Env:minimum_numpy_version=1.16.6
         } else {
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+          $Env:minimum_numpy_version=1.23.2
         }
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$Env:minimum_numpy_version
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 

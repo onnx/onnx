@@ -104,9 +104,9 @@ jobs:
       if: ${{ always() }}
       run: |
         if [ '${{ matrix.python-version }}' == 'cp39-cp39' || '${{ matrix.python-version }}' == 'cp38-cp38']; then
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+          export minimum_numpy_version=1.16.6
         else
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+          export minimum_numpy_version=1.23.2
         fi
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
