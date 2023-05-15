@@ -9,11 +9,10 @@ __all__ = [
 ]
 
 import typing
-from typing import Any, Collection, Optional, TypeVar
+from typing import Any, Collection, Optional, Protocol, TypeVar
 
 import google.protobuf.message
 import google.protobuf.text_format
-from typing import Protocol
 
 import onnx
 
