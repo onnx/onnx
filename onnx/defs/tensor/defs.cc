@@ -520,7 +520,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_length->set_dim_value((end - start) < 0 ? 0 : (end - start));
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-          if (ctx.getInputType(0)->tensor_type().has_shape()) {
+          if (hasInputShape(ctx, 0)) {
             auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
             int64_t rank = static_cast<int64_t>(input_shape.dim_size());
             int64_t start = getAttribute(ctx, "start", 0);
@@ -2372,31 +2372,40 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Resize_ver19_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
 
-static const char* GridSample_ver16_doc = R"DOC(
-Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from `grid`.
-Currently, only spatial (4-D) inputs are supported. For input `X` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
-the output `Y` will have shape (N, C, H_out, W_out).
+static const char* GridSample_ver20_doc = R"DOC(
+Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.
+For spatial input `X` with shape (N, C, H, W), the `grid` will have shape (N, H_out, W_out, 2),
+the output `Y` will have shape (N, C, H_out, W_out). For volumetric input `X` with shape (N, C, D, H, W),
+the `grid` will have shape (N, D_out, H_out, W_out, 3), the output `Y` will have shape (N, C, D_out, H_out, W_out).
+More generally, for an input `X` of rank r+2 with shape (N, C, d1, d2, ..., dr),
+the `grid` will have shape (N, D1_out, D2_out, ..., Dr_out, r), the output `Y` will have shape (N, C, D1_out, D2_out, ..., Dr_out).
 
-The tensor `X` contains values at centers of square pixels in a H by W 2-dimensional image.
-The tensor `grid` describes normalized positions where the output `Y` is to be computed
-using a specified interpolation method (the mode) and a padding mode (for grid positions falling outside the 2-dimensional image).
+The tensor `X` contains values at centers of square pixels (voxels, etc) locations such as (n, c, d1_in, d2_in, ..., dr_in).
+The (n, d1_out, d2_out, ..., dr_out, :) values from the tensor `grid` are the normalized positions for interpolating the values
+at the (n, c, d1_out, d2_out, ..., dr_out) locations from the output tensor `Y` using a specified interpolation method (the mode)
+and a padding mode (for `grid` positions falling outside the 2-dimensional image).
 
-Elements in `grid[N, H_out, W_out]` are size-2 vectors specifying positions in the 2-dimensional space of `X`.
-They are used to interpolate output values of `Y[N, C, H_out, W_out]`.
+For example, the values in `grid[n, h_out, w_out, :]` are size-2 vectors specifying normalized positions in the 2-dimensional space of `X`.
+They are used to interpolate output values of `Y[n, c, h_out, w_out]`.
 
-The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
-See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
+The GridSample operator is often used in doing grid generator and sampler in the
+[Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
+See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     GridSample,
-    16,
+    20,
     OpSchema()
         .Attr(
             "mode",
-            "Three interpolation modes: bilinear (default), nearest and bicubic.",
+            "Three interpolation modes: linear (default), nearest and cubic. "
+            "The \"linear\" mode includes linear and N-linear interpolation modes depending on the number of spatial dimensions "
+            "of the input tensor (i.e. linear for 1 spatial dimension, bilinear for 2 spatial dimensions, etc.). "
+            "The \"cubic\" mode also includes N-cubic interpolation modes following the same rules. The \"nearest\" mode rounds "
+            "to the nearest even index when the sampling point falls halfway between two indices.",
             AttributeProto::STRING,
-            std::string("bilinear"))
+            std::string("linear"))
         .Attr(
             "padding_mode",
             "Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. "
@@ -2410,16 +2419,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             std::string("zeros"))
         .Attr(
             "align_corners",
-            "If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. "
-            "If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.",
+            "If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels (voxels, etc.). "
+            "If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels (voxels, etc.), "
+            "making the sampling more resolution agnostic.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
             0,
             "X",
-            "4-D tensor of shape (N, C, H, W), "
-            "where N is the batch size, C is the numbers of channels, "
-            "H and W are the height and width of the input data.",
+            "Input tensor of rank r+2 that has shape (N, C, D1, D2, ..., Dr), where N is the batch size, "
+            "C is the number of channels, D1, D2, ..., Dr are the spatial dimensions.",
             "T1",
             OpSchema::Single,
             true,
@@ -2428,11 +2437,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "grid",
-            "Input offset, 4-D tensor of shape (N, H_out, W_out, 2), "
-            "where H_out and W_out are the height and width of grid and output, "
-            "Grid specifies the sampling pixel locations normalized by the input spatial dimensions. "
-            "Therefore, it should have most values in the range of [-1, 1]. "
-            "If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.",
+            "Input offset of shape (N, D1_out, D2_out, ..., Dr_out, r), where D1_out, D2_out, ..., "
+            "Dr_out are the spatial dimensions of the grid and output, and r is the number of spatial dimensions. "
+            "Grid specifies the sampling locations normalized by the input spatial dimensions. "
+            "Therefore, it should have most values in the range of [-1, 1]. If the grid has values outside the range of [-1, 1], "
+            "the corresponding outputs will be handled as defined by padding_mode. Following computer vision convention, "
+            "the coordinates in the length-r location vector are listed from the innermost tensor dimension to the outermost, "
+            "the opposite of regular tensor indexing.",
             "T2",
             OpSchema::Single,
             true,
@@ -2441,7 +2452,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "Y",
-            "4-D tensor of shape (N, C, H_out, W_out) of sampled values. "
+            "Output tensor of rank r+2 that has shape (N, C, D1_out, D2_out, ..., Dr_out) of the sampled values. "
             "For integer input types, intermediate values are computed as floating point and cast to integer at the end.",
             "T1",
             OpSchema::Single,
@@ -2456,31 +2467,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain grid types to float tensors.")
-        .SetDoc(GridSample_ver16_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          size_t input_param = 0, grid_param = 1;
-
-          checkInputRank(ctx, input_param, 4);
-          checkInputRank(ctx, grid_param, 4);
-
-          // Output dimensions, initialized to an unknown-dimension-value
-          Dim N, C, H_out, W_out;
-
-          // Get value of N from dim 0 of input_param, if available
-          unifyInputDim(ctx, input_param, 0, N);
-          // Get value of C from dim 1 of input_param, if available
-          unifyInputDim(ctx, input_param, 1, C);
-
-          // Get value of H_out from dim 1 of grid_param, if available
-          unifyInputDim(ctx, grid_param, 1, H_out);
-          // Get value of W_out from dim 2 of grid_param, if available
-          unifyInputDim(ctx, grid_param, 2, W_out);
-
-          // set output shape:
-          updateOutputShape(ctx, 0, {N, C, H_out, W_out});
-        }));
+        .SetDoc(GridSample_ver20_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
