@@ -13,7 +13,7 @@ from typing import Any, Collection, Optional, TypeVar
 
 import google.protobuf.message
 import google.protobuf.text_format
-from typing_extensions import Protocol
+from typing import Protocol
 
 import onnx
 

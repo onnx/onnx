@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 import parameterized
-from typing_extensions import Literal
+from typing import Literal
 
 import onnx
 from onnx import serialization
