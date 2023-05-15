@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 import onnx.checker
 import onnx.helper
@@ -176,8 +176,8 @@ class Extractor:
 
 
 def extract_model(
-    input_path: Union[str, os.PathLike],
-    output_path: Union[str, os.PathLike],
+    input_path: str | os.PathLike,
+    output_path: str | os.PathLike,
     input_names: List[str],
     output_names: List[str],
     check_model: bool = True,
@@ -191,8 +191,8 @@ def extract_model(
     subgraph that is connected to the _main graph_ as attributes of these operators.
 
     Arguments:
-        input_path (Union[str, os.PathLike]): The path to original ONNX model.
-        output_path (Union[str, os.PathLike]): The path to save the extracted ONNX model.
+        input_path (str | os.PathLike): The path to original ONNX model.
+        output_path (str | os.PathLike): The path to save the extracted ONNX model.
         input_names (list of string): The names of the input tensors that to be extracted.
         output_names (list of string): The names of the output tensors that to be extracted.
         check_model (bool): Whether to run model checker on the extracted model.

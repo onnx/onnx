@@ -10,7 +10,7 @@ proto is legal.
 import functools
 import os
 import sys
-from typing import Any, Callable, Optional, Type, TypeVar, Union, cast
+from typing import Any, Callable, Optional, Type, TypeVar, cast
 
 from google.protobuf.message import Message
 
@@ -115,12 +115,12 @@ def check_sparse_tensor(
 
 
 def check_model(
-    model: Union[ModelProto, str, bytes, os.PathLike], full_check: bool = False
+    model: ModelProto | str | bytes | os.PathLike, full_check: bool = False
 ) -> None:
     """Check the consistency of a model. An exception is raised if the test fails.
 
     Arguments:
-        model (Union[ModelProto, str, bytes, os.PathLike]): model to check
+        model (ModelProto | str | bytes | os.PathLike): model to check
         full_check (bool): if True, the function checks shapes can be inferred
     """
     # If model is a path instead of ModelProto

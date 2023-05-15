@@ -69,7 +69,7 @@ __all__ = [
 
 import os
 import typing
-from typing import IO, Optional, Union
+from typing import IO, Union
 
 from typing_extensions import Literal
 
@@ -135,7 +135,8 @@ from onnx import (
 # register their own formats. So we allow str as well.
 _SupportedFormat = Union[Literal["protobuf", "textproto"], str]
 
-def _load_bytes(f: Union[IO[bytes], str, os.PathLike]) -> bytes:
+
+def _load_bytes(f: IO[bytes] | str | os.PathLike) -> bytes:
     if hasattr(f, "read") and callable(typing.cast(IO[bytes], f).read):
         content = typing.cast(IO[bytes], f).read()
     else:
@@ -145,7 +146,7 @@ def _load_bytes(f: Union[IO[bytes], str, os.PathLike]) -> bytes:
     return content
 
 
-def _save_bytes(content: bytes, f: Union[IO[bytes], str, os.PathLike]) -> None:
+def _save_bytes(content: bytes, f: IO[bytes] | str | os.PathLike) -> None:
     if hasattr(f, "write") and callable(typing.cast(IO[bytes], f).write):
         typing.cast(IO[bytes], f).write(content)
     else:
@@ -154,7 +155,7 @@ def _save_bytes(content: bytes, f: Union[IO[bytes], str, os.PathLike]) -> None:
             writable.write(content)
 
 
-def _get_file_path(f: Union[IO[bytes], str, os.PathLike]) -> Optional[str]:
+def _get_file_path(f: IO[bytes] | str | os.PathLike) -> str | None:
     if isinstance(f, (str, os.PathLike)):
         return os.path.abspath(f)
     if hasattr(f, "name"):
@@ -163,7 +164,7 @@ def _get_file_path(f: Union[IO[bytes], str, os.PathLike]) -> Optional[str]:
 
 
 def load_model(
-    f: Union[IO[bytes], str, os.PathLike],
+    f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
     load_external_data: bool = True,
 ) -> ModelProto:
@@ -193,7 +194,7 @@ def load_model(
 
 
 def load_tensor(
-    f: Union[IO[bytes], str, os.PathLike],
+    f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
 ) -> TensorProto:
     """Loads a serialized TensorProto into memory.
@@ -244,8 +245,8 @@ def load_tensor_from_string(
 
 
 def save_model(
-    proto: Union[ModelProto, bytes],
-    f: Union[IO[bytes], str, os.PathLike],
+    proto: ModelProto | bytes,
+    f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
     *,
     save_as_external_data: bool = False,
@@ -298,7 +299,7 @@ def save_model(
 
 def save_tensor(
     proto: TensorProto,
-     f: Union[IO[bytes], str, os.PathLike],
+    f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
 ) -> None:
     """
