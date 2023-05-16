@@ -102,7 +102,7 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        if ('${{ matrix.python-version }}' -eq '3.8' || '${{ matrix.python-version }}' -eq '3.9') {
+        if ('${{ matrix.python-version }}' -eq '3.8' -Or '${{ matrix.python-version }}' -eq '3.9') {
           $Env:minimum_numpy_version=1.16.6
         } else {
           $Env:minimum_numpy_version=1.23.2

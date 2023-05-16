@@ -80,7 +80,7 @@ jobs:
     - name: Verify ONNX with the minimum supported numpy
       if: ${{ always() }}
       run: |
-        if [ '${{ matrix.python-version }}' == '3.8' || '${{ matrix.python-version }}' == '3.9']; then
+        if [[ "${{ matrix.python-version }}" == "3.8" || "${{ matrix.python-version }}" == "3.9" ]]; then
           export minimum_numpy_version=1.16.6
         else
           export minimum_numpy_version=1.23.2

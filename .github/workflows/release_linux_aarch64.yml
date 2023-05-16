@@ -103,7 +103,7 @@ jobs:
     - name: Verify ONNX with the minimum supported numpy
       if: ${{ always() }}
       run: |
-        if [ '${{ matrix.python-version }}' == 'cp39-cp39' || '${{ matrix.python-version }}' == 'cp38-cp38']; then
+        if [[ "${{ matrix.python-version }}" == "cp38-cp38" || "${{ matrix.python-version }}" == "cp39-cp39" ]]; then
           export minimum_numpy_version=1.16.6
         else
           export minimum_numpy_version=1.23.2
