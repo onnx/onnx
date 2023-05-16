@@ -6,7 +6,7 @@
 This implements graphalities that allows us to check whether a serialized
 proto is legal.
 """
-
+from __future__ import annotations
 import functools
 import os
 import sys
