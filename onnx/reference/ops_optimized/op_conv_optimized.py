@@ -41,8 +41,8 @@ def im2col_fast(X, kernel_shape, pads, strides):
     padding = [(pads[i], pads[i + n_dims]) for i in range(n_dims)]
     X_padded = np.pad(X, tuple(nc) + tuple(padding), mode="constant")
 
-    getitem = np.array(slice(0, m), d, *indices)
-    cols = X_padded[getitem]
+    getitem = (slice(0, m), d, *indices)
+    cols = X_padded[getitem]  # type: ignore[index]
     conc_cols = np.concatenate(cols, axis=-1)
     return conc_cols, tuple(shape_out)
 
