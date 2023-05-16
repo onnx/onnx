@@ -69,9 +69,8 @@ __all__ = [
 
 import os
 import typing
-from typing import IO, Union
+from typing import IO, Literal, Union
 
-from typing_extensions import Literal
 
 from onnx import serialization
 from onnx.onnx_cpp2py_export import ONNX_ML

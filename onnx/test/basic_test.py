@@ -7,9 +7,9 @@ import os
 import pathlib
 import tempfile
 import unittest
+from typing import Literal
 
 import parameterized
-from typing_extensions import Literal
 
 import onnx
 from onnx import serialization
