@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         # the different python versions for building wheels
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
+        python-version: [cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
@@ -37,9 +37,6 @@ jobs:
 
       # setting up qemu for enabling aarch64 binary execution on x86 machine
     - uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
-      with:
-        # TODO: freeze version for now since the latest one cannot use jupyter
-        image: tonistiigi/binfmt:qemu-v6.0.0-12
 
       # Creating a virtual environment on machine with the help of docker container \
       # and installing the dependencies inside that \

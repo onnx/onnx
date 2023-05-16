@@ -212,6 +212,12 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.type_protos), types)
         self.assertEqual(attr.type, AttributeProto.TYPE_PROTOS)
 
+    def test_attr_empty_list(self) -> None:
+        attr = helper.make_attribute("empty", [], attr_type=AttributeProto.STRINGS)
+        self.assertEqual(attr.type, AttributeProto.STRINGS)
+        self.assertEqual(len(attr.strings), 0)
+        self.assertRaises(ValueError, helper.make_attribute, "empty", [])
+
     def test_is_attr_legal(self) -> None:
         # no name, no field
         attr = AttributeProto()
