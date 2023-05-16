@@ -261,7 +261,7 @@ def save_model(
     Args:
         proto: should be a in-memory ModelProto
         f: can be a file-like object (has "write" function) or a string containing
-        a file name format for future use or a pathlike object
+        a file name or a pathlike object
         format: The serialization format. Default is "protobuf". The encoding is
             assumed to be "utf-8" when the format is a text format.
         save_as_external_data: If true, save tensors to external file(s).
