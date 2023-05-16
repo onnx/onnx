@@ -1,6 +1,5 @@
 numpy
 protobuf
-typing-extensions
 pytest
 pytest-cov
 parameterized
