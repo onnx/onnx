@@ -747,7 +747,7 @@ class TestSaveAllTensorsAsExternalDataWithPath(TestSaveAllTensorsAsExternalData)
 
 class TestExternalDataToArrayWithPath(TestExternalDataToArray):
     @property
-    def model_file_path(self):
+    def model_file_path(self) -> pathlib.Path:
         return pathlib.Path(self._model_file_path)
 
 
