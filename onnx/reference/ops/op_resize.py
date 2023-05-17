@@ -461,7 +461,7 @@ class Resize(OpRun):
                 res = np.empty((reshaped.shape[0], *output.shape), dtype=output.dtype)
             res[i] = output
 
-        res_reshaped = res.reshape((tuple(X.shape[a] for a in not_axes) + res[0].shape))  # type: ignore
+        res_reshaped = res.reshape(tuple(X.shape[a] for a in not_axes) + res[0].shape)  # type: ignore
         new_perm = list(perm)
         for i, a in enumerate(perm):
             new_perm[a] = i

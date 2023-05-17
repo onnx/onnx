@@ -94,7 +94,7 @@ def _rename_edges_helper(
 def function_expand_helper(
     node: NodeProto, function_proto: FunctionProto, op_prefix: str
 ) -> List[NodeProto]:
-    io_names_map = dict()
+    io_names_map = {}
     attribute_map = {a.name: a for a in node.attribute}
 
     for idx in range(len(function_proto.input)):

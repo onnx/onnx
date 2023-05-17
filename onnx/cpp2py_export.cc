@@ -14,6 +14,7 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
+#include "onnx/inliner/inliner.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
@@ -524,19 +525,21 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   checker.def(
       "check_model",
-      [](const py::bytes& bytes, bool full_check) -> void {
+      [](const py::bytes& bytes, bool full_check, bool skip_opset_compatibility_check) -> void {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
-        checker::check_model(proto, full_check);
+        checker::check_model(proto, full_check, skip_opset_compatibility_check);
       },
       "bytes"_a,
-      "full_check"_a = false);
+      "full_check"_a = false,
+      "skip_opset_compatibility_check"_a = false);
 
   checker.def(
       "check_model_path",
-      (void (*)(const std::string& path, bool full_check)) & checker::check_model,
+      (void (*)(const std::string& path, bool full_check, bool skip_opset_compatibility_check)) & checker::check_model,
       "path"_a,
-      "full_check"_a = false);
+      "full_check"_a = false,
+      "skip_opset_compatibility_check"_a = false);
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
@@ -550,6 +553,19 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     auto result = version_conversion::ConvertVersion(proto, target);
     std::string out;
     result.SerializeToString(&out);
+    return py::bytes(out);
+  });
+
+  // Submodule `inliner`
+  auto inliner = onnx_cpp2py_export.def_submodule("inliner");
+  inliner.doc() = "Inliner submodule";
+
+  inliner.def("inline_local_functions", [](const py::bytes& bytes, bool convert_version) {
+    ModelProto model{};
+    ParseProtoFromPyBytes(&model, bytes);
+    inliner::InlineLocalFunctions(model, convert_version);
+    std::string out;
+    model.SerializeToString(&out);
     return py::bytes(out);
   });
 
