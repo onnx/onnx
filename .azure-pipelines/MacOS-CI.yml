@@ -64,7 +64,7 @@ jobs:
         export ONNX_ML=1
       fi
       export ONNX_BUILD_TESTS=1
-      export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_WERROR=ON"
+      export CMAKE_ARGS="-DONNX_WERROR=ON"
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
