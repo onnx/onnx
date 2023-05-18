@@ -568,45 +568,9 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void replaceAttrRefs(NodeProto& n, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
-    auto& attributes = *n.mutable_attribute();
-    for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
-      auto& attr = *attr_iter;
-      if (!attr.ref_attr_name().empty()) {
-        // Attribute-references must be replaced by the corresponding attribute-value in the call-node
-        // if the call-node contains the attribute. Otherwise, this attribute must be removed.
-        auto entry = attr_map.find(attr.ref_attr_name());
-        if (entry != attr_map.cend()) {
-          // Copy value of attribute, but retain original name:
-          std::string name = attr.name();
-          attr = *(entry->second);
-          attr.set_name(name);
-        } else {
-          attr_iter = attributes.erase(attr_iter);
-          continue;
-        }
-      }
-      // Subgraphs must be recursively processed.
-      if (attr.has_g()) {
-        replaceAttrRefs(*attr.mutable_g(), attr_map);
-      }
-      for (auto& graph : *attr.mutable_graphs()) {
-        replaceAttrRefs(graph, attr_map);
-      }
-      ++attr_iter;
-    }
-  }
-
-  void replaceAttrRefs(GraphProto& graph, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
-    for (auto& n : *graph.mutable_node()) {
-      replaceAttrRefs(n, attr_map);
-    }
-  }
-
   void process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
     NodeProto copy_n(n);
     attribute_binder.Transform(copy_n);
-    // replaceAttrRefs(copy_n, attr_map);
     process(copy_n);
   }
 
