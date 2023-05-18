@@ -11,6 +11,7 @@
 #include "onnx/common/interned_strings.h"
 #include "onnx/common/visitor.h"
 #include "onnx/inliner/inliner.h"
+#include "onnx/shape_inference/attribute_binder.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
@@ -24,7 +25,7 @@ using Visitor = internal::Visitor;
 // Attribute lookup function. Returns nullptr if attribute is not found.
 using AttributeLookupFunction = std::function<const AttributeProto*(const std::string& name)>;
 
-using AttributeMap = std::unordered_map<std::string, const AttributeProto*>;
+using AttributeMap = internal::AttributeMap;
 
 // Function lookup function. Returns true iff lookup is successful, in which case
 // the found FunctionProto is copied into *return_value. The opset version is not
@@ -68,49 +69,6 @@ struct OpsetMap : public OpsetMapBase {
 };
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
-
-// Class for binding formal attribute-parameters (in a node or graph) to their values.
-
-class AttributeBinder : private Visitor {
-public:
-  AttributeBinder(const AttributeMap& attr_map) : attr_map_(attr_map) {}
-
-  inline void Transform (NodeProto& node) { VisitNode(&node); }
-
-  // Binding a formal attribute-parameter to a value may, as a special case, also
-  // remove the attribute from the list of attributes of a node (when the attribute
-  // has no specified value). Hence, we need to do the processing at a Node level
-  // rather than an attribute level.
-  void VisitNode(NodeProto* node) override {
-    auto& attributes = *node->mutable_attribute();
-    for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
-      auto& attr = *attr_iter;
-      if (!attr.ref_attr_name().empty()) {
-        // Attribute-references must be replaced by the corresponding attribute-value in the call-node
-        // if the call-node contains the attribute. Otherwise, this attribute must be removed.
-        auto it = attr_map_.find(attr.ref_attr_name());
-        if (it != attr_map_.end()) {
-          const AttributeProto* replacement = it->second;
-          // Copy value of attribute, but retain original name:
-          std::string name = attr.name();
-          attr = *replacement;
-          attr.set_name(name);
-          ++attr_iter;
-        } else {
-          attr_iter = attributes.erase(attr_iter);
-        }
-      } else {
-        // For regular attributes, we process subgraphs, if present, recursively.
-        VisitAttribute(&attr);
-        ++attr_iter;
-      }
-    }
-  }
-
-private:
-  const AttributeMap& attr_map_;
-
-};
 
 class NameGenerator : private Visitor {
  public:
@@ -295,7 +253,7 @@ class Specializer {
       return (iter != map.end()) ? iter->second : nullptr;
     };
     Specializer specializer(unique_suffix, generator, lookup);
-    AttributeBinder attr_binder(map);
+    internal::AttributeBinder attr_binder(map);
 
     specializer.Bind<false>(*callee.mutable_input(), callnode.input());
     specializer.Bind<true>(*callee.mutable_output(), callnode.output());

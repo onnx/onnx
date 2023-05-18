@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/shape_inference/implementation.h"
+#include "onnx/shape_inference/attribute_binder.h"
 #include <algorithm>
 #include <fstream>
 #include <list>
@@ -602,9 +603,10 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void process(const NodeProto& n, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
+  void process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
     NodeProto copy_n(n);
-    replaceAttrRefs(copy_n, attr_map);
+    attribute_binder.Transform(copy_n);
+    // replaceAttrRefs(copy_n, attr_map);
     process(copy_n);
   }
 
@@ -655,8 +657,9 @@ class ShapeInferenceImplBase {
       attr_map[name] = (value != nullptr) ? value : &default_value;
     }
 
+    internal::AttributeBinder attribute_binder(attr_map);
     for (auto& n : func_proto.node()) {
-      process(n, attr_map);
+      process(n, attribute_binder);
     }
 
     for (int i = 0; i < func_proto.output_size(); ++i) {
