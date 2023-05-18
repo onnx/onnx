@@ -60,6 +60,9 @@ std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
   return ONNX_NAMESPACE::to_string(type.elem_type());
 }
 
+inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
+  return (IsOnnxDomain(node.domain()) && (node.op_type() == op_type));
+}
 } // namespace
 
 template <class T>
@@ -300,7 +303,7 @@ class ShapeInferenceImplBase {
   void preprocess(const NodeProto& n) {
     if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
-    } else if (n.op_type() == "Constant" && n.output().size() == 1) {
+    } else if (IsOnnxDomainOp (n, "Constant") && n.output().size() == 1) {
       const std::string& output_name = n.output(0);
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {
@@ -400,9 +403,9 @@ class ShapeInferenceImplBase {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
-      // Both "" and "ai.onnx" refer to the default ONNX domain
-      if (n.domain() == "") {
-        dit = opset_imports.find("ai.onnx");
+      // Both "" (ONNX_DOMAIN) and "ai.onnx" (AI_ONNX_DOMAIN) refer to the default ONNX domain
+      if (n.domain() == ONNX_DOMAIN) {
+        dit = opset_imports.find(AI_ONNX_DOMAIN);
       }
       if (dit == opset_imports.end()) {
         fail_type_inference(

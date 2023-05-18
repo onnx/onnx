@@ -68,6 +68,10 @@ using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
 // A visitor class for visiting all nodes and subgraphs in a graph.
 struct NodeVisitorBase {
+
+  // The VisitX methods invoke ProcessX, and if that returns true, will
+  // continue to visit all children of the X.
+
   void VisitGraph(const GraphProto& graph) {
     if (ProcessGraph(graph))
       for (auto& node : graph.node())
@@ -77,12 +81,18 @@ struct NodeVisitorBase {
   void VisitNode(const NodeProto& node) {
     if (ProcessNode(node)) {
       for (auto& attr : node.attribute()) {
-        if (attr.has_g()) {
-          VisitGraph(attr.g());
-        }
-        for (auto& graph : attr.graphs())
-          VisitGraph(graph);
+        VisitAttribute(attr);
       }
+    }
+  }
+
+  void VisitAttribute(const AttributeProto& attr) {
+    if (ProcessAttribute(attr)) {
+      if (attr.has_g()) {
+        VisitGraph(attr.g());
+      }
+      for (auto& graph : attr.graphs())
+        VisitGraph(graph);
     }
   }
 
@@ -96,17 +106,96 @@ struct NodeVisitorBase {
     return true;
   }
 
+  virtual bool ProcessAttribute(const AttributeProto& attr) {
+    ONNX_UNUSED_PARAMETER(attr);
+    return true;
+  }
+
+  // Mutable version of visitor methods:
+
+  void VisitGraph(GraphProto* graph) {
+    if (ProcessGraph(graph))
+      for (auto& node : *(graph->mutable_node()))
+        VisitNode(&node);
+  }
+
+  void VisitNode(NodeProto* node) {
+    if (ProcessNode(node)) {
+      for (auto& attr : *(node->mutable_attribute())) {
+        VisitAttribute(&attr);
+      }
+    }
+  }
+
+  void VisitAttribute(AttributeProto* attr) {
+    if (ProcessAttribute(attr)) {
+      if (attr->has_g()) {
+        VisitGraph(attr->mutable_g());
+      }
+      for (auto& graph : *(attr->mutable_graphs()))
+        VisitGraph(&graph);
+    }
+  }
+
+  virtual bool ProcessGraph(GraphProto* graph) {
+    ONNX_UNUSED_PARAMETER(graph);
+    return true;
+  }
+
+  virtual bool ProcessNode(NodeProto* node) {
+    ONNX_UNUSED_PARAMETER(node);
+    return true;
+  }
+
+  virtual bool ProcessAttribute(AttributeProto* attr) {
+    ONNX_UNUSED_PARAMETER(attr);
+    return true;
+  }
+
   virtual ~NodeVisitorBase() {}
 };
 
-struct NodeVisitor : public NodeVisitorBase {
-  std::function<bool(const NodeProto&)> process_node;
+// Class for binding formal attribute-parameters (in a node or graph) to their values.
 
-  NodeVisitor(std::function<bool(const NodeProto&)> process_node_fun) : process_node(process_node_fun) {}
+class AttributeBinder : private NodeVisitorBase {
+public:
+  AttributeBinder(const AttributeMap& attr_map) : attr_map_(attr_map) {}
 
-  bool ProcessNode(const NodeProto& node) override {
-    return process_node(node);
+  inline void Transform (NodeProto& node) { VisitNode(&node); }
+
+  // Binding a formal attribute-parameter to a value may, as a special case, also
+  // remove the attribute from the list of attributes of a node (when the attribute
+  // has no specified value). Hence, we need to do the processing at a Node level
+  // rather than an attribute level.
+  void VisitNode(NodeProto* node) {
+    auto& attributes = *node->mutable_attribute();
+    for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
+      auto& attr = *attr_iter;
+      if (!attr.ref_attr_name().empty()) {
+        // Attribute-references must be replaced by the corresponding attribute-value in the call-node
+        // if the call-node contains the attribute. Otherwise, this attribute must be removed.
+        auto it = attr_map_.find(attr.ref_attr_name());
+        if (it != attr_map_.end()) {
+          const AttributeProto* replacement = it->second;
+          // Copy value of attribute, but retain original name:
+          std::string name = attr.name();
+          attr = *replacement;
+          attr.set_name(name);
+          ++attr_iter;
+        } else {
+          attr_iter = attributes.erase(attr_iter);
+        }
+      } else {
+        // For regular attributes, we process subgraphs, if present, recursively.
+        VisitAttribute(&attr);
+        ++attr_iter;
+      }
+    }
   }
+
+private:
+  const AttributeMap& attr_map_;
+
 };
 
 class NameGenerator : public NodeVisitorBase {
@@ -254,20 +343,7 @@ class Specializer {
     auto& attributes = *n.mutable_attribute();
     for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
       auto& attr = *attr_iter;
-      if (!attr.ref_attr_name().empty()) {
-        // Attribute-references must be replaced by the corresponding attribute-value in the call-node
-        // if the call-node contains the attribute. Otherwise, this attribute must be removed.
-        auto* attr_val = attr_map(attr.ref_attr_name());
-        if (attr_val != nullptr) {
-          // Copy value of attribute, but retain original name:
-          std::string name = attr.name();
-          attr = *attr_val;
-          attr.set_name(name);
-        } else {
-          attr_iter = attributes.erase(attr_iter);
-          continue;
-        }
-      }
+      if (!attr.ref_attr_name().empty()) continue;
       // Subgraphs must be recursively processed.
       if (attr.has_g()) {
         Transform(*attr.mutable_g());
@@ -305,12 +381,15 @@ class Specializer {
       return (iter != map.end()) ? iter->second : nullptr;
     };
     Specializer specializer(unique_suffix, generator, lookup);
+    AttributeBinder attr_binder(map);
 
     specializer.Bind<false>(*callee.mutable_input(), callnode.input());
     specializer.Bind<true>(*callee.mutable_output(), callnode.output());
 
-    for (auto& n : *callee.mutable_node())
+    for (auto& n : *callee.mutable_node()) {
       specializer.Transform(n);
+      attr_binder.Transform(n);
+    }
   }
 };
 
