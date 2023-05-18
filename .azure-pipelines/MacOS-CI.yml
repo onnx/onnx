@@ -13,23 +13,23 @@ jobs:
         build_type: 'Release'
         protobuf_type: 'External'
         onnx_lite: 0
-      py310:
+      py310-InternalProtobuf:
         python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
-        protobuf_type: 'External'
+        protobuf_type: 'Internal'
         onnx_lite: 1
       py39-ml:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Release'
-        protobuf_type: 'Internal'
+        protobuf_type: 'External'
         onnx_lite: 1
-      py39-ml-debug:
+      py39-ml-debug-InternalProtobuf:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Debug'
-        protobuf_type: 'InternalV22'
+        protobuf_type: 'Internal'
         onnx_lite: 0
       py38-ml-debug:
         python.version: '3.8'
@@ -53,9 +53,7 @@ jobs:
       if [ '$(protobuf_type)' == 'External' ]; then
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
       elif [ '$(protobuf_type)' == 'Internal' ]; then
-        CMAKE_ARGS="-DONNX_USE_PROTOBUF_V22=OFF"
-      elif [ '$(protobuf_type)' == 'InternalV22' ]; then
-        CMAKE_ARGS="-DONNX_USE_PROTOBUF_V22=ON"
+        echo "Use the internal protobuf build"
       fi
 
       git submodule update --init --recursive

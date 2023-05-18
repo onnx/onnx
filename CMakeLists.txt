@@ -1,8 +1,6 @@
-# Minimum CMake required.
-# FetchContent module requires 3.11.
-cmake_minimum_required(VERSION 3.11)
+# Minimum CMake required
+cmake_minimum_required(VERSION 3.1)
 include(cmake/Utils.cmake)
-include(FetchContent)
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "Build type not set - defaulting to Release")
@@ -28,7 +26,6 @@ option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
-option(ONNX_USE_PROTOBUF_V22 "Use protobuf v22" OFF)
 
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
@@ -174,9 +171,6 @@ else()
               NO_DEFAULT_PATH)
     find_package(Protobuf)
     if (Protobuf_FOUND)
-      if (ONNX_USE_PROTOBUF_V22 AND "${Protobuf_VERSION}" VERSION_LESS "4.22.0")
-        message(WARNING "ONNX_USE_PROTOBUF_V22 is set but found protobuf version: ${Protobuf_VERSION}")
-      endif()
       set(Build_Protobuf OFF)
     else()
       set(Build_Protobuf ON)
@@ -185,54 +179,51 @@ else()
     set(Build_Protobuf ON)
   endif()
   if (Build_Protobuf)
+    # FetchContent module requires 3.11.
+    cmake_minimum_required(VERSION 3.11)
+    include(FetchContent)
     message("Loading Dependencies URLs ...")
-    if (ONNX_USE_PROTOBUF_V22)
-      # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.0
-      set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz)
-      set(AbseilSHA1 3b3a858ff8ddeb7120c0b76e56d38a480af8ca77)
-      FetchContent_Declare(
-        Abseil_cpp
-        URL ${AbseilURL}
-        URL_HASH SHA1=${AbseilSHA1}
-      )
-      set(ABSL_PROPAGATE_CXX_STD 1)
-      set(abseil_BUILD_TESTING 0)
-      message(STATUS "Download and build Abseil from ${AbseilURL}")
-      FetchContent_Populate(Abseil_cpp)
-      FetchContent_GetProperties(Abseil_cpp)
-      # ABSL_ROOT_DIR is required by Protobuf.
-      set(ABSL_ROOT_DIR ${abseil_cpp_SOURCE_DIR})
-      message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-      set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
-      set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
-      FetchContent_Declare(
-        Protobuf
-        URL ${ProtobufURL}
-        URL_HASH SHA1=${ProtobufSHA1}
-      )
-      set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
-      message(STATUS "Download and build Protobuf from ${ProtobufURL}")
-      FetchContent_MakeAvailable(Protobuf Abseil_cpp)
-    else()
-      set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz)
-      set(ProtobufSHA1 8919db17a1ea42c8afdfdf6f0c1ad21ac284e064)
-      FetchContent_Declare(
-        Protobuf
-        URL ${ProtobufURL}
-        URL_HASH SHA1=${ProtobufSHA1}
-      )
-      set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
-      message(STATUS "Download and build Protobuf from ${ProtobufURL}")
-      FetchContent_MakeAvailable(Protobuf)
-    endif()
+    # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.3
+    set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.tar.gz)
+    set(AbseilSHA1 e21faa0de5afbbf8ee96398ef0ef812daf416ad8)
+    FetchContent_Declare(
+      Abseil
+      URL ${AbseilURL}
+      URL_HASH SHA1=${AbseilSHA1}
+    )
+    set(ABSL_PROPAGATE_CXX_STD 1)
+    set(abseil_BUILD_TESTING 0)
+    set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+    # Use this setting to build thirdparty libs.
+    set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
+    message(STATUS "Download and build Abseil from ${AbseilURL}")
+    FetchContent_Populate(Abseil)
+    FetchContent_GetProperties(Abseil)
+    # ABSL_ROOT_DIR is required by Protobuf.
+    set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
+    message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
+    set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
+    FetchContent_Declare(
+      Protobuf
+      URL ${ProtobufURL}
+      URL_HASH SHA1=${ProtobufSHA1}
+    )
+    set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+    message(STATUS "Download and build Protobuf from ${ProtobufURL}")
+    FetchContent_MakeAvailable(Protobuf Abseil)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
-    message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
+    set(Protobuf_VERSION "4.22.3")
+    # Change back the BUILD_SHARED_LIBS to control the onnx project.
+    set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
   endif()
-  if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
+  message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
+  message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
+  message(STATUS "protobuf_ABSL_USED_TARGETS: ${protobuf_ABSL_USED_TARGETS}")
+  if (Build_Protobuf AND "${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
     # There are extra dependencies for protobuf.
-    find_package(absl REQUIRED)
-    find_package(utf8_range REQUIRED)
+    find_package(absl)
+    find_package(utf8_range)
     message(STATUS "absl_VERSION: ${absl_VERSION}")
     set(protobuf_ABSL_USED_TARGETS
       absl::absl_check
@@ -272,12 +263,10 @@ else()
       utf8_range::utf8_range
       utf8_range::utf8_validity
     )
-  else()
-    set(protobuf_ABSL_USED_TARGETS "")
   endif()
 endif()
 
-# Protobuf build would fail if ONNX_WERROR is on.
+# abseil build would fail if ONNX_WERROR is on.
 if(ONNX_WERROR)
   if(MSVC)
     string(APPEND CMAKE_CXX_FLAGS " /WX")

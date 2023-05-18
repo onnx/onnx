@@ -13,7 +13,7 @@ jobs:
         build_type: 'Debug'
         documentation: 0
         protobuf_type: 'External'
-      py310:
+      py310-InternalProtobuf:
         python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
@@ -24,19 +24,19 @@ jobs:
         onnx_ml: 1
         build_type: 'Release'
         documentation: 1
-        protobuf_type: 'InternalV22'
-      py38:
+        protobuf_type: 'External'
+      py38-InternalProtobuf:
         python.version: '3.8'
         onnx_ml: 0
         build_type: 'Release'
         documentation: 0
-        protobuf_type: 'External'
+        protobuf_type: 'Internal'
       py38-ml:
         python.version: '3.8'
         onnx_ml: 1
         build_type: 'Release'
         documentation: 0
-        protobuf_type: 'Internal'
+        protobuf_type: 'External'
     maxParallel: 6
 
   steps:
@@ -53,9 +53,7 @@ jobs:
       if [ '$(protobuf_type)' == 'External' ]; then
         sudo apt-get install libprotobuf-dev protobuf-compiler
       elif [ '$(protobuf_type)' == 'Internal' ]; then
-        CMAKE_ARGS="-DONNX_USE_PROTOBUF_V22=OFF"
-      elif [ '$(protobuf_type)' == 'InternalV22' ]; then
-        CMAKE_ARGS="-DONNX_USE_PROTOBUF_V22=ON"
+        echo "Use the internal protobuf build"
       fi
 
       python -m pip install --upgrade pip
