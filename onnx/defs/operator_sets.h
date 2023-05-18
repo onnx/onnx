@@ -1140,28 +1140,35 @@ inline void RegisterOnnxOperatorSetSchema() {
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
   // Update here if opset_version bumps
   // These calls for schema registration here are required to be in descending order for this to work correctly
-  RegisterOpSetSchema<OpSet_Onnx_ver20>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver19>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver18>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver17>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver16>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver15>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver14>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver13>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver12>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver11>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver10>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver9>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver8>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver7>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver6>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver5>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver4>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver3>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver2>(target_version);
-  RegisterOpSetSchema<OpSet_Onnx_ver1>(target_version);
+  // Version-sepcific registration sees duplicate schema version request as valid
+  RegisterOpSetSchema<OpSet_Onnx_ver20>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver19>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver18>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver17>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver16>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver15>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver14>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver13>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver12>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver11>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver10>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver9>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver8>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver7>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver6>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver5>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver4>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver3>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver2>(target_version, false);
+  RegisterOpSetSchema<OpSet_Onnx_ver1>(target_version, false);
   // Sets to record the loaded version and prevent the full operator check in Debug mode
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(target_version);
+}
+
+inline void DeregisterOnnxOperatorSetSchema() {
+    OpSchemaRegistry::Instance()->OpSchemaDeregisterAll(ONNX_DOMAIN);
+    // -1 means no ONNX schema is loaded
+    OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
 }
 
 } // namespace ONNX_NAMESPACE
