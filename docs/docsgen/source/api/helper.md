@@ -35,7 +35,6 @@
     make_tensor_sequence_value_info
     make_tensor_type_proto
     make_training_info
-    make_tensor_type_proto
     make_tensor_value_info
     make_value_info
     np_dtype_to_tensor_dtype
@@ -183,10 +182,6 @@ All functions uses to create an ONNX graph.
 
 ```{eval-rst}
 .. autofunction:: onnx.helper.make_training_info
-```
-
-```{eval-rst}
-.. autofunction:: onnx.helper.make_tensor_type_proto
 ```
 
 ```{eval-rst}

@@ -86,10 +86,15 @@ class TestShapeInferenceHelper(unittest.TestCase):
             value_info=value_info,
         )
 
-    def _inferred(self, graph: GraphProto, **kwargs: Any) -> ModelProto:
-        kwargs["producer_name"] = "onnx-test"
+    def _inferred(
+        self, graph_or_model: GraphProto | ModelProto, **kwargs: Any
+    ) -> ModelProto:
         data_prop = kwargs.pop("data_prop", False)
-        orig_model = helper.make_model(graph, **kwargs)
+        if isinstance(graph_or_model, GraphProto):
+            kwargs["producer_name"] = "onnx-test"
+            orig_model = helper.make_model(graph_or_model, **kwargs)
+        else:
+            orig_model = graph_or_model
         inferred_model = onnx.shape_inference.infer_shapes(
             orig_model, strict_mode=True, data_prop=data_prop
         )
@@ -97,11 +102,19 @@ class TestShapeInferenceHelper(unittest.TestCase):
         return inferred_model
 
     def _assert_inferred(
-        self, graph: GraphProto, vis: list[ValueInfoProto], **kwargs: Any
+        self,
+        graph_or_model: GraphProto | ModelProto,
+        vis: list[ValueInfoProto],
+        **kwargs: Any,
     ) -> None:
+        graph = (
+            graph_or_model
+            if isinstance(graph_or_model, GraphProto)
+            else graph_or_model.graph
+        )
         names_in_vis = {x.name for x in vis}
         vis = [x for x in graph.value_info if x.name not in names_in_vis] + vis
-        inferred_model = self._inferred(graph, **kwargs)
+        inferred_model = self._inferred(graph_or_model, **kwargs)
         inferred_vis = list(inferred_model.graph.value_info)
         vis = sorted(vis, key=lambda x: x.name)
         inferred_vis = sorted(inferred_vis, key=lambda x: x.name)  # type: ignore
