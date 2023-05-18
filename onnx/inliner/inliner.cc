@@ -9,6 +9,7 @@
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"
 #include "onnx/common/interned_strings.h"
+#include "onnx/common/visitor.h"
 #include "onnx/inliner/inliner.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
@@ -17,6 +18,8 @@ namespace ONNX_NAMESPACE {
 namespace inliner {
 
 namespace { // internal/private API
+
+using Visitor = internal::Visitor;
 
 // Attribute lookup function. Returns nullptr if attribute is not found.
 using AttributeLookupFunction = std::function<const AttributeProto*(const std::string& name)>;
@@ -66,98 +69,9 @@ struct OpsetMap : public OpsetMapBase {
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
-// A visitor class for visiting all nodes and subgraphs in a graph.
-struct NodeVisitorBase {
-
-  // The VisitX methods invoke ProcessX, and if that returns true, will
-  // continue to visit all children of the X.
-
-  void VisitGraph(const GraphProto& graph) {
-    if (ProcessGraph(graph))
-      for (auto& node : graph.node())
-        VisitNode(node);
-  }
-
-  void VisitNode(const NodeProto& node) {
-    if (ProcessNode(node)) {
-      for (auto& attr : node.attribute()) {
-        VisitAttribute(attr);
-      }
-    }
-  }
-
-  void VisitAttribute(const AttributeProto& attr) {
-    if (ProcessAttribute(attr)) {
-      if (attr.has_g()) {
-        VisitGraph(attr.g());
-      }
-      for (auto& graph : attr.graphs())
-        VisitGraph(graph);
-    }
-  }
-
-  virtual bool ProcessGraph(const GraphProto& graph) {
-    ONNX_UNUSED_PARAMETER(graph);
-    return true;
-  }
-
-  virtual bool ProcessNode(const NodeProto& node) {
-    ONNX_UNUSED_PARAMETER(node);
-    return true;
-  }
-
-  virtual bool ProcessAttribute(const AttributeProto& attr) {
-    ONNX_UNUSED_PARAMETER(attr);
-    return true;
-  }
-
-  // Mutable version of visitor methods:
-
-  void VisitGraph(GraphProto* graph) {
-    if (ProcessGraph(graph))
-      for (auto& node : *(graph->mutable_node()))
-        VisitNode(&node);
-  }
-
-  void VisitNode(NodeProto* node) {
-    if (ProcessNode(node)) {
-      for (auto& attr : *(node->mutable_attribute())) {
-        VisitAttribute(&attr);
-      }
-    }
-  }
-
-  void VisitAttribute(AttributeProto* attr) {
-    if (ProcessAttribute(attr)) {
-      if (attr->has_g()) {
-        VisitGraph(attr->mutable_g());
-      }
-      for (auto& graph : *(attr->mutable_graphs()))
-        VisitGraph(&graph);
-    }
-  }
-
-  virtual bool ProcessGraph(GraphProto* graph) {
-    ONNX_UNUSED_PARAMETER(graph);
-    return true;
-  }
-
-  virtual bool ProcessNode(NodeProto* node) {
-    ONNX_UNUSED_PARAMETER(node);
-    return true;
-  }
-
-  virtual bool ProcessAttribute(AttributeProto* attr) {
-    ONNX_UNUSED_PARAMETER(attr);
-    return true;
-  }
-
-  virtual ~NodeVisitorBase() {}
-};
-
 // Class for binding formal attribute-parameters (in a node or graph) to their values.
 
-class AttributeBinder : private NodeVisitorBase {
+class AttributeBinder : private Visitor {
 public:
   AttributeBinder(const AttributeMap& attr_map) : attr_map_(attr_map) {}
 
@@ -167,7 +81,7 @@ public:
   // remove the attribute from the list of attributes of a node (when the attribute
   // has no specified value). Hence, we need to do the processing at a Node level
   // rather than an attribute level.
-  void VisitNode(NodeProto* node) {
+  void VisitNode(NodeProto* node) override {
     auto& attributes = *node->mutable_attribute();
     for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
       auto& attr = *attr_iter;
@@ -198,7 +112,7 @@ private:
 
 };
 
-class NameGenerator : public NodeVisitorBase {
+class NameGenerator : private Visitor {
  public:
   NameGenerator(const GraphProto& graph) : index_(0) {
     VisitGraph(graph);
@@ -397,7 +311,7 @@ class Specializer {
 // This includes the variables listed as node.input, as well as
 // implicit inputs referred to in any graph-valued-attribute of the node.
 
-struct ComputeUsedVars : public NodeVisitorBase {
+struct ComputeUsedVars : private Visitor {
   std::vector<std::string> result;
 
   bool ProcessNode(const NodeProto& node) override {
