@@ -20,13 +20,7 @@ namespace inliner {
 
 namespace { // internal/private API
 
-using Visitor = internal::Visitor;
-using MutableVisitor = internal::MutableVisitor;
-
-// Attribute lookup function. Returns nullptr if attribute is not found.
-using AttributeLookupFunction = std::function<const AttributeProto*(const std::string& name)>;
-
-using AttributeMap = internal::AttributeMap;
+using namespace internal;
 
 // Function lookup function. Returns true iff lookup is successful, in which case
 // the found FunctionProto is copied into *return_value. The opset version is not
@@ -249,9 +243,8 @@ class InliningRenamer : private MutableVisitor {
 // This includes the variables listed as node.input, as well as
 // implicit inputs referred to in any graph-valued-attribute of the node.
 
-struct ComputeUsedVars : private Visitor {
-  std::vector<std::string> result;
-
+class ComputeUsedVars : private Visitor {
+ private:
   bool ProcessNode(const NodeProto& node) override {
     for (auto& var : node.input()) {
       if (!var.empty()) {
@@ -260,6 +253,9 @@ struct ComputeUsedVars : private Visitor {
     }
     return true; // process sub-graphs
   }
+
+ public:
+  std::vector<std::string> result;
 
   ComputeUsedVars(const NodeProto& node) {
     result.reserve(node.input_size());
