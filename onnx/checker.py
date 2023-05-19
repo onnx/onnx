@@ -115,7 +115,9 @@ def check_sparse_tensor(
 
 
 def check_model(
-    model: ModelProto | str | bytes | os.PathLike, full_check: bool = False
+    model: ModelProto | str | bytes | os.PathLike,
+    full_check: bool = False,
+    skip_opset_compatibility_check: bool = False,
 ) -> None:
     """Check the consistency of a model. An exception is raised if the test fails.
 
@@ -125,7 +127,7 @@ def check_model(
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):
-        C.check_model_path(os.fspath(model), full_check)
+        C.check_model_path(os.fspath(model), full_check, skip_opset_compatibility_check)
     else:
         protobuf_string = (
             model if isinstance(model, bytes) else model.SerializeToString()
@@ -136,7 +138,7 @@ def check_model(
             raise ValueError(
                 "This protobuf of onnx model is too large (>2GB). Call check_model with model path instead."
             )
-        C.check_model(protobuf_string, full_check)
+        C.check_model(protobuf_string, full_check, skip_opset_compatibility_check)
 
 
 ValidationError = C.ValidationError
