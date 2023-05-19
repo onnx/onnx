@@ -307,7 +307,7 @@ def save_tensor(
     Args:
         proto: should be a in-memory TensorProto
         f: can be a file-like object (has "write" function) or a string
-        containing a file name format  or a pathlike object: for future use
+        containing a file name or a pathlike object.
         format: The serialization format. Default is "protobuf". The encoding is
             assumed to be "utf-8" when the format is a text format.
     """
