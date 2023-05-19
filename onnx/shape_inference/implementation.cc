@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/shape_inference/implementation.h"
-#include "onnx/shape_inference/attribute_binder.h"
 #include <algorithm>
 #include <fstream>
 #include <list>
@@ -12,6 +11,7 @@
 #include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
+#include "onnx/shape_inference/attribute_binder.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -304,7 +304,7 @@ class ShapeInferenceImplBase {
   void preprocess(const NodeProto& n) {
     if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
-    } else if (IsOnnxDomainOp (n, "Constant") && n.output().size() == 1) {
+    } else if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
       const std::string& output_name = n.output(0);
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {

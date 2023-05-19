@@ -215,7 +215,8 @@ class Specializer {
     auto& attributes = *n.mutable_attribute();
     for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
       auto& attr = *attr_iter;
-      if (!attr.ref_attr_name().empty()) continue;
+      if (!attr.ref_attr_name().empty())
+        continue;
       // Subgraphs must be recursively processed.
       if (attr.has_g()) {
         Transform(*attr.mutable_g());
