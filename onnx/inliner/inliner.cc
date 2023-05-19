@@ -21,6 +21,7 @@ namespace inliner {
 namespace { // internal/private API
 
 using Visitor = internal::Visitor;
+using MutableVisitor = internal::MutableVisitor;
 
 // Attribute lookup function. Returns nullptr if attribute is not found.
 using AttributeLookupFunction = std::function<const AttributeProto*(const std::string& name)>;
@@ -121,7 +122,7 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-struct InliningRenamer {
+struct InliningRenamer : public MutableVisitor {
   std::string suffix;
   NameGenerator& generator;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
@@ -199,43 +200,40 @@ struct InliningRenamer {
   }
 
   // Process a node:
-  void Transform(NodeProto& n) {
-    if (!n.name().empty())
-      n.set_name(MakeUnique(n.name()));
+  bool ProcessNode(NodeProto* node) override {
+    if (!node->name().empty())
+      node->set_name(MakeUnique(node->name()));
 
-    for (auto& x : *n.mutable_input()) {
+    for (auto& x : *node->mutable_input()) {
       LookupOrRename(x, false);
     }
-    for (auto& y : *n.mutable_output()) {
+    for (auto& y : *node->mutable_output()) {
       LookupOrRename(y, true);
     }
-    auto& attributes = *n.mutable_attribute();
-    for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
-      auto& attr = *attr_iter;
-      if (!attr.ref_attr_name().empty())
-        continue;
-      // Subgraphs must be recursively processed.
-      if (attr.has_g()) {
-        Transform(*attr.mutable_g());
-      }
-      for (auto& graph : *attr.mutable_graphs())
-        Transform(graph);
-      ++attr_iter;
-    }
+    return true; // Process attribute subgraphs in traversal
   }
 
   // Process a sub-graph, contained as an attribute in a control-flow op node.
-  void Transform(GraphProto& graph) {
+  // Since we need both pre-processing and post-processing in the traversal, we
+  // override the VisitGraph method.
+  void VisitGraph(GraphProto* graph) override {
     rename_scopes.emplace_back();
-    for (auto& x : *graph.mutable_input())
+    for (auto& x : *graph->mutable_input())
       Rename(*x.mutable_name());
-    for (auto& init : *graph.mutable_initializer())
+    for (auto& init : *graph->mutable_initializer())
       Rename(*init.mutable_name());
-    for (auto& y : *graph.mutable_output())
+    for (auto& y : *graph->mutable_output())
       Rename(*y.mutable_name());
-    for (auto& n : *graph.mutable_node())
-      Transform(n);
+    for (auto& n : *graph->mutable_node())
+      VisitNode(&n);
     rename_scopes.pop_back();
+  }
+
+  void Rename(const NodeProto& callnode, FunctionProto& callee) {
+    Bind<false>(*callee.mutable_input(), callnode.input());
+    Bind<true>(*callee.mutable_output(), callnode.output());
+
+    VisitFunction(&callee);
   }
 };
 
@@ -248,18 +246,11 @@ void Specialize(const NodeProto& callnode, FunctionProto& callee, std::string un
   for (auto& attr : callnode.attribute()) {
     map[attr.name()] = &attr;
   }
-
   internal::AttributeBinder attr_binder(map);
+  attr_binder.VisitFunction(&callee);
 
   InliningRenamer renamer(unique_suffix, generator);
-  renamer.Bind<false>(*callee.mutable_input(), callnode.input());
-  renamer.Bind<true>(*callee.mutable_output(), callnode.output());
-
-  for (auto& n : *callee.mutable_node()) {
-    renamer.Transform(n);
-  }
-
-  attr_binder.VisitFunction(&callee);
+  renamer.Rename(callnode, callee);
 }
 
 // Identify the set of all "input" variables used by a given node.
