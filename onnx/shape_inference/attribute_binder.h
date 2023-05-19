@@ -48,6 +48,17 @@ class AttributeBinder : public MutableVisitor {
     }
   }
 
+  // Updates a FunctionProto by replacing all attribute-references with the corresponding
+  // attribute-values in the call-node, if present. Otherwise, the attribute is removed.
+  static void BindAttributes(const NodeProto& callnode, FunctionProto& callee) {
+    AttributeMap map;
+    for (auto& attr : callnode.attribute()) {
+      map[attr.name()] = &attr;
+    }
+    AttributeBinder attr_binder(map);
+    attr_binder.VisitFunction(&callee);
+  }
+
  private:
   const AttributeMap& attr_map_;
 };

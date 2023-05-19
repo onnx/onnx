@@ -122,7 +122,8 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-struct InliningRenamer : public MutableVisitor {
+class InliningRenamer : private MutableVisitor {
+ private:
   std::string suffix;
   NameGenerator& generator;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
@@ -229,29 +230,20 @@ struct InliningRenamer : public MutableVisitor {
     rename_scopes.pop_back();
   }
 
-  void Rename(const NodeProto& callnode, FunctionProto& callee) {
-    Bind<false>(*callee.mutable_input(), callnode.input());
-    Bind<true>(*callee.mutable_output(), callnode.output());
+ public:
+  // Renames variables in a FunctionProto for inlining a particular call-site. This does the following:
+  // (i)  Rename all intermediate variables in the function to ensure that they are unique (wrt the main graph).
+  // (ii) Rename inputs and outputs using names of actual parameters.
+  static void
+  Rename(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
+    InliningRenamer renamer(unique_suffix, generator);
 
-    VisitFunction(&callee);
+    renamer.Bind<false>(*callee.mutable_input(), callnode.input());
+    renamer.Bind<true>(*callee.mutable_output(), callnode.output());
+
+    renamer.VisitFunction(&callee);
   }
 };
-
-// Specialize a FunctionProto for a particular call-site for inlining. This does the following:
-// (i)  Rename all intermediate variables in the function to ensure that they are unique (wrt the main graph).
-// (ii) Rename inputs and outputs using names of actual parameters.
-// (iii) Replace attribute-parameters with their actual values.
-void Specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
-  AttributeMap map;
-  for (auto& attr : callnode.attribute()) {
-    map[attr.name()] = &attr;
-  }
-  internal::AttributeBinder attr_binder(map);
-  attr_binder.VisitFunction(&callee);
-
-  InliningRenamer renamer(unique_suffix, generator);
-  renamer.Rename(callnode, callee);
-}
 
 // Identify the set of all "input" variables used by a given node.
 // This includes the variables listed as node.input, as well as
@@ -382,8 +374,11 @@ void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
     if (iter != map.end()) {
       callee = *iter->second.first;
       int64_t target_version = iter->second.second;
-      // Rename and specialize called function body
-      Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
+      // Bind attribute parameters
+      internal::AttributeBinder::BindAttributes(node, callee);
+
+      // Rename variable names in callee
+      InliningRenamer::Rename(node, callee, "__" + std::to_string(++inline_count), name_generator);
       if (target_version != kNoConversion) {
         ONNX_ASSERTM(
             convert_version,
