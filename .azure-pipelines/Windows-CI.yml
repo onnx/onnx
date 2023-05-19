@@ -12,22 +12,27 @@ jobs:
         python.version: '3.11'
         onnx_ml: 0
         onnx_verify_proto: 0
-      py310_verify_proto:
+        protobuf_type: 'External'
+      py310_verify_proto_internal_protobuf:
         python.version: '3.10'
         onnx_ml: 0
         onnx_verify_proto: 1
+        protobuf_type: 'Internal'
       py39:
         python.version: '3.9'
         onnx_ml: 0
         onnx_verify_proto: 0
-      py38:
+        protobuf_type: 'External'
+      py38_internal_protobuf:
         python.version: '3.8'
         onnx_ml: 0
         onnx_verify_proto: 0
+        protobuf_type: 'Internal'
       py38_onnx_ml:
         python.version: '3.8'
         onnx_ml: 1
         onnx_verify_proto: 0
+        protobuf_type: 'External'
     maxParallel: 4
 
   steps:
@@ -41,7 +46,11 @@ jobs:
 
   - script: |
       conda create --yes --quiet --name py$(python.version) python=$(python.version)
-      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf==3.21.5
+      if ('$(protobuf_type)' -eq 'External') {
+        conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf==3.21.5
+      } else {
+        conda install -n py$(python.version) -y -c conda-forge numpy
+      }
     displayName: Create Anaconda environment
 
   - script: |
