@@ -66,14 +66,24 @@ jobs:
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-        # TODO: stop uploading to TestPyPI after future ONNX 1.14
-        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
         TEST_HUB=1 pytest
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        python -m pip install dist/*manylinux2014_x86_64.whl
+        pytest
+
+    - name: Verify ONNX with the minimum supported numpy
+      if: ${{ always() }}
+      run: |
+        if [[ "${{ matrix.python-version }}" == "3.8" || "${{ matrix.python-version }}" == "3.9" ]]; then
+          export minimum_numpy_version=1.16.6
+        else
+          export minimum_numpy_version=1.23.2
+        fi
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$minimum_numpy_version
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
