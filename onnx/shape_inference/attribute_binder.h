@@ -14,13 +14,9 @@ using AttributeMap = std::unordered_map<std::string, const AttributeProto*>;
 
 // Class for binding formal attribute-parameters (in a node or graph) to their values.
 
-class AttributeBinder : private Visitor {
+class AttributeBinder : public MutableVisitor {
  public:
   AttributeBinder(const AttributeMap& attr_map) : attr_map_(attr_map) {}
-
-  inline void Transform(NodeProto& node) {
-    VisitNode(&node);
-  }
 
   // Binding a formal attribute-parameter to a value may, as a special case, also
   // remove the attribute from the list of attributes of a node (when the attribute

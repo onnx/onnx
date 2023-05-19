@@ -8,22 +8,24 @@
 #include "onnx/common/common.h"
 #include "onnx/onnx_pb.h"
 
-// A visitor base class for visiting all nodes and subgraphs in a graph.
-// Currently restricted to Nodes, Graphs, and Attributes, which are
-// mutually recursive.
-
 namespace ONNX_NAMESPACE {
 namespace internal {
 
+// Visitor: A readonly visitor class for ONNX Proto objects.
+// This class is restricted to Nodes, Graphs, Attributes, and Functions.
+// The VisitX methods invoke ProcessX, and if that returns true, will
+// continue to visit all children of the X.
+
 struct Visitor {
-  // The VisitX methods invoke ProcessX, and if that returns true, will
-  // continue to visit all children of the X.
-
-  // Readonly visitor methods:
-
   virtual void VisitGraph(const GraphProto& graph) {
     if (ProcessGraph(graph))
       for (auto& node : graph.node())
+        VisitNode(node);
+  }
+
+  virtual void VisitFunction(const FunctionProto& function) {
+    if (ProcessFunction(function))
+      for (auto& node : function.node())
         VisitNode(node);
   }
 
@@ -50,6 +52,11 @@ struct Visitor {
     return true;
   }
 
+  virtual bool ProcessFunction(const FunctionProto& function) {
+    ONNX_UNUSED_PARAMETER(function);
+    return true;
+  }
+
   virtual bool ProcessNode(const NodeProto& node) {
     ONNX_UNUSED_PARAMETER(node);
     return true;
@@ -60,11 +67,20 @@ struct Visitor {
     return true;
   }
 
-  // Visitor methods that may update objects.
+  virtual ~Visitor() {}
+};
 
+// MutableVisitor: A version of Visitor that allows mutation of the visited objects.
+struct MutableVisitor {
   virtual void VisitGraph(GraphProto* graph) {
     if (ProcessGraph(graph))
       for (auto& node : *(graph->mutable_node()))
+        VisitNode(&node);
+  }
+
+  virtual void VisitFunction(FunctionProto* function) {
+    if (ProcessFunction(function))
+      for (auto& node : *(function->mutable_node()))
         VisitNode(&node);
   }
 
@@ -91,6 +107,11 @@ struct Visitor {
     return true;
   }
 
+  virtual bool ProcessFunction(FunctionProto* function) {
+    ONNX_UNUSED_PARAMETER(function);
+    return true;
+  }
+
   virtual bool ProcessNode(NodeProto* node) {
     ONNX_UNUSED_PARAMETER(node);
     return true;
@@ -101,7 +122,7 @@ struct Visitor {
     return true;
   }
 
-  virtual ~Visitor() {}
+  virtual ~MutableVisitor() {}
 };
 
 } // namespace internal

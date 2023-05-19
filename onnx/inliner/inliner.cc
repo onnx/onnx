@@ -121,15 +121,12 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-class Specializer {
- private:
+struct InliningRenamer {
   std::string suffix;
   NameGenerator& generator;
-  AttributeLookupFunction attr_map;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
 
-  Specializer(std::string suffix_, NameGenerator& generator_, AttributeLookupFunction attr_map_)
-      : suffix(suffix_), generator(generator_), attr_map(attr_map_) {
+  InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(suffix_), generator(generator_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
   }
@@ -240,31 +237,30 @@ class Specializer {
       Transform(n);
     rename_scopes.pop_back();
   }
-
- public:
-  // The main specialization method: specialize a FunctionProto for a particular call-site.
-  static void
-  Specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
-    AttributeMap map;
-    for (auto& attr : callnode.attribute()) {
-      map[attr.name()] = &attr;
-    }
-    auto lookup = [&](const std::string& name) -> const AttributeProto* {
-      auto iter = map.find(name);
-      return (iter != map.end()) ? iter->second : nullptr;
-    };
-    Specializer specializer(unique_suffix, generator, lookup);
-    internal::AttributeBinder attr_binder(map);
-
-    specializer.Bind<false>(*callee.mutable_input(), callnode.input());
-    specializer.Bind<true>(*callee.mutable_output(), callnode.output());
-
-    for (auto& n : *callee.mutable_node()) {
-      specializer.Transform(n);
-      attr_binder.Transform(n);
-    }
-  }
 };
+
+// Specialize a FunctionProto for a particular call-site for inlining. This does the following:
+// (i)  Rename all intermediate variables in the function to ensure that they are unique (wrt the main graph).
+// (ii) Rename inputs and outputs using names of actual parameters.
+// (iii) Replace attribute-parameters with their actual values.
+void Specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
+  AttributeMap map;
+  for (auto& attr : callnode.attribute()) {
+    map[attr.name()] = &attr;
+  }
+
+  internal::AttributeBinder attr_binder(map);
+
+  InliningRenamer renamer(unique_suffix, generator);
+  renamer.Bind<false>(*callee.mutable_input(), callnode.input());
+  renamer.Bind<true>(*callee.mutable_output(), callnode.output());
+
+  for (auto& n : *callee.mutable_node()) {
+    renamer.Transform(n);
+  }
+
+  attr_binder.VisitFunction(&callee);
+}
 
 // Identify the set of all "input" variables used by a given node.
 // This includes the variables listed as node.input, as well as
@@ -396,7 +392,7 @@ void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
       callee = *iter->second.first;
       int64_t target_version = iter->second.second;
       // Rename and specialize called function body
-      Specializer::Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
+      Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
       if (target_version != kNoConversion) {
         ONNX_ASSERTM(
             convert_version,

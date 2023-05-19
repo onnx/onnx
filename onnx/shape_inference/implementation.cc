@@ -570,7 +570,7 @@ class ShapeInferenceImplBase {
 
   void process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
     NodeProto copy_n(n);
-    attribute_binder.Transform(copy_n);
+    attribute_binder.VisitNode(&copy_n);
     process(copy_n);
   }
 
