@@ -64,6 +64,7 @@ jobs:
       if '$(protobuf_type)' == 'External' (
         set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
       ) else (
+        REM Disable ONNX_WERROR since the new protobuf version has build warnings that are treated as errors.
         set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=OFF
       )
 
