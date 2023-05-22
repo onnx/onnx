@@ -593,7 +593,9 @@ class OpRunExpand(OpRun):
     Class any operator to avoid must inherit from.
     """
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
+    def __init__(
+        self, onnx_node: NodeProto, log_function: Any, impl: Any = None
+    ):  # pylint: disable=super-init-not-called
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -627,7 +629,7 @@ class OpFunction(OpRun):
         # but the attributes may be different at every call.
         self.attributes_ = {
             name: getattr(self, name)
-            for name in getattr(self.impl_, "attributes_", attributes)
+            for name in getattr(self.impl_, "attributes_", attributes)  # type: ignore[union-attr]
         }
 
     def _run(self, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
@@ -675,18 +677,20 @@ class OpFunctionContextDependant(OpFunction):
                 ttype = np_dtype_to_tensor_dtype(t.dtype)
             except KeyError as e:
                 if t.dtype == float8e4m3fn:
-                    ttype = TensorProto.FLOAT8E4M3FN
+                    ttype = TensorProto.FLOAT8E4M3FN  # type: ignore[attr-defined]
                 elif t.dtype == float8e4m3fnuz:
-                    ttype = TensorProto.FLOAT8E4M3FNUZ
+                    ttype = TensorProto.FLOAT8E4M3FNUZ  # type: ignore[attr-defined]
                 elif t.dtype == float8e5m2:
-                    ttype = TensorProto.FLOAT8E5M2
+                    ttype = TensorProto.FLOAT8E5M2  # type: ignore[attr-defined]
                 elif t.dtype == float8e5m2fnuz:
-                    ttype = TensorProto.FLOAT8E5M2FNUZ
+                    ttype = TensorProto.FLOAT8E5M2FNUZ  # type: ignore[attr-defined]
                 elif t.dtype == bfloat16:
-                    ttype = TensorProto.BLOFAT16
+                    ttype = TensorProto.BLOFAT16  # type: ignore[attr-defined]
                 else:
                     raise e
             types.append(make_tensor_type_proto(ttype, t.shape))
-        cl = self.parent._load_impl(self.onnx_node, types)
+        cl = self.parent._load_impl(
+            self.onnx_node, types
+        )  # pylint: disable=protected-access
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)
