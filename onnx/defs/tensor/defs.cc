@@ -2483,6 +2483,33 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* AffineGrid_ver20_doc = R"DOC(
+  Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
+  (https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
+  An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
+  ```
+  [r00, r01, r02, t0]   [x]   [x']
+  [r10, r11, r12, t1] * [y] = [y']
+  [r20, r21, r22, t2]   [z]   [z']
+  [0,   0,    0,  1 ]   [1]   [1 ]
+  ```
+  where (x, y, z) is the position in the original space, (x', y', z') is the position in the output space.
+  The last row is always [0, 0, 0, 1] and is not stored in the affine matrix. Therefore we have `theta` of shape (N, 2, 3) for 2D or (N, 3, 4) for 3D.
+
+  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from -1 to 1.
+  The output `grid` contains positions in the output space.
+  
+  When `align_corners`=1, consider -1 and 1 to refer to the centers of the corner pixels (mark v in illustration).
+  ```
+  v            v            v            v
+  |-------------------|------------------|
+  -1                  0                  1
+  ```
+  When `align_corners`=0, consider -1 and 1 to refer to the outer edge of the corner pixels.
+  ```
+       v        v         v         v
+  |------------------|-------------------|
+  -1                 0                   1
+  ```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2540,7 +2567,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           condition_is_2d = Equal (size_ndim, int_four)
 
           grid = If (condition_is_2d) <
-              then_branch = g1 () => (float[N, H, W, 2] grid_2d_then) {
+              then_branch = g1 () => (grid_2d_then) { # => (float[N, H, W, 2])
                   minus_one = Constant <value = float {-1.0}>()
                   zero = Constant <value = float {0.0}>()
                   one = Constant <value = float {1.0}>()
@@ -2555,7 +2582,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   H_float = CastLike (H, zero)
                   W_float = CastLike (W, zero)
                   grid_h_0, grid_w_0 = If (constant_align_corners_equal_zero) <
-                      then_branch = h1 () => (float[H] grid_h_then, float[W] grid_w_then) {
+                      then_branch = h1 () => (grid_h_then, grid_w_then) { # => (float[H], float[W])
                           step_h = Div (two, H_float)
                           step_w = Div (two, W_float)
                           step_h_half = Div (step_h, two)
@@ -2566,7 +2593,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                           start_w = Add (minus_one, step_w_half)
                           grid_w_then = Range (start_w, one, step_w)
                       },
-                      else_branch = h2 () => (float[H] grid_h_else, float[W] grid_w_else) {
+                      else_branch = h2 () => (grid_h_else, grid_w_else) { # => (float[H], float[W])
                           H_float_nimus_one = Sub (H_float, one)
                           W_float_nimus_one = Sub (W_float, one)
                           step_h = Div (two, H_float_nimus_one)
@@ -2577,26 +2604,28 @@ ONNX_OPERATOR_SET_SCHEMA(
                           grid_w_else = Range (minus_one, one_plus_epsilon, step_w)
                       }
                   >
-                  size_ones_H_by_W_transpose = Transpose (ones_H_by_W) # (3, 2)
-                  grid_h_1 = Mul(size_ones_H_by_W_transpose, grid_h_0)
+                  ones_W_by_H = Transpose (ones_H_by_W)
+                  grid_h_1 = Mul(ones_W_by_H, grid_h_0)
                   grid_h = Transpose (grid_h_1)
                   
                   grid_w = Add (grid_w_0, zero_H_by_W)
 
                   # make folowing a function (theta, grid_w, grid_h) =>  (grid)
-                  original_grid_seq = SequenceConstruct (grid_w, grid_h, ones_H_by_W)   
+                  original_grid_seq = SequenceConstruct (grid_w, grid_h, ones_H_by_W)
                   original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
                   constant_shape_HW_3 = Constant <value_ints: ints = [-1, 3]> ()
                   original_grid_HW_3 = Reshape (original_grid, constant_shape_HW_3)
-                  original_grid_3_HW = Transpose (original_grid_HW_3)
+                  original_grid_3_HW_ = Transpose (original_grid_HW_3)
 
+                  original_grid_3_HW = CastLike (original_grid_3_HW_, theta)
                   grid_N_2_HW = MatMul (theta, original_grid_3_HW)
                   grid_N_HW_2 = Transpose <perm = [0, 2, 1]> (grid_N_2_HW)
                   N_H_W_2_seq = SequenceConstruct (N, H, W, int_two_1d)
                   N_H_W_2 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_H_W_2_seq)
-                  grid_2d_then = Reshape(grid_N_HW_2, N_H_W_2)
+                  grid_2d_then_ = Reshape(grid_N_HW_2, N_H_W_2)
+                  grid_2d_then = CastLike(grid_2d_then_, theta)
                   },
-              else_branch = g2 () => (float[N, D, H, W, 3] grid_3d_else) {
+              else_branch = g2 () => (grid_3d_else) { # => (float[N, D, H, W, 3])
                   minus_one = Constant <value = float {-1.0}>()
                   zero = Constant <value = float {0.0}>()
                   one = Constant <value = float {1.0}>()
@@ -2613,7 +2642,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   H_float = CastLike (H, zero)
                   W_float = CastLike (W, zero)
                   grid_d_0, grid_h_0, grid_w_0 = If (constant_align_corners_equal_zero) <
-                      then_branch = h1 () => (float[D] grid_d_then, float[H] grid_h_then, float[W] grid_w_then) {
+                      then_branch = h1 () => (grid_d_then, grid_h_then, grid_w_then) { # => (float[D], float[H], float[W])
                           step_d = Div (two, D_float)
                           step_h = Div (two, H_float)
                           step_w = Div (two, W_float)
@@ -2630,7 +2659,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                           start_w = Add (minus_one, step_w_half)
                           grid_w_then = Range (start_w, one, step_w)
                       },
-                      else_branch = h2 () => (float[D] grid_d_else, float[H] grid_h_else, float[W] grid_w_else) {
+                      else_branch = h2 () => (grid_d_else, grid_h_else, grid_w_else) { # => (float[D], float[H], float[W])
                           D_float_nimus_one = Sub (D_float, one)
                           H_float_nimus_one = Sub (H_float, one)
                           W_float_nimus_one = Sub (W_float, one)
@@ -2658,13 +2687,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                   original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
                   constant_shape_DHW_4 = Constant <value_ints: ints = [-1, 4]> ()
                   original_grid_DHW_4 = Reshape (original_grid, constant_shape_DHW_4)
-                  original_grid_4_DHW = Transpose (original_grid_DHW_4)
+                  original_grid_4_DHW_ = Transpose (original_grid_DHW_4)
 
+                  original_grid_4_DHW = CastLike(original_grid_4_DHW_, theta)
                   grid_N_3_DHW = MatMul (theta, original_grid_4_DHW)
                   grid_N_DHW_3 = Transpose <perm = [0, 2, 1]> (grid_N_3_DHW)
                   N_D_H_W_3_seq = SequenceConstruct (N, D, H, W, int_three_1d)
                   N_D_H_W_3 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_D_H_W_3_seq)
-                  grid_3d_else = Reshape(grid_N_DHW_3, N_D_H_W_3)
+                  grid_3d_else_ = Reshape(grid_N_DHW_3, N_D_H_W_3)
+                  grid_3d_else = CastLike(grid_3d_else_, theta)
                   }
               >
         }
@@ -2680,15 +2711,26 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (size_rank != 1) {
             fail_shape_inference("Rank of input 'size' is ", size_rank, ". It must be 1.");
           }
-          if (!size_shape.dim(0).has_dim_value()) {
-            fail_shape_inference("length of input 'size' must be known.");
+
+          const TensorProto* size_initializer = ctx.getInputData(1);
+          const auto* size_input = ctx.getSymbolicInput(1);
+          TensorShapeProto size_proto;
+          if (size_initializer) {
+            auto sizeData = ParseData<int64_t>(size_initializer);
+            for (auto val : sizeData) {
+              size_proto.add_dim()->set_dim_value(val);
+            }
+          } else if (size_input) {
+            size_proto.CopyFrom(*size_input);
+          } else {
+            return;
           }
 
-          const auto size_length = size_shape.dim(0).dim_value();
+          const auto size_length = size_proto.dim_size();
           if (size_length != 4 && size_length != 5) {
-            fail_shape_inference("Length input 'size' is ", size_length, ". It must be 4 for 2D or 5 for 5D.");
+            fail_shape_inference("Length of input 'size' is ", size_length, ". It must be 4 for 2D or 5 for 5D.");
           }
-          
+
           auto add_and_set_dim = [](auto& dim, auto* output_shape) {
             auto* output_dim = output_shape->add_dim();
             if (dim.has_dim_value()) {
@@ -2698,37 +2740,23 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           };
 
-          const TensorProto* sizeInitializer = ctx.getInputData(1);
-          const auto* sizeInput = ctx.getSymbolicInput(1);
-          // The targetShapeProto represents the specified shape for output.
-          TensorShapeProto sizeProto;
-          if (sizeInitializer) {
-            auto sizeData = ParseData<int64_t>(sizeInitializer);
-            for (auto val : sizeData) {
-              targetShapeProto.add_dim()->set_dim_value(val);
-            }
-          } else if (shapeInput) {
-            targetShapeProto.CopyFrom(*shapeInput);
-          } else {
-            return;
-          }
-
           auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          const auto& N = size_shape.dim(0);
+
+          const auto& N = size_proto.dim(0);
           add_and_set_dim(N, output_shape);
-          const auto& C = size_shape.dim(1);
-          if (size_rank == 4) {
+          const auto& C = size_proto.dim(1);
+          if (size_length == 4) {
             // 2D case: size shape (N, C, H, W), output shape (N, C, H, W, 2)
-            const auto& H = size_shape.dim(2);
-            const auto& W = size_shape.dim(3);
+            const auto& H = size_proto.dim(2);
+            const auto& W = size_proto.dim(3);
             add_and_set_dim(H, output_shape);
             add_and_set_dim(W, output_shape);
             output_shape->add_dim()->set_dim_value(2);
-          } else if (size_rank == 5) {
+          } else if (size_length == 5) {
             // 3D case: size shape (N, C, D, H, W), output shape (N, C, D, H, W, 3)
-            const auto& D = size_shape.dim(2);
-            const auto& H = size_shape.dim(3);
-            const auto& W = size_shape.dim(4);
+            const auto& D = size_proto.dim(2);
+            const auto& H = size_proto.dim(3);
+            const auto& W = size_proto.dim(4);
             add_and_set_dim(D, output_shape);
             add_and_set_dim(H, output_shape);
             add_and_set_dim(W, output_shape);

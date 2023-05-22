@@ -158,11 +158,11 @@ class TestAutomaticUpgrade(unittest.TestCase):
 
     def test_AffineGrid_2D(self) -> None:
         N, C, H, W = 2, 3, 5, 6
-        self._test_op_upgrade("AffineGrid", 20, [[N, 2, 3], [N, C, H, W]], [[N, H, W, 2]])
+        self._test_op_upgrade("AffineGrid", 20, [[N, 2, 3], [4]], [[N, H, W, 2]])
 
     def test_AffineGrid_3D(self) -> None:
         N, C, D, H, W = 2, 3, 4, 5, 6
-        self._test_op_upgrade("AffineGrid", 20, [[N, 3, 4], [N, C, D, H, W]], [[N, D, H, W, 3]])
+        self._test_op_upgrade("AffineGrid", 20, [[N, 3, 4], [5]], [[N, D, H, W, 3]])
 
     def test_ArgMax_1(self) -> None:
         self._test_op_upgrade(

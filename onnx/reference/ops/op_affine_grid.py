@@ -76,7 +76,7 @@ class AffineGrid(OpRun):
         self, theta, size, align_corners=None
     ):
         align_corners = align_corners or self.align_corners  # type: ignore
-        _, _, data_size = size
+        _, _, *data_size = size
         original_grid = construct_original_grid(data_size, align_corners)
         grid = apply_affine_transform(theta, original_grid)
         return (grid,)

@@ -153,7 +153,7 @@ class TestBasicFunctions(unittest.TestCase):
                 condition_is_2d = Equal (size_ndim, int_four)
 
                 grid = If (condition_is_2d) <
-                    then_branch = g1 () => (float[N, H, W, 2] grid_2d_then) {
+                    then_branch = g1 () => (grid_2d_then) { # =>float[N, H, W, 2]
                         minus_one = Constant <value = float {-1.0}>()
                         zero = Constant <value = float {0.0}>()
                         one = Constant <value = float {1.0}>()
@@ -168,7 +168,7 @@ class TestBasicFunctions(unittest.TestCase):
                         H_float = CastLike (H, zero)
                         W_float = CastLike (W, zero)
                         grid_h_0, grid_w_0 = If (constant_align_corners_equal_zero) <
-                            then_branch = h1 () => (float[H] grid_h_then, float[W] grid_w_then) {
+                            then_branch = h1 () => (grid_h_then, grid_w_then) { # => (float[H], float[W])
                                 step_h = Div (two, H_float)
                                 step_w = Div (two, W_float)
                                 step_h_half = Div (step_h, two)
@@ -179,7 +179,7 @@ class TestBasicFunctions(unittest.TestCase):
                                 start_w = Add (minus_one, step_w_half)
                                 grid_w_then = Range (start_w, one, step_w)
                             },
-                            else_branch = h2 () => (float[H] grid_h_else, float[W] grid_w_else) {
+                            else_branch = h2 () => (grid_h_else, grid_w_else) { # => (float[H], float[W])
                                 H_float_nimus_one = Sub (H_float, one)
                                 W_float_nimus_one = Sub (W_float, one)
                                 step_h = Div (two, H_float_nimus_one)
@@ -209,7 +209,7 @@ class TestBasicFunctions(unittest.TestCase):
                         N_H_W_2 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_H_W_2_seq)
                         grid_2d_then = Reshape(grid_N_HW_2, N_H_W_2)
                         },
-                    else_branch = g2 () => (float[N, D, H, W, 3] grid_3d_else) {
+                    else_branch = g2 () => (grid_3d_else) { # => (float[N, D, H, W, 3])
                         minus_one = Constant <value = float {-1.0}>()
                         zero = Constant <value = float {0.0}>()
                         one = Constant <value = float {1.0}>()
@@ -226,7 +226,7 @@ class TestBasicFunctions(unittest.TestCase):
                         H_float = CastLike (H, zero)
                         W_float = CastLike (W, zero)
                         grid_d_0, grid_h_0, grid_w_0 = If (constant_align_corners_equal_zero) <
-                            then_branch = h1 () => (float[D] grid_d_then, float[H] grid_h_then, float[W] grid_w_then) {
+                            then_branch = h1 () => (grid_d_then, grid_h_then, grid_w_then) { # => (float[D], float[H], float[W])
                                 step_d = Div (two, D_float)
                                 step_h = Div (two, H_float)
                                 step_w = Div (two, W_float)
@@ -243,7 +243,7 @@ class TestBasicFunctions(unittest.TestCase):
                                 start_w = Add (minus_one, step_w_half)
                                 grid_w_then = Range (start_w, one, step_w)
                             },
-                            else_branch = h2 () => (float[D] grid_d_else, float[H] grid_h_else, float[W] grid_w_else) {
+                            else_branch = h2 () => (grid_d_else, grid_h_else, grid_w_else) { # => (float[D], float[H], float[W])
                                 D_float_nimus_one = Sub (D_float, one)
                                 H_float_nimus_one = Sub (H_float, one)
                                 W_float_nimus_one = Sub (W_float, one)
@@ -285,6 +285,7 @@ class TestBasicFunctions(unittest.TestCase):
 
         model = onnx.parser.parse_model(input)
         checker.check_model(model)
+        model = onnx.shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
         onnx.save(model, "C:/Temp/affine_grid_test.onnx")
 
         import torch
@@ -294,7 +295,7 @@ class TestBasicFunctions(unittest.TestCase):
         inference_session = InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
         np.random.seed(42)
 
-        test_2d = True
+        test_2d = False
         align_corners = False
         if test_2d:
             N, C, H, W = 32, 3, 240, 512

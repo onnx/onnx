@@ -825,6 +825,10 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_operator_symbolic_override": 1e-4,
             "test__pytorch_converted_Conv3d_dilated_strided": 1e-4,
             "test__pytorch_converted_Conv3d_groups": 1e-4,
+            "test_affine_grid_2d_expanded": 1e-4,
+            "test_affine_grid_2d_align_corners_expanded": 1e-4,
+            "test_affine_grid_3d_expanded": 1e-4,
+            "test_affine_grid_3d_align_corners_expanded": 1e-4,
         }
 
         if version(npver) < version("1.21.5"):
