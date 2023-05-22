@@ -2576,8 +2576,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                   int_two_1d = Constant<value_ints=[2]>()
                   int_four_1d = Constant<value_ints=[4]>()
                   constant_H_W_shape = Slice(size, int_two_1d, int_four_1d) # [N, C, H, W] => [H, W]
-                  zero_H_by_W = ConstantOfShape (constant_H_W_shape)
-                  ones_H_by_W = Add (zero_H_by_W, one)
+                  zeros_H_by_W = ConstantOfShape (constant_H_W_shape)
+                  ones_H_by_W = Add (zeros_H_by_W, one)
 
                   H_float = CastLike (H, zero)
                   W_float = CastLike (W, zero)
@@ -2604,11 +2604,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                           grid_w_else = Range (minus_one, one_plus_epsilon, step_w)
                       }
                   >
-                  ones_W_by_H = Transpose (ones_H_by_W)
-                  grid_h_1 = Mul(ones_W_by_H, grid_h_0)
+                  zeros_W_by_H = Transpose (zeros_H_by_W)
+                  grid_h_1 = Add (zeros_W_by_H, grid_h_0)
                   grid_h = Transpose (grid_h_1)
                   
-                  grid_w = Add (grid_w_0, zero_H_by_W)
+                  grid_w = Add (grid_w_0, zeros_H_by_W)
 
                   # make folowing a function (theta, grid_w, grid_h) =>  (grid)
                   original_grid_seq = SequenceConstruct (grid_w, grid_h, ones_H_by_W)
@@ -2635,8 +2635,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                   int_three_1d = Constant<value_ints=[3]>()
                   int_five_1d = Constant<value_ints=[5]>()
                   constant_D_H_W_shape = Slice(size, int_two_1d, int_five_1d) # [N, C, D, H, W] => [D, H, W]
-                  zero_D_H_W = ConstantOfShape (constant_D_H_W_shape)
-                  ones_D_H_W = Add (zero_D_H_W, one)
+                  zeros_D_H_W = ConstantOfShape (constant_D_H_W_shape)
+                  ones_D_H_W = Add (zeros_D_H_W, one)
 
                   D_float = CastLike (D, zero)
                   H_float = CastLike (H, zero)
@@ -2673,15 +2673,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                           grid_w_else = Range (minus_one, one_plus_epsilon, step_w)
                       }
                   >
-                  ones_H_W_D = Transpose <perm = [1, 2, 0]> (ones_D_H_W)
-                  grid_d_1 = Mul(ones_H_W_D, grid_d_0)
+                  zeros_H_W_D = Transpose <perm = [1, 2, 0]> (zeros_D_H_W)
+                  grid_d_1 = Add (zeros_H_W_D, grid_d_0)
                   grid_d = Transpose <perm = [2, 0, 1]>(grid_d_1)
 
-                  ones_D_W_H = Transpose <perm = [0, 2, 1]> (ones_D_H_W)
-                  grid_h_1 = Mul(ones_D_W_H, grid_h_0)
+                  zeros_D_W_H = Transpose <perm = [0, 2, 1]> (zeros_D_H_W)
+                  grid_h_1 = Add (zeros_H_W_D, grid_h_0)
                   grid_h = Transpose <perm = [0, 2, 1]>(grid_h_1)
 
-                  grid_w = Add (grid_w_0, zero_D_H_W)
+                  grid_w = Add (grid_w_0, zeros_D_H_W)
 
                   original_grid_seq = SequenceConstruct (grid_w, grid_h, grid_d, ones_D_H_W)
                   original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
