@@ -2671,6 +2671,69 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          const auto& size_shape = ctx.getInputType(1)->tensor_type().shape();
+          const auto size_rank = size_shape.dim_size();
+          if (size_rank != 1) {
+            fail_shape_inference("Rank of input 'size' is ", size_rank, ". It must be 1.");
+          }
+          if (!size_shape.dim(0).has_dim_value()) {
+            fail_shape_inference("length of input 'size' must be known.");
+          }
+
+          const auto size_length = size_shape.dim(0).dim_value();
+          if (size_length != 4 && size_length != 5) {
+            fail_shape_inference("Length input 'size' is ", size_length, ". It must be 4 for 2D or 5 for 5D.");
+          }
+          
+          auto add_and_set_dim = [](auto& dim, auto* output_shape) {
+            auto* output_dim = output_shape->add_dim();
+            if (dim.has_dim_value()) {
+              output_dim->set_dim_value(dim.dim_value());
+            } else {
+              output_dim->set_dim_param(dim.dim_param());
+            }
+          };
+
+          const TensorProto* sizeInitializer = ctx.getInputData(1);
+          const auto* sizeInput = ctx.getSymbolicInput(1);
+          // The targetShapeProto represents the specified shape for output.
+          TensorShapeProto sizeProto;
+          if (sizeInitializer) {
+            auto sizeData = ParseData<int64_t>(sizeInitializer);
+            for (auto val : sizeData) {
+              targetShapeProto.add_dim()->set_dim_value(val);
+            }
+          } else if (shapeInput) {
+            targetShapeProto.CopyFrom(*shapeInput);
+          } else {
+            return;
+          }
+
+          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          const auto& N = size_shape.dim(0);
+          add_and_set_dim(N, output_shape);
+          const auto& C = size_shape.dim(1);
+          if (size_rank == 4) {
+            // 2D case: size shape (N, C, H, W), output shape (N, C, H, W, 2)
+            const auto& H = size_shape.dim(2);
+            const auto& W = size_shape.dim(3);
+            add_and_set_dim(H, output_shape);
+            add_and_set_dim(W, output_shape);
+            output_shape->add_dim()->set_dim_value(2);
+          } else if (size_rank == 5) {
+            // 3D case: size shape (N, C, D, H, W), output shape (N, C, D, H, W, 3)
+            const auto& D = size_shape.dim(2);
+            const auto& H = size_shape.dim(3);
+            const auto& W = size_shape.dim(4);
+            add_and_set_dim(D, output_shape);
+            add_and_set_dim(H, output_shape);
+            add_and_set_dim(W, output_shape);
+            output_shape->add_dim()->set_dim_value(3);
+          }
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(

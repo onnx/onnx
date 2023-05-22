@@ -7238,6 +7238,90 @@ class TestShapeInference(TestShapeInferenceHelper):
             inferred_model.graph.output[0].type.tensor_type.HasField("shape")
         )
 
+    def test_affinegrid_2d(self) -> None:
+        N, C, H, W = 2, 3, 4, 5
+        graph = self._make_graph(
+            [
+                ("theta", TensorProto.FLOAT, (N, 2, 3)),
+                ("size", TensorProto.INT64, (N, C, H, W)),
+            ],
+            [
+                make_node(
+                    "AffineGrid",
+                    ["theta", "size"],
+                    ["grid"],
+                    align_corners=1,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, (N, H, W, 2))]
+        )  # type: ignore
+
+    def test_affinegrid_3d(self) -> None:
+        N, C, D, H, W = 2, 3, 4, 5, 6
+        graph = self._make_graph(
+            [
+                ("theta", TensorProto.FLOAT, (N, 3, 4)),
+                ("size", TensorProto.INT64, (N, C, D, H, W)),
+            ],
+            [
+                make_node(
+                    "AffineGrid",
+                    ["theta", "size"],
+                    ["grid"],
+                    align_corners=1,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, (N, D, H, W, 3))]
+        )  # type: ignore
+
+    def test_affinegrid_2d_symbolic(self) -> None:
+        N, C, H, W = "N", "C", "H", "W"
+        graph = self._make_graph(
+            [
+                ("theta", TensorProto.FLOAT, (N, 2, 3)),
+                ("size", TensorProto.INT64, (N, C, H, W)),
+            ],
+            [
+                make_node(
+                    "AffineGrid",
+                    ["theta", "size"],
+                    ["grid"],
+                    align_corners=1,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, (N, H, W, 2))]
+        )  # type: ignore
+
+    def test_affinegrid_3d_symbolic(self) -> None:
+        N, C, D, H, W = "N", "C", "D", "H", "W"
+        graph = self._make_graph(
+            [
+                ("theta", TensorProto.FLOAT, (N, 3, 4)),
+                ("size", TensorProto.INT64, (N, C, D, H, W)),
+            ],
+            [
+                make_node(
+                    "AffineGrid",
+                    ["theta", "size"],
+                    ["grid"],
+                    align_corners=1,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, (N, D, H, W, 3))]
+        )  # type: ignore
+
     def test_gridsample(self) -> None:
         graph = self._make_graph(
             [
