@@ -13,7 +13,7 @@ from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeP
 from onnx.reference.op_run import (
     OpRun,
     OpFunctionContextDependant,
-    OpRunInline,
+    OpRunExpand,
     RuntimeContextError,
 )
 from onnx.reference.ops_optimized import optimized_operators
@@ -169,6 +169,24 @@ class ReferenceEvaluator:
         `Pad_18` is selected for any greater opset. Both classes must be
         imported into file `_op_list.py` to register their existence to the
         runtime.
+
+        An operator may have a reference implementation such as `CastLike`
+        and still be defined as a function. By default, the reference implementation
+        is used. This behaviour can be changed by adding a class to the list
+        of overwritten operators. It must inherit from :class:`OpRunExpand`.
+
+        ::
+
+            from onnx.reference.op_run import OpRunExpand
+
+            class CastLike(OpRunExpand):
+                op_domain = ""
+
+            ref = ReferenceEvaluator(model, new_ops=[CastLike])
+            # ...
+
+            This mechanism is used in unit test to check the function
+            implementation a schema may define.
     """
 
     def __init__(  # type: ignore
@@ -377,7 +395,9 @@ class ReferenceEvaluator:
                     it = [self.get_result_types(i, exc=False) for i in node.input]
                     if None in it:
                         # One input does not exist. It must be done while executing the graph.
-                        cl = lambda *args, parent=self: OpFunctionContextDependant(*args, parent=parent)  # type: ignore
+                        cl = lambda *args, parent=self: OpFunctionContextDependant(  # noqa: E731
+                            *args, parent=parent
+                        )
                     else:
                         cl = self._load_impl(node, it)  # type: ignore
                 else:
@@ -408,22 +428,22 @@ class ReferenceEvaluator:
             )
         version = self.opsets[node.domain]
         key = node.domain, node.op_type
-        inline = False
+        expand = False
         if key in self.new_ops_:
             # This operator has a custom implementation.
             # This mechanism can be used to implement a custom onnx node
             # or to overwrite an existing one.
             cl = self.new_ops_[key]
-            if not issubclass(cl, OpRunInline):
+            if not issubclass(cl, OpRunExpand):
                 return cl
             # It must be replaced by its implementation defined in its schema.
-            inline = True
+            expand = True
 
         if node.domain == "":
             from onnx.reference.ops import load_op
 
             try:
-                return load_op(node.domain, node.op_type, version, inline=inline)
+                return load_op(node.domain, node.op_type, version, expand=expand)
             except RuntimeContextError:
                 if input_types is None:
                     raise
@@ -433,12 +453,13 @@ class ReferenceEvaluator:
                     version,
                     node=node,
                     input_types=input_types,  # type: ignore[arg-type]
-                    inline=inline,
+                    expand=expand,
                 )
 
-        if inline:
+        if expand:
             raise NotImplementedError(
-                f"inlining is only implemented for the main opset, remove operator "
+                f"Expanding an operator with its function definition "
+                f"is only implemented for the main opset. Remove operator "
                 f"{node.domain},{node.op_type} from the list of inlined operator."
             )
         if node.domain == "ai.onnx.preview.training":

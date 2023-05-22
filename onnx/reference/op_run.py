@@ -588,7 +588,7 @@ class OpRun(ABC):
         return res
 
 
-class OpRunInline(OpRun):
+class OpRunExpand(OpRun):
     """
     Class any operator to avoid must inherit from.
     """
@@ -656,6 +656,8 @@ class OpFunction(OpRun):
 class OpFunctionContextDependant(OpFunction):
     """
     The function can be instantiated but only at execution time.
+    An instance of OpFunction is created everytime to node is executed.
+    This is needed when the schema of an operator defines a context dependant function.
     """
 
     def __init__(self, onnx_node: NodeProto, log_function: Any, parent: Any = None):
@@ -665,6 +667,8 @@ class OpFunctionContextDependant(OpFunction):
         self.schema_ = get_schema(onnx_node.op_type, version, onnx_node.domain)
 
     def _run(self, *inputs, **kwargs):
+        # Input types are known. They are used to properly
+        # created the body for this operator.
         types = []
         for t in inputs:
             try:
@@ -672,6 +676,14 @@ class OpFunctionContextDependant(OpFunction):
             except KeyError as e:
                 if t.dtype == float8e4m3fn:
                     ttype = TensorProto.FLOAT8E4M3FN
+                elif t.dtype == float8e4m3fnuz:
+                    ttype = TensorProto.FLOAT8E4M3FNUZ
+                elif t.dtype == float8e5m2:
+                    ttype = TensorProto.FLOAT8E5M2
+                elif t.dtype == float8e5m2fnuz:
+                    ttype = TensorProto.FLOAT8E5M2FNUZ
+                elif t.dtype == bfloat16:
+                    ttype = TensorProto.BLOFAT16
                 else:
                     raise e
             types.append(make_tensor_type_proto(ttype, t.shape))

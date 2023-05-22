@@ -240,7 +240,7 @@ def load_op(
     custom: Any = None,
     node: Union[None, NodeProto] = None,
     input_types: Union[None, List[TypeProto]] = None,
-    inline: bool = False,
+    expand: bool = False,
 ) -> Any:
     """
     Loads the implemented for a specified operator.
@@ -253,7 +253,7 @@ def load_op(
         which is context dependant
     :param input_types: used if no implementation was found and the operator defines a function
         which is context dependant
-    :param inline: use the function implementeded in the schema instead
+    :param expand: use the function implemented in the schema instead
         of its reference implementation
     :return: class
     """
@@ -267,7 +267,7 @@ def load_op(
         version = onnx_opset_version()
     if domain != "":
         raise ValueError(f"Domain must be '' not {domain!r}.")
-    if op_type in _registered_operators and not inline:  # type: ignore
+    if op_type in _registered_operators and not expand:  # type: ignore
         found = True
     else:
         # maybe the operator can be replacted by a function

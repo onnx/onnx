@@ -47,7 +47,7 @@ from onnx.helper import (
 )
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, from_array
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.op_run import OpRun, OpRunInline
+from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Celu
@@ -3189,13 +3189,13 @@ class TestReferenceEvaluator(unittest.TestCase):
                 for x in data
             ]
         )
-        ref = ReferenceEvaluator(model, verbose=9)
+        ref = ReferenceEvaluator(model)
         got = ref.run(None, {"X": data})
         assert_allclose(got[0], expected)
 
         # Forces ReferenceEvaluator to not use the associated implementation for CastLike
         # but its implementation as a function instead.
-        class CastLike(OpRunInline):
+        class CastLike(OpRunExpand):
             op_domain = ""
 
         ref = ReferenceEvaluator(model, new_ops=[CastLike])
