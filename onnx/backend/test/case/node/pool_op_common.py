@@ -33,21 +33,19 @@ def get_output_shape(
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
+    ceil_mode: bool = False,
 ) -> Sequence[int]:
     out_shape = [0] * len(input_spatial_shape)
-    if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
-        for i in range(len(input_spatial_shape)):
-            out_shape[i] = int(
-                np.ceil(float(input_spatial_shape[i]) / float(strides_spatial[i]))
-            )
-    elif auto_pad == "VALID":
-        for i in range(len(input_spatial_shape)):
-            out_shape[i] = int(
-                np.ceil(
-                    float(input_spatial_shape[i] - (kernel_spatial_shape[i] - 1))
-                    / float(strides_spatial[i])
-                )
-            )
+    for i in range(len(input_spatial_shape)):
+        if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
+            out = float(input_spatial_shape[i]) / float(strides_spatial[i])
+        elif auto_pad == "VALID":
+            out = float(input_spatial_shape[i] - (kernel_spatial_shape[i] - 1))/ float(strides_spatial[i])
+        # default auto_pad is NOTSET
+        else:
+            #ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+            out = float(input_spatial_shape[i] - kernel_spatial_shape[i])/ float(strides_spatial[i]) + 1
+        out_shape[i] = int(np.ceil(out) if ceil_mode else np.floor(out))
     return out_shape
 
 
