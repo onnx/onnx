@@ -1156,7 +1156,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
             std::stringstream err;
             err << "Trying to register schema with name " << op_name << " (domain: " << op_domain << " version: " << ver
                 << ") from file " << op_schema.file() << " line " << op_schema.line()
-                << ", but it is already registered from file " << schema.file() << " line " << schema.line() << std::endl;
+                << ", but it is already registered from file " << schema.file() << " line " << schema.line()
+                << std::endl;
             fail_schema(err.str());
           }
           return;
@@ -1164,13 +1165,14 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
         if (opset_version_to_load != 0) {
           // Stops because the opset_version is higher than opset_version_to_load
-          if (ver > opset_version_to_load) return;
+          if (ver > opset_version_to_load)
+            return;
 
           // Stops because a later version is registered within target opset version
           if (!schema_ver_map.empty()) {
-            int max_registered_ver_le_target = GetMaxRegisteredVerWithinTarget(
-              schema_ver_map, opset_version_to_load);
-            if (max_registered_ver_le_target >= ver) return;
+            int max_registered_ver_le_target = GetMaxRegisteredVerWithinTarget(schema_ver_map, opset_version_to_load);
+            if (max_registered_ver_le_target >= ver)
+              return;
           }
         }
 
@@ -1184,9 +1186,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
    private:
     // Gets the maximum version from given map that is less or equal to target version
-    static int GetMaxRegisteredVerWithinTarget(const std::map<OperatorSetVersion, OpSchema>& m,
-                                               int target_ver)
-    {
+    static int GetMaxRegisteredVerWithinTarget(const std::map<OperatorSetVersion, OpSchema>& m, int target_ver) {
       // std::map is sorted on key
       // reverse iterator returns the largest element keyed on the integer version
       for (auto&& it = m.rbegin(); it != m.rend(); it++) {
@@ -1198,9 +1198,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       return -1;
     }
 
-    static void CheckDomainAndVersionToRegister(const OpSchema& op_schema,
-                                                const std::string& op_name,
-                                                const std::string& op_domain) {
+    static void CheckDomainAndVersionToRegister(
+        const OpSchema& op_schema,
+        const std::string& op_name,
+        const std::string& op_domain) {
       auto ver_range_map = DomainToVersionRange::Instance().Map();
       auto ver_range_it = ver_range_map.find(op_domain);
       auto ver = op_schema.SinceVersion();
@@ -1345,9 +1346,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   }
 };
 
-void RegisterSchema(OpSchema schema,
-                    int opset_version_to_load = 0,
-                    bool fail_duplicate_schema = true);
+void RegisterSchema(OpSchema schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true);
 
 // Registers the latest opset schema before opset_version_to_load
 // By default opset_version_to_load=0 means it will register all versions
@@ -1355,7 +1354,7 @@ template <class T>
 void RegisterOpSetSchema(int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
   T::ForEachSchema([opset_version_to_load, fail_duplicate_schema](OpSchema&& schema) {
     RegisterSchema(schema, opset_version_to_load, fail_duplicate_schema);
-});
+  });
 };
 
 // Forward declaration for the non-specialized GetOpSchema method.  This

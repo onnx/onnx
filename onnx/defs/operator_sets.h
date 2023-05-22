@@ -1167,9 +1167,9 @@ inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicat
 }
 
 inline void DeregisterOnnxOperatorSetSchema() {
-    OpSchemaRegistry::Instance()->OpSchemaDeregisterAll(ONNX_DOMAIN);
-    // -1 means no ONNX schema is loaded
-    OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
+  OpSchemaRegistry::Instance()->OpSchemaDeregisterAll(ONNX_DOMAIN);
+  // -1 means no ONNX schema is loaded
+  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
 }
 
 } // namespace ONNX_NAMESPACE

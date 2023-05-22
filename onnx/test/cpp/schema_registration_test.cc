@@ -14,9 +14,35 @@ using namespace ONNX_NAMESPACE;
 namespace ONNX_NAMESPACE {
 namespace Test {
 
+// Schema of all versions are registered by default
+// Further schema manipulation expects to be error-free
+TEST(SchemaRegistrationTest, RegisterAllByDefaultAndManipulateSchema) {
+#ifndef __ONNX_DISABLE_STATIC_REGISTRATION
+  // Expects all opset registered by default
+  EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0);
+
+  // Should find schema for all versions
+  EXPECT_NE(nullptr, OpSchemaRegistry::Schema("Add", 1));
+  EXPECT_NE(nullptr, OpSchemaRegistry::Schema("Add", 6));
+  EXPECT_NE(nullptr, OpSchemaRegistry::Schema("Add", 7));
+  EXPECT_NE(nullptr, OpSchemaRegistry::Schema("Add", 13));
+
+  // Clear all opset schema registration
+  DeregisterOnnxOperatorSetSchema();
+
+  // Should not find any opset
+  EXPECT_EQ(nullptr, OpSchemaRegistry::Schema("Add"));
+
+  // Register all opset versions
+  RegisterOnnxOperatorSetSchema();
+
+  // Should find all opset
+  EXPECT_NE(nullptr, OpSchemaRegistry::Schema("Add"));
+#endif
+}
+
 // By default ONNX registers all opset versions and selective schema loading cannot be tested
 // So these tests are run only when static registration is disabled
-
 TEST(SchemaRegistrationTest, RegisterAndDeregisterAllOpsetSchemaVersion) {
 #ifdef __ONNX_DISABLE_STATIC_REGISTRATION
   // Clear all opset schema registration
