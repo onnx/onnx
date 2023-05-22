@@ -8,7 +8,7 @@ import numpy as np
 
 from onnx import TensorProto
 from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
-from onnx.helper import make_node
+from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
 from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 from onnx.reference.custom_element_types import (
@@ -625,3 +625,57 @@ class OpFunction(OpRun):
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         return tuple(results)
+
+
+class OpRunInline(OpRun):
+    """
+    Class any operator to avoid must inherit from.
+    """
+
+    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
+        raise RuntimeError(
+            f"The reference implementation must not use this node ({type(self)})."
+        )
+
+    def _run(self, *inputs, **kwargs):
+        raise RuntimeError(
+            f"The reference implementation must not use this node ({type(self)})."
+        )
+
+
+class OpRunDelayed(OpRun):
+    def __init__(
+        self,
+        onnx_node: NodeProto,
+        run_params: Dict[str, Any],
+        schema: Any = None,
+        ref: "ReferenceEvaluator" = None,
+        version: Optional[int] = None,
+    ):
+        self.onnx_node = onnx_node
+        self.run_params = run_params
+        self.version = version
+        self._schema = schema
+        self.ref = ref
+        self.has_linked_attribute = False
+        if self._schema is None:
+            self._schema = get_schema(onnx_node.op_type, version, onnx_node.domain)
+        self.has_subgraph = False
+        self._load_attributes()
+
+    def _run(self, *inputs, **kwargs):
+        types = []
+        for t in inputs:
+            try:
+                ttype = np_dtype_to_tensor_dtype(t.dtype)
+            except KeyError as e:
+                if t.dtype == float8e4m3fn:
+                    ttype = TensorProto.FLOAT8E4M3FN
+                else:
+                    raise e
+            types.append(make_tensor_type_proto(ttype, t.shape))
+        cl = self.ref._load_impl(self.onnx_node, types)
+        inst = cl(self.onnx_node, self.run_params)
+        feeds = dict(zip(self.onnx_node.input, inputs))
+        res = inst.run(None, feeds, attributes=kwargs)
+        return tuple(res)

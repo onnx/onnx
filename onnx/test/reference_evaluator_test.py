@@ -47,7 +47,7 @@ from onnx.helper import (
 )
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, from_array
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.op_run import OpRun
+from onnx.reference.op_run import OpRun, OpRunInline
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Celu
@@ -3164,6 +3164,43 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(got[1], expected2)
         assert_allclose(got[2], expected1)
         assert_allclose(got[3], expected2)
+
+    def test_cast_like_float8(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["f8"], to=TensorProto.FLOAT8E4M3FNUZ),
+                    make_node("CastLike", ["X", "f8"], ["f32"], saturate=0),
+                    make_node("Cast", ["f32"], ["Y"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        data = np.array([0, 1e7], dtype=np.float32)
+        expected = np.array(
+            [
+                float8e4m3_to_float32(
+                    float32_to_float8e4m3(x, uz=True, saturate=False), uz=True
+                )
+                for x in data
+            ]
+        )
+        ref = ReferenceEvaluator(model, verbose=9)
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected)
+
+        # Forces ReferenceEvaluator to not use the associated implementation for CastLike
+        # but its implementation as a function instead.
+        class CastLike(OpRunInline):
+            op_domain = ""
+
+        ref = ReferenceEvaluator(model, new_ops=[CastLike])
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected)
 
     def test_cast_float8_output(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])

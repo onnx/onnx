@@ -10,7 +10,7 @@ import numpy as np
 from onnx import load, numpy_helper
 from onnx.defs import onnx_opset_version
 from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
-from onnx.reference.op_run import OpRun, RuntimeContextError
+from onnx.reference.op_run import OpRun, OpRunDelayed, OpRunInline, RuntimeContextError
 from onnx.reference.ops_optimized import optimized_operators
 
 
@@ -257,12 +257,12 @@ class ReferenceEvaluator:
         self.new_ops_: Dict[Tuple[str, str], OpRun] = {}
         if new_ops is not None:
             for cl in new_ops:
-                if not issubclass(cl, OpRun):  # type: ignore
-                    raise TypeError(f"Class {cl} must inherit from OpRun (in new_ops).")
                 if not hasattr(cl, "op_domain"):
                     raise AttributeError(
                         f"Class {cl} must define attribute 'op_domain'."
                     )
+                if not issubclass(cl, OpRun):  # type: ignore
+                    raise TypeError(f"Class {cl} must inherit from OpRun (in new_ops).")
                 key = cl.op_domain, cl.__name__  # type: ignore
                 if key in self.new_ops_:
                     # Already an implementation, the first one is used.
@@ -326,15 +326,17 @@ class ReferenceEvaluator:
     def __str__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(self.input_names)}) -> {', '.join(self.output_names)}"
 
-    def get_result_types(self, name: str) -> Any:
+    def get_result_types(self, name: str, exc: bool = True) -> Any:
         if self.all_types_ is None:
             raise RuntimeError(
                 f"Unable to return type for name {name!r}. Run shape_inference first."
             )
         if name not in self.all_types_:
-            raise RuntimeError(
-                f"Unable to return type for name {name!r}, it was not found in {sorted(self.all_types_)}."
-            )
+            if exc:
+                raise RuntimeError(
+                    f"Unable to return type for name {name!r}, it was not found in {sorted(self.all_types_)}."
+                )
+            return None
         return self.all_types_[name]
 
     def _init(self) -> None:
@@ -367,8 +369,16 @@ class ReferenceEvaluator:
                 # A node has a context dependent implementation.
                 # Shape inference must be run to get the input types.
                 if self.all_types_:
-                    it = [self.get_result_types(i) for i in node.input]
-                    cl = self._load_impl(node, it)  # type: ignore
+                    it = [self.get_result_types(i, exc=False) for i in node.input]
+                    if None in it:
+                        # One input does not exist. It must be done while executing the graph.
+                        cl = lambda node, params, version=self.opsets[
+                            node.domain
+                        ], ref=self: OpRunDelayed(
+                            node, params, version=version, ref=ref
+                        )
+                    else:
+                        cl = self._load_impl(node, it)  # type: ignore
                 else:
                     raise RuntimeContextError(
                         f"No implementation was found for node type {node.op_type!r} from domain {node.domain!r}. "
@@ -397,17 +407,22 @@ class ReferenceEvaluator:
             )
         version = self.opsets[node.domain]
         key = node.domain, node.op_type
+        inline = False
         if key in self.new_ops_:
             # This operator has a custom implementation.
             # This mechanism can be used to implement a custom onnx node
             # or to overwrite an existing one.
-            return self.new_ops_[key]
+            cl = self.new_ops_[key]
+            if not issubclass(cl, OpRunInline):
+                return cl
+            # It must be replaced by its implementation defined in its schema.
+            inline = True
 
         if node.domain == "":
             from onnx.reference.ops import load_op
 
             try:
-                return load_op(node.domain, node.op_type, version)
+                return load_op(node.domain, node.op_type, version, inline=inline)
             except RuntimeContextError:
                 if input_types is None:
                     raise
@@ -417,8 +432,14 @@ class ReferenceEvaluator:
                     version,
                     node=node,
                     input_types=input_types,  # type: ignore[arg-type]
+                    inline=inline,
                 )
 
+        if inline:
+            raise NotImplementedError(
+                f"inlining is only implemented for the main opset, remove operator "
+                f"{node.domain},{node.op_type} from the list of inlined operator."
+            )
         if node.domain == "ai.onnx.preview.training":
             from onnx.reference.ops.aionnx_preview_training import load_op as load_op_pt
 
