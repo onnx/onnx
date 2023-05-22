@@ -10,7 +10,12 @@ import numpy as np
 from onnx import load, numpy_helper
 from onnx.defs import onnx_opset_version
 from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
-from onnx.reference.op_run import OpRun, OpRunDelayed, OpRunInline, RuntimeContextError
+from onnx.reference.op_run import (
+    OpRun,
+    OpFunctionContextDependant,
+    OpRunInline,
+    RuntimeContextError,
+)
 from onnx.reference.ops_optimized import optimized_operators
 
 
@@ -372,11 +377,7 @@ class ReferenceEvaluator:
                     it = [self.get_result_types(i, exc=False) for i in node.input]
                     if None in it:
                         # One input does not exist. It must be done while executing the graph.
-                        cl = lambda node, params, version=self.opsets[
-                            node.domain
-                        ], ref=self: OpRunDelayed(
-                            node, params, version=version, ref=ref
-                        )
+                        cl = lambda *args, parent=self: OpFunctionContextDependant(*args, parent=parent)  # type: ignore
                     else:
                         cl = self._load_impl(node, it)  # type: ignore
                 else:

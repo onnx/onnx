@@ -588,45 +588,6 @@ class OpRun(ABC):
         return res
 
 
-class OpFunction(OpRun):
-    """
-    Runs a custom function.
-    """
-
-    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
-        if impl is None:
-            raise RuntimeError(
-                f"impl cannot be None for node type {onnx_node.op_type!r} "
-                f"from domain {onnx_node.domain!r}."
-            )
-        OpRun.__init__(self, onnx_node, log_function)
-        self.impl_ = impl
-        # The function implementation is the same whenever the function is called
-        # but the attributes may be different at every call.
-        self.attributes_ = {
-            name: getattr(self, name) for name in self.impl_.attributes_
-        }
-
-    def _run(self, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
-        if len(self.impl_.input_names) != len(inputs):
-            raise RuntimeError(
-                f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(self.impl_.inputs)} "
-                f"for node {self.op_type!r} from domain {self.domain!r}."
-            )
-        feeds = dict(zip(self.impl_.input_names, inputs))
-        attributes = self.attributes_.copy()
-        attributes.update(kwargs)
-        results = self.impl_.run(None, feeds, attributes=attributes)
-        if len(self.impl_.output_names) != len(results):
-            raise RuntimeError(
-                f"Mismatch lengths between the number of outputs {len(results)} "
-                f"and the expected number of outputs {len(self.impl_.output_names)} "
-                f"for node {self.op_type!r} from domain {self.domain!r}."
-            )
-        return tuple(results)
-
-
 class OpRunInline(OpRun):
     """
     Class any operator to avoid must inherit from.
@@ -643,25 +604,65 @@ class OpRunInline(OpRun):
         )
 
 
-class OpRunDelayed(OpRun):
+class OpFunction(OpRun):
+    """
+    Runs a custom function.
+    """
+
     def __init__(
         self,
         onnx_node: NodeProto,
-        run_params: Dict[str, Any],
-        schema: Any = None,
-        ref: "ReferenceEvaluator" = None,
-        version: Optional[int] = None,
+        log_function: Any,
+        impl: Any = None,
+        attributes: Optional[Dict[str, Any]] = None,
     ):
-        self.onnx_node = onnx_node
-        self.run_params = run_params
-        self.version = version
-        self._schema = schema
-        self.ref = ref
-        self.has_linked_attribute = False
-        if self._schema is None:
-            self._schema = get_schema(onnx_node.op_type, version, onnx_node.domain)
-        self.has_subgraph = False
-        self._load_attributes()
+        if impl is None:
+            raise RuntimeError(
+                f"impl cannot be None for node type {onnx_node.op_type!r} "
+                f"from domain {onnx_node.domain!r}."
+            )
+        OpRun.__init__(self, onnx_node, log_function)
+        self.impl_ = impl
+        # The function implementation is the same whenever the function is called
+        # but the attributes may be different at every call.
+        self.attributes_ = {
+            name: getattr(self, name)
+            for name in getattr(self.impl_, "attributes_", attributes)
+        }
+
+    def _run(self, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
+        return self._run_impl(self.impl_, *inputs, **kwargs)
+
+    def _run_impl(self, impl, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
+        if len(impl.input_names) != len(inputs):
+            raise RuntimeError(
+                f"Mismatch lengths between the number of inputs {len(inputs)} "
+                f"and the expected number of inputs {len(impl.inputs)} "
+                f"for node {self.op_type!r} from domain {self.domain!r}."
+            )
+        feeds = dict(zip(impl.input_names, inputs))
+        attributes = self.attributes_.copy()
+        attributes.update(kwargs)
+        results = impl.run(None, feeds, attributes=attributes)
+        if len(impl.output_names) != len(results):
+            raise RuntimeError(
+                f"Mismatch lengths between the number of outputs {len(results)} "
+                f"and the expected number of outputs {len(impl.output_names)} "
+                f"for node {self.op_type!r} from domain {self.domain!r}."
+            )
+        return tuple(results)
+
+
+class OpFunctionContextDependant(OpFunction):
+    """
+    The function can be instantiated but only at execution time.
+    """
+
+    def __init__(self, onnx_node: NodeProto, log_function: Any, parent: Any = None):
+        OpFunction.__init__(self, onnx_node, log_function, impl=self, attributes={})
+        self.parent = parent
+        version = parent.opsets[onnx_node.domain]
+        self.schema_ = get_schema(onnx_node.op_type, version, onnx_node.domain)
 
     def _run(self, *inputs, **kwargs):
         types = []
@@ -674,8 +675,6 @@ class OpRunDelayed(OpRun):
                 else:
                     raise e
             types.append(make_tensor_type_proto(ttype, t.shape))
-        cl = self.ref._load_impl(self.onnx_node, types)
+        cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)
-        feeds = dict(zip(self.onnx_node.input, inputs))
-        res = inst.run(None, feeds, attributes=kwargs)
-        return tuple(res)
+        return self._run_impl(inst.impl_, *inputs, **kwargs)
