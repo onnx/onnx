@@ -2475,13 +2475,14 @@ static const char* AffineGrid_ver20_doc = R"DOC(
   (https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
   An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
   ```
+  
   [r00, r01, r02, t0]   [x]   [x']
 
   [r10, r11, r12, t1]   [y] = [y']
                       *
   [r20, r21, r22, t2]   [z]   [z']
 
-  [0,   0,    0,  1 ]   [1]   [1 ]
+  [0,   0,   0,   1 ]   [1]   [1 ]
 
   ```
   where (x, y, z) is the position in the original space, (x', y', z') is the position in the output space.
