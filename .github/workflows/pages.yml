@@ -46,6 +46,7 @@ jobs:
           sudo apt-get install libprotobuf-dev protobuf-compiler
           git submodule update --init --recursive
           export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          export ONNX_ML=1
           python setup.py install
       - name: Build Docs
         run: |

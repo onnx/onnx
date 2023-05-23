@@ -19,8 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # the different python versions for building wheels
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
+        python-version: [cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
@@ -37,9 +36,6 @@ jobs:
 
       # setting up qemu for enabling aarch64 binary execution on x86 machine
     - uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
-      with:
-        # TODO: freeze version for now since the latest one cannot use jupyter
-        image: tonistiigi/binfmt:qemu-v6.0.0-12
 
       # Creating a virtual environment on machine with the help of docker container \
       # and installing the dependencies inside that \
@@ -89,8 +85,6 @@ jobs:
       run: |
         python -m pip install -q twine
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-        # TODO: stop uploading to TestPyPI after future ONNX 1.14
-        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy and protobuf
       if: ${{ always() }}
@@ -103,6 +97,30 @@ jobs:
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
+
+    - name: Verify ONNX with the minimum supported numpy
+      if: ${{ always() }}
+      run: |
+        # only difference is numpy version
+        if [[ "${{ matrix.python-version }}" == "cp38-cp38" || "${{ matrix.python-version }}" == "cp39-cp39" ]]; then
+          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+            ${{ env.img }} \
+            bash -exc '\
+            source .env/bin/activate && \
+            python -m pip uninstall -y onnx numpy && python -m pip install numpy==1.16.6 && \
+            python -m pip install dist/*manylinux2014_aarch64.whl && \
+            pytest && \
+            deactivate'
+        else
+          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          python -m pip uninstall -y onnx numpy && python -m pip install numpy==1.23.2 && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          pytest && \
+          deactivate'
+        fi
 
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
       if: ${{ always() }}

@@ -24,7 +24,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
         host-architecture: ['x64']
         target-architecture: ['x86_64', 'universal2']
 
@@ -84,13 +84,23 @@ jobs:
       if: github.event_name == 'schedule' # Only triggered by weekly event
       run: |
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-        # TODO: stop uploading to TestPyPI after future ONNX 1.14
-        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
+
+    - name: Verify ONNX with the minimum supported numpy
+      if: ${{ always() }}
+      run: |
+        if [[ "${{ matrix.python-version }}" == "3.8" || "${{ matrix.python-version }}" == "3.9" ]]; then
+          export minimum_numpy_version=1.16.6
+        else
+          export minimum_numpy_version=1.23.2
+        fi
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$minimum_numpy_version
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
 
