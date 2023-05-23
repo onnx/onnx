@@ -7,6 +7,7 @@ import numpy as np
 
 from onnx.reference.op_run import OpRun
 
+
 def construct_original_grid(data_size, align_corners):
     is_2d = len(data_size) == 2
     size_zeros = np.zeros(data_size)
@@ -42,6 +43,7 @@ def construct_original_grid(data_size, align_corners):
             original_grid = [x, *original_grid]
     return np.stack(original_grid, axis=2 if is_2d else 3)
 
+
 def apply_affine_transform(theta_n, original_grid_homo):
     # theta_n: (N, 2, 3) for 2D, (N, 3, 4) for 3D
     # original_grid_homo: (H, W, 3) for 2D, (D, H, W, 4) for 3D
@@ -52,8 +54,12 @@ def apply_affine_transform(theta_n, original_grid_homo):
         H, W, dim_homo = original_grid_homo.shape
         assert dim_homo == 3
         # reshape to [H * W, dim_homo] and then transpose to [dim_homo, H * W]
-        original_grid_transposed = np.transpose(np.reshape(original_grid_homo, (H * W, dim_homo)))
-        grid_n = np.matmul(theta_n, original_grid_transposed)   # shape (N, dim_2d, H * W)
+        original_grid_transposed = np.transpose(
+            np.reshape(original_grid_homo, (H * W, dim_homo))
+        )
+        grid_n = np.matmul(
+            theta_n, original_grid_transposed
+        )  # shape (N, dim_2d, H * W)
         # transpose to (N, H * W, dim_2d) and then reshape to (N, H, W, dim_2d)
         grid = np.reshape(np.transpose(grid_n, (0, 2, 1)), (N, H, W, dim_2d))
         return grid
@@ -64,17 +70,19 @@ def apply_affine_transform(theta_n, original_grid_homo):
         D, H, W, dim_homo = original_grid_homo.shape
         assert dim_homo == 4
         # reshape to [D * H * W, dim_homo] and then transpose to [dim_homo, D * H * W]
-        original_grid_transposed = np.transpose(np.reshape(original_grid_homo, (D * H * W, dim_homo)))
-        grid_n = np.matmul(theta_n, original_grid_transposed)   # shape (N, dim_3d, D * H * W)
+        original_grid_transposed = np.transpose(
+            np.reshape(original_grid_homo, (D * H * W, dim_homo))
+        )
+        grid_n = np.matmul(
+            theta_n, original_grid_transposed
+        )  # shape (N, dim_3d, D * H * W)
         # transpose to (N, D * H * W, dim_3d) and then reshape to (N, D, H, W, dim_3d)
         grid = np.reshape(np.transpose(grid_n, (0, 2, 1)), (N, D, H, W, dim_3d))
         return grid
 
 
 class AffineGrid(OpRun):
-    def _run(  # type: ignore
-        self, theta, size, align_corners=None
-    ):
+    def _run(self, theta, size, align_corners=None):  # type: ignore
         align_corners = align_corners or self.align_corners  # type: ignore
         _, _, *data_size = size
         original_grid = construct_original_grid(data_size, align_corners)
