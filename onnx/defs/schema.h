@@ -1233,11 +1233,11 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // Deregister all ONNX opset schemas from domain
   // Domain with default value ONNX_DOMAIN means ONNX.
   static void OpSchemaDeregisterAll(const std::string& domain = ONNX_DOMAIN) {
-    auto& m = GetMapWithoutEnsuringRegistration();
-    // The map m stores operator schemas in the format of
+    auto& schema_map = GetMapWithoutEnsuringRegistration();
+    // schema_map stores operator schemas in the format of
     // <OpName, <Domain, <OperatorSetVersion, OpSchema>>>
-    for (auto&& m_p : m) {
-      auto& domain_map = m_p.second;
+    for (auto&& schema_map_pair : schema_map) {
+      auto& domain_map = schema_map_pair.second;
       if (domain_map.count(domain)) {
         auto& opset_version_schema_map = domain_map[domain];
         // Invalidates ver-schema pairs and frees memory, leaving m[op_name][op_domain] empty
