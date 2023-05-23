@@ -689,8 +689,8 @@ class OpFunctionContextDependant(OpFunction):
                 else:
                     raise e
             types.append(make_tensor_type_proto(ttype, t.shape))
-        cl = self.parent._load_impl(
+        cl = self.parent._load_impl(  # pylint: disable=protected-access
             self.onnx_node, types
-        )  # pylint: disable=protected-access
+        )
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)
