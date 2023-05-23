@@ -2485,7 +2485,7 @@ static const char* AffineGrid_ver20_doc = R"DOC(
 
   Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from -1 to 1.
   The output `grid` contains positions in the output space.
-  
+
   When `align_corners`=1, consider -1 and 1 to refer to the centers of the corner pixels (mark v in illustration).
   ```
   v            v            v            v
@@ -2549,8 +2549,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           int_four = Constant<value_int: int=4>()
 
           constant_align_corners = Constant<value_int: int=@align_corners>()
-          constant_align_corners_equal_zero = Equal (constant_align_corners, int_zero) 
-          
+          constant_align_corners_equal_zero = Equal (constant_align_corners, int_zero)
+
           size_ndim = Size (size)
           condition_is_2d = Equal (size_ndim, int_four)
 
@@ -2595,7 +2595,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   zeros_W_by_H = Transpose (zeros_H_by_W)
                   grid_h_1 = Add (zeros_W_by_H, grid_h_0)
                   grid_h = Transpose (grid_h_1)
-                  
+
                   grid_w = Add (grid_w_0, zeros_H_by_W)
 
                   # make following a function (theta, grid_w, grid_h) =>  (grid)

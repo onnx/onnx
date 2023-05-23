@@ -7306,7 +7306,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )  # type: ignore
 
     def test_affinegrid_2d_symbolic(self) -> None:
-        N, C, H, W = "N", "C", "H", "W"
+        N, _, _, _ = "N", "C", "H", "W"
         graph = self._make_graph(
             [
                 ("theta", TensorProto.FLOAT, (N, 2, 3)),
@@ -7327,7 +7327,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )  # type: ignore
 
     def test_affinegrid_3d_symbolic(self) -> None:
-        N, C, D, H, W = "N", "C", "D", "H", "W"
+        N, _, _, _, _ = "N", "C", "D", "H", "W"
         graph = self._make_graph(
             [
                 ("theta", TensorProto.FLOAT, (N, 3, 4)),
