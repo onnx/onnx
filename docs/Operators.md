@@ -546,7 +546,7 @@ This version of the operator has been available since version 20 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain grid types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain size's type to int64 tensors.</dd>
@@ -566,7 +566,9 @@ shear_x = np.array([-0.5, 0.5])
 shear_y = np.array([0.3, -0.3])
 scale_x = np.array([2.2, 1.1])
 scale_y = np.array([3.1, 0.9])
-theta_2d = create_affine_matrix_2d(angle, offset_x, offset_y, shear_x, shear_y, scale_x, scale_y)
+theta_2d = create_affine_matrix_2d(
+    angle, offset_x, offset_y, shear_x, shear_y, scale_x, scale_y
+)
 N, C, W, H = len(angle), 3, 5, 6
 data_size = (W, H)
 for align_corners in [0, 1]:
@@ -574,7 +576,7 @@ for align_corners in [0, 1]:
         "AffineGrid",
         inputs=["theta", "size"],
         outputs=["grid"],
-        align_corners=align_corners
+        align_corners=align_corners,
     )
 
     original_grid = construct_original_grid(data_size, align_corners)
@@ -583,7 +585,12 @@ for align_corners in [0, 1]:
     test_name = "test_affine_grid_2d"
     if align_corners == 1:
         test_name += "_align_corners"
-    expect(node, inputs=[theta_2d, np.array([N, C, W, H], dtype=np.int64)], outputs=[grid], name=test_name)
+    expect(
+        node,
+        inputs=[theta_2d, np.array([N, C, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
 ```
 
 </details>
@@ -605,7 +612,19 @@ scale_x = np.array([2.2, 1.1])
 scale_y = np.array([3.1, 0.9])
 scale_z = np.array([0.5, 1.5])
 
-theta_3d = create_affine_matrix_3d(angle1, angle2, offset_x, offset_y, offset_z, shear_x, shear_y, shear_z, scale_x, scale_y, scale_z)
+theta_3d = create_affine_matrix_3d(
+    angle1,
+    angle2,
+    offset_x,
+    offset_y,
+    offset_z,
+    shear_x,
+    shear_y,
+    shear_z,
+    scale_x,
+    scale_y,
+    scale_z,
+)
 N, C, D, W, H = len(angle1), 3, 4, 5, 6
 data_size = (D, W, H)
 for align_corners in [0, 1]:
@@ -613,7 +632,7 @@ for align_corners in [0, 1]:
         "AffineGrid",
         inputs=["theta", "size"],
         outputs=["grid"],
-        align_corners=align_corners
+        align_corners=align_corners,
     )
 
     original_grid = construct_original_grid(data_size, align_corners)
@@ -622,7 +641,12 @@ for align_corners in [0, 1]:
     test_name = "test_affine_grid_3d"
     if align_corners == 1:
         test_name += "_align_corners"
-    expect(node, inputs=[theta_3d, np.array([N, C, D, W, H], dtype=np.int64)], outputs=[grid], name=test_name)
+    expect(
+        node,
+        inputs=[theta_3d, np.array([N, C, D, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
 ```
 
 </details>
