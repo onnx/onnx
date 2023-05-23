@@ -2541,7 +2541,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain grid types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain size's type to int64 tensors.")
         .SetDoc(AffineGrid_ver20_doc)
         .FunctionBody(R"ONNX(
         {
@@ -2598,7 +2598,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   
                   grid_w = Add (grid_w_0, zeros_H_by_W)
 
-                  # make folowing a function (theta, grid_w, grid_h) =>  (grid)
+                  # make following a function (theta, grid_w, grid_h) =>  (grid)
                   original_grid_seq = SequenceConstruct (grid_w, grid_h, ones_H_by_W)
                   original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
                   constant_shape_HW_3 = Constant <value_ints: ints = [-1, 3]> ()

@@ -374,7 +374,7 @@ for align_corners in [0, 1]:
     test_name = "test_affine_grid_2d"
     if align_corners == 1:
         test_name += "_align_corners"
-    expect(node, inputs=[theta_2d, np.array([N, C, W, H])], outputs=[grid], name=test_name)
+    expect(node, inputs=[theta_2d, np.array([N, C, W, H], dtype=np.int64)], outputs=[grid], name=test_name)
 ```
 
 </details>
@@ -411,7 +411,7 @@ for align_corners in [0, 1]:
     test_name = "test_affine_grid_3d"
     if align_corners == 1:
         test_name += "_align_corners"
-    expect(node, inputs=[theta_3d, np.array([N, C, D, W, H])], outputs=[grid], name=test_name)
+    expect(node, inputs=[theta_3d, np.array([N, C, D, W, H], dtype=np.int64)], outputs=[grid], name=test_name)
 ```
 
 </details>
