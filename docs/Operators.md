@@ -493,9 +493,13 @@ expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
     An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
     ```
     [r00, r01, r02, t0]   [x]   [x']
-    [r10, r11, r12, t1] * [y] = [y']
+
+    [r10, r11, r12, t1]   [y] = [y']
+                        *
     [r20, r21, r22, t2]   [z]   [z']
+
     [0,   0,    0,  1 ]   [1]   [1 ]
+
     ```
     where (x, y, z) is the position in the original space, (x', y', z') is the position in the output space.
     The last row is always [0, 0, 0, 1] and is not stored in the affine matrix. Therefore we have `theta` of shape (N, 2, 3) for 2D or (N, 3, 4) for 3D.

@@ -2476,9 +2476,13 @@ static const char* AffineGrid_ver20_doc = R"DOC(
   An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
   ```
   [r00, r01, r02, t0]   [x]   [x']
-  [r10, r11, r12, t1] * [y] = [y']
+
+  [r10, r11, r12, t1]   [y] = [y']
+                      *
   [r20, r21, r22, t2]   [z]   [z']
+
   [0,   0,    0,  1 ]   [1]   [1 ]
+
   ```
   where (x, y, z) is the position in the original space, (x', y', z') is the position in the output space.
   The last row is always [0, 0, 0, 1] and is not stored in the affine matrix. Therefore we have `theta` of shape (N, 2, 3) for 2D or (N, 3, 4) for 3D.
@@ -2537,10 +2541,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T1",
-            OpSchema::all_float_types_ir4(),
-            "Constrain grid types to float tensors.")
+        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain grid types to float tensors.")
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain size's type to int64 tensors.")
         .SetDoc(AffineGrid_ver20_doc)
         .FunctionBody(R"ONNX(
