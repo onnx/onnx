@@ -2539,7 +2539,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            OpSchema::all_float_types_ir4(),
             "Constrain grid types to float tensors.")
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain size's type to int64 tensors.")
         .SetDoc(AffineGrid_ver20_doc)

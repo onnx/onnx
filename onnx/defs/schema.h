@@ -739,6 +739,19 @@ class OpSchema final {
     return all_tensor_types_ir4;
   }
 
+  static const std::vector<std::string>& all_float_types_ir4() {
+    static const std::vector<std::string> all_float_types_ir4 = {
+        "tensor(float8e4m3fn)",
+        "tensor(float8e4m3fnuz)",
+        "tensor(float8e5m2)",
+        "tensor(float8e5m2fnuz)",
+        "tensor(bfloat16)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)"};
+    return all_float_types_ir4;
+  }
+
   // Deprecated function, use all_tensor_types_ir4 instead. It will be removed in onnx==1.15.0.
   static const std::vector<std::string>& all_tensor_types_with_bfloat() {
     return all_tensor_types_ir4();
