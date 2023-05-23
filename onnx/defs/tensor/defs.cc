@@ -2732,7 +2732,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           const auto& N = size_proto.dim(0);
           add_and_set_dim(N, output_shape);
-          const auto& C = size_proto.dim(1);
+          // const auto& C = size_proto.dim(1); // C is not used
           if (size_length == 4) {
             // 2D case: size shape (N, C, H, W), output shape (N, C, H, W, 2)
             const auto& H = size_proto.dim(2);
