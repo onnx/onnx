@@ -40,11 +40,16 @@ def get_output_shape(
         if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
             out = float(input_spatial_shape[i]) / float(strides_spatial[i])
         elif auto_pad == "VALID":
-            out = float(input_spatial_shape[i] - (kernel_spatial_shape[i] - 1))/ float(strides_spatial[i])
+            out = float(input_spatial_shape[i] - (kernel_spatial_shape[i] - 1)) / float(
+                strides_spatial[i]
+            )
         # default auto_pad is NOTSET
         else:
-            #ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
-            out = float(input_spatial_shape[i] - kernel_spatial_shape[i])/ float(strides_spatial[i]) + 1
+            out = (
+                float(input_spatial_shape[i] - kernel_spatial_shape[i])
+                / float(strides_spatial[i])
+                + 1
+            )
         out_shape[i] = int(np.ceil(out) if ceil_mode else np.floor(out))
     return out_shape
 
