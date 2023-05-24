@@ -279,7 +279,7 @@ class MaxPool(Base):
         strides = [1]
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "MAX")
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0], "MAX")
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_1d_default")
 
@@ -301,7 +301,7 @@ class MaxPool(Base):
         strides = (1, 1)
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "MAX")
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_default")
 
@@ -323,7 +323,7 @@ class MaxPool(Base):
         strides = [1, 1, 1]
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "MAX")
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0, 0, 0, 0], "MAX")
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_3d_default")
 
@@ -359,7 +359,8 @@ class MaxPool(Base):
             mode="constant",
             constant_values=np.nan,
         )
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "MAX")
+        pads = [pad_top, pad_left, pad_bottom, pad_right]
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "MAX")
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_upper")
 
@@ -395,7 +396,8 @@ class MaxPool(Base):
             mode="constant",
             constant_values=np.nan,
         )
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "MAX")
+        pads = [pad_top, pad_left, pad_bottom, pad_right]
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "MAX")
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_lower")
 
@@ -428,7 +430,8 @@ class MaxPool(Base):
             mode="constant",
             constant_values=np.nan,
         )
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "MAX")
+        pads = [pad_top, pad_left, pad_bottom, pad_right]
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "MAX")
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_pads")
 
@@ -447,7 +450,7 @@ class MaxPool(Base):
         strides = (3, 3)
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "MAX")
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_strides")
 

@@ -8,6 +8,7 @@ import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 from onnx.backend.test.case.node.pool_op_common import (
+    get_output_shape_update_pads,
     get_output_shape,
     get_pad_shape,
     pool,
@@ -197,11 +198,12 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32).astype(np.float32)
         x_shape = np.shape(x)
+        dilations = [1]
         kernel_shape = [2]
         strides = [1]
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "AVG")
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0], "AVG", dilations=dilations)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_1d_default")
 
@@ -219,11 +221,12 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
+        dilations = (1, 1)
         kernel_shape = (2, 2)
         strides = (1, 1)
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "AVG", dilations)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_default")
 
@@ -241,11 +244,12 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
+        dilations = (1, 1, 1)
         kernel_shape = [2, 2, 2]
         strides = [1, 1, 1]
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "AVG")
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0, 0, 0, 0], "AVG", dilations)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_3d_default")
 
@@ -265,6 +269,7 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
+        dilations = (1, 1)
         kernel_shape = (2, 2)
         strides = (1, 1)
         out_shape = get_output_shape("SAME_UPPER", x_shape[2:], kernel_shape, strides)
@@ -281,7 +286,8 @@ class AveragePool(Base):
             mode="constant",
             constant_values=np.nan,
         )
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "AVG")
+        pads = (pad_top, pad_left, pad_bottom, pad_right)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "AVG", dilations)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_upper")
 
@@ -301,6 +307,7 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
+        dilations = (1, 1)
         kernel_shape = (2, 2)
         strides = (1, 1)
         out_shape = get_output_shape("SAME_LOWER", x_shape[2:], kernel_shape, strides)
@@ -317,7 +324,8 @@ class AveragePool(Base):
             mode="constant",
             constant_values=np.nan,
         )
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "AVG")
+        pads = (pad_top, pad_left, pad_bottom, pad_right)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "AVG", dilations)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_lower")
 
@@ -337,23 +345,22 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 28, 28).astype(np.float32)
         x_shape = np.shape(x)
+        dilations = (1, 1)
         kernel_shape = (3, 3)
         strides = (1, 1)
         pad_bottom = 2
         pad_top = 2
         pad_right = 2
         pad_left = 2
-        pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-        out_shape = get_output_shape(
-            "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
-        )
+        pads = [pad_top, pad_left, pad_bottom, pad_right]
+        out_shape, pads = get_output_shape_update_pads(pads, x_shape[2:], dilations, kernel_shape, strides, ceil_mode=False)
         padded = np.pad(
             x,
-            ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+            ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
             mode="constant",
             constant_values=np.nan,
         )
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "AVG")
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "AVG", dilations)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_pads")
 
@@ -374,6 +381,7 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 28, 28).astype(np.float32)
         x_shape = np.shape(x)
+        dilations = (1, 1)
         kernel_shape = (3, 3)
         strides = (1, 1)
         pad_bottom = 2
@@ -390,13 +398,14 @@ class AveragePool(Base):
             mode="constant",
             constant_values=0,
         )
+        pads = [pad_top, pad_left, pad_bottom, pad_right]
         y = pool(
             padded,
             x_shape,
             kernel_shape,
             strides,
             out_shape,
-            pad_shape,
+            pads,
             "AVG",
             count_include_pad=1,
         )
@@ -423,11 +432,12 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
+        dilations = (1, 1)
         kernel_shape = (5, 5)
         strides = (3, 3)
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "AVG", dilations)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_strides")
 

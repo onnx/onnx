@@ -36,7 +36,7 @@ class LpPool(Base):
         x_shape = np.shape(x)
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "LPPOOL", p=p)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0], "LPPOOL", p=p)
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_1d_default")
 
@@ -61,7 +61,7 @@ class LpPool(Base):
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(
-            padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
+            padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "LPPOOL", p=p
         )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_default")
@@ -87,7 +87,7 @@ class LpPool(Base):
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(
-            padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "LPPOOL", p=p
+            padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0, 0, 0, 0], "LPPOOL", p=p
         )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_3d_default")
@@ -126,8 +126,9 @@ class LpPool(Base):
             mode="constant",
             constant_values=0,
         )
+        pads = [pad_top, pad_left, pad_bottom, pad_right]
         y = pool(
-            padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
+            padded, x_shape, kernel_shape, strides, out_shape, pads, "LPPOOL", p=p
         )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
@@ -166,8 +167,9 @@ class LpPool(Base):
             mode="constant",
             constant_values=0,
         )
+        pads = [pad_top, pad_left, pad_bottom, pad_right]
         y = pool(
-            padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
+            padded, x_shape, kernel_shape, strides, out_shape, pads, "LPPOOL", p=p
         )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
@@ -203,8 +205,9 @@ class LpPool(Base):
             mode="constant",
             constant_values=0,
         )
+        pads = [pad_top, pad_left, pad_bottom, pad_right]
         y = pool(
-            padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
+            padded, x_shape, kernel_shape, strides, out_shape, pads, "LPPOOL", p=p
         )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
@@ -231,7 +234,7 @@ class LpPool(Base):
         out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(
-            padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
+            padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "LPPOOL", p=p
         )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_strides")
