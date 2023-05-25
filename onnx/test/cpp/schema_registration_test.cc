@@ -14,10 +14,19 @@ using namespace ONNX_NAMESPACE;
 namespace ONNX_NAMESPACE {
 namespace Test {
 
+TEST(SchemaRegistrationTest, DisabledOnnxStaticRegistrationAPICall) {
+#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
+  EXPECT_TRUE(IsOnnxStaticRegistrationDisabled());
+#else
+  EXPECT_FALSE(IsOnnxStaticRegistrationDisabled());
+#endif
+}
+
 // Schema of all versions are registered by default
 // Further schema manipulation expects to be error-free
 TEST(SchemaRegistrationTest, RegisterAllByDefaultAndManipulateSchema) {
 #ifndef __ONNX_DISABLE_STATIC_REGISTRATION
+
   // Expects all opset registered by default
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0);
 
@@ -45,6 +54,10 @@ TEST(SchemaRegistrationTest, RegisterAllByDefaultAndManipulateSchema) {
 // So these tests are run only when static registration is disabled
 TEST(SchemaRegistrationTest, RegisterAndDeregisterAllOpsetSchemaVersion) {
 #ifdef __ONNX_DISABLE_STATIC_REGISTRATION
+
+  // DEBUG
+  EXPECT_TRUE(false);
+
   // Clear all opset schema registration
   DeregisterOnnxOperatorSetSchema();
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == -1);
@@ -127,7 +140,8 @@ TEST(SchemaRegistrationTest, RegisterMultipleOpsetSchemaVersions_UpgradeVersion)
   RegisterOnnxOperatorSetSchema(11);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 11);
   // Register opset 14
-  RegisterOnnxOperatorSetSchema(14);
+  // Do not fail on duplicate schema registration request
+  RegisterOnnxOperatorSetSchema(14, true);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 14);
 
   // Acos-7 is the latest before/at opset 11 and 14
@@ -169,7 +183,8 @@ TEST(SchemaRegistrationTest, RegisterMultipleOpsetSchemaVersions_DowngradeVersio
   RegisterOnnxOperatorSetSchema(14);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 14);
   // Register opset 11
-  RegisterOnnxOperatorSetSchema(11);
+  // Do not fail on duplicate schema registration request
+  RegisterOnnxOperatorSetSchema(11, true);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 11);
 
   // Acos-7 is the latest before/at opset 11 and 14
@@ -212,7 +227,8 @@ TEST(SchemaRegistrationTest, RegisterSpecificThenAllVersion) {
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 11);
 
   // Register all opset versions
-  RegisterOnnxOperatorSetSchema(0);
+  // Do not fail on duplicate schema registration request
+  RegisterOnnxOperatorSetSchema(0, true);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0);
 
   // Should find schema for all ops
@@ -240,7 +256,8 @@ TEST(SchemaRegistrationTest, RegisterAllThenSpecificVersion) {
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0);
 
   // Register opset 11
-  RegisterOnnxOperatorSetSchema(11);
+  // Do not fail on duplicate schema registration request
+  RegisterOnnxOperatorSetSchema(11, true);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 11);
 
   // Should find schema for all ops

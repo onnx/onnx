@@ -1137,7 +1137,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
 
-inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicate_schema = false) {
+inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicate_schema = true) {
   // Update here if opset_version bumps
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
@@ -1170,6 +1170,14 @@ inline void DeregisterOnnxOperatorSetSchema() {
   OpSchemaRegistry::Instance()->OpSchemaDeregisterAll(ONNX_DOMAIN);
   // -1 means no ONNX schema is loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
+}
+
+inline bool IsOnnxStaticRegistrationDisabled() {
+#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
+  return true;
+#else
+  return false;
+#endif
 }
 
 } // namespace ONNX_NAMESPACE

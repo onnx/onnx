@@ -1136,7 +1136,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+    explicit OpSchemaRegisterOnce(
+        OpSchema& op_schema,
+        int opset_version_to_load = 0,
+        bool fail_duplicate_schema = true) {
       ONNX_TRY {
         op_schema.Finalize();
         auto& m = GetMapWithoutEnsuringRegistration();
