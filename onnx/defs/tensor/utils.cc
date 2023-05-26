@@ -56,6 +56,68 @@ void KeepAspectRatioHelper(
   }
 }
 
+void gridSampleShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // If there is any input shape unknown, skip the shape inference.
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+
+  // Grid sample input tensor indices.
+  size_t const input_param = 0, grid_param = 1;
+
+  auto const& input_shape = getInputShape(ctx, input_param);
+  auto const& grid_shape = getInputShape(ctx, grid_param);
+
+  if (input_shape.dim_size() != grid_shape.dim_size()) {
+    fail_shape_inference(
+        "The input tensor and grid tensor must have the same rank for GridSample. ",
+        "Got input tensor rank: ",
+        input_shape.dim_size(),
+        ". ",
+        "Got grid tensor rank: ",
+        grid_shape.dim_size(),
+        ". ");
+  }
+
+  int const num_dims = input_shape.dim_size();
+
+  if (num_dims < 3) {
+    fail_shape_inference(
+        "The input tensor and grid tensor ranks must be >= 3. ",
+        "Got input tensor and grid tensor ranks: ",
+        num_dims,
+        ". ");
+  }
+  auto const& last_dim = grid_shape.dim(num_dims - 1);
+  if (last_dim.has_dim_value() && (last_dim.dim_value() != num_dims - 2)) {
+    fail_shape_inference(
+        "The last dimension of the grid tensor must be the rank of the grid tensor - 2. ",
+        "Got grid tensor rank: ",
+        num_dims,
+        "Got the last dimension of the grid tensor: ",
+        last_dim.dim_value(),
+        ". ");
+  }
+
+  auto* output_shape = getOutputShape(ctx, 0);
+  // N
+  Dim& N = *(output_shape->add_dim());
+  // The first call sets the dimension using the dimensions from input_shape.
+  unifyDim(input_shape.dim(0), N);
+  // The second call checks the dimension using the dimensions from grid_shape.
+  unifyDim(grid_shape.dim(0), N);
+  // C
+  Dim& C = *(output_shape->add_dim());
+  unifyDim(input_shape.dim(1), C);
+  // Other Dimensions.
+  for (int i = 0; i < num_dims - 2; ++i) {
+    Dim& D = *(output_shape->add_dim());
+    unifyDim(grid_shape.dim(1 + i), D);
+  }
+}
+
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
     const std::vector<float>& scales_data,
@@ -366,7 +428,7 @@ std::function<void(OpSchema&)> PadDocGenerator(const char* description, const ch
 
     schema.Output(0, "output", "Tensor after padding.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.TypeConstraint(
-        "T", OpSchema::all_tensor_types_with_bfloat(), "Constrain input and output types to all tensor types.");
+        "T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.");
     schema.TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference

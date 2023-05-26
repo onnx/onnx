@@ -8,24 +8,24 @@ jobs:
     vmImage: 'windows-2019'
   strategy:
     matrix:
+      py311:
+        python.version: '3.11'
+        onnx_ml: 0
+        onnx_verify_proto: 0
+      py310_verify_proto:
+        python.version: '3.10'
+        onnx_ml: 0
+        onnx_verify_proto: 1
       py39:
         python.version: '3.9'
         onnx_ml: 0
         onnx_verify_proto: 0
-      py39_verify_proto:
-        python.version: '3.9'
-        onnx_ml: 0
-        onnx_verify_proto: 1
       py38:
         python.version: '3.8'
         onnx_ml: 0
         onnx_verify_proto: 0
-      py37:
-        python.version: '3.7'
-        onnx_ml: 0
-        onnx_verify_proto: 0
-      py37_onnx_ml:
-        python.version: '3.7'
+      py38_onnx_ml:
+        python.version: '3.8'
         onnx_ml: 1
         onnx_verify_proto: 0
     maxParallel: 4
@@ -41,23 +41,33 @@ jobs:
 
   - script: |
       conda create --yes --quiet --name py$(python.version) python=$(python.version)
-      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf=3.20
+      conda install -n py$(python.version) -y -c conda-forge numpy libprotobuf==3.21.5
     displayName: Create Anaconda environment
 
   - script: |
       call activate py$(python.version)
-      python -m pip install -q --upgrade pip
-      python -m pip install -q -r requirements-release.txt
+      python -m pip install --upgrade pip
+      python -m pip install -r requirements-release.txt
 
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1
       set ONNX_ML=$(onnx_ml)
       set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
 
-      python setup.py -q install
+      pip install -e .
       pytest
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "pytest failed"
+        EXIT 1
+      )
+
+      python -m pip install onnxruntime
+      set ORT_MAX_IR_SUPPORTED_VERSION=8
+      set ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
+      set ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+      pytest
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "pytest failed when testing onnx with onnxruntime"
         EXIT 1
       )
 
@@ -86,5 +96,22 @@ jobs:
 
       rm -rf .setuptools-cmake-build
 
-
+      conda install -y -c conda-forge libprotobuf=3.20
     displayName: Install and test ONNX
+
+  - script: |
+      call activate py$(python.version)
+      python -m pip install protobuf==3.20.2
+
+      set ONNX_BUILD_TESTS=1
+      set ONNX_ML=$(onnx_ml)
+      set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
+      pip uninstall -y onnx
+      python setup.py install
+
+      pytest
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "pytest failed when testing onnx with libprotobuf=3.20"
+        EXIT 1
+      )
+    displayName: Test Protobuf 3.20 from conda-forge

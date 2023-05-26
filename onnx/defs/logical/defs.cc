@@ -89,7 +89,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("greater"))
-        .TypeConstraint("T", OpSchema::all_numeric_types_with_bfloat(), "Constrain input types to all numeric tensors.")
+        .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -97,7 +97,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("less"))
-        .TypeConstraint("T", OpSchema::all_numeric_types_with_bfloat(), "Constrain input types to all numeric tensors.")
+        .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor."));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -193,7 +193,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     16,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("less_equal"))
-        .TypeConstraint("T", OpSchema::all_numeric_types_with_bfloat(), "Constrain input types to all numeric tensors.")
+        .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
         .FunctionBody(R"ONNX(
@@ -209,7 +209,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     16,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("greater_equal"))
-        .TypeConstraint("T", OpSchema::all_numeric_types_with_bfloat(), "Constrain input types to all numeric tensors.")
+        .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
         .FunctionBody(R"ONNX(

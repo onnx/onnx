@@ -1061,9 +1061,21 @@ class OpSet_Onnx_ver18 {
 // Forward declarations for ai.onnx version 19
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Equal);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, AveragePool);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Pad);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Resize);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Cast);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, CastLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Constant);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, DeformConv);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Identity);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, If);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Loop);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Pad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Resize);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Reshape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Scan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Shape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Size);
 
 // Iterate over schema from ai.onnx version 19
 class OpSet_Onnx_ver19 {
@@ -1071,9 +1083,32 @@ class OpSet_Onnx_ver19 {
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Equal)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, AveragePool)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Pad)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Resize)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Cast)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, CastLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Constant)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, DeformConv)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Identity)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, If)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Loop)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Pad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Reshape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Resize)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Scan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Shape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 19, Size)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 20
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, GridSample);
+
+// Iterate over schema from ai.onnx version 20
+class OpSet_Onnx_ver20 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, GridSample)>());
   }
 };
 
@@ -1097,6 +1132,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver17>();
   RegisterOpSetSchema<OpSet_Onnx_ver18>();
   RegisterOpSetSchema<OpSet_Onnx_ver19>();
+  RegisterOpSetSchema<OpSet_Onnx_ver20>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
@@ -1104,6 +1140,7 @@ inline void RegisterOnnxOperatorSetSchema() {
 inline void RegisterOnnxOperatorSetSchema(int target_version) {
   // Update here if opset_version bumps
   // These calls for schema registration here are required to be in descending order for this to work correctly
+  RegisterOpSetSchema<OpSet_Onnx_ver20>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver19>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver18>(target_version);
   RegisterOpSetSchema<OpSet_Onnx_ver17>(target_version);

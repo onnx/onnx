@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 """onnx checker
 
@@ -111,7 +113,11 @@ def check_sparse_tensor(
     C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
-def check_model(model: Union[ModelProto, str, bytes], full_check: bool = False) -> None:
+def check_model(
+    model: Union[ModelProto, str, bytes],
+    full_check: bool = False,
+    skip_opset_compatibility_check: bool = False,
+) -> None:
     """Check the consistency of a model. An exception is raised if the test fails.
 
     Arguments:
@@ -120,7 +126,7 @@ def check_model(model: Union[ModelProto, str, bytes], full_check: bool = False) 
     """
     # If model is a path instead of ModelProto
     if isinstance(model, str):
-        C.check_model_path(model, full_check)
+        C.check_model_path(model, full_check, skip_opset_compatibility_check)
     else:
         protobuf_string = (
             model if isinstance(model, bytes) else model.SerializeToString()
@@ -131,7 +137,7 @@ def check_model(model: Union[ModelProto, str, bytes], full_check: bool = False) 
             raise ValueError(
                 "This protobuf of onnx model is too large (>2GB). Call check_model with model path instead."
             )
-        C.check_model(protobuf_string, full_check)
+        C.check_model(protobuf_string, full_check, skip_opset_compatibility_check)
 
 
 ValidationError = C.ValidationError

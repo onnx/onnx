@@ -80,7 +80,7 @@ class Loop(OpRun):
             outputs = outputs[1 : 1 + self.N]
         outputs.extend(k_carried_away)
         while len(outputs) < len(self.onnx_node.output):
-            outputs.append(np.empty(shape=tuple()))
+            outputs.append(np.empty(shape=()))
         res = tuple(outputs)
 
         return res

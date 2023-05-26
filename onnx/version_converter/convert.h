@@ -22,6 +22,7 @@
 #include "onnx/version_converter/adapters/extend_supported_types.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
+#include "onnx/version_converter/adapters/gridsample_19_20.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -541,8 +542,23 @@ class DefaultVersionConverter : public BaseVersionConverter {
     /******** 18 -> 19 ********/
     registerAdapter(make_unique<CompatibleAdapter>("Equal", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("AveragePool", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Cast", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("CastLike", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Constant", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Identity", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("If", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Loop", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Pad", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Reshape", OpSetID(18), OpSetID(19)));
     registerAdapter(make_unique<CompatibleAdapter>("Resize", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Scan", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Shape", OpSetID(18), OpSetID(19)));
+    registerAdapter(make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
+
+    /******** 19 -> 20 ********/
+    registerAdapter(make_unique<GridSample_19_20>());
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

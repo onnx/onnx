@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -39,10 +39,10 @@ from onnx.parser import parse_graph
 class TestShapeInferenceHelper(unittest.TestCase):
     def _make_graph(
         self,
-        seed_values: Sequence[Union[str, Tuple[str, TensorProto.DataType, Any]]],
-        nodes: List[NodeProto],
-        value_info: List[ValueInfoProto],
-        initializer: Optional[Sequence[TensorProto]] = None,
+        seed_values: Sequence[str | tuple[str, TensorProto.DataType, Any]],
+        nodes: list[NodeProto],
+        value_info: list[ValueInfoProto],
+        initializer: Sequence[TensorProto] | None = None,
     ) -> GraphProto:
         if initializer is None:
             initializer = []
@@ -86,10 +86,15 @@ class TestShapeInferenceHelper(unittest.TestCase):
             value_info=value_info,
         )
 
-    def _inferred(self, graph: GraphProto, **kwargs: Any) -> ModelProto:
-        kwargs["producer_name"] = "onnx-test"
+    def _inferred(
+        self, graph_or_model: GraphProto | ModelProto, **kwargs: Any
+    ) -> ModelProto:
         data_prop = kwargs.pop("data_prop", False)
-        orig_model = helper.make_model(graph, **kwargs)
+        if isinstance(graph_or_model, GraphProto):
+            kwargs["producer_name"] = "onnx-test"
+            orig_model = helper.make_model(graph_or_model, **kwargs)
+        else:
+            orig_model = graph_or_model
         inferred_model = onnx.shape_inference.infer_shapes(
             orig_model, strict_mode=True, data_prop=data_prop
         )
@@ -97,14 +102,22 @@ class TestShapeInferenceHelper(unittest.TestCase):
         return inferred_model
 
     def _assert_inferred(
-        self, graph: GraphProto, vis: List[ValueInfoProto], **kwargs: Any
+        self,
+        graph_or_model: GraphProto | ModelProto,
+        vis: list[ValueInfoProto],
+        **kwargs: Any,
     ) -> None:
+        graph = (
+            graph_or_model
+            if isinstance(graph_or_model, GraphProto)
+            else graph_or_model.graph
+        )
         names_in_vis = {x.name for x in vis}
-        vis = list(x for x in graph.value_info if x.name not in names_in_vis) + vis
-        inferred_model = self._inferred(graph, **kwargs)
+        vis = [x for x in graph.value_info if x.name not in names_in_vis] + vis
+        inferred_model = self._inferred(graph_or_model, **kwargs)
         inferred_vis = list(inferred_model.graph.value_info)
-        vis = list(sorted(vis, key=lambda x: x.name))
-        inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))  # type: ignore
+        vis = sorted(vis, key=lambda x: x.name)
+        inferred_vis = sorted(inferred_vis, key=lambda x: x.name)  # type: ignore
         assert len(vis) == len(inferred_vis)
         for v, inferred_v in zip(vis, inferred_vis):
             self._compare_value_infos(v.type, inferred_v.type)
@@ -147,6 +160,14 @@ class TestShapeInferenceHelper(unittest.TestCase):
             vi = vi_type.optional_type.elem_type
             inferred_vi = inferred_vi_type.optional_type.elem_type
             self._compare_value_infos(vi, inferred_vi)
+        elif vi_type.HasField("map_type"):
+            assert inferred_vi_type.HasField("map_type")
+            assert vi_type.map_type.key_type == vi_type.map_type.key_type
+            self._compare_value_infos(
+                vi_type.map_type.value_type, inferred_vi_type.map_type.value_type
+            )
+        elif vi_type == onnx.TypeProto():
+            assert inferred_vi_type == onnx.TypeProto()
         else:
             raise NotImplementedError(
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type)
@@ -186,6 +207,17 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))]
+        )
+
+    def test_transpose_scalar(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, ())],
+            [make_node("Transpose", ["X"], ["Y"])],
+            [],
+        )
+
+        self._assert_inferred(
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ())]
         )
 
     def test_transpose_partial(self) -> None:
@@ -1655,7 +1687,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 2, 2))]
         )
 
     def test_average_pool_with_same_upper_padding_and_stride_and_dilation(self) -> None:
@@ -7219,7 +7251,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             inferred_model.graph.output[0].type.tensor_type.HasField("shape")
         )
 
-    def test_gridsample(self) -> None:
+    def test_gridsample_2d(self) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (1, 1, 3, 3)),
@@ -7241,7 +7273,29 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 1, 3, 3))]
         )  # type: ignore
 
-    def test_gridsample_defaults(self) -> None:
+    def test_gridsample_3d(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 3, 3, 3)),
+                ("grid", TensorProto.INT64, (1, 3, 2, 3, 3)),
+            ],
+            [
+                make_node(
+                    "GridSample",
+                    ["x", "grid"],
+                    ["y"],
+                    mode="nearest",
+                    padding_mode="border",
+                    align_corners=1,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 1, 3, 2, 3))]
+        )  # type: ignore
+
+    def test_gridsample_2d_defaults(self) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, ("N", "C", "H", "W")),
@@ -7259,7 +7313,25 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )  # type: ignore
 
-    def test_gridsample_no_dim(self) -> None:
+    def test_gridsample_3d_defaults(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, ("N", "C", "D", "H", "W")),
+                ("grid", TensorProto.FLOAT, ("N", "D_out", "H_out", "W_out", 3)),
+            ],
+            [make_node("GridSample", ["x", "grid"], ["y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "y", TensorProto.FLOAT, ("N", "C", "D_out", "H_out", "W_out")
+                )
+            ],
+        )  # type: ignore
+
+    def test_gridsample_2d_no_dim(self) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, ("N", "C", None, None)),
@@ -7270,7 +7342,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "GridSample",
                     ["x", "grid"],
                     ["y"],
-                    mode="bilinear",
+                    mode="linear",
                     padding_mode="border",
                 )
             ],
@@ -7279,6 +7351,32 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", None, None))],
+        )  # type: ignore
+
+    def test_gridsample_3d_no_dim(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, ("N", "C", None, None, None)),
+                ("grid", TensorProto.FLOAT, ("N", None, None, None, 3)),
+            ],
+            [
+                make_node(
+                    "GridSample",
+                    ["x", "grid"],
+                    ["y"],
+                    mode="linear",
+                    padding_mode="border",
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "y", TensorProto.FLOAT, ("N", "C", None, None, None)
+                )
+            ],
         )  # type: ignore
 
     def test_sequence_map_identity_known_dims(self):  # type: () -> None
@@ -8764,6 +8862,46 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("output", TensorProto.FLOAT, (2, "N", 3, 4))],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 1),
+                make_opsetid(ONNX_DOMAIN, 18),
+            ],
+        )
+
+    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    def test_zip_map(self) -> None:
+        params = (
+            ({"classlabels_int64s": [1, 2, 3]}, onnx.TensorProto.INT64),
+            ({"classlabels_strings": ["a", "b", "c"]}, onnx.TensorProto.STRING),
+        )
+        for attrs, input_type in params:
+            with self.subTest(attrs=attrs, input_type=input_type):
+                self.zip_map_test_case(attrs, input_type)
+
+    def zip_map_test_case(self, attrs, input_type) -> None:
+        graph = self._make_graph(
+            [("input", TensorProto.FLOAT, ("N", 3))],
+            [
+                make_node(
+                    "ZipMap",
+                    ["input"],
+                    ["output"],
+                    **attrs,
+                    domain="ai.onnx.ml",
+                )
+            ],
+            [],
+        )
+        typ = onnx.helper.make_map_type_proto(
+            input_type, onnx.helper.make_tensor_type_proto(TensorProto.FLOAT, ())
+        )
+        self._assert_inferred(
+            graph,
+            [
+                onnx.helper.make_value_info(
+                    "output", onnx.helper.make_sequence_type_proto(typ)
+                )
+            ],
             opset_imports=[
                 make_opsetid(ONNX_ML_DOMAIN, 1),
                 make_opsetid(ONNX_DOMAIN, 18),

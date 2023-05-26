@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 # pylint: disable=unidiomatic-typecheck
@@ -463,13 +465,13 @@ def add_prefix_graph(  # pylint: disable=too-many-branches
                 name_map[e] = _prefixed(prefix, e)
             for e in n.output:
                 name_map[e] = _prefixed(prefix, e)
-    else:
-        if rename_outputs:
-            for entry in g.output:
-                name_map[entry.name] = _prefixed(prefix, entry.name)
-        if rename_inputs:
-            for entry in g.input:
-                name_map[entry.name] = _prefixed(prefix, entry.name)
+
+    if rename_inputs:
+        for entry in g.input:
+            name_map[entry.name] = _prefixed(prefix, entry.name)
+    if rename_outputs:
+        for entry in g.output:
+            name_map[entry.name] = _prefixed(prefix, entry.name)
 
     if rename_nodes:
         for n in g.node:

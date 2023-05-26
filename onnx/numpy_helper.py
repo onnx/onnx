@@ -1,4 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 # pylint: disable=C3001,isinstance-second-argument-not-valid-type
 
 import sys
@@ -32,7 +35,146 @@ def bfloat16_to_float32(
     return shift(data.astype(np.int32)).reshape(dims).view(np.float32)  # type: ignore[no-any-return]
 
 
-def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
+def _float8e4m3_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
+    if not fn:
+        raise NotImplementedError("fn=False is not implemented.")
+    if ival < 0 or ival > 255:
+        raise ValueError(f"{ival} is not a float8.")
+    if uz:
+        exponent_bias = 8
+        if ival == 0x80:
+            return np.nan  # type: ignore[return-value]
+    else:
+        exponent_bias = 7
+        if ival == 255:
+            return np.float32(-np.nan)
+        if ival == 127:
+            return np.float32(np.nan)
+
+    expo = (ival & 0x78) >> 3
+    mant = ival & 0x07
+    sign = ival & 0x80
+    res = sign << 24
+    if expo == 0:
+        if mant > 0:
+            expo = 0x7F - exponent_bias
+            if mant & 0x4 == 0:
+                mant &= 0x3
+                mant <<= 1
+                expo -= 1
+            if mant & 0x4 == 0:
+                mant &= 0x3
+                mant <<= 1
+                expo -= 1
+            res |= (mant & 0x3) << 21
+            res |= expo << 23
+    else:
+        res |= mant << 20
+        expo += 0x7F - exponent_bias
+        res |= expo << 23
+    f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
+    return f
+
+
+_float8e4m3_to_float32 = np.vectorize(
+    _float8e4m3_to_float32_scalar, excluded=["fn", "uz"]
+)
+
+
+def float8e4m3_to_float32(
+    data: Union[np.int16, np.int32, np.ndarray],
+    dims: Optional[Union[int, Sequence[int]]] = None,
+    fn: bool = True,
+    uz: bool = False,
+) -> np.ndarray:
+    """Converts ndarray of float8, e4m3 (as uint32) to f32 (as uint32).
+
+    :param data: a numpy array, empty dimensions are allowed if dims is None
+    :param dims: if specified, the function reshapes the results
+    :param fn: no infinite values
+    :param uz: no negative zero
+    :return: a numpy array of float32 with the same dimension if dims is None,
+        or reshaped to dims if specified.
+
+    See :ref:`onnx-detail-float8` for technical details.
+    """
+    if not fn:
+        raise NotImplementedError(
+            "float32_to_float8e4m3 not implemented with fn=False."
+        )
+    res = _float8e4m3_to_float32(data, fn=fn, uz=uz)
+    if dims is None:
+        return res  # type: ignore[no-any-return]
+    return res.reshape(dims)  # type: ignore[no-any-return]
+
+
+def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
+    if fn and uz:
+        if ival == 0x80:
+            return np.float32(np.nan)
+        exponent_bias = 16
+    elif not fn and not uz:
+        if ival in {253, 254, 255}:
+            return np.float32(-np.nan)
+        if ival in {125, 126, 127}:
+            return np.float32(np.nan)
+        if ival == 252:
+            return np.float32(-np.inf)
+        if ival == 124:
+            return np.float32(np.inf)
+        exponent_bias = 15
+    else:
+        raise NotImplementedError("fn and uz must be both False or True.")
+
+    expo = (ival & 0x7C) >> 2
+    mant = ival & 0x03
+    sign = ival & 0x80
+    res = sign << 24
+    if expo == 0:
+        if mant > 0:
+            expo = 0x7F - exponent_bias
+            if mant & 0x2 == 0:
+                mant &= 0x1
+                mant <<= 1
+                expo -= 1
+            res |= (mant & 0x1) << 22
+            res |= expo << 23
+    else:
+        res |= mant << 21
+        expo += 0x7F - exponent_bias
+        res |= expo << 23
+    f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
+    return f
+
+
+_float8e5m2_to_float32 = np.vectorize(
+    _float8e5m2_to_float32_scalar, excluded=["fn", "uz"]
+)
+
+
+def float8e5m2_to_float32(
+    data: Union[np.int16, np.int32, np.ndarray],
+    dims: Optional[Union[int, Sequence[int]]] = None,
+    fn: bool = False,
+    uz: bool = False,
+) -> np.ndarray:
+    """Converts ndarray of float8, e5m2 (as uint32) to f32 (as uint32).
+
+    :param data: a numpy array, empty dimensions are allowed if dims is None
+    :param dims: if specified, the function reshapes the results
+    :param fn: no infinite values
+    :param uz: no negative zero
+    :return: a numpy array of float32 with the same dimension if dims is None,
+        or reshaped to dims if specified"""
+    res = _float8e5m2_to_float32(data, fn=fn, uz=uz)
+    if dims is None:
+        return res  # type: ignore[no-any-return]
+    return res.reshape(dims)  # type: ignore[no-any-return]
+
+
+def to_array(  # pylint: disable=too-many-branches
+    tensor: TensorProto, base_dir: str = ""
+) -> np.ndarray:
     """Converts a tensor def object to a numpy array.
 
     Args:
@@ -57,7 +199,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
 
     if tensor.data_type == TensorProto.STRING:
         utf8_strings = getattr(tensor, storage_field)
-        ss = list(s.decode("utf-8") for s in utf8_strings)
+        ss = [s.decode("utf-8") for s in utf8_strings]
         return np.asarray(ss).astype(np_dtype).reshape(dims)
 
     # Load raw data from external tensor if it exists
@@ -75,6 +217,22 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
             data = np.frombuffer(tensor.raw_data, dtype=np.int16)
             return bfloat16_to_float32(data, dims)
 
+        if tensor_dtype == TensorProto.FLOAT8E4M3FN:
+            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            return float8e4m3_to_float32(data, dims)
+
+        if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
+            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            return float8e4m3_to_float32(data, dims, uz=True)
+
+        if tensor_dtype == TensorProto.FLOAT8E5M2:
+            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            return float8e5m2_to_float32(data, dims)
+
+        if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
+            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            return float8e5m2_to_float32(data, dims, fn=True, uz=True)
+
         return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
 
     # float16 is stored as int32 (uint16 type); Need view to get the original value
@@ -89,6 +247,22 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     if tensor_dtype == TensorProto.BFLOAT16:
         data = np.asarray(tensor.int32_data, dtype=np.int32)
         return bfloat16_to_float32(data, dims)
+
+    if tensor_dtype == TensorProto.FLOAT8E4M3FN:
+        data = np.asarray(tensor.int32_data, dtype=np.int32)
+        return float8e4m3_to_float32(data, dims)
+
+    if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
+        data = np.asarray(tensor.int32_data, dtype=np.int32)
+        return float8e4m3_to_float32(data, dims, uz=True)
+
+    if tensor_dtype == TensorProto.FLOAT8E5M2:
+        data = np.asarray(tensor.int32_data, dtype=np.int32)
+        return float8e5m2_to_float32(data, dims)
+
+    if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
+        data = np.asarray(tensor.int32_data, dtype=np.int32)
+        return float8e5m2_to_float32(data, dims, fn=True, uz=True)
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):

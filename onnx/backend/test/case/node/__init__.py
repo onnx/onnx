@@ -17,6 +17,7 @@ from onnx.onnx_pb import (
     GraphProto,
     ModelProto,
     NodeProto,
+    TensorProto,
     TypeProto,
 )
 
@@ -180,6 +181,10 @@ def _extract_value_info(
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
             type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+        elif isinstance(input, TensorProto):
+            elem_type = input.data_type
+            shape = tuple(input.dims)
+            type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
         else:
             elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
             shape = input.shape
@@ -228,8 +233,8 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # the latest opset vesion that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
-    inputs: Sequence[np.ndarray],
-    outputs: Sequence[np.ndarray],
+    inputs: Sequence[Union[np.ndarray, TensorProto]],
+    outputs: Sequence[Union[np.ndarray, TensorProto]],
     name: str,
     **kwargs: Any,
 ) -> None:

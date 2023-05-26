@@ -1140,12 +1140,26 @@ node = onnx.helper.make_node(
     "AveragePool",
     inputs=["x"],
     outputs=["y"],
-    kernel_shape=[3, 3],
+    kernel_shape=[2, 2],
     strides=[1, 1],
     dilations=[2, 2],
     ceil_mode=True,
 )
-x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+
+# input shape: [1, 1, 4, 4]
+x = np.array(
+    [
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [13, 14, 15, 16],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
 y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
@@ -2095,7 +2109,7 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 
 
 ### Cast
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>cast</summary>
 
@@ -2112,7 +2126,27 @@ test_cases = [
     ("STRING", "FLOAT"),
     ("FLOAT", "BFLOAT16"),
     ("BFLOAT16", "FLOAT"),
+    ("FLOAT", "FLOAT8E4M3FN"),
+    ("FLOAT16", "FLOAT8E4M3FN"),
+    ("FLOAT", "FLOAT8E4M3FNUZ"),
+    ("FLOAT16", "FLOAT8E4M3FNUZ"),
+    ("FLOAT8E4M3FN", "FLOAT"),
+    ("FLOAT8E4M3FN", "FLOAT16"),
+    ("FLOAT8E4M3FNUZ", "FLOAT"),
+    ("FLOAT8E4M3FNUZ", "FLOAT16"),
+    ("FLOAT", "FLOAT8E5M2"),
+    ("FLOAT16", "FLOAT8E5M2"),
+    ("FLOAT", "FLOAT8E5M2FNUZ"),
+    ("FLOAT16", "FLOAT8E5M2FNUZ"),
+    ("FLOAT8E5M2", "FLOAT"),
+    ("FLOAT8E5M2", "FLOAT16"),
+    ("FLOAT8E5M2FNUZ", "FLOAT"),
+    ("FLOAT8E5M2FNUZ", "FLOAT16"),
 ]
+
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
 
 for from_type, to_type in test_cases:
     input_type_proto = None
@@ -2167,6 +2201,101 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
+    elif from_type in f8_types or to_type in f8_types:
+        np_fp32 = np.array(
+            [
+                "0.47892547",
+                "0.48033667",
+                "0.49968487",
+                "0.81910545",
+                "0.47031248",
+                "0.7229038",
+                "1000000",
+                "1e-7",
+                "NaN",
+                "INF",
+                "+INF",
+                "-INF",
+            ],
+            dtype=np.float32,
+        )
+
+        if from_type == "FLOAT":
+            input_values = np_fp32
+            input = make_tensor(
+                "x", TensorProto.FLOAT, [3, 4], np_fp32.tolist()
+            )
+        elif from_type == "FLOAT16":
+            input_values = np_fp32.astype(np.float16).astype(np.float32)
+            input = make_tensor(
+                "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E4M3FN":
+            input_values = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32)
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FN, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E4M3FNUZ":
+            input_values = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32, uz=True), uz=True
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E5M2":
+            input_values = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32)
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E5M2, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E5M2FNUZ":
+            input_values = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32, fn=True, uz=True),
+                fn=True,
+                uz=True,
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 4], input_values.tolist()
+            )
+        else:
+            raise ValueError(
+                "Conversion from {from_type} to {to_type} is not tested."
+            )
+
+        if to_type == "FLOAT8E4M3FN":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(input_values)
+            )
+        elif to_type == "FLOAT8E4M3FNUZ":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(input_values, uz=True), uz=True
+            )
+        elif to_type == "FLOAT8E5M2":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(input_values)
+            )
+        elif to_type == "FLOAT8E5M2FNUZ":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(input_values, fn=True, uz=True),
+                fn=True,
+                uz=True,
+            )
+        elif to_type == "FLOAT16":
+            expected = input_values.astype(np.float16).astype(np.float32)
+        elif to_type == "FLOAT":
+            expected = input_values
+        else:
+            raise ValueError(
+                "Conversion from {from_type} to {to_type} is not tested."
+            )
+        expected_tensor = make_tensor(
+            "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
+        )
+        output = expected_tensor
+
     elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
@@ -2230,6 +2359,98 @@ for from_type, to_type in test_cases:
 ```
 
 </details>
+<details>
+<summary>saturate_false</summary>
+
+```python
+test_cases = [
+    ("FLOAT", "FLOAT8E4M3FN"),
+    ("FLOAT16", "FLOAT8E4M3FN"),
+    ("FLOAT", "FLOAT8E4M3FNUZ"),
+    ("FLOAT16", "FLOAT8E4M3FNUZ"),
+    ("FLOAT", "FLOAT8E5M2"),
+    ("FLOAT16", "FLOAT8E5M2"),
+    ("FLOAT", "FLOAT8E5M2FNUZ"),
+    ("FLOAT16", "FLOAT8E5M2FNUZ"),
+]
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+
+for from_type, to_type in test_cases:
+    np_fp32 = np.array(
+        [
+            "0.47892547",
+            "0.48033667",
+            "0.49968487",
+            "0.81910545",
+            "0.47031248",
+            "0.7229038",
+            "1000000",
+            "1e-7",
+            "NaN",
+            "INF",
+            "+INF",
+            "-INF",
+        ],
+        dtype=np.float32,
+    )
+
+    if from_type == "FLOAT":
+        input_values = np_fp32
+        input = make_tensor("x", TensorProto.FLOAT, [3, 4], np_fp32.tolist())
+    elif from_type == "FLOAT16":
+        input_values = np_fp32.astype(np.float16).astype(np.float32)
+        input = make_tensor(
+            "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+        )
+    else:
+        raise ValueError(
+            "Conversion from {from_type} to {to_type} is not tested."
+        )
+
+    if to_type == "FLOAT8E4M3FN":
+        expected = vect_float32_to_float8e4m3(input_values, saturate=False)
+    elif to_type == "FLOAT8E4M3FNUZ":
+        expected = vect_float32_to_float8e4m3(
+            input_values, uz=True, saturate=False
+        )
+    elif to_type == "FLOAT8E5M2":
+        expected = vect_float32_to_float8e5m2(input_values, saturate=False)
+    elif to_type == "FLOAT8E5M2FNUZ":
+        expected = vect_float32_to_float8e5m2(
+            input_values, fn=True, uz=True, saturate=False
+        )
+    else:
+        raise ValueError(
+            "Conversion from {from_type} to {to_type} is not tested."
+        )
+
+    ivals = bytes([int(i) for i in expected])
+    tensor = TensorProto()
+    tensor.data_type = getattr(TensorProto, to_type)
+    tensor.name = "x"
+    tensor.dims.extend([3, 4])
+    field = tensor_dtype_to_field(tensor.data_type)
+    getattr(tensor, field).extend(ivals)
+
+    output = tensor
+
+    node = onnx.helper.make_node(
+        "Cast",
+        inputs=["input"],
+        outputs=["output"],
+        to=getattr(TensorProto, to_type),
+        saturate=0,
+    )
+    expect(
+        node,
+        inputs=[input],
+        outputs=[output],
+        name="test_cast_no_saturate_" + from_type + "_to_" + to_type,
+    )
+```
+
+</details>
 
 
 ### CastLike
@@ -2250,7 +2471,18 @@ test_cases = [
     ("STRING", "FLOAT"),
     ("FLOAT", "BFLOAT16"),
     ("BFLOAT16", "FLOAT"),
+    ("FLOAT", "FLOAT8E4M3FN"),
+    ("FLOAT", "FLOAT8E4M3FNUZ"),
+    ("FLOAT8E4M3FN", "FLOAT"),
+    ("FLOAT8E4M3FNUZ", "FLOAT"),
+    ("FLOAT", "FLOAT8E5M2"),
+    ("FLOAT", "FLOAT8E5M2FNUZ"),
+    ("FLOAT8E5M2", "FLOAT"),
+    ("FLOAT8E5M2FNUZ", "FLOAT"),
 ]
+
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
 
 for from_type, to_type in test_cases:
     input_type_proto = None
@@ -2305,6 +2537,86 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
+        like = output.flatten()[0:1]
+    elif from_type in (
+        "FLOAT8E4M3FN",
+        "FLOAT8E4M3FNUZ",
+        "FLOAT8E5M2",
+        "FLOAT8E5M2FNUZ",
+    ) or to_type in (
+        "FLOAT8E4M3FN",
+        "FLOAT8E4M3FNUZ",
+        "FLOAT8E5M2",
+        "FLOAT8E5M2FNUZ",
+    ):
+        np_fp32 = np.array(
+            [
+                "0.47892547",
+                "0.48033667",
+                "0.49968487",
+                "0.81910545",
+                "0.47031248",
+                "0.816468",
+                "0.21087195",
+                "0.7229038",
+                "NaN",
+                "INF",
+                "+INF",
+                "-INF",
+            ],
+            dtype=np.float32,
+        )
+        if to_type == "FLOAT8E4M3FN":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32)
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FN, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FN, [1], expected[:1]
+            )
+        elif to_type == "FLOAT8E4M3FNUZ":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32, uz=True), uz=True
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FNUZ, [1], expected[:1]
+            )
+        elif to_type == "FLOAT8E5M2":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32)
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2, [1], expected[:1]
+            )
+        elif to_type == "FLOAT8E5M2FNUZ":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32, fn=True, uz=True),
+                fn=True,
+                uz=True,
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2FNUZ, [1], expected[:1]
+            )
+        if from_type == "FLOAT":
+            input = np_fp32.reshape((3, 4))
+            output = expected_tensor
+            like = like_tensor
+        else:
+            assert to_type == "FLOAT"
+            input = expected_tensor
+            output = expected.reshape((3, 4))
+            like = output.flatten()[:1]
     elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
@@ -2322,6 +2634,7 @@ for from_type, to_type in test_cases:
             output = input.astype(
                 helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
             )
+        like = output.flatten()[0:1]
     else:
         input = np.array(
             [
@@ -2343,19 +2656,23 @@ for from_type, to_type in test_cases:
         output = input.astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
         )
-    like = output.flatten()[0:1]
+        like = output.flatten()[0:1]
     node = onnx.helper.make_node(
         "CastLike",
         inputs=["input", "like"],
         outputs=["output"],
     )
     if input_type_proto and output_type_proto:
+        like_type_proto = onnx.helper.make_tensor_type_proto(
+            output_type_proto.tensor_type.elem_type, like.shape
+        )
+
         expect(
             node,
             inputs=[input, like],
             outputs=[output],
             name="test_castlike_" + from_type + "_to_" + to_type,
-            input_type_protos=[input_type_proto, output_type_proto],
+            input_type_protos=[input_type_proto, like_type_proto],
             output_type_protos=[output_type_proto],
         )
     else:
@@ -3206,12 +3523,12 @@ for test_case, values_ in test_cases.items():
     for i in range(len(values[0].shape)):
         in_args = ["value" + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
-            "Concat", inputs=[s for s in in_args], outputs=["output"], axis=i
+            "Concat", inputs=list(in_args), outputs=["output"], axis=i
         )
         output = np.concatenate(values, i)
         expect(
             node,
-            inputs=[v for v in values],
+            inputs=list(values),
             outputs=[output],
             name="test_concat_" + test_case + "_axis_" + str(i),
         )
@@ -3219,12 +3536,12 @@ for test_case, values_ in test_cases.items():
     for i in range(-len(values[0].shape), 0):
         in_args = ["value" + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
-            "Concat", inputs=[s for s in in_args], outputs=["output"], axis=i
+            "Concat", inputs=list(in_args), outputs=["output"], axis=i
         )
         output = np.concatenate(values, i)
         expect(
             node,
-            inputs=[v for v in values],
+            inputs=list(values),
             outputs=[output],
             name="test_concat_" + test_case + "_axis_negative_" + str(abs(i)),
         )
@@ -4541,7 +4858,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 ### DequantizeLinear
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -4599,6 +4916,54 @@ expect(
     inputs=[x, x_scale, x_zero_point],
     outputs=[y],
     name="test_dequantizelinear",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+x_scale = np.float32(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn",
+)
+```
+
+</details>
+<details>
+<summary>e5m2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
+x_scale = np.float32(2)
+y = np.array([0.0, 1.0, 2.0, 98304.0, 192.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e5m2",
 )
 ```
 
@@ -6321,7 +6686,7 @@ expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_bcast")
 
 
 ### GridSample
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>gridsample</summary>
 
@@ -6330,7 +6695,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     padding_mode="zeros",
     align_corners=0,
 )
@@ -6459,7 +6824,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bilinear = np.array(
@@ -6479,7 +6844,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -6517,7 +6882,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bicubic = np.array(
@@ -6527,6 +6892,155 @@ Y_bicubic = np.array(
 
 expect(
     node, inputs=[X, Grid], outputs=[Y_bicubic], name="test_gridsample_bicubic"
+)
+
+# ============================================================================
+# Additional tests
+# The reference output tensors were generated using PyTorch 2.0.
+Grid = np.array(
+    [
+        [
+            [[-1.0, -0.8], [-0.6, -0.5], [-0.1, -0.2], [0.7, 0.0]],
+            [[0.0, 0.4], [0.2, -0.2], [-0.3, 0.5], [-1.0, 1.0]],
+        ]
+    ],
+    dtype=np.float32,
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [[[[0.0, 0.0, 2.0, 3.0], [4.0, 3.0, 4.0, 4.0]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_nearest_align_corners_0_additional_1",
+)
+
+# setting mode = 'nearest'
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [[[[0.0, 0.0, 2.0, 3.0], [2.0, 3.0, 4.0, 4.0]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_nearest_align_corners_1_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [[[[0.0000, 0.4500, 1.8000, 2.4000], [3.7000, 2.1000, 3.7000, 1.0000]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_bilinear_align_corners_0_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [[[[0.4000, 1.2000, 2.0500, 2.8500], [3.3000, 2.2000, 3.3500, 4.0000]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_bilinear_align_corners_1_additional_1",
+)
+
+# These two new bicubic tests produces slightly higher error ~5e-5
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="cubic",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [-0.173250, 0.284265, 1.923106, 2.568000],
+                [5.170375, 2.284414, 4.744844, 1.046875],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bicubic],
+    name="test_gridsample_bicubic_align_corners_0_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="cubic",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [0.304001, 1.128750, 2.266270, 3.144844],
+                [4.531500, 2.455360, 4.599819, 4.000000],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bicubic],
+    name="test_gridsample_bicubic_align_corners_1_additional_1",
 )
 ```
 
@@ -6619,6 +7133,173 @@ expect(
     inputs=[X, Grid],
     outputs=[Y_reflection],
     name="test_gridsample_reflection_padding",
+)
+```
+
+</details>
+<details>
+<summary>volumeetric_gridsample_mode_aligncorners</summary>
+
+```python
+X = np.array(
+    [
+        [
+            [
+                [[1.0, 2.0], [3.0, 4.0]],
+                [[5.0, 6.0], [7.0, 8.0]],
+                [[9.0, 10.0], [11.0, 12.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+Grid = np.array(
+    [
+        [
+            [
+                [[-1.0, -1.0, -1.0], [-1.0, -0.5, 0.3]],
+                [[-0.5, -0.5, -0.5], [1.0, -0.6, -1.0]],
+                [[-0.2, -0.2, -0.2], [0.4, 0.2, 0.6]],
+                [[0.0, 0.0, 0.0], [-1.0, 0.0, 0.0]],
+            ],
+            [
+                [[0.0, 0.0, 0.0], [-1.0, 1.0, 0.0]],
+                [[-0.2, -0.2, -0.2], [1.0, 0.4, -0.2]],
+                [[0.5, 0.5, 0.5], [-1.0, -0.8, 0.8]],
+                [[1.0, 1.0, 1.0], [0.4, 0.6, -0.3]],
+            ],
+        ]
+    ],
+    dtype=np.float32,
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [[1.0, 5.0], [1.0, 0.0], [5.0, 12.0], [5.0, 5.0]],
+                [[5.0, 0.0], [5.0, 0.0], [12.0, 9.0], [0.0, 8.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_volumetric_nearest_align_corners_0",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [[1.0, 5.0], [1.0, 2.0], [5.0, 12.0], [5.0, 5.0]],
+                [[5.0, 7.0], [5.0, 8.0], [12.0, 9.0], [12.0, 8.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_volumetric_nearest_align_corners_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [
+                    [0.1250, 3.4000],
+                    [2.0000, 0.4500],
+                    [4.7000, 10.9000],
+                    [6.5000, 3.0000],
+                ],
+                [
+                    [6.5000, 1.7500],
+                    [4.7000, 3.3000],
+                    [11.0000, 2.5200],
+                    [1.5000, 5.4900],
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_volumetric_bilinear_align_corners_0",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [
+                    [1.0000, 6.7000],
+                    [3.7500, 2.4000],
+                    [5.4000, 9.3000],
+                    [6.5000, 6.0000],
+                ],
+                [
+                    [6.5000, 7.0000],
+                    [5.4000, 6.6000],
+                    [9.2500, 8.4000],
+                    [12.0000, 6.1000],
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_volumetric_bilinear_align_corners_1",
 )
 ```
 
@@ -12007,7 +12688,7 @@ expect(
 
 
 ### QuantizeLinear
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -12039,6 +12720,58 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_axis",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
+y_scale = np.float32(2)
+y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+y = make_tensor(
+    "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96]
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_e4m3fn",
+)
+```
+
+</details>
+<details>
+<summary>e5m2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
+y_scale = np.float32(2)
+y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
+y = make_tensor(
+    "zero_point", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96]
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_e5m2",
 )
 ```
 
@@ -19686,7 +20419,7 @@ node = onnx.helper.make_node(
     keepdims=0,
 )
 
-expected_outputs = [list(data[:, i] for i in range(data.shape[1]))]
+expected_outputs = [[data[:, i] for i in range(data.shape[1])]]
 
 expect(
     node,
@@ -21133,9 +21866,9 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 
 # prepare index mapping from sorted to unsorted
 argsorted_indices = np.argsort(indices)
-inverse_indices_map = {
-    i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))
-}
+inverse_indices_map = dict(
+    zip(argsorted_indices, np.arange(len(argsorted_indices)))
+)
 
 indices = indices[argsorted_indices]
 y = np.take(x, indices, axis=0)

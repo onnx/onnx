@@ -313,8 +313,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "AveragePool",
             "average",
             "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
-            false,
-            false))
+            true, /* use_dilation: dilations attribute has been added in opset 19. */
+            false /* supports8bit: does not support 8bit. */))
         .Attr(
             "dilations",
             "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
@@ -2012,10 +2012,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Constrain input and output to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output to all tensor types.")
         .Attr(
             "axis",
             "Indicate up to which input dimensions "
@@ -2536,7 +2533,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_with_bfloat(),
+            OpSchema::all_tensor_types_ir4(),
             "Constrain input and output types to all numeric tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { col2imShapeInference(ctx); }));
 
