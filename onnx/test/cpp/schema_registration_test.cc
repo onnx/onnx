@@ -55,9 +55,6 @@ TEST(SchemaRegistrationTest, RegisterAllByDefaultAndManipulateSchema) {
 TEST(SchemaRegistrationTest, RegisterAndDeregisterAllOpsetSchemaVersion) {
 #ifdef __ONNX_DISABLE_STATIC_REGISTRATION
 
-  // DEBUG
-  EXPECT_TRUE(false);
-
   // Clear all opset schema registration
   DeregisterOnnxOperatorSetSchema();
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == -1);
@@ -141,7 +138,7 @@ TEST(SchemaRegistrationTest, RegisterMultipleOpsetSchemaVersions_UpgradeVersion)
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 11);
   // Register opset 14
   // Do not fail on duplicate schema registration request
-  RegisterOnnxOperatorSetSchema(14, true);
+  RegisterOnnxOperatorSetSchema(14, false);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 14);
 
   // Acos-7 is the latest before/at opset 11 and 14
@@ -184,7 +181,7 @@ TEST(SchemaRegistrationTest, RegisterMultipleOpsetSchemaVersions_DowngradeVersio
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 14);
   // Register opset 11
   // Do not fail on duplicate schema registration request
-  RegisterOnnxOperatorSetSchema(11, true);
+  RegisterOnnxOperatorSetSchema(11, false);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 11);
 
   // Acos-7 is the latest before/at opset 11 and 14
@@ -228,7 +225,7 @@ TEST(SchemaRegistrationTest, RegisterSpecificThenAllVersion) {
 
   // Register all opset versions
   // Do not fail on duplicate schema registration request
-  RegisterOnnxOperatorSetSchema(0, true);
+  RegisterOnnxOperatorSetSchema(0, false);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0);
 
   // Should find schema for all ops
@@ -257,7 +254,7 @@ TEST(SchemaRegistrationTest, RegisterAllThenSpecificVersion) {
 
   // Register opset 11
   // Do not fail on duplicate schema registration request
-  RegisterOnnxOperatorSetSchema(11, true);
+  RegisterOnnxOperatorSetSchema(11, false);
   EXPECT_TRUE(OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 11);
 
   // Should find schema for all ops
