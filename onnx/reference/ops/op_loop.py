@@ -29,7 +29,7 @@ class Loop(OpRun):
         return True
 
     def _run(self, M, cond, *args, context=None, body=None, attributes=None):  # type: ignore
-        if not args:
+        if args:
             v_initial = args[0]
             args = args[1:]
         else:
@@ -42,7 +42,7 @@ class Loop(OpRun):
         if v_initial is not None:
             inputs[loop_inputs[2]] = v_initial
         cond_name = body.output_names[0]
-        if not args:
+        if args:
             begin = len(loop_inputs) - len(args)
             all_inputs = loop_inputs[begin:]
             for name, val in zip(all_inputs, args):
