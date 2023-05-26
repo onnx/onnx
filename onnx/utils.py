@@ -1,9 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import os
-from typing import List, Tuple
 
 import onnx.checker
 import onnx.helper
@@ -40,17 +40,17 @@ class Extractor:
         new_io_tensors_map = self._build_name2obj_dict(new_io_tensors)
         return [new_io_tensors_map[name] for name in io_names_to_extract]
 
-    def _collect_new_inputs(self, names: List[str]) -> List[ValueInfoProto]:
+    def _collect_new_inputs(self, names: list[str]) -> list[ValueInfoProto]:
         return self._collect_new_io_core(self.graph.input, names)  # type: ignore
 
-    def _collect_new_outputs(self, names: List[str]) -> List[ValueInfoProto]:
+    def _collect_new_outputs(self, names: list[str]) -> list[ValueInfoProto]:
         return self._collect_new_io_core(self.graph.output, names)  # type: ignore
 
     def _dfs_search_reachable_nodes(
         self,
         node_output_name: str,
-        graph_input_names: List[str],
-        reachable_nodes: List[NodeProto],
+        graph_input_names: list[str],
+        reachable_nodes: list[NodeProto],
     ) -> None:
         if node_output_name in graph_input_names:
             return
@@ -68,9 +68,9 @@ class Extractor:
 
     def _collect_reachable_nodes(
         self,
-        input_names: List[str],
-        output_names: List[str],
-    ) -> List[NodeProto]:
+        input_names: list[str],
+        output_names: list[str],
+    ) -> list[NodeProto]:
         reachable_nodes = []  # type: ignore[var-annotated]
         for name in output_names:
             self._dfs_search_reachable_nodes(name, input_names, reachable_nodes)
@@ -113,15 +113,15 @@ class Extractor:
 
     def _collect_reachable_tensors(
         self,
-        nodes: List[NodeProto],
-    ) -> Tuple[List[TensorProto], List[ValueInfoProto]]:
-        all_tensors_name = set()
+        nodes: list[NodeProto],
+    ) -> tuple[list[TensorProto], list[ValueInfoProto]]:
+        all_tensors_names: set[str] = set()
         for node in nodes:
-            all_tensors_name.update(node.input)
-            all_tensors_name.update(node.output)
+            all_tensors_names.update(node.input)
+            all_tensors_names.update(node.output)
 
-        initializer = [self.wmap[t] for t in self.wmap if t in all_tensors_name]
-        value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_name]
+        initializer = [self.wmap[t] for t in self.wmap if t in all_tensors_names]
+        value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_names]
         len_sparse_initializer = len(self.graph.sparse_initializer)
         if len_sparse_initializer != 0:
             raise ValueError(
@@ -136,12 +136,12 @@ class Extractor:
 
     def _make_model(
         self,
-        nodes: List[NodeProto],
-        inputs: List[ValueInfoProto],
-        outputs: List[ValueInfoProto],
-        initializer: List[TensorProto],
-        value_info: List[ValueInfoProto],
-        local_functions: List[FunctionProto],
+        nodes: list[NodeProto],
+        inputs: list[ValueInfoProto],
+        outputs: list[ValueInfoProto],
+        initializer: list[TensorProto],
+        value_info: list[ValueInfoProto],
+        local_functions: list[FunctionProto],
     ) -> ModelProto:
         name = "Extracted from {" + self.graph.name + "}"
         graph = onnx.helper.make_graph(
@@ -158,8 +158,8 @@ class Extractor:
 
     def extract_model(
         self,
-        input_names: List[str],
-        output_names: List[str],
+        input_names: list[str],
+        output_names: list[str],
     ) -> ModelProto:
         inputs = self._collect_new_inputs(input_names)
         outputs = self._collect_new_outputs(output_names)
@@ -176,8 +176,8 @@ class Extractor:
 def extract_model(
     input_path: str,
     output_path: str,
-    input_names: List[str],
-    output_names: List[str],
+    input_names: list[str],
+    output_names: list[str],
     check_model: bool = True,
 ) -> None:
     """Extracts sub-model from an ONNX model.
