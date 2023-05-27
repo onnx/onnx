@@ -186,7 +186,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
             return []
 
         ret = []
-        name_pattern = re.compile("^{}_([0-9]+)$".format(op_name))
+        name_pattern = re.compile(f"^{op_name}_([0-9]+)$")
         for name in op_names:
             m = name_pattern.search(name)
             if m is not None:
@@ -202,7 +202,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         if len(versions) == 0:
             # Only one version found for this op.
             function_name = f"_internal_{test_function_middel_name}"
-            test_func = self.__getattribute__(function_name)
+            test_func = getattr(self, function_name)
             assert test_func is not None, "Cannot find test function {function_name}"
             test_func()
         for version in versions:
@@ -211,7 +211,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
                 # Not sure how to fix the Reshape error in self._make_graph.
                 continue
             function_name = f"_internal_{test_function_middel_name}_v{version}"
-            test_func = self.__getattribute__(function_name)
+            test_func = getattr(self, function_name)
             assert test_func is not None, "Cannot find test function {function_name}"
             test_func()
 
