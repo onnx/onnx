@@ -34,6 +34,7 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.parser import parse_graph
+from onnx.reference.ops import _op_list as op_list
 
 
 class TestShapeInferenceHelper(unittest.TestCase):
@@ -173,6 +174,41 @@ class TestShapeInferenceHelper(unittest.TestCase):
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type)
             )
 
+    def _get_op_version(self, op_name):
+        op_names = dir(op_list)
+        if op_name in op_names:
+            return []
+        import re
+
+        ret = []
+        name_pattern = re.compile("^{}_([0-9]+)$".format(op_name))
+        for name in op_names:
+            m = name_pattern.search(name)
+            if m is not None:
+                ret.append(m.group(1))
+        if op_name in op_names or len(ret) > 0:
+            return ret
+        else:
+            return None
+
+    def _test_an_op(self, op_name, test_function_middel_name) -> None:
+        versions = self._get_op_version(op_name)
+        assert versions is not None
+        if len(versions) == 0:
+            # Only one version found.
+            function_name = f"_internal_{test_function_middel_name}"
+            test_func = self.__getattribute__(function_name)
+            assert test_func is not None, "Cannot find {function_name}"
+            test_func()
+        for version in versions:
+            if int(version) <= 5:
+                # Not sure how to refactor the Reshape in self._make_graph.
+                continue
+            function_name = f"_internal_{test_function_middel_name}_v{version}"
+            test_func = self.__getattribute__(function_name)
+            assert test_func is not None, "Cannot find {function_name}"
+            test_func()
+
 
 class TestShapeInference(TestShapeInferenceHelper):
     def test_empty_graph(self) -> None:
@@ -190,6 +226,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_transpose(self) -> None:
+        self._test_an_op("Transpose", "test_transpose")
+
+    def _internal_test_transpose(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
@@ -1170,6 +1209,24 @@ class TestShapeInference(TestShapeInferenceHelper):
         )  # type: ignore
 
     def test_squeeze(self) -> None:
+        self._test_an_op("Squeeze", "test_squeeze")
+
+    def _internal_test_squeeze_v11(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
+            [make_node("Squeeze", "x", "y", axes=[0, 2, 3, 5])],
+            [],
+        )
+        operatorsetid = OperatorSetIdProto()
+        operatorsetid.domain = ""
+        operatorsetid.version = 11
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
+            opset_imports=[operatorsetid],
+        )
+
+    def _internal_test_squeeze_v13(self) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1)),
@@ -1179,8 +1236,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             initializer=[make_tensor("axes", TensorProto.INT64, (4,), (0, 2, 3, 5))],
         )
+        operatorsetid = OperatorSetIdProto()
+        operatorsetid.domain = ""
+        operatorsetid.version = 13
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
+            opset_imports=[operatorsetid],
         )
 
     def test_unsqueeze_regular(self) -> None:
