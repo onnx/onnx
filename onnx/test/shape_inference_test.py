@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import re
 import unittest
 from typing import Any, Sequence
 
@@ -175,10 +176,14 @@ class TestShapeInferenceHelper(unittest.TestCase):
             )
 
     def _get_op_version(self, op_name):
+        """This function returns a version str list for an op.
+        If op has only one version, [] is returned.
+        If op has many version, [versions] is returned.
+        If op is not in the opset, None is returned.
+        """
         op_names = dir(op_list)
         if op_name in op_names:
             return []
-        import re
 
         ret = []
         name_pattern = re.compile("^{}_([0-9]+)$".format(op_name))
@@ -195,18 +200,19 @@ class TestShapeInferenceHelper(unittest.TestCase):
         versions = self._get_op_version(op_name)
         assert versions is not None
         if len(versions) == 0:
-            # Only one version found.
+            # Only one version found for this op.
             function_name = f"_internal_{test_function_middel_name}"
             test_func = self.__getattribute__(function_name)
-            assert test_func is not None, "Cannot find {function_name}"
+            assert test_func is not None, "Cannot find test function {function_name}"
             test_func()
         for version in versions:
+            # Many versions found for this op.
             if int(version) <= 5:
-                # Not sure how to refactor the Reshape in self._make_graph.
+                # Not sure how to fix the Reshape error in self._make_graph.
                 continue
             function_name = f"_internal_{test_function_middel_name}_v{version}"
             test_func = self.__getattribute__(function_name)
-            assert test_func is not None, "Cannot find {function_name}"
+            assert test_func is not None, "Cannot find test function {function_name}"
             test_func()
 
 
