@@ -78,13 +78,9 @@ def infer_shapes_path(
         model_path = os.fspath(model_path)
         output_path = os.fspath(output_path)
         # Directly output the inferred model into the specified path, return nothing
-        if isinstance(model_path, str):
-            # If output_path is not defined, default output_path would be the original model path
-            if output_path == "":
-                output_path = model_path
-            C.infer_shapes_path(
-                model_path, output_path, check_type, strict_mode, data_prop
-            )
+        if output_path == "":
+            output_path = model_path
+        C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
     except TypeError as exp:
         raise TypeError(
             "infer_shapes_path only accepts model paths as a string or PathLike), "
