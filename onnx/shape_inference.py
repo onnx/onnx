@@ -76,16 +76,22 @@ def infer_shapes_path(
         )
     try:
         model_path = os.fspath(model_path)
-        output_path = os.fspath(output_path)
-        # Directly output the inferred model into the specified path, return nothing
-        if output_path == "":
-            output_path = model_path
-        C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
     except TypeError as exp:
         raise TypeError(
-            "infer_shapes_path only accepts model paths as a string or PathLike), "
-            f"incorrect type: {type(model_path)}"
+            "infer_shapes_path only accepts model path as a string or PathLike, "
+            f"incorrect model path type: {type(model_path)}"
         ) from exp
+    try:
+        output_path = os.fspath(output_path)
+    except TypeError as exp:
+        raise TypeError(
+            "infer_shapes_path only accepts output path as a string or PathLike, "
+            f"incorrect output path type: {type(output_path)}"
+        ) from exp
+
+    if output_path == "":
+        output_path = model_path
+    C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
 
 
 def infer_node_outputs(
