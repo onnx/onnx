@@ -12,8 +12,7 @@ from typing import List
 import config
 
 import onnx
-from onnx import version_converter
-from onnx import hub
+from onnx import hub, version_converter
 
 
 CWD_PATH = Path.cwd()
@@ -35,10 +34,9 @@ def main():
         type=str,
         help="Directory path for testing. e.g., text, vision",
     )
-    
     model_list = hub.list_models()
-    
     print(f"=== Running ONNX Checker on {len(model_list)} models ===")
+
     # run checker on each model
     failed_models = []
     failed_messages = []
@@ -66,10 +64,7 @@ def main():
                 original_version = model.opset_import[0].version
                 latest_opset_version = onnx.helper.VERSION_TABLE[-1][2]
                 if original_version < latest_opset_version:
-                    if (
-                        model_path
-                        in config.SKIP_VERSION_CONVERTER_MODELS
-                    ):
+                    if model_path in config.SKIP_VERSION_CONVERTER_MODELS:
                         skip_model(
                             f"[SKIP]: model {model_name} is in the skip list for version converter. ",
                             skip_models,
