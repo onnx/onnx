@@ -344,9 +344,9 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   // Parse the actual values:
 
   int64_t intval;
-  uint64_t uintval;
-  float floatval;
-  double dblval;
+  uint64_t uintval = 0;
+  float floatval = 0.0;
+  double dblval = 0.0;
   std::string strval;
   MATCH('{');
   if (!Matches('}')) {
