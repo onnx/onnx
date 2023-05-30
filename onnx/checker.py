@@ -7,10 +7,11 @@ This implements graphalities that allows us to check whether a serialized
 proto is legal.
 """
 from __future__ import annotations
+
 import functools
 import os
 import sys
-from typing import Any, Callable, Optional, Type, TypeVar, cast
+from typing import Any, Callable, TypeVar, cast
 
 from google.protobuf.message import Message
 
@@ -49,7 +50,7 @@ FuncType = TypeVar("FuncType", bound=Callable[..., Any])
 
 
 # TODO: This really doesn't seem worth the metaprogramming...
-def _create_checker(proto_type: Type[Message]) -> Callable[[FuncType], FuncType]:
+def _create_checker(proto_type: type[Message]) -> Callable[[FuncType], FuncType]:
     def decorator(py_func: FuncType) -> FuncType:
         @functools.wraps(py_func)
         def checker(proto: Message, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> Any:
@@ -89,7 +90,7 @@ def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None
 
 
 def check_function(
-    function: FunctionProto, ctx: Optional[C.CheckerContext] = None
+    function: FunctionProto, ctx: C.CheckerContext | None = None
 ) -> None:
     if ctx is None:
         ctx = C.CheckerContext()
