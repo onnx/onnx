@@ -38,5 +38,5 @@ Every PR
 
   * (6):
     * The ONNX Model Zoo test will run weekly (Sunday midnight)
-    * To manually trigger it, add a PR label "test ONNX Model Zoo" (only maintainers have permission). Please note that it will need a lot of download bandwidth from [onnx/models](https://github.com/onnx/models) so use it with caution.
+    * To manually trigger it, add a PR label "test ONNX Model Zoo" (only maintainers have permission). Please note that we now directly load models from [onnx.hub](/docs/Hub.md) instead of downloading from [onnx/models](https://github.com/onnx/models).
   * (7) Some old deprecated models (opset-1) are [skipped](/workflow_scripts/config.py).
