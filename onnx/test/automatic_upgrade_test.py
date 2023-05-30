@@ -464,6 +464,12 @@ class TestAutomaticUpgrade(unittest.TestCase):
     def test_GatherND(self) -> None:
         self._test_op_upgrade("GatherND", 11, [[1, 2, 3], [1, 2, 3]], [[1, 2]])
 
+    def test_Gelu_1(self) -> None:
+        self._test_op_upgrade("Gelu", 20, attrs={"approximate": "tanh"})
+
+    def test_Gelu_2(self) -> None:
+        self._test_op_upgrade("Gelu", 20)
+
     def test_Gemm(self) -> None:
         self._test_op_upgrade("Gemm", 1, [[5, 4], [4, 3], [3]], [[5, 3]])
 

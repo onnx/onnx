@@ -14,7 +14,7 @@ from onnx.backend.test.case.node import expect
 class Gelu(Base):
     @staticmethod
     def export() -> None:
-        node = onnx.helper.make_node("Gelu", inputs=["x"], outputs=["y"], approx="tanh")
+        node = onnx.helper.make_node("Gelu", inputs=["x"], outputs=["y"], approximate="tanh")
 
         x = np.array([-1, 0, 1]).astype(np.float32)
         # expected output [-0.158808, 0., 0.841192]
@@ -31,7 +31,7 @@ class Gelu(Base):
     @staticmethod
     def export_gelu_default() -> None:
         node = onnx.helper.make_node("Gelu", inputs=["x"], outputs=["y"])
-        
+
         x = np.random.randn(-1, 0, 1).astype(np.float32)
         # expected output [-0.15865526, 0., 0.84134474]
         y = 0.5 * x * (1 + np.vectorize(math.erf)(x / np.sqrt(2)))

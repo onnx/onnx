@@ -559,22 +559,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* gelu_ver20_doc = R"DOC(
-Gaussian Error Linear Units:
 Gelu takes input data (Tensor<T>) and an argument approximate, and produces one
-output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
-`f(x) = x for x >= 0`, is applied to the data tensor elementwise.
-Perform the linear unit element-wise on the input tensor X
-using formula:
-
-```
-0.5*x*(1+erf(x/sqrt(2)))
-```
-
-When approximate is set to tanh
-
-```
-0.5*x*(1+Tanh(sqrt(2/π)*(x+0.044715*x^3)))
-```
+output data (Tensor<T>) where the function `y = 0.5 * x * (1 + erf(x/sqrt(2)))`
+is applied to the tensor elementwise. When the attribute "approximate" is set 
+to "tanh", the function `y = 0.5 * x * (1 + Tanh(sqrt(2/π)*(x+0.044715*x^3)))` 
+is applied to the tensor elementwise to estimate.
 
 )DOC";
 
