@@ -38,7 +38,7 @@ jobs:
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b 
+      uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
