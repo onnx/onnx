@@ -23881,6 +23881,48 @@ This version of the operator has been available since version 19 of the default 
 </dl>
 
 ## Version 20 of the default ONNX operator set
+### <a name="Gelu-20"></a>**Gelu-20**</a>
+
+  Gelu takes one input data (Tensor<T>) and produces one
+  output data (Tensor<T>) where the gaussian error linear units function,
+  `y = 0.5 * x * (1 + erf(x/sqrt(2)))` is applied to the tensor elementwise.
+  If the attribute "approximate" is set to "tanh", the function estimation,
+  `y = 0.5 * x * (1 + Tanh(sqrt(2/π) * (x + 0.044715 * x^3)))` is used and applied
+  to the tensor elementwise.
+
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>approximate</tt> : string (default is none)</dt>
+<dd>Gelu approximation algorithm: tanh, none(default).'none': do not use approximation.'tanh': use tanh approximation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="ConstantOfShape-20"></a>**ConstantOfShape-20**</a>
 
   Generate a tensor with given value and shape.
