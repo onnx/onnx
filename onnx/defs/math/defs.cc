@@ -559,11 +559,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* gelu_ver20_doc = R"DOC(
-Gelu takes input data (Tensor<T>) and an argument approximate, and produces one
-output data (Tensor<T>) where the function `y = 0.5 * x * (1 + erf(x/sqrt(2)))`
-is applied to the tensor elementwise. When the attribute "approximate" is set 
-to "tanh", the function `y = 0.5 * x * (1 + Tanh(sqrt(2/π)*(x+0.044715*x^3)))` 
-is applied to the tensor elementwise to estimate.
+Gelu takes one input data (Tensor<T>) and produces one
+output data (Tensor<T>) where the gaussian error linear units function, 
+`y = 0.5 * x * (1 + erf(x/sqrt(2)))` is applied to the tensor elementwise. 
+If the attribute "approximate" is set to "tanh", the function estimation,  
+`y = 0.5 * x * (1 + Tanh(sqrt(2/π) * (x + 0.044715 * x^3)))` is used and applied 
+to the tensor elementwise.
 
 )DOC";
 
@@ -576,7 +577,7 @@ bool BuildContextDependentFunctionBodyGelu(
   auto approx_attr_proto = ctx.getAttribute("approximate");
   std::string approx  = approx_attr_proto != nullptr && approx_attr_proto->has_s()
                       ? approx_attr_proto->s() 
-                      : gelu_default_alpha;
+                      : gelu_default_approx;
   FunctionBuilder builder(functionProto);
   
   if (approx == "tanh") {
@@ -629,12 +630,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
             "approximate",
-            "Type of gelu approximation algorithm to use: tanh, none(default)."
+            "Gelu approximation algorithm: tanh, none(default)."
             "'none': do not use approximation."
             "'tanh': use tanh approximation.",
             AttributeProto::STRING,
-            gelu_default_appox)
-        .TypeConstraint("T", {"tensor(float)"}, "Constrain input and output types to float32 tensors.")
+            gelu_default_approx)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
