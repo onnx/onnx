@@ -1,5 +1,5 @@
 [tool.mypy]
-disallow_untyped_defs
+disallow_untyped_defs=true
 follow_imports = "slient"
 strict_optional = true
 warn_return_any = true
