@@ -27,26 +27,34 @@ def get_pad_shape(
         pass
     return pad_shape
 
-# Use pads to calculate output shape. Use output shape in turn to calculate the actual pads
-# that are used to pad the input tensor so that computation in pool() will not cause out of bound error.
 def get_output_shape_update_pads(
-    pads_spatial_shape: Sequence[int] | None,
+    pads: Sequence[int] | None,
     input_spatial_shape: Sequence[int],
     dilations: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
     ceil_mode: bool,
 ) -> Tuple[Sequence[int], Sequence[int]]:
-    
-    # compute output shape according to:
-    # https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html?highlight=max+pool#torch.nn.MaxPool1d
+    """
+    compute output shape according to:
+    https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html?highlight=max+pool#torch.nn.MaxPool1d
+    Pads are used to calculate output shape. Use output shape in turn to calculate the actual pads
+    that are used to pad the input tensor so that computation in pool() will not cause out of bound error.
+    Here is the detail. Thinking kernel as a sliding window, its size:
+    sw = (kernel - 1) * dilation + 1
+    width_in = (width_out - 1) * stride + sw
+    width_in is not necessarily the same as input width, because of ceiling.
+    in case they differ, we need to pad the input tensor to make sure that
+    the sliding window does not go out-of-bound w.r.t. input tensor.  
+    """    
     output_spatial_shape = [0] * len(input_spatial_shape)
+    pads = pads or [0] * len(input_spatial_shape) * 2
     dims = len(input_spatial_shape)
     for dim in range(dims):
         dim_size = (
             input_spatial_shape[dim] +
-            pads_spatial_shape[dim] +
-            pads_spatial_shape[dims + dim] -
+            pads[dim] +
+            pads[dims + dim] -
             dilations[dim] * (kernel_spatial_shape[dim] - 1) - 1
         ) / strides_spatial[dim] + 1
         
@@ -54,22 +62,15 @@ def get_output_shape_update_pads(
             output_spatial_shape[dim] = int(np.ceil(dim_size))
         else:
             output_spatial_shape[dim] = int(np.floor(dim_size))
-    # import numpy as np
-    # import torch
-    # from torch import nn
-    # m = nn.MaxPool1d(2, stride=4, padding=0, dilation=3, ceil_mode=True)
-    # input = torch.from_numpy(np.array([[[1, 2, 3, 4, 0]]])).float()
-    # output = m(input)
-    # output
-    # tensor([[[4., 0.]]])
-    # it shows that if extra padding (pad = 3 here) is needed, it is added to the right (tail) side of the input tensor.
-    pads_spatial_shape_new = pads_spatial_shape[:]
+
+    pads_spatial_shape_new = pads[:]
     for dim in range(dims):
         sliding_window_size = (kernel_spatial_shape[dim] - 1) * dilations[dim] + 1
         actual_padded_input_size = (output_spatial_shape[dim] - 1) * strides_spatial[dim] + sliding_window_size
-        extra_pad = actual_padded_input_size - input_spatial_shape[dim] - pads_spatial_shape[dim] - pads_spatial_shape[dims + dim]
+        extra_pad = actual_padded_input_size - input_spatial_shape[dim] - pads[dim] - pads[dims + dim]
         if extra_pad > 0:
-            pads_spatial_shape_new[dims + dim] += extra_pad
+            pads_spatial_shape_new[dim] += extra_pad // 2
+            pads_spatial_shape_new[dims + dim] += extra_pad - extra_pad // 2
 
     return output_spatial_shape, pads_spatial_shape_new    
 
