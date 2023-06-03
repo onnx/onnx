@@ -1523,9 +1523,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_squeeze(self) -> None:
         self._test_an_op("Squeeze", self.get_caller_function_name())
 
-    def _internal_test_squeeze_v11(
-        self, op_name, version  # pylint: disable=unused-argument
-    ) -> None:
+    def _internal_test_squeeze_v11(self, op_name, version) -> None:
         assert op_name == "Squeeze"
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
@@ -1535,12 +1533,10 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def _internal_test_squeeze_v13(
-        self, op_name, version  # pylint: disable=unused-argument
-    ) -> None:
+    def _internal_test_squeeze_v13(self, op_name, version) -> None:
         assert op_name == "Squeeze"
         graph = self._make_graph(
             [
@@ -1554,7 +1550,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 13)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_unsqueeze_regular(self) -> None:
