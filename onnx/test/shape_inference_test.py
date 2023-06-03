@@ -652,7 +652,9 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_concat_missing_shape(self) -> None:
         self._test_an_op("Concat", self.get_caller_function_name())
 
-    def _internal_test_concat_missing_shape_v11(self, op_name, version) -> None:
+    def _internal_test_concat_missing_shape_v11(
+        self, op_name, version  # pylint: disable=unused-argument
+    ) -> None:
         assert op_name == "Concat"
         graph = self._make_graph(
             [
@@ -1521,7 +1523,9 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_squeeze(self) -> None:
         self._test_an_op("Squeeze", self.get_caller_function_name())
 
-    def _internal_test_squeeze_v11(self, op_name, version) -> None:
+    def _internal_test_squeeze_v11(
+        self, op_name, version  # pylint: disable=unused-argument
+    ) -> None:
         assert op_name == "Squeeze"
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
@@ -1534,7 +1538,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
         )
 
-    def _internal_test_squeeze_v13(self, op_name, version) -> None:
+    def _internal_test_squeeze_v13(
+        self, op_name, version  # pylint: disable=unused-argument
+    ) -> None:
         assert op_name == "Squeeze"
         graph = self._make_graph(
             [
