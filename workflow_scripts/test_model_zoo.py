@@ -6,16 +6,12 @@ import gc
 import os
 import sys
 import time
-from pathlib import Path
 from typing import List
 
 import config
 
 import onnx
 from onnx import hub, version_converter
-
-
-CWD_PATH = Path.cwd()
 
 
 def skip_model(error_message: str, skip_list: List[str], model_name: str):
