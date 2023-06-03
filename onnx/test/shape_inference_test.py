@@ -41,7 +41,6 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.parser import parse_graph
-from onnx.reference.ops import _op_list as op_list
 
 
 class TestShapeInferenceHelper(unittest.TestCase):
@@ -253,7 +252,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         with self.assertRaises(NotImplementedError):
             self._test_an_op("Transpose", self.get_caller_function_name())
         with self.assertRaises(NotImplementedError):
-            self._test_an_op("TreeEnsembleClassifier", self.get_caller_function_name())
+            self._test_an_op("Adam", self.get_caller_function_name())
 
     def test_transpose(self) -> None:
         self._test_an_op("Transpose", self.get_caller_function_name())
@@ -324,7 +323,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._test_an_op("Transpose", self.get_caller_function_name())
 
     def _internal_test_transpose_preexisting_incorrect_shape_v13(
-        self, op_name, version
+        self, op_name, version  # pylint: disable=unused-argument
     ) -> None:
         assert op_name == "Transpose"
         graph = self._make_graph(
@@ -338,7 +337,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._test_an_op("Transpose", self.get_caller_function_name())
 
     def _internal_test_transpose_preexisting_incorrect_type_v13(
-        self, op_name, version
+        self, op_name, version  # pylint: disable=unused-argument
     ) -> None:
         assert op_name == "Transpose"
         graph = self._make_graph(
@@ -352,7 +351,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._test_an_op("Transpose", self.get_caller_function_name())
 
     def _internal_test_transpose_incorrect_repeated_perm_v13(
-        self, op_name, version
+        self, op_name, version  # pylint: disable=unused-argument
     ) -> None:
         assert op_name == "Transpose"
         graph = self._make_graph(
@@ -363,7 +362,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
     def _make_matmul_test_all_dims_known(
-        self, shape1: Sequence[int], shape2: Sequence[int]
+        self, version, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
             np.arange(np.product(shape1)).reshape(shape1),
@@ -375,25 +374,34 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, expected_out_shape)]
+            graph,
+            [make_tensor_value_info("z", TensorProto.FLOAT, expected_out_shape)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_matmul_all_dims_known(self) -> None:
-        self._make_matmul_test_all_dims_known((2,), (2,))
+        self._test_an_op("MatMul", self.get_caller_function_name())
 
-        self._make_matmul_test_all_dims_known((4, 2), (2, 4))
-        self._make_matmul_test_all_dims_known((5, 2), (2, 4))
-        self._make_matmul_test_all_dims_known((5, 2), (2, 1))
-        self._make_matmul_test_all_dims_known((1, 2), (2, 3))
-        self._make_matmul_test_all_dims_known((2,), (2, 3))
-        self._make_matmul_test_all_dims_known((4, 2), (2,))
-        self._make_matmul_test_all_dims_known((1, 4, 2), (3, 2, 3))
-        self._make_matmul_test_all_dims_known((3, 4, 2), (3, 2, 3))
-        self._make_matmul_test_all_dims_known((5, 1, 4, 2), (1, 3, 2, 3))
-        self._make_matmul_test_all_dims_known((4, 2), (3, 2, 3))
+    def _internal_test_matmul_all_dims_known_v9(self, op_name, version) -> None:
+        assert op_name == "MatMul"
+        self._make_matmul_test_all_dims_known(version, (2,), (2,))
+
+        self._make_matmul_test_all_dims_known(version, (4, 2), (2, 4))
+        self._make_matmul_test_all_dims_known(version, (5, 2), (2, 4))
+        self._make_matmul_test_all_dims_known(version, (5, 2), (2, 1))
+        self._make_matmul_test_all_dims_known(version, (1, 2), (2, 3))
+        self._make_matmul_test_all_dims_known(version, (2,), (2, 3))
+        self._make_matmul_test_all_dims_known(version, (4, 2), (2,))
+        self._make_matmul_test_all_dims_known(version, (1, 4, 2), (3, 2, 3))
+        self._make_matmul_test_all_dims_known(version, (3, 4, 2), (3, 2, 3))
+        self._make_matmul_test_all_dims_known(version, (5, 1, 4, 2), (1, 3, 2, 3))
+        self._make_matmul_test_all_dims_known(version, (4, 2), (3, 2, 3))
+
+    def _internal_test_matmul_all_dims_known_v13(self, op_name, version) -> None:
+        self._internal_test_matmul_all_dims_known_v9(op_name, version)
 
     def _make_matmul_test_allow_unknown(
-        self, shape1: Any, shape2: Any, expected_out_shape: Any
+        self, version, shape1: Any, shape2: Any, expected_out_shape: Any
     ) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, shape1), ("y", TensorProto.FLOAT, shape2)],
@@ -401,21 +409,33 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, expected_out_shape)]
+            graph,
+            [make_tensor_value_info("z", TensorProto.FLOAT, expected_out_shape)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_matmul_allow_unknown(self) -> None:
-        # TODO(guoyuhong): cover old-version ops.
-        self._make_matmul_test_allow_unknown((None,), (None,), ())
-        self._make_matmul_test_allow_unknown((3,), (None,), ())
-        self._make_matmul_test_allow_unknown((2,), (2, "a"), ("a",))
-        self._make_matmul_test_allow_unknown((4, 2), (2, "a"), (4, "a"))
-        self._make_matmul_test_allow_unknown((4, None), (2, "a"), (4, "a"))
-        self._make_matmul_test_allow_unknown((4, None), (None, "a"), (4, "a"))
-        self._make_matmul_test_allow_unknown((1, 4, 2), ("a", 2, 5), ("a", 4, 5))
-        self._make_matmul_test_allow_unknown((1, 3, 4, 2), ("a", 2, 5), (1, 3, 4, 5))
-        self._make_matmul_test_allow_unknown((3,), None, None)
-        self._make_matmul_test_allow_unknown(None, None, None)
+        self._test_an_op("MatMul", self.get_caller_function_name())
+
+    def _internal_test_matmul_allow_unknown_v9(self, op_name, version) -> None:
+        assert op_name == "MatMul"
+        self._make_matmul_test_allow_unknown(version, (None,), (None,), ())
+        self._make_matmul_test_allow_unknown(version, (3,), (None,), ())
+        self._make_matmul_test_allow_unknown(version, (2,), (2, "a"), ("a",))
+        self._make_matmul_test_allow_unknown(version, (4, 2), (2, "a"), (4, "a"))
+        self._make_matmul_test_allow_unknown(version, (4, None), (2, "a"), (4, "a"))
+        self._make_matmul_test_allow_unknown(version, (4, None), (None, "a"), (4, "a"))
+        self._make_matmul_test_allow_unknown(
+            version, (1, 4, 2), ("a", 2, 5), ("a", 4, 5)
+        )
+        self._make_matmul_test_allow_unknown(
+            version, (1, 3, 4, 2), ("a", 2, 5), (1, 3, 4, 5)
+        )
+        self._make_matmul_test_allow_unknown(version, (3,), None, None)
+        self._make_matmul_test_allow_unknown(version, None, None, None)
+
+    def _internal_test_matmul_allow_unknown_v13(self, op_name, version) -> None:
+        self._internal_test_matmul_allow_unknown_v9(op_name, version)
 
     def test_cast(self) -> None:
         self._test_an_op("Cast", self.get_caller_function_name())
@@ -806,7 +826,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._test_an_op("Reshape", self.get_caller_function_name())
 
     def _internal_test_reshape_static_shape_allowzero_v13(
-        self, op_name, version
+        self, op_name, version  # pylint: disable=unused-argument
     ) -> None:
         # allowzero is added from Version 14, so skip this test in Version 13.
         pass
