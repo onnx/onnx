@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import inspect
 import re
 import unittest
 from typing import Any, Sequence
@@ -22,10 +23,16 @@ from onnx import (
     TypeProto,
     ValueInfoProto,
     checker,
+    defs,
     helper,
     numpy_helper,
 )
-from onnx.defs import AI_ONNX_PREVIEW_TRAINING_DOMAIN, ONNX_DOMAIN, ONNX_ML_DOMAIN
+from onnx.defs import (
+    AI_ONNX_PREVIEW_TRAINING_DOMAIN,
+    ONNX_DOMAIN,
+    ONNX_ML_DOMAIN,
+    SchemaError,
+)
 from onnx.helper import (
     make_empty_tensor_value_info,
     make_node,
@@ -39,6 +46,20 @@ from onnx.reference.ops import _op_list as op_list
 
 
 class TestShapeInferenceHelper(unittest.TestCase):
+    def setUp(self):
+        self.op_versions = {}
+        for schema in defs.get_all_schemas():
+            self.op_versions[schema.name] = self._get_available_versions(schema)
+
+    def _get_available_versions(self, schema):
+        versions = set()
+        for version in range(schema.since_version, 0, -1):
+            try:
+                versions.add(defs.get_schema(schema.name, version).since_version)
+            except SchemaError:
+                break
+        return versions
+
     def _make_graph(
         self,
         seed_values: Sequence[str | tuple[str, TensorProto.DataType, Any]],
@@ -196,24 +217,33 @@ class TestShapeInferenceHelper(unittest.TestCase):
         else:
             return None
 
-    def _test_an_op(self, op_name, test_function_middel_name) -> None:
-        versions = self._get_op_version(op_name)
+    def _test_an_op(self, op_name, test_function_name) -> None:
+        """Given an operator name and test_function_name, run tests for op versions > 5.
+        :param op_name: The operator name.
+        :param test_function_name: The test function name for the op. It's used to form test functions.
+            The caller can use self.get_caller_function_name() to get the function name.
+        :return: None
+        """
+        versions = list(self.op_versions[op_name])
         assert versions is not None
         if len(versions) == 0:
-            # Only one version found for this op.
-            function_name = f"_internal_{test_function_middel_name}"
-            test_func = getattr(self, function_name)
-            assert test_func is not None, "Cannot find test function {function_name}"
-            test_func()
+            # The version starts from 0 to now.
+            function_name = f"_internal_{test_function_name}"
+            test_func = getattr(self, function_name, None)
+            if test_func is None:
+                raise NotImplementedError(f"Cannot find test function {function_name}")
+            test_func(op_name=op_name)
+            return
         for version in versions:
             # Many versions found for this op.
             if int(version) <= 5:
                 # Not sure how to fix the Reshape error in self._make_graph.
                 continue
-            function_name = f"_internal_{test_function_middel_name}_v{version}"
-            test_func = getattr(self, function_name)
-            assert test_func is not None, "Cannot find test function {function_name}"
-            test_func()
+            function_name = f"_internal_{test_function_name}_v{version}"
+            test_func = getattr(self, function_name, None)
+            if test_func is None:
+                raise NotImplementedError(f"Cannot find test function {function_name}")
+            test_func(op_name=op_name, version=version)
 
 
 class TestShapeInference(TestShapeInferenceHelper):
@@ -231,30 +261,59 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (30, 4, 5))]
         )
 
-    def test_transpose(self) -> None:
-        self._test_an_op("Transpose", "test_transpose")
+    def get_caller_function_name(self):
+        """Return the function name that calls this get_caller_function_name."""
+        return inspect.stack()[1][3]
 
-    def _internal_test_transpose(self) -> None:
+    def test_no_op(self) -> None:
+        assert self.get_caller_function_name() == inspect.stack()[0][3]
+        assert self.get_caller_function_name() == "test_no_op"
+        with self.assertRaises(KeyError):
+            self._test_an_op("NoOp", self.get_caller_function_name())
+
+    def test_not_implemented(self) -> None:
+        with self.assertRaises(NotImplementedError):
+            self._test_an_op("Transpose", self.get_caller_function_name())
+        with self.assertRaises(NotImplementedError):
+            self._test_an_op("TreeEnsembleClassifier", self.get_caller_function_name())
+
+    def test_transpose(self) -> None:
+        self._test_an_op("Transpose", self.get_caller_function_name())
+
+    def _internal_test_transpose_v13(self, op_name, version) -> None:
+        assert op_name == "Transpose"
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_transpose_preexisting(self) -> None:
+        self._test_an_op("Transpose", self.get_caller_function_name())
+
+    def _internal_test_transpose_preexisting_v13(self, op_name, version) -> None:
+        assert op_name == "Transpose"
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
             [make_tensor_value_info("Y", TensorProto.FLOAT, None)],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_transpose_scalar(self) -> None:
+        self._test_an_op("Transpose", self.get_caller_function_name())
+
+    def _internal_test_transpose_scalar_v13(self, op_name, version) -> None:
+        assert op_name == "Transpose"
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, ())],
             [make_node("Transpose", ["X"], ["Y"])],
@@ -262,20 +321,34 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ())]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, ())],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_transpose_partial(self) -> None:
+        self._test_an_op("Transpose", self.get_caller_function_name())
+
+    def _internal_test_transpose_partial_v13(self, op_name, version) -> None:
+        assert op_name == "Transpose"
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
             [make_tensor_value_info("Y", TensorProto.UNDEFINED, (3, "a", "b"))],
         )  # type: ignore
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))]
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_transpose_preexisting_incorrect_shape(self) -> None:
+        self._test_an_op("Transpose", self.get_caller_function_name())
+
+    def _internal_test_transpose_preexisting_incorrect_shape_v13(
+        self, op_name, version
+    ) -> None:
+        assert op_name == "Transpose"
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
@@ -284,6 +357,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
     def test_transpose_preexisting_incorrect_type(self) -> None:
+        self._test_an_op("Transpose", self.get_caller_function_name())
+
+    def _internal_test_transpose_preexisting_incorrect_type_v13(
+        self, op_name, version
+    ) -> None:
+        assert op_name == "Transpose"
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
@@ -292,6 +371,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
     def test_transpose_incorrect_repeated_perm(self) -> None:
+        self._test_an_op("Transpose", self.get_caller_function_name())
+
+    def _internal_test_transpose_incorrect_repeated_perm_v13(
+        self, op_name, version
+    ) -> None:
+        assert op_name == "Transpose"
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 1])],
@@ -342,6 +427,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_matmul_allow_unknown(self) -> None:
+        # TODO(guoyuhong): cover old-version ops.
         self._make_matmul_test_allow_unknown((None,), (None,), ())
         self._make_matmul_test_allow_unknown((3,), (None,), ())
         self._make_matmul_test_allow_unknown((2,), (2, "a"), ("a",))
@@ -354,26 +440,54 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._make_matmul_test_allow_unknown(None, None, None)
 
     def test_cast(self) -> None:
+        self._test_an_op("Cast", self.get_caller_function_name())
+
+    def _internal_test_cast_v6(self, op_name, version) -> None:
+        assert op_name == "Cast"
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
             [make_node("Cast", ["x"], ["y"], to=TensorProto.UINT8)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.UINT8, (2, 4, 3))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (2, 4, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_cast_v9(self, op_name, version) -> None:
+        self._internal_test_cast_v6(op_name, version)
+
+    def _internal_test_cast_v13(self, op_name, version) -> None:
+        self._internal_test_cast_v6(op_name, version)
+
+    def _internal_test_cast_v19(self, op_name, version) -> None:
+        self._internal_test_cast_v6(op_name, version)
+
     def test_cast_like(self) -> None:
+        self._test_an_op("CastLike", self.get_caller_function_name())
+
+    def _internal_test_cast_like_v15(self, op_name, version) -> None:
+        assert op_name == "CastLike"
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3)), ("t", TensorProto.FLOAT16, ("N",))],
             [make_node("CastLike", ["x", "t"], ["y"])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT16, (2, 4, 3))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT16, (2, 4, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_cast_like_v19(self, op_name, version) -> None:
+        self._internal_test_cast_like_v15(op_name, version)
+
     def test_col2im(self) -> None:
+        self._test_an_op("Col2Im", self.get_caller_function_name())
+
+    def _internal_test_col2im_v18(self, op_name, version) -> None:
+        assert op_name == "Col2Im"
         graph = self._make_graph(
             [
                 ("input", TensorProto.FLOAT, (1, 5, 5)),
@@ -392,10 +506,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 5, 5))]
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 5, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_col2im_strides(self) -> None:
+        self._test_an_op("Col2Im", self.get_caller_function_name())
+
+    def _internal_test_col2im_strides_v18(self, op_name, version) -> None:
+        assert op_name == "Col2Im"
         graph = self._make_graph(
             [
                 ("input", TensorProto.FLOAT, (1, 9, 4)),
@@ -417,10 +537,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 5, 5))]
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 5, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_col2im_pads(self) -> None:
+        self._test_an_op("Col2Im", self.get_caller_function_name())
+
+    def _internal_test_col2im_pads_v18(self, op_name, version) -> None:
+        assert op_name == "Col2Im"
         graph = self._make_graph(
             [
                 ("input", TensorProto.FLOAT, (1, 5, 15)),
@@ -442,10 +568,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 5, 5))]
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 5, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_col2im_dilations(self) -> None:
+        self._test_an_op("Col2Im", self.get_caller_function_name())
+
+    def _internal_test_col2im_dilations_v18(self, op_name, version) -> None:
+        assert op_name == "Col2Im"
         graph = self._make_graph(
             [
                 ("input", TensorProto.FLOAT, (1, 4, 5)),
@@ -467,10 +599,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 6, 6))]
+            graph,
+            [make_tensor_value_info("output", TensorProto.FLOAT, (1, 1, 6, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_col2im_5d(self) -> None:
+        self._test_an_op("Col2Im", self.get_caller_function_name())
+
+    def _internal_test_col2im_5d_v18(self, op_name, version) -> None:
+        assert op_name == "Col2Im"
         graph = self._make_graph(
             [
                 ("input", TensorProto.FLOAT, (1, 10, 12)),
@@ -491,19 +629,33 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("output", TensorProto.FLOAT, (1, 2, 3, 4, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_concat(self) -> None:
+        self._test_an_op("Concat", self.get_caller_function_name())
+
+    def _internal_test_concat_v11(self, op_name, version) -> None:
+        assert op_name == "Concat"
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3)), ("y", TensorProto.FLOAT, (7, 4, 3))],
             [make_node("Concat", ["x", "y"], ["z"], axis=0)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (9, 4, 3))]
+            graph,
+            [make_tensor_value_info("z", TensorProto.FLOAT, (9, 4, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_concat_v13(self, op_name, version) -> None:
+        self._internal_test_concat_v11(op_name, version)
+
     def test_concat_missing_shape(self) -> None:
+        self._test_an_op("Concat", self.get_caller_function_name())
+
+    def _internal_test_concat_missing_shape_v11(self, op_name, version) -> None:
+        assert op_name == "Concat"
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (2, 4, 3)),
@@ -515,47 +667,93 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
+    def _internal_test_concat_missing_shape_v13(self, op_name, version) -> None:
+        self._internal_test_concat_missing_shape_v11(op_name, version)
+
     def test_concat_3d_axis_2(self) -> None:
+        self._test_an_op("Concat", self.get_caller_function_name())
+
+    def _internal_test_concat_3d_axis_2_v11(self, op_name, version) -> None:
+        assert op_name == "Concat"
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 2, 2)), ("y", TensorProto.FLOAT, (2, 2, 2))],
             [make_node("Concat", ["x", "y"], ["z"], axis=2)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 2, 4))]
+            graph,
+            [make_tensor_value_info("z", TensorProto.FLOAT, (2, 2, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_concat_3d_axis_2_v13(self, op_name, version) -> None:
+        self._internal_test_concat_3d_axis_2_v11(op_name, version)
+
     def test_concat_param(self) -> None:
+        self._test_an_op("Concat", self.get_caller_function_name())
+
+    def _internal_test_concat_param_v11(self, op_name, version) -> None:
+        assert op_name == "Concat"
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, ("a", 2)), ("y", TensorProto.FLOAT, ("a", 3))],
             [make_node("Concat", ["x", "y"], ["z"], axis=1)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, ("a", 5))]
+            graph,
+            [make_tensor_value_info("z", TensorProto.FLOAT, ("a", 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_concat_param_v13(self, op_name, version) -> None:
+        self._internal_test_concat_param_v11(op_name, version)
+
     def test_concat_param_single_input(self) -> None:
+        self._test_an_op("Concat", self.get_caller_function_name())
+
+    def _internal_test_concat_param_single_input_v11(self, op_name, version) -> None:
+        assert op_name == "Concat"
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, ("a", 2))],
             [make_node("Concat", ["x"], ["z"], axis=0)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, ("a", 2))]
+            graph,
+            [make_tensor_value_info("z", TensorProto.FLOAT, ("a", 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_concat_param_single_input_v13(self, op_name, version) -> None:
+        self._internal_test_concat_param_single_input_v11(op_name, version)
+
     def test_reshape_dynamic_shape(self) -> None:
+        self._test_an_op("Reshape", self.get_caller_function_name())
+
+    def _internal_test_reshape_dynamic_shape_v13(self, op_name, version) -> None:
+        assert op_name == "Reshape"
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, (2,))],
             [make_node("Reshape", ["x", "shape"], ["y"])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.UINT8, None)]
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, None)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_reshape_dynamic_shape_v14(self, op_name, version) -> None:
+        self._internal_test_reshape_dynamic_shape_v13(op_name, version)
+
+    def _internal_test_reshape_dynamic_shape_v19(self, op_name, version) -> None:
+        self._internal_test_reshape_dynamic_shape_v13(op_name, version)
+
     def test_reshape_static_shape(self) -> None:
+        self._test_an_op("Reshape", self.get_caller_function_name())
+
+    def _internal_test_reshape_static_shape_v13(self, op_name, version) -> None:
+        assert op_name == "Reshape"
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, (2,))],
             [make_node("Reshape", ["x", "shape"], ["y"])],
@@ -563,10 +761,24 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("shape", TensorProto.INT64, (2,), (3, 8))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.UINT8, (3, 8))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (3, 8))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_reshape_static_shape_v14(self, op_name, version) -> None:
+        self._internal_test_reshape_static_shape_v13(op_name, version)
+
+    def _internal_test_reshape_static_shape_v19(self, op_name, version) -> None:
+        self._internal_test_reshape_static_shape_v13(op_name, version)
+
     def test_reshape_static_shape_inferred(self) -> None:
+        self._test_an_op("Reshape", self.get_caller_function_name())
+
+    def _internal_test_reshape_static_shape_inferred_v13(
+        self, op_name, version
+    ) -> None:
+        assert op_name == "Reshape"
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, (3,))],
             [make_node("Reshape", ["x", "shape"], ["y"])],
@@ -574,10 +786,26 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 3, -1))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.UINT8, (2, 3, 4))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (2, 3, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_reshape_static_shape_inferred_v14(
+        self, op_name, version
+    ) -> None:
+        self._internal_test_reshape_static_shape_inferred_v13(op_name, version)
+
+    def _internal_test_reshape_static_shape_inferred_v19(
+        self, op_name, version
+    ) -> None:
+        self._internal_test_reshape_static_shape_inferred_v13(op_name, version)
+
     def test_reshape_static_shape_zero(self) -> None:
+        self._test_an_op("Reshape", self.get_caller_function_name())
+
+    def _internal_test_reshape_static_shape_zero_v13(self, op_name, version) -> None:
+        assert op_name == "Reshape"
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (1, 1, 1)), ("shape", TensorProto.INT64, (3,))],
             [make_node("Reshape", ["x", "shape"], ["y"])],
@@ -585,10 +813,30 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 1, 1))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.UINT8, (1, 1, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (1, 1, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_reshape_static_shape_zero_v14(self, op_name, version) -> None:
+        self._internal_test_reshape_static_shape_zero_v13(op_name, version)
+
+    def _internal_test_reshape_static_shape_zero_v19(self, op_name, version) -> None:
+        self._internal_test_reshape_static_shape_zero_v13(op_name, version)
+
     def test_reshape_static_shape_allowzero(self) -> None:
+        self._test_an_op("Reshape", self.get_caller_function_name())
+
+    def _internal_test_reshape_static_shape_allowzero_v13(
+        self, op_name, version
+    ) -> None:
+        # allowzero is added from Version 14, so skip this test in Version 13.
+        pass
+
+    def _internal_test_reshape_static_shape_allowzero_v14(
+        self, op_name, version
+    ) -> None:
+        assert op_name == "Reshape"
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (1, 0, 0)), ("shape", TensorProto.INT64, (3,))],
             [make_node("Reshape", ["x", "shape"], ["y"], allowzero=1)],
@@ -596,10 +844,23 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 1, 1))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.UINT8, (0, 1, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (0, 1, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_reshape_static_shape_allowzero_v19(
+        self, op_name, version
+    ) -> None:
+        self._internal_test_reshape_static_shape_allowzero_v13(op_name, version)
+
     def test_reshape_static_shape_constant(self) -> None:
+        self._test_an_op("Reshape", self.get_caller_function_name())
+
+    def _internal_test_reshape_static_shape_constant_v13(
+        self, op_name, version
+    ) -> None:
+        assert op_name == "Reshape"
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (2, 4, 3))],
             [
@@ -619,9 +880,30 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("shape", TensorProto.INT64, (2,)),
                 make_tensor_value_info("y", TensorProto.UINT8, (3, 8)),
             ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _internal_test_reshape_static_shape_constant_v14(
+        self, op_name, version
+    ) -> None:
+        self._internal_test_reshape_static_shape_constant_v13(op_name, version)
+
+    def _internal_test_reshape_static_shape_constant_v19(
+        self, op_name, version
+    ) -> None:
+        self._internal_test_reshape_static_shape_constant_v13(op_name, version)
+
     def test_upsample(self) -> None:
+        self._test_an_op("Upsample", self.get_caller_function_name())
+
+    def _internal_test_upsample_v10(self, op_name, version) -> None:
+        with self.assertRaises(onnx.checker.ValidationError) as cm:
+            self._internal_test_upsample_v9(op_name, version)
+        exception = cm.exception
+        assert "Upsample is deprecated" in str(exception)
+
+    def _internal_test_upsample_v9(self, op_name, version) -> None:
+        assert op_name == "Upsample"
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -636,10 +918,33 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    def _internal_test_upsample_v7(self, op_name, version) -> None:
+        assert op_name == "Upsample"
+        graph = self._make_graph(
+            [("x", TensorProto.INT32, (2, 4, 3, 5))],
+            [make_node("Upsample", ["x"], ["y"], scales=[1.0, 1.1, 1.3, 1.9])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_upsample_raw_data(self) -> None:
+        self._test_an_op("Upsample", self.get_caller_function_name())
+
+    def _internal_test_upsample_raw_data_v10(self, op_name, version) -> None:
+        with self.assertRaises(onnx.checker.ValidationError) as cm:
+            self._internal_test_upsample_raw_data_v9(op_name, version)
+        exception = cm.exception
+        assert "Upsample is deprecated" in str(exception)
+
+    def _internal_test_upsample_raw_data_v9(self, op_name, version) -> None:
+        assert op_name == "Upsample"
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -660,10 +965,11 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_upsample_raw_data_v7(self) -> None:
+    def _internal_test_upsample_raw_data_v7(self, op_name, version) -> None:
+        assert op_name == "Upsample"
         graph = self._make_graph(
             [("x", TensorProto.INT32, (1, 3, 4, 5))],
             [make_node("Upsample", ["x"], ["y"], scales=[2.0, 1.1, 2.3, 1.9])],
@@ -672,7 +978,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 9, 9))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 7)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_expand(self) -> None:
@@ -1215,24 +1521,23 @@ class TestShapeInference(TestShapeInferenceHelper):
         )  # type: ignore
 
     def test_squeeze(self) -> None:
-        self._test_an_op("Squeeze", "test_squeeze")
+        self._test_an_op("Squeeze", self.get_caller_function_name())
 
-    def _internal_test_squeeze_v11(self) -> None:
+    def _internal_test_squeeze_v11(self, op_name, version) -> None:
+        assert op_name == "Squeeze"
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
             [make_node("Squeeze", "x", "y", axes=[0, 2, 3, 5])],
             [],
         )
-        operatorsetid = OperatorSetIdProto()
-        operatorsetid.domain = ""
-        operatorsetid.version = 11
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
-            opset_imports=[operatorsetid],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
         )
 
-    def _internal_test_squeeze_v13(self) -> None:
+    def _internal_test_squeeze_v13(self, op_name, version) -> None:
+        assert op_name == "Squeeze"
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1)),
@@ -1242,13 +1547,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             initializer=[make_tensor("axes", TensorProto.INT64, (4,), (0, 2, 3, 5))],
         )
-        operatorsetid = OperatorSetIdProto()
-        operatorsetid.domain = ""
-        operatorsetid.version = 13
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
-            opset_imports=[operatorsetid],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 13)],
         )
 
     def test_unsqueeze_regular(self) -> None:
