@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import inspect
-import re
 import unittest
 from typing import Any, Sequence
 
@@ -195,27 +194,6 @@ class TestShapeInferenceHelper(unittest.TestCase):
             raise NotImplementedError(
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type)
             )
-
-    def _get_op_version(self, op_name):
-        """This function returns a version str list for an op.
-        If op has only one version, [] is returned.
-        If op has many version, [versions] is returned.
-        If op is not in the opset, None is returned.
-        """
-        op_names = dir(op_list)
-        if op_name in op_names:
-            return []
-
-        ret = []
-        name_pattern = re.compile(f"^{op_name}_([0-9]+)$")
-        for name in op_names:
-            m = name_pattern.search(name)
-            if m is not None:
-                ret.append(m.group(1))
-        if op_name in op_names or len(ret) > 0:
-            return ret
-        else:
-            return None
 
     def _test_an_op(self, op_name, test_function_name) -> None:
         """Given an operator name and test_function_name, run tests for op versions > 5.
