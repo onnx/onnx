@@ -6,10 +6,12 @@
 This implements graphalities that allows us to check whether a serialized
 proto is legal.
 """
+from __future__ import annotations
 
 import functools
+import os
 import sys
-from typing import Any, Callable, Optional, Type, TypeVar, Union, cast
+from typing import Any, Callable, TypeVar, cast
 
 from google.protobuf.message import Message
 
@@ -48,7 +50,7 @@ FuncType = TypeVar("FuncType", bound=Callable[..., Any])
 
 
 # TODO: This really doesn't seem worth the metaprogramming...
-def _create_checker(proto_type: Type[Message]) -> Callable[[FuncType], FuncType]:
+def _create_checker(proto_type: type[Message]) -> Callable[[FuncType], FuncType]:
     def decorator(py_func: FuncType) -> FuncType:
         @functools.wraps(py_func)
         def checker(proto: Message, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> Any:
@@ -88,7 +90,7 @@ def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None
 
 
 def check_function(
-    function: FunctionProto, ctx: Optional[C.CheckerContext] = None
+    function: FunctionProto, ctx: C.CheckerContext | None = None
 ) -> None:
     if ctx is None:
         ctx = C.CheckerContext()
@@ -114,19 +116,19 @@ def check_sparse_tensor(
 
 
 def check_model(
-    model: Union[ModelProto, str, bytes],
+    model: ModelProto | str | bytes | os.PathLike,
     full_check: bool = False,
     skip_opset_compatibility_check: bool = False,
 ) -> None:
     """Check the consistency of a model. An exception is raised if the test fails.
 
     Arguments:
-        model (ModelProto): model to check
+        model (ModelProto | str | bytes | os.PathLike): model to check
         full_check (bool): if True, the function checks shapes can be inferred
     """
     # If model is a path instead of ModelProto
-    if isinstance(model, str):
-        C.check_model_path(model, full_check, skip_opset_compatibility_check)
+    if isinstance(model, (str, os.PathLike)):
+        C.check_model_path(os.fspath(model), full_check, skip_opset_compatibility_check)
     else:
         protobuf_string = (
             model if isinstance(model, bytes) else model.SerializeToString()
