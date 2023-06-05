@@ -187,10 +187,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #ifdef __APPLE__
         struct stat buffer; // APPLE does not have stat64
         if (stat((data_path).c_str(), &buffer) != 0) {
-# else
-        struct stat64 buffer;
+#else
+        struct stat64 buffer; // All POSIX except APPLE have stat64
         if (stat64((data_path).c_str(), &buffer) != 0) {
-# endif
+#endif
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
