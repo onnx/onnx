@@ -184,7 +184,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
         // use stat64 to check whether the file exists
-# ifdef defined(__APPLE__)
+#ifdef __APPLE__
         struct stat buffer; // APPLE does not have stat64
         if (stat((data_path).c_str(), &buffer) != 0) {
 # else
