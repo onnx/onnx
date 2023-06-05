@@ -244,7 +244,11 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|equal_string"
         "|equal_string_broadcast"
         "|gridsample"
+        "|cast"
         "|castlike"
+        "|equal"
+        "|identity"
+        "|reshape"
         ")"
     )
 
