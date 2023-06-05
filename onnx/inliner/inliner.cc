@@ -242,13 +242,45 @@ class InliningRenamer : private MutableVisitor {
 // Identify the set of all "input" variables used by a given node.
 // This includes the variables listed as node.input, as well as
 // implicit inputs referred to in any graph-valued-attribute of the node.
+// In the case of variables referenced in sub-graphs, only non-local variables
+// are treated as implicit inputs.
 
-class ComputeUsedVars : private Visitor {
+class ComputeInputs : private Visitor {
  private:
+  std::vector<std::unordered_set<std::string>> namescopes;
+
+  std::unordered_set<std::string>& CurrentScope() {
+    return namescopes.back();
+  }
+
+  bool IsLocalVar(const std::string& name) {
+    for (auto& scope : namescopes) {
+      if (scope.count(name) > 0)
+        return true;
+    }
+    return false;
+  }
+
+  void VisitGraph(GraphProto* graph) override {
+    namescopes.emplace_back();
+    for (auto& x : graph.input())
+      CurrentScope().add(x);
+    for (auto& init : graph->initializer())
+      CurrentScope().add(x);
+    for (auto& n : *graph->mutable_node())
+      VisitNode(&n);
+    namescopes.pop_back();
+  }
+
   bool ProcessNode(const NodeProto& node) override {
     for (auto& var : node.input()) {
-      if (!var.empty()) {
+      if (!var.empty() && !IsLocalVar(var)) {
         result.push_back(var);
+      }
+    }
+    for (auto& var : node.output()) {
+      if (!var.empty()) {
+        CurrentScope().add(var);
       }
     }
     return true; // process sub-graphs
@@ -257,14 +289,14 @@ class ComputeUsedVars : private Visitor {
  public:
   std::vector<std::string> result;
 
-  ComputeUsedVars(const NodeProto& node) {
+  ComputeInputs(const NodeProto& node) {
     result.reserve(node.input_size());
     VisitNode(node);
   }
 };
 
 std::vector<std::string> GetUsedVars(const NodeProto& node) {
-  return ComputeUsedVars(node).result;
+  return ComputeInputs(node).result;
 }
 
 using ConstNodeMap = std::unordered_map<std::string, const NodeProto*>;

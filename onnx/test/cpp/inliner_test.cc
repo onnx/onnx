@@ -250,5 +250,30 @@ bar (x) => (y) {
   ASSERT_EQ(node2.attribute_size(), 0);
 }
 
+TEST(FunctionInliner, SubGraph) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
+agraph (bool flag, float[N,M] X) => (float[N,M] Y)
+{
+  Y = local.IfNot (flag) <
+        then_part = g1 () => (float[N, M] z_then) { z_then = Add (X, X) },
+        else_part = g2 () => (float[N, M] z_else) { z_else = Mul (X, X) }
+      >
+  >
+}
+
+<opset_import: [ "" : 17, "local" : 1], domain: "local">
+IfNot <then_part, else_part> (cond) => (y) {
+  y = If (cond) <
+    then_branch = @else_part,
+    else_branch = @then_part
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  InlineFunctions(model, code);
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE
