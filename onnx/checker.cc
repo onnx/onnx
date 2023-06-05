@@ -183,9 +183,9 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "' points outside the directory");
         }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
-        // use stat to check whether the file exists
-        struct stat buffer;
-        if (stat((data_path).c_str(), &buffer) != 0) {
+        // use stat64 to check whether the file exists
+        struct stat64 buffer;
+        if (stat64((data_path).c_str(), &buffer) != 0) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
