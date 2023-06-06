@@ -261,14 +261,14 @@ class ComputeInputs : private Visitor {
     return false;
   }
 
-  void VisitGraph(GraphProto* graph) override {
+  void VisitGraph(const GraphProto& graph) override {
     namescopes.emplace_back();
     for (auto& x : graph.input())
-      CurrentScope().add(x);
-    for (auto& init : graph->initializer())
-      CurrentScope().add(x);
-    for (auto& n : *graph->mutable_node())
-      VisitNode(&n);
+      CurrentScope().insert(x.name());
+    for (auto& init : graph.initializer())
+      CurrentScope().insert(init.name());
+    for (auto& n : graph.node())
+      VisitNode(n);
     namescopes.pop_back();
   }
 
@@ -280,7 +280,7 @@ class ComputeInputs : private Visitor {
     }
     for (auto& var : node.output()) {
       if (!var.empty()) {
-        CurrentScope().add(var);
+        CurrentScope().insert(var);
       }
     }
     return true; // process sub-graphs
