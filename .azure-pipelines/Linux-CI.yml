@@ -12,26 +12,31 @@ jobs:
         onnx_ml: 1
         build_type: 'Debug'
         documentation: 0
-      py310:
+        protobuf_type: 'External'
+      py310-InternalProtobuf:
         python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
         documentation: 0
+        protobuf_type: 'Internal'
       py39-ml:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Release'
         documentation: 1
-      py38:
+        protobuf_type: 'External'
+      py38-InternalProtobuf:
         python.version: '3.8'
         onnx_ml: 0
         build_type: 'Release'
         documentation: 0
+        protobuf_type: 'Internal'
       py38-ml:
         python.version: '3.8'
         onnx_ml: 1
         build_type: 'Release'
         documentation: 0
+        protobuf_type: 'External'
     maxParallel: 6
 
   steps:
@@ -45,7 +50,12 @@ jobs:
       python -m virtualenv venv
       source venv/bin/activate
 
-      sudo apt-get install libprotobuf-dev protobuf-compiler
+      if [ '$(protobuf_type)' == 'External' ]; then
+        sudo apt-get install libprotobuf-dev protobuf-compiler
+      elif [ '$(protobuf_type)' == 'Internal' ]; then
+        echo "Use the internal protobuf build"
+      fi
+
       python -m pip install --upgrade pip
       python -m pip install -r requirements-release.txt
       # still test protobuf==3.20.2 at least in a CI
@@ -64,7 +74,7 @@ jobs:
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       # enable more sanitizer
       export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
-      pip install -e .
+      pip install -e . -v
     displayName: 'Install ONNX and dependencies'
 
   - script: |
