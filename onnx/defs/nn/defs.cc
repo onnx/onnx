@@ -1556,7 +1556,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "training_mode",
             "If set to true, it indicates BatchNormalization is being used for training, and outputs 1, "
-            "2, 3, and 4 would be populated.",
+            "2, and 3 would be populated.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
