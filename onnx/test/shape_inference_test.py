@@ -192,63 +192,66 @@ class TestShapeInferenceHelper(unittest.TestCase):
             )
 
 
+def single_op_all_version_tester(op_name: str):
+    """This is decorator to run one test case for all versions of an Op.
+
+    However, there is a creation issue for Reshape Operator under version 5, which
+    probably caused by the mismatch creation arguments in _make_graph.
+    Therefore, all test cases now only run when version > 5.
+    Issue reference: https://github.com/onnx/onnx/issues/5289.
+
+    Args:
+        op_name: The name of the Op, which should be in `defs.get_all_schemas`.
+
+    Returns:
+        The decorated function for unittest case.
+        For example, we can use:
+        ```
+        @single_op_all_version_tester("Transpose")
+        def test_transpose(self, version):
+            ...
+        ```
+
+    Raises:
+        KeyError: If the op_name is not in `defs.get_all_schemas`.
+    """
+    cls = TestShapeInferenceHelper
+    if len(cls.all_op_versions) == 0:
+        # Init the version map for all Ops.
+        for schema in defs.get_all_schemas():
+            cls.all_op_versions[schema.name] = cls.get_available_versions(schema)
+
+    def decorator(test_function):
+        if op_name not in cls.all_op_versions:
+            raise KeyError(f"Invalid Op name: {op_name}")
+        versions = cls.all_op_versions[op_name]
+        assert versions is not None
+
+        def wrapper(*args, **kwargs):
+            assert len(versions) > 0
+            for version in versions:
+                # Many versions found for this op.
+                if int(version) <= 5:
+                    # Not sure how to fix the Reshape error in self._make_graph.
+                    # Issue reference: https://github.com/onnx/onnx/issues/5289.
+                    continue
+                # Check whether there is version-specified test function.
+                function_name = f"_{test_function.__name__}_v{version}"
+                version_test_function = getattr(args[0], function_name, None)
+                with args[0].subTest(op_version=version):
+                    if version_test_function is not None:
+                        version_test_function(version=version, **kwargs)
+                    else:
+                        # There is no version-specified test function.
+                        # The default test function is used.
+                        test_function(*args, version=version, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 class TestShapeInference(TestShapeInferenceHelper):
-    @staticmethod
-    def single_op_all_version_tester(op_name):
-        """This is decorator to run one test case for all versions of an Op.
-
-        However, there is a creation issue for Reshape Operator under version 5.
-        Therefore, all test cases only run when version > 5.
-
-        Args:
-            op_name: The name of the Op, which should be in `defs.get_all_schemas`.
-
-        Returns:
-            The decorated function for unittest case.
-            For example, we can use:
-            ```
-            @single_op_tester("Transpose")
-            def test_transpose(self, version):
-                ...
-            ```
-
-        Raises:
-            KeyError: If the op_name is not in `defs.get_all_schemas`.
-        """
-        cls = TestShapeInferenceHelper
-        if len(cls.all_op_versions) == 0:
-            # Init the version map for all Ops.
-            for schema in defs.get_all_schemas():
-                cls.all_op_versions[schema.name] = cls.get_available_versions(schema)
-
-        def decorate(test_function):
-            if op_name not in cls.all_op_versions:
-                raise KeyError(f"Invalid Op name: {op_name}")
-            versions = cls.all_op_versions[op_name]
-            assert versions is not None
-
-            def wrapper(*args, **kwargs):
-                assert len(versions) > 0
-                for version in versions:
-                    # Many versions found for this op.
-                    if int(version) <= 5:
-                        # Not sure how to fix the Reshape error in self._make_graph.
-                        continue
-                    # Check whether there is version-specified test function.
-                    function_name = f"_{test_function.__name__}_v{version}"
-                    version_test_function = getattr(args[0], function_name, None)
-                    with args[0].subTest(version=version):
-                        if version_test_function is not None:
-                            version_test_function(*args, version=version, **kwargs)
-                        else:
-                            # There is no version-specified test function.
-                            # The default test function is used.
-                            test_function(*args, version=version, **kwargs)
-
-            return wrapper
-
-        return decorate
-
     def test_empty_graph(self) -> None:
         graph = self._make_graph(["y"], [], [])
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
@@ -742,17 +745,12 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @single_op_all_version_tester("Upsample")
     def test_upsample(self, version) -> None:
-        if version == 7:
-            self._internal_test_upsample_v7(version)
-        elif version == 10:
-            with self.assertRaises(onnx.checker.ValidationError) as cm:
-                self._internal_test_upsample_v9(version)
-            exception = cm.exception
-            assert "Upsample is deprecated" in str(exception)
-        else:
-            self._internal_test_upsample_v9(version)
+        with self.assertRaises(onnx.checker.ValidationError) as cm:
+            self._test_upsample_v9(version)
+        exception = cm.exception
+        assert "Upsample is deprecated" in str(exception)
 
-    def _internal_test_upsample_v9(self, version) -> None:
+    def _test_upsample_v9(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -770,7 +768,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def _internal_test_upsample_v7(self, version) -> None:
+    def _test_upsample_v7(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.INT32, (2, 4, 3, 5))],
             [make_node("Upsample", ["x"], ["y"], scales=[1.0, 1.1, 1.3, 1.9])],
@@ -784,17 +782,12 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @single_op_all_version_tester("Upsample")
     def test_upsample_raw_data(self, version) -> None:
-        if version == 7:
-            self._internal_test_upsample_raw_data_v7(version)
-        elif version == 10:
-            with self.assertRaises(onnx.checker.ValidationError) as cm:
-                self._internal_test_upsample_raw_data_v9(version)
-            exception = cm.exception
-            assert "Upsample is deprecated" in str(exception)
-        else:
-            self._internal_test_upsample_raw_data_v9(version)
+        with self.assertRaises(onnx.checker.ValidationError) as cm:
+            self._test_upsample_raw_data_v9(version)
+        exception = cm.exception
+        assert "Upsample is deprecated" in str(exception)
 
-    def _internal_test_upsample_raw_data_v9(self, version) -> None:
+    def _test_upsample_raw_data_v9(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -818,7 +811,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def _internal_test_upsample_raw_data_v7(self, version) -> None:
+    def _test_upsample_raw_data_v7(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.INT32, (1, 3, 4, 5))],
             [make_node("Upsample", ["x"], ["y"], scales=[2.0, 1.1, 2.3, 1.9])],
@@ -1371,24 +1364,6 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @single_op_all_version_tester("Squeeze")
     def test_squeeze(self, version) -> None:
-        if version == 11:
-            self._internal_test_squeeze_v11(version)
-        else:
-            self._internal_test_squeeze_v13(version)
-
-    def _internal_test_squeeze_v11(self, version) -> None:
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
-            [make_node("Squeeze", "x", "y", axes=[0, 2, 3, 5])],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
-
-    def _internal_test_squeeze_v13(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1)),
@@ -1397,6 +1372,18 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Squeeze", ["x", "axes"], "y")],
             [],
             initializer=[make_tensor("axes", TensorProto.INT64, (4,), (0, 2, 3, 5))],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    def _test_squeeze_v11(self, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
+            [make_node("Squeeze", "x", "y", axes=[0, 2, 3, 5])],
+            [],
         )
         self._assert_inferred(
             graph,
@@ -9151,10 +9138,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(graph, [make_tensor_value_info("output", TensorProto.INT64, (2, "N", 3, None))])  # type: ignore
 
-
-TestShapeInference.switch = {
-    1: TestShapeInference.single_op_all_version_tester,
-}
 
 if __name__ == "__main__":
     unittest.main()
