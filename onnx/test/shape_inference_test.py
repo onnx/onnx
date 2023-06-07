@@ -41,20 +41,70 @@ from onnx.helper import (
 )
 from onnx.parser import parse_graph
 
+all_test_op_versions: dict[str, set[int]] = {}
+
+
+def get_available_versions(schema):
+    versions: set[int] = set()
+    for version in range(schema.since_version, 0, -1):
+        try:
+            versions.add(defs.get_schema(schema.name, version).since_version)
+        except SchemaError:
+            break
+    return versions
+
+
+def single_op_all_version_tester(op_name: str):
+    """This is decorator to run one test case for all versions of an Op.
+
+    However, there is a creation issue for Reshape Operator under version 5, which
+    probably caused by the mismatch creation arguments in _make_graph.
+    Therefore, all test cases now only run when version > 5.
+    Issue reference: https://github.com/onnx/onnx/issues/5289.
+
+    Args:
+        op_name: The name of the Op, which should be in `defs.get_all_schemas`.
+
+    Returns:
+        The decorated function for unittest case.
+        For example, we can use:
+        ```
+        @single_op_all_version_tester("Transpose")
+        def test_transpose(self, version):
+            ...
+        ```
+
+    Raises:
+        KeyError: If the op_name is not in `defs.get_all_schemas`.
+    """
+    if len(all_test_op_versions) == 0:
+        # Init the version map for all Ops.
+        for schema in defs.get_all_schemas():
+            all_test_op_versions[schema.name] = get_available_versions(schema)
+
+    def decorator(test_function):
+        if op_name not in all_test_op_versions:
+            raise KeyError(f"Invalid Op name: {op_name}")
+        versions = all_test_op_versions[op_name]
+        assert versions is not None
+
+        def wrapper(*args, **kwargs):
+            assert len(versions) > 0
+            for version in versions:
+                # Many versions found for this op.
+                if int(version) <= 5:
+                    # Not sure how to fix the Reshape error in self._make_graph.
+                    # Issue reference: https://github.com/onnx/onnx/issues/5289.
+                    continue
+                with args[0].subTest(op_version=version):
+                    test_function(*args, version=version, **kwargs)
+
+        return wrapper
+
+    return decorator
+
 
 class TestShapeInferenceHelper(unittest.TestCase):
-    all_op_versions: dict[str, set[int]] = {}
-
-    @classmethod
-    def get_available_versions(cls, schema):
-        versions: set[int] = set()
-        for version in range(schema.since_version, 0, -1):
-            try:
-                versions.add(defs.get_schema(schema.name, version).since_version)
-            except SchemaError:
-                break
-        return versions
-
     def _make_graph(
         self,
         seed_values: Sequence[str | tuple[str, TensorProto.DataType, Any]],
@@ -190,57 +240,6 @@ class TestShapeInferenceHelper(unittest.TestCase):
             raise NotImplementedError(
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type)
             )
-
-
-def single_op_all_version_tester(op_name: str):
-    """This is decorator to run one test case for all versions of an Op.
-
-    However, there is a creation issue for Reshape Operator under version 5, which
-    probably caused by the mismatch creation arguments in _make_graph.
-    Therefore, all test cases now only run when version > 5.
-    Issue reference: https://github.com/onnx/onnx/issues/5289.
-
-    Args:
-        op_name: The name of the Op, which should be in `defs.get_all_schemas`.
-
-    Returns:
-        The decorated function for unittest case.
-        For example, we can use:
-        ```
-        @single_op_all_version_tester("Transpose")
-        def test_transpose(self, version):
-            ...
-        ```
-
-    Raises:
-        KeyError: If the op_name is not in `defs.get_all_schemas`.
-    """
-    cls = TestShapeInferenceHelper
-    if len(cls.all_op_versions) == 0:
-        # Init the version map for all Ops.
-        for schema in defs.get_all_schemas():
-            cls.all_op_versions[schema.name] = cls.get_available_versions(schema)
-
-    def decorator(test_function):
-        if op_name not in cls.all_op_versions:
-            raise KeyError(f"Invalid Op name: {op_name}")
-        versions = cls.all_op_versions[op_name]
-        assert versions is not None
-
-        def wrapper(*args, **kwargs):
-            assert len(versions) > 0
-            for version in versions:
-                # Many versions found for this op.
-                if int(version) <= 5:
-                    # Not sure how to fix the Reshape error in self._make_graph.
-                    # Issue reference: https://github.com/onnx/onnx/issues/5289.
-                    continue
-                with args[0].subTest(op_version=version):
-                    test_function(*args, version=version, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 class TestShapeInference(TestShapeInferenceHelper):
