@@ -823,7 +823,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_expand(self) -> None:
+    @single_op_all_version_tester("Expand")
+    def test_expand(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.INT32, (3, 1)), ("shape", TensorProto.INT64, (3,))],
             [make_node("Expand", ["x", "shape"], ["y"])],
@@ -831,10 +832,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("shape", TensorProto.INT64, (3,), (2, 1, 6))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 6))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_expand_scalar_input(self) -> None:
+    @single_op_all_version_tester("Expand")
+    def test_expand_scalar_input(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.INT32, ()), ("shape", TensorProto.INT64, (2,))],
             [make_node("Expand", ["x", "shape"], ["y"])],
@@ -842,10 +846,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("shape", TensorProto.INT64, (2,), (4, 8))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (4, 8))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (4, 8))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_expand_raw_data(self) -> None:
+    @single_op_all_version_tester("Expand")
+    def test_expand_raw_data(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.INT32, (3, 1)), ("shape", TensorProto.INT64, (2,))],
             [make_node("Expand", ["x", "shape"], ["y"])],
@@ -861,10 +868,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (3, 4))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (3, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_expand_dynamic_shape(self) -> None:
+    @single_op_all_version_tester("Expand")
+    def test_expand_dynamic_shape(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (1, 2, None)),
@@ -875,10 +885,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (None, 2, None))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (None, 2, None))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_expand_symbolic_shape(self) -> None:
+    @single_op_all_version_tester("Expand")
+    def test_expand_symbolic_shape(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (1, 2, None)),
@@ -890,10 +903,13 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         # if giving a symbolic shape, Expand should not infer any shape or rank inference
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, None)]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, None)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_size(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_size(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -905,10 +921,52 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("sizes", TensorProto.INT64, (4,), (3, 5, 6, 7))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (3, 5, 6, 7))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (3, 5, 6, 7))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_size_axes_2_3(self) -> None:
+    def _test_resize_size_v10(self, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.INT32, (2, 4, 3, 5)),
+                ("scales", TensorProto.FLOAT, (4,)),
+            ],
+            [make_node("Resize", ["x", "scales"], ["y"])],
+            [],
+            initializer=[
+                make_tensor("scales", TensorProto.FLOAT, (4,), (1.0, 1.1, 1.3, 1.9))
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    def _test_resize_size_v11(self, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.INT32, (2, 4, 3, 5)),
+                ("roi", TensorProto.FLOAT, (8,)),
+                ("scales", TensorProto.FLOAT, (4,)),
+                ("sizes", TensorProto.INT64, (4,)),
+            ],
+            [make_node("Resize", ["x", "roi", "scales", "sizes"], ["y"])],
+            [],
+            initializer=[make_tensor("sizes", TensorProto.INT64, (4,), (3, 5, 6, 7))],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (3, 5, 6, 7))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @single_op_all_version_tester("Resize")
+    def test_resize_size_axes_2_3(self, version) -> None:
+        if version < 18:
+            # axes attribute is introduced from Version 18.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -920,10 +978,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("sizes", TensorProto.INT64, (2,), (6, 7))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 6, 7))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 6, 7))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_size_axes_3_2(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_size_axes_3_2(self, version) -> None:
+        if version < 18:
+            # axes attribute is introduced from Version 18.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -935,10 +999,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("sizes", TensorProto.INT64, (2,), (6, 7))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 7, 6))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 7, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_size_not_larger(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_size_not_larger(self, version) -> None:
+        if version < 18:
+            # keep_aspect_ratio_policy attribute is introduced from Version 18.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (3, 5)),
@@ -957,10 +1027,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("sizes", TensorProto.INT64, (2,), (6, 6))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (4, 6))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (4, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_size_axes_2_3_not_larger(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_size_axes_2_3_not_larger(self, version) -> None:
+        if version < 18:
+            # axes & keep_aspect_ratio_policy attributes are introduced from Version 18.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -980,10 +1056,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("sizes", TensorProto.INT64, (2,), (6, 6))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 4, 6))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 4, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_size_not_smaller(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_size_not_smaller(self, version) -> None:
+        if version < 18:
+            # keep_aspect_ratio_policy attribute is introduced from Version 18.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (3, 5)),
@@ -1002,10 +1084,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("sizes", TensorProto.INT64, (2,), (6, 6))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (6, 10))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (6, 10))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_size_axes_2_3_not_smaller(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_size_axes_2_3_not_smaller(self, version) -> None:
+        if version < 18:
+            # axes & keep_aspect_ratio_policy attributes are introduced from Version 18.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -1025,10 +1113,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("sizes", TensorProto.INT64, (2,), (6, 6))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 6, 10))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 6, 10))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_scale(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_scale(self, version) -> None:
+        if version < 11:
+            # roi input is introduced from Version 11.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -1042,10 +1136,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_scale_axes_2_3(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_scale_axes_2_3(self, version) -> None:
+        if version < 18:
+            # axes attribute is introduced from Version 18.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -1057,10 +1157,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("scales", TensorProto.FLOAT, (2,), (1.3, 1.9))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_scale_axes_3_2(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_scale_axes_3_2(self, version) -> None:
+        if version < 18:
+            # axes attribute is introduced from Version 18.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (2, 4, 3, 5)),
@@ -1072,10 +1178,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer=[make_tensor("scales", TensorProto.FLOAT, (2,), (1.9, 1.3))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_scale_raw_data(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_scale_raw_data(self, version) -> None:
+        if version < 11:
+            # roi input is introduced from Version 11.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (1, 3, 4, 5)),
@@ -1095,10 +1207,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 9, 9))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 9, 9))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_scale_and_size_but_one_is_empty(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_scale_and_size_but_one_is_empty(self, version) -> None:
+        if version < 11:
+            # roi input is introduced from Version 11.
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.INT32, (1, 3, 4, 5)),
@@ -1126,10 +1244,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 9, 9))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 9, 9))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_resize_opset11_scales_is_empty(self) -> None:
+    @single_op_all_version_tester("Resize")
+    def test_resize_opset11_scales_is_empty(self, version) -> None:
+        if version != 11:
+            # This test only works for Version 11.
+            return
         # "scales" input in Resize in opset11 is not optional. It must be an empty tensor
         # if sizes is needed. Shape inference for Resize shall handle this case.
         graph = self._make_graph(
@@ -1157,120 +1281,190 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.INT32, (2, 6, 8, 10))],
-            opset_imports=[helper.make_opsetid("", 11)],
+            opset_imports=[helper.make_opsetid("", version)],
         )
 
-    def test_shape(self) -> None:
+    @single_op_all_version_tester("Shape")
+    def test_shape(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
             [make_node("Shape", ["x"], ["y"])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (3,))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (3,))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_shape_start_1(self) -> None:
+    @single_op_all_version_tester("Shape")
+    def test_shape_start_1(self, version) -> None:
+        if version < 15:
+            # start and end attributes are added from Version 15.
+            return
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
             [make_node("Shape", ["x"], ["y"], start=1)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (2,))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (2,))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_shape_end_1(self) -> None:
+    @single_op_all_version_tester("Shape")
+    def test_shape_end_1(self, version) -> None:
+        if version < 15:
+            # start and end attributes are added from Version 15.
+            return
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
             [make_node("Shape", ["x"], ["y"], end=1)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (1,))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (1,))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_shape_negative_start(self) -> None:
+    @single_op_all_version_tester("Shape")
+    def test_shape_negative_start(self, version) -> None:
+        if version < 15:
+            # start and end attributes are added from Version 15.
+            return
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
             [make_node("Shape", ["x"], ["y"], start=-1)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (1,))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (1,))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_shape_clip1(self) -> None:
+    @single_op_all_version_tester("Shape")
+    def test_shape_clip1(self, version) -> None:
+        if version < 15:
+            # start and end attributes are added from Version 15.
+            return
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
             [make_node("Shape", ["x"], ["y"], start=-5)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (3,))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (3,))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_shape_clip2(self) -> None:
+    @single_op_all_version_tester("Shape")
+    def test_shape_clip2(self, version) -> None:
+        if version < 15:
+            # start and end attributes are added from Version 15.
+            return
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
             [make_node("Shape", ["x"], ["y"], end=10)],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, (3,))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (3,))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_size(self) -> None:
+    @single_op_all_version_tester("Size")
+    def test_size(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))], [make_node("Size", ["x"], ["y"])], []
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.INT64, ())]
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, ())],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_gather(self) -> None:
+    @single_op_all_version_tester("Gather")
+    def test_gather(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (4, 3)), ("i", TensorProto.INT64, (2,))],
             [make_node("Gather", ["x", "i"], ["y"])],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 3))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 3))],  # type: ignore
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_gather_axis1(self) -> None:
+    @single_op_all_version_tester("Gather")
+    def test_gather_axis1(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (4, 3, 5)), ("i", TensorProto.INT64, (1, 2))],
             [make_node("Gather", ["x", "i"], ["y"], axis=1)],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (4, 1, 2, 5))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (4, 1, 2, 5))],  # type: ignore
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_gather_into_scalar(self) -> None:
+    @single_op_all_version_tester("Gather")
+    def test_gather_into_scalar(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3,)), ("i", TensorProto.INT64, ())],
             [make_node("Gather", ["x", "i"], ["y"])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, ())]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ())],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_gather_elements(self) -> None:
+    @single_op_all_version_tester("GatherElements")
+    def test_gather_elements(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 2)), ("i", TensorProto.INT64, (2, 2))],
             [make_node("GatherElements", ["x", "i"], ["y"], axis=1)],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))],  # type: ignore
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_gather_elements_axis0(self) -> None:
+    @single_op_all_version_tester("GatherElements")
+    def test_gather_elements_axis0(self, version) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 3)), ("i", TensorProto.INT64, (2, 3))],
             [make_node("GatherElements", ["x", "i"], ["y"], axis=0)],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 3))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 3))],  # type: ignore
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_scatter(self) -> None:
+    @single_op_all_version_tester("Scatter")
+    def test_scatter(self, version) -> None:
+        if version >= 11:
+            # Scatter is deprecated in domain_version of 11.
+            with self.assertRaises(onnx.checker.ValidationError) as cm:
+                self._test_scatter(version)
+            exception = cm.exception
+            assert "Scatter is deprecated" in str(exception)
+        else:
+            self._test_scatter(version)
+
+    def _test_scatter(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 3)),
@@ -1283,10 +1477,21 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (3, 3))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 10)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )  # type: ignore
 
-    def test_scatter_axis1(self) -> None:
+    @single_op_all_version_tester("Scatter")
+    def test_scatter_axis1(self, version) -> None:
+        if version >= 11:
+            # Scatter is deprecated in domain_version of 11.
+            with self.assertRaises(onnx.checker.ValidationError) as cm:
+                self._test_scatter_axis1(version)
+            exception = cm.exception
+            assert "Scatter is deprecated" in str(exception)
+        else:
+            self._test_scatter_axis1(version)
+
+    def _test_scatter_axis1(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (1, 5)),
@@ -1299,10 +1504,11 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (1, 5))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 10)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )  # type: ignore
 
-    def test_scatter_elements(self) -> None:
+    @single_op_all_version_tester("ScatterElements")
+    def test_scatter_elements(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 3)),
@@ -1312,9 +1518,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("ScatterElements", ["x", "i", "u"], ["y"])],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 3))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (3, 3))],  # type: ignore
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_scatter_elements_axis1(self) -> None:
+    @single_op_all_version_tester("ScatterElements")
+    def test_scatter_elements_axis1(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (1, 5)),
@@ -1324,9 +1535,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("ScatterElements", ["x", "i", "u"], ["y"], axis=1)],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 5))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 5))],  # type: ignore
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_scatternd(self) -> None:
+    @single_op_all_version_tester("ScatterND")
+    def test_scatternd(self, version) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (4, 5, 6)),
@@ -1336,9 +1552,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("ScatterND", ["x", "indices", "updates"], ["y"])],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (4, 5, 6))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (4, 5, 6))],  # type: ignore
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_scatternd_noshape(self) -> None:
+    @single_op_all_version_tester("ScatterND")
+    def test_scatternd_noshape(self, version) -> None:
         # The shape of 'x_reshaped' cannot be inferred, since it is the output of a dynamic reshape.
         # Thus the shape of 'y' is also None.
         graph = self._make_graph(
@@ -1360,6 +1581,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("x_reshaped", TensorProto.FLOAT, None),
                 make_tensor_value_info("y", TensorProto.FLOAT, None),
             ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )  # type: ignore
 
     @single_op_all_version_tester("Squeeze")
