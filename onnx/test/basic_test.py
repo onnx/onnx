@@ -4,6 +4,7 @@
 
 import io
 import os
+import pathlib
 import tempfile
 import unittest
 from typing import Literal
@@ -64,6 +65,14 @@ class TestIO(unittest.TestCase):
             loaded_proto = onnx.load_model(model_path, format=self.format)
             self.assertEqual(proto, loaded_proto)
 
+    def test_save_and_load_model_when_input_is_pathlike(self) -> None:
+        proto = _simple_model()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = pathlib.Path(temp_dir, "model.onnx")
+            onnx.save_model(proto, model_path, format=self.format)
+            loaded_proto = onnx.load_model(model_path, format=self.format)
+            self.assertEqual(proto, loaded_proto)
+
     def test_load_tensor_when_input_is_bytes(self) -> None:
         proto = _simple_tensor()
         proto_string = serialization.registry.get(self.format).serialize_proto(proto)
@@ -83,6 +92,15 @@ class TestIO(unittest.TestCase):
         proto = _simple_tensor()
         with tempfile.TemporaryDirectory() as temp_dir:
             model_path = os.path.join(temp_dir, "model.onnx")
+            onnx.save_tensor(proto, model_path, format=self.format)
+            loaded_proto = onnx.load_tensor(model_path, format=self.format)
+            self.assertEqual(proto, loaded_proto)
+
+    def test_save_and_load_tensor_when_input_is_pathlike(self) -> None:
+        # Test if input is a file name
+        proto = _simple_tensor()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = pathlib.Path(temp_dir, "model.onnx")
             onnx.save_tensor(proto, model_path, format=self.format)
             loaded_proto = onnx.load_tensor(model_path, format=self.format)
             self.assertEqual(proto, loaded_proto)
