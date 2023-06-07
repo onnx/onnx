@@ -255,10 +255,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 return false;
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
-              int64_t saturate = ctx.getAttribute("saturate") != nullptr ? ctx.getAttribute("saturate")->i() : 1;
               FunctionBuilder builder(functionProto);
               builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate=", saturate, "> (input)")
+                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
                       .c_str());
               schema.BuildFunction(functionProto);
               return true;
