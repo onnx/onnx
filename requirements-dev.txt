@@ -1,5 +1,6 @@
 numpy
 protobuf
+opencv-python
 pytest
 pytest-cov
 parameterized

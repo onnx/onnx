@@ -7925,6 +7925,199 @@ expect(
 </details>
 
 
+### ImageDecoder
+There are 9 test cases, listed as following:
+<details>
+<summary>image_decoder_decode_bmp_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".bmp", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_bmp_rgb",
+)
+```
+
+</details>
+<details>
+<summary>image_decoder_decode_jpeg2k_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".jp2", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg2k_rgb",
+)
+```
+
+</details>
+<details>
+<summary>image_decoder_decode_jpeg_bgr</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="BGR",
+)
+
+data, output = generate_test_data(".jpg", "BGR")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg_bgr",
+)
+```
+
+</details>
+<details>
+<summary>image_decoder_decode_jpeg_grayscale</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="Grayscale",
+)
+
+data, output = generate_test_data(".jpg", "Grayscale")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg_grayscale",
+)
+```
+
+</details>
+<details>
+<summary>image_decoder_decode_jpeg_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".jpg", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg_rgb",
+)
+```
+
+</details>
+<details>
+<summary>image_decoder_decode_png_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".png", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_png_rgb",
+)
+```
+
+</details>
+<details>
+<summary>image_decoder_decode_pnm_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".pnm", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_pnm_rgb",
+)
+```
+
+</details>
+<details>
+<summary>image_decoder_decode_tiff_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".tiff", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_tiff_rgb",
+)
+```
+
+</details>
+<details>
+<summary>image_decoder_decode_webp_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".webp", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_webp_rgb",
+)
+```
+
+</details>
+
+
 ### InstanceNormalization
 There are 1 test cases, listed as following:
 <details>
