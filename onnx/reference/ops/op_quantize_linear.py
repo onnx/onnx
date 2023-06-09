@@ -130,4 +130,6 @@ class QuantizeLinear_10(_CommonQuantizeLinear):
 class QuantizeLinear_19(_CommonQuantizeLinear):
     def _run(self, *args, axis=None, saturate=None):  # type: ignore
         # args: x, y_scale, zero_point
+        print("-----------")
+        print(args)
         return self.common_run(*args, axis=axis, saturate=saturate)  # type: ignore
