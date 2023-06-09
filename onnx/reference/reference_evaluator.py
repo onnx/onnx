@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from onnx import load, numpy_helper
+from onnx import load
 from onnx.defs import onnx_opset_version
 from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
 from onnx.reference.op_run import OpRun, RuntimeContextError, to_array_extended
