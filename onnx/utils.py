@@ -80,14 +80,14 @@ class Extractor:
 
     def _collect_referred_local_functions(
         self,
-        nodes,  # type: List[NodeProto]
-    ):  # type: (...) -> List[FunctionProto]
+        nodes,  # type: list[NodeProto]
+    ):  # type: (...) -> list[FunctionProto]
         # a node in a model graph may refer a function.
         # a function contains nodes, some of which may in turn refer a function.
         # we need to find functions referred by graph nodes and
         # by nodes used to define functions.
         def find_referred_funcs(nodes, referred_local_functions):  # type: ignore
-            new_nodes = []  # type: List[NodeProto]
+            new_nodes = []  # type: list[NodeProto]
             for node in nodes:
                 # check if the node is a function op
                 match_function = next(
@@ -104,7 +104,7 @@ class Extractor:
 
             return new_nodes
 
-        referred_local_functions = []  # type: List[FunctionProto]
+        referred_local_functions = []  # type: list[FunctionProto]
         new_nodes = find_referred_funcs(nodes, referred_local_functions)
         while new_nodes:
             new_nodes = find_referred_funcs(new_nodes, referred_local_functions)
@@ -116,6 +116,7 @@ class Extractor:
         nodes: list[NodeProto],
     ) -> tuple[list[TensorProto], list[ValueInfoProto]]:
         all_tensors_names: set[str] = set()
+
         for node in nodes:
             all_tensors_names.update(node.input)
             all_tensors_names.update(node.output)
@@ -174,8 +175,8 @@ class Extractor:
 
 
 def extract_model(
-    input_path: str,
-    output_path: str,
+    input_path: str | os.PathLike,
+    output_path: str | os.PathLike,
     input_names: list[str],
     output_names: list[str],
     check_model: bool = True,
@@ -189,8 +190,8 @@ def extract_model(
     subgraph that is connected to the _main graph_ as attributes of these operators.
 
     Arguments:
-        input_path (string): The path to original ONNX model.
-        output_path (string): The path to save the extracted ONNX model.
+        input_path (str | os.PathLike): The path to original ONNX model.
+        output_path (str | os.PathLike): The path to save the extracted ONNX model.
         input_names (list of string): The names of the input tensors that to be extracted.
         output_names (list of string): The names of the output tensors that to be extracted.
         check_model (bool): Whether to run model checker on the extracted model.

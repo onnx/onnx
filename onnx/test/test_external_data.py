@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import tempfile
 import unittest
 import uuid
@@ -524,16 +525,17 @@ class TestExternalDataToArray(unittest.TestCase):
             tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
         )
         self.temp_dir: str = self._temp_dir_obj.name
-        self.model_file_path: str = os.path.join(self.temp_dir, "model.onnx")
+        self._model_file_path: str = os.path.join(self.temp_dir, "model.onnx")
         self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
         self.small_data = (200, 300)
         self.model = self.create_test_model()
 
+    @property
+    def model_file_path(self):
+        return self._model_file_path
+
     def tearDown(self) -> None:
         self._temp_dir_obj.cleanup()
-
-    def get_temp_model_filename(self) -> str:
-        return os.path.join(self.temp_dir, str(uuid.uuid4()) + ".onnx")
 
     def create_test_model(self) -> ModelProto:
         X = helper.make_tensor_value_info("X", TensorProto.FLOAT, self.large_data.shape)
@@ -736,6 +738,17 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
         self.model_filename = self.create_test_model("C:/file.bin")
         with self.assertRaises(onnx.checker.ValidationError):
             checker.check_model(self.model_filename)
+
+
+class TestSaveAllTensorsAsExternalDataWithPath(TestSaveAllTensorsAsExternalData):
+    def get_temp_model_filename(self) -> pathlib.Path:
+        return pathlib.Path(super().get_temp_model_filename())
+
+
+class TestExternalDataToArrayWithPath(TestExternalDataToArray):
+    @property
+    def model_file_path(self) -> pathlib.Path:
+        return pathlib.Path(self._model_file_path)
 
 
 if __name__ == "__main__":
