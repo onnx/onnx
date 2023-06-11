@@ -1,17 +1,13 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-"""onnx checker
+"""Graph utilities for checking whether an ONNX proto message is legal."""
 
-This implements graphalities that allows us to check whether a serialized
-proto is legal.
-"""
 from __future__ import annotations
 
-import functools
 import os
 import sys
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, Callable, TypeVar
 
 from google.protobuf.message import Message
 
@@ -32,7 +28,7 @@ from onnx import (
 )
 
 # Limitation of single protobuf file is 2GB
-MAXIMUM_PROTOBUF = 2000000000
+_MAXIMUM_PROTOBUF = 2000000000
 
 # TODO: This thing where we reserialize the protobuf back into the
 # string, only to deserialize it at the call site, is really goofy.
@@ -49,49 +45,41 @@ DEFAULT_CONTEXT.opset_imports = {"": onnx.defs.onnx_opset_version()}
 FuncType = TypeVar("FuncType", bound=Callable[..., Any])
 
 
-# TODO: This really doesn't seem worth the metaprogramming...
-def _create_checker(proto_type: type[Message]) -> Callable[[FuncType], FuncType]:
-    def decorator(py_func: FuncType) -> FuncType:
-        @functools.wraps(py_func)
-        def checker(proto: Message, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> Any:
-            if not isinstance(proto, proto_type):
-                raise RuntimeError(
-                    f"You cannot pass an object that is not of type {proto_type.__name__}"
-                )
-            return getattr(C, py_func.__name__)(proto.SerializeToString(), ctx)
-
-        return cast(FuncType, checker)
-
-    return decorator
+def _ensure_proto_type(proto: Message, proto_type: type[Message]) -> None:
+    if not isinstance(proto, proto_type):
+        raise TypeError(
+            f"The proto message needs to be of type '{proto_type.__name__}'"
+        )
 
 
-@_create_checker(ValueInfoProto)
 def check_value_info(
     value_info: ValueInfoProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
 ) -> None:
-    pass
+    _ensure_proto_type(value_info, ValueInfoProto)
+    return C.check_value_info(value_info.SerializeToString(), ctx)
 
 
-@_create_checker(TensorProto)
 def check_tensor(tensor: TensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
-    pass
+    _ensure_proto_type(tensor, TensorProto)
+    return C.check_tensor(tensor.SerializeToString(), ctx)
 
 
-@_create_checker(AttributeProto)
 def check_attribute(
     attr: AttributeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
 ) -> None:
-    pass
+    _ensure_proto_type(attr, AttributeProto)
+    return C.check_attribute(attr.SerializeToString(), ctx)
 
 
-@_create_checker(NodeProto)
 def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
-    pass
+    _ensure_proto_type(node, NodeProto)
+    return C.check_node(node.SerializeToString(), ctx)
 
 
 def check_function(
     function: FunctionProto, ctx: C.CheckerContext | None = None
 ) -> None:
+    _ensure_proto_type(function, FunctionProto)
     if ctx is None:
         ctx = C.CheckerContext()
         ctx.ir_version = helper.find_min_ir_version_for(
@@ -104,14 +92,15 @@ def check_function(
     C.check_function(function.SerializeToString(), ctx)
 
 
-@_create_checker(GraphProto)
 def check_graph(graph: GraphProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
-    pass
+    _ensure_proto_type(graph, GraphProto)
+    return C.check_graph(graph.SerializeToString(), ctx)
 
 
 def check_sparse_tensor(
     sparse: SparseTensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
 ) -> None:
+    _ensure_proto_type(sparse, SparseTensorProto)
     C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
@@ -122,9 +111,11 @@ def check_model(
 ) -> None:
     """Check the consistency of a model. An exception is raised if the test fails.
 
-    Arguments:
-        model (ModelProto | str | bytes | os.PathLike): model to check
-        full_check (bool): if True, the function checks shapes can be inferred
+    Args:
+        model: Model to check.
+        full_check: If True, the function also checks for shapes that can be inferred.
+        skip_opset_compatibility_check: If True, the function skips the check for
+            opset compatibility.
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):
@@ -135,7 +126,7 @@ def check_model(
         )
         # If the protobuf is larger than 2GB,
         # remind users should use the model path to check
-        if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
+        if sys.getsizeof(protobuf_string) > _MAXIMUM_PROTOBUF:
             raise ValueError(
                 "This protobuf of onnx model is too large (>2GB). Call check_model with model path instead."
             )
