@@ -5,6 +5,20 @@
 
 from __future__ import annotations
 
+__all__ = [
+    "check_attribute",
+    "check_function",
+    "check_graph",
+    "check_model",
+    "check_node",
+    "check_sparse_tensor",
+    "check_tensor",
+    "check_value_info",
+    "DEFAULT_CONTEXT",
+    "ValidationError",
+    "C",
+]
+
 import os
 import sys
 from typing import Any, Callable, TypeVar
