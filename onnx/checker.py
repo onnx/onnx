@@ -17,6 +17,7 @@ __all__ = [
     "DEFAULT_CONTEXT",
     "ValidationError",
     "C",
+    "MAXIMUM_PROTOBUF",
 ]
 
 import os
@@ -42,7 +43,7 @@ from onnx import (
 )
 
 # Limitation of single protobuf file is 2GB
-_MAXIMUM_PROTOBUF = 2000000000
+MAXIMUM_PROTOBUF = 2000000000
 
 # TODO: This thing where we reserialize the protobuf back into the
 # string, only to deserialize it at the call site, is really goofy.
@@ -140,7 +141,7 @@ def check_model(
         )
         # If the protobuf is larger than 2GB,
         # remind users should use the model path to check
-        if sys.getsizeof(protobuf_string) > _MAXIMUM_PROTOBUF:
+        if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
             raise ValueError(
                 "This protobuf of onnx model is too large (>2GB). Call check_model with model path instead."
             )
