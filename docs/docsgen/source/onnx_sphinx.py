@@ -9,6 +9,7 @@ import keyword
 import os
 import pathlib
 import re
+import shutil
 import sys
 import textwrap
 from typing import Any
@@ -845,6 +846,23 @@ def _generate_op_doc(app):
     onnx_documentation_folder(folder, flog=logger.info, max_opsets=max_opsets)
 
 
+def _copy_repo_docs(app):
+    logger = logging.getLogger(__name__)
+    dest_name = app.config.onnx_md_folder
+
+    docs_dir = pathlib.Path(__file__).parent.parent.parent  # docs
+    dest_folder = docs_dir / "docsgen" / "source" / dest_name
+    dest_folder.mkdir(parents=True, exist_ok=True)
+    # Copy all the markdown files from the folder except for the blocklisted ones
+    blocklist = {"Changelog-ml.md", "Changelog.md", "CIPipelines.md", "Operators-ml.md", "Operators.md", "Relicensing.md", "TestCoverage-ml.md", "TestCoverage.md"}
+
+    logger.info("Copying Markdown files from '%s' to '%s'", docs_dir, dest_folder)
+    for file in docs_dir.glob("*.md"):
+        if file.name not in blocklist:
+            shutil.copy(file, dest_folder)
+            logger.info("Copying '%s'", file.name)
+
+
 def setup(app):
     """
     Sphinx extension `onnx_sphinx` displays documentation
@@ -853,8 +871,11 @@ def setup(app):
     import sphinx
 
     app.add_config_value("onnx_doc_folder", "operators", "env")
+    # Folder for storing the Markdown documentation from the repository
+    app.add_config_value("onnx_md_folder", "repo-docs", "env")
     app.add_config_value("max_opsets", {}, "env")
     app.connect("builder-inited", _generate_op_doc)
+    app.connect("builder-inited", _copy_repo_docs)
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
 
 
