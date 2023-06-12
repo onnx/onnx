@@ -22,6 +22,18 @@ import onnx
 from onnx.backend.test.case.base import _Exporter
 from onnx.defs import OpSchema
 
+REPO_DOCS_EXCLUDE = {
+    "Changelog-ml.md",
+    "Changelog.md",
+    "CIPipelines.md",
+    "CONTRIBUTING.md",
+    "Operators-ml.md",
+    "Operators.md",
+    "Relicensing.md",
+    "TestCoverage-ml.md",
+    "TestCoverage.md",
+}
+
 
 def _get_diff_template():
     return jinja2.Template(
@@ -854,13 +866,13 @@ def _copy_repo_docs(app):
     dest_folder = docs_dir / "docsgen" / "source" / dest_name
     dest_folder.mkdir(parents=True, exist_ok=True)
     # Copy all the markdown files from the folder except for the blocklisted ones
-    blocklist = {"Changelog-ml.md", "Changelog.md", "CIPipelines.md", "Operators-ml.md", "Operators.md", "Relicensing.md", "TestCoverage-ml.md", "TestCoverage.md"}
 
     logger.info("Copying Markdown files from '%s' to '%s'", docs_dir, dest_folder)
     for file in docs_dir.glob("*.md"):
-        if file.name not in blocklist:
-            shutil.copy(file, dest_folder)
-            logger.info("Copying '%s'", file.name)
+        if file.name in REPO_DOCS_EXCLUDE:
+            continue
+        shutil.copy(file, dest_folder)
+        logger.info("Copying '%s'", file.name)
 
 
 def setup(app):
