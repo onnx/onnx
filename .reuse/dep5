@@ -98,7 +98,7 @@ Files: docs/Operator*.md
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: .gitignore .gitmodules .lintrunner.toml .gitattributes .git-blame-ignore-revs .clang* .editorconfig
+Files: ./**/*.gitignore .gitmodules .lintrunner.toml .gitattributes .git-blame-ignore-revs .clang* .editorconfig
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
