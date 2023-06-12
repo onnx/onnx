@@ -1,8 +1,8 @@
 # ONNX Repository Documentation
 
-```{eval-rst}
+```{toctree}
 :maxdepth: 1
-    :glob:
+:glob:
 
-    *
+*
 ```
