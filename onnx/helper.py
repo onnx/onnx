@@ -1223,7 +1223,7 @@ def printable_attribute(
         else:
             # special case to print scalars
             field = tensor_dtype_to_field(attr.t.data_type)
-            content.append(f"<Scalar Tensor {str(getattr(attr.t, field))}>")
+            content.append(f"<Scalar Tensor {getattr(attr.t, field)!s}>")
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)

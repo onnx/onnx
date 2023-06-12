@@ -687,7 +687,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             with open(f"issue_{te.name}.onnx", "wb") as f:
                 f.write(te.onnx_model.SerializeToString())
             raise AssertionError(
-                f"Unable to run test {te.name!r} due to {e}\n{str(te.onnx_model)}"
+                f"Unable to run test {te.name!r} due to {e}\n{te.onnx_model!s}"
             ) from e
         successes.append((te, atol.get(te.fname, None), rtol.get(te.fname, None)))
         if verbose > 7:
