@@ -31,6 +31,7 @@ from onnx.defs import (
     AI_ONNX_PREVIEW_TRAINING_DOMAIN,
     ONNX_DOMAIN,
     ONNX_ML_DOMAIN,
+    OpSchema,
     SchemaError,
 )
 from onnx.helper import (
@@ -44,7 +45,7 @@ from onnx.helper import (
 from onnx.parser import parse_graph
 
 
-def get_available_versions(schema):
+def get_available_versions(schema: OpSchema) -> set[int]:
     versions: set[int] = set()
     for version in range(schema.since_version, 0, -1):
         try:
