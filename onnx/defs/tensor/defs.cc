@@ -675,17 +675,19 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Split_ver18_doc =
+static const char* Split_ver20_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified 'axis'.
 Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
 If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
-If the tensor is not evenly splittable into `num_outputs`, the last chunk will be smaller.
 If the input 'split' is specified, it indicates the sizes of each output in the split.
+If the tensor is not evenly splittable into `num_outputs`, the behavior depends on `mode` attribute.
+If `mode` is set to 'numpy' (default), the last few dimensions sizes will be lowered by one.
+If 'mode' is set to 'legacy', only the last dimension will be smaller.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Split,
-    18,
+    20,
     OpSchema()
         .Input(0, "input", "The tensor to split", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
@@ -721,7 +723,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If the tensor is not evenly splittable the last chunk will be smaller.",
             AttributeProto::INT,
             false)
-        .SetDoc(Split_ver18_doc)
+        .Attr(
+            "mode",
+            "Uneven split mode. "
+            "Possible values are 'torch' (default) and 'legacy'.",
+            AttributeProto::STRING,
+            std::string("torch"))
+        .SetDoc(Split_ver20_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
@@ -753,7 +761,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (ctx.hasInput(1) && num_outputs_attr) {
             fail_shape_inference("Both 'split' input and 'num_outputs' attribute were given");
           }
-          if (ctx.hasInput(1)) { //'split' is input
+          if (ctx.hasInput(1)) { // 'split' is input
             auto split_proto = ctx.getInputData(1);
             if (split_proto == nullptr) {
               // skip if split is not an initializer
@@ -786,10 +794,22 @@ ONNX_OPERATOR_SET_SCHEMA(
                 int chunk_size = split_dim_value / num_outputs;
                 split.resize(num_outputs, chunk_size);
               } else { // tensor needs to be split unevenly
-                int chunk_size = (split_dim_value / num_outputs) + 1;
-                int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
-                split.resize(num_outputs - 1, chunk_size);
-                split.push_back(last_chunk_size);
+                const auto mode = getAttribute(ctx, "mode", "torch");
+                int chunk_size = split_dim_value / num_outputs;
+                if (mode == "torch") {
+                  int reduced_dims = num_outputs * (chunk_size + 1) - split_dim_value;
+                  for (int i=0; i<num_outputs-reduced_dims; i++) {
+                    split.push_back(chunk_size+1);
+                  }
+                  while (split.size() <= num_outputs) {
+                    split.push_back(chunk_size);
+                  }
+                } else {
+                  int chunk_size = (split_dim_value / num_outputs) + 1;
+                  int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
+                  split.resize(num_outputs - 1, chunk_size);
+                  split.push_back(last_chunk_size);
+                }
               }
             } else {
               fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");
