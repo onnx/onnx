@@ -1484,10 +1484,15 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
    ```
    if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   or when ceil_mode is disabled:
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -1563,7 +1568,7 @@ x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "AVG")
 
@@ -1627,7 +1632,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
 
@@ -1703,7 +1708,7 @@ pad_right = 2
 pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -1746,7 +1751,7 @@ pad_right = 2
 pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -2071,7 +2076,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET)", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
 
@@ -2099,7 +2104,7 @@ x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "AVG")
 
@@ -13729,7 +13734,7 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "LPPOOL", p=p)
 
@@ -13759,7 +13764,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(
     padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
@@ -13844,7 +13849,7 @@ strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -13975,7 +13980,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(
     padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
@@ -14007,7 +14012,7 @@ x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(
     padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "LPPOOL", p=p
@@ -14301,10 +14306,15 @@ for op_dtype in all_numeric_dtypes:
    ```
    if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   or when ceil_mode is disabled:
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -14384,7 +14394,7 @@ x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "MAX")
 
@@ -14448,7 +14458,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
 
@@ -14517,7 +14527,7 @@ strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -14755,7 +14765,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
 
@@ -14832,7 +14842,7 @@ x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "MAX")
 
