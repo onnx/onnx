@@ -23956,7 +23956,7 @@ This version of the operator has been available since version 20 of the default 
   If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
   If the input 'split' is specified, it indicates the sizes of each output in the split.
   If the tensor is not evenly splittable into `num_outputs`, the behavior depends on `mode` attribute.
-  If `mode` is set to 'numpy' (default), the last few dimensions sizes will be lowered by one.
+  If `mode` is set to 'torch' (default), the last few dimensions sizes will be lowered by one.
   If 'mode' is set to 'legacy', only the last dimension will be smaller.
 
 #### Version
