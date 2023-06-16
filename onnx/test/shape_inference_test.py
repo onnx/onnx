@@ -510,6 +510,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.UINT8, (None, None))]
         )
 
+    def test_reshape_dynamic_shape_symbolic(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, ("M",))],
+            [make_node("Reshape", ["x", "shape"], ["y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.UINT8, None)]
+        )
+
     def test_reshape_dynamic_unknown_rank(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, None)],
