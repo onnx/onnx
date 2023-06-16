@@ -10,32 +10,32 @@
 .. autofunction:: onnx.defs.onnx_opset_version
 ```
 
-```{eval-rst}
-.. autofunction:: onnx.defs.get_all_schemas_with_history
-```
-
 ## Operators and Functions Schemas
 
 ```{eval-rst}
+.. autofunction:: onnx.defs.has
+
+.. autofunction:: onnx.defs.get_schema
+
+.. autofunction:: onnx.defs.get_all_schemas
+
+.. autofunction:: onnx.defs.get_all_schemas_with_history
+
 .. autofunction:: onnx.defs.get_function_ops
 ```
 
-```{eval-rst}
-.. autofunction:: onnx.defs.get_schema
-```
-
-## class OpSchema
+## class `OpSchema`
 
 ```{eval-rst}
 .. autoclass:: onnx.defs.OpSchema
     :members:
+    :undoc-members:
 ```
 
-## Exception SchemaError
+## Exceptions
 
 ```{eval-rst}
 .. autoclass:: onnx.defs.SchemaError
-    :members:
 ```
 
 ## Constants

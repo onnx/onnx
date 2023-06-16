@@ -1,5 +1,5 @@
 [tool.mypy]
-follow_imports = "slient"
+follow_imports = "silent"
 strict_optional = true
 warn_return_any = true
 warn_no_return = true
