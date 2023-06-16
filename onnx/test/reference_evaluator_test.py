@@ -280,7 +280,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         try:
             check_model(onnx_model)
         except Exception as e:
-            raise AssertionError(f"checker fails for\n{str(onnx_model)}") from e
+            raise AssertionError(f"checker fails for\n{onnx_model}") from e
         return onnx_model, f
 
     def test_reference_evaluator_exceptions(self):
@@ -3396,6 +3396,30 @@ class TestReferenceEvaluator(unittest.TestCase):
                 "g",
                 [X],
                 [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0, 1, 2, 896, 192], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_quantize_linear_e4m3_initializer(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    make_tensor("zero", TensorProto.FLOAT8E4M3FN, [1], [0.0]),
+                ],
             )
         )
         ref = ReferenceEvaluator(model)

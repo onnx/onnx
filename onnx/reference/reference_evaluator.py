@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from onnx import load, numpy_helper
+from onnx import load
 from onnx.defs import onnx_opset_version
 from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
 from onnx.reference.op_run import (
@@ -15,6 +15,7 @@ from onnx.reference.op_run import (
     OpRun,
     OpRunExpand,
     RuntimeContextError,
+    to_array_extended,
 )
 from onnx.reference.ops_optimized import optimized_operators
 
@@ -369,7 +370,7 @@ class ReferenceEvaluator:
         self.rt_inits_ = {}
         self.rt_nodes_ = []
         for init in self.inits_:
-            self.rt_inits_[init.name] = numpy_helper.to_array(init)  # type: ignore[union-attr,arg-type]
+            self.rt_inits_[init.name] = to_array_extended(init)  # type: ignore[union-attr,arg-type]
         run_params = {
             "log": lambda pattern, *args: self._log(10, pattern, *args),
             "opsets": self.opsets,
