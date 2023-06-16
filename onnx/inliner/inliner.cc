@@ -249,6 +249,10 @@ class ComputeInputs : private Visitor {
  private:
   std::vector<std::unordered_set<std::string>> namescopes;
 
+  bool InNestedScope() {
+    return ! namescopes.empty()
+  }
+
   std::unordered_set<std::string>& CurrentScope() {
     return namescopes.back();
   }
@@ -278,9 +282,11 @@ class ComputeInputs : private Visitor {
         result.push_back(var);
       }
     }
-    for (auto& var : node.output()) {
-      if (!var.empty()) {
-        CurrentScope().add(var);
+    if (InNestedScope()) {
+      for (auto& var : node.output()) {
+        if (!var.empty()) {
+          CurrentScope().add(var);
+        }
       }
     }
     return true; // process sub-graphs
