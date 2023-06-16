@@ -49,6 +49,9 @@ ONNX_VERIFY_PROTO3 = bool(os.getenv("ONNX_VERIFY_PROTO3") == "1")
 ONNX_NAMESPACE = os.getenv("ONNX_NAMESPACE", "onnx")
 ONNX_BUILD_TESTS = bool(os.getenv("ONNX_BUILD_TESTS") == "1")
 ONNX_DISABLE_EXCEPTIONS = bool(os.getenv("ONNX_DISABLE_EXCEPTIONS") == "1")
+ONNX_DISABLE_STATIC_REGISTRATION = bool(
+    os.getenv("ONNX_DISABLE_STATIC_REGISTRATION") == "1"
+)
 
 USE_MSVC_STATIC_RUNTIME = bool(os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1")
 DEBUG = bool(os.getenv("DEBUG", "0") == "1")
@@ -207,6 +210,8 @@ class CmakeBuild(setuptools.Command):
                 cmake_args.append("-DONNX_BUILD_TESTS=ON")
             if ONNX_DISABLE_EXCEPTIONS:
                 cmake_args.append("-DONNX_DISABLE_EXCEPTIONS=ON")
+            if ONNX_DISABLE_STATIC_REGISTRATION:
+                cmake_args.append("-DONNX_DISABLE_STATIC_REGISTRATION=ON")
             if "CMAKE_ARGS" in os.environ:
                 extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
                 # prevent crossfire with downstream scripts

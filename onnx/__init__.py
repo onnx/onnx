@@ -135,25 +135,27 @@ from onnx import (
 _SupportedFormat = Union[Literal["protobuf", "textproto"], str]
 
 
-def _load_bytes(f: IO[bytes] | str) -> bytes:
+def _load_bytes(f: IO[bytes] | str | os.PathLike) -> bytes:
     if hasattr(f, "read") and callable(typing.cast(IO[bytes], f).read):
         content = typing.cast(IO[bytes], f).read()
     else:
-        with open(typing.cast(str, f), "rb") as readable:
+        f = typing.cast(Union[str, os.PathLike], f)
+        with open(f, "rb") as readable:
             content = readable.read()
     return content
 
 
-def _save_bytes(content: bytes, f: IO[bytes] | str) -> None:
+def _save_bytes(content: bytes, f: IO[bytes] | str | os.PathLike) -> None:
     if hasattr(f, "write") and callable(typing.cast(IO[bytes], f).write):
         typing.cast(IO[bytes], f).write(content)
     else:
-        with open(typing.cast(str, f), "wb") as writable:
+        f = typing.cast(Union[str, os.PathLike], f)
+        with open(f, "wb") as writable:
             writable.write(content)
 
 
-def _get_file_path(f: IO[bytes] | str) -> str | None:
-    if isinstance(f, str):
+def _get_file_path(f: IO[bytes] | str | os.PathLike) -> str | None:
+    if isinstance(f, (str, os.PathLike)):
         return os.path.abspath(f)
     if hasattr(f, "name"):
         return os.path.abspath(f.name)
@@ -161,14 +163,14 @@ def _get_file_path(f: IO[bytes] | str) -> str | None:
 
 
 def load_model(
-    f: IO[bytes] | str,
+    f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
     load_external_data: bool = True,
 ) -> ModelProto:
     """Loads a serialized ModelProto into memory.
 
     Args:
-        f: can be a file-like object (has "read" function) or a string containing a file name
+        f: can be a file-like object (has "read" function) or a string/PathLike containing a file name
         format: The serialization format. Default is "protobuf". The encoding is
             assumed to be "utf-8" when the format is a text format.
         load_external_data: Whether to load the external data.
@@ -191,13 +193,13 @@ def load_model(
 
 
 def load_tensor(
-    f: IO[bytes] | str,
+    f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
 ) -> TensorProto:
     """Loads a serialized TensorProto into memory.
 
     Args:
-        f: can be a file-like object (has "read" function) or a string containing a file name
+        f: can be a file-like object (has "read" function) or a string/PathLike containing a file name
         format: The serialization format. Default is "protobuf". The encoding is
             assumed to be "utf-8" when the format is a text format.
 
@@ -243,7 +245,7 @@ def load_tensor_from_string(
 
 def save_model(
     proto: ModelProto | bytes,
-    f: IO[bytes] | str,
+    f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
     *,
     save_as_external_data: bool = False,
@@ -257,7 +259,8 @@ def save_model(
 
     Args:
         proto: should be a in-memory ModelProto
-        f: can be a file-like object (has "write" function) or a string containing a file name
+        f: can be a file-like object (has "write" function) or a string containing
+        a file name or a pathlike object
         format: The serialization format. Default is "protobuf". The encoding is
             assumed to be "utf-8" when the format is a text format.
         save_as_external_data: If true, save tensors to external file(s).
@@ -295,7 +298,7 @@ def save_model(
 
 def save_tensor(
     proto: TensorProto,
-    f: IO[bytes] | str,
+    f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
 ) -> None:
     """
@@ -303,7 +306,8 @@ def save_tensor(
 
     Args:
         proto: should be a in-memory TensorProto
-        f: can be a file-like object (has "write" function) or a string containing a file name
+        f: can be a file-like object (has "write" function) or a string
+        containing a file name or a pathlike object.
         format: The serialization format. Default is "protobuf". The encoding is
             assumed to be "utf-8" when the format is a text format.
     """

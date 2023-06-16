@@ -5,6 +5,8 @@
  */
 
 #include <functional>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"
@@ -265,14 +267,14 @@ class ComputeInputs : private Visitor {
     return false;
   }
 
-  void VisitGraph(GraphProto* graph) override {
+  void VisitGraph(const GraphProto& graph) override {
     namescopes.emplace_back();
     for (auto& x : graph.input())
-      CurrentScope().add(x);
-    for (auto& init : graph->initializer())
-      CurrentScope().add(x);
-    for (auto& n : *graph->mutable_node())
-      VisitNode(&n);
+      CurrentScope().insert(x.name());
+    for (auto& init : graph.initializer())
+      CurrentScope().insert(init.name());
+    for (auto& n : graph.node())
+      VisitNode(n);
     namescopes.pop_back();
   }
 
@@ -285,7 +287,7 @@ class ComputeInputs : private Visitor {
     if (InNestedScope()) {
       for (auto& var : node.output()) {
         if (!var.empty()) {
-          CurrentScope().add(var);
+          CurrentScope().insert(var);
         }
       }
     }
