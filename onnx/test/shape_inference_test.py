@@ -116,7 +116,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         vis = [x for x in graph.value_info if x.name not in names_in_vis] + vis
         inferred_model = self._inferred(graph_or_model, **kwargs)
         inferred_vis = list(inferred_model.graph.value_info)
-        vis = sorted(vis, key=lambda x: x.name)
+        vis = sorted(vis, key=lambda x: x.name)  # type: ignore[no-any-return]
         inferred_vis = sorted(inferred_vis, key=lambda x: x.name)  # type: ignore
         assert len(vis) == len(inferred_vis)
         for v, inferred_v in zip(vis, inferred_vis):
@@ -500,9 +500,19 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, ("a", 2))]
         )
 
-    def test_reshape_dynamic_shape(self) -> None:
+    def test_reshape_dynamic_shape_known_rank(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, (2,))],
+            [make_node("Reshape", ["x", "shape"], ["y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.UINT8, (None, None))]
+        )
+
+    def test_reshape_dynamic_unknown_rank(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, None)],
             [make_node("Reshape", ["x", "shape"], ["y"])],
             [],
         )
@@ -1146,8 +1156,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (4, 5, 6))])  # type: ignore
 
     def test_scatternd_noshape(self) -> None:
-        # The shape of 'x_reshaped' cannot be inferred, since it is the output of a dynamic reshape.
-        # Thus the shape of 'y' is also None.
+        # The dimensions of 'x_reshaped' cannot be inferred, since it is the output of a dynamic reshape.
+        # Thus the dimensions of 'y' are also None but the rank is known.
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (4, 5, 6)),
@@ -1164,8 +1174,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("x_reshaped", TensorProto.FLOAT, None),
-                make_tensor_value_info("y", TensorProto.FLOAT, None),
+                make_tensor_value_info("x_reshaped", TensorProto.FLOAT, (None, None)),
+                make_tensor_value_info("y", TensorProto.FLOAT, (None, None)),
             ],
         )  # type: ignore
 

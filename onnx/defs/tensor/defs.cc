@@ -318,6 +318,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           } else if (shapeInput) {
             targetShapeProto.CopyFrom(*shapeInput);
+          } else if (hasInputShape(ctx, 1) && getInputShape(ctx, 1).dim_size() > 0) {
+            // The shape parameter's rank can be used to inform the rank of the output shape.
+            int64_t output_rank = getInputShape(ctx, 1).dim(0).dim_value();
+            TensorShapeProto* outputShape = getOutputShape(ctx, 0);
+            for (size_t i = 0; i < output_rank; ++i) {
+              outputShape->add_dim();
+            }
+            return;
           } else {
             return;
           }
