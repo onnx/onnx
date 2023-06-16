@@ -252,7 +252,7 @@ class ComputeInputs : private Visitor {
   std::vector<std::unordered_set<std::string>> namescopes;
 
   bool InNestedScope() {
-    return ! namescopes.empty()
+    return ! namescopes.empty();
   }
 
   std::unordered_set<std::string>& CurrentScope() {
