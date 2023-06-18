@@ -1173,7 +1173,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ("x", TensorProto.FLOAT, (4, 5, 6)),
                 ("indices", TensorProto.INT64, (3, 3, 2)),
                 ("updates", TensorProto.FLOAT, (3, 3, 6)),
-                ("shape", TensorProto.INT64, (2,)),
+                ("shape", TensorProto.INT64, ("M",)),
             ],
             [
                 make_node("Reshape", ["x", "shape"], ["x_reshaped"]),
@@ -1184,8 +1184,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("x_reshaped", TensorProto.FLOAT, (None, None)),
-                make_tensor_value_info("y", TensorProto.FLOAT, (None, None)),
+                make_tensor_value_info("x_reshaped", TensorProto.FLOAT, None),
+                make_tensor_value_info("y", TensorProto.FLOAT, None),
             ],
         )  # type: ignore
 
