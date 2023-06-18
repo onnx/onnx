@@ -520,7 +520,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.UINT8, None)]
         )
 
-    def test_reshape_dynamic_unknown_rank(self) -> None:
+    def test_reshape_dynamic_unknown_shape(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, None)],
             [make_node("Reshape", ["x", "shape"], ["y"])],
@@ -1166,8 +1166,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (4, 5, 6))])  # type: ignore
 
     def test_scatternd_noshape(self) -> None:
-        # The dimensions of 'x_reshaped' cannot be inferred, since it is the output of a dynamic reshape.
-        # Thus the dimensions of 'y' are also None but the rank is known.
+        # The shape of 'x_reshaped' cannot be inferred, since it is the output of a dynamic reshape.
+        # Thus the shape of 'y' is also None.
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (4, 5, 6)),
