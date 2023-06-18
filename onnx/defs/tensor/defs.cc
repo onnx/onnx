@@ -305,31 +305,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          // Shape Inference if 2nd input data (the target shape) is available
-          // or the target shape is generated via partial data propagation
-          const TensorProto* targetShapeInitializer = ctx.getInputData(1);
-          const auto* shapeInput = ctx.getSymbolicInput(1);
-          // The targetShapeProto represents the specified shape for output.
-          TensorShapeProto targetShapeProto;
-          if (targetShapeInitializer) {
-            auto targetShape = ParseData<int64_t>(targetShapeInitializer);
-            for (auto val : targetShape) {
-              targetShapeProto.add_dim()->set_dim_value(val);
-            }
-          } else if (shapeInput) {
-            targetShapeProto.CopyFrom(*shapeInput);
-          } else if (hasInputShape(ctx, 1)) {
-            TensorShapeProto shape = getInputShape(ctx, 1);
-            if (shape.dim_size() > 0 && shape.dim(0).has_dim_value()) {
-              // The shape parameter's shape can be used to inform the rank of the output shape.
-              int64_t output_rank = getInputShape(ctx, 1).dim(0).dim_value();
-              TensorShapeProto* outputShape = getOutputShape(ctx, 0);
-              for (size_t i = 0; i < output_rank; ++i) {
-                outputShape->add_dim();
-              }
-            }
-            return;
-          } else {
+          bool found;
+          TensorShapeProto targetShapeProto = getShapeInput(ctx, 1, found);
+          if (!found) {
             return;
           }
 
