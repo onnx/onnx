@@ -13,6 +13,10 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    ignore:
+      # Only update them manually since updating them might break compatibility
+      - dependency-name: "numpy"
+      - dependency-name: "protobuf"
 
   - package-ecosystem: "github-actions"
     # Workflow files stored in the
