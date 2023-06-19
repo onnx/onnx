@@ -47,7 +47,7 @@ from onnx.helper import (
 )
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, from_array
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.op_run import OpRun
+from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Celu
@@ -280,7 +280,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         try:
             check_model(onnx_model)
         except Exception as e:
-            raise AssertionError(f"checker fails for\n{onnx_model!s}") from e
+            raise AssertionError(f"checker fails for\n{onnx_model}") from e
         return onnx_model, f
 
     def test_reference_evaluator_exceptions(self):
@@ -3165,6 +3165,43 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(got[2], expected1)
         assert_allclose(got[3], expected2)
 
+    def test_cast_like_float8(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["f8"], to=TensorProto.FLOAT8E4M3FNUZ),
+                    make_node("CastLike", ["X", "f8"], ["f32"], saturate=0),
+                    make_node("Cast", ["f32"], ["Y"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        data = np.array([0, 1e7], dtype=np.float32)
+        expected = np.array(
+            [
+                float8e4m3_to_float32(
+                    float32_to_float8e4m3(x, uz=True, saturate=False), uz=True
+                )
+                for x in data
+            ]
+        )
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected)
+
+        # Forces ReferenceEvaluator to not use the associated implementation for CastLike
+        # but its implementation as a function instead.
+        class CastLike(OpRunExpand):
+            op_domain = ""
+
+        ref = ReferenceEvaluator(model, new_ops=[CastLike])
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected)
+
     def test_cast_float8_output(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         F1 = make_tensor_value_info("F1", TensorProto.FLOAT8E4M3FN, [None])
@@ -3359,6 +3396,30 @@ class TestReferenceEvaluator(unittest.TestCase):
                 "g",
                 [X],
                 [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0, 1, 2, 896, 192], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_quantize_linear_e4m3_initializer(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    make_tensor("zero", TensorProto.FLOAT8E4M3FN, [1], [0.0]),
+                ],
             )
         )
         ref = ReferenceEvaluator(model)
