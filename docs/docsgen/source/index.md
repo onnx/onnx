@@ -15,4 +15,5 @@ intro/index
 api/index
 operators/index
 technical/index
+repo-docs/index
 ```
