@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
-import math
 
 import numpy as np
 
@@ -26,7 +25,7 @@ class BlackmanWindow(_CommonWindow):
             N_1 = N_1 - 1
         alpha = 0.42
         beta = 0.08
-        pi = math.pi
+        pi = np.pi
         y = np.cos((ni * (pi * 2)) / N_1) * (-0.5)
         y += np.cos((ni * (pi * 4)) / N_1) * beta
         y += alpha

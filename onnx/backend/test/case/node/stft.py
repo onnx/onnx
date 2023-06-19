@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import math
 
 import numpy as np
 
@@ -47,7 +46,7 @@ class STFT(Base):
         a0 = 0.5
         a1 = 0.5
         window = a0 + a1 * np.cos(
-            2 * math.pi * np.arange(0, length, 1, dtype=np.float32) / length
+            2 * np.pi * np.arange(0, length, 1, dtype=np.float32) / length
         )
         nstfts = 1 + (signal.shape[1] - window.shape[0]) // step
 
