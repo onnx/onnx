@@ -15881,46 +15881,46 @@ This version of the operator has been available since version 13 of the default 
   **Example 1**
 
   ```
-    batch_dims = 0
-    data    = [[0,1],[2,3]]   # data_shape    = [2, 2]
-    indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
-    output  = [0,3]           # output_shape  = [2]
+  batch_dims = 0
+  data    = [[0,1],[2,3]]   # data_shape    = [2, 2]
+  indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+  output  = [0,3]           # output_shape  = [2]
   ```
 
   **Example 2**
 
   ```
-    batch_dims = 0
-    data    = [[0,1],[2,3]]  # data_shape    = [2, 2]
-    indices = [[1],[0]]      # indices_shape = [2, 1]
-    output  = [[2,3],[0,1]]  # output_shape  = [2, 2]
+  batch_dims = 0
+  data    = [[0,1],[2,3]]  # data_shape    = [2, 2]
+  indices = [[1],[0]]      # indices_shape = [2, 1]
+  output  = [[2,3],[0,1]]  # output_shape  = [2, 2]
   ```
 
   **Example 3**
 
   ```
-    batch_dims = 0
-    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
-    indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-    output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+  batch_dims = 0
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
   ```
 
   **Example 4**
 
   ```
-    batch_dims = 0
-    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
-    indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-    output  = [[[2,3]],[[4,5]]]             # output_shape  = [2, 1, 2]
+  batch_dims = 0
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+  output  = [[[2,3]],[[4,5]]]             # output_shape  = [2, 1, 2]
   ```
 
   **Example 5**
 
   ```
-    batch_dims = 1
-    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
-    indices = [[1],[0]]                     # indices_shape = [2, 1]
-    output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+  batch_dims = 1
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[1],[0]]                     # indices_shape = [2, 1]
+  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
   ```
 
 #### Version
