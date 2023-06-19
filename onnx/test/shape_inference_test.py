@@ -67,7 +67,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
                 )
                 input_value_infos.append(
                     make_tensor_value_info(
-                        "UNKNOWN_SHAPE_" + seed_name, TensorProto.INT64, (None,)
+                        "UNKNOWN_SHAPE_" + seed_name, TensorProto.INT64, ()
                     )
                 )
                 nodes[:0] = [

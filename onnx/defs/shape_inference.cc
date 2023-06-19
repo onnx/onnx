@@ -446,7 +446,7 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
   }
 }
 
-TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& found) {
+TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found) {
   TensorShapeProto shape_input;
 
   // First, check initializer.
@@ -472,7 +472,8 @@ TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& 
   if (hasInputShape(ctx, input_index)) {
     const TensorShapeProto& shape_input_shape = getInputShape(ctx, input_index);
     if (shape_input_shape.dim_size() != 1) {
-      fail_shape_inference("shape input must be 1D tensor");
+      found = false;
+      return shape_input;
     }
     if (shape_input_shape.dim(0).has_dim_value()) {
       // Attempt rank inference using shape of shape input
