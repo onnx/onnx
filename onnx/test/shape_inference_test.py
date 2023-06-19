@@ -108,7 +108,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
                 )
                 input_value_infos.append(
                     make_tensor_value_info(
-                        "UNKNOWN_SHAPE_" + seed_name, TensorProto.INT64, ()
+                        "UNKNOWN_SHAPE_" + seed_name, TensorProto.INT64, (None,)
                     )
                 )
                 nodes[:0] = [
@@ -605,7 +605,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(all_versions_for("Reshape"))
     def test_reshape_dynamic_shape_known_rank(self, _, version) -> None:
-        self.skipIf(version < 19, "Rank inference is added from Version 19")
+        self.skipIf(version < 14, "Rank inference is added from Version 14")
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, (2,))],
             [make_node("Reshape", ["x", "shape"], ["y"])],
