@@ -4,9 +4,9 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-### ONNX Backend Test
+# ONNX Backend Test
 
-#### What is ONNX Backend Test
+## What is ONNX Backend Test
 
 ONNX Backend Test is a test suite that each ONNX backend should run to verify whether it fulfills ONNX's standard. It serves both as a verification tool for backend implementations and one of the two ways to define each operator's expected behavior (the other way is to add it to the documentation).
 
@@ -15,7 +15,7 @@ There are two types of tests in this suite – Node Tests and Model Tests:
 - **Node Tests** verify whether a backend is performing the correct computation, having the expected behavior of handling various attributes for each individual operator. In each test case, the backend will be given a node with some input, and the returned output will be compared with an expected output.
 - **Model Tests** verify the backend at the model level. The test cases are similar to those of Node Tests', but instead of a node, the backend will be given an ONNX model.
 
-#### Contributing
+## Contributing
 
 As ONNX aims to become the spec of deep learning models format, it's important to ensure that there is no ambiguity in each ONNX operator's definition; adding more test cases is the only way to enforce this.
 

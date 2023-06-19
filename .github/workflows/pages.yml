@@ -53,7 +53,7 @@ jobs:
           cd docs/docsgen
           make html
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@64bcae551a7b18bcb9a09042ddf1960979799187 # v1.0.8
+        uses: actions/upload-pages-artifact@66b63f4a7de003f4f00cc8e9af4b83b8f2abdb96 # v1.0.9
         with:
           path: 'docs/docsgen/build/html'
       - name: Deploy to GitHub Pages
