@@ -4,8 +4,7 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-Open Neural Network Exchange Intermediate Representation (ONNX IR) Specification
-=========
+# Open Neural Network Exchange Intermediate Representation (ONNX IR) Specification
 
 __Purpose__
 
@@ -424,7 +423,7 @@ The following types are used to define the types of graph and node inputs and ou
 
 |Variant | Type | Description |
 |---|---|---|
-ONNX|dense tensors|Represents a Tensor. See definition above. 
+ONNX|dense tensors|Represents a Tensor. See definition above.
 ONNX|sequence|Sequences are dense, ordered, collections of elements that are of homogeneous types.
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
 ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](ONNXTypes.md)
