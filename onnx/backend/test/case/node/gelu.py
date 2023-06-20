@@ -13,7 +13,7 @@ from onnx.backend.test.case.node import expect
 
 class Gelu(Base):
     @staticmethod
-    def export() -> None:
+    def export_gelu_tanh() -> None:
         node = onnx.helper.make_node("Gelu", inputs=["x"], outputs=["y"], approximate="tanh")
 
         x = np.array([-1, 0, 1]).astype(np.float32)
