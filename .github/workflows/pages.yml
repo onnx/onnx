@@ -58,4 +58,4 @@ jobs:
           path: 'docs/docsgen/build/html'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@af48cf94a42f2c634308b1c9dc0151830b6f190a # v2.0.1
+        uses: actions/deploy-pages@ee48c7b82e077d7b8ef30b50a719e6a792a50c9a # v2.0.2
