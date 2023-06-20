@@ -4,7 +4,7 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-## ONNX CI Pipelines
+# ONNX CI Pipelines
 
 * CI pipelines matrix:
 

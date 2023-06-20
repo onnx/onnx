@@ -98,7 +98,7 @@ Files: docs/Operator*.md
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: .gitignore .gitmodules .lintrunner.toml .gitattributes .git-blame-ignore-revs .clang* .editorconfig
+Files: .gitignore **/*/.gitignore .gitmodules .lintrunner.toml .gitattributes .git-blame-ignore-revs .clang* .editorconfig
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
@@ -131,10 +131,6 @@ COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
 Files: cmake/ONNXConfig*.in CMakeLists.txt cmake/*cmake cmake/
-COPYRIGHT: Copyright (c) ONNX Project Contributors
-License: Apache-2.0
-
-Files: .vscode/settings.json docs/docsgen/source/_templates/layout.html docs/docsgen/source/_templates/sidebar-nav-bs.html docs/images/onnx_hub_arch.svg docs/onnx-horizontal-color.png tools/protoc-gen-mypy.sh.in
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
