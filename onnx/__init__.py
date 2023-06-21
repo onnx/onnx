@@ -193,8 +193,10 @@ def load_model(
 
     Args:
         f: can be a file-like object (has "read" function) or a string/PathLike containing a file name
-        format: The serialization format. Default is "protobuf". The encoding is
-            assumed to be "utf-8" when the format is a text format.
+        format: The serialization format. When it is not specified, it is inferred
+            from the file extension when ``f`` is a path. If not specified _and_
+            ``f`` is not a path, "protobuf" is used. The encoding is assumed to
+            be "utf-8" when the format is a text format.
         load_external_data: Whether to load the external data.
             Set to True if the data is under the same directory of the model.
             If not, users need to call :func:`load_external_data_for_model`
@@ -222,8 +224,10 @@ def load_tensor(
 
     Args:
         f: can be a file-like object (has "read" function) or a string/PathLike containing a file name
-        format: The serialization format. Default is "protobuf". The encoding is
-            assumed to be "utf-8" when the format is a text format.
+        format: The serialization format. When it is not specified, it is inferred
+            from the file extension when ``f`` is a path. If not specified _and_
+            ``f`` is not a path, "protobuf" is used. The encoding is assumed to
+            be "utf-8" when the format is a text format.
 
     Returns:
         Loaded in-memory TensorProto.
@@ -239,8 +243,10 @@ def load_model_from_string(
 
     Args:
         s: a string, which contains serialized ModelProto
-        format: The serialization format. Default is "protobuf". The encoding is
-            assumed to be "utf-8" when the format is a text format.
+        format: The serialization format. When it is not specified, it is inferred
+            from the file extension when ``f`` is a path. If not specified _and_
+            ``f`` is not a path, "protobuf" is used. The encoding is assumed to
+            be "utf-8" when the format is a text format.
 
     Returns:
         Loaded in-memory ModelProto.
@@ -256,8 +262,10 @@ def load_tensor_from_string(
 
     Args:
         s: a string, which contains serialized TensorProto
-        format: The serialization format. Default is "protobuf". The encoding is
-            assumed to be "utf-8" when the format is a text format.
+        format: The serialization format. When it is not specified, it is inferred
+            from the file extension when ``f`` is a path. If not specified _and_
+            ``f`` is not a path, "protobuf" is used. The encoding is assumed to
+            be "utf-8" when the format is a text format.
 
     Returns:
         Loaded in-memory TensorProto.
@@ -283,8 +291,10 @@ def save_model(
         proto: should be a in-memory ModelProto
         f: can be a file-like object (has "write" function) or a string containing
         a file name or a pathlike object
-        format: The serialization format. Default is "protobuf". The encoding is
-            assumed to be "utf-8" when the format is a text format.
+        format: The serialization format. When it is not specified, it is inferred
+            from the file extension when ``f`` is a path. If not specified _and_
+            ``f`` is not a path, "protobuf" is used. The encoding is assumed to
+            be "utf-8" when the format is a text format.
         save_as_external_data: If true, save tensors to external file(s).
         all_tensors_to_one_file: Effective only if save_as_external_data is True.
             If true, save all tensors to one external file specified by location.
@@ -330,8 +340,10 @@ def save_tensor(
         proto: should be a in-memory TensorProto
         f: can be a file-like object (has "write" function) or a string
         containing a file name or a pathlike object.
-        format: The serialization format. Default is "protobuf". The encoding is
-            assumed to be "utf-8" when the format is a text format.
+        format: The serialization format. When it is not specified, it is inferred
+            from the file extension when ``f`` is a path. If not specified _and_
+            ``f`` is not a path, "protobuf" is used. The encoding is assumed to
+            be "utf-8" when the format is a text format.
     """
     serialized = _get_serializer(f, format).serialize_proto(proto)
     _save_bytes(serialized, f)
