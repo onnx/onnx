@@ -26,7 +26,7 @@ class ProtoSerializer(Protocol):
 
     supported_formats: Collection[str]
     # File extensions supported by the serializer
-    file_extensions: Collection[str]
+    file_extensions: Collection[str] = ()
 
     # NOTE: The methods defined are serialize_proto and deserialize_proto and not the
     # more generic serialize and deserialize to leave space for future protocols
