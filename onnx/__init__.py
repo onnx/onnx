@@ -162,7 +162,9 @@ def _get_file_path(f: IO[bytes] | str | os.PathLike) -> str | None:
     return None
 
 
-def _get_serializer(f: str | os.PathLike | IO[bytes] | None, fmt: _SupportedFormat | None) -> serialization.ProtoSerializer:
+def _get_serializer(
+    f: str | os.PathLike | IO[bytes] | None, fmt: _SupportedFormat | None
+) -> serialization.ProtoSerializer:
     """Get the serializer for the given path and format from the serialization registry."""
     # Use fmt if it is specified
     if fmt is not None:
@@ -310,9 +312,7 @@ def save_model(
             If false, convert only non-attribute tensors to external data
     """
     if isinstance(proto, bytes):
-        proto = _get_serializer(None, "protobuf").deserialize_proto(
-            proto, ModelProto()
-        )
+        proto = _get_serializer(None, "protobuf").deserialize_proto(proto, ModelProto())
 
     if save_as_external_data:
         convert_model_to_external_data(
