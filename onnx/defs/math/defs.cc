@@ -561,9 +561,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* gelu_ver20_doc = R"DOC(
 Gelu takes one input data (Tensor<T>) and produces one
 output data (Tensor<T>) where the gaussian error linear units function, 
-`y = 0.5 * x * (1 + erf(x/sqrt(2)))` is applied to the tensor elementwise. 
+$y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise. 
 If the attribute "approximate" is set to "tanh", the function estimation,  
-`y = 0.5 * x * (1 + Tanh(sqrt(2/π) * (x + 0.044715 * x^3)))` is used and applied 
+$y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied 
 to the tensor elementwise.
 
 )DOC";
@@ -575,12 +575,12 @@ bool BuildContextDependentFunctionBodyGelu(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   auto approx_attr_proto = ctx.getAttribute("approximate");
-  std::string approx  = approx_attr_proto != nullptr && approx_attr_proto->has_s()
+  std::string approximate  = approx_attr_proto != nullptr && approx_attr_proto->has_s()
                       ? approx_attr_proto->s() 
                       : gelu_default_approx;
   FunctionBuilder builder(functionProto);
   
-  if (approx == "tanh") {
+  if (approximate == "tanh") {
     builder.Add(R"(
               Half = Constant <value = float {0.5}>()
               HalfCast = CastLike (Half, X)
@@ -593,12 +593,13 @@ bool BuildContextDependentFunctionBodyGelu(
               SqrtTwoOverPi = Sqrt (TwoOverPiCast)
               Three = Constant <value = float {3.0}>()
               ThreeCast = CastLike (Three, X)
-              CubeX = Pow ( X, ThreeCast)
-              XCubeC0 = Mul (C0Cast, CubeX)
-              XC0XCube = Sum (X, XCubeC0)
-              ErfApprox = Tanh (XC0XCube)
+              XCubed = Pow (X, ThreeCast)
+              XCubedC0 = Mul (C0Cast, XCubed)
+              XC0XCubed = Sum (X, XCubedC0)
+              TanhInput = Mul (SqrtTwoOverPi, XC0XCubed)
+              ErfApprox = Tanh (TanhInput)
               PhiApprox = Sum (OneCast, ErfApprox)
-              MultX = Mul (Half, X)
+              MultX = Mul (HalfCast, X)
               Y = Mul (MultX, PhiApprox)
               )"); 
   } else {
@@ -613,7 +614,7 @@ bool BuildContextDependentFunctionBodyGelu(
               XSqrt = Div (X, SqrtTwo)
               ErfXSqrt = Erf(XSqrt)
               Phi = Sum (OneCast, ErfXSqrt)
-              MultX = Mul (Half, X)
+              MultX = Mul (HalfCast, X)
               Y = Mul (MultX, Phi)
               )");
   }
@@ -630,14 +631,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
             "approximate",
-            "Gelu approximation algorithm: tanh, none(default)."
-            "'none': do not use approximation."
-            "'tanh': use tanh approximation.",
+            "Gelu approximation algorithm: `\"tanh\"`, `\"none\"`(default)."
+            "`\"none\"`: do not use approximation."
+            "`\"tanh\"`: use tanh approximation.",
             AttributeProto::STRING,
             gelu_default_approx)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
