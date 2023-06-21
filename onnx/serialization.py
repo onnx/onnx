@@ -68,7 +68,7 @@ class _Registry:
             ) from None
 
     def get_format_from_file_extension(self, file_extension: str) -> str | None:
-        """Get a format from a file extension.
+        """Get the corresponding format from a file extension.
 
         Args:
             file_extension: The file extension to get a format for.
