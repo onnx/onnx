@@ -108,7 +108,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
                 )
                 input_value_infos.append(
                     make_tensor_value_info(
-                        "UNKNOWN_SHAPE_" + seed_name, TensorProto.INT64, ()
+                        "UNKNOWN_SHAPE_" + seed_name, TensorProto.INT64, (None,)
                     )
                 )
                 nodes[:0] = [
@@ -157,7 +157,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         vis = [x for x in graph.value_info if x.name not in names_in_vis] + vis
         inferred_model = self._inferred(graph_or_model, **kwargs)
         inferred_vis = list(inferred_model.graph.value_info)
-        vis = sorted(vis, key=lambda x: x.name)
+        vis = sorted(vis, key=lambda x: x.name)  # type: ignore[no-any-return]
         inferred_vis = sorted(inferred_vis, key=lambda x: x.name)  # type: ignore
         assert len(vis) == len(inferred_vis)
         for v, inferred_v in zip(vis, inferred_vis):
@@ -604,9 +604,36 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     @parameterized.expand(all_versions_for("Reshape"))
-    def test_reshape_dynamic_shape(self, _, version) -> None:
+    def test_reshape_dynamic_shape_known_rank(self, _, version) -> None:
+        self.skipIf(version < 14, "Rank inference is added from Version 14")
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, (2,))],
+            [make_node("Reshape", ["x", "shape"], ["y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (None, None))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Reshape"))
+    def test_reshape_dynamic_shape_symbolic(self, _, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, ("M",))],
+            [make_node("Reshape", ["x", "shape"], ["y"])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, None)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Reshape"))
+    def test_reshape_dynamic_unknown_shape(self, _, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.UINT8, (2, 4, 3)), ("shape", TensorProto.INT64, None)],
             [make_node("Reshape", ["x", "shape"], ["y"])],
             [],
         )
@@ -1515,7 +1542,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ("x", TensorProto.FLOAT, (4, 5, 6)),
                 ("indices", TensorProto.INT64, (3, 3, 2)),
                 ("updates", TensorProto.FLOAT, (3, 3, 6)),
-                ("shape", TensorProto.INT64, (2,)),
+                ("shape", TensorProto.INT64, ("M",)),
             ],
             [
                 make_node("Reshape", ["x", "shape"], ["x_reshaped"]),

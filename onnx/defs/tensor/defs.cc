@@ -307,20 +307,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          // Shape Inference if 2nd input data (the target shape) is available
-          // or the target shape is generated via partial data propagation
-          const TensorProto* targetShapeInitializer = ctx.getInputData(1);
-          const auto* shapeInput = ctx.getSymbolicInput(1);
-          // The targetShapeProto represents the specified shape for output.
-          TensorShapeProto targetShapeProto;
-          if (targetShapeInitializer) {
-            auto targetShape = ParseData<int64_t>(targetShapeInitializer);
-            for (auto val : targetShape) {
-              targetShapeProto.add_dim()->set_dim_value(val);
-            }
-          } else if (shapeInput) {
-            targetShapeProto.CopyFrom(*shapeInput);
-          } else {
+          bool found;
+          TensorShapeProto targetShapeProto = getShapeInput(ctx, 1, found);
+          if (!found) {
             return;
           }
 
@@ -3210,57 +3199,50 @@ The output tensor is obtained by mapping each index-tuple in the `indices` tenso
 
 This operator is the inverse of `ScatterND`.
 
-`Example 1`
+**Example 1**
 
-  batch_dims = 0
+```
+batch_dims = 0
+data    = [[0,1],[2,3]]   # data_shape    = [2, 2]
+indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+output  = [0,3]           # output_shape  = [2]
+```
 
-  data    = [[0,1],[2,3]]   # data_shape = [2, 2]
+**Example 2**
 
-  indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+```
+batch_dims = 0
+data    = [[0,1],[2,3]]  # data_shape    = [2, 2]
+indices = [[1],[0]]      # indices_shape = [2, 1]
+output  = [[2,3],[0,1]]  # output_shape  = [2, 2]
+```
 
-  output  = [0,3]           # output_shape = [2]
+**Example 3**
 
-`Example 2`
+```
+batch_dims = 0
+data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+```
 
-  batch_dims = 0
+**Example 4**
 
-  data    = [[0,1],[2,3]]  # data_shape = [2, 2]
+```
+batch_dims = 0
+data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+output  = [[[2,3]],[[4,5]]]             # output_shape  = [2, 1, 2]
+```
 
-  indices = [[1],[0]]      # indices_shape = [2, 1]
+**Example 5**
 
-  output  = [[2,3],[0,1]]  # output_shape = [2, 2]
-
-`Example 3`
-
-  batch_dims = 0
-
-  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-
-  indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-
-  output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
-
-`Example 4`
-
-  batch_dims = 0
-
-  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-
-  indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-
-  output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
-
-`Example 5`
-
-  batch_dims = 1
-
-  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-
-  indices = [[1],[0]]             # indices_shape = [2, 1]
-
-  output  = [[2,3],[4,5]]             # output_shape = [2, 2]
-
-
+```
+batch_dims = 1
+data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+indices = [[1],[0]]                     # indices_shape = [2, 1]
+output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
