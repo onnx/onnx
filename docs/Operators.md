@@ -158,7 +158,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Trilu">Trilu</a>|<a href="Changelog.md#Trilu-14">14</a>|
 |<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
 |<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
-|<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
+|<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>, <a href="Changelog.md#Upsample-1">1</a>|
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|**Function version**|
@@ -32349,7 +32349,7 @@ expect(node, inputs=[x, axes], outputs=[y], name="test_unsqueeze_unsorted_axes")
 
 This version of the operator has been deprecated since version 10 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Upsample-7">7</a>, <a href="Changelog.md#Upsample-9">9</a>
+Other versions of this operator: <a href="Changelog.md#Upsample-1">1</a>, <a href="Changelog.md#Upsample-7">7</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-10">10</a>
 
 
 #### Examples
