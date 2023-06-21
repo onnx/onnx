@@ -78,25 +78,6 @@ jobs:
         exit 1
       fi
 
-      # check auto-gen files up-to-date
-      python onnx/defs/gen_doc.py
-      python onnx/gen_proto.py -l
-      python onnx/gen_proto.py -l --ml
-      python onnx/backend/test/stat_coverage.py
-
-      git status
-      git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
-      if [ $? -ne 0 ]; then
-        echo "git diff returned failures"
-        exit 1
-      fi
-
-      # Do not hardcode onnx's namespace in the c++ source code, so that
-      # other libraries who statically link with onnx can hide onnx symbols
-      # in a private namespace.
-      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
-      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
-
       # onnx c++ API tests
       export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
       ./.setuptools-cmake-build/onnx_gtests

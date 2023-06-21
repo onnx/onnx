@@ -13,4 +13,4 @@ clang-format==16.0.6
 # PYLINT
 pylint==2.17.4
 # EDITORCONFIG-CHECKER
-editorconfig-checker==2.7.1
+editorconfig-checker==2.7.2
