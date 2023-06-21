@@ -162,9 +162,31 @@ def _get_file_path(f: IO[bytes] | str | os.PathLike) -> str | None:
     return None
 
 
+def _get_serializer(f: str | os.PathLike | IO[bytes] | None, fmt: _SupportedFormat | None) -> serialization.ProtoSerializer:
+    """Get the serializer for the given path and format from the serialization registry."""
+    # Use fmt if it is specified
+    if fmt is not None:
+        return serialization.registry.get(fmt)
+
+    if f is None:
+        # No format specified and no file path. Use protobuf as default
+        return serialization.registry.get("protobuf")
+
+    file_path = _get_file_path(f)
+    if file_path is not None:
+        _, ext = os.path.splitext(file_path)
+        fmt = serialization.registry.get_format_from_file_extension(ext)
+
+    if fmt is None:
+        # Failed to resolve format. Use protobuf as default
+        fmt = "protobuf"
+
+    return serialization.registry.get(fmt)
+
+
 def load_model(
     f: IO[bytes] | str | os.PathLike,
-    format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+    format: _SupportedFormat | None = None,  # pylint: disable=redefined-builtin
     load_external_data: bool = True,
 ) -> ModelProto:
     """Loads a serialized ModelProto into memory.
@@ -181,7 +203,7 @@ def load_model(
     Returns:
         Loaded in-memory ModelProto.
     """
-    model = load_model_from_string(_load_bytes(f), format=format)
+    model = _get_serializer(f, format).deserialize_proto(_load_bytes(f), ModelProto())
 
     if load_external_data:
         model_filepath = _get_file_path(f)
@@ -194,7 +216,7 @@ def load_model(
 
 def load_tensor(
     f: IO[bytes] | str | os.PathLike,
-    format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+    format: _SupportedFormat | None = None,  # pylint: disable=redefined-builtin
 ) -> TensorProto:
     """Loads a serialized TensorProto into memory.
 
@@ -206,7 +228,7 @@ def load_tensor(
     Returns:
         Loaded in-memory TensorProto.
     """
-    return load_tensor_from_string(_load_bytes(f), format)
+    return _get_serializer(f, format).deserialize_proto(_load_bytes(f), TensorProto())
 
 
 def load_model_from_string(
@@ -223,7 +245,7 @@ def load_model_from_string(
     Returns:
         Loaded in-memory ModelProto.
     """
-    return serialization.registry.get(format).deserialize_proto(s, ModelProto())
+    return _get_serializer(None, format).deserialize_proto(s, ModelProto())
 
 
 def load_tensor_from_string(
@@ -240,13 +262,13 @@ def load_tensor_from_string(
     Returns:
         Loaded in-memory TensorProto.
     """
-    return serialization.registry.get(format).deserialize_proto(s, TensorProto())
+    return _get_serializer(None, format).deserialize_proto(s, TensorProto())
 
 
 def save_model(
     proto: ModelProto | bytes,
     f: IO[bytes] | str | os.PathLike,
-    format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+    format: _SupportedFormat | None = None,  # pylint: disable=redefined-builtin
     *,
     save_as_external_data: bool = False,
     all_tensors_to_one_file: bool = True,
@@ -278,7 +300,7 @@ def save_model(
             If false, convert only non-attribute tensors to external data
     """
     if isinstance(proto, bytes):
-        proto = serialization.registry.get("protobuf").deserialize_proto(
+        proto = _get_serializer(None, "protobuf").deserialize_proto(
             proto, ModelProto()
         )
 
@@ -288,18 +310,18 @@ def save_model(
         )
 
     model_filepath = _get_file_path(f)
-    if model_filepath:
+    if model_filepath is not None:
         basepath = os.path.dirname(model_filepath)
         proto = write_external_data_tensors(proto, basepath)
 
-    serialized = serialization.registry.get(format).serialize_proto(proto)
+    serialized = _get_serializer(model_filepath, format).serialize_proto(proto)
     _save_bytes(serialized, f)
 
 
 def save_tensor(
     proto: TensorProto,
     f: IO[bytes] | str | os.PathLike,
-    format: _SupportedFormat = "protobuf",  # pylint: disable=redefined-builtin
+    format: _SupportedFormat | None = None,  # pylint: disable=redefined-builtin
 ) -> None:
     """
     Saves the TensorProto to the specified path.
@@ -311,7 +333,7 @@ def save_tensor(
         format: The serialization format. Default is "protobuf". The encoding is
             assumed to be "utf-8" when the format is a text format.
     """
-    serialized = serialization.registry.get(format).serialize_proto(proto)
+    serialized = _get_serializer(f, format).serialize_proto(proto)
     _save_bytes(serialized, f)
 
 

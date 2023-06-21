@@ -25,6 +25,8 @@ class ProtoSerializer(Protocol):
     """A serializer-deserializer to and from in-memory Protocol Buffers representations."""
 
     supported_formats: Collection[str]
+    # File extensions supported by the serializer
+    file_extensions: Collection[str]
 
     # NOTE: The methods defined are serialize_proto and deserialize_proto and not the
     # more generic serialize and deserialize to leave space for future protocols
@@ -50,7 +52,7 @@ class _Registry:
         """Get a serializer for a format.
 
         Args:
-            fmt (str): The format to get a serializer for.
+            fmt: The format to get a serializer for.
 
         Returns:
             ProtoSerializer: The serializer for the format.
@@ -65,11 +67,26 @@ class _Registry:
                 f"Unsupported format: '{fmt}'. Supported formats are: {self._serializers.keys()}"
             ) from None
 
+    def get_format_from_file_extension(self, file_extension: str | None) -> str | None:
+        """Get a format from a file extension.
+
+        Args:
+            file_extension: The file extension to get a format for.
+
+        Returns:
+            The format for the file extension, or None if not found.
+        """
+        for fmt, serializer in self._serializers.items():
+            if file_extension in serializer.file_extensions:
+                return fmt
+        return None
+
 
 class _ProtobufSerializer(ProtoSerializer):
     """Serialize and deserialize protobuf message."""
 
     supported_formats = ("protobuf",)
+    file_extensions = frozenset({"onnx", "pb"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         if hasattr(proto, "SerializeToString") and callable(proto.SerializeToString):
@@ -104,6 +121,7 @@ class _TextProtoSerializer(ProtoSerializer):
     """Serialize and deserialize text proto."""
 
     supported_formats = ("textproto",)
+    file_extensions = frozenset({"textproto", "prototxt", "pbtxt"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         textproto = google.protobuf.text_format.MessageToString(proto)
