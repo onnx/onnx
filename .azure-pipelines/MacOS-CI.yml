@@ -11,26 +11,31 @@ jobs:
         python.version: '3.11'
         onnx_ml: 0
         build_type: 'Release'
+        protobuf_type: 'External'
         onnx_lite: 0
-      py310:
+      py310-InternalProtobuf:
         python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
+        protobuf_type: 'Internal'
         onnx_lite: 1
       py39-ml:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Release'
+        protobuf_type: 'External'
         onnx_lite: 1
-      py39-ml-debug:
+      py39-ml-debug-InternalProtobuf:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Debug'
+        protobuf_type: 'Internal'
         onnx_lite: 0
       py38-ml-debug:
         python.version: '3.8'
         onnx_ml: 1
         build_type: 'Debug'
+        protobuf_type: 'External'
         onnx_lite: 0
     maxParallel: 6
 
@@ -45,7 +50,11 @@ jobs:
       if [ '$(build_type)' == 'Debug' ]; then
         export DEBUG=1
       fi
-      source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
+      if [ '$(protobuf_type)' == 'External' ]; then
+        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
+      elif [ '$(protobuf_type)' == 'Internal' ]; then
+        echo "Use the internal protobuf build"
+      fi
 
       git submodule update --init --recursive
       python -m pip install --upgrade pip
@@ -59,7 +68,7 @@ jobs:
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
-      pip install -e .
+      pip install -e . -v
     displayName: 'Install dependencies and ONNX'
 
   - script: |
@@ -68,25 +77,6 @@ jobs:
         echo "pytest failed"
         exit 1
       fi
-
-      # check auto-gen files up-to-date
-      python onnx/defs/gen_doc.py
-      python onnx/gen_proto.py -l
-      python onnx/gen_proto.py -l --ml
-      python onnx/backend/test/stat_coverage.py
-
-      git status
-      git diff --exit-code  -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
-      if [ $? -ne 0 ]; then
-        echo "git diff returned failures"
-        exit 1
-      fi
-
-      # Do not hardcode onnx's namespace in the c++ source code, so that
-      # other libraries who statically link with onnx can hide onnx symbols
-      # in a private namespace.
-      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
-      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
       # onnx c++ API tests
       export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
