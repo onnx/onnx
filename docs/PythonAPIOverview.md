@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 The full API is described at [API Reference](https://onnx.ai/onnx/api).
 
 ## Loading an ONNX Model
+
 ```python
 import onnx
 
