@@ -24,9 +24,10 @@ _ENCODING = "utf-8"
 class ProtoSerializer(Protocol):
     """A serializer-deserializer to and from in-memory Protocol Buffers representations."""
 
-    supported_formats: Collection[str]
-    # File extensions supported by the serializer
-    file_extensions: Collection[str] = ()
+    # Format supported by the serializer. E.g. "protobuf"
+    supported_format: str
+    # File extensions supported by the serializer. E.g. frozenset({"onnx", "pb"})
+    file_extensions: Collection[str]
 
     # NOTE: The methods defined are serialize_proto and deserialize_proto and not the
     # more generic serialize and deserialize to leave space for future protocols
@@ -45,8 +46,7 @@ class _Registry:
         self._serializers: dict[str, ProtoSerializer] = {}
 
     def register(self, serializer: ProtoSerializer) -> None:
-        for fmt in serializer.supported_formats:
-            self._serializers[fmt] = serializer
+        self._serializers[serializer.supported_format] = serializer
 
     def get(self, fmt: str) -> ProtoSerializer:
         """Get a serializer for a format.
@@ -67,7 +67,7 @@ class _Registry:
                 f"Unsupported format: '{fmt}'. Supported formats are: {self._serializers.keys()}"
             ) from None
 
-    def get_format_from_file_extension(self, file_extension: str | None) -> str | None:
+    def get_format_from_file_extension(self, file_extension: str) -> str | None:
         """Get a format from a file extension.
 
         Args:
@@ -85,7 +85,7 @@ class _Registry:
 class _ProtobufSerializer(ProtoSerializer):
     """Serialize and deserialize protobuf message."""
 
-    supported_formats = ("protobuf",)
+    supported_format = "protobuf"
     file_extensions = frozenset({"onnx", "pb"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
@@ -120,7 +120,7 @@ class _ProtobufSerializer(ProtoSerializer):
 class _TextProtoSerializer(ProtoSerializer):
     """Serialize and deserialize text proto."""
 
-    supported_formats = ("textproto",)
+    supported_format = "textproto"
     file_extensions = frozenset({"textproto", "prototxt", "pbtxt"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
