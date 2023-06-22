@@ -31,7 +31,6 @@ from onnx.reference.ops.op_abs import Abs
 from onnx.reference.ops.op_acos import Acos
 from onnx.reference.ops.op_acosh import Acosh
 from onnx.reference.ops.op_add import Add
-from onnx.reference.ops.op_affine_grid import AffineGrid
 from onnx.reference.ops.op_and import And
 from onnx.reference.ops.op_argmax import ArgMax_1, ArgMax_12
 from onnx.reference.ops.op_argmin import ArgMin_1, ArgMin_12

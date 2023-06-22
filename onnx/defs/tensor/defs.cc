@@ -2699,12 +2699,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto& size_shape = ctx.getInputType(1)->tensor_type().shape();
-          const auto size_rank = size_shape.dim_size();
-          if (size_rank != 1) {
-            fail_shape_inference("Rank of input 'size' is ", size_rank, ". It must be 1.");
-          }
-
+          checkInputRank(ctx, 1, 1);
           const TensorProto* size_initializer = ctx.getInputData(1);
           const auto* size_input = ctx.getSymbolicInput(1);
           TensorShapeProto size_proto;
@@ -2724,35 +2719,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Length of input 'size' is ", size_length, ". It must be 4 for 2D or 5 for 5D.");
           }
 
-          auto add_and_set_dim = [](auto& dim, auto* output_shape) {
-            auto* output_dim = output_shape->add_dim();
-            if (dim.has_dim_value()) {
-              output_dim->set_dim_value(dim.dim_value());
-            } else {
-              output_dim->set_dim_param(dim.dim_param());
-            }
-          };
-
           auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
           const auto& N = size_proto.dim(0);
-          add_and_set_dim(N, output_shape);
+          *output_shape->add_dim() = N;
           // const auto& C = size_proto.dim(1); // C is not used
           if (size_length == 4) {
             // 2D case: size shape (N, C, H, W), output shape (N, C, H, W, 2)
             const auto& H = size_proto.dim(2);
             const auto& W = size_proto.dim(3);
-            add_and_set_dim(H, output_shape);
-            add_and_set_dim(W, output_shape);
+            *output_shape->add_dim() = H;
+            *output_shape->add_dim() = W;
             output_shape->add_dim()->set_dim_value(2);
           } else if (size_length == 5) {
             // 3D case: size shape (N, C, D, H, W), output shape (N, C, D, H, W, 3)
             const auto& D = size_proto.dim(2);
             const auto& H = size_proto.dim(3);
             const auto& W = size_proto.dim(4);
-            add_and_set_dim(D, output_shape);
-            add_and_set_dim(H, output_shape);
-            add_and_set_dim(W, output_shape);
+            *output_shape->add_dim() = D;
+            *output_shape->add_dim() = H;
+            *output_shape->add_dim() = W;
             output_shape->add_dim()->set_dim_value(3);
           }
         }));
