@@ -76,6 +76,11 @@ def all_versions_for(op_name: str) -> list[tuple[str, int]]:
     ]
 
 
+def has_inference_function(op_name, version):
+    op_schema = defs.get_schema(op_name, version)
+    return op_schema.has_type_and_shape_inference_function
+
+
 class TestShapeInferenceHelper(unittest.TestCase):
     def _make_graph(
         self,
@@ -165,16 +170,16 @@ class TestShapeInferenceHelper(unittest.TestCase):
         names_in_vis = {x.name for x in vis}
         vis = [x for x in graph.value_info if x.name not in names_in_vis] + vis
         shape_inference_function_arg_name = "has_inference_function"
-        has_inference_function = True
+        has_inference_func = True
         if shape_inference_function_arg_name in kwargs:
             if not kwargs[shape_inference_function_arg_name]:
-                has_inference_function = False
+                has_inference_func = False
             kwargs.pop(shape_inference_function_arg_name)
         inferred_model = self._inferred(graph_or_model, **kwargs)
         inferred_vis = list(inferred_model.graph.value_info)
         vis = sorted(vis, key=lambda x: x.name)  # type: ignore[no-any-return]
         inferred_vis = sorted(inferred_vis, key=lambda x: x.name)  # type: ignore
-        if has_inference_function:
+        if has_inference_func:
             assert len(vis) == len(inferred_vis)
         else:
             assert len(vis) == len(inferred_vis) + 1
@@ -436,14 +441,12 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             version,
         )
-        op_schema = defs.get_schema("Cast", version)
-        # Cast Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.UINT8, (2, 4, 3))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            # Concat Version 1 does not have shape inference function.
+            has_inference_function=has_inference_function("Cast", version),
         )
 
     @parameterized.expand(all_versions_for("CastLike"))
@@ -607,14 +610,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             version,
         )
-        op_schema = defs.get_schema("Concat", version)
-        # Concat Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
         self._assert_inferred(
             graph,
             [make_tensor_value_info("z", TensorProto.FLOAT, (9, 4, 3))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            has_inference_function=has_inference_function("Concat", version),
         )
 
     @parameterized.expand(all_versions_for("Concat"))
@@ -644,14 +644,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             version,
         )
-        op_schema = defs.get_schema("Concat", version)
-        # Concat Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
         self._assert_inferred(
             graph,
             [make_tensor_value_info("z", TensorProto.FLOAT, (2, 2, 4))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            has_inference_function=has_inference_function("Concat", version),
         )
 
     @parameterized.expand(all_versions_for("Concat"))
@@ -662,14 +659,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             version,
         )
-        op_schema = defs.get_schema("Concat", version)
-        # Concat Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
         self._assert_inferred(
             graph,
             [make_tensor_value_info("z", TensorProto.FLOAT, ("a", 5))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            has_inference_function=has_inference_function("Concat", version),
         )
 
     @parameterized.expand(all_versions_for("Concat"))
@@ -718,14 +712,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             version,
         )
-        op_schema = defs.get_schema("Reshape", version)
-        # Reshape Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.UINT8, None)],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            has_inference_function=has_inference_function("Reshape", version),
         )
 
     @parameterized.expand(all_versions_for("Reshape"))
@@ -743,109 +734,80 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             version,
         )
-        op_schema = defs.get_schema("Reshape", version)
-        # Reshape Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.UINT8, None)],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            has_inference_function=has_inference_function("Reshape", version),
         )
 
     @parameterized.expand(all_versions_for("Reshape"))
     def test_reshape_static_shape(self, _, version) -> None:
-        if version == 1:
-            graph = self._make_graph(
-                [("x", TensorProto.UINT8, (2, 4, 3))],
-                [make_node("Reshape", ["x"], ["y"])],
-                [],
-                version,
-                initializer=[make_tensor("shape", TensorProto.INT64, (2,), (3, 8))],
-            )
-        else:
-            graph = self._make_graph(
-                [
-                    ("x", TensorProto.UINT8, (2, 4, 3)),
-                    ("shape", TensorProto.INT64, (2,)),
-                ],
-                [make_node("Reshape", ["x", "shape"], ["y"])],
-                [],
-                version,
-                initializer=[make_tensor("shape", TensorProto.INT64, (2,), (3, 8))],
-            )
-        op_schema = defs.get_schema("Reshape", version)
-        # Reshape Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
+        seed_values: list[tuple[str, TensorProto.DataType, Any]] = [
+            ("x", TensorProto.UINT8, (2, 4, 3))
+        ]
+        inputs = ["x"]
+        if version > 1:
+            seed_values.append(("shape", TensorProto.INT64, (2,)))
+            inputs.append("shape")
+        graph = self._make_graph(
+            seed_values,
+            [make_node("Reshape", inputs, ["y"])],
+            [],
+            version,
+            initializer=[make_tensor("shape", TensorProto.INT64, (2,), (3, 8))],
+        )
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.UINT8, (3, 8))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            has_inference_function=has_inference_function("Reshape", version),
         )
 
     @parameterized.expand(all_versions_for("Reshape"))
     def test_reshape_static_shape_inferred(self, _, version) -> None:
-        if version == 1:
-            graph = self._make_graph(
-                [("x", TensorProto.UINT8, (2, 4, 3))],
-                [make_node("Reshape", ["x"], ["y"])],
-                [],
-                version,
-                initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 3, -1))],
-            )
-        else:
-            graph = self._make_graph(
-                [
-                    ("x", TensorProto.UINT8, (2, 4, 3)),
-                    ("shape", TensorProto.INT64, (3,)),
-                ],
-                [make_node("Reshape", ["x", "shape"], ["y"])],
-                [],
-                version,
-                initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 3, -1))],
-            )
-        op_schema = defs.get_schema("Reshape", version)
-        # Reshape Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
+        seed_values: list[tuple[str, TensorProto.DataType, Any]] = [
+            ("x", TensorProto.UINT8, (2, 4, 3))
+        ]
+        inputs = ["x"]
+        if version > 1:
+            seed_values.append(("shape", TensorProto.INT64, (3,)))
+            inputs.append("shape")
+        graph = self._make_graph(
+            seed_values,
+            [make_node("Reshape", inputs, ["y"])],
+            [],
+            version,
+            initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 3, -1))],
+        )
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.UINT8, (2, 3, 4))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            has_inference_function=has_inference_function("Reshape", version),
         )
 
     @parameterized.expand(all_versions_for("Reshape"))
     def test_reshape_static_shape_zero(self, _, version) -> None:
-        # Not sure why the inferred_model does not have output value for Version 1.
-        # self.skipIf(version == 1, "Result does not have 'y'")
-        if version == 1:
-            graph = self._make_graph(
-                [("x", TensorProto.UINT8, (1, 1, 1))],
-                [make_node("Reshape", ["x"], ["y"])],
-                [],
-                version,
-                initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 1, 1))],
-            )
-        else:
-            graph = self._make_graph(
-                [
-                    ("x", TensorProto.UINT8, (1, 1, 1)),
-                    ("shape", TensorProto.INT64, (3,)),
-                ],
-                [make_node("Reshape", ["x", "shape"], ["y"])],
-                [],
-                version,
-                initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 1, 1))],
-            )
-        op_schema = defs.get_schema("Reshape", version)
-        # Reshape Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
+        seed_values: list[tuple[str, TensorProto.DataType, Any]] = [
+            ("x", TensorProto.UINT8, (1, 1, 1))
+        ]
+        inputs = ["x"]
+        if version > 1:
+            seed_values.append(("shape", TensorProto.INT64, (3,)))
+            inputs.append("shape")
+        graph = self._make_graph(
+            seed_values,
+            [make_node("Reshape", inputs, ["y"])],
+            [],
+            version,
+            initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 1, 1))],
+        )
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.UINT8, (1, 1, 1))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            has_inference_function=has_inference_function("Reshape", version),
         )
 
     @parameterized.expand(all_versions_for("Reshape"))
@@ -887,9 +849,6 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             version,
         )
-        op_schema = defs.get_schema("Reshape", version)
-        # Reshape Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
         self._assert_inferred(
             graph,
             [
@@ -897,36 +856,23 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.UINT8, (3, 8)),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            has_inference_function=has_inference_function,
+            has_inference_function=has_inference_function("Reshape", version),
         )
 
     @parameterized.expand(all_versions_for("Upsample"))
     def test_upsample(self, _, version) -> None:
-        op_schema = defs.get_schema("Upsample", version)
-        # Upsample Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
-        if version == 1:
-            graph = self._make_graph(
-                [("x", TensorProto.INT32, (2, 4, 3, 5))],
+        has_inference_func = has_inference_function("Upsample", version)
+        if version <= 7:
+            if version == 1:
                 # scales = (1.0, 1.0, height_scale, width_scale)
-                [
-                    make_node(
-                        "Upsample", ["x"], ["y"], height_scale=1.3, width_scale=1.9
-                    )
-                ],
-                [],
-                version,
-            )
-            self._assert_inferred(
-                graph,
-                [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
-                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                has_inference_function=has_inference_function,
-            )
-        elif version == 7:
+                node = make_node(
+                    "Upsample", ["x"], ["y"], height_scale=1.3, width_scale=1.9
+                )
+            else:
+                node = make_node("Upsample", ["x"], ["y"], scales=[1.0, 1.1, 1.3, 1.9])
             graph = self._make_graph(
                 [("x", TensorProto.INT32, (2, 4, 3, 5))],
-                [make_node("Upsample", ["x"], ["y"], scales=[1.0, 1.1, 1.3, 1.9])],
+                [node],
                 [],
                 version,
             )
@@ -934,7 +880,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 graph,
                 [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                has_inference_function=has_inference_function,
+                has_inference_function=has_inference_func,
             )
         else:
             graph = self._make_graph(
@@ -955,7 +901,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     graph,
                     [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
                     opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                    has_inference_function=has_inference_function,
+                    has_inference_function=has_inference_func,
                 )
 
             if version == 9:
@@ -969,39 +915,28 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(all_versions_for("Upsample"))
     def test_upsample_raw_data(self, _, version) -> None:
-        op_schema = defs.get_schema("Upsample", version)
-        # Upsample Version 1 does not have shape inference function.
-        has_inference_function = op_schema.has_type_and_shape_inference_function
-        if version == 1:
-            graph = self._make_graph(
-                [("x", TensorProto.INT32, (1, 3, 4, 5))],
+        has_inference_func = has_inference_function("Upsample", version)
+        if version <= 7:
+            if version == 1:
                 # scales = (1.0, 1.0, height_scale, width_scale)
-                [
-                    make_node(
-                        "Upsample", ["x"], ["y"], height_scale=2.3, width_scale=1.9
-                    )
-                ],
-                [],
-                version,
-            )
-            self._assert_inferred(
-                graph,
-                [make_tensor_value_info("y", TensorProto.INT32, (1, 3, 9, 9))],
-                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                has_inference_function=has_inference_function,
-            )
-        elif version == 7:
+                node = make_node(
+                    "Upsample", ["x"], ["y"], height_scale=2.3, width_scale=1.9
+                )
+                expected = make_tensor_value_info("y", TensorProto.INT32, (1, 3, 9, 9))
+            else:
+                node = make_node("Upsample", ["x"], ["y"], scales=[2.0, 1.1, 2.3, 1.9])
+                expected = make_tensor_value_info("y", TensorProto.INT32, (2, 3, 9, 9))
             graph = self._make_graph(
                 [("x", TensorProto.INT32, (1, 3, 4, 5))],
-                [make_node("Upsample", ["x"], ["y"], scales=[2.0, 1.1, 2.3, 1.9])],
+                [node],
                 [],
                 version,
             )
             self._assert_inferred(
                 graph,
-                [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 9, 9))],
+                [expected],
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                has_inference_function=has_inference_function,
+                has_inference_function=has_inference_func,
             )
         else:
             graph = self._make_graph(
@@ -1028,7 +963,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     graph,
                     [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
                     opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                    has_inference_function=has_inference_function,
+                    has_inference_function=has_inference_func,
                 )
 
             if version == 9:
