@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 ## Loading an ONNX Model with External Data
 
 * [Default] If the external data is under the same directory of the model, simply use `onnx.load()`
+
 ```python
 import onnx
 
@@ -39,6 +40,7 @@ onnx.save_model(onnx_model, "path/to/save/the/model.onnx")
 ```
 
 ## Converting and Saving an ONNX Model to External Data
+
 ```python
 import onnx
 
@@ -54,6 +56,7 @@ onnx.save_model(onnx_model, "path/to/save/the/model.onnx", save_as_external_data
 Current checker supports checking models with external data. Specify either loaded onnx model or model path to the checker.
 
 ### Large models >2GB
+
 However, for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory.
 
 ```python
@@ -68,6 +71,7 @@ onnx.checker.check_model("path/to/the/model.onnx")
 There are two fields related to the external data in TensorProto message type.
 
 ### data_location field
+
 `data_location` field stores the location of data for this tensor. Value MUST be one of:
 * `MESSAGE` - data stored in type-specific fields inside the protobuf message.
 * `RAW` - data stored in raw_data field.
@@ -75,6 +79,7 @@ There are two fields related to the external data in TensorProto message type.
 * `value` not set - legacy value. Assume data is stored in raw_data (if set) otherwise in message.
 
 ### external_data field
+
 `external_data` field stores key-value pairs of strings describing data location
 
 Recognized keys are:
@@ -87,6 +92,7 @@ Recognized keys are:
 After an ONNX file is loaded, all `external_data` fields may be updated with an additional key `("basepath")`, which stores the path to the directory from which he ONNX model file was loaded.
 
 ### External data files
+
 Data stored in external data files will be in the same binary bytes string format as is used by the `raw_data` field in current ONNX implementations.
 
 Reference
