@@ -2228,6 +2228,34 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
+static const char* StringConcat_doc =
+    R"DOC(StringConcat concatenates string tensors elementwise (with Numpy-style broadcasting support))DOC";
+ONNX_OPERATOR_SET_SCHEMA(
+    StringConcat,
+    20,
+    OpSchema()
+        .Input(
+            0,
+            "X",
+            "Tensor to prepend in concatenation",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(1, "Y", "Tensor to append in concatenation", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Z", "Concatenated string tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .TypeConstraint("T", {"tensor(string)"}, "Inputs and outputs must be UTF-8 strings")
+        .SetDoc(StringConcat_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
+
 static const char* StringNormalizer_ver10_doc = R"DOC(
 StringNormalization performs string operations for basic cleaning.
 This operator has only one input (denoted by X) and only one output

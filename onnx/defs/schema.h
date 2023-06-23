@@ -1391,7 +1391,7 @@ OpSchema GetOpSchema();
 #ifdef NDEBUG
 #define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() 0
 #else
-#define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().IncrementCount()
+#define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instancexwwx().IncrementCount()
 #define ONNX_DBG_GET_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().GetCount()
 
 class DbgOperatorSetTracker {

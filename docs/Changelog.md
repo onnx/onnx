@@ -23942,6 +23942,37 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
 
+### <a name="StringConcat-20"></a>**StringConcat-20**</a>
+
+  StringConcat concatenates string tensors elementwise (with Numpy-style broadcasting support)
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Tensor to prepend in concatenation</dd>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Tensor to append in concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
+<dd>Concatenated string tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>Inputs and outputs must be UTF-8 strings</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
