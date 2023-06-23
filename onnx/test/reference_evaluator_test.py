@@ -3694,6 +3694,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         [
             (["abc", "def"], [".com", ".net"], ["abc.com", "def.net"], (2,)),
             (["cat", "dog", "snake"], ["s"], ["cats", "dogs", "snakes"], (3,)),
+            ("cat", "s", "cats", ()),
         ]
     )
     def test_string_concat(self, a, b, expected, expected_shape):
