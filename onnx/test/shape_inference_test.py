@@ -69,6 +69,7 @@ def all_versions_for(op_name: str) -> list[tuple[str, int]]:
     versions = sorted(versions_set)
     return [
         (
+            # This is used by parameterized to show the readable test version.
             f"version{version}",
             version,
         )
@@ -119,7 +120,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
                         )
                     )
                 if reshape_version >= 5:
-                    # For Reshape of version >=5, it has two inputs: data and shape.
+                    # For Reshape of version >= 5, it has two inputs: data and shape.
                     reshape_inputs = ["SEED_" + seed_name, "UNKNOWN_SHAPE_" + seed_name]
                 else:
                     # For Reshape of Version 1, it has only one input: data.
@@ -326,7 +327,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         if version == 1:
             self.assertRaises(RuntimeError, self._inferred, graph)
         else:
-            # InferenceError for Transpose is from Version 13.
+            # InferenceError is from https://github.com/onnx/onnx/pull/3169
             self.assertRaises(
                 onnx.shape_inference.InferenceError, self._inferred, graph
             )
@@ -342,7 +343,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         if version == 1:
             self.assertRaises(RuntimeError, self._inferred, graph)
         else:
-            # InferenceError for Transpose is from Version 13.
+            # InferenceError is from https://github.com/onnx/onnx/pull/3169
             self.assertRaises(
                 onnx.shape_inference.InferenceError, self._inferred, graph
             )
@@ -358,7 +359,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         if version == 1:
             self.assertRaises(RuntimeError, self._inferred, graph)
         else:
-            # InferenceError for Transpose is from Version 13.
+            # InferenceError is from https://github.com/onnx/onnx/pull/3169
             self.assertRaises(
                 onnx.shape_inference.InferenceError, self._inferred, graph
             )
@@ -629,7 +630,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             version,
         )
-        if version < 5:
+        if version < 11:
+            # InferenceError is from https://github.com/onnx/onnx/pull/3169
             self.assertRaises(RuntimeError, self._inferred, graph)
         else:
             self.assertRaises(
@@ -669,7 +671,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     @parameterized.expand(all_versions_for("Concat"))
     def test_concat_param_single_input(self, _, version) -> None:
         # From: https://github.com/onnx/onnx/pull/2418.
-        self.skipIf(version < 5, "Concat for single input is from Version 11.")
+        self.skipIf(version < 11, "Concat for single input is from Version 11.")
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, ("a", 2))],
             [make_node("Concat", ["x"], ["z"], axis=0)],
@@ -861,7 +863,6 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(all_versions_for("Upsample"))
     def test_upsample(self, _, version) -> None:
-        has_inference_func = has_inference_function("Upsample", version)
         if version <= 7:
             if version == 1:
                 # scales = (1.0, 1.0, height_scale, width_scale)
@@ -880,7 +881,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 graph,
                 [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                has_inference_function=has_inference_func,
+                has_inference_function=has_inference_function("Upsample", version),
             )
         else:
             graph = self._make_graph(
@@ -901,7 +902,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                     graph,
                     [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
                     opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                    has_inference_function=has_inference_func,
                 )
 
             if version == 9:
@@ -915,7 +915,6 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(all_versions_for("Upsample"))
     def test_upsample_raw_data(self, _, version) -> None:
-        has_inference_func = has_inference_function("Upsample", version)
         if version <= 7:
             if version == 1:
                 # scales = (1.0, 1.0, height_scale, width_scale)
@@ -936,7 +935,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 graph,
                 [expected],
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                has_inference_function=has_inference_func,
+                has_inference_function=has_inference_function("Upsample", version),
             )
         else:
             graph = self._make_graph(
@@ -963,7 +962,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                     graph,
                     [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
                     opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-                    has_inference_function=has_inference_func,
                 )
 
             if version == 9:
@@ -1646,7 +1644,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (3, 3))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )  # type: ignore
+        )
 
     @parameterized.expand(all_versions_for("Scatter"))
     def test_scatter_axis1(self, _, version) -> None:
@@ -1674,7 +1672,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (1, 5))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )  # type: ignore
+        )
 
     @parameterized.expand(all_versions_for("ScatterElements"))
     def test_scatter_elements(self, _, version) -> None:
@@ -1755,7 +1753,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, None),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )  # type: ignore
+        )
 
     @parameterized.expand(all_versions_for("Squeeze"))
     def test_squeeze(self, _, version) -> None:
@@ -1790,51 +1788,114 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
-    def test_unsqueeze_regular(self) -> None:
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (3, 2)), ("axes", TensorProto.INT64, (4,))],
-            [make_node("Unsqueeze", ["x", "axes"], "y")],
-            [],
-            initializer=[make_tensor("axes", TensorProto.INT64, (4,), (0, 1, 3, 5))],
-        )
+    @parameterized.expand(all_versions_for("Unsqueeze"))
+    def test_unsqueeze_regular(self, _, version) -> None:
+        if version <= 11:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (3, 2))],
+                [make_node("Unsqueeze", "x", "y", axes=[0, 1, 3, 5])],
+                [],
+                version,
+                initializer=[
+                    make_tensor("axes", TensorProto.INT64, (4,), (0, 1, 3, 5))
+                ],
+            )
+        else:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (3, 2)), ("axes", TensorProto.INT64, (4,))],
+                [make_node("Unsqueeze", ["x", "axes"], "y")],
+                [],
+                version,
+                initializer=[
+                    make_tensor("axes", TensorProto.INT64, (4,), (0, 1, 3, 5))
+                ],
+            )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 1, 3, 1, 2, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 1, 3, 1, 2, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_unsqueeze_unsorted_axes(self) -> None:
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (3, 4, 5)), ("axes", TensorProto.INT64, (2,))],
-            [make_node("Unsqueeze", ["x", "axes"], "y")],
-            [],
-            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (4, 0))],
-        )
+    @parameterized.expand(all_versions_for("Unsqueeze"))
+    def test_unsqueeze_unsorted_axes(self, _, version) -> None:
+        if version <= 11:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (3, 4, 5))],
+                [make_node("Unsqueeze", "x", "y", axes=[4, 0])],
+                [],
+                version,
+            )
+        else:
+            graph = self._make_graph(
+                [
+                    ("x", TensorProto.FLOAT, (3, 4, 5)),
+                    ("axes", TensorProto.INT64, (2,)),
+                ],
+                [make_node("Unsqueeze", ["x", "axes"], "y")],
+                [],
+                version,
+                initializer=[make_tensor("axes", TensorProto.INT64, (2,), (4, 0))],
+            )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 3, 4, 5, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 3, 4, 5, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_unsqueeze_negative_axes(self) -> None:
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (3, 4, 5)), ("axes", TensorProto.INT64, (2,))],
-            [make_node("Unsqueeze", ["x", "axes"], "y")],
-            [],
-            initializer=[make_tensor("axes", TensorProto.INT64, (2,), (0, -1))],
-        )
-        self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 3, 4, 5, 1))]
-        )
+    @parameterized.expand(all_versions_for("Unsqueeze"))
+    def test_unsqueeze_negative_axes(self, _, version) -> None:
+        if version <= 11:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (3, 4, 5))],
+                [make_node("Unsqueeze", "x", "y", axes=[0, -1])],
+                [],
+                version,
+            )
+        else:
+            graph = self._make_graph(
+                [
+                    ("x", TensorProto.FLOAT, (3, 4, 5)),
+                    ("axes", TensorProto.INT64, (2,)),
+                ],
+                [make_node("Unsqueeze", ["x", "axes"], "y")],
+                [],
+                version,
+                initializer=[make_tensor("axes", TensorProto.INT64, (2,), (0, -1))],
+            )
+        if version == 1:
+            self._assert_inferred(
+                graph,
+                [make_tensor_value_info("y", TensorProto.FLOAT, (3, 4, 5))],
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+        else:
+            # Negative axes problem is fixed in: https://github.com/onnx/onnx/pull/2347
+            self._assert_inferred(
+                graph,
+                [make_tensor_value_info("y", TensorProto.FLOAT, (1, 3, 4, 5, 1))],
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
-    def test_unsqueeze_scalar(self) -> None:
+    @parameterized.expand(all_versions_for("Unsqueeze"))
+    def test_unsqueeze_scalar(self, _, version) -> None:
+        # https://github.com/onnx/onnx/pull/4113
+        self.skipIf(version < 13, "Scalar is supported from Version 13.")
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, ()), ("axes", TensorProto.INT64, ())],
             [make_node("Unsqueeze", ["x", "axes"], "y")],
             [],
+            version,
             initializer=[make_tensor("axes", TensorProto.INT64, (), (-1,))],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1,))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1,))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_without_input_shape(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_without_input_shape(self, _, version) -> None:
+        self.skipIf(version == 1, "starts & ends are required.")
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -1843,36 +1904,54 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("Slice", ["x", "starts", "ends"], ["y"])],
             [],
+            version,
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, None)]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, None)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_with_input_shape(self) -> None:
-        graph = self._make_graph(
-            [
-                ("x", TensorProto.FLOAT, (3, 2)),
-                ("starts", TensorProto.INT64, (2,)),
-                ("ends", TensorProto.INT64, (2,)),
-            ],
-            [make_node("Slice", ["x", "starts", "ends"], ["y"])],
-            [],
-            initializer=[
-                make_tensor(
-                    "starts",
-                    TensorProto.INT64,
-                    (2,),
-                    vals=np.array([1, 0], dtype="<i8").tobytes(),
-                    raw=True,
-                ),  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
-                make_tensor("ends", TensorProto.INT64, (2,), (2, 2)),
-            ],
-        )
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_with_input_shape(self, _, version) -> None:
+        if version == 1:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (3, 2))],
+                [make_node("Slice", "x", "y", axes=[0, 1], starts=[1, 0], ends=[2, 2])],
+                [],
+                version,
+            )
+        else:
+            graph = self._make_graph(
+                [
+                    ("x", TensorProto.FLOAT, (3, 2)),
+                    ("starts", TensorProto.INT64, (2,)),
+                    ("ends", TensorProto.INT64, (2,)),
+                ],
+                [make_node("Slice", ["x", "starts", "ends"], ["y"])],
+                [],
+                version,
+                initializer=[
+                    make_tensor(
+                        "starts",
+                        TensorProto.INT64,
+                        (2,),
+                        vals=np.array([1, 0], dtype="<i8").tobytes(),
+                        raw=True,
+                    ),  # Feed raw bytes (force little endian ordering like onnx standard) for test purpose
+                    make_tensor("ends", TensorProto.INT64, (2,), (2, 2)),
+                ],
+            )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_with_input_shape_containing_dim_params(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_with_input_shape_containing_dim_params(self, _, version) -> None:
+        # https://github.com/onnx/onnx/pull/2526
+        self.skipIf(version == 1, "This does not supported in Version 1")
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (1, "a", 1)),
@@ -1881,14 +1960,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("Slice", ["x", "starts", "ends"], ["y"])],
             [],
+            version,
             initializer=[
                 make_tensor("starts", TensorProto.INT64, (3,), (0, 0, 0)),
                 make_tensor("ends", TensorProto.INT64, (3,), (1, 1, 1)),
             ],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, None, 1))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, None, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_slice_with_input_shape_steps(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_with_input_shape_steps(self, _, version) -> None:
+        self.skipIf(version == 1, "Version 1 does not have steps attribute")
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (5, 6, 7)),
@@ -1899,6 +1985,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], ["y"])],
             [],
+            version,
             initializer=[
                 make_tensor("starts", TensorProto.INT64, (3,), (1, 0, 0)),
                 make_tensor("ends", TensorProto.INT64, (3,), (2, 6, 6)),
@@ -1906,10 +1993,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_with_input_shape_axes(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_with_input_shape_axes(self, _, version) -> None:
+        self.skipIf(version == 1, "Version 1 does not have steps attribute")
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 6, 2)),
@@ -1920,6 +2011,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], ["y"])],
             [],
+            version,
             initializer=[
                 make_tensor("starts", TensorProto.INT64, (2,), (1, 0)),
                 make_tensor("ends", TensorProto.INT64, (2,), (2, 2)),
@@ -1927,10 +2019,27 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (1, 6, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (1, 6, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_unsorted_axes(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_unsorted_axes(self, _, version) -> None:
+        if version == 1:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (3, 2))],
+                [make_node("Slice", "x", "y", axes=[1, 0], starts=[1, 0], ends=[2, 2])],
+                [],
+                version,
+            )
+            self._assert_inferred(
+                graph,
+                [make_tensor_value_info("y", TensorProto.FLOAT, None)],
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+            return
+        # For versions other then 1.
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -1940,6 +2049,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("Slice", ["x", "starts", "ends", "axes"], "y")],
             [],
+            version,
             initializer=[
                 make_tensor("starts", TensorProto.INT64, (2,), (1, 0)),
                 make_tensor("ends", TensorProto.INT64, (2,), (2, 2)),
@@ -1947,30 +2057,50 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )  # can handle unsorted axes
 
-    def test_slice_giant_number(self) -> None:
-        graph = self._make_graph(
-            [
-                ("x", TensorProto.FLOAT, (3, 2)),
-                ("starts", TensorProto.INT64, (2,)),
-                ("ends", TensorProto.INT64, (2,)),
-                ("axes", TensorProto.INT64, (2,)),
-            ],
-            [make_node("Slice", ["x", "starts", "ends", "axes"], "y")],
-            [],
-            initializer=[
-                make_tensor("starts", TensorProto.INT64, (2,), (1, 0)),
-                make_tensor("ends", TensorProto.INT64, (2,), (200, 22000)),
-                make_tensor("axes", TensorProto.INT64, (2,), (0, 1)),
-            ],
-        )
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_giant_number(self, _, version) -> None:
+        if version == 1:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (3, 2))],
+                [
+                    make_node(
+                        "Slice", "x", "y", axes=[0, 1], starts=[1, 0], ends=[200, 22000]
+                    )
+                ],
+                [],
+                version,
+            )
+        else:
+            graph = self._make_graph(
+                [
+                    ("x", TensorProto.FLOAT, (3, 2)),
+                    ("starts", TensorProto.INT64, (2,)),
+                    ("ends", TensorProto.INT64, (2,)),
+                    ("axes", TensorProto.INT64, (2,)),
+                ],
+                [make_node("Slice", ["x", "starts", "ends", "axes"], "y")],
+                [],
+                version,
+                initializer=[
+                    make_tensor("starts", TensorProto.INT64, (2,), (1, 0)),
+                    make_tensor("ends", TensorProto.INT64, (2,), (200, 22000)),
+                    make_tensor("axes", TensorProto.INT64, (2,), (0, 1)),
+                ],
+            )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_giant_step(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_giant_step(self, _, version) -> None:
+        self.skipIf(version == 1, "Version 1 does not have steps attribute")
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -1981,6 +2111,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
             [],
+            version,
             initializer=[
                 make_tensor("starts", TensorProto.INT64, (2,), (1, 0)),
                 make_tensor("ends", TensorProto.INT64, (2,), (200, 200)),
@@ -1989,10 +2120,31 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_slice_negative_end(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_negative_end(self, _, version) -> None:
+        if version == 1:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (3, 2))],
+                [
+                    make_node(
+                        "Slice", "x", "y", axes=[0, 1], starts=[1, 0], ends=[200, -1]
+                    )
+                ],
+                [],
+                version,
+            )
+            # https://github.com/onnx/onnx/pull/772
+            self._assert_inferred(
+                graph,
+                [make_tensor_value_info("y", TensorProto.FLOAT, (None, None))],
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -2002,6 +2154,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("Slice", ["x", "starts", "ends", "axes"], "y")],
             [],
+            version,
             initializer=[
                 make_tensor("starts", TensorProto.INT64, (2,), (1, 0)),
                 make_tensor(
@@ -2010,9 +2163,32 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("axes", TensorProto.INT64, (2,), (0, 1)),
             ],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_slice_negative_start(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_negative_start(self, _, version) -> None:
+        if version == 1:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (3, 2))],
+                [
+                    make_node(
+                        "Slice", "x", "y", axes=[0, 1], starts=[1, -2], ends=[200, 3]
+                    )
+                ],
+                [],
+                version,
+            )
+            # https://github.com/onnx/onnx/pull/772
+            self._assert_inferred(
+                graph,
+                [make_tensor_value_info("y", TensorProto.FLOAT, (None, None))],
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
+            return
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 2)),
@@ -2030,9 +2206,15 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("axes", TensorProto.INT64, (2,), (0, 1)),
             ],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
-    def test_slice_negative_step(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_negative_step(self, _, version) -> None:
+        self.skipIf(version == 1, "Version 1 does not have steps attribute")
         graph = self._make_graph(
             [
                 ("x", TensorProto.FLOAT, (3, 4)),
@@ -2043,6 +2225,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
             [],
+            version,
             initializer=[
                 make_tensor(
                     "starts", TensorProto.INT64, (2,), (1, 4)
@@ -2052,27 +2235,48 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("steps", TensorProto.INT64, (2,), (1, -1)),
             ],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 3))])  # type: ignore
-
-    def test_slice_variable_copy(self) -> None:
-        graph = self._make_graph(
-            [
-                ("x", TensorProto.FLOAT, ("a", 2)),
-                ("starts", TensorProto.INT64, (1,)),
-                ("ends", TensorProto.INT64, (1,)),
-                ("axes", TensorProto.INT64, (1,)),
-            ],
-            [make_node("Slice", ["x", "starts", "ends", "axes"], "y")],
-            [],
-            initializer=[
-                make_tensor("starts", TensorProto.INT64, (1,), (1,)),
-                make_tensor("ends", TensorProto.INT64, (1,), (200,)),
-                make_tensor("axes", TensorProto.INT64, (1,), (1,)),
-            ],
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("a", 1))])  # type: ignore
 
-    def test_slice_variable_input_types(self) -> None:
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_variable_copy(self, _, version) -> None:
+        if version == 1:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, ("a", 2))],
+                [make_node("Slice", "x", "y", axes=[1], starts=[1], ends=[200])],
+                [],
+                version,
+            )
+        else:
+            graph = self._make_graph(
+                [
+                    ("x", TensorProto.FLOAT, ("a", 2)),
+                    ("starts", TensorProto.INT64, (1,)),
+                    ("ends", TensorProto.INT64, (1,)),
+                    ("axes", TensorProto.INT64, (1,)),
+                ],
+                [make_node("Slice", ["x", "starts", "ends", "axes"], "y")],
+                [],
+                version,
+                initializer=[
+                    make_tensor("starts", TensorProto.INT64, (1,), (1,)),
+                    make_tensor("ends", TensorProto.INT64, (1,), (200,)),
+                    make_tensor("axes", TensorProto.INT64, (1,), (1,)),
+                ],
+            )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("a", 1))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Slice"))
+    def test_slice_variable_input_types(self, _, version) -> None:
+        # https://github.com/onnx/onnx/pull/1950
+        self.skipIf(version < 10, "This is supported only from Version 10")
         graph = self._make_graph(
             [
                 ("x", TensorProto.DOUBLE, (3, 2)),
@@ -2082,6 +2286,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("Slice", ["x", "starts", "ends", "axes"], "y")],
             [],
+            version,
             initializer=[
                 make_tensor("starts", TensorProto.INT32, (2,), (1, 0)),
                 make_tensor("ends", TensorProto.INT32, (2,), (200, 22000)),
@@ -2089,7 +2294,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.DOUBLE, (2, 2))]
+            graph,
+            [make_tensor_value_info("y", TensorProto.DOUBLE, (2, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_conv(self) -> None:
