@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <functional>
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
