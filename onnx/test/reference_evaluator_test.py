@@ -3704,7 +3704,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         node = make_node("StringConcat", inputs=["A", "B"], outputs=["Y"])
         model = make_model(make_graph([node], "g", [A, B], [Y]))
         ref = ReferenceEvaluator(model)
-        result, *_ = ref.run(None, {"A": a, "B": b})
+        result, *_ = ref.run(None, {"A": np.array(a), "B": np.array(b)})
         np.testing.assert_array_equal(result, expected)
         self.assertEqual(result.dtype.kind, "U")
         self.assertEqual(result.shape, expected_shape)
