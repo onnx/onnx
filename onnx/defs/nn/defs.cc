@@ -2695,7 +2695,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(LayerNormalization_ver17_doc)
         .Attr(
             "axis",
-            "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). strong "
+            "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r]. "
             "Negative value means counting dimensions from the back.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
