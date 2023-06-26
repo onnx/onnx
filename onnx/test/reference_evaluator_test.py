@@ -3730,7 +3730,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         result, *_ = ref.run(None, {"A": np.array(a), "B": np.array(b)})
         np.testing.assert_array_equal(result, expected)
-        self.assertEqual(result.dtype.kind, "U")
+        self.assertEqual(result.dtype.kind, "O")
         self.assertEqual(result.shape, expected_shape)
 
 
