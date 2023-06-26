@@ -65,7 +65,6 @@ jobs:
           export ONNX_BUILD_TESTS=0
           export ONNX_ML=1
           export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
-          export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
           python setup.py install
 
