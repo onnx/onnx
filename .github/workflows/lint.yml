@@ -98,6 +98,8 @@ jobs:
       - name: Check auto-gen files are up-to-date
         run: |
           echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
+          pip uninstall -y onnx
+          pip install -e .
           python onnx/defs/gen_doc.py
           python onnx/gen_proto.py -l
           python onnx/gen_proto.py -l --ml
