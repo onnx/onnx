@@ -2471,19 +2471,19 @@ An affine matrix `theta` is applied to a position tensor represented in its homo
 [r20, r21, r22, t2]   [z]   [z']
 [0,   0,   0,   1 ]   [1]   [1 ]
 ```
-where (x, y, z) is the position in the original space, (x', y', z') is the position in the output space.
-The last row is always [0, 0, 0, 1] and is not stored in the affine matrix. Therefore we have `theta` of shape (N, 2, 3) for 2D or (N, 3, 4) for 3D.
+where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
+The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
 
-Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from -1 to 1.
+Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
 The output `grid` contains positions in the output space.
 
-When `align_corners`=1, consider -1 and 1 to refer to the centers of the corner pixels (mark v in illustration).
+When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
 ```
 v            v            v            v
 |-------------------|------------------|
 -1                  0                  1
 ```
-When `align_corners`=0, consider -1 and 1 to refer to the outer edge of the corner pixels.
+When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
 ```
     v        v         v         v
 |------------------|-------------------|
@@ -2568,10 +2568,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                           start_w_then = Add (minus_one, step_w_half)
                       },
                       else_branch = h2 () => (start_h_else, step_h_else, start_w_else, step_w_else) { # => (float, float, float, float)
-                          H_float_nimus_one = Sub (H_float, one)
-                          W_float_nimus_one = Sub (W_float, one)
-                          step_h_else = Div (two, H_float_nimus_one)
-                          step_w_else = Div (two, W_float_nimus_one)
+                          H_float_minus_one = Sub (H_float, one)
+                          W_float_minus_one = Sub (W_float, one)
+                          step_h_else = Div (two, H_float_minus_one)
+                          step_w_else = Div (two, W_float_minus_one)
                           start_h_else = Identity (minus_one)
                           start_w_else = Identity (minus_one)
                       }
@@ -2604,8 +2604,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                   grid_N_HW_2 = Transpose <perm = [0, 2, 1]> (grid_N_2_HW)
                   N_H_W_2_seq = SequenceConstruct (N, H, W, int_two_1d)
                   N_H_W_2 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_H_W_2_seq)
-                  grid_2d_then_ = Reshape(grid_N_HW_2, N_H_W_2)
-                  grid_2d_then = CastLike(grid_2d_then_, theta)
+                  grid_2d_then_ = Reshape (grid_N_HW_2, N_H_W_2)
+                  grid_2d_then = CastLike (grid_2d_then_, theta)
                   },
               else_branch = g2 () => (grid_3d_else) { # => (float[N, D, H, W, 3])
                   int_one = Constant<value_int: int=1>()
@@ -2640,12 +2640,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                           start_w_then = Add (minus_one, step_w_half)
                       },
                       else_branch = h2 () => (start_d_else, step_d_else, start_h_else, step_h_else, start_w_else, step_w_else) { # => (float, float, float, float, float, float)
-                          D_float_nimus_one = Sub (D_float, one)
-                          H_float_nimus_one = Sub (H_float, one)
-                          W_float_nimus_one = Sub (W_float, one)
-                          step_d_else = Div (two, D_float_nimus_one)
-                          step_h_else = Div (two, H_float_nimus_one)
-                          step_w_else = Div (two, W_float_nimus_one)
+                          D_float_minus_one = Sub (D_float, one)
+                          H_float_minus_one = Sub (H_float, one)
+                          W_float_minus_one = Sub (W_float, one)
+                          step_d_else = Div (two, D_float_minus_one)
+                          step_h_else = Div (two, H_float_minus_one)
+                          step_w_else = Div (two, W_float_minus_one)
                           start_d_else = Identity (minus_one)
                           start_h_else = Identity (minus_one)
                           start_w_else = Identity (minus_one)
@@ -2700,17 +2700,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           checkInputRank(ctx, 1, 1);
-          const TensorProto* size_initializer = ctx.getInputData(1);
-          const auto* size_input = ctx.getSymbolicInput(1);
-          TensorShapeProto size_proto;
-          if (size_initializer) {
-            auto sizeData = ParseData<int64_t>(size_initializer);
-            for (auto val : sizeData) {
-              size_proto.add_dim()->set_dim_value(val);
-            }
-          } else if (size_input) {
-            size_proto.CopyFrom(*size_input);
-          } else {
+
+          bool found;
+          TensorShapeProto size_proto = getShapeInput(ctx, 1, found);
+          if (!found) {
             return;
           }
 
