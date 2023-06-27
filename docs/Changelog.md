@@ -23942,6 +23942,46 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
 
+### <a name="StringSplit-20"></a>**StringSplit-20**</a>
+
+  StringSplit splits a string tensor based on a delimiter attribute and a maxsplit attribute. The output of this operator is a (potentially nested) Sequence of tensors of strings. The shape of the output nested Sequence is the same as the input tensor shape, and the string tensors contain the substrings split by the delimiter at the same position as in the input.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>delimiter</tt> : string</dt>
+<dd>Delimiter to split on. If left unset this defaults to a space character.</dd>
+<dt><tt>maxsplit</tt> : int</dt>
+<dd>Maximum number of splits. If left unset, it will make as many splits as many times the delimiter appears.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>String Tensor to split</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : S</dt>
+<dd>Sequence of split strings (with equal Sequence shape as the input tensor)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>The input must be a UTF-8 string tensor</dd>
+<dt><tt>S</tt> : seq(tensor(string)), seq(seq(tensor(string)))</dt>
+<dd>The output is a sequence of string tensors</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>

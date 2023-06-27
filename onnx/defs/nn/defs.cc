@@ -2228,6 +2228,61 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
+static const char* StringSplit_doc =
+    R"DOC(StringSplit splits a string tensor based on a delimiter attribute and a maxsplit attribute. The output of this operator is a (potentially nested) Sequence of tensors of strings. The shape of the output nested Sequence is the same as the input tensor shape, and the string tensors contain the substrings split by the delimiter at the same position as in the input.)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    StringSplit,
+    20,
+    OpSchema()
+        .Input(0, "X", "String Tensor to split", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Attr(
+            "delimiter",
+            "Delimiter to split on. If left unset this defaults to a space character.",
+            AttributeProto::STRING,
+            false)
+        .Attr(
+            "maxsplit",
+            "Maximum number of splits. If left unset, it will make as many splits as many times the delimiter appears.",
+            AttributeProto::INT,
+            false)
+        .Output(
+            0,
+            "Y",
+            "Sequence of split strings (with equal Sequence shape as the input tensor)",
+            "S",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint("T", {"tensor(string)"}, "The input must be a UTF-8 string tensor")
+        .TypeConstraint(
+            "S",
+            {"seq(tensor(string))", "seq(seq(tensor(string)))"},
+            "The output is a sequence of string tensors")
+        .SetDoc(StringSplit_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (!hasInputShape(ctx, 0)) {
+            return;
+          }
+          const TypeProto* input_type = ctx.getInputType(0);
+          if (input_type == nullptr || !input_type->has_tensor_type() ||
+              input_type->tensor_type().elem_type() != TensorProto::STRING) {
+            return;
+          }
+          TensorShapeProto input_shape = getInputShape(ctx, 0);
+          // We produce a string tensor per input element. The sequence "rank" and more generally, "shape", is therefore
+          // the same as the input. The extent that this can be inferred is to propagate "rank".
+          TypeProto* output_type = ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type();
+          for (auto i = 0; i < input_shape.dim_size() - 1; ++i) {
+            output_type = output_type->mutable_sequence_type()->mutable_elem_type();
+          }
+          // For each input element, we have a 1D tensor of strings in the output
+          auto* tensor_type = output_type->mutable_tensor_type();
+          tensor_type->mutable_shape()->add_dim();
+          tensor_type->set_elem_type(TensorProto::STRING);
+        }));
+
 static const char* StringNormalizer_ver10_doc = R"DOC(
 StringNormalization performs string operations for basic cleaning.
 This operator has only one input (denoted by X) and only one output

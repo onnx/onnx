@@ -147,6 +147,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
 |<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
 |<a href="#StringNormalizer">StringNormalizer</a>|<a href="Changelog.md#StringNormalizer-10">10</a>|
+|<a href="#StringSplit">StringSplit</a>|<a href="Changelog.md#StringSplit-20">20</a>|
 |<a href="#Sub">Sub</a>|<a href="Changelog.md#Sub-14">14</a>, <a href="Changelog.md#Sub-13">13</a>, <a href="Changelog.md#Sub-7">7</a>, <a href="Changelog.md#Sub-6">6</a>, <a href="Changelog.md#Sub-1">1</a>|
 |<a href="#Sum">Sum</a>|<a href="Changelog.md#Sum-13">13</a>, <a href="Changelog.md#Sum-8">8</a>, <a href="Changelog.md#Sum-6">6</a>, <a href="Changelog.md#Sum-1">1</a>|
 |<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-7">7</a>|
@@ -30202,6 +30203,92 @@ expect(
     outputs=[output],
     name="test_strnormalizer_nostopwords_nochangecase",
 )
+```
+
+</details>
+
+
+### <a name="StringSplit"></a><a name="stringsplit">**StringSplit**</a>
+
+  StringSplit splits a string tensor based on a delimiter attribute and a maxsplit attribute. The output of this operator is a (potentially nested) Sequence of tensors of strings. The shape of the output nested Sequence is the same as the input tensor shape, and the string tensors contain the substrings split by the delimiter at the same position as in the input.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>delimiter</tt> : string</dt>
+<dd>Delimiter to split on. If left unset this defaults to a space character.</dd>
+<dt><tt>maxsplit</tt> : int</dt>
+<dd>Maximum number of splits. If left unset, it will make as many splits as many times the delimiter appears.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>String Tensor to split</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : S</dt>
+<dd>Sequence of split strings (with equal Sequence shape as the input tensor)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>The input must be a UTF-8 string tensor</dd>
+<dt><tt>S</tt> : seq(tensor(string)), seq(seq(tensor(string)))</dt>
+<dd>The output is a sequence of string tensors</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["result"],
+    delimiter=".",
+)
+
+x = np.array(["abc.com", "def.net"]).astype(object)
+result = [np.array(["abc", "com"]).astype(object), np.array(["def", "net"]).astype(object)]
+expect(node, inputs=[x], outputs=[result], name="test_string_split_basic")
+```
+
+</details>
+
+
+<details>
+<summary>maxsplit</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["result"],
+    maxsplit=2,
+)
+
+x = np.array([["hello world", "def.net"], ["o n n x", "the quick brown fox"]]).astype(object)
+result = [
+    [np.array(["hello", "world"]).astype(object), np.array(["def.net"]).astype(object)],
+    [np.array(["o", "n", "n x"]).astype(object), np.array(["the", "quick", "brown fox"]).astype(object)]
+    ]
+
+output_type_protos = [onnx.helper.make_sequence_type_proto(onnx.helper.make_sequence_type_proto(onnx.helper.make_tensor_type_proto(onnx.helper.np_dtype_to_tensor_dtype(np.dtype("object")), (None,))))]
+expect(node, inputs=[x], outputs=[result], name="test_string_split_maxsplit", output_type_protos=output_type_protos)
 ```
 
 </details>

@@ -1103,12 +1103,14 @@ class OpSet_Onnx_ver19 {
 
 // Forward declarations for ai.onnx version 20
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, GridSample);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringSplit);
 
 // Iterate over schema from ai.onnx version 20
 class OpSet_Onnx_ver20 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, GridSample)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringSplit)>());
   }
 };
 

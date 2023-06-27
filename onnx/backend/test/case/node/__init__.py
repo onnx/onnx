@@ -168,6 +168,18 @@ def function_testcase_helper(
     return expanded_tests, schema.since_version
 
 
+def _infer_type_proto(input: Union[List[Any], np.ndarray, TensorProto]) -> TypeProto:
+    if isinstance(input, list):
+        return onnx.helper.make_sequence_type_proto(_infer_type_proto(input[0]))
+    elif isinstance(input, TensorProto):
+        elem_type = input.data_type
+        shape = tuple(input.dims)
+        return onnx.helper.make_tensor_type_proto(elem_type, shape)
+    else:
+        elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
+        return onnx.helper.make_tensor_type_proto(elem_type, input.shape)
+
+
 def _extract_value_info(
     input: Union[List[Any], np.ndarray, None],
     name: str,
@@ -178,19 +190,8 @@ def _extract_value_info(
             raise NotImplementedError(
                 "_extract_value_info: both input and type_proto arguments cannot be None."
             )
-        elif isinstance(input, list):
-            elem_type = onnx.helper.np_dtype_to_tensor_dtype(input[0].dtype)
-            shape = None
-            tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
-            type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
-        elif isinstance(input, TensorProto):
-            elem_type = input.data_type
-            shape = tuple(input.dims)
-            type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
         else:
-            elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
-            shape = input.shape
-            type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
+            type_proto = _infer_type_proto(input)
 
     return onnx.helper.make_value_info(name, type_proto)
 

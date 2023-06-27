@@ -1170,15 +1170,24 @@ def make_tensor_sequence_value_info(
     elem_shape_denotation: Optional[List[str]] = None,
 ) -> ValueInfoProto:
     """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
-    value_info_proto = ValueInfoProto()
+    tensor_type_proto = make_tensor_type_proto(elem_type, shape, elem_shape_denotation)
+    return make_sequence_value_info(name, 1, tensor_type_proto, doc_string)
+
+
+def make_sequence_value_info(
+    name: str, dims: int, inner_type_proto: TypeProto, doc_string: str = ""
+) -> ValueInfoProto:
+    """Makes a generic Sequence ValueInfoProto based on the a dimensionality and inner type."""
+    if dims < 1:
+        raise AssertionError("Sequence must have at least one dimension.")
+    value_info_proto: ValueInfoProto = ValueInfoProto()
     value_info_proto.name = name
     if doc_string:
         value_info_proto.doc_string = doc_string
-
-    tensor_type_proto = make_tensor_type_proto(elem_type, shape, elem_shape_denotation)
-    sequence_type_proto = make_sequence_type_proto(tensor_type_proto)
+    sequence_type_proto = inner_type_proto
+    for _ in range(dims):
+        sequence_type_proto = make_sequence_type_proto(sequence_type_proto)
     value_info_proto.type.sequence_type.CopyFrom(sequence_type_proto.sequence_type)
-
     return value_info_proto
 
 

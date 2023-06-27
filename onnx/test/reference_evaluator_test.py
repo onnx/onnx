@@ -3714,6 +3714,45 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(got.shape, (11,) * dim)
         self.assertEqual(got.dtype, np.float32)
 
+    @parameterized.parameterized.expand(
+        [
+            (
+                np.array(["1,2,3", "4,5,6"], dtype=object),
+                ",",
+                None,
+                [np.array(["1", "2", "3"]), np.array(["4", "5", "6"])],
+            ),
+            (
+                np.array(["1,", "4,6", ""], dtype=object),
+                ",",
+                None,
+                [np.array(["1", ""]), np.array(["4", "6"]), np.array([""])],
+            ),
+            (
+                np.array(["1,", "4,6", "4,5,6"], dtype=object),
+                ",",
+                1,
+                [np.array(["1", ""]), np.array(["4", "6"]), np.array(["4", "5,6"])],
+            ),
+        ]
+    )
+    def test_string_split(self, x, delimiter, maxsplit, expected):
+        X = make_tensor_value_info("X", TensorProto.STRING, (None))
+        Y = make_tensor_value_info("Y", TensorProto.STRING, (None))
+        node = make_node(
+            "StringSplit",
+            inputs=["X"],
+            outputs=["Y"],
+            delimiter=delimiter,
+            maxsplit=maxsplit,
+        )
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        result, *_ = ref.run(None, {"X": x})
+        self.assertEqual(len(result), len(expected))
+        for a, b in zip(result, expected):
+            np.testing.assert_equal(a, b)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 173/186 (93.01%, 5 generators excluded) common operators.
+Node tests have covered 174/187 (93.05%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -20707,6 +20707,49 @@ expect(
     outputs=[output],
     name="test_strnormalizer_nostopwords_nochangecase",
 )
+```
+
+</details>
+
+
+### StringSplit
+There are 2 test cases, listed as following:
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["result"],
+    delimiter=".",
+)
+
+x = np.array(["abc.com", "def.net"]).astype(object)
+result = [np.array(["abc", "com"]).astype(object), np.array(["def", "net"]).astype(object)]
+expect(node, inputs=[x], outputs=[result], name="test_string_split_basic")
+```
+
+</details>
+<details>
+<summary>maxsplit</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["result"],
+    maxsplit=2,
+)
+
+x = np.array([["hello world", "def.net"], ["o n n x", "the quick brown fox"]]).astype(object)
+result = [
+    [np.array(["hello", "world"]).astype(object), np.array(["def.net"]).astype(object)],
+    [np.array(["o", "n", "n x"]).astype(object), np.array(["the", "quick", "brown fox"]).astype(object)]
+    ]
+
+output_type_protos = [onnx.helper.make_sequence_type_proto(onnx.helper.make_sequence_type_proto(onnx.helper.make_tensor_type_proto(onnx.helper.np_dtype_to_tensor_dtype(np.dtype("object")), (None,))))]
+expect(node, inputs=[x], outputs=[result], name="test_string_split_maxsplit", output_type_protos=output_type_protos)
 ```
 
 </details>
