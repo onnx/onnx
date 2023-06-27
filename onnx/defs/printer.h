@@ -5,9 +5,8 @@
 #pragma once
 
 #include <iostream>
-
+#include <string>
 #include "onnx/onnx_pb.h"
-
 #include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {

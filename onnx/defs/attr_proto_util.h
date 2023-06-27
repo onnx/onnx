@@ -7,6 +7,8 @@
 #pragma once
 
 #include "onnx/onnx-operators_pb.h"
+#include <vector>
+#include <string>
 
 namespace ONNX_NAMESPACE {
 

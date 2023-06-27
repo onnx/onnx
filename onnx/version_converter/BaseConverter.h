@@ -8,8 +8,12 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
 #include <stdlib.h>
+#include <string>
 #include <iostream>
+#include <unordered_map>
 #include <utility>
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"

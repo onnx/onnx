@@ -7,6 +7,7 @@
 // Adapter for Clip in default domain from version 10 to 11
 
 #pragma once
+#include <memory>
 #include <limits>
 
 namespace ONNX_NAMESPACE {
