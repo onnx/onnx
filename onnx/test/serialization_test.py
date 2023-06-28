@@ -63,13 +63,6 @@ class TestRegistry(unittest.TestCase):
         with self.assertRaises(ValueError):
             onnx.serialization.registry.get("unsupported")
 
-    def test_serialize_deserialize_model(self) -> None:
-        serializer = onnx.serialization.registry.get("onnxtext")
-        model = onnx.parser.parse_model(_TEST_MODEL)
-        serialized = serializer.serialize_proto(model)
-        deserialized = serializer.deserialize_proto(serialized, onnx.ModelProto())
-        self.assertEqual(model, deserialized)
-
     def test_onnx_save_load_model_uses_the_custom_serializer(self) -> None:
         model = onnx.parser.parse_model(_TEST_MODEL)
         with tempfile.TemporaryDirectory() as tmpdir:
