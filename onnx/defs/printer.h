@@ -6,8 +6,8 @@
 
 #include <iostream>
 #include <string>
-#include "onnx/onnx_pb.h"
 #include "onnx/defs/parser.h"
+#include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
 

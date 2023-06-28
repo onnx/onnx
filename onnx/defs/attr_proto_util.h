@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include "onnx/onnx-operators_pb.h"
-#include <vector>
 #include <string>
+#include <vector>
+#include "onnx/onnx-operators_pb.h"
 
 namespace ONNX_NAMESPACE {
 
