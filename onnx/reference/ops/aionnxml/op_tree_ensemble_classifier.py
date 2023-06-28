@@ -95,7 +95,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
             "PROBIT": probit,
         }
         if binary:
-            if res.shape[1] == 1 and len(classes) == 1:
+            if res.shape[1] == len(classes) == 1:
                 new_res = np.zeros((res.shape[0], 2), res.dtype)
                 new_res[:, 1] = res[:, 0]
                 res = new_res

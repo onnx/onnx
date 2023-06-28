@@ -111,7 +111,7 @@ def find_min_ir_version_for(
     default_min_version = 3
 
     def find_min(domain: Union[str, None], version: int) -> int:
-        key = (domain if domain else "ai.onnx", version)
+        key = (domain or "ai.onnx", version)
         if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
         if ignore_unknown:

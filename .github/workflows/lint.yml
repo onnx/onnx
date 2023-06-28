@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: misspell # Check spellings as well
-        uses: reviewdog/action-misspell@b149b49fbecf7e99831283bb0f63a3828126d341 # v1.13.0
+        uses: reviewdog/action-misspell@9257f108197b44e37995c98bea6ee4a5b9ffc3b0 # v1.13.1
         with:
           github_token: ${{ secrets.github_token }}
           locale: "US"
@@ -34,7 +34,7 @@ jobs:
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@1c58cf1fdadcdcdbe0bc577e6970891c50595e13 # v1.18.0
+        uses: reviewdog/action-shellcheck@50e5e1e2284575f23a1e409d9c0804cdfc4f6e31 # v1.18.1
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
