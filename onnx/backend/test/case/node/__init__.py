@@ -75,8 +75,7 @@ def _rename_edges_helper(
                 def subgraph_rename_helper(name: str) -> Any:
                     if name in sg_rename:  # noqa: B023
                         return sg_rename[name]  # noqa: B023
-                    else:
-                        return rename_helper(name)
+                    return rename_helper(name)
 
                 new_nodes = [
                     _rename_edges_helper(
@@ -117,8 +116,7 @@ def function_expand_helper(
             return io_names_map[internal_name]
         elif internal_name == "":
             return ""
-        else:
-            return op_prefix + internal_name
+        return op_prefix + internal_name
 
     new_node_list = [
         _rename_edges_helper(internal_node, rename_helper, attribute_map, op_prefix)
@@ -203,7 +201,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
             # directly use make_model to create a model with the latest ir version
             if (
                 (
-                    (opset.domain == "" or opset.domain == "ai.onnx")
+                    (opset.domain in {"", "ai.onnx"})
                     and opset.version == latest_onnx_version + 1
                 )
                 or (
@@ -212,8 +210,8 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
                 )
                 or (
                     (
-                        opset.domain == "ai.onnx.training version"
-                        or opset.domain == "ai.onnx.preview.training"
+                        opset.domain
+                        in {"ai.onnx.training version", "ai.onnx.preview.training"}
                     )
                     and opset.version == latest_training_version + 1
                 )
@@ -346,7 +344,7 @@ def expect(
 
         function_test_name = name + "_expanded"
         if onnx_ai_opset_version and onnx_ai_opset_version != since_version:
-            function_test_name += "_ver" + str(onnx_ai_opset_version)
+            function_test_name += f"_ver{onnx_ai_opset_version}"
         graph = onnx.helper.make_graph(
             nodes=expanded_function_nodes,
             name=function_test_name,
