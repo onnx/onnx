@@ -76,7 +76,10 @@ class TestRegistry(unittest.TestCase):
 
             loaded_model = onnx.load_model(model_path, format="onnxtext")
 
-            self.assertEqual(model, loaded_model)
+            self.assertEqual(
+                model.SerializeToString(deterministic=True),
+                loaded_model.SerializeToString(deterministic=True),
+            )
 
 
 class TestCustomSerializer(unittest.TestCase):
@@ -85,4 +88,7 @@ class TestCustomSerializer(unittest.TestCase):
         model = onnx.parser.parse_model(_TEST_MODEL)
         serialized = serializer.serialize_proto(model)
         deserialized = serializer.deserialize_proto(serialized, onnx.ModelProto())
-        self.assertEqual(model, deserialized)
+        self.assertEqual(
+            model.SerializeToString(deterministic=True),
+            deserialized.SerializeToString(deterministic=True),
+        )
