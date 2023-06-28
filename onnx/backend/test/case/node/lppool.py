@@ -34,7 +34,7 @@ class LpPool(Base):
         )
         x = np.random.randn(1, 3, 32).astype(np.float32)
         x_shape = np.shape(x)
-        out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0], "LPPOOL", p=p)
 
@@ -58,7 +58,7 @@ class LpPool(Base):
         x_shape = np.shape(x)
         kernel_shape = (2, 2)
         strides = (1, 1)
-        out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(
             padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "LPPOOL", p=p
@@ -84,7 +84,7 @@ class LpPool(Base):
         x_shape = np.shape(x)
         kernel_shape = [2, 2, 2]
         strides = [1, 1, 1]
-        out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(
             padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0, 0, 0, 0], "LPPOOL", p=p
@@ -197,7 +197,7 @@ class LpPool(Base):
         pad_bottom = pad_top = pad_right = pad_left = 2
         pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
         out_shape = get_output_shape(
-            "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+            "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
         )
         padded = np.pad(
             x,
@@ -231,7 +231,7 @@ class LpPool(Base):
         x_shape = np.shape(x)
         kernel_shape = (5, 5)
         strides = (3, 3)
-        out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(
             padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "LPPOOL", p=p

@@ -5,6 +5,8 @@
  */
 
 #include <functional>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"

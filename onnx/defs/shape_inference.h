@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <functional>
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
@@ -291,12 +292,12 @@ inline bool hasShape(const TypeProto& type) {
 }
 
 template <typename Context>
-inline bool hasInputShape(Context& ctx, size_t n) {
+inline bool hasInputShape(const Context& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) && hasShape(*ctx.getInputType(n));
 }
 
 template <typename Context>
-inline bool hasNInputShapes(Context& ctx, size_t n) {
+inline bool hasNInputShapes(const Context& ctx, size_t n) {
   for (size_t i = 0; i < n; i++) {
     if (!hasInputShape(ctx, i)) {
       return false;
@@ -305,7 +306,7 @@ inline bool hasNInputShapes(Context& ctx, size_t n) {
   return true;
 }
 
-inline const TensorShapeProto& getInputShape(InferenceContext& ctx, size_t n) {
+inline const TensorShapeProto& getInputShape(const InferenceContext& ctx, size_t n) {
   const auto* input_type = ctx.getInputType(n);
   const auto value_case = input_type->value_case();
   if (value_case != TypeProto::kTensorType && value_case != TypeProto::kSparseTensorType) {
@@ -532,7 +533,7 @@ inline void updateOutputShape(
 // If neither is available, try rank inference.
 // When one of above succeeds, `true` is stored in `found`.
 // Otherwise, `false` is stored, which means that returned TensorShapeProto does not make sense.
-TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& found);
+TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found);
 
 // Infer shape of an output from the value of a specified attribute, which is
 // expected to be a list of integers specifying a valid shape.

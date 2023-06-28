@@ -201,7 +201,7 @@ class AveragePool(Base):
         dilations = [1]
         kernel_shape = [2]
         strides = [1]
-        out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0], "AVG", dilations=dilations)
 
@@ -224,7 +224,7 @@ class AveragePool(Base):
         dilations = (1, 1)
         kernel_shape = (2, 2)
         strides = (1, 1)
-        out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "AVG", dilations=dilations)
 
@@ -247,7 +247,7 @@ class AveragePool(Base):
         dilations = (1, 1, 1)
         kernel_shape = [2, 2, 2]
         strides = [1, 1, 1]
-        out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
         padded = x
         y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0, 0, 0, 0], "AVG", dilations=dilations)
 
