@@ -391,12 +391,16 @@ OpSchema& OpSchema::Deprecate() {
 }
 
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  num_inputs_allowed_ = [std::move(allowed_input_nums)](int n) -> bool { return allowed_input_nums.count(n); };
+  num_inputs_allowed_ = [allowed_input_nums = std::move(allowed_input_nums)](int n) -> bool {
+    return allowed_input_nums.count(n);
+  };
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  num_outputs_allowed_ = [std::move(allowed_output_nums)](int n) -> bool { return allowed_output_nums.count(n) > 0; };
+  num_outputs_allowed_ = [allowed_output_nums = std::move(allowed_output_nums)](int n) -> bool {
+    return allowed_output_nums.count(n) > 0;
+  };
   return *this;
 }
 
