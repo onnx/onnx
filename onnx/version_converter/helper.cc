@@ -4,8 +4,8 @@
 
 // Helper Methods for Adapters
 
-#include <vector>
 #include "onnx/version_converter/helper.h"
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {

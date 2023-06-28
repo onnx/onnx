@@ -11,13 +11,13 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
-#include <vector>
+#include <fstream>
 #include <functional>
+#include <iterator>
 #include <set>
 #include <string>
-#include <fstream>
-#include <iterator>
 #include <unordered_set>
+#include <vector>
 
 #ifdef _WIN32
 #include <direct.h>

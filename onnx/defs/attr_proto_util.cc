@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <vector>
-#include <string>
 #include "attr_proto_util.h"
+#include <string>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 

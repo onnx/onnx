@@ -3,8 +3,8 @@
  */
 
 #include "onnx/defs/printer.h"
-#include <vector>
 #include <iomanip>
+#include <vector>
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {

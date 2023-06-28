@@ -10,12 +10,12 @@
 #include "onnx/common/ir_pb_converter.h"
 
 #include <memory>
-#include <string>
-#include <vector>
-#include <unordered_set>
-#include <unordered_map>
-#include <utility>
 #include <sstream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 

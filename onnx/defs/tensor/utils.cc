@@ -3,11 +3,11 @@
  */
 
 #include "onnx/defs/tensor/utils.h"
-#include <numeric>
-#include <limits>
 #include <algorithm>
-#include <utility>
+#include <limits>
+#include <numeric>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ONNX_NAMESPACE {

@@ -2,8 +2,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <string>
 #include "onnx/defs/math/utils.h"
+#include <string>
 
 namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)>

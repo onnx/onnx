@@ -2,9 +2,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <vector>
-#include <string>
 #include "onnx/defs/math/utils.h"
+#include <string>
+#include <vector>
 #include "onnx/defs/controlflow/utils.h"
 
 namespace ONNX_NAMESPACE {
