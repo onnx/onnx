@@ -115,15 +115,14 @@ class Extractor:
         self,
         nodes: list[NodeProto],
     ) -> tuple[list[TensorProto], list[ValueInfoProto]]:
-        all_tensors_name = set()
-        for node in nodes:
-            for name in node.input:
-                all_tensors_name.add(name)
-            for name in node.output:
-                all_tensors_name.add(name)
+        all_tensors_names: set[str] = set()
 
-        initializer = [self.wmap[t] for t in self.wmap if t in all_tensors_name]
-        value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_name]
+        for node in nodes:
+            all_tensors_names.update(node.input)
+            all_tensors_names.update(node.output)
+
+        initializer = [self.wmap[t] for t in self.wmap if t in all_tensors_names]
+        value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_names]
         len_sparse_initializer = len(self.graph.sparse_initializer)
         if len_sparse_initializer != 0:
             raise ValueError(

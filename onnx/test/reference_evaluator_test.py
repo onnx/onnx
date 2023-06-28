@@ -2366,7 +2366,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             "signal": np.arange(128).reshape((1, 128, 1)).astype(np.float32),
             "frame_step": np.array(8, dtype=np.int64),
             "window": 0.5
-            + 0.5 * np.cos(2 * 3.1415 * np.arange(0, 16, 1, dtype=np.float32) / 16),
+            + 0.5 * np.cos(2 * np.pi * np.arange(0, 16, 1, dtype=np.float32) / 16),
             "frame_length": np.array(16, dtype=np.int64),
         }
 
