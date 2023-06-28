@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <vector>
 #include "shape_inference.h"
 #include "onnx/defs/tensor_proto_util.h"
 

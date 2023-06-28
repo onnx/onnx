@@ -8,6 +8,13 @@
 // Adventurous users should note that the APIs will probably change.
 
 #include "onnx/common/ir_pb_converter.h"
+
+#include <memory>
+#include <string>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+#include <utility>
 #include <sstream>
 
 namespace ONNX_NAMESPACE {

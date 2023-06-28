@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <map>
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/string_utils.h"

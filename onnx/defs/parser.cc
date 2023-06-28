@@ -8,10 +8,9 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
-
+#include <vector>
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
-
 #include "onnx/defs/parser.h"
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))

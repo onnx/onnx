@@ -3,6 +3,7 @@
  */
 
 #include "onnx/defs/printer.h"
+#include <vector>
 #include <iomanip>
 #include "onnx/defs/tensor_proto_util.h"
 

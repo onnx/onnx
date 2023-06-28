@@ -6,6 +6,11 @@
 #include <algorithm>
 #include <fstream>
 #include <list>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+#include <utility>
+#include <utility>
 #include "onnx/checker.h"
 #include "onnx/common/common.h"
 #include "onnx/common/file_utils.h"

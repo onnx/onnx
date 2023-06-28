@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <string>
+#include <memory>
 #include "onnx/version_converter/convert.h"
 
 namespace ONNX_NAMESPACE {
