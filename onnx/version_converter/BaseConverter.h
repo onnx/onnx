@@ -82,7 +82,7 @@ class BaseVersionConverter {
   }
 
   void registerAdapter(const char* op, int64_t from, int64_t to, NodeTransformerFunction transformer) {
-    registerAdapter(make_unique<GenericAdapter>(op, from, to, transformer));
+    registerAdapter(std::make_unique<GenericAdapter>(op, from, to, transformer));
   }
 };
 
