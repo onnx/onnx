@@ -3717,6 +3717,10 @@ class TestReferenceEvaluator(unittest.TestCase):
     def test_constant_of_shape(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+<<<<<<< HEAD
+=======
+        value = np.array([-5], dtype=np.float32)
+>>>>>>> 7caa3798 (Fix reference implementation for operator CastLike and bfloat16)
 
         nodes = [
             make_node("Shape", inputs=["X"], outputs=["shape"]),
