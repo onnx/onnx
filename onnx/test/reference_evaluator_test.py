@@ -2075,6 +2075,30 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = np.array([[1.0, 1.1, 3.0, 4.0, 5.0]], dtype=np.float32)
         assert_allclose(expected, got1[0])
 
+    def test_scatternd(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Ind = make_tensor_value_info("I", TensorProto.INT64, [None, None])
+        U = make_tensor_value_info("U", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+
+        node = make_node(
+            "ScatterND",
+            ["X", "I", "U"],
+            ["Y"],
+        )
+        graph = make_graph([node], "g", [X, Ind, U], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        feeds = {
+            "X": np.array([[1.0, 2.0]], dtype=np.float32),
+            "I": np.array([[0, 0]]),
+            "U": np.array([3.0], dtype=np.float32),
+        }
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        expected = np.array([[3.0, 2.0]], dtype=np.float32)
+        assert_allclose(expected, got1[0])
+
     def test_col2im_impl(self):
         def get_im2col_indices(
             x_shape, field_height, field_width, padding=None, stride=1
@@ -2342,7 +2366,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             "signal": np.arange(128).reshape((1, 128, 1)).astype(np.float32),
             "frame_step": np.array(8, dtype=np.int64),
             "window": 0.5
-            + 0.5 * np.cos(2 * 3.1415 * np.arange(0, 16, 1, dtype=np.float32) / 16),
+            + 0.5 * np.cos(2 * np.pi * np.arange(0, 16, 1, dtype=np.float32) / 16),
             "frame_length": np.array(16, dtype=np.int64),
         }
 
