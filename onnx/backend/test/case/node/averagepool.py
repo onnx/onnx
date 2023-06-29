@@ -505,30 +505,91 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_3d_dilations() -> None:
-        x_shape = (32, 32, 32)
-        dilations = (2, 2, 2)
-        kernel_shape = (5, 5, 5)
-        strides = (3, 3, 3)
-        ceil_mode=True
-
+        """
+        input_shape: [1, 1, 4, 4]
+        output_shape: [1, 1, 2, 2]
+        """
         node = onnx.helper.make_node(
             "AveragePool",
             inputs=["x"],
             outputs=["y"],
-            kernel_shape=kernel_shape,
-            strides=strides,
-            dilations=dilations,
-            ceil_mode=ceil_mode,
+            kernel_shape=[2, 2, 2],
+            strides=[1, 1, 1],
+            dilations=[2, 2, 2],
+            ceil_mode=True,
         )
 
-        x = np.random.randn(1, 1, *x_shape).astype(np.float32)
-        out_shape, pads = get_output_shape_update_pads(None, x_shape, dilations, kernel_shape, strides, ceil_mode=ceil_mode)
-        padded = np.pad(
-            x,
-            ((0, 0), (0, 0), (pads[0], pads[3]), (pads[1], pads[4]), (pads[2], pads[5])),
-            mode="constant",
-            constant_values=0,
-        )
-        y = pool(padded, (1, 1, *x_shape), kernel_shape, strides, out_shape, pads, "AVG", dilations=dilations)
+        # input shape: [1, 1, 4, 4]
+        x = np.array(
+            [
+                [
+                    [
+                        [
+                            [1, 2, 3, 4],
+                            [5, 6, 7, 8],
+                            [9, 10, 11, 12],
+                            [13, 14, 15, 16],
+                        ],
+                                            [
+                            [1, 2, 3, 4],
+                            [5, 6, 7, 8],
+                            [9, 10, 11, 12],
+                            [13, 14, 15, 16],
+                        ],
+                        [
+                            [1, 2, 3, 4],
+                            [5, 6, 7, 8],
+                            [9, 10, 11, 12],
+                            [13, 14, 15, 16],
+                        ],
+                        [
+                            [1, 2, 3, 4],
+                            [5, 6, 7, 8],
+                            [9, 10, 11, 12],
+                            [13, 14, 15, 16],
+                        ]
+                    ]
+                ]
+            ]
+        ).astype(np.float32)
+
+        y = np.array([[[
+            [[6, 7], [10, 11]],
+            [[6, 7], [10, 11]]
+            ]]]).astype(np.float32)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_3d_dilations")
+
+    @staticmethod
+    def export_averagepool_3d_dilations_large() -> None:
+        x_shape = (32, 32, 32)
+        dilations = (2, 2, 2)
+        kernel_shape = (5, 5, 5)
+        strides = (3, 3, 3)
+        ceil_mode = True
+        count_include_pad = 0
+
+        for count_include_pad in (0, 1):
+            node = onnx.helper.make_node(
+                "AveragePool",
+                inputs=["x"],
+                outputs=["y"],
+                kernel_shape=kernel_shape,
+                strides=strides,
+                dilations=dilations,
+                count_include_pad=count_include_pad,
+                ceil_mode=ceil_mode,
+            )
+
+            x = np.random.randn(1, 1, *x_shape).astype(np.float32)
+            out_shape, pads = get_output_shape_update_pads(None, x_shape, dilations, kernel_shape, strides, ceil_mode=ceil_mode)
+            padded = np.pad(
+                x,
+                ((0, 0), (0, 0), (pads[0], pads[3]), (pads[1], pads[4]), (pads[2], pads[5])),
+                mode="constant",
+                constant_values=0 if count_include_pad == 1 else np.nan,
+            )
+            y = pool(padded, (1, 1, *x_shape), kernel_shape, strides, out_shape, pads, "AVG", dilations=dilations, count_include_pad=count_include_pad)
+
+            test_name = f"test_averagepool_3d_dilations_large_count_include_pad_is_{count_include_pad}"
+            expect(node, inputs=[x], outputs=[y], name=test_name)
