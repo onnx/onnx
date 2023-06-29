@@ -80,7 +80,7 @@ jobs:
         name: wheels
         path: dist
 
-    - name: Upload wheel to TestPyPI/PyPI weekly
+    - name: Upload wheel to PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         python -m pip install -q twine

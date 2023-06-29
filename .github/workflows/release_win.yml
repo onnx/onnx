@@ -66,7 +66,7 @@ jobs:
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
         if ('${{ github.event_name }}' -eq 'schedule') {
-          echo "Build weekly TestPyPI package"
+          echo "Build weekly PyPI package"
           python setup.py bdist_wheel --weekly_build
         } else {
           python setup.py bdist_wheel
@@ -83,7 +83,7 @@ jobs:
         name: wheels
         path: ./onnx/dist
 
-    - name: Upload onnx-weekly wheel to TestPyPI/PyPI weekly
+    - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
