@@ -97,7 +97,7 @@ jobs:
           checkout_path: ${{ github.workspace }}
       - name: Check auto-gen files are up-to-date
         run: |
-          echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
+          echo -e "\n::group:: ===> Check auto-gen files are up-to-date..."
           ONNX_ML=1 python onnx/defs/gen_doc.py
           ONNX_ML=0 python onnx/defs/gen_doc.py
           python onnx/gen_proto.py -l
@@ -105,7 +105,7 @@ jobs:
           python onnx/backend/test/stat_coverage.py
           echo -e "::endgroup::"
 
-          echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
+          echo -e "\n::group:: ===> Auto-gen results"
           git status
           if ! git diff --color --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'; then
             echo -e "\e[1m\e[36mGit diff returned failures. This may mean you need to regenerate the docs or need to update the source code that will generate the documentation.\e[0m"
