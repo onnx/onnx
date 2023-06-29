@@ -26,7 +26,8 @@ class ProtoSerializer(Protocol):
 
     # Format supported by the serializer. E.g. "protobuf"
     supported_format: str
-    # File extensions supported by the serializer. E.g. frozenset({"onnx", "pb"})
+    # File extensions supported by the serializer. E.g. frozenset({".onnx", ".pb"})
+    # Be careful to include the dot in the file extension.
     file_extensions: Collection[str]
 
     # NOTE: The methods defined are serialize_proto and deserialize_proto and not the
@@ -86,7 +87,7 @@ class _ProtobufSerializer(ProtoSerializer):
     """Serialize and deserialize protobuf message."""
 
     supported_format = "protobuf"
-    file_extensions = frozenset({"onnx", "pb"})
+    file_extensions = frozenset({".onnx", ".pb"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         if hasattr(proto, "SerializeToString") and callable(proto.SerializeToString):
@@ -121,7 +122,7 @@ class _TextProtoSerializer(ProtoSerializer):
     """Serialize and deserialize text proto."""
 
     supported_format = "textproto"
-    file_extensions = frozenset({"textproto", "prototxt", "pbtxt"})
+    file_extensions = frozenset({".textproto", ".prototxt", ".pbtxt"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         textproto = google.protobuf.text_format.MessageToString(proto)
