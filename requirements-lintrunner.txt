@@ -14,3 +14,5 @@ clang-format==16.0.6
 pylint==2.17.4
 # EDITORCONFIG-CHECKER
 editorconfig-checker==2.7.2
+# REFURB
+refurb==1.17.0

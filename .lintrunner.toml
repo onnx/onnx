@@ -253,3 +253,29 @@ init_command = [
     '--dry-run={{DRYRUN}}',
     '--requirement=requirements-lintrunner.txt',
 ]
+
+[[linter]]
+code = 'REFURB'
+include_patterns = [
+    '**/*.py',
+]
+exclude_patterns = []
+command = [
+    'python',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'refurb_linter',
+    '--config-file=pyproject.toml',
+    '--',
+    '@{{PATHSFILE}}',
+]
+init_command = [
+    'python',
+    '-m',
+    'lintrunner_adapters',
+    'run',
+    'pip_init',
+    '--dry-run={{DRYRUN}}',
+    '--requirement=requirements-lintrunner.txt',
+]
