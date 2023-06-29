@@ -156,34 +156,30 @@ def _save_bytes(content: bytes, f: IO[bytes] | str | os.PathLike) -> None:
             writable.write(content)
 
 
-def _get_file_path(f: IO[bytes] | str | os.PathLike) -> str | None:
+def _get_file_path(f: IO[bytes] | str | os.PathLike | None) -> str | None:
     if isinstance(f, (str, os.PathLike)):
         return os.path.abspath(f)
     if hasattr(f, "name"):
+        assert f is not None
         return os.path.abspath(f.name)
     return None
 
 
 def _get_serializer(
-    f: str | os.PathLike | IO[bytes] | None, fmt: _SupportedFormat | None
+    fmt: _SupportedFormat | None, f: str | os.PathLike | IO[bytes] | None = None
 ) -> serialization.ProtoSerializer:
     """Get the serializer for the given path and format from the serialization registry."""
     # Use fmt if it is specified
     if fmt is not None:
         return serialization.registry.get(fmt)
 
-    if f is None:
-        # No format specified and no file path. Use protobuf as default
-        return serialization.registry.get(_DEFAULT_FORMAT)
-
-    file_path = _get_file_path(f)
-    if file_path is not None:
+    if (file_path := _get_file_path(f)) is not None:
         _, ext = os.path.splitext(file_path)
         fmt = serialization.registry.get_format_from_file_extension(ext)
 
-    if fmt is None:
-        # Failed to resolve format. Use protobuf as default
-        fmt = _DEFAULT_FORMAT
+    # Failed to resolve format if fmt is None. Use protobuf as default
+    fmt = fmt or _DEFAULT_FORMAT
+    assert fmt is not None
 
     return serialization.registry.get(fmt)
 
@@ -209,7 +205,7 @@ def load_model(
     Returns:
         Loaded in-memory ModelProto.
     """
-    model = _get_serializer(f, format).deserialize_proto(_load_bytes(f), ModelProto())
+    model = _get_serializer(format, f).deserialize_proto(_load_bytes(f), ModelProto())
 
     if load_external_data:
         model_filepath = _get_file_path(f)
@@ -236,7 +232,7 @@ def load_tensor(
     Returns:
         Loaded in-memory TensorProto.
     """
-    return _get_serializer(f, format).deserialize_proto(_load_bytes(f), TensorProto())
+    return _get_serializer(format, f).deserialize_proto(_load_bytes(f), TensorProto())
 
 
 def load_model_from_string(
@@ -255,7 +251,7 @@ def load_model_from_string(
     Returns:
         Loaded in-memory ModelProto.
     """
-    return _get_serializer(None, format).deserialize_proto(s, ModelProto())
+    return _get_serializer(format).deserialize_proto(s, ModelProto())
 
 
 def load_tensor_from_string(
@@ -274,7 +270,7 @@ def load_tensor_from_string(
     Returns:
         Loaded in-memory TensorProto.
     """
-    return _get_serializer(None, format).deserialize_proto(s, TensorProto())
+    return _get_serializer(format).deserialize_proto(s, TensorProto())
 
 
 def save_model(
@@ -314,9 +310,7 @@ def save_model(
             If false, convert only non-attribute tensors to external data
     """
     if isinstance(proto, bytes):
-        proto = _get_serializer(None, _DEFAULT_FORMAT).deserialize_proto(
-            proto, ModelProto()
-        )
+        proto = _get_serializer(_DEFAULT_FORMAT).deserialize_proto(proto, ModelProto())
 
     if save_as_external_data:
         convert_model_to_external_data(
@@ -328,7 +322,7 @@ def save_model(
         basepath = os.path.dirname(model_filepath)
         proto = write_external_data_tensors(proto, basepath)
 
-    serialized = _get_serializer(model_filepath, format).serialize_proto(proto)
+    serialized = _get_serializer(format, model_filepath).serialize_proto(proto)
     _save_bytes(serialized, f)
 
 
@@ -349,7 +343,7 @@ def save_tensor(
             ``f`` is not a path, 'protobuf' is used. The encoding is assumed to
             be "utf-8" when the format is a text format.
     """
-    serialized = _get_serializer(f, format).serialize_proto(proto)
+    serialized = _get_serializer(format, f).serialize_proto(proto)
     _save_bytes(serialized, f)
 
 
