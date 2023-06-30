@@ -215,9 +215,7 @@ def pool(
                 f"Pooling type {pooling_type} does not support. Should be AVG, MAX"
             )
 
-        if count_include_pad == 1 and (
-            pooling_type == "AVG" or pooling_type == "LPPOOL"
-        ):
+        if count_include_pad == 1 and (pooling_type in {"AVG", "LPPOOL"}):
             y[shape] = f(window_vals)
         else:
             y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])

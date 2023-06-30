@@ -738,24 +738,24 @@ class TestComposeFunctions(unittest.TestCase):
         overlapping_inputs = list(set(inputs0) & set(inputs1))
         overlapping_outputs = list(set(outputs0) & set(outputs1))
         overlapping_edges = list(set(overlapping_inputs + overlapping_outputs))
-        if len(overlapping_edges) > 0:
+        if overlapping_edges:
             self.assertEqual(overlap[i], ("edge", overlapping_edges))
             i += 1
 
         overlapping_vis = list(set(value_info0) & set(value_info1))
-        if len(overlapping_vis) > 0:
+        if overlapping_vis:
             self.assertEqual(overlap[i], ("value_info", overlapping_vis))
             i += 1
 
         overlapping_init = list(set(initializer0) & set(initializer1))
-        if len(overlapping_init) > 0:
+        if overlapping_init:
             self.assertEqual(overlap[i], ("initializer", overlapping_init))
             i += 1
 
         overlapping_sparse_init = list(
             set(sparse_initializer0) & set(sparse_initializer1)
         )
-        if len(overlapping_sparse_init) > 0:
+        if overlapping_sparse_init:
             expected_overlap = []
             for overlapping_name in overlapping_sparse_init:
                 expected_overlap.append(overlapping_name + "_values")

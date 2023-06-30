@@ -50,19 +50,19 @@ def check_overlapping_names(
 
     # Edges already cover input/output
     overlap = _overlapping(_edge_names(g1), _edge_names(g2, exclude=io_map_inputs))
-    if len(overlap) > 0:
+    if overlap:
         result.append(("edge", overlap))
 
     overlap = _overlapping(
         [e.name for e in g1.value_info], [e.name for e in g2.value_info]
     )
-    if len(overlap) > 0:
+    if overlap:
         result.append(("value_info", overlap))
 
     overlap = _overlapping(
         [e.name for e in g1.initializer], [e.name for e in g2.initializer]
     )
-    if len(overlap) > 0:
+    if overlap:
         result.append(("initializer", overlap))
 
     overlap = _overlapping(
@@ -72,7 +72,7 @@ def check_overlapping_names(
         [e.indices.name for e in g1.sparse_initializer],
         [e.indices.name for e in g2.sparse_initializer],
     )
-    if len(overlap) > 0:
+    if overlap:
         result.append(("sparse_initializer", overlap))
 
     return result
