@@ -7,9 +7,9 @@ import numpy as np
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.backend.test.case.node.pool_op_common import (
-    get_output_shape_update_pads,
-    get_output_shape,
+from onnx.reference.ops.op_pool_common import (
+    get_output_shape_explicit_padding,
+    get_output_shape_auto_pad,
     get_pad_shape,
     pool,
 )
@@ -198,12 +198,12 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32).astype(np.float32)
         x_shape = np.shape(x)
-        dilations = [1]
+        pads = None
         kernel_shape = [2]
         strides = [1]
-        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
+        out_shape, _ = get_output_shape_explicit_padding(pads, x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0], "AVG", dilations=dilations)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_1d_default")
 
@@ -221,12 +221,12 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
-        dilations = (1, 1)
+        pads = None
         kernel_shape = (2, 2)
         strides = (1, 1)
-        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
+        out_shape, _ = get_output_shape_explicit_padding(pads, x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0, 0, 0), "AVG", dilations=dilations)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_default")
 
@@ -244,12 +244,12 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
-        dilations = (1, 1, 1)
+        pads = None
         kernel_shape = [2, 2, 2]
         strides = [1, 1, 1]
-        out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
+        out_shape, _ = get_output_shape_explicit_padding(pads, x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0, 0, 0, 0], "AVG", dilations=dilations)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_3d_default")
 
@@ -269,10 +269,9 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
-        dilations = (1, 1)
         kernel_shape = (2, 2)
         strides = (1, 1)
-        out_shape = get_output_shape("SAME_UPPER", x_shape[2:], kernel_shape, strides)
+        out_shape = get_output_shape_auto_pad("SAME_UPPER", x_shape[2:], kernel_shape, strides)
         pad_shape = get_pad_shape(
             "SAME_UPPER", x_shape[2:], kernel_shape, strides, out_shape
         )
@@ -287,7 +286,7 @@ class AveragePool(Base):
             constant_values=np.nan,
         )
         pads = (pad_top, pad_left, pad_bottom, pad_right)
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "AVG", dilations=dilations)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_upper")
 
@@ -307,10 +306,9 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
-        dilations = (1, 1)
         kernel_shape = (2, 2)
         strides = (1, 1)
-        out_shape = get_output_shape("SAME_LOWER", x_shape[2:], kernel_shape, strides)
+        out_shape = get_output_shape_auto_pad("SAME_LOWER", x_shape[2:], kernel_shape, strides)
         pad_shape = get_pad_shape(
             "SAME_LOWER", x_shape[2:], kernel_shape, strides, out_shape
         )
@@ -325,7 +323,7 @@ class AveragePool(Base):
             constant_values=np.nan,
         )
         pads = (pad_top, pad_left, pad_bottom, pad_right)
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "AVG", dilations=dilations)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_lower")
 
@@ -345,7 +343,6 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 28, 28).astype(np.float32)
         x_shape = np.shape(x)
-        dilations = (1, 1)
         kernel_shape = (3, 3)
         strides = (1, 1)
         pad_bottom = 2
@@ -353,14 +350,14 @@ class AveragePool(Base):
         pad_right = 2
         pad_left = 2
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        out_shape, pads = get_output_shape_update_pads(pads, x_shape[2:], dilations, kernel_shape, strides, ceil_mode=False)
+        out_shape, pads = get_output_shape_explicit_padding(pads, x_shape[2:], kernel_shape, strides, ceil_mode=False)
         padded = np.pad(
             x,
             ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
             mode="constant",
             constant_values=np.nan,
         )
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "AVG", dilations=dilations)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_pads")
 
@@ -389,7 +386,7 @@ class AveragePool(Base):
         pad_right = 2
         pad_left = 2
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        out_shape, pads = get_output_shape_update_pads(pads, x_shape[2:], dilations, kernel_shape, strides, ceil_mode=False)
+        out_shape, pads = get_output_shape_explicit_padding(pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode=False)
         padded = np.pad(
             x,
             ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
@@ -402,10 +399,9 @@ class AveragePool(Base):
             kernel_shape,
             strides,
             out_shape,
-            pads,
             "AVG",
+            pads,
             count_include_pad=1,
-            dilations=dilations,
         )
 
         expect(
@@ -430,12 +426,11 @@ class AveragePool(Base):
         )
         x = np.random.randn(1, 3, 32, 32).astype(np.float32)
         x_shape = np.shape(x)
-        dilations = (1, 1)
         kernel_shape = (5, 5)
         strides = (3, 3)
-        out_shape, pads = get_output_shape_update_pads(None, x_shape[2:], dilations, kernel_shape, strides, ceil_mode=False)
+        out_shape, pads = get_output_shape_explicit_padding(None, x_shape[2:], kernel_shape, strides, ceil_mode=False)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pads, "AVG", dilations=dilations)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
         expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_strides")
 
@@ -519,7 +514,7 @@ class AveragePool(Base):
             ceil_mode=True,
         )
 
-        # input shape: [1, 1, 4, 4]
+        # input shape: [1, 1, 4, 4, 4]
         x = np.array(
             [
                 [
@@ -558,7 +553,7 @@ class AveragePool(Base):
             [[6, 7], [10, 11]]
             ]]]).astype(np.float32)
 
-        expect(node, inputs=[x], outputs=[y], name="test_averagepool_3d_dilations")
+        expect(node, inputs=[x], outputs=[y], name="test_averagepool_3d_dilations_small")
 
     @staticmethod
     def export_averagepool_3d_dilations_large() -> None:
@@ -566,30 +561,30 @@ class AveragePool(Base):
         dilations = (2, 2, 2)
         kernel_shape = (5, 5, 5)
         strides = (3, 3, 3)
-        ceil_mode = True
         count_include_pad = 0
 
         for count_include_pad in (0, 1):
-            node = onnx.helper.make_node(
-                "AveragePool",
-                inputs=["x"],
-                outputs=["y"],
-                kernel_shape=kernel_shape,
-                strides=strides,
-                dilations=dilations,
-                count_include_pad=count_include_pad,
-                ceil_mode=ceil_mode,
-            )
+            for ceil_mode in (True, False):
+                node = onnx.helper.make_node(
+                    "AveragePool",
+                    inputs=["x"],
+                    outputs=["y"],
+                    kernel_shape=kernel_shape,
+                    strides=strides,
+                    dilations=dilations,
+                    count_include_pad=count_include_pad,
+                    ceil_mode=ceil_mode,
+                )
 
-            x = np.random.randn(1, 1, *x_shape).astype(np.float32)
-            out_shape, pads = get_output_shape_update_pads(None, x_shape, dilations, kernel_shape, strides, ceil_mode=ceil_mode)
-            padded = np.pad(
-                x,
-                ((0, 0), (0, 0), (pads[0], pads[3]), (pads[1], pads[4]), (pads[2], pads[5])),
-                mode="constant",
-                constant_values=0 if count_include_pad == 1 else np.nan,
-            )
-            y = pool(padded, (1, 1, *x_shape), kernel_shape, strides, out_shape, pads, "AVG", dilations=dilations, count_include_pad=count_include_pad)
+                x = np.random.randn(1, 1, *x_shape).astype(np.float32)
+                out_shape, pads = get_output_shape_explicit_padding(None, x_shape, kernel_shape, strides, dilations=dilations, ceil_mode=ceil_mode)
+                padded = np.pad(
+                    x,
+                    ((0, 0), (0, 0), (pads[0], pads[3]), (pads[1], pads[4]), (pads[2], pads[5])),
+                    mode="constant",
+                    constant_values=0 if count_include_pad == 1 else np.nan,
+                )
+                y = pool(padded, (1, 1, *x_shape), kernel_shape, strides, out_shape, "AVG", pads=pads, dilations=dilations, count_include_pad=count_include_pad)
 
-            test_name = f"test_averagepool_3d_dilations_large_count_include_pad_is_{count_include_pad}"
-            expect(node, inputs=[x], outputs=[y], name=test_name)
+                test_name = f"test_averagepool_3d_dilations_large_count_include_pad_is_{count_include_pad}_ceil_mode_is_{ceil_mode}"
+                expect(node, inputs=[x], outputs=[y], name=test_name)
