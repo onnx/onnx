@@ -446,7 +446,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.UINT8, (2, 4, 3))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-            # Concat Version 1 does not have shape inference function.
+            # Cast Version 1 does not have shape inference function.
             has_inference_function=has_inference_function("Cast", version),
         )
 
@@ -615,6 +615,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("z", TensorProto.FLOAT, (9, 4, 3))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            # Concat Version 1 does not have shape inference function.
             has_inference_function=has_inference_function("Concat", version),
         )
 
@@ -718,6 +719,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.UINT8, None)],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            # Reshape Version 1 does not have shape inference function.
             has_inference_function=has_inference_function("Reshape", version),
         )
 
@@ -881,6 +883,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 graph,
                 [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3, 9))],
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+                # Upsample Version 1 does not have shape inference function.
                 has_inference_function=has_inference_function("Upsample", version),
             )
         else:
