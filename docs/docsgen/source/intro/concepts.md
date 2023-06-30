@@ -49,11 +49,11 @@ It is just a kind of pseudo-code to illustrate the model.
 Input: float[M,K] x, float[K,N] a, float[N] c
 Output: float[M, N] y
 
-r = onnx.MatMul(a, x)
+r = onnx.MatMul(x, a)
 y = onnx.Add(r, c)
 ```
 
-This code implements a function `f(x, a, c) -> y = a @ x + c`.
+This code implements a function `f(x, a, c) -> y = x @ a + c`.
 And *x*, *a*, *c* are the **inputs**, *y* is the **output**.
 *r* is an intermediate result.
 *MatMul* and *Add* are the **nodes**. They also have inputs and outputs.
@@ -68,10 +68,10 @@ it is most efficient to turn it into a constant stored in the graph.
 ```
 Input: float[M,K] x
 Initializer: float[K,N] a, float[N] c
-Output: float[M, N] axc
+Output: float[M, N] xac
 
-ax = onnx.MatMul(a, x)
-axc = onnx.Add(ax, c)
+xa = onnx.MatMul(x, a)
+xac = onnx.Add(xa, c)
 ```
 
 Visually, this graph would look like the following image.
