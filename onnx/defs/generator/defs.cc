@@ -209,7 +209,11 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint16)",
              "tensor(uint32)",
              "tensor(uint64)",
-             "tensor(bool)"},
+             "tensor(bool)",
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)"},
             "Constrain output types to be numerics.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
