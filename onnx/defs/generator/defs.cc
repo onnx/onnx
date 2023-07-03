@@ -166,15 +166,15 @@ ONNX_OPERATOR_SET_SCHEMA(
               "this line should never be reached.");
         }));
 
-static const char* ConstantOfShape_ver9_doc = R"DOC(
+static const char* ConstantOfShape_ver20_doc = R"DOC(
 Generate a tensor with given value and shape.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
-    9,
+    20,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver9_doc)
+        .SetDoc(ConstantOfShape_ver20_doc)
         .Attr(
             "value",
             "(Optional) The value of the output elements."
@@ -210,6 +210,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)",
+             "tensor(bfloat16)",
              "tensor(float8e4m3fn)",
              "tensor(float8e4m3fnuz)",
              "tensor(float8e5m2)",

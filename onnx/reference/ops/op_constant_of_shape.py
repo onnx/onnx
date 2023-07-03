@@ -5,6 +5,13 @@
 
 import numpy as np
 
+from onnx.reference.custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+)
 from onnx.reference.op_run import OpRun
 
 
@@ -23,6 +30,11 @@ class ConstantOfShape(OpRun):
         if not isinstance(
             self.cst,
             (
+                bfloat16,
+                float8e4m3fn,
+                float8e4m3fnuz,
+                float8e5m2,
+                float8e5m2fnuz,
                 np.float32,
                 np.float64,
                 np.int64,
