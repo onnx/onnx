@@ -5,6 +5,8 @@
  */
 
 #include "attr_proto_util.h"
+#include <string>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 

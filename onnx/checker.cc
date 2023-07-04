@@ -12,8 +12,12 @@
 #include "onnx/string_utils.h"
 
 #include <fstream>
+#include <functional>
 #include <iterator>
+#include <set>
+#include <string>
 #include <unordered_set>
+#include <vector>
 
 #ifdef _WIN32
 #include <direct.h>
