@@ -565,6 +565,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 19 -> 20 ********/
     registerAdapter(make_unique<GridSample_19_20>());
+    registerAdapter(make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
