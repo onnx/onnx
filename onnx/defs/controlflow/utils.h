@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <string>
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
