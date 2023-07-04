@@ -275,7 +275,7 @@ These outputs will be the output of the operator `If`.
 Operator {ref}`l-onnx-doc-Scan` implements a loop with a fixed number of iterations.
 It loops over the rows (or any other dimension) of the inputs and concatenates
 the outputs along the same axis. Let's see an example which implements
-pairwise distances: $M(i,j) = \norm{X_i - X_j}^2$.
+pairwise distances: $M(i,j) = \lVert X_i - X_j \rVert^2$.
 
 ```{image} images/dot_scan.png
 ```
