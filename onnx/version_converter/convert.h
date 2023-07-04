@@ -9,6 +9,12 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"

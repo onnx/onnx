@@ -9,6 +9,10 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <vector>
 #include "onnx/version_converter/adapters/adapter.h"
 
 namespace ONNX_NAMESPACE {
