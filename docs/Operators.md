@@ -36,7 +36,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
 |<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
-|<a href="#ConstantOfShape">ConstantOfShape</a>|<a href="Changelog.md#ConstantOfShape-9">9</a>|
+|<a href="#ConstantOfShape">ConstantOfShape</a>|<a href="Changelog.md#ConstantOfShape-20">20</a>, <a href="Changelog.md#ConstantOfShape-9">9</a>|
 |<a href="#Conv">Conv</a>|<a href="Changelog.md#Conv-11">11</a>, <a href="Changelog.md#Conv-1">1</a>|
 |<a href="#ConvInteger">ConvInteger</a>|<a href="Changelog.md#ConvInteger-10">10</a>|
 |<a href="#ConvTranspose">ConvTranspose</a>|<a href="Changelog.md#ConvTranspose-11">11</a>, <a href="Changelog.md#ConvTranspose-1">1</a>|
@@ -5087,7 +5087,9 @@ expect(node, inputs=[], outputs=[values], name="test_constant")
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ConstantOfShape-9">9</a>
 
 #### Attributes
 
@@ -5115,7 +5117,7 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain input types.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain output types to be numerics.</dd>
 </dl>
 
