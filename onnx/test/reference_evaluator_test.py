@@ -3718,9 +3718,12 @@ class TestReferenceEvaluator(unittest.TestCase):
         X = make_tensor_value_info("X", TensorProto.FLOAT, None)
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         value = np.array([-5], dtype=np.float32)
 >>>>>>> 7caa3798 (Fix reference implementation for operator CastLike and bfloat16)
+=======
+>>>>>>> 28bb8044 (lint)
 
         nodes = [
             make_node("Shape", inputs=["X"], outputs=["shape"]),
