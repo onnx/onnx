@@ -318,8 +318,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self, version, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
-            np.arange(np.product(shape1)).reshape(shape1),
-            np.arange(np.product(shape2)).reshape(shape2),
+            np.arange(np.prod(shape1)).reshape(shape1),
+            np.arange(np.prod(shape2)).reshape(shape2),
         ).shape
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, shape1), ("y", TensorProto.FLOAT, shape2)],
@@ -5033,8 +5033,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
-            np.arange(np.product(shape1)).reshape(shape1),
-            np.arange(np.product(shape2)).reshape(shape2),
+            np.arange(np.prod(shape1)).reshape(shape1),
+            np.arange(np.prod(shape2)).reshape(shape2),
         ).shape
         graph = self._make_graph(
             [
@@ -5131,8 +5131,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
-            np.arange(np.product(shape1)).reshape(shape1),
-            np.arange(np.product(shape2)).reshape(shape2),
+            np.arange(np.prod(shape1)).reshape(shape1),
+            np.arange(np.prod(shape2)).reshape(shape2),
         ).shape
         graph = self._make_graph(
             [
