@@ -5,6 +5,13 @@
 
 import numpy as np
 
+from onnx.reference.custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+)
 from onnx.reference.op_run import OpRun
 
 
@@ -29,6 +36,11 @@ class ConstantOfShape(OpRun):
                 np.int32,
                 np.bool_,
                 np.float16,
+                bfloat16,
+                float8e4m3fn,
+                float8e4m3fnuz,
+                float8e5m2,
+                float8e5m2fnuz,
             ),
         ):
             raise TypeError(f"cst must be a real not {type(self.cst)}")

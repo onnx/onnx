@@ -98,7 +98,8 @@ jobs:
       - name: Check auto-gen files are up-to-date
         run: |
           echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
-          python onnx/defs/gen_doc.py
+          
+          ONNX_ML=1 python onnx/defs/gen_doc.py
           python onnx/gen_proto.py -l
           python onnx/gen_proto.py -l --ml
           python onnx/backend/test/stat_coverage.py
