@@ -560,10 +560,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* gelu_ver20_doc = R"DOC(
 Gelu takes one input data (Tensor<T>) and produces one
-output data (Tensor<T>) where the gaussian error linear units function, 
-$y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise. 
-If the attribute "approximate" is set to "tanh", the function estimation,  
-$y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied 
+output data (Tensor<T>) where the gaussian error linear units function,
+$y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise.
+If the attribute "approximate" is set to "tanh", the function estimation,
+$y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied
 to the tensor elementwise.
 
 )DOC";
@@ -575,11 +575,10 @@ bool BuildContextDependentFunctionBodyGelu(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   auto approx_attr_proto = ctx.getAttribute("approximate");
-  std::string approximate  = approx_attr_proto != nullptr && approx_attr_proto->has_s()
-                      ? approx_attr_proto->s() 
-                      : gelu_default_approx;
+  std::string approximate =
+      approx_attr_proto != nullptr && approx_attr_proto->has_s() ? approx_attr_proto->s() : gelu_default_approx;
   FunctionBuilder builder(functionProto);
-  
+
   if (approximate == "tanh") {
     builder.Add(R"(
               Half = Constant <value = float {0.5}>()
@@ -601,7 +600,7 @@ bool BuildContextDependentFunctionBodyGelu(
               PhiApprox = Sum (OneCast, ErfApprox)
               MultX = Mul (HalfCast, X)
               Y = Mul (MultX, PhiApprox)
-              )"); 
+              )");
   } else {
     builder.Add(R"(
               Half = Constant <value = float {0.5}>()
