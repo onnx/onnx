@@ -10,6 +10,7 @@
 #include "onnx/common/path.h"
 
 #include <fstream>
+#include <string>
 
 namespace ONNX_NAMESPACE {
 
