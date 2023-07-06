@@ -1060,7 +1060,7 @@ x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "AVG")
 
@@ -1120,7 +1120,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
 
@@ -1140,12 +1140,26 @@ node = onnx.helper.make_node(
     "AveragePool",
     inputs=["x"],
     outputs=["y"],
-    kernel_shape=[3, 3],
+    kernel_shape=[2, 2],
     strides=[1, 1],
     dilations=[2, 2],
     ceil_mode=True,
 )
-x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+
+# input shape: [1, 1, 4, 4]
+x = np.array(
+    [
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [13, 14, 15, 16],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
 y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
@@ -1178,7 +1192,7 @@ pad_right = 2
 pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -1219,7 +1233,7 @@ pad_right = 2
 pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -1530,7 +1544,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET)", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
 
@@ -1556,7 +1570,7 @@ x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "AVG")
 
@@ -2069,8 +2083,8 @@ a0 = 0.42
 a1 = -0.5
 a2 = 0.08
 y = a0
-y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
-y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
 
 # Test symmetric window
@@ -2083,10 +2097,10 @@ a1 = -0.5
 a2 = 0.08
 y = a0
 y += a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 y += a2 * np.cos(
-    4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 ```
@@ -2649,12 +2663,16 @@ for from_type, to_type in test_cases:
         outputs=["output"],
     )
     if input_type_proto and output_type_proto:
+        like_type_proto = onnx.helper.make_tensor_type_proto(
+            output_type_proto.tensor_type.elem_type, like.shape
+        )
+
         expect(
             node,
             inputs=[input, like],
             outputs=[output],
             name="test_castlike_" + from_type + "_to_" + to_type,
-            input_type_protos=[input_type_proto, output_type_proto],
+            input_type_protos=[input_type_proto, like_type_proto],
             output_type_protos=[output_type_proto],
         )
     else:
@@ -6668,7 +6686,7 @@ expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_bcast")
 
 
 ### GridSample
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>gridsample</summary>
 
@@ -6677,7 +6695,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     padding_mode="zeros",
     align_corners=0,
 )
@@ -6806,7 +6824,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bilinear = np.array(
@@ -6826,7 +6844,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -6864,7 +6882,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bicubic = np.array(
@@ -6874,6 +6892,155 @@ Y_bicubic = np.array(
 
 expect(
     node, inputs=[X, Grid], outputs=[Y_bicubic], name="test_gridsample_bicubic"
+)
+
+# ============================================================================
+# Additional tests
+# The reference output tensors were generated using PyTorch 2.0.
+Grid = np.array(
+    [
+        [
+            [[-1.0, -0.8], [-0.6, -0.5], [-0.1, -0.2], [0.7, 0.0]],
+            [[0.0, 0.4], [0.2, -0.2], [-0.3, 0.5], [-1.0, 1.0]],
+        ]
+    ],
+    dtype=np.float32,
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [[[[0.0, 0.0, 2.0, 3.0], [4.0, 3.0, 4.0, 4.0]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_nearest_align_corners_0_additional_1",
+)
+
+# setting mode = 'nearest'
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [[[[0.0, 0.0, 2.0, 3.0], [2.0, 3.0, 4.0, 4.0]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_nearest_align_corners_1_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [[[[0.0000, 0.4500, 1.8000, 2.4000], [3.7000, 2.1000, 3.7000, 1.0000]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_bilinear_align_corners_0_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [[[[0.4000, 1.2000, 2.0500, 2.8500], [3.3000, 2.2000, 3.3500, 4.0000]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_bilinear_align_corners_1_additional_1",
+)
+
+# These two new bicubic tests produces slightly higher error ~5e-5
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="cubic",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [-0.173250, 0.284265, 1.923106, 2.568000],
+                [5.170375, 2.284414, 4.744844, 1.046875],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bicubic],
+    name="test_gridsample_bicubic_align_corners_0_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="cubic",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [0.304001, 1.128750, 2.266270, 3.144844],
+                [4.531500, 2.455360, 4.599819, 4.000000],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bicubic],
+    name="test_gridsample_bicubic_align_corners_1_additional_1",
 )
 ```
 
@@ -6970,6 +7137,173 @@ expect(
 ```
 
 </details>
+<details>
+<summary>volumeetric_gridsample_mode_aligncorners</summary>
+
+```python
+X = np.array(
+    [
+        [
+            [
+                [[1.0, 2.0], [3.0, 4.0]],
+                [[5.0, 6.0], [7.0, 8.0]],
+                [[9.0, 10.0], [11.0, 12.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+Grid = np.array(
+    [
+        [
+            [
+                [[-1.0, -1.0, -1.0], [-1.0, -0.5, 0.3]],
+                [[-0.5, -0.5, -0.5], [1.0, -0.6, -1.0]],
+                [[-0.2, -0.2, -0.2], [0.4, 0.2, 0.6]],
+                [[0.0, 0.0, 0.0], [-1.0, 0.0, 0.0]],
+            ],
+            [
+                [[0.0, 0.0, 0.0], [-1.0, 1.0, 0.0]],
+                [[-0.2, -0.2, -0.2], [1.0, 0.4, -0.2]],
+                [[0.5, 0.5, 0.5], [-1.0, -0.8, 0.8]],
+                [[1.0, 1.0, 1.0], [0.4, 0.6, -0.3]],
+            ],
+        ]
+    ],
+    dtype=np.float32,
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [[1.0, 5.0], [1.0, 0.0], [5.0, 12.0], [5.0, 5.0]],
+                [[5.0, 0.0], [5.0, 0.0], [12.0, 9.0], [0.0, 8.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_volumetric_nearest_align_corners_0",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [[1.0, 5.0], [1.0, 2.0], [5.0, 12.0], [5.0, 5.0]],
+                [[5.0, 7.0], [5.0, 8.0], [12.0, 9.0], [12.0, 8.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_volumetric_nearest_align_corners_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [
+                    [0.1250, 3.4000],
+                    [2.0000, 0.4500],
+                    [4.7000, 10.9000],
+                    [6.5000, 3.0000],
+                ],
+                [
+                    [6.5000, 1.7500],
+                    [4.7000, 3.3000],
+                    [11.0000, 2.5200],
+                    [1.5000, 5.4900],
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_volumetric_bilinear_align_corners_0",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [
+                    [1.0000, 6.7000],
+                    [3.7500, 2.4000],
+                    [5.4000, 9.3000],
+                    [6.5000, 6.0000],
+                ],
+                [
+                    [6.5000, 7.0000],
+                    [5.4000, 6.6000],
+                    [9.2500, 8.4000],
+                    [12.0000, 6.1000],
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_volumetric_bilinear_align_corners_1",
+)
+```
+
+</details>
 
 
 ### GroupNormalization
@@ -7039,9 +7373,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
 
 # Test symmetric window
@@ -7052,7 +7384,7 @@ size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
 ```
@@ -7075,9 +7407,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow")
 
 # Test symmetric window
@@ -7088,7 +7418,7 @@ size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
 ```
@@ -8729,7 +9059,7 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "LPPOOL", p=p)
 
@@ -8757,7 +9087,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(
     padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
@@ -8838,7 +9168,7 @@ strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -8963,7 +9293,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(
     padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
@@ -8993,7 +9323,7 @@ x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(
     padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "LPPOOL", p=p
@@ -9180,7 +9510,7 @@ x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "MAX")
 
@@ -9240,7 +9570,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
 
@@ -9305,7 +9635,7 @@ strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -9531,7 +9861,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
 
@@ -9604,7 +9934,7 @@ x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "MAX")
 
@@ -12034,7 +12364,7 @@ expect(
 <summary>reflection_edge_and_wrap_pad</summary>
 
 ```python
-for mode in ["edge", "reflect", "wrap"]:
+for mode in ("edge", "reflect", "wrap"):
     node = onnx.helper.make_node(
         "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
     )
@@ -16848,7 +17178,7 @@ node = onnx.helper.make_node(
 a0 = 0.5
 a1 = 0.5
 window = a0 + a1 * np.cos(
-    2 * 3.1415 * np.arange(0, length, 1, dtype=np.float32) / length
+    2 * np.pi * np.arange(0, length, 1, dtype=np.float32) / length
 )
 nstfts = 1 + (signal.shape[1] - window.shape[0]) // step
 

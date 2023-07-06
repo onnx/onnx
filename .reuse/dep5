@@ -82,7 +82,7 @@ Files: onnx/onnx-operators* onnx/onnx-ml* onnx/onnx-data* onnx/onnx*
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: docs/docsgen/source/api/* rst docs/docsgen/source/_static/*  docs/docsgen/source/requirements.txt docs/docsgen/source/onnx-favicon.png
+Files: docs/docsgen/source/api/*md docs/docsgen/source/_static/*  docs/docsgen/source/requirements.txt docs/docsgen/source/onnx-favicon.png
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
@@ -98,11 +98,11 @@ Files: docs/Operator*.md
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: .gitignore .gitmodules .lintrunner.toml .gitattributes .git-blame-ignore-revs .clang* .editorconfig
+Files: .gitignore **/*/.gitignore .gitmodules .lintrunner.toml .gitattributes .git-blame-ignore-revs .clang* .editorconfig
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: docs/docsgen/source/intro/images/*  docs/docsgen/source/intro/*rst
+Files: docs/docsgen/source/intro/images/* docs/docsgen/source/intro/*md
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
@@ -131,10 +131,6 @@ COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
 Files: cmake/ONNXConfig*.in CMakeLists.txt cmake/*cmake cmake/
-COPYRIGHT: Copyright (c) ONNX Project Contributors
-License: Apache-2.0
-
-Files: .vscode/settings.json docs/docsgen/source/_templates/layout.html docs/docsgen/source/_templates/sidebar-nav-bs.html docs/images/onnx_hub_arch.svg docs/onnx-horizontal-color.png tools/protoc-gen-mypy.sh.in
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 

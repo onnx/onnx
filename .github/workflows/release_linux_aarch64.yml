@@ -19,15 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # the different python versions for building wheels
-        python-version: [cp37-cp37m, cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
+        python-version: [cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
       img: quay.io/pypa/manylinux2014_aarch64
 
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
     - name: Checkout submodules
       shell: bash
       run: |
@@ -36,10 +35,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
       # setting up qemu for enabling aarch64 binary execution on x86 machine
-    - uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
-      with:
-        # TODO: freeze version for now since the latest one cannot use jupyter
-        image: tonistiigi/binfmt:qemu-v6.0.0-12
+    - uses: docker/setup-qemu-action@2b82ce82d56a2a04d2637cd93a637ae1b359c0a7 # v2.2.0
 
       # Creating a virtual environment on machine with the help of docker container \
       # and installing the dependencies inside that \
@@ -84,13 +80,11 @@ jobs:
         name: wheels
         path: dist
 
-    - name: Upload wheel to TestPyPI/PyPI weekly
+    - name: Upload wheel to PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         python -m pip install -q twine
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-        # TODO: stop uploading to TestPyPI after future ONNX 1.14
-        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy and protobuf
       if: ${{ always() }}
@@ -103,6 +97,30 @@ jobs:
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
+
+    - name: Verify ONNX with the minimum supported numpy
+      if: ${{ always() }}
+      run: |
+        # only difference is numpy version
+        if [[ "${{ matrix.python-version }}" == "cp38-cp38" || "${{ matrix.python-version }}" == "cp39-cp39" ]]; then
+          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+            ${{ env.img }} \
+            bash -exc '\
+            source .env/bin/activate && \
+            python -m pip uninstall -y onnx numpy && python -m pip install numpy==1.16.6 && \
+            python -m pip install dist/*manylinux2014_aarch64.whl && \
+            pytest && \
+            deactivate'
+        else
+          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          python -m pip uninstall -y onnx numpy && python -m pip install numpy==1.23.2 && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          pytest && \
+          deactivate'
+        fi
 
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
       if: ${{ always() }}
@@ -117,7 +135,6 @@ jobs:
           deactivate'
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != 'cp311-cp311'
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
@@ -125,8 +142,8 @@ jobs:
           source .env/bin/activate && \
           python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt && \
           python -m pip install -q onnxruntime && \
-          export ORT_MAX_IR_SUPPORTED_VERSION=8 \
+          export ORT_MAX_IR_SUPPORTED_VERSION=9 \
           export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3 \
-          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18 \
+          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19 \
           pytest && \
           deactivate'

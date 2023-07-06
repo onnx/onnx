@@ -151,8 +151,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "' points outside the directory");
         }
         std::wstring data_path = path_join(utf8str_to_wstring(ctx.get_model_dir()), relative_path);
-        struct _stat buff;
-        if (_wstat(data_path.c_str(), &buff) != 0) {
+        struct _stat64 buff;
+        if (_wstat64(data_path.c_str(), &buff) != 0) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -183,9 +183,14 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "' points outside the directory");
         }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
-        // use stat to check whether the file exists
-        struct stat buffer;
+        // use stat64 to check whether the file exists
+#ifdef __APPLE__
+        struct stat buffer; // APPLE does not have stat64
         if (stat((data_path).c_str(), &buffer) != 0) {
+#else
+        struct stat64 buffer; // All POSIX except APPLE have stat64
+        if (stat64((data_path).c_str(), &buffer) != 0) {
+#endif
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -942,7 +947,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
     // check whether the opset version imported for a domain by function and model are
     // compatible
-    check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
+    if (!ctx_copy.skip_opset_compatibility_check())
+      check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
     if (check_is_experimental_op(node)) {
       used_experimental_ops.insert(node.op_type());
     }
@@ -1009,7 +1015,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   }
 }
 
-void check_model(const std::string& model_path, bool full_check) {
+void check_model(const std::string& model_path, bool full_check, bool skip_opset_compatibility_check) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -1020,6 +1026,7 @@ void check_model(const std::string& model_path, bool full_check) {
     model_dir = model_path.substr(0, pos + 1);
   }
   ctx.set_model_dir(model_dir);
+  ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   check_model(model, ctx);
 
   if (full_check) {
@@ -1028,8 +1035,9 @@ void check_model(const std::string& model_path, bool full_check) {
   }
 }
 
-void check_model(const ModelProto& model, bool full_check) {
+void check_model(const ModelProto& model, bool full_check, bool skip_opset_compatibility_check) {
   CheckerContext ctx;
+  ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   check_model(model, ctx);
   if (full_check) {
     ShapeInferenceOptions options{true, 1, false};

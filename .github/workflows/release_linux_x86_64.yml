@@ -19,11 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
         architecture: ['x64']
 
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
     - name: Checkout submodules
       shell: bash
       run: |
@@ -31,8 +31,14 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
+    - name: Build manylinux2014_x86_64
+      uses: docker://quay.io/pypa/manylinux2014_x86_64:latest@sha256:085b7c2c1bcb45b936e5478fe24a5142b0519e242a0104142fd50d569d6cb922
+      with:
+        entrypoint: bash
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@3faddefb4c02470d61266571df739b19e3a006be 
+      uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -41,12 +47,6 @@ jobs:
       run: |
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
-
-    - name: Build manylinux2014_x86_64
-      uses: docker://quay.io/pypa/manylinux2014_x86_64
-      with:
-        entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
 
     - name: Install protobuf in the GitHub Action environment for testing the wheel
       run: |
@@ -62,18 +62,28 @@ jobs:
         name: wheels
         path: dist
 
-    - name: Upload wheel to TestPyPI/PyPI weekly
+    - name: Upload wheel to PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-        # TODO: stop uploading to TestPyPI after future ONNX 1.14
-        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
         TEST_HUB=1 pytest
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        python -m pip install dist/*manylinux2014_x86_64.whl
+        pytest
+
+    - name: Verify ONNX with the minimum supported numpy
+      if: ${{ always() }}
+      run: |
+        if [[ "${{ matrix.python-version }}" == "3.8" || "${{ matrix.python-version }}" == "3.9" ]]; then
+          export minimum_numpy_version=1.16.6
+        else
+          export minimum_numpy_version=1.23.2
+        fi
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$minimum_numpy_version
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
@@ -92,11 +102,10 @@ jobs:
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.11'
       run: |
         python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime
-        export ORT_MAX_IR_SUPPORTED_VERSION=8
+        export ORT_MAX_IR_SUPPORTED_VERSION=9
         export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+        export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
         pytest

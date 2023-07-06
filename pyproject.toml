@@ -1,5 +1,5 @@
 [tool.mypy]
-follow_imports = "slient"
+follow_imports = "silent"
 strict_optional = true
 warn_return_any = true
 warn_no_return = true
@@ -33,7 +33,6 @@ module = [
     'onnx.onnx_pb',
     'onnx.onnx_pb2',
     'onnx.onnx_ml_pb2',
-    'onnx.onnx_ml_pb2',
     'onnx.onnx_operators_pb',
     'onnx.onnx_operators_ml_pb2',
 ]
@@ -41,7 +40,7 @@ ignore_errors = true
 
 [tool.black]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = ["py37", "py38", "py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311"]
 
 [tool.isort]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
@@ -61,7 +60,7 @@ disable = [
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py37"
+target-version = "py38"
 select = [
     "B", # flake8-bugbear
     "C4", # flake8-comprehensions
@@ -116,4 +115,5 @@ ban-relative-imports = "all"
 "onnx/reference/ops/aionnx_preview_training/__init__.py" = ["F401"]
 "onnx/reference/ops/aionnx_preview_training/_op_list.py" = ["F401"]
 "onnx/reference/ops/experimental/__init__.py" = ["F401"]
+"onnx/test/reference_evaluator_test.py"= ["C408"]  # dict(...) -> { ... }
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]

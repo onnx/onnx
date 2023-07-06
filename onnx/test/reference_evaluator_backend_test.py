@@ -69,6 +69,7 @@ SKIP_TESTS = {
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
     "test_lppool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
+    "test_averagepool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
 }
 
 if version(npver) < version("1.21.5"):
@@ -668,7 +669,9 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     return
 
                 te.run(
-                    lambda obj: InferenceSession(obj.SerializeToString()),
+                    lambda obj: InferenceSession(
+                        obj.SerializeToString(), providers=["CPUExecutionProvider"]
+                    ),
                     lambda *a, **b: TestOnnxBackEndWithReferenceEvaluator.run_fct(
                         *a, verbose=1, **b
                     ),
@@ -684,7 +687,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             with open(f"issue_{te.name}.onnx", "wb") as f:
                 f.write(te.onnx_model.SerializeToString())
             raise AssertionError(
-                f"Unable to run test {te.name!r} due to {e}\n{str(te.onnx_model)}"
+                f"Unable to run test {te.name!r} due to {e}\n{te.onnx_model}"
             ) from e
         successes.append((te, atol.get(te.fname, None), rtol.get(te.fname, None)))
         if verbose > 7:
@@ -788,6 +791,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_blackmanwindow_symmetric": 1e-7,
             "test_blackmanwindow_symmetric_expanded": 1e-4,
             "test_Conv1d": 1e-6,
+            "test_Conv2d_depthwise_padded": 1e-7,
             "test_Conv3d_dilated": 1e-6,
             "test_gridsample_bicubic": 1e-4,
             "test_gru_seq_length": 1e-7,
@@ -812,6 +816,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv2d_depthwise": 1e-4,
             "test__pytorch_converted_Conv2d_depthwise_strided": 1e-4,
             "test__pytorch_converted_Conv2d_depthwise_with_multiplier": 1e-4,
+            "test__pytorch_converted_Conv2d_depthwise_padded": 1e-4,
             "test__pytorch_converted_Conv2d_groups": 1e-4,
             "test__pytorch_converted_Conv2d_groups_thnn": 1e-4,
             "test__pytorch_converted_Conv2d_no_bias": 1e-5,

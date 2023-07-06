@@ -49,6 +49,9 @@ ONNX_VERIFY_PROTO3 = bool(os.getenv("ONNX_VERIFY_PROTO3") == "1")
 ONNX_NAMESPACE = os.getenv("ONNX_NAMESPACE", "onnx")
 ONNX_BUILD_TESTS = bool(os.getenv("ONNX_BUILD_TESTS") == "1")
 ONNX_DISABLE_EXCEPTIONS = bool(os.getenv("ONNX_DISABLE_EXCEPTIONS") == "1")
+ONNX_DISABLE_STATIC_REGISTRATION = bool(
+    os.getenv("ONNX_DISABLE_STATIC_REGISTRATION") == "1"
+)
 
 USE_MSVC_STATIC_RUNTIME = bool(os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1")
 DEBUG = bool(os.getenv("DEBUG", "0") == "1")
@@ -207,6 +210,8 @@ class CmakeBuild(setuptools.Command):
                 cmake_args.append("-DONNX_BUILD_TESTS=ON")
             if ONNX_DISABLE_EXCEPTIONS:
                 cmake_args.append("-DONNX_DISABLE_EXCEPTIONS=ON")
+            if ONNX_DISABLE_STATIC_REGISTRATION:
+                cmake_args.append("-DONNX_DISABLE_STATIC_REGISTRATION=ON")
             if "CMAKE_ARGS" in os.environ:
                 extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
                 # prevent crossfire with downstream scripts
@@ -219,6 +224,18 @@ class CmakeBuild(setuptools.Command):
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."
                 )
+            if (
+                "PYTHONPATH" in os.environ
+                and "pip-build-env" in os.environ["PYTHONPATH"]
+            ):
+                # When the users use `pip install -e .` to install onnx and
+                # the cmake executable is a python entry script, there will be
+                # `Fix ModuleNotFoundError: No module named 'cmake'` from the cmake script.
+                # This is caused by the additional PYTHONPATH environment variable added by pip,
+                # which makes cmake python entry script not able to find correct python cmake packages.
+                # Actually, sys.path is well enough for `pip install -e .`.
+                # Therefore, we delete the PYTHONPATH variable.
+                del os.environ["PYTHONPATH"]
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, "--build", os.curdir]

@@ -18,7 +18,7 @@ jobs:
     if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'test ONNX Model Zoo')
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       name: Checkout repo
     - name: Checkout submodules
       shell: bash
@@ -27,7 +27,7 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     - name: Set up Python
-      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
       with:
         python-version: '3.10'
     - name: Install dependencies
@@ -47,12 +47,8 @@ jobs:
         export CC=clang
         export CXX=clang++
         export ONNX_ML=1
-        pip install -e .
+        pip install -e . -v
 
     - name: Test all models with onnx.checker, onnx.shape_inference, onnx.version_converter
       run: |
-        cd ..
-        git clone https://github.com/onnx/models.git
-        cd models
-        python ../onnx/workflow_scripts/test_model_zoo.py
-
+        python workflow_scripts/test_model_zoo.py

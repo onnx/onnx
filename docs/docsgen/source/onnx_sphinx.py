@@ -9,6 +9,7 @@ import keyword
 import os
 import pathlib
 import re
+import shutil
 import sys
 import textwrap
 from typing import Any
@@ -20,6 +21,18 @@ from sphinx.util import logging
 import onnx
 from onnx.backend.test.case.base import _Exporter
 from onnx.defs import OpSchema
+
+REPO_DOCS_EXCLUDE = {
+    "Changelog-ml.md",
+    "Changelog.md",
+    "CIPipelines.md",
+    "CONTRIBUTING.md",
+    "Operators-ml.md",
+    "Operators.md",
+    "Relicensing.md",
+    "TestCoverage-ml.md",
+    "TestCoverage.md",
+}
 
 
 def _get_diff_template():
@@ -64,7 +77,7 @@ def _get_diff_template():
 def _get_ops_template():
     return jinja2.Template(
         textwrap.dedent(
-        """
+            """
         {% for sch in schemas %}
 
         .. tag-diff-insert.
@@ -140,11 +153,11 @@ def _get_ops_template():
         {{text_wrap(type_constraint.description, 2)}}
         {% endfor %}
         {% endif %}
-        {% if get_onnx_example and is_last_schema(sch): %}
+        {% if examples and is_last_schema(sch): %}
 
         ### Examples
 
-        {% for example, code in get_onnx_example(sch.name).items(): %}
+        {% for example, code in examples.items(): %}
 
         #### {{ example }}
 
@@ -372,9 +385,7 @@ def get_markdown_doc(
         if doc is None:
             doc = ""
         if not isinstance(doc, str):
-            raise TypeError(
-                f"doc must be a string not {type(doc)!r} - {doc + 42!r}."
-            )
+            raise TypeError(f"doc must be a string not {type(doc)!r} - {doc + 42!r}.")
         main_docs_url = "https://github.com/onnx/onnx/blob/main/"
         rep = {
             "[the doc](IR.md)": f"[ONNX IR]({main_docs_url}docs/IR.md)",
@@ -427,6 +438,7 @@ def get_markdown_doc(
         lines = textwrap.wrap(text, initial_indent=s, subsequent_indent=s)
         return "\n".join(lines)
 
+    examples = get_onnx_example(op_name, domain) if example else {}
     docs = _template_operator.render(
         schemas=schemas,
         OpSchema=OpSchema,
@@ -443,7 +455,7 @@ def get_markdown_doc(
         text_wrap=text_wrap,
         str=str,
         clean_default_value=clean_default_value,
-        get_onnx_example=get_onnx_example if example else None,
+        examples=examples,
         format_example=format_example,
         is_last_schema=is_last_schema,
     )
@@ -484,10 +496,12 @@ def get_markdown_doc(
             new_lines.append(line)
         docs = "\n".join(new_lines)
 
-    return docs, d_links
+    return docs, d_links, len(examples)
 
 
-def _insert_diff(folder, docs, split=".. tag-diff-insert.", op_name=None, version=None, domain=None):
+def _insert_diff(
+    folder, docs, split=".. tag-diff-insert.", op_name=None, version=None, domain=None
+):
     """
     Splits a using `split`, insert HTML differences between pieces.
     The function relies on package `pyquickhelper`.
@@ -614,18 +628,26 @@ def _process_example(code: str) -> str:
     return "\n".join(elements)
 
 
-def get_onnx_example(op_name):
+def get_onnx_example(op_name, domain):
     """
     Retrieves examples associated to one operator
     stored in onnx packages.
     :param op_name: operator name
+    :param domain: operator domain
     :param fmt: rendering format
     :return: dictionary
     """
-    modules = [
-        f"onnx.backend.test.case.node.{op_name.lower()}",
-        f"onnx.backend.test.case.node.{pascal_to_snake_case(op_name)}",
-    ]
+    if domain in (None, "ai.onnx"):
+        modules = [
+            f"onnx.backend.test.case.node.{op_name.lower()}",
+            f"onnx.backend.test.case.node.{pascal_to_snake_case(op_name)}",
+        ]
+    else:
+        domain_ = domain.replace(".", "_")
+        modules = [
+            f"onnx.backend.test.case.node.{domain_}.{op_name.lower()}",
+            f"onnx.backend.test.case.node.{domain_}.{pascal_to_snake_case(op_name)}",
+        ]
     module = None
     for m in modules:
         try:
@@ -651,9 +673,7 @@ def get_onnx_example(op_name):
                 if sub in code:
                     found = code
             if found is None:
-                raise RuntimeError(
-                    f"Unable to find {sub!r} in\n{code_cls}"
-                )
+                raise RuntimeError(f"Unable to find {sub!r} in\n{code_cls}")
             found = textwrap.dedent(found)
             lines = found.split("\n")
             first = 0
@@ -683,7 +703,9 @@ def is_last_schema(sch: OpSchema) -> bool:
     return last.since_version == sch.since_version
 
 
-def onnx_documentation_folder(folder, title="ONNX Operators", flog=None, max_opsets=None):
+def onnx_documentation_folder(
+    folder, title="ONNX Operators", flog=None, max_opsets=None
+):
     """
     Creates documentation in a folder for all known
     ONNX operators or a subset.
@@ -725,22 +747,14 @@ def onnx_documentation_folder(folder, title="ONNX Operators", flog=None, max_ops
                 name = op["name"]
                 dom = self.domain.replace(".", "-")
                 table_dom.append(f"    * - :ref:`{name} <l-onnx-doc{dom}-{name}>`")
-                versions = list(
-                    reversed(
-                        sorted(
-                            (k, v) for k, v in op["links"].items() if isinstance(k, int)
-                        )
-                    )
+                versions = sorted(
+                    [(k, v) for k, v in op["links"].items() if isinstance(k, int)],
+                    reverse=True,
                 )
                 col1 = ", ".join(f":ref:`{k} <{v}>`" for k, v in versions)
-                diffs = list(
-                    reversed(
-                        sorted(
-                            (k, v)
-                            for k, v in op["links"].items()
-                            if isinstance(k, tuple)
-                        )
-                    )
+                diffs = sorted(
+                    [(k, v) for k, v in op["links"].items() if isinstance(k, tuple)],
+                    reverse=True,
                 )
                 col2 = ", ".join(f":ref:`{k[1]}/{k[0]} <{v}>`" for k, v in diffs)
                 table_dom.append(f"      - {col1}")
@@ -797,9 +811,11 @@ def onnx_documentation_folder(folder, title="ONNX Operators", flog=None, max_ops
             if flog is not None:
                 flog(f"generate page for onnx {dom!r} - {op!r}")
             page_name = f"onnx_{dom.replace('.', '')}_{op}"
-            doc, d_links = get_markdown_doc(
+            doc, d_links, n_examples = get_markdown_doc(
                 folder, op, domain=dom, version=None, example=True, diff=True
             )
+            if flog is not None and n_examples == 0:
+                flog(f"{' '* 14}no_example for {op} from domain {domain}")
             if dom == "":
                 main = op
             else:
@@ -842,6 +858,23 @@ def _generate_op_doc(app):
     onnx_documentation_folder(folder, flog=logger.info, max_opsets=max_opsets)
 
 
+def _copy_repo_docs(app):
+    logger = logging.getLogger(__name__)
+    dest_name = app.config.onnx_md_folder
+
+    docs_dir = pathlib.Path(__file__).parent.parent.parent  # docs
+    dest_folder = docs_dir / "docsgen" / "source" / dest_name
+    dest_folder.mkdir(parents=True, exist_ok=True)
+    # Copy all the markdown files from the folder except for the blocklisted ones
+
+    logger.info("Copying Markdown files from '%s' to '%s'", docs_dir, dest_folder)
+    for file in docs_dir.glob("*.md"):
+        if file.name in REPO_DOCS_EXCLUDE:
+            continue
+        shutil.copy(file, dest_folder)
+        logger.info("Copying '%s'", file.name)
+
+
 def setup(app):
     """
     Sphinx extension `onnx_sphinx` displays documentation
@@ -850,8 +883,11 @@ def setup(app):
     import sphinx
 
     app.add_config_value("onnx_doc_folder", "operators", "env")
+    # Folder for storing the Markdown documentation from the repository
+    app.add_config_value("onnx_md_folder", "repo-docs", "env")
     app.add_config_value("max_opsets", {}, "env")
     app.connect("builder-inited", _generate_op_doc)
+    app.connect("builder-inited", _copy_repo_docs)
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
 
 

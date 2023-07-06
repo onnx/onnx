@@ -24,12 +24,12 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
         host-architecture: ['x64']
         target-architecture: ['x86_64', 'universal2']
 
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
     - name: Checkout submodules
       shell: bash
       run: |
@@ -37,7 +37,7 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.host-architecture }}
@@ -80,17 +80,27 @@ jobs:
         name: wheels
         path: dist
 
-    - name: Upload wheel to TestPyPI/PyPI weekly
+    - name: Upload wheel to PyPI weekly
       if: github.event_name == 'schedule' # Only triggered by weekly event
       run: |
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-        # TODO: stop uploading to TestPyPI after future ONNX 1.14
-        twine upload --verbose dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        pytest
+
+    - name: Verify ONNX with the minimum supported numpy
+      if: ${{ always() }}
+      run: |
+        if [[ "${{ matrix.python-version }}" == "3.8" || "${{ matrix.python-version }}" == "3.9" ]]; then
+          export minimum_numpy_version=1.16.6
+        else
+          export minimum_numpy_version=1.23.2
+        fi
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$minimum_numpy_version
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
         pytest
 
@@ -118,17 +128,16 @@ jobs:
         twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
         # Test weekly source distribution from PyPI
-        python -m pip uninstall -y onnx
+        python -m pip uninstall -y onnx-weekly
         python -m pip install setuptools
-        python -m pip install --index-url https://upload.pypi.org/legacy/ --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly
+        python -m pip install --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx-weekly onnx-weekly
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.11'
       run: |
         python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime
-        export ORT_MAX_IR_SUPPORTED_VERSION=8
+        export ORT_MAX_IR_SUPPORTED_VERSION=9
         export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+        export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
         pytest

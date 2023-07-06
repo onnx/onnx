@@ -67,7 +67,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#GlobalLpPool">GlobalLpPool</a>|<a href="Changelog.md#GlobalLpPool-2">2</a>, <a href="Changelog.md#GlobalLpPool-1">1</a>|
 |<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-1">1</a>|
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
-|<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-16">16</a>|
+|<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-20">20</a>, <a href="Changelog.md#GridSample-16">16</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-19">19</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
 |<a href="#If">If</a>|<a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
@@ -1476,22 +1476,27 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
-   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   or when ceil_mode is disabled:
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
-   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
    ```
    The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
 
@@ -1563,7 +1568,7 @@ x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "AVG")
 
@@ -1627,7 +1632,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
 
@@ -1649,12 +1654,26 @@ node = onnx.helper.make_node(
     "AveragePool",
     inputs=["x"],
     outputs=["y"],
-    kernel_shape=[3, 3],
+    kernel_shape=[2, 2],
     strides=[1, 1],
     dilations=[2, 2],
     ceil_mode=True,
 )
-x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+
+# input shape: [1, 1, 4, 4]
+x = np.array(
+    [
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [13, 14, 15, 16],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
 y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
@@ -1689,7 +1708,7 @@ pad_right = 2
 pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -1732,7 +1751,7 @@ pad_right = 2
 pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -2057,7 +2076,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET)", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
 
@@ -2085,7 +2104,7 @@ x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "AVG")
 
@@ -2993,8 +3012,8 @@ a0 = 0.42
 a1 = -0.5
 a2 = 0.08
 y = a0
-y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
-y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
 
 # Test symmetric window
@@ -3007,10 +3026,10 @@ a1 = -0.5
 a2 = 0.08
 y = a0
 y += a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 y += a2 * np.cos(
-    4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 ```
@@ -3726,12 +3745,16 @@ for from_type, to_type in test_cases:
         outputs=["output"],
     )
     if input_type_proto and output_type_proto:
+        like_type_proto = onnx.helper.make_tensor_type_proto(
+            output_type_proto.tensor_type.elem_type, like.shape
+        )
+
         expect(
             node,
             inputs=[input, like],
             outputs=[output],
             name="test_castlike_" + from_type + "_to_" + to_type,
-            input_type_protos=[input_type_proto, output_type_proto],
+            input_type_protos=[input_type_proto, like_type_proto],
             output_type_protos=[output_type_proto],
         )
     else:
@@ -6936,7 +6959,7 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'y_scale' determines the output type.</dd>
+<dd>'x_scale' determines the output type.</dd>
 </dl>
 
 
@@ -9222,57 +9245,50 @@ expect(
 
   This operator is the inverse of `ScatterND`.
 
-  `Example 1`
+  **Example 1**
 
-    batch_dims = 0
+  ```
+  batch_dims = 0
+  data    = [[0,1],[2,3]]   # data_shape    = [2, 2]
+  indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+  output  = [0,3]           # output_shape  = [2]
+  ```
 
-    data    = [[0,1],[2,3]]   # data_shape = [2, 2]
+  **Example 2**
 
-    indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+  ```
+  batch_dims = 0
+  data    = [[0,1],[2,3]]  # data_shape    = [2, 2]
+  indices = [[1],[0]]      # indices_shape = [2, 1]
+  output  = [[2,3],[0,1]]  # output_shape  = [2, 2]
+  ```
 
-    output  = [0,3]           # output_shape = [2]
+  **Example 3**
 
-  `Example 2`
+  ```
+  batch_dims = 0
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+  ```
 
-    batch_dims = 0
+  **Example 4**
 
-    data    = [[0,1],[2,3]]  # data_shape = [2, 2]
+  ```
+  batch_dims = 0
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+  output  = [[[2,3]],[[4,5]]]             # output_shape  = [2, 1, 2]
+  ```
 
-    indices = [[1],[0]]      # indices_shape = [2, 1]
+  **Example 5**
 
-    output  = [[2,3],[0,1]]  # output_shape = [2, 2]
-
-  `Example 3`
-
-    batch_dims = 0
-
-    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-
-    indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-
-    output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
-
-  `Example 4`
-
-    batch_dims = 0
-
-    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-
-    indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-
-    output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
-
-  `Example 5`
-
-    batch_dims = 1
-
-    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-
-    indices = [[1],[0]]             # indices_shape = [2, 1]
-
-    output  = [[2,3],[4,5]]             # output_shape = [2, 2]
-
-
+  ```
+  batch_dims = 1
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[1],[0]]                     # indices_shape = [2, 1]
+  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+  ```
 
 #### Version
 
@@ -10002,31 +10018,38 @@ Other versions of this operator: <a href="Changelog.md#GreaterOrEqual-12">12</a>
 
 ### <a name="GridSample"></a><a name="gridsample">**GridSample**</a>
 
-  Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from `grid`.
-  Currently, only spatial (4-D) inputs are supported. For input `X` with shape (N, C, H, W) and `grid` with shape (N, H_out, W_out, 2),
-  the output `Y` will have shape (N, C, H_out, W_out).
+  Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.
+  For spatial input `X` with shape (N, C, H, W), the `grid` will have shape (N, H_out, W_out, 2),
+  the output `Y` will have shape (N, C, H_out, W_out). For volumetric input `X` with shape (N, C, D, H, W),
+  the `grid` will have shape (N, D_out, H_out, W_out, 3), the output `Y` will have shape (N, C, D_out, H_out, W_out).
+  More generally, for an input `X` of rank r+2 with shape (N, C, d1, d2, ..., dr),
+  the `grid` will have shape (N, D1_out, D2_out, ..., Dr_out, r), the output `Y` will have shape (N, C, D1_out, D2_out, ..., Dr_out).
 
-  The tensor `X` contains values at centers of square pixels in a H by W 2-dimensional image.
-  The tensor `grid` describes normalized positions where the output `Y` is to be computed
-  using a specified interpolation method (the mode) and a padding mode (for grid positions falling outside the 2-dimensional image).
+  The tensor `X` contains values at centers of square pixels (voxels, etc) locations such as (n, c, d1_in, d2_in, ..., dr_in).
+  The (n, d1_out, d2_out, ..., dr_out, :) values from the tensor `grid` are the normalized positions for interpolating the values
+  at the (n, c, d1_out, d2_out, ..., dr_out) locations from the output tensor `Y` using a specified interpolation method (the mode)
+  and a padding mode (for `grid` positions falling outside the 2-dimensional image).
 
-  Elements in `grid[N, H_out, W_out]` are size-2 vectors specifying positions in the 2-dimensional space of `X`.
-  They are used to interpolate output values of `Y[N, C, H_out, W_out]`.
+  For example, the values in `grid[n, h_out, w_out, :]` are size-2 vectors specifying normalized positions in the 2-dimensional space of `X`.
+  They are used to interpolate output values of `Y[n, c, h_out, w_out]`.
 
-  The GridSample operator is often used in doing grid generator and sampler in the [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
-  See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/master/generated/torch.nn.functional.grid_sample.html#torch-nn-functional-grid-sample).
+  The GridSample operator is often used in doing grid generator and sampler in the
+  [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
+  See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html).
 
 #### Version
 
-This version of the operator has been available since version 16 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GridSample-16">16</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>align_corners</tt> : int (default is 0)</dt>
-<dd>If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels. If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels, making the sampling more resolution agnostic.</dd>
-<dt><tt>mode</tt> : string (default is bilinear)</dt>
-<dd>Three interpolation modes: bilinear (default), nearest and bicubic.</dd>
+<dd>If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels (voxels, etc.). If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels (voxels, etc.), making the sampling more resolution agnostic.</dd>
+<dt><tt>mode</tt> : string (default is linear)</dt>
+<dd>Three interpolation modes: linear (default), nearest and cubic. The "linear" mode includes linear and N-linear interpolation modes depending on the number of spatial dimensions of the input tensor (i.e. linear for 1 spatial dimension, bilinear for 2 spatial dimensions, etc.). The "cubic" mode also includes N-cubic interpolation modes following the same rules. The "nearest" mode rounds to the nearest even index when the sampling point falls halfway between two indices.</dd>
 <dt><tt>padding_mode</tt> : string (default is zeros)</dt>
 <dd>Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. zeros: use 0 for out-of-bound grid locations, border: use border values for out-of-bound grid locations, reflection: use values at locations reflected by the border for out-of-bound grid locations. If index 0 represents the margin pixel, the reflected value at index -1 will be the same as the value at index 1. For location far away from the border, it will keep being reflected until becoming in bound. If pixel location x = -3.5 reflects by border -1 and becomes x' = 1.5, then reflects by border 1 and becomes x'' = 0.5.</dd>
 </dl>
@@ -10035,16 +10058,16 @@ This version of the operator has been available since version 16 of the default 
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T1</dt>
-<dd>4-D tensor of shape (N, C, H, W), where N is the batch size, C is the numbers of channels, H and W are the height and width of the input data.</dd>
+<dd>Input tensor of rank r+2 that has shape (N, C, D1, D2, ..., Dr), where N is the batch size, C is the number of channels, D1, D2, ..., Dr are the spatial dimensions.</dd>
 <dt><tt>grid</tt> (non-differentiable) : T2</dt>
-<dd>Input offset, 4-D tensor of shape (N, H_out, W_out, 2), where H_out and W_out are the height and width of grid and output, Grid specifies the sampling pixel locations normalized by the input spatial dimensions. Therefore, it should have most values in the range of [-1, 1]. If grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode.</dd>
+<dd>Input offset of shape (N, D1_out, D2_out, ..., Dr_out, r), where D1_out, D2_out, ..., Dr_out are the spatial dimensions of the grid and output, and r is the number of spatial dimensions. Grid specifies the sampling locations normalized by the input spatial dimensions. Therefore, it should have most values in the range of [-1, 1]. If the grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode. Following computer vision convention, the coordinates in the length-r location vector are listed from the innermost tensor dimension to the outermost, the opposite of regular tensor indexing.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T1</dt>
-<dd>4-D tensor of shape (N, C, H_out, W_out) of sampled values. For integer input types, intermediate values are computed as floating point and cast to integer at the end.</dd>
+<dd>Output tensor of rank r+2 that has shape (N, C, D1_out, D2_out, ..., Dr_out) of the sampled values. For integer input types, intermediate values are computed as floating point and cast to integer at the end.</dd>
 </dl>
 
 #### Type Constraints
@@ -10067,7 +10090,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     padding_mode="zeros",
     align_corners=0,
 )
@@ -10198,7 +10221,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bilinear = np.array(
@@ -10218,7 +10241,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -10256,7 +10279,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bicubic = np.array(
@@ -10266,6 +10289,155 @@ Y_bicubic = np.array(
 
 expect(
     node, inputs=[X, Grid], outputs=[Y_bicubic], name="test_gridsample_bicubic"
+)
+
+# ============================================================================
+# Additional tests
+# The reference output tensors were generated using PyTorch 2.0.
+Grid = np.array(
+    [
+        [
+            [[-1.0, -0.8], [-0.6, -0.5], [-0.1, -0.2], [0.7, 0.0]],
+            [[0.0, 0.4], [0.2, -0.2], [-0.3, 0.5], [-1.0, 1.0]],
+        ]
+    ],
+    dtype=np.float32,
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [[[[0.0, 0.0, 2.0, 3.0], [4.0, 3.0, 4.0, 4.0]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_nearest_align_corners_0_additional_1",
+)
+
+# setting mode = 'nearest'
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [[[[0.0, 0.0, 2.0, 3.0], [2.0, 3.0, 4.0, 4.0]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_nearest_align_corners_1_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [[[[0.0000, 0.4500, 1.8000, 2.4000], [3.7000, 2.1000, 3.7000, 1.0000]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_bilinear_align_corners_0_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [[[[0.4000, 1.2000, 2.0500, 2.8500], [3.3000, 2.2000, 3.3500, 4.0000]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_bilinear_align_corners_1_additional_1",
+)
+
+# These two new bicubic tests produces slightly higher error ~5e-5
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="cubic",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [-0.173250, 0.284265, 1.923106, 2.568000],
+                [5.170375, 2.284414, 4.744844, 1.046875],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bicubic],
+    name="test_gridsample_bicubic_align_corners_0_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="cubic",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [0.304001, 1.128750, 2.266270, 3.144844],
+                [4.531500, 2.455360, 4.599819, 4.000000],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bicubic],
+    name="test_gridsample_bicubic_align_corners_1_additional_1",
 )
 ```
 
@@ -10360,6 +10532,175 @@ expect(
     inputs=[X, Grid],
     outputs=[Y_reflection],
     name="test_gridsample_reflection_padding",
+)
+```
+
+</details>
+
+
+<details>
+<summary>volumeetric_gridsample_mode_aligncorners</summary>
+
+```python
+X = np.array(
+    [
+        [
+            [
+                [[1.0, 2.0], [3.0, 4.0]],
+                [[5.0, 6.0], [7.0, 8.0]],
+                [[9.0, 10.0], [11.0, 12.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+Grid = np.array(
+    [
+        [
+            [
+                [[-1.0, -1.0, -1.0], [-1.0, -0.5, 0.3]],
+                [[-0.5, -0.5, -0.5], [1.0, -0.6, -1.0]],
+                [[-0.2, -0.2, -0.2], [0.4, 0.2, 0.6]],
+                [[0.0, 0.0, 0.0], [-1.0, 0.0, 0.0]],
+            ],
+            [
+                [[0.0, 0.0, 0.0], [-1.0, 1.0, 0.0]],
+                [[-0.2, -0.2, -0.2], [1.0, 0.4, -0.2]],
+                [[0.5, 0.5, 0.5], [-1.0, -0.8, 0.8]],
+                [[1.0, 1.0, 1.0], [0.4, 0.6, -0.3]],
+            ],
+        ]
+    ],
+    dtype=np.float32,
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [[1.0, 5.0], [1.0, 0.0], [5.0, 12.0], [5.0, 5.0]],
+                [[5.0, 0.0], [5.0, 0.0], [12.0, 9.0], [0.0, 8.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_volumetric_nearest_align_corners_0",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [[1.0, 5.0], [1.0, 2.0], [5.0, 12.0], [5.0, 5.0]],
+                [[5.0, 7.0], [5.0, 8.0], [12.0, 9.0], [12.0, 8.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_volumetric_nearest_align_corners_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [
+                    [0.1250, 3.4000],
+                    [2.0000, 0.4500],
+                    [4.7000, 10.9000],
+                    [6.5000, 3.0000],
+                ],
+                [
+                    [6.5000, 1.7500],
+                    [4.7000, 3.3000],
+                    [11.0000, 2.5200],
+                    [1.5000, 5.4900],
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_volumetric_bilinear_align_corners_0",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [
+                    [1.0000, 6.7000],
+                    [3.7500, 2.4000],
+                    [5.4000, 9.3000],
+                    [6.5000, 6.0000],
+                ],
+                [
+                    [6.5000, 7.0000],
+                    [5.4000, 6.6000],
+                    [9.2500, 8.4000],
+                    [12.0000, 6.1000],
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_volumetric_bilinear_align_corners_1",
 )
 ```
 
@@ -10531,9 +10872,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
 
 # Test symmetric window
@@ -10544,7 +10883,7 @@ size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
 ```
@@ -10608,9 +10947,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow")
 
 # Test symmetric window
@@ -10621,7 +10958,7 @@ size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
 ```
@@ -13386,7 +13723,7 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "LPPOOL", p=p)
 
@@ -13416,7 +13753,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(
     padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
@@ -13501,7 +13838,7 @@ strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -13632,7 +13969,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(
     padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
@@ -13664,7 +14001,7 @@ x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(
     padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "LPPOOL", p=p
@@ -13958,10 +14295,15 @@ for op_dtype in all_numeric_dtypes:
    ```
    if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   or when ceil_mode is disabled:
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -14041,7 +14383,7 @@ x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "MAX")
 
@@ -14105,7 +14447,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
 
@@ -14174,7 +14516,7 @@ strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+    "NOTSET", np.add(x_shape[2:], pad_shape), kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -14412,7 +14754,7 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
 
@@ -14489,7 +14831,7 @@ x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape("NOTSET", x_shape[2:], kernel_shape, strides)
 padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "MAX")
 
@@ -17171,7 +17513,7 @@ Other versions of this operator: <a href="Changelog.md#OneHot-9">9</a>
 <dt><tt>indices</tt> (non-differentiable) : T1</dt>
 <dd>Input tensor containing indices. Any entries in the 'indices' input tensor with values outside the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
 <dt><tt>depth</tt> (non-differentiable) : T2</dt>
-<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dd>Scalar or Rank 1 tensor containing exactly one element, specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
 <dt><tt>values</tt> (non-differentiable) : T3</dt>
 <dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
@@ -18023,7 +18365,7 @@ expect(
 <summary>reflection_edge_and_wrap_pad</summary>
 
 ```python
-for mode in ["edge", "reflect", "wrap"]:
+for mode in ("edge", "reflect", "wrap"):
     node = onnx.helper.make_node(
         "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
     )
@@ -24560,7 +24902,7 @@ node = onnx.helper.make_node(
 a0 = 0.5
 a1 = 0.5
 window = a0 + a1 * np.cos(
-    2 * 3.1415 * np.arange(0, length, 1, dtype=np.float32) / length
+    2 * np.pi * np.arange(0, length, 1, dtype=np.float32) / length
 )
 nstfts = 1 + (signal.shape[1] - window.shape[0]) // step
 

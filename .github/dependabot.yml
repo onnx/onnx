@@ -13,9 +13,7 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-    # disable version updates for pip dependencies 
-    open-pull-requests-limit: 0    
-   
+
   - package-ecosystem: "github-actions"
     # Workflow files stored in the
     # default location of `.github/workflows`
@@ -26,4 +24,14 @@ updates:
     labels:
       - "dependencies"
       - "github_actions"
+      - "run release CIs"      
+      
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
       - "run release CIs"
+      
