@@ -383,6 +383,7 @@ void ProtoPrinter::print(const ModelProto& model) {
 }
 
 void ProtoPrinter::print(const OperatorSetIdProto& opset) {
+  std::unordered_map<std::string, std::string> test;
   output_ << "\"" << opset.domain() << "\" : " << opset.version();
 }
 
