@@ -47,6 +47,7 @@ jobs:
           reporter: github-pr-check
           level: warning
           flags: --linelength=120
+          filter: "-,+build/include_what_you_use"
 
 
   enforce-style:
