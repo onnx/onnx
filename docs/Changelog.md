@@ -23986,9 +23986,12 @@ This version of the operator has been available since version 20 of the default 
   Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
   If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
   If the input 'split' is specified, it indicates the sizes of each output in the split.
-  If the tensor is not evenly splittable into `num_outputs`, the behavior depends on `mode` attribute.
-  If `mode` is set to 'torch' (default), the last few dimensions sizes will be lowered by one.
-  If 'mode' is set to 'legacy', only the last dimension will be smaller.
+  If the tensor is not evenly splittable into `num_outputs`, the behavior depends on `minimize_diff` attribute.
+  If `minimize_diff` is set to 'true' (default), the difference
+  between the number of elements in the output tensors is minimized, which
+  results in the last few dimensions' sizes being lowered by one.
+  If 'minimize_diff' is set to 'false', the last output tensors will be emptied in order to
+  accomodate for the missing values.
 
 #### Version
 
@@ -23999,10 +24002,10 @@ This version of the operator has been available since version 20 of the default 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
-<dt><tt>mode</tt> : string (default is torch)</dt>
-<dd>Uneven split mode. Possible values are 'torch' (default) and 'legacy'.</dd>
+<dt><tt>minimize_diff</tt> : int (required)</dt>
+<dd>Uneven split mode. </dd>
 <dt><tt>num_outputs</tt> : int</dt>
-<dd>Number of outputs to split parts of the tensor into. If the tensor is not evenly splittable the last chunk will be smaller.</dd>
+<dd>Number of outputs to split parts of the tensor into. </dd>
 </dl>
 
 #### Inputs (1 - 2)

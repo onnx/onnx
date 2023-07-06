@@ -671,9 +671,12 @@ static const char* Split_ver20_doc =
 Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
 If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
 If the input 'split' is specified, it indicates the sizes of each output in the split.
-If the tensor is not evenly splittable into `num_outputs`, the behavior depends on `mode` attribute.
-If `mode` is set to 'torch' (default), the last few dimensions sizes will be lowered by one.
-If 'mode' is set to 'legacy', only the last dimension will be smaller.
+If the tensor is not evenly splittable into `num_outputs`, the behavior depends on `minimize_diff` attribute.
+If `minimize_diff` is set to 'true' (default), the difference
+between the number of elements in the output tensors is minimized, which
+results in the last few dimensions' sizes being lowered by one.
+If 'minimize_diff' is set to 'false', the last output tensors will be emptied in order to
+accomodate for the missing values.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -710,16 +713,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "num_outputs",
-            "Number of outputs to split parts of the tensor into. "
-            "If the tensor is not evenly splittable the last chunk will be smaller.",
+            "Number of outputs to split parts of the tensor into. ",
             AttributeProto::INT,
             false)
         .Attr(
-            "mode",
-            "Uneven split mode. "
-            "Possible values are 'torch' (default) and 'legacy'.",
-            AttributeProto::STRING,
-            std::string("torch"))
+            "minimize_diff",
+            "Uneven split mode. ",
+            AttributeProto::INT,
+            true)
         .SetDoc(Split_ver20_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
@@ -785,9 +786,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 int chunk_size = split_dim_value / num_outputs;
                 split.resize(num_outputs, chunk_size);
               } else { // tensor needs to be split unevenly
-                const auto mode = getAttribute(ctx, "mode", "torch");
+                const auto minimize_diff = getAttribute(ctx, "minimize_diff", true);
                 int chunk_size = split_dim_value / num_outputs;
-                if (mode == "torch") {
+                if (minimize_diff) {
                   int reduced_dims = num_outputs * (chunk_size + 1) - split_dim_value;
                   for (int i=0; i<num_outputs-reduced_dims; i++) {
                     split.push_back(chunk_size+1);

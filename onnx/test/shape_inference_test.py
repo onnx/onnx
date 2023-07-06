@@ -3093,10 +3093,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    def test_split_uneven_split_2d_legacymode(self) -> None:
+    def test_split_uneven_split_2d_maximize_diff(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (8, 2))],
-            [make_node("Split", ["x"], ["y", "z", "a"], axis=0, num_outputs=3, mode="legacy")],
+            [make_node("Split", ["x"], ["y", "z", "a"], axis=0, num_outputs=3, minimize_diff=False)],
             [],
         )
         self._assert_inferred(
@@ -3123,10 +3123,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
     
-    def test_split_uneven_split_3d_legacymode(self) -> None:
+    def test_split_uneven_split_3d_maximize_diff(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 7, 3))],
-            [make_node("Split", ["x"], ["y", "z", "a"], axis=1, num_outputs=3, mode="legacy")],
+            [make_node("Split", ["x"], ["y", "z", "a"], axis=1, num_outputs=3, minimize_diff=False)],
             [],
         )
         self._assert_inferred(

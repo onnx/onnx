@@ -564,7 +564,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
 
     /******** 19 -> 20 ********/
-    registerAdapter("Split", 19, 20, SetAttribute(kmode, "legacy"));
+    registerAdapter("Split", 19, 20, SetAttribute(kminimize_diff, "legacy"));
     registerAdapter(make_unique<GridSample_19_20>());
     registerAdapter(make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
   }
