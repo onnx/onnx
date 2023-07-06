@@ -9,6 +9,12 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
@@ -560,6 +566,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     /******** 19 -> 20 ********/
     registerAdapter("Split", 19, 20, SetAttribute(kmode, "legacy"));
     registerAdapter(make_unique<GridSample_19_20>());
+    registerAdapter(make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

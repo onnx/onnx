@@ -85,16 +85,6 @@ jobs:
         EXIT 1
       )
 
-      python onnx/defs/gen_doc.py
-      python onnx/gen_proto.py -l
-      python onnx/gen_proto.py -l --ml
-
-      git diff --exit-code -- . :(exclude)onnx/onnx-data.proto :(exclude)onnx/onnx-data.proto3
-      IF NOT %ERRORLEVEL% EQU 0 (
-        @echo "git diff returned failures"
-        EXIT 1
-      )
-
       python onnx/backend/test/cmd_tools.py generate-data --clean
       git status
       git diff --exit-code -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 :!*output_*.pb :!*input_*.pb

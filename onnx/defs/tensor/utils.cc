@@ -3,7 +3,12 @@
  */
 
 #include "onnx/defs/tensor/utils.h"
+#include <algorithm>
+#include <limits>
 #include <numeric>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 void resizeShapeInferenceHelper(

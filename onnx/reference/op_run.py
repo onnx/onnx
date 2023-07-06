@@ -8,7 +8,7 @@ import numpy as np
 
 from onnx import TensorProto
 from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
-from onnx.helper import make_node
+from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
 from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 from onnx.reference.custom_element_types import (
@@ -453,7 +453,7 @@ class OpRun(ABC):
                 )
             kwargs[att] = getattr(self, att)
         if self.has_subgraph:
-            if self.has_linked_attribute and len(linked_attributes) == 0:
+            if self.has_linked_attribute and not linked_attributes:
                 raise RuntimeError(
                     f"A subgraph has linked attribute but none was given to {type(self)}."
                 )
@@ -461,7 +461,7 @@ class OpRun(ABC):
         if context is not None:
             kwargs["context"] = context
         try:
-            if len(overridden_attributes) > 0:
+            if overridden_attributes:
                 res = self._run(*args, **overridden_attributes, **kwargs)
             else:
                 res = self._run(*args, **kwargs)
@@ -588,12 +588,36 @@ class OpRun(ABC):
         return res
 
 
+class OpRunExpand(OpRun):
+    """
+    Class any operator to avoid must inherit from.
+    """
+
+    def __init__(
+        self, onnx_node: NodeProto, log_function: Any, impl: Any = None
+    ):  # pylint: disable=super-init-not-called
+        raise RuntimeError(
+            f"The reference implementation must not use this node ({type(self)})."
+        )
+
+    def _run(self, *inputs, **kwargs):
+        raise RuntimeError(
+            f"The reference implementation must not use this node ({type(self)})."
+        )
+
+
 class OpFunction(OpRun):
     """
     Runs a custom function.
     """
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
+    def __init__(
+        self,
+        onnx_node: NodeProto,
+        log_function: Any,
+        impl: Any = None,
+        attributes: Optional[Dict[str, Any]] = None,
+    ):
         if impl is None:
             raise RuntimeError(
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
@@ -604,24 +628,69 @@ class OpFunction(OpRun):
         # The function implementation is the same whenever the function is called
         # but the attributes may be different at every call.
         self.attributes_ = {
-            name: getattr(self, name) for name in self.impl_.attributes_
+            name: getattr(self, name)
+            for name in getattr(self.impl_, "attributes_", attributes)  # type: ignore[union-attr]
         }
 
     def _run(self, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
-        if len(self.impl_.input_names) != len(inputs):
+        return self._run_impl(self.impl_, *inputs, **kwargs)
+
+    def _run_impl(self, impl, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
+        if len(impl.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(self.impl_.inputs)} "
+                f"and the expected number of inputs {len(impl.inputs)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
-        feeds = dict(zip(self.impl_.input_names, inputs))
+        feeds = dict(zip(impl.input_names, inputs))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
-        results = self.impl_.run(None, feeds, attributes=attributes)
-        if len(self.impl_.output_names) != len(results):
+        results = impl.run(None, feeds, attributes=attributes)
+        if len(impl.output_names) != len(results):
             raise RuntimeError(
                 f"Mismatch lengths between the number of outputs {len(results)} "
-                f"and the expected number of outputs {len(self.impl_.output_names)} "
+                f"and the expected number of outputs {len(impl.output_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         return tuple(results)
+
+
+class OpFunctionContextDependant(OpFunction):
+    """
+    The function can be instantiated but only at execution time.
+    An instance of OpFunction is created everytime to node is executed.
+    This is needed when the schema of an operator defines a context dependant function.
+    """
+
+    def __init__(self, onnx_node: NodeProto, log_function: Any, parent: Any = None):
+        OpFunction.__init__(self, onnx_node, log_function, impl=self, attributes={})
+        self.parent = parent
+        version = parent.opsets[onnx_node.domain]
+        self.schema_ = get_schema(onnx_node.op_type, version, onnx_node.domain)
+
+    def _run(self, *inputs, **kwargs):
+        # Input types are known. They are used to properly
+        # created the body for this operator.
+        types = []
+        for t in inputs:
+            try:
+                ttype = np_dtype_to_tensor_dtype(t.dtype)
+            except KeyError as e:
+                if t.dtype == float8e4m3fn:
+                    ttype = TensorProto.FLOAT8E4M3FN  # type: ignore[attr-defined]
+                elif t.dtype == float8e4m3fnuz:
+                    ttype = TensorProto.FLOAT8E4M3FNUZ  # type: ignore[attr-defined]
+                elif t.dtype == float8e5m2:
+                    ttype = TensorProto.FLOAT8E5M2  # type: ignore[attr-defined]
+                elif t.dtype == float8e5m2fnuz:
+                    ttype = TensorProto.FLOAT8E5M2FNUZ  # type: ignore[attr-defined]
+                elif t.dtype == bfloat16:
+                    ttype = TensorProto.BLOFAT16  # type: ignore[attr-defined]
+                else:
+                    raise e
+            types.append(make_tensor_type_proto(ttype, t.shape))
+        cl = self.parent._load_impl(  # pylint: disable=protected-access
+            self.onnx_node, types
+        )
+        inst = cl(self.onnx_node, self.run_params)
+        return self._run_impl(inst.impl_, *inputs, **kwargs)

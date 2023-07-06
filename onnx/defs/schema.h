@@ -18,6 +18,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "onnx/common/common.h"
@@ -1136,10 +1137,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    explicit OpSchemaRegisterOnce(
-        OpSchema& op_schema,
-        int opset_version_to_load = 0,
-        bool fail_duplicate_schema = true) {
+    OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       ONNX_TRY {
         op_schema.Finalize();
         auto& m = GetMapWithoutEnsuringRegistration();
