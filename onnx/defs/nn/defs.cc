@@ -1333,7 +1333,8 @@ output_shape can also be explicitly specified in which case pads values are auto
     schema.Attr(
         "output_shape",
         "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
-        "pads values are ignored. See doc for details for equations to generate pads",
+        "pads values are ignored. See doc for details for equations to generate pads. Note that output_shape should not have "
+        "dimensions for batch size and number of channels.",
         AttributeProto::INTS,
         OPTIONAL_VALUE);
     schema.Attr(
