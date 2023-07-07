@@ -1,6 +1,6 @@
 trigger:
 - main
-- gh-readonly-queue/main/**
+- gh-readonly-queue/**
 
 jobs:
 

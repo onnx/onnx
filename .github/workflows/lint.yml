@@ -10,7 +10,6 @@ on:
       - main
   pull_request:
   merge_group:
-     branches: [main]
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
