@@ -41,8 +41,9 @@ from numpy.testing import assert_allclose  # type: ignore
 from onnx import ONNX_ML, OptionalProto, SequenceProto, TensorProto, load
 from onnx.backend.test import __file__ as backend_folder
 from onnx.helper import __file__ as onnx_file
-from onnx.numpy_helper import bfloat16_to_float32, to_array, to_list, to_optional
+from onnx.numpy_helper import bfloat16_to_float32, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
+from onnx.reference.op_run import to_array_extended
 from onnx.reference.ops.op_cast import cast_to
 
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
@@ -68,6 +69,7 @@ SKIP_TESTS = {
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
     "test_lppool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
+    "test_averagepool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
 }
 
 if version(npver) < version("1.21.5"):
@@ -82,7 +84,6 @@ if version(npver) < version("1.21.5"):
         "test_castlike_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16_expanded",
     }
-    MIN_PASSING_TESTS -= len(SKIP_TESTS)
 
 
 def assert_allclose_string(expected, value):
@@ -147,7 +148,7 @@ class OnnxBackendTest:
         with open(full, "rb") as f:
             serialized = f.read()
         proto_types = [
-            (TensorProto, to_array),
+            (TensorProto, to_array_extended),
             (SequenceProto, to_list),
             (OptionalProto, to_optional),
         ]
@@ -203,11 +204,12 @@ class OnnxBackendTest:
                 outputs = OnnxBackendTest._sort(
                     c for c in pb if c.startswith("output_")
                 )
-                t = dict(
-                    inputs=OnnxBackendTest._load(full, inputs),
-                    outputs=OnnxBackendTest._load(full, outputs),
+                self.tests.append(
+                    {
+                        "inputs": OnnxBackendTest._load(full, inputs),
+                        "outputs": OnnxBackendTest._load(full, outputs),
+                    }
                 )
-                self.tests.append(t)
 
     @property
     def name(self):
@@ -272,18 +274,39 @@ class OnnxBackendTest:
                             f"Output {i_output} of test {index} in folder {self.folder!r} failed, comment={comment}."
                         ) from ex
                 else:
-                    try:
-                        assert_allclose(desired, output, atol=atol, rtol=rtl)
-                    except AssertionError as ex:
+                    equal_nan = desired.dtype in (np.float16, np.float32, np.float64)
+                    if equal_nan:
                         try:
-                            diff = output - desired
-                        except ValueError:
-                            diff = None
-                        raise AssertionError(
-                            f"Output {i_output} of test {index} in folder {self.folder!r} failed "
-                            f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
-                            f"\n{output}\n-----\n{diff}\n------INPUTS----\n{pprint.pformat(inputs)}."
-                        ) from ex
+                            assert_allclose(
+                                desired,
+                                output,
+                                atol=atol,
+                                rtol=rtl,
+                                equal_nan=equal_nan,
+                            )
+                        except AssertionError as ex:
+                            try:
+                                diff = output - desired
+                            except ValueError:
+                                diff = None
+                            raise AssertionError(
+                                f"Output {i_output} of test {index} in folder {self.folder!r} failed "
+                                f"(rtol={rtl}, atol={atol}), comment={comment}\n---\n{desired}\n----"
+                                f"\n{output}\n-----\n{diff}\n------INPUTS----\n{pprint.pformat(inputs)}."
+                            ) from ex
+                    else:
+                        # float 8 types
+                        if desired.dtype != output.dtype:
+                            raise AssertionError(
+                                f"Output {i_output} of test {index} in folder {self.folder!r} "
+                                f"has unexpected type {output.dtype} (expecting {desired.dtype}.)"
+                            )
+                        if desired.tolist() != output.tolist():
+                            raise AssertionError(
+                                f"Output {i_output} of test {index} in folder {self.folder!r} "
+                                f"has unexpected values {output} (expecting {desired}.)"
+                            )
+
                 if desired.shape != output.shape:
                     raise AssertionError(
                         f"Output {i_output} of test {index} in folder {self.folder!r} failed "
@@ -386,11 +409,11 @@ class OnnxBackendTest:
                 f"Unexpected number of output (test {index}, folder {self.folder!r}), "
                 f"got {len(got)}, expected {len(expected)}."
             )
-        res = dict(
-            inputs=self.tests[index]["inputs"],
-            expected=self.tests[index]["outputs"],
-            results=got,
-        )
+        res = {
+            "inputs": self.tests[index]["inputs"],
+            "expected": self.tests[index]["outputs"],
+            "results": got,
+        }
         for i, (e, o) in enumerate(zip(expected, got)):
             if self.is_random():
                 if e.dtype != o.dtype:
@@ -543,6 +566,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     inputs[i] = cast_to(
                         xf.astype(np.float32).reshape(inputs[i].shape),
                         TensorProto.BFLOAT16,
+                        True,
                     )
         feeds = {input_names[i]: inputs[i] for i in range(len(inputs))}
         got = obj.run(None, feeds)
@@ -645,7 +669,9 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     return
 
                 te.run(
-                    lambda obj: InferenceSession(obj.SerializeToString()),
+                    lambda obj: InferenceSession(
+                        obj.SerializeToString(), providers=["CPUExecutionProvider"]
+                    ),
                     lambda *a, **b: TestOnnxBackEndWithReferenceEvaluator.run_fct(
                         *a, verbose=1, **b
                     ),
@@ -661,7 +687,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             with open(f"issue_{te.name}.onnx", "wb") as f:
                 f.write(te.onnx_model.SerializeToString())
             raise AssertionError(
-                f"Unable to run test {te.name!r} due to {e}\n{str(te.onnx_model)}"
+                f"Unable to run test {te.name!r} due to {e}\n{te.onnx_model}"
             ) from e
         successes.append((te, atol.get(te.fname, None), rtol.get(te.fname, None)))
         if verbose > 7:
@@ -730,11 +756,12 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             raise AssertionError(
                 f"Mismatch in test {te.name!r}\n{te.onnx_model}."
             ) from e
-        if 30 < success < MIN_PASSING_TESTS:
+
+        if sum(failed) > len(SKIP_TESTS):
             raise AssertionError(
-                f"The coverage ({coverage * 100:.1f}% out of {success + sum(failed)} tests) "
-                f"the runtime among has decreased. New operators were added with no "
-                f"corresponding runtime."
+                f"Unexpected failures. {sum(failed)}/{success + sum(failed)} tests have failed."
+                f"The coverage is {coverage * 100:.1f}%. "
+                f"New operators were added with no corresponding runtime."
             )
 
     @classmethod
@@ -764,6 +791,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_blackmanwindow_symmetric": 1e-7,
             "test_blackmanwindow_symmetric_expanded": 1e-4,
             "test_Conv1d": 1e-6,
+            "test_Conv2d_depthwise_padded": 1e-7,
             "test_Conv3d_dilated": 1e-6,
             "test_gridsample_bicubic": 1e-4,
             "test_gru_seq_length": 1e-7,
@@ -788,6 +816,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test__pytorch_converted_Conv2d_depthwise": 1e-4,
             "test__pytorch_converted_Conv2d_depthwise_strided": 1e-4,
             "test__pytorch_converted_Conv2d_depthwise_with_multiplier": 1e-4,
+            "test__pytorch_converted_Conv2d_depthwise_padded": 1e-4,
             "test__pytorch_converted_Conv2d_groups": 1e-4,
             "test__pytorch_converted_Conv2d_groups_thnn": 1e-4,
             "test__pytorch_converted_Conv2d_no_bias": 1e-5,

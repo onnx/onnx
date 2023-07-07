@@ -19,16 +19,20 @@ from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
+from typing import Sequence, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 import parameterized
-from numpy.testing import assert_allclose  # type: ignore
+from numpy.testing import assert_allclose
 
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
 from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
+    float32_to_bfloat16,
+    float32_to_float8e4m3,
+    float32_to_float8e5m2,
     make_function,
     make_graph,
     make_model,
@@ -41,18 +45,21 @@ from onnx.helper import (
     make_tensor_value_info,
     make_value_info,
 )
-from onnx.numpy_helper import from_array
+from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, from_array
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.op_run import OpRun
+from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
+from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Celu
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
-from onnx.reference.ops.experimental.op_im2col import im2col
 from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
 )
+from onnx.reference.ops.op_conv import Conv, _conv_implementation
+from onnx.reference.ops_optimized import Conv as ConvOptimized
+from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_im2col
 
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
 # For now, bump the version in CIs whenever there is a new onnxruntime release
@@ -131,6 +138,73 @@ def run_ort_inference(onnx_model):
     )
 
 
+def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  # type: ignore
+    """
+    Naive implementation for `im2col`.
+
+    :param image: image (float)
+    :param kernel_shape: kernel shape
+    :param dilations: dilations
+    :param pads: pads
+    :param strides: strides
+    :return: result
+    """
+    if not isinstance(kernel_shape, tuple):
+        raise TypeError(f"Unexpected type {type(kernel_shape)!r} for kernel_shape.")
+    if len(data.shape) != len(kernel_shape):
+        raise ValueError(f"Shape mismatch {data.shape!r} and {kernel_shape!r}.")
+    n_dims = len(pads) // 2
+    new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
+    list_output_shape = list(data.shape + kernel_shape)
+    for d in range(n_dims):
+        kd = kernel_shape[d] + (kernel_shape[d] - 1) * (dilations[d] - 1)
+        nd = int(
+            ((list_output_shape[d] - kd + new_pads[d][0] + new_pads[d][1]) / strides[d])
+            + 1
+        )
+        list_output_shape[d] = nd
+    output_shape = tuple(list_output_shape)
+
+    res = np.zeros(output_shape, dtype=data.dtype)
+    kernel_size = np.prod(kernel_shape)
+    res_size = np.prod(res.shape[:-n_dims])
+    for i in range(res_size):
+        i_res = _get_indices(i, res.shape[:-n_dims])
+        t_res = tuple(i_res)
+        for j in range(kernel_size):
+            i_kernel = _get_indices(j, kernel_shape)
+            t_kernel = tuple(i_kernel)
+
+            i_img = i_res * strides - new_pads[:, 0] + i_kernel * dilations
+            t_img = tuple(i_img)
+            if _is_out(t_img, data.shape):
+                res[t_res + t_kernel] = 0
+            else:
+                res[t_res + t_kernel] = data[tuple(t_img)]
+    return res
+
+
+def im2col(
+    img: np.ndarray,
+    kernel_shape: Tuple[int, ...],
+    dilations: Sequence[int],
+    pads: Sequence[int],
+    strides: Sequence[int],
+) -> np.ndarray:
+    res = None
+    for n in range(img.shape[0]):
+        for c in range(img.shape[1]):
+            out = im2col_naive_implementation(
+                img[n, c, ...], kernel_shape, dilations, pads, strides
+            )
+            if res is None:
+                new_shape = img.shape[:2] + out.shape
+                res = np.empty(new_shape, dtype=img.dtype)
+            res[n, c, ...] = out
+    new_shape = res.shape[: -len(kernel_shape)] + (-1,)  # type: ignore
+    return res.reshape(new_shape)  # type: ignore
+
+
 class TestReferenceEvaluator(unittest.TestCase):
     m2_def = """
         <
@@ -206,7 +280,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         try:
             check_model(onnx_model)
         except Exception as e:
-            raise AssertionError(f"checker fails for\n{str(onnx_model)}") from e
+            raise AssertionError(f"checker fails for\n{onnx_model}") from e
         return onnx_model, f
 
     def test_reference_evaluator_exceptions(self):
@@ -1105,9 +1179,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
-        with self.assertRaises(ValueError):
-            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha, InvAlpha])
-        sess = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        sess = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha, InvAlpha])
         got = sess.run(None, {"X": x})[0]
         expected = 1 / (x + 0.5)
         assert_allclose(expected, got)
@@ -1354,7 +1426,12 @@ class TestReferenceEvaluator(unittest.TestCase):
         sess1 = run_ort_inference(onnx_model)
         if sess1 is None:
             return
-        sess2 = ReferenceEvaluator(onnx_model)
+        sess2 = ReferenceEvaluator(onnx_model, optimized=False)
+        self.assertIsInstance(sess2.rt_nodes_[0], Conv)
+        sess3 = ReferenceEvaluator(onnx_model, new_ops=[ConvOptimized], optimized=False)
+        self.assertIsInstance(sess3.rt_nodes_[0], ConvOptimized)
+        sess4 = ReferenceEvaluator(onnx_model, optimized=True)
+        self.assertIsInstance(sess4.rt_nodes_[0], ConvOptimized)
 
         sH, sW = 5, 6
         for i in range(sH):
@@ -1368,6 +1445,10 @@ class TestReferenceEvaluator(unittest.TestCase):
                 expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
                 got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
                 assert_allclose(expected, got)
+                got3 = sess3.run(None, {"X": X, "W": W, "B": B})[0]
+                assert_allclose(expected, got3)
+                got4 = sess4.run(None, {"X": X, "W": W, "B": B})[0]
+                assert_allclose(expected, got4)
 
     @skip_if_no_onnxruntime
     def test_qlinearconv(self):
@@ -1518,13 +1599,9 @@ class TestReferenceEvaluator(unittest.TestCase):
             domain="experimental",
         )
         node_flat = make_node("Flatten", ["W"], ["wflat"])
-        node_axes = make_node(
-            "Constant", [], ["axes"], value=from_array(np.array([0], dtype=np.int64))
-        )
-        node_qu = make_node("Squeeze", ["wflat", "axes"], ["wsqu"])
-        node_gem = make_node("MatMul", ["xim", "wsqu"], ["Y2"])
+        node_gem = make_node("MatMul", ["wflat", "xim"], ["Y2"])
         graph = make_graph(
-            [node, node_shape, node_im, node_axes, node_flat, node_qu, node_gem],
+            [node, node_shape, node_im, node_flat, node_gem],
             "g",
             [X, W],
             [Y1, Y2],
@@ -1562,9 +1639,9 @@ class TestReferenceEvaluator(unittest.TestCase):
                 got = sess.run(None, {"X": X, "W": W})
                 if sess_conv is not None:
                     ort_res = sess_conv.run(None, {"X": X, "W": W})[0]
-                    assert_allclose(got[1], ort_res)
+                    assert_allclose(got[1].ravel(), ort_res.ravel())
                 try:
-                    assert_allclose(got[0], got[1])
+                    assert_allclose(got[0].ravel(), got[1].ravel())
                 except AssertionError as e:
                     raise AssertionError(
                         f"Discrepancies: pads={pads}, dilations={dilations}, strides={strides}, "
@@ -1595,11 +1672,6 @@ class TestReferenceEvaluator(unittest.TestCase):
     def test_im2col_3x3_strides(self):
         self.common_test_im2col(
             (3, 3), pads=[0, 1, 1, 1], strides=[1, 2], dilations=[1, 1]
-        )
-
-    def test_im2col_3x3_dilations(self):
-        self.common_test_im2col(
-            (3, 3), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 2]
         )
 
     def test_im2col_5x5(self):
@@ -2003,6 +2075,30 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = np.array([[1.0, 1.1, 3.0, 4.0, 5.0]], dtype=np.float32)
         assert_allclose(expected, got1[0])
 
+    def test_scatternd(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Ind = make_tensor_value_info("I", TensorProto.INT64, [None, None])
+        U = make_tensor_value_info("U", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+
+        node = make_node(
+            "ScatterND",
+            ["X", "I", "U"],
+            ["Y"],
+        )
+        graph = make_graph([node], "g", [X, Ind, U], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        feeds = {
+            "X": np.array([[1.0, 2.0]], dtype=np.float32),
+            "I": np.array([[0, 0]]),
+            "U": np.array([3.0], dtype=np.float32),
+        }
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        expected = np.array([[3.0, 2.0]], dtype=np.float32)
+        assert_allclose(expected, got1[0])
+
     def test_col2im_impl(self):
         def get_im2col_indices(
             x_shape, field_height, field_width, padding=None, stride=1
@@ -2270,7 +2366,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             "signal": np.arange(128).reshape((1, 128, 1)).astype(np.float32),
             "frame_step": np.array(8, dtype=np.int64),
             "window": 0.5
-            + 0.5 * np.cos(2 * 3.1415 * np.arange(0, 16, 1, dtype=np.float32) / 16),
+            + 0.5 * np.cos(2 * np.pi * np.arange(0, 16, 1, dtype=np.float32) / 16),
             "frame_length": np.array(16, dtype=np.int64),
         }
 
@@ -3037,10 +3133,356 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
         got = ref.run(None, {"X": data})
-        expected = [list(data[:, :, i] for i in range(data.shape[2]))]
+        expected = [[data[:, :, i] for i in range(data.shape[2])]]
         self.assertEqual(len(expected[0]), len(got[0]))
         for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
+
+    def test_cast_float8(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        F1 = make_tensor_value_info("F1", TensorProto.FLOAT, [None])
+        F2 = make_tensor_value_info("F2", TensorProto.FLOAT, [None])
+        F3 = make_tensor_value_info("F3", TensorProto.FLOAT, [None])
+        F4 = make_tensor_value_info("F4", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["f81"], to=TensorProto.FLOAT8E4M3FN),
+                    make_node("Cast", ["X"], ["f82"], to=TensorProto.FLOAT8E5M2),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["C1"],
+                        value=make_tensor(
+                            "C1", TensorProto.FLOAT8E4M3FN, [5], [0, 1, 2, 5e-2, 200]
+                        ),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["C2"],
+                        value=make_tensor(
+                            "C2", TensorProto.FLOAT8E5M2, [5], [0, 1, 2, 5e-2, 200]
+                        ),
+                    ),
+                    make_node("Cast", ["f81"], ["F1"], to=TensorProto.FLOAT),
+                    make_node("Cast", ["f82"], ["F2"], to=TensorProto.FLOAT),
+                    make_node("Cast", ["C1"], ["F3"], to=TensorProto.FLOAT),
+                    make_node("Cast", ["C2"], ["F4"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [F1, F2, F3, F4],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
+        expected1 = np.array(
+            [float8e4m3_to_float32(float32_to_float8e4m3(x)) for x in data]
+        )
+        expected2 = np.array(
+            [float8e5m2_to_float32(float32_to_float8e5m2(x)) for x in data]
+        )
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected1)
+        assert_allclose(got[1], expected2)
+        assert_allclose(got[2], expected1)
+        assert_allclose(got[3], expected2)
+
+    def test_cast_like_float8(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["f8"], to=TensorProto.FLOAT8E4M3FNUZ),
+                    make_node("CastLike", ["X", "f8"], ["f32"], saturate=0),
+                    make_node("Cast", ["f32"], ["Y"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        data = np.array([0, 1e7], dtype=np.float32)
+        expected = np.array(
+            [
+                float8e4m3_to_float32(
+                    float32_to_float8e4m3(x, uz=True, saturate=False), uz=True
+                )
+                for x in data
+            ]
+        )
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected)
+
+        # Forces ReferenceEvaluator to not use the associated implementation for CastLike
+        # but its implementation as a function instead.
+        class CastLike(OpRunExpand):
+            op_domain = ""
+
+        ref = ReferenceEvaluator(model, new_ops=[CastLike])
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected)
+
+    def test_cast_float8_output(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        F1 = make_tensor_value_info("F1", TensorProto.FLOAT8E4M3FN, [None])
+        F2 = make_tensor_value_info("F2", TensorProto.FLOAT8E5M2, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["F1"], to=TensorProto.FLOAT8E4M3FN),
+                    make_node("Cast", ["X"], ["F2"], to=TensorProto.FLOAT8E5M2),
+                ],
+                "g",
+                [X],
+                [F1, F2],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
+        expected1 = np.array([float32_to_float8e4m3(x) for x in data])
+        expected2 = np.array([float32_to_float8e5m2(x) for x in data])
+        got = ref.run(None, {"X": data})
+        self.assertEqual(expected1.tolist(), got[0].tolist())
+        self.assertEqual(expected2.tolist(), got[1].tolist())
+
+    def test_float8_4_types(self):
+        x = np.array(
+            [
+                0.4068359375,
+                352,
+                416,
+                336,
+                304,
+                272,
+                -248,
+                -100,
+                1e-4,
+                1e-2,
+                416,
+                432,
+                1e5,
+                np.inf,
+                -np.inf,
+                np.nan,
+            ],
+            dtype=np.float32,
+        )
+        expected = {
+            TensorProto.FLOAT8E4M3FN: np.array(
+                [
+                    0.40625,
+                    352.0,
+                    416.0,
+                    320.0,
+                    320.0,
+                    256.0,
+                    -256.0,
+                    -96.0,
+                    0.0,
+                    0.009765625,
+                    416.0,
+                    448.0,
+                    448.0,
+                    448.0,
+                    -448.0,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+            TensorProto.FLOAT8E4M3FNUZ: np.array(
+                [
+                    0.40625,
+                    240.0,
+                    240.0,
+                    240.0,
+                    240.0,
+                    240.0,
+                    -240.0,
+                    -104.0,
+                    0.0,
+                    0.009765625,
+                    240.0,
+                    240.0,
+                    240.0,
+                    240.0,
+                    -240.0,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+            TensorProto.FLOAT8E5M2: np.array(
+                [
+                    0.4375,
+                    384.0,
+                    384.0,
+                    320.0,
+                    320.0,
+                    256.0,
+                    -256.0,
+                    -96.0,
+                    0.0001068115234375,
+                    0.009765625,
+                    384.0,
+                    448.0,
+                    57344.0,
+                    57344.0,
+                    -57344.0,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+            TensorProto.FLOAT8E5M2FNUZ: np.array(
+                [
+                    4.3750000e-01,
+                    3.8400000e02,
+                    4.4800000e02,
+                    3.2000000e02,
+                    3.2000000e02,
+                    2.5600000e02,
+                    -2.5600000e02,
+                    -9.6000000e01,
+                    1.0681152e-04,
+                    9.7656250e-03,
+                    4.4800000e02,
+                    4.4800000e02,
+                    5.7344000e04,
+                    5.7344000e04,
+                    -5.7344000e04,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+        }
+
+        def model_cast_cast(to):
+            X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+            Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+            node1 = make_node("Cast", ["X"], ["T"], to=to)
+            node2 = make_node("Cast", ["T"], ["Y"], to=TensorProto.FLOAT)
+            graph = make_graph([node1, node2], "lr", [X], [Y])
+            onnx_model = make_model(graph)
+            check_model(onnx_model)
+            return onnx_model
+
+        for to, expect in expected.items():
+            with self.subTest(to=to):
+                onnx_model = model_cast_cast(to)
+                ref = ReferenceEvaluator(onnx_model)
+                y = ref.run(None, {"X": x})[0]
+                assert_allclose(expect, y)
+                self.assertEqual(expect.shape, y.shape)
+                self.assertEqual(expect.dtype, y.dtype)
+
+    def test_cast_bfloat16_output(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.BFLOAT16, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Y"], to=TensorProto.BFLOAT16),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected1 = np.array([float32_to_bfloat16(x) for x in data])
+        got = ref.run(None, {"X": data})
+        self.assertEqual(expected1.tolist(), got[0].tolist())
+
+    def test_quantize_linear_e4m3(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "Constant",
+                        [],
+                        ["scale"],
+                        value=make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["zero"],
+                        value=make_tensor("zero", TensorProto.FLOAT8E4M3FN, [1], [0.0]),
+                    ),
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0, 1, 2, 896, 192], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_quantize_linear_e4m3_initializer(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    make_tensor("zero", TensorProto.FLOAT8E4M3FN, [1], [0.0]),
+                ],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0, 1, 2, 896, 192], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_quantize_linear_e5m2(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "Constant",
+                        [],
+                        ["scale"],
+                        value=make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["zero"],
+                        value=make_tensor("zero", TensorProto.FLOAT8E5M2, [1], [0.0]),
+                    ),
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0, 1, 2, 98304, 192], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
 
     def test_lrn(self):
         def _expected(x, alpha, beta, bias, size):
@@ -3077,6 +3519,155 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = _expected(data, alpha, beta, bias, size)
         self.assertEqual(len(expected), len(got[0]))
 
+    def test_conv_im2col_1d(self):
+        feeds = {
+            "X": np.arange(1 * 1 * 11).reshape((1, 1, 11)).astype(np.float32) + 1,
+            "W": np.arange(3).reshape((1, 1, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1],
+            kernel_shape=[3],
+            pads=[1, 1],
+            strides=[1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_1d_pad0(self):
+        feeds = {
+            "X": np.arange(2 * 4 * 3).reshape((2, 4, -1)).astype(np.float32) + 1,
+            "W": np.arange(2 * 4 * 3).reshape((-1, 4, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1],
+            kernel_shape=[3],
+            pads=[0, 0],
+            strides=[1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d(self):
+        feeds = {
+            "X": np.arange(1 * 1 * 11 * 23).reshape((1, 1, 11, 23)).astype(np.float32)
+            + 1,
+            "W": np.arange(9).reshape((1, 1, 3, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[1, 1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_pad0(self):
+        feeds = {
+            "X": np.arange(2 * 3 * 5 * 2).reshape((2, 3, 5, -1)).astype(np.float32) + 1,
+            "W": 2
+            ** np.arange(3 * 3 * 1 * 2).reshape((-1, 3, 1, 2)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[1, 2],
+            pads=[0, 0, 0, 0],
+            strides=[1, 1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_autopad(self):
+        feeds = {
+            "X": np.arange(5 * 5).reshape((1, 1, 5, -1)).astype(np.float32) + 1,
+            "W": 2 ** np.arange(3 * 3).reshape((1, 1, 3, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            strides=[2, 2],
+            pads=None,
+            auto_pad="SAME_LOWER",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_3d(self):
+        feeds = {
+            "X": np.arange(1 * 1 * 11 * 5 * 13)
+            .reshape((1, 1, 11, 5, 13))
+            .astype(np.float32)
+            + 1,
+            "W": np.arange(27).reshape((1, 1, 3, 3, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1, 1],
+            kernel_shape=[3, 3, 3],
+            pads=[1, 1, 1, 1, 1, 1],
+            strides=[1, 1, 1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_strides(self):
+        feeds = {
+            "X": np.arange(1 * 3 * 6 * 6).reshape((1, 3, 6, 6)).astype(np.float32) + 1,
+            "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
+            "B": np.zeros((2,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_dilations(self):
+        feeds = {
+            "X": np.arange(1 * 3 * 6 * 6).reshape((1, 3, 6, 6)).astype(np.float32) + 1,
+            "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
+            "B": np.zeros((2,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[2, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
     @parameterized.parameterized.expand(
         [
             ("ReduceSum",),
@@ -3098,7 +3689,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"X": data})
         r = got[0]
         self.assertIsInstance(r, np.ndarray)
-        self.assertEqual(r.shape, tuple())
+        self.assertEqual(r.shape, ())
 
     @parameterized.parameterized.expand([(1,), (2,), (3,), (4,), (5,), (6,)])
     def test_pad(self, dim):

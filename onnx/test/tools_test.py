@@ -76,7 +76,7 @@ class TestToolsFunctions(unittest.TestCase):
         oinf1 = ReferenceEvaluator(model_def)
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def)
-        node_types = set(n.op_type for n in repl.graph.node)
+        node_types = {n.op_type for n in repl.graph.node}
         self.assertIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
@@ -103,7 +103,7 @@ class TestToolsFunctions(unittest.TestCase):
         oinf1 = ReferenceEvaluator(model_def)
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def)
-        node_types = set(n.op_type for n in repl.graph.node)
+        node_types = {n.op_type for n in repl.graph.node}
         self.assertIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
@@ -130,7 +130,7 @@ class TestToolsFunctions(unittest.TestCase):
         oinf1 = ReferenceEvaluator(model_def)
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def, use_range=True)
-        node_types = set(n.op_type for n in repl.graph.node)
+        node_types = {n.op_type for n in repl.graph.node}
         self.assertIn("Range", node_types)
         self.assertNotIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)
@@ -173,7 +173,7 @@ class TestToolsFunctions(unittest.TestCase):
         oinf1 = ReferenceEvaluator(model_def)
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def)
-        node_types = set(n.op_type for n in repl.functions[0].node)
+        node_types = {n.op_type for n in repl.functions[0].node}
         self.assertIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
@@ -217,7 +217,7 @@ class TestToolsFunctions(unittest.TestCase):
         oinf1 = ReferenceEvaluator(model_def)
         y1 = oinf1.run(None, {"X": x})[0]
         repl = replace_initializer_by_constant_of_shape(model_def, use_range=True)
-        node_types = set(n.op_type for n in repl.functions[0].node)
+        node_types = {n.op_type for n in repl.functions[0].node}
         self.assertIn("Range", node_types)
         self.assertNotIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)

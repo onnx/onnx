@@ -222,10 +222,15 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  ```
  if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
- `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+ `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
  ```
  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+ ```
+ or when ceil_mode is disabled:
+ ```
+ VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
+ SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
  ```
  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
  ```
@@ -313,8 +318,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "AveragePool",
             "average",
             "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
-            false,
-            false))
+            true, /* use_dilation: dilations attribute has been added in opset 19. */
+            false /* supports8bit: does not support 8bit. */))
         .Attr(
             "dilations",
             "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
@@ -2012,10 +2017,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Constrain input and output to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output to all tensor types.")
         .Attr(
             "axis",
             "Indicate up to which input dimensions "
@@ -2536,7 +2538,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_with_bfloat(),
+            OpSchema::all_tensor_types_ir4(),
             "Constrain input and output types to all numeric tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { col2imShapeInference(ctx); }));
 

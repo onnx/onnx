@@ -19,13 +19,11 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        # TODO: Freeze as 3.10.5 for now and use the latest 3.10 after future numpy upgrade in ONNX;
-        # related issue: https://github.com/actions/setup-python/issues/481
-        python-version: ['3.7', '3.8', '3.9', '3.10.5', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11']
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
          path: ./onnx
     - name: Checkout ONNX submodules
@@ -37,7 +35,7 @@ jobs:
          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -68,7 +66,7 @@ jobs:
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
         if ('${{ github.event_name }}' -eq 'schedule') {
-          echo "Build weekly TestPyPI package"
+          echo "Build weekly PyPI package"
           python setup.py bdist_wheel --weekly_build
         } else {
           python setup.py bdist_wheel
@@ -85,12 +83,10 @@ jobs:
         name: wheels
         path: ./onnx/dist
 
-    - name: Upload onnx-weekly wheel to TestPyPI/PyPI weekly
+    - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-        # TODO: stop uploading to TestPyPI after future ONNX 1.14
-        twine upload --verbose onnx/dist/*.whl --repository-url https://test.pypi.org/legacy/ -u ${{ secrets.TESTPYPI_USERNAME }} -p ${{ secrets.TESTPYPI_PASSWORD }}
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
@@ -99,16 +95,17 @@ jobs:
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
-    # TODO: Remove one if condition after using consistent NumPy version for all Python versions
-    - name: Verify ONNX with the minimum supported numpy  (from requirements.txt)
+    # TODO: Remove if conditions in all release CIs after the minimum supported numpy is upgraded to 1.23.2 or higher
+    - name: Verify ONNX with the minimum supported numpy
       if: ${{ always() }}
       run: |
         cd onnx
-        if ('${{ matrix.python-version }}' -eq '3.11') {
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.23.2
+        if ('${{ matrix.python-version }}' -eq '3.8' -Or '${{ matrix.python-version }}' -eq '3.9') {
+          $minimum_numpy_version="1.16.6"
         } else {
-          python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.16.6
+          $minimum_numpy_version="1.23.2"
         }
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$minimum_numpy_version
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
@@ -129,12 +126,11 @@ jobs:
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.11'
       run: |
         cd onnx
         python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime
-        $Env:ORT_MAX_IR_SUPPORTED_VERSION=8
+        $Env:ORT_MAX_IR_SUPPORTED_VERSION=9
         $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
         pytest

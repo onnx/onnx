@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <memory>
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 
 namespace ONNX_NAMESPACE {

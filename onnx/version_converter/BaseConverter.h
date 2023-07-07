@@ -10,6 +10,10 @@
 
 #include <stdlib.h>
 #include <iostream>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"

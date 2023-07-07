@@ -5,14 +5,13 @@
 // Experimental language syntax and parser for ONNX. Please note that the syntax as formalized
 // by this parser is preliminary and may change.
 
+#include "onnx/defs/parser.h"
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
-
+#include <vector>
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
-
-#include "onnx/defs/parser.h"
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
 #define PARSE(...) CHECK_PARSER_STATUS(Parse(__VA_ARGS__))
@@ -344,9 +343,9 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   // Parse the actual values:
 
   int64_t intval;
-  uint64_t uintval;
-  float floatval;
-  double dblval;
+  uint64_t uintval = 0;
+  float floatval = 0.0;
+  double dblval = 0.0;
   std::string strval;
   MATCH('{');
   if (!Matches('}')) {

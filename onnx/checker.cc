@@ -12,8 +12,12 @@
 #include "onnx/string_utils.h"
 
 #include <fstream>
+#include <functional>
 #include <iterator>
+#include <set>
+#include <string>
 #include <unordered_set>
+#include <vector>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -151,8 +155,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "' points outside the directory");
         }
         std::wstring data_path = path_join(utf8str_to_wstring(ctx.get_model_dir()), relative_path);
-        struct _stat buff;
-        if (_wstat(data_path.c_str(), &buff) != 0) {
+        struct _stat64 buff;
+        if (_wstat64(data_path.c_str(), &buff) != 0) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -183,9 +187,14 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "' points outside the directory");
         }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
-        // use stat to check whether the file exists
-        struct stat buffer;
+        // use stat64 to check whether the file exists
+#ifdef __APPLE__
+        struct stat buffer; // APPLE does not have stat64
         if (stat((data_path).c_str(), &buffer) != 0) {
+#else
+        struct stat64 buffer; // All POSIX except APPLE have stat64
+        if (stat64((data_path).c_str(), &buffer) != 0) {
+#endif
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -257,6 +266,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
       case TensorProto::BFLOAT16:
+      case TensorProto::FLOAT8E4M3FN:
+      case TensorProto::FLOAT8E4M3FNUZ:
+      case TensorProto::FLOAT8E5M2:
+      case TensorProto::FLOAT8E5M2FNUZ:
         check_field(int32_data);
         break;
 
@@ -938,7 +951,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
     // check whether the opset version imported for a domain by function and model are
     // compatible
-    check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
+    if (!ctx_copy.skip_opset_compatibility_check())
+      check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
     if (check_is_experimental_op(node)) {
       used_experimental_ops.insert(node.op_type());
     }
@@ -967,7 +981,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
     fail_check("The model does not have an ir_version set properly.");
   }
   if (model.ir_version() > IR_VERSION) {
-    fail_check("Your model ir_version is higher than the checker's.");
+    fail_check("Your model ir_version ", model.ir_version(), " is higher than the checker's (", IR_VERSION, ").");
   }
   if (model.metadata_props_size() > 1) {
     std::unordered_set<std::string> keys;
@@ -1005,7 +1019,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
   }
 }
 
-void check_model(const std::string& model_path, bool full_check) {
+void check_model(const std::string& model_path, bool full_check, bool skip_opset_compatibility_check) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -1016,6 +1030,7 @@ void check_model(const std::string& model_path, bool full_check) {
     model_dir = model_path.substr(0, pos + 1);
   }
   ctx.set_model_dir(model_dir);
+  ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   check_model(model, ctx);
 
   if (full_check) {
@@ -1024,8 +1039,9 @@ void check_model(const std::string& model_path, bool full_check) {
   }
 }
 
-void check_model(const ModelProto& model, bool full_check) {
+void check_model(const ModelProto& model, bool full_check, bool skip_opset_compatibility_check) {
   CheckerContext ctx;
+  ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   check_model(model, ctx);
   if (full_check) {
     ShapeInferenceOptions options{true, 1, false};

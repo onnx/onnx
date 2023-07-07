@@ -4,18 +4,20 @@
 
 #include "onnx/defs/reduction/utils.h"
 #include <algorithm>
+#include <string>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit) {
   if (supports8bit) {
-    auto data_types = OpSchema::numeric_types_for_math_reduction_with_bfloat();
+    auto data_types = OpSchema::numeric_types_for_math_reduction_ir4();
     data_types.push_back("tensor(uint8)");
     data_types.push_back("tensor(int8)");
 
     return data_types;
   }
 
-  return OpSchema::numeric_types_for_math_reduction_with_bfloat();
+  return OpSchema::numeric_types_for_math_reduction_ir4();
 }
 
 std::function<void(OpSchema&)> ReduceDocGenerator_opset13_18(
