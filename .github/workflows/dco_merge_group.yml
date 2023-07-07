@@ -1,9 +1,9 @@
-name: dco
+name: DCO
 on:
   merge_group:
 
 jobs:
-  dco:
+  DCO:
     runs-on: ubuntu-latest
     if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
