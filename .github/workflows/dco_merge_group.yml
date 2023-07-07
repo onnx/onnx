@@ -1,4 +1,4 @@
-name: dco
+name: DCO
 on:
   merge_group:
 
