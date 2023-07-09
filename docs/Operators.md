@@ -36,7 +36,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
 |<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
-|<a href="#ConstantOfShape">ConstantOfShape</a>|<a href="Changelog.md#ConstantOfShape-9">9</a>|
+|<a href="#ConstantOfShape">ConstantOfShape</a>|<a href="Changelog.md#ConstantOfShape-20">20</a>, <a href="Changelog.md#ConstantOfShape-9">9</a>|
 |<a href="#Conv">Conv</a>|<a href="Changelog.md#Conv-11">11</a>, <a href="Changelog.md#Conv-1">1</a>|
 |<a href="#ConvInteger">ConvInteger</a>|<a href="Changelog.md#ConvInteger-10">10</a>|
 |<a href="#ConvTranspose">ConvTranspose</a>|<a href="Changelog.md#ConvTranspose-11">11</a>, <a href="Changelog.md#ConvTranspose-1">1</a>|
@@ -497,19 +497,19 @@ expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
   [r20, r21, r22, t2]   [z]   [z']
   [0,   0,   0,   1 ]   [1]   [1 ]
   ```
-  where (x, y, z) is the position in the original space, (x', y', z') is the position in the output space.
-  The last row is always [0, 0, 0, 1] and is not stored in the affine matrix. Therefore we have `theta` of shape (N, 2, 3) for 2D or (N, 3, 4) for 3D.
+  where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
+  The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
 
-  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from -1 to 1.
+  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
   The output `grid` contains positions in the output space.
 
-  When `align_corners`=1, consider -1 and 1 to refer to the centers of the corner pixels (mark v in illustration).
+  When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
   ```
   v            v            v            v
   |-------------------|------------------|
   -1                  0                  1
   ```
-  When `align_corners`=0, consider -1 and 1 to refer to the outer edge of the corner pixels.
+  When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
   ```
       v        v         v         v
   |------------------|-------------------|
@@ -559,19 +559,48 @@ This version of the operator has been available since version 20 of the default 
 <summary>2d</summary>
 
 ```python
-angle = np.array([np.pi / 4, np.pi / 3])
-offset_x = np.array([5.0, 2.5])
-offset_y = np.array([-3.3, 1.1])
-shear_x = np.array([-0.5, 0.5])
-shear_y = np.array([0.3, -0.3])
-scale_x = np.array([2.2, 1.1])
-scale_y = np.array([3.1, 0.9])
-theta_2d = create_affine_matrix_2d(
-    angle, offset_x, offset_y, shear_x, shear_y, scale_x, scale_y
-)
-N, C, W, H = len(angle), 3, 5, 6
+theta_2d = create_theta_2d()
+N, C, W, H = len(theta_2d), 3, 5, 6
+size_input = np.array([N, C, W, H], dtype=np.int64)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    theta = onnx.helper.make_tensor_value_info("theta", TensorProto.FLOAT, [2, 3])
+    size = onnx.helper.make_tensor_value_info("size", TensorProto.INT64, [4])
+    grid = onnx.helper.make_tensor_value_info("grid", TensorProto.FLOAT, [None, None, None, None])
+
+    graph = onnx.helper.make_graph([node], "g", [theta, size], [grid])
+    opset = 20
+    onnx_model = onnx.helper.make_model(graph, opset_imports=[onnx.helper.make_opsetid("", opset)])
+    ref = ReferenceEvaluator(onnx_model)
+    expected_grid = ref.run(None, {"theta": theta_2d, "size": size_input})[0]
+    test_name = "test_affine_grid_2d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_2d, size_input],
+        outputs=[expected_grid],
+        name=test_name,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>2d_no_reference_evaluator</summary>
+
+```python
+theta_2d = create_theta_2d()
+N, C, W, H = len(theta_2d), 3, 5, 6
 data_size = (W, H)
-for align_corners in [0, 1]:
+for align_corners in (0, 1):
     node = onnx.helper.make_node(
         "AffineGrid",
         inputs=["theta", "size"],
@@ -582,7 +611,7 @@ for align_corners in [0, 1]:
     original_grid = construct_original_grid(data_size, align_corners)
     grid = apply_affine_transform(theta_2d, original_grid)
 
-    test_name = "test_affine_grid_2d"
+    test_name = "test_affine_grid_2d_no_reference_evaluator"
     if align_corners == 1:
         test_name += "_align_corners"
     expect(
@@ -600,34 +629,48 @@ for align_corners in [0, 1]:
 <summary>3d</summary>
 
 ```python
-angle1 = np.array([np.pi / 4, np.pi / 3])
-angle2 = np.array([np.pi / 6, np.pi / 2])
-offset_x = np.array([5.0, 2.5])
-offset_y = np.array([-3.3, 1.1])
-offset_z = np.array([-1.1, 2.2])
-shear_x = np.array([-0.5, 0.5])
-shear_y = np.array([0.3, -0.3])
-shear_z = np.array([0.7, -0.2])
-scale_x = np.array([2.2, 1.1])
-scale_y = np.array([3.1, 0.9])
-scale_z = np.array([0.5, 1.5])
+theta_3d = create_theta_3d()
+N, C, D, W, H = len(theta_3d), 3, 4, 5, 6
+size_input = np.array([N, C, D, W, H], dtype=np.int64)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
 
-theta_3d = create_affine_matrix_3d(
-    angle1,
-    angle2,
-    offset_x,
-    offset_y,
-    offset_z,
-    shear_x,
-    shear_y,
-    shear_z,
-    scale_x,
-    scale_y,
-    scale_z,
-)
-N, C, D, W, H = len(angle1), 3, 4, 5, 6
+    theta = onnx.helper.make_tensor_value_info("theta", TensorProto.FLOAT, [3, 4])
+    size = onnx.helper.make_tensor_value_info("size", TensorProto.INT64, [5])
+    grid = onnx.helper.make_tensor_value_info("grid", TensorProto.FLOAT, [None, None, None, None, None])
+
+    graph = onnx.helper.make_graph([node], "g", [theta, size], [grid])
+    opset = 20
+    onnx_model = onnx.helper.make_model(graph, opset_imports=[onnx.helper.make_opsetid("", opset)])
+    ref = ReferenceEvaluator(onnx_model)
+    expected_grid = ref.run(None, {"theta": theta_3d, "size": size_input})[0]
+    test_name = "test_affine_grid_3d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_3d, size_input],
+        outputs=[expected_grid],
+        name=test_name,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>3d_no_reference_evaluator</summary>
+
+```python
+theta_3d = create_theta_3d()
+N, C, D, W, H = len(theta_3d), 3, 4, 5, 6
 data_size = (D, W, H)
-for align_corners in [0, 1]:
+for align_corners in (0, 1):
     node = onnx.helper.make_node(
         "AffineGrid",
         inputs=["theta", "size"],
@@ -638,7 +681,7 @@ for align_corners in [0, 1]:
     original_grid = construct_original_grid(data_size, align_corners)
     grid = apply_affine_transform(theta_3d, original_grid)
 
-    test_name = "test_affine_grid_3d"
+    test_name = "test_affine_grid_3d_no_reference_evaluator"
     if align_corners == 1:
         test_name += "_align_corners"
     expect(
@@ -3179,8 +3222,8 @@ a0 = 0.42
 a1 = -0.5
 a2 = 0.08
 y = a0
-y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
-y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
 
 # Test symmetric window
@@ -3193,10 +3236,10 @@ a1 = -0.5
 a2 = 0.08
 y = a0
 y += a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 y += a2 * np.cos(
-    4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 ```
@@ -5254,7 +5297,9 @@ expect(node, inputs=[], outputs=[values], name="test_constant")
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ConstantOfShape-9">9</a>
 
 #### Attributes
 
@@ -5282,7 +5327,7 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain input types.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain output types to be numerics.</dd>
 </dl>
 
@@ -7126,7 +7171,7 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'y_scale' determines the output type.</dd>
+<dd>'x_scale' determines the output type.</dd>
 </dl>
 
 
@@ -11039,9 +11084,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
 
 # Test symmetric window
@@ -11052,7 +11095,7 @@ size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
 ```
@@ -11116,9 +11159,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow")
 
 # Test symmetric window
@@ -11129,7 +11170,7 @@ size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
 ```
@@ -18536,7 +18577,7 @@ expect(
 <summary>reflection_edge_and_wrap_pad</summary>
 
 ```python
-for mode in ["edge", "reflect", "wrap"]:
+for mode in ("edge", "reflect", "wrap"):
     node = onnx.helper.make_node(
         "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
     )
@@ -25073,7 +25114,7 @@ node = onnx.helper.make_node(
 a0 = 0.5
 a1 = 0.5
 window = a0 + a1 * np.cos(
-    2 * 3.1415 * np.arange(0, length, 1, dtype=np.float32) / length
+    2 * np.pi * np.arange(0, length, 1, dtype=np.float32) / length
 )
 nstfts = 1 + (signal.shape[1] - window.shape[0]) // step
 

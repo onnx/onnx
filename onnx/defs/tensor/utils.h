@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <cmath>
+#include <vector>
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
-
-#include <cmath>
 
 namespace ONNX_NAMESPACE {
 // The below is called by ops after opset 11, inclusively.

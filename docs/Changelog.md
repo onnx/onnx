@@ -22943,7 +22943,7 @@ This version of the operator has been available since version 19 of the default 
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'y_scale' determines the output type.</dd>
+<dd>'x_scale' determines the output type.</dd>
 </dl>
 
 ### <a name="Equal-19"></a>**Equal-19**</a>
@@ -23892,19 +23892,19 @@ This version of the operator has been available since version 19 of the default 
   [r20, r21, r22, t2]   [z]   [z']
   [0,   0,   0,   1 ]   [1]   [1 ]
   ```
-  where (x, y, z) is the position in the original space, (x', y', z') is the position in the output space.
-  The last row is always [0, 0, 0, 1] and is not stored in the affine matrix. Therefore we have `theta` of shape (N, 2, 3) for 2D or (N, 3, 4) for 3D.
+  where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
+  The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
 
-  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from -1 to 1.
+  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
   The output `grid` contains positions in the output space.
 
-  When `align_corners`=1, consider -1 and 1 to refer to the centers of the corner pixels (mark v in illustration).
+  When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
   ```
   v            v            v            v
   |-------------------|------------------|
   -1                  0                  1
   ```
-  When `align_corners`=0, consider -1 and 1 to refer to the outer edge of the corner pixels.
+  When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
   ```
       v        v         v         v
   |------------------|-------------------|
@@ -23945,6 +23945,44 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain grid types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain size's type to int64 tensors.</dd>
+</dl>
+
+### <a name="ConstantOfShape-20"></a>**ConstantOfShape-20**</a>
+
+  Generate a tensor with given value and shape.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>value</tt> : tensor</dt>
+<dd>(Optional) The value of the output elements.Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar. All values must be >= 0.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor of shape specified by 'input'.If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'.If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype defaults to float32.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain input types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain output types to be numerics.</dd>
 </dl>
 
 ### <a name="GridSample-20"></a>**GridSample-20**</a>
