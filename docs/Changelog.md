@@ -23881,6 +23881,44 @@ This version of the operator has been available since version 19 of the default 
 </dl>
 
 ## Version 20 of the default ONNX operator set
+### <a name="ConstantOfShape-20"></a>**ConstantOfShape-20**</a>
+
+  Generate a tensor with given value and shape.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>value</tt> : tensor</dt>
+<dd>(Optional) The value of the output elements.Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar. All values must be >= 0.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor of shape specified by 'input'.If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'.If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype defaults to float32.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain input types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain output types to be numerics.</dd>
+</dl>
+
 ### <a name="GridSample-20"></a>**GridSample-20**</a>
 
   Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.

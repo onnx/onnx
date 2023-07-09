@@ -3,6 +3,7 @@
  */
 
 #include "onnx/defs/function.h"
+#include <map>
 #include "onnx/defs/schema.h"
 #include "onnx/string_utils.h"
 

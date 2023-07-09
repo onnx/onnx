@@ -453,7 +453,7 @@ class OpRun(ABC):
                 )
             kwargs[att] = getattr(self, att)
         if self.has_subgraph:
-            if self.has_linked_attribute and len(linked_attributes) == 0:
+            if self.has_linked_attribute and not linked_attributes:
                 raise RuntimeError(
                     f"A subgraph has linked attribute but none was given to {type(self)}."
                 )
@@ -461,7 +461,7 @@ class OpRun(ABC):
         if context is not None:
             kwargs["context"] = context
         try:
-            if len(overridden_attributes) > 0:
+            if overridden_attributes:
                 res = self._run(*args, **overridden_attributes, **kwargs)
             else:
                 res = self._run(*args, **kwargs)
