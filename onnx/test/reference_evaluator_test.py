@@ -3763,6 +3763,44 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(got.dtype, np.uint16)
         assert_allclose(np.array(1, dtype=np.uint16), got)
 
+    @parameterized.parameterized.expand(
+        [
+            (
+                ["www.google.com", "www.facebook.com", "www.bbc.co.uk"],
+                r"www\.[\w.-]+\.\bcom\b",
+                [True, True, False],
+                (3,),
+            ),
+            (
+                [["Onnx", "tensorflow", "Numpy"], ["Pytorch", "Cython", "numba"]],
+                r"^[A-Z][a-z]*$",
+                [[True, False, True], [True, True, False]],
+                (2, 3),
+            ),
+            (
+                [
+                    "account@gmail.com",
+                    "account@hotmail.com",
+                    "not email",
+                    "account2@yahoo.com",
+                ],
+                r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+                [True, False, False, True],
+                (4,),
+            ),
+        ]
+    )
+    def test_regex_full_match(self, x, pattern, expected, expected_shape):
+        X = make_tensor_value_info("X", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
+        node = make_node("RegexFullMatch", inputs=["X"], outputs=["Y"], pattern=pattern)
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        result, *_ = ref.run(None, {"X": np.array(x)})
+        np.testing.assert_array_equal(result, expected)
+        self.assertEqual(result.dtype.kind, "b")
+        self.assertEqual(result.shape, expected_shape)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -8,6 +8,7 @@ wheel
 jupyter
 setuptools
 twine
+google-re2
 # Dependencies for linting. Versions match those in setup.py.
 lintrunner>=0.10.7
 lintrunner-adapters>=0.8

@@ -118,6 +118,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceMin">ReduceMin</a>|<a href="Changelog.md#ReduceMin-18">18</a>, <a href="Changelog.md#ReduceMin-13">13</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-1">1</a>|
 |<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-18">18</a>, <a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
 |<a href="#ReduceSum">ReduceSum</a>|<a href="Changelog.md#ReduceSum-13">13</a>, <a href="Changelog.md#ReduceSum-11">11</a>, <a href="Changelog.md#ReduceSum-1">1</a>|
+|<a href="#RegexFullMatch">RegexFullMatch</a>|<a href="Changelog.md#RegexFullMatch-20">20</a>|
 |<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-19">19</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
 |<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-19">19</a>, <a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
@@ -21929,6 +21930,85 @@ expect(
     outputs=[reduced],
     name="test_reduce_sum_square_negative_axes_keepdims_random",
 )
+```
+
+</details>
+
+
+### <a name="RegexFullMatch"></a><a name="regexfullmatch">**RegexFullMatch**</a>
+
+  RegexFullMatch performs a full regex match on each element of the input element. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>pattern</tt> : string</dt>
+<dd>Regex pattern to match on. This must be in the [RE2](https://github.com/google/re2/wiki/Syntax) syntax.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor with strings to match on</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Concatenated string tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>Inputs must be UTF-8 strings</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Outputs are bools and are True where there is a full regex match and False otherwise.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"www\.[\w.-]+\.\bcom\b"
+)
+
+x = np.array(["www.google.com", "www.facebook.com", "www.bbc.co.uk"]).astype(object)
+result = np.array([True, True, False])
+expect(node, inputs=[x], outputs=[result], name="test_regex_full_match_basic")
+```
+
+</details>
+
+
+<details>
+<summary>match_email_domain</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)"
+)
+
+x = np.array([["account@gmail.com", "account@hotmail.com"], ["not email", "account2@yahoo.com"]]).astype(object)
+result = np.array([[True, False], [False, True]])
+expect(node, inputs=[x], outputs=[result], name="test_regex_full_match_email_domain")
 ```
 
 </details>

@@ -175,6 +175,7 @@ from onnx.reference.ops.op_reduce_sum_square import (
     ReduceSumSquare_1,
     ReduceSumSquare_18,
 )
+from onnx.reference.ops.op_regex_full_match import RegexFullMatch
 from onnx.reference.ops.op_relu import Relu
 from onnx.reference.ops.op_reshape import Reshape_5, Reshape_14
 from onnx.reference.ops.op_resize import Resize

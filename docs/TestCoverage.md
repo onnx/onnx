@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 173/186 (93.01%, 5 generators excluded) common operators.
+Node tests have covered 174/187 (93.05%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -14735,6 +14735,44 @@ expect(
     outputs=[reduced],
     name="test_reduce_sum_square_negative_axes_keepdims_random",
 )
+```
+
+</details>
+
+
+### RegexFullMatch
+There are 2 test cases, listed as following:
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"www\.[\w.-]+\.\bcom\b"
+)
+
+x = np.array(["www.google.com", "www.facebook.com", "www.bbc.co.uk"]).astype(object)
+result = np.array([True, True, False])
+expect(node, inputs=[x], outputs=[result], name="test_regex_full_match_basic")
+```
+
+</details>
+<details>
+<summary>match_email_domain</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)"
+)
+
+x = np.array([["account@gmail.com", "account@hotmail.com"], ["not email", "account2@yahoo.com"]]).astype(object)
+result = np.array([[True, False], [False, True]])
+expect(node, inputs=[x], outputs=[result], name="test_regex_full_match_email_domain")
 ```
 
 </details>
