@@ -23999,14 +23999,14 @@ This version of the operator has been available since version 20 of the default 
 
 <dl>
 <dt><tt>X</tt> (non-differentiable) : T1</dt>
-<dd>Tensor with strings to match on</dd>
+<dd>Tensor with strings to match on.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> (non-differentiable) : T2</dt>
-<dd>Concatenated string tensor</dd>
+<dd>Tensor of bools indicating if each input string fully matches the regex pattern specified.</dd>
 </dl>
 
 #### Type Constraints

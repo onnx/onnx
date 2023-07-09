@@ -7,13 +7,21 @@ ONNX_OPERATOR_SET_SCHEMA(
     RegexFullMatch,
     20,
     OpSchema()
-        .Input(0, "X", "Tensor with strings to match on", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(0, "X", "Tensor with strings to match on.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
             "pattern",
             "Regex pattern to match on. This must be in the [RE2](https://github.com/google/re2/wiki/Syntax) syntax.",
             AttributeProto::STRING,
             false)
-        .Output(0, "Y", "Concatenated string tensor", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "Tensor of bools indicating if each input string fully matches the regex pattern specified.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .TypeConstraint("T1", {"tensor(string)"}, "Inputs must be UTF-8 strings")
         .TypeConstraint(
             "T2",
