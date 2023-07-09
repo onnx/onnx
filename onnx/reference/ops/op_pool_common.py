@@ -4,10 +4,12 @@
 
 import itertools
 import math
-import numpy as np
 from typing import Sequence, Tuple
 
+import numpy as np
+
 from onnx.reference.op_run import OpRun
+
 
 def get_pad_shape(
     auto_pad: str,
@@ -28,18 +30,24 @@ def get_pad_shape(
             )
     elif auto_pad == "VALID":
         pass
-    
+
     return pad_shape
+
 
 def get_pad_with_auto_pad(auto_pad: str, pad_shape: Sequence[int]) -> Sequence[int]:
     spatial_dims = len(pad_shape)
     if auto_pad == "SAME_UPPER":
-        pads = [pad_shape[i] // 2 for i in range(spatial_dims)] + [pad_shape[i] - pad_shape[i] // 2 for i in range(spatial_dims)]
+        pads = [pad_shape[i] // 2 for i in range(spatial_dims)] + [
+            pad_shape[i] - pad_shape[i] // 2 for i in range(spatial_dims)
+        ]
     elif auto_pad == "SAME_LOWER":
-        pads = [pad_shape[i] - pad_shape[i] // 2 for i in range(spatial_dims)] + [pad_shape[i] // 2 for i in range(spatial_dims)]
+        pads = [pad_shape[i] - pad_shape[i] // 2 for i in range(spatial_dims)] + [
+            pad_shape[i] // 2 for i in range(spatial_dims)
+        ]
     else:
-        pads = [0] * spatial_dims * 2 # no padding
+        pads = [0] * spatial_dims * 2  # no padding
     return pads
+
 
 def get_output_shape_explicit_padding(
     pads: Sequence[int] | None,
@@ -58,7 +66,7 @@ def get_output_shape_explicit_padding(
     sw = dilation * (kernel - 1) + 1
     l_out = (l_in + pad[0] + pad[1] - sw) / stride + 1 # (ceiled if ceil_mode is True)
     l_in_required = (l_out - 1) * stride + sw
-    
+
     l_in_required is used to for computation in pool() which may be larger than padded l_in, because of ceiling.
     as an example, l_in = 3, kernel = 2, stride = 2, dilation = 1, pad = [0, 0], then
     sw = dilation * (kernel - 1) + 1 = 1 * (2 - 1) + 1 = 2
@@ -66,7 +74,7 @@ def get_output_shape_explicit_padding(
     l_in_required = (l_out - 1) * stride + sw = (2 - 1) * 2 + 2 = 4
     l_in_required (= 4) is not equal to l_in (= 3), so we need to pad the input tensor to l_in_required to make sure that
     the sliding window does not go out-of-bound w.r.t. input tensor. Otherwise pool() will fail.
-    """    
+    """
     output_spatial_shape = [0] * len(input_spatial_shape)
     pads = pads or [0] * len(input_spatial_shape) * 2
     strides_spatial = strides_spatial or [1] * len(input_spatial_shape)
@@ -76,12 +84,13 @@ def get_output_shape_explicit_padding(
 
     for dim in range(dims):
         dim_size = (
-            input_spatial_shape[dim] +
-            pads[dim] +
-            pads[dims + dim] -
-            dilations[dim] * (kernel_spatial_shape[dim] - 1) - 1
+            input_spatial_shape[dim]
+            + pads[dim]
+            + pads[dims + dim]
+            - dilations[dim] * (kernel_spatial_shape[dim] - 1)
+            - 1
         ) / strides_spatial[dim] + 1
-        
+
         if ceil_mode:
             output_spatial_shape[dim] = int(np.ceil(dim_size))
         else:
@@ -90,13 +99,20 @@ def get_output_shape_explicit_padding(
     pads_spatial_shape_new = pads[:]
     for dim in range(dims):
         sliding_window_size = (kernel_spatial_shape[dim] - 1) * dilations[dim] + 1
-        actual_padded_input_size = (output_spatial_shape[dim] - 1) * strides_spatial[dim] + sliding_window_size
-        extra_pad = actual_padded_input_size - input_spatial_shape[dim] - pads[dim] - pads[dims + dim]
+        actual_padded_input_size = (output_spatial_shape[dim] - 1) * strides_spatial[
+            dim
+        ] + sliding_window_size
+        extra_pad = (
+            actual_padded_input_size
+            - input_spatial_shape[dim]
+            - pads[dim]
+            - pads[dims + dim]
+        )
         if extra_pad > 0:
             pads_spatial_shape_new[dim] += extra_pad // 2
             pads_spatial_shape_new[dims + dim] += extra_pad - extra_pad // 2
 
-    return output_spatial_shape, pads_spatial_shape_new    
+    return output_spatial_shape, pads_spatial_shape_new
 
 
 def get_output_shape_auto_pad(
@@ -116,13 +132,22 @@ def get_output_shape_auto_pad(
     out_shape = [0] * len(input_spatial_shape)
     for i in range(len(input_spatial_shape)):
         if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
-            out_shape[i] = math.floor((input_spatial_shape[i] - 1) / strides_spatial[i]) + 1
+            out_shape[i] = (
+                math.floor((input_spatial_shape[i] - 1) / strides_spatial[i]) + 1
+            )
         elif auto_pad == "VALID":
-            out_shape[i] = math.floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / 
-                strides_spatial[i]) + 1
+            out_shape[i] = (
+                math.floor(
+                    (input_spatial_shape[i] - kernel_spatial_shape[i])
+                    / strides_spatial[i]
+                )
+                + 1
+            )
         # if auto_pad is NOTSET, explicite padding should be used
         else:
-            raise ValueError("auto_pad can only be NOTSET, SAME_UPPER, SAME_LOWER, or VALID")
+            raise ValueError(
+                "auto_pad can only be NOTSET, SAME_UPPER, SAME_LOWER, or VALID"
+            )
     # pads = get_pad_shape(auto_pad, input_spatial_shape, kernel_shape, strides_spatial, out_shape)
 
     return out_shape
@@ -147,7 +172,7 @@ def pool(
     count_include_pad: int = 0,
     p: int = 1,
 ) -> np.ndarray:
-    '''
+    """
     this function is used to calculate the pooling result of a padded tensor
     padded: the padded tensor
     x_shape: the shape of the original tensor in [N, C, *spatial_shape]
@@ -159,7 +184,7 @@ def pool(
     dilations: the dilation
     count_include_pad: whether to include the padding in the calculation of average and lp pooling
     p: the p value for lp pooling
-    '''
+    """
     spatial_size = len(x_shape) - 2
     y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)], dtype=padded.dtype)
     if dilations is None:
@@ -179,7 +204,13 @@ def pool(
         *[
             range(
                 int(
-                    (x_shape[i + 2] + pads[i] + pads[i + spatial_size] - (1 + (kernel[i] - 1) * dilations[i]) ) / strides[i]
+                    (
+                        x_shape[i + 2]
+                        + pads[i]
+                        + pads[i + spatial_size]
+                        - (1 + (kernel[i] - 1) * dilations[i])
+                    )
+                    / strides[i]
                     + 1
                 )
             )
@@ -195,7 +226,8 @@ def pool(
                         *[
                             range(
                                 strides[i] * shape[i + 2],
-                                strides[i] * shape[i + 2] + (1 + (kernel[i]  - 1) * dilations[i]),
+                                strides[i] * shape[i + 2]
+                                + (1 + (kernel[i] - 1) * dilations[i]),
                                 dilations[i],
                             )
                             for i in range(spatial_size)
@@ -221,6 +253,7 @@ def pool(
             y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
     return y
 
+
 class CommonPool(OpRun):
     def _run(  # type: ignore
         self,
@@ -239,8 +272,12 @@ class CommonPool(OpRun):
         pading_value = np.nan if pooling_type == "MAX" or count_include_pad == 0 else 0
 
         if auto_pad in ["SAME_UPPER", "SAME_LOWER", "VALID"]:
-            assert ceil_mode is None or ceil_mode == 0, "ceil_mode is not supported with auto_pad"
-            out_shape = get_output_shape_auto_pad(auto_pad, x.shape[2:], kernel_shape, strides)
+            assert (
+                ceil_mode is None or ceil_mode == 0
+            ), "ceil_mode is not supported with auto_pad"
+            out_shape = get_output_shape_auto_pad(
+                auto_pad, x.shape[2:], kernel_shape, strides
+            )
             pads_shape = get_pad_shape(
                 auto_pad, x_shape[2:], kernel_shape, strides, out_shape
             )
@@ -251,12 +288,25 @@ class CommonPool(OpRun):
                 x,
                 ((0, 0), (0, 0), *pads_np),
                 mode="constant",
-                constant_values = pading_value,
-            )            
-            y = pool(padded, x_shape, kernel_shape, strides, out_shape, pooling_type, pads, dilations, count_include_pad, p)
-            return (y, )
+                constant_values=pading_value,
+            )
+            y = pool(
+                padded,
+                x_shape,
+                kernel_shape,
+                strides,
+                out_shape,
+                pooling_type,
+                pads,
+                dilations,
+                count_include_pad,
+                p,
+            )
+            return (y,)
         else:
-            out_shape, pads = get_output_shape_explicit_padding(pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode)
+            out_shape, pads = get_output_shape_explicit_padding(
+                pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode
+            )
             # convert pads from [x1_begin, x2_begin,...,x1_end, x2_end,...] to [(x1_begin, x1_end), (x2_begin, x2_end),...]
             n_dims = len(pads) // 2
             pads_np = [(pads[i], pads[i + n_dims]) for i in range(n_dims)]
@@ -264,7 +314,18 @@ class CommonPool(OpRun):
                 x,
                 ((0, 0), (0, 0), *pads_np),
                 mode="constant",
-                constant_values = pading_value,
+                constant_values=pading_value,
             )
-            y = pool(padded, x_shape, kernel_shape, strides, out_shape, pooling_type, pads, dilations, count_include_pad, p)
+            y = pool(
+                padded,
+                x_shape,
+                kernel_shape,
+                strides,
+                out_shape,
+                pooling_type,
+                pads,
+                dilations,
+                count_include_pad,
+                p,
+            )
             return (y,)
