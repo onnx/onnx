@@ -434,7 +434,6 @@ class MaxPool(Base):
         kernel_shape = (3, 3)
         strides = (1, 1)
         pad_bottom = pad_top = pad_right = pad_left = 2
-        pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
         pads = [pad_top, pad_left, pad_bottom, pad_right]
         out_shape, pads = get_output_shape_explicit_padding(
             pads, x_shape[2:], kernel_shape, strides
@@ -634,9 +633,6 @@ class MaxPool(Base):
                 ]
             ]
         ).astype(np.float32)
-        y_ = np.array([[[[[11, 12], [15, 16]], [[11, 12], [15, 16]]]]]).astype(
-            np.float32
-        )
 
         x_shape = x.shape[2:]
         out_shape, pads = get_output_shape_explicit_padding(
