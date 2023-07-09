@@ -23944,7 +23944,7 @@ This version of the operator has been available since version 20 of the default 
 
 ### <a name="StringConcat-20"></a>**StringConcat-20**</a>
 
-  StringConcat concatenates string tensors elementwise (with Numpy-style broadcasting support)
+  StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
 
 #### Version
 

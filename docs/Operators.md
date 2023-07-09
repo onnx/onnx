@@ -29989,7 +29989,7 @@ expect(node, inputs=[x, axes], outputs=[y], name="test_squeeze_negative_axes")
 
 ### <a name="StringConcat"></a><a name="stringconcat">**StringConcat**</a>
 
-  StringConcat concatenates string tensors elementwise (with Numpy-style broadcasting support)
+  StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
 
 #### Version
 
