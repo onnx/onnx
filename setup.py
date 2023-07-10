@@ -338,6 +338,7 @@ if not os.path.exists(requirements_path):
 with open(requirements_path) as f:
     install_requires = f.read().splitlines()
 
+extras_require["text"] = ["google-re2"]
 ################################################################################
 # Test
 ################################################################################
