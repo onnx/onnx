@@ -470,6 +470,26 @@ mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
 ```
 )DOC";
 
+ONNX_OPERATOR_SET_SCHEMA(
+    Mish,
+    18,
+    OpSchema()
+        .SetDoc(mish_ver18_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input X and output types to float tensors.")
+        .FunctionBody(R"ONNX(
+          {
+            Softplus_X = Softplus (X)
+            TanHSoftplusX = Tanh (Softplus_X)
+            Y = Mul (X, TanHSoftplusX)
+           }
+        )ONNX")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 static const char* celu_ver12_doc = R"DOC(
 Continuously Differentiable Exponential Linear Units:
 Perform the linear unit element-wise on the input tensor X
@@ -538,24 +558,88 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* gelu_ver20_doc = R"DOC(
+Gelu takes one input data (Tensor<T>) and produces one
+output data (Tensor<T>) where the gaussian error linear units function,
+$y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise.
+If the attribute "approximate" is set to "tanh", the function estimation,
+$y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied
+to the tensor elementwise.
+
+)DOC";
+
+static std::string gelu_default_approx = "none";
+
+bool BuildContextDependentFunctionBodyGelu(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  auto approx_attr_proto = ctx.getAttribute("approximate");
+  std::string approximate =
+      approx_attr_proto != nullptr && approx_attr_proto->has_s() ? approx_attr_proto->s() : gelu_default_approx;
+  FunctionBuilder builder(functionProto);
+
+  if (approximate == "tanh") {
+    builder.Add(R"(
+              Half = Constant <value = float {0.5}>()
+              HalfCast = CastLike (Half, X)
+              One = Constant <value = float {1.0}>()
+              OneCast = CastLike (One, X)
+              TwoOverPi = Constant <value = float {0.63661977236}>()
+              TwoOverPiCast = CastLike (TwoOverPi, X)
+              C0 = Constant <value = float {0.044715}>()
+              C0Cast = CastLike (C0, X)
+              SqrtTwoOverPi = Sqrt (TwoOverPiCast)
+              Three = Constant <value = float {3.0}>()
+              ThreeCast = CastLike (Three, X)
+              XCubed = Pow (X, ThreeCast)
+              XCubedC0 = Mul (C0Cast, XCubed)
+              XC0XCubed = Sum (X, XCubedC0)
+              TanhInput = Mul (SqrtTwoOverPi, XC0XCubed)
+              ErfApprox = Tanh (TanhInput)
+              PhiApprox = Sum (OneCast, ErfApprox)
+              MultX = Mul (HalfCast, X)
+              Y = Mul (MultX, PhiApprox)
+              )");
+  } else {
+    builder.Add(R"(
+              Half = Constant <value = float {0.5}>()
+              HalfCast = CastLike (Half, X)
+              One = Constant <value = float {1.0}>()
+              OneCast = CastLike (One, X)
+              Two = Constant <value = float {2.0}>()
+              TwoCast = CastLike (Two, X)
+              SqrtTwo = Sqrt (TwoCast)
+              XSqrt = Div (X, SqrtTwo)
+              ErfXSqrt = Erf(XSqrt)
+              Phi = Sum (OneCast, ErfXSqrt)
+              MultX = Mul (HalfCast, X)
+              Y = Mul (MultX, Phi)
+              )");
+  }
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
-    Mish,
-    18,
+    Gelu,
+    20,
     OpSchema()
-        .SetDoc(mish_ver18_doc)
+        .SetDoc(gelu_ver20_doc)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Attr(
+            "approximate",
+            "Gelu approximation algorithm: `\"tanh\"`, `\"none\"`(default)."
+            "`\"none\"`: do not use approximation."
+            "`\"tanh\"`: use tanh approximation.",
+            AttributeProto::STRING,
+            gelu_default_approx)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input X and output types to float tensors.")
-        .FunctionBody(R"ONNX(
-          {
-            Softplus_X = Softplus (X)
-            TanHSoftplusX = Tanh (Softplus_X)
-            Y = Mul (X, TanHSoftplusX)
-           }
-        )ONNX")
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input and output types to float tensors.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Exp_ver13_doc = R"DOC(
