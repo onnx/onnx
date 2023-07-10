@@ -4,7 +4,7 @@
 
 import itertools
 import math
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 
@@ -54,7 +54,7 @@ def get_output_shape_explicit_padding(
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
-    dilations: Sequence[int] | None = None,
+    dilations: Union[Sequence[int], None] = None,
     ceil_mode: bool = False,
 ) -> Tuple[Sequence[int], Sequence[int]]:
     """
