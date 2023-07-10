@@ -21977,7 +21977,7 @@ This version of the operator has been available since version 20 of the default 
 #### Examples
 
 <details>
-<summary>basic</summary>
+<summary>regex_full_match_basic</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -21998,7 +21998,7 @@ expect(node, inputs=[x], outputs=[result], name="test_regex_full_match_basic")
 
 
 <details>
-<summary>match_email_domain</summary>
+<summary>regex_full_match_email_domain</summary>
 
 ```python
 node = onnx.helper.make_node(
