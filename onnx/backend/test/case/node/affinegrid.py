@@ -8,12 +8,12 @@ import onnx
 from onnx import TensorProto
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
+from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_affine_grid import (
     apply_affine_transform,
     construct_original_grid,
 )
 
-from onnx.reference import ReferenceEvaluator
 
 def create_affine_matrix_3d(
     angle1,
@@ -113,6 +113,7 @@ def create_affine_matrix_2d(
     affine_matrix = np.transpose(affine_matrix, (0, 2, 1))
     return affine_matrix
 
+
 def create_theta_2d():
     angle = np.array([np.pi / 4, np.pi / 3])
     offset_x = np.array([5.0, 2.5])
@@ -125,6 +126,7 @@ def create_theta_2d():
         angle, offset_x, offset_y, shear_x, shear_y, scale_x, scale_y
     )
     return theta_2d
+
 
 def create_theta_3d():
     angle1 = np.array([np.pi / 4, np.pi / 3])
@@ -153,6 +155,7 @@ def create_theta_3d():
         scale_z,
     )
     return theta_3d
+
 
 class AffineGrid(Base):
     @staticmethod
@@ -220,13 +223,19 @@ class AffineGrid(Base):
                 align_corners=align_corners,
             )
 
-            theta = onnx.helper.make_tensor_value_info("theta", TensorProto.FLOAT, [2, 3])
+            theta = onnx.helper.make_tensor_value_info(
+                "theta", TensorProto.FLOAT, [2, 3]
+            )
             size = onnx.helper.make_tensor_value_info("size", TensorProto.INT64, [4])
-            grid = onnx.helper.make_tensor_value_info("grid", TensorProto.FLOAT, [None, None, None, None])
+            grid = onnx.helper.make_tensor_value_info(
+                "grid", TensorProto.FLOAT, [None, None, None, None]
+            )
 
             graph = onnx.helper.make_graph([node], "g", [theta, size], [grid])
             opset = 20
-            onnx_model = onnx.helper.make_model(graph, opset_imports=[onnx.helper.make_opsetid("", opset)])
+            onnx_model = onnx.helper.make_model(
+                graph, opset_imports=[onnx.helper.make_opsetid("", opset)]
+            )
             ref = ReferenceEvaluator(onnx_model)
             expected_grid = ref.run(None, {"theta": theta_2d, "size": size_input})[0]
             test_name = "test_affine_grid_2d"
@@ -252,13 +261,19 @@ class AffineGrid(Base):
                 align_corners=align_corners,
             )
 
-            theta = onnx.helper.make_tensor_value_info("theta", TensorProto.FLOAT, [3, 4])
+            theta = onnx.helper.make_tensor_value_info(
+                "theta", TensorProto.FLOAT, [3, 4]
+            )
             size = onnx.helper.make_tensor_value_info("size", TensorProto.INT64, [5])
-            grid = onnx.helper.make_tensor_value_info("grid", TensorProto.FLOAT, [None, None, None, None, None])
+            grid = onnx.helper.make_tensor_value_info(
+                "grid", TensorProto.FLOAT, [None, None, None, None, None]
+            )
 
             graph = onnx.helper.make_graph([node], "g", [theta, size], [grid])
             opset = 20
-            onnx_model = onnx.helper.make_model(graph, opset_imports=[onnx.helper.make_opsetid("", opset)])
+            onnx_model = onnx.helper.make_model(
+                graph, opset_imports=[onnx.helper.make_opsetid("", opset)]
+            )
             ref = ReferenceEvaluator(onnx_model)
             expected_grid = ref.run(None, {"theta": theta_3d, "size": size_input})[0]
             test_name = "test_affine_grid_3d"

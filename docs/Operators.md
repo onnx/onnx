@@ -570,13 +570,19 @@ for align_corners in (0, 1):
         align_corners=align_corners,
     )
 
-    theta = onnx.helper.make_tensor_value_info("theta", TensorProto.FLOAT, [2, 3])
+    theta = onnx.helper.make_tensor_value_info(
+        "theta", TensorProto.FLOAT, [2, 3]
+    )
     size = onnx.helper.make_tensor_value_info("size", TensorProto.INT64, [4])
-    grid = onnx.helper.make_tensor_value_info("grid", TensorProto.FLOAT, [None, None, None, None])
+    grid = onnx.helper.make_tensor_value_info(
+        "grid", TensorProto.FLOAT, [None, None, None, None]
+    )
 
     graph = onnx.helper.make_graph([node], "g", [theta, size], [grid])
     opset = 20
-    onnx_model = onnx.helper.make_model(graph, opset_imports=[onnx.helper.make_opsetid("", opset)])
+    onnx_model = onnx.helper.make_model(
+        graph, opset_imports=[onnx.helper.make_opsetid("", opset)]
+    )
     ref = ReferenceEvaluator(onnx_model)
     expected_grid = ref.run(None, {"theta": theta_2d, "size": size_input})[0]
     test_name = "test_affine_grid_2d"
@@ -640,13 +646,19 @@ for align_corners in (0, 1):
         align_corners=align_corners,
     )
 
-    theta = onnx.helper.make_tensor_value_info("theta", TensorProto.FLOAT, [3, 4])
+    theta = onnx.helper.make_tensor_value_info(
+        "theta", TensorProto.FLOAT, [3, 4]
+    )
     size = onnx.helper.make_tensor_value_info("size", TensorProto.INT64, [5])
-    grid = onnx.helper.make_tensor_value_info("grid", TensorProto.FLOAT, [None, None, None, None, None])
+    grid = onnx.helper.make_tensor_value_info(
+        "grid", TensorProto.FLOAT, [None, None, None, None, None]
+    )
 
     graph = onnx.helper.make_graph([node], "g", [theta, size], [grid])
     opset = 20
-    onnx_model = onnx.helper.make_model(graph, opset_imports=[onnx.helper.make_opsetid("", opset)])
+    onnx_model = onnx.helper.make_model(
+        graph, opset_imports=[onnx.helper.make_opsetid("", opset)]
+    )
     ref = ReferenceEvaluator(onnx_model)
     expected_grid = ref.run(None, {"theta": theta_3d, "size": size_input})[0]
     test_name = "test_affine_grid_3d"
