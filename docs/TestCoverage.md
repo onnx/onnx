@@ -14743,7 +14743,7 @@ expect(
 ### RegexFullMatch
 There are 2 test cases, listed as following:
 <details>
-<summary>regex_full_match_basic</summary>
+<summary>basic</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -14762,7 +14762,7 @@ expect(node, inputs=[x], outputs=[result], name="test_regex_full_match_basic")
 
 </details>
 <details>
-<summary>regex_full_match_email_domain</summary>
+<summary>match_email_domain</summary>
 
 ```python
 node = onnx.helper.make_node(
