@@ -829,15 +829,14 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_affine_grid_2d_align_corners_expanded": 1e-4,
             "test_affine_grid_2d_no_reference_evaluator_expanded": 1e-4,
             "test_affine_grid_2d_no_reference_evaluator_align_corners": 1e-4,
-            "test_affine_grid_2d_no_reference_evaluator_align_corners": 1e-4,
             "test_affine_grid_2d_no_reference_evaluator": 1e-4,
+            "test_affine_grid_2d_no_reference_evaluator_align_corners_expanded": 1e-4,
             "test_affine_grid_3d_expanded": 1e-4,
             "test_affine_grid_3d_align_corners_expanded": 1e-4,
             "test_affine_grid_3d_no_reference_evaluator": 1e-4,
             "test_affine_grid_3d_no_reference_evaluator_align_corners": 1e-4,
             "test_affine_grid_3d_no_reference_evaluator_align_corners_expanded": 1e-4,
             "test_affine_grid_3d_no_reference_evaluator_expanded": 1e-4,
-            "test_affine_grid_2d_no_reference_evaluator_align_corners_expanded": 1e-4,
         }
 
         if version(npver) < version("1.21.5"):

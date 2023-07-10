@@ -13,7 +13,6 @@ def construct_original_grid(data_size, align_corners):
     size_zeros = np.zeros(data_size)
     original_grid = [np.ones(data_size)]
     for dim, dim_size in enumerate(data_size):
-        assert dim_size > 0
         if align_corners == 1:
             step = 2.0 / (dim_size - 1)
             start = -1
