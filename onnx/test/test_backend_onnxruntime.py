@@ -249,7 +249,6 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|equal"
         "|identity"
         "|reshape"
-        "|gelu"
         ")"
     )
 
