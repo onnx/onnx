@@ -170,7 +170,7 @@ def pool(
     out_shape: Sequence[int],
     pooling_type: str,
     pads: Sequence[int] | None = None,
-    dilations: Sequence[int] | None = None,
+    dilations: Union[Sequence[int], None] = None,
     count_include_pad: int = 0,
     p: int = 1,
 ) -> np.ndarray:
