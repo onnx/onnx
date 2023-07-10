@@ -50,7 +50,7 @@ def get_pad_with_auto_pad(auto_pad: str, pad_shape: Sequence[int]) -> Sequence[i
 
 
 def get_output_shape_explicit_padding(
-    pads: Sequence[int] | None,
+    pads: Sequence[int],
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
@@ -130,7 +130,9 @@ def get_output_shape_auto_pad(
     """
     strides_spatial = strides_spatial or [1] * len(input_spatial_shape)
     out_shape = [0] * len(input_spatial_shape)
-    for i in range(len(input_spatial_shape)):   # pylint: disable=consider-using-enumerate
+    for i in range(
+        len(input_spatial_shape)
+    ):  # pylint: disable=consider-using-enumerate
         if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
             out_shape[i] = (
                 math.floor((input_spatial_shape[i] - 1) / strides_spatial[i]) + 1
