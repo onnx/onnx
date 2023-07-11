@@ -171,6 +171,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
+|<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
 |<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-18">18</a>|18|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|17|
@@ -9411,6 +9412,101 @@ expect(
 </details>
 
 
+### <a name="Gelu"></a><a name="gelu">**Gelu**</a>
+
+  Gelu takes one input data (Tensor<T>) and produces one
+  output data (Tensor<T>) where the gaussian error linear units function,
+  $y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise.
+  If the attribute "approximate" is set to "tanh", the function estimation,
+  $y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied
+  to the tensor elementwise.
+
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>approximate</tt> : string (default is none)</dt>
+<dd>Gelu approximation algorithm: `"tanh"`, `"none"`(default).`"none"`: do not use approximation.`"tanh"`: use tanh approximation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gelu_default</summary>
+
+```python
+node = onnx.helper.make_node("Gelu", inputs=["x"], outputs=["y"])
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+# expected output [-0.15865526, 0., 0.84134474]
+y = (0.5 * x * (1 + np.vectorize(math.erf)(x / np.sqrt(2)))).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_default_1")
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+# expected output [2.99595031, 3.99987331, 4.99999857]
+y = (0.5 * x * (1 + np.vectorize(math.erf)(x / np.sqrt(2)))).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_default_2")
+```
+
+</details>
+
+
+<details>
+<summary>gelu_tanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Gelu", inputs=["x"], outputs=["y"], approximate="tanh"
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+# expected output [-0.158808, 0., 0.841192]
+y = (
+    0.5
+    * x
+    * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * np.power(x, 3))))
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_tanh_1")
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+# expected output [2.9963627, 3.99993, 4.9999995]
+y = (
+    0.5
+    * x
+    * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * np.power(x, 3))))
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_tanh_2")
+```
+
+</details>
+
+
 ### <a name="Gemm"></a><a name="gemm">**Gemm**</a>
 
   General Matrix multiplication:
@@ -18072,7 +18168,7 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">1</a>, <a href="
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> (differentiable) : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs

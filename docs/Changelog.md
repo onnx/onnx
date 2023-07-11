@@ -7150,7 +7150,7 @@ This version of the operator has been available since version 7 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -8746,7 +8746,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> (differentiable) : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -20319,7 +20319,7 @@ This version of the operator has been available since version 16 of the default 
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> (differentiable) : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -23917,6 +23917,48 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain input types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain output types to be numerics.</dd>
+</dl>
+
+### <a name="Gelu-20"></a>**Gelu-20**</a>
+
+  Gelu takes one input data (Tensor<T>) and produces one
+  output data (Tensor<T>) where the gaussian error linear units function,
+  $y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise.
+  If the attribute "approximate" is set to "tanh", the function estimation,
+  $y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied
+  to the tensor elementwise.
+
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>approximate</tt> : string (default is none)</dt>
+<dd>Gelu approximation algorithm: `"tanh"`, `"none"`(default).`"none"`: do not use approximation.`"tanh"`: use tanh approximation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="GridSample-20"></a>**GridSample-20**</a>
