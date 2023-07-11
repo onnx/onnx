@@ -4858,7 +4858,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 ### DequantizeLinear
-There are 4 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -4940,6 +4940,55 @@ expect(
     inputs=[x, x_scale],
     outputs=[y],
     name="test_dequantizelinear_e4m3fn",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+x_scale = np.float16(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_float16",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn_zero_point</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "zero_point"],
+    outputs=["y"],
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+x_scale = np.float32(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_zero_point",
 )
 ```
 

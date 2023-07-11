@@ -40,7 +40,13 @@ class DequantizeLinear(OpRun):
         if len(value.shape) == 0:
             return value
         dims = [1] * len(shape)
-        dims[axis] = value.size
+        try:
+            dims[axis] = value.size
+        except IndexError as e:
+            raise IndexError(
+                f"axis is out of boundary, axis={axis}, "
+                f"value.shape={value.shape}, shape={shape}."
+            )
         return value.reshape(tuple(dims))
 
     def _run(
