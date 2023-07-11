@@ -55,11 +55,11 @@ class DequantizeLinear(OpRun):
 
         x_type = self.get_x_type(x)
         f8_type = x_type in {
-                TensorProto.FLOAT8E4M3FN,
-                TensorProto.FLOAT8E4M3FNUZ,
-                TensorProto.FLOAT8E5M2,
-                TensorProto.FLOAT8E5M2FNUZ,
-            }
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+        }
         if x_zero_point is not None and not f8_type:
             zero_type = self.get_x_type(x_zero_point)
             if x_type != zero_type:
@@ -71,8 +71,14 @@ class DequantizeLinear(OpRun):
                 x_zero_point, x.shape, axis
             )
         else:
-            if f8_type and x_zero_point.astype(uint8) != np.uint8(0):
-                raise RuntimeError(f"x_zero_point is not null but should be for float 8 types.")
+            if (
+                f8_type
+                and x_zero_point is not None
+                and x_zero_point.astype(np.uint8) != np.uint8(0)
+            ):
+                raise RuntimeError(
+                    f"x_zero_point is not null but should be for float 8 types."
+                )
             if x_type == TensorProto.FLOAT8E4M3FN:
                 dx = float8e4m3_to_float32(x)
             elif x_type == TensorProto.FLOAT8E4M3FNUZ:
