@@ -77,7 +77,7 @@ class DequantizeLinear(OpRun):
                 and x_zero_point.astype(np.uint8) != np.uint8(0)
             ):
                 raise RuntimeError(
-                    f"x_zero_point is not null but should be for float 8 types."
+                    "x_zero_point is not null but should be for float 8 types."
                 )
             if x_type == TensorProto.FLOAT8E4M3FN:
                 dx = float8e4m3_to_float32(x)
