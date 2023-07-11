@@ -56,9 +56,9 @@ class StringConcat(Base):
             name="test_string_concat_empty_string",
         )
 
-        x = np.array(["a", "ß", "y"]).astype("object")
-        y = np.array(["a", "ß", "y"]).astype("object")
-        result = np.array(["aa", "ßß", "yy"]).astype("object")
+        x = np.array(["的", "中"]).astype("object")
+        y = np.array(["的", "中"]).astype("object")
+        result = np.array(["的的", "中中"]).astype("object")
 
         expect(
             node,
