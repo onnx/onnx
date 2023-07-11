@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <set>
+
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"

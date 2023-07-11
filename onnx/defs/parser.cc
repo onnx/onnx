@@ -6,10 +6,12 @@
 // by this parser is preliminary and may change.
 
 #include "onnx/defs/parser.h"
+
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 

@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
@@ -45,13 +46,12 @@
 #include "onnx/version_converter/adapters/split_17_18.h"
 #include "onnx/version_converter/adapters/sum_8_7.h"
 #include "onnx/version_converter/adapters/topk_9_10.h"
+#include "onnx/version_converter/adapters/transformers.h"
 #include "onnx/version_converter/adapters/type_restriction.h"
 #include "onnx/version_converter/adapters/upsample_6_7.h"
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
-
-#include "onnx/version_converter/adapters/transformers.h"
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {

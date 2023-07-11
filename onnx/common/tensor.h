@@ -15,6 +15,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "onnx/common/assertions.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"

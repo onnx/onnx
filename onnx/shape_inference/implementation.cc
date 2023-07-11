@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/shape_inference/implementation.h"
+
 #include <algorithm>
 #include <fstream>
 #include <list>
@@ -10,6 +11,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include "onnx/checker.h"
 #include "onnx/common/common.h"
 #include "onnx/common/file_utils.h"
