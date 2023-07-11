@@ -4928,6 +4928,7 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale
@@ -4952,6 +4953,7 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale
@@ -4976,6 +4978,7 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale", "zero_point"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale
@@ -5001,6 +5004,7 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale

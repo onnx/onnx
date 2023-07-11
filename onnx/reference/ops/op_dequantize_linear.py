@@ -46,7 +46,7 @@ class DequantizeLinear(OpRun):
             raise IndexError(
                 f"axis is out of boundary, axis={axis}, "
                 f"value.shape={value.shape}, shape={shape}."
-            )
+            ) from e
         return value.reshape(tuple(dims))
 
     def _run(
