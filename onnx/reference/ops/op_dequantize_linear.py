@@ -54,26 +54,25 @@ class DequantizeLinear(OpRun):
             raise RuntimeError("Input 2 must be a vector or a number.")
 
         x_type = self.get_x_type(x)
-        if x_zero_point is not None:
-            zero_type = self.get_x_type(x_zero_point)
-            if x_type != zero_type:
-                raise RuntimeError(
-                    f"Type mismatch {x_type} != {zero_type} in DequantizeLinear."
-                )
-            if x_type in (
+        f8_type = x_type in {
                 TensorProto.FLOAT8E4M3FN,
                 TensorProto.FLOAT8E4M3FNUZ,
                 TensorProto.FLOAT8E5M2,
                 TensorProto.FLOAT8E5M2FNUZ,
-            ):
+            }
+        if x_zero_point is not None and not f8_type:
+            zero_type = self.get_x_type(x_zero_point)
+            if x_type != zero_type:
                 raise RuntimeError(
-                    f"x_zero_point not supported for float 8 type {x_type}."
+                    f"Type mismatch {x_type} != {zero_type} in DequantizeLinear."
                 )
 
             dx = x.astype(np.float32) - DequantizeLinear.reshape_input(
                 x_zero_point, x.shape, axis
             )
         else:
+            if f8_type and x_zero_point.astype(uint8) != np.uint8(0):
+                raise RuntimeError(f"x_zero_point is not null but should be for float 8 types.")
             if x_type == TensorProto.FLOAT8E4M3FN:
                 dx = float8e4m3_to_float32(x)
             elif x_type == TensorProto.FLOAT8E4M3FNUZ:
@@ -85,4 +84,4 @@ class DequantizeLinear(OpRun):
             else:
                 dx = x.astype(np.float32)
         y = dx * DequantizeLinear.reshape_input(x_scale, x.shape, axis)
-        return (y.astype(np.float32),)
+        return (y.astype(x_scale.dtype),)

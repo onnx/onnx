@@ -86,6 +86,47 @@ class DequantizeLinear(Base):
         )
 
     @staticmethod
+    def export_e4m3fn_float16() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale"],
+            outputs=["y"],
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+        x_scale = np.float16(2)
+        y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float16)
+
+        expect(
+            node,
+            inputs=[x, x_scale],
+            outputs=[y],
+            name="test_dequantizelinear_e4m3fn",
+        )
+
+    @staticmethod
+    def export_e4m3fn_zero_point() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale"],
+            outputs=["y"],
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+        zero_point = make_tensor("zero", TensorProto.FLOAT8E4M3FN, [1], [0])
+        x_scale = np.float32(2)
+        y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale, zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_e4m3fn",
+        )
+
+    @staticmethod
     def export_e5m2() -> None:
         node = onnx.helper.make_node(
             "DequantizeLinear",
