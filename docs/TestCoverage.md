@@ -4931,9 +4931,9 @@ node = onnx.helper.make_node(
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
 x_scale = np.float32(2)
-y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
 
 expect(
     node,
@@ -4955,9 +4955,9 @@ node = onnx.helper.make_node(
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
 x_scale = np.float16(2)
-y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float16)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float16)
 
 expect(
     node,
@@ -4979,10 +4979,10 @@ node = onnx.helper.make_node(
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
 zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
 x_scale = np.float32(2)
-y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
 
 expect(
     node,
@@ -5004,9 +5004,9 @@ node = onnx.helper.make_node(
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
+x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, -96])
 x_scale = np.float32(2)
-y = np.array([0.0, 1.0, 2.0, 98304.0, 192.0], dtype=np.float32)
+y = np.array([0.0, 1.0, 2.0, 98304.0, -192.0], dtype=np.float32)
 
 expect(
     node,
