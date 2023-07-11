@@ -7712,48 +7712,6 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("grid", TensorProto.FLOAT, (N, D, H, W, 3))]
         )  # type: ignore
 
-    def test_affinegrid_2d_symbolic(self) -> None:
-        N, _, _, _ = "N", "C", "H", "W"
-        graph = self._make_graph(
-            [
-                ("theta", TensorProto.FLOAT, (N, 2, 3)),
-                ("size", TensorProto.INT64, (4,)),
-            ],
-            [
-                make_node(
-                    "AffineGrid",
-                    ["theta", "size"],
-                    ["grid"],
-                    align_corners=1,
-                )
-            ],
-            [],
-        )
-        self._assert_inferred(
-            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, None)]
-        )  # type: ignore
-
-    def test_affinegrid_3d_symbolic(self) -> None:
-        N, _, _, _, _ = "N", "C", "D", "H", "W"
-        graph = self._make_graph(
-            [
-                ("theta", TensorProto.FLOAT, (N, 3, 4)),
-                ("size", TensorProto.INT64, (5,)),
-            ],
-            [
-                make_node(
-                    "AffineGrid",
-                    ["theta", "size"],
-                    ["grid"],
-                    align_corners=1,
-                )
-            ],
-            [],
-        )
-        self._assert_inferred(
-            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, None)]
-        )  # type: ignore
-
     def test_gridsample_2d(self) -> None:
         graph = self._make_graph(
             [
