@@ -30151,6 +30151,28 @@ expect(
     outputs=[result],
     name="test_string_concat_zero_dimensional",
 )
+
+x = np.array(["abc", ""]).astype("object")
+y = np.array(["", "abc"]).astype("object")
+result = np.array(["abc", "abc"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_empty_string",
+)
+
+x = np.array(["α", "ß", "γ"]).astype("object")
+y = np.array(["α", "ß", "γ"]).astype("object")
+result = np.array(["αα", "ßß", "γγ"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_utf8",
+)
 ```
 
 </details>
