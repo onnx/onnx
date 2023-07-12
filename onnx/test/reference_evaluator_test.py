@@ -2366,7 +2366,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             "signal": np.arange(128).reshape((1, 128, 1)).astype(np.float32),
             "frame_step": np.array(8, dtype=np.int64),
             "window": 0.5
-            + 0.5 * np.cos(2 * 3.1415 * np.arange(0, 16, 1, dtype=np.float32) / 16),
+            + 0.5 * np.cos(2 * np.pi * np.arange(0, 16, 1, dtype=np.float32) / 16),
             "frame_length": np.array(16, dtype=np.int64),
         }
 
@@ -3713,6 +3713,55 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"X": x, "P": p, "V": value})[0]
         self.assertEqual(got.shape, (11,) * dim)
         self.assertEqual(got.dtype, np.float32)
+
+    def test_constant_of_shape(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        nodes = [
+            make_node("Shape", inputs=["X"], outputs=["shape"]),
+            make_node(
+                "ConstantOfShape",
+                inputs=["shape"],
+                outputs=["Y"],
+                value=make_tensor("value", TensorProto.UINT16, [1], [1]),
+            ),
+        ]
+        model = make_model(make_graph(nodes, "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.array(1, dtype=np.float32)
+        got = ref.run(None, {"X": x})[0]
+        self.assertEqual(got.shape, tuple())
+        self.assertEqual(got.dtype, np.uint16)
+        assert_allclose(np.array(1, dtype=np.uint16), got)
+
+    def test_constant_of_shape_castlike(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        nodes = [
+            make_node(
+                "Constant",
+                [],
+                ["like"],
+                value=make_tensor("c", TensorProto.UINT16, [1], [2]),
+            ),
+            make_node("Shape", inputs=["X"], outputs=["shape"]),
+            make_node(
+                "ConstantOfShape",
+                inputs=["shape"],
+                outputs=["cst"],
+                value=make_tensor("value", TensorProto.INT64, [1], [1]),
+            ),
+            make_node("CastLike", ["cst", "like"], ["Y"]),
+        ]
+        model = make_model(make_graph(nodes, "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.array(1, dtype=np.float32)
+        got = ref.run(None, {"X": x})[0]
+        self.assertEqual(got.shape, tuple())
+        self.assertEqual(got.dtype, np.uint16)
+        assert_allclose(np.array(1, dtype=np.uint16), got)
 
 
 if __name__ == "__main__":

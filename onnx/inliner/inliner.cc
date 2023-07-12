@@ -5,8 +5,11 @@
  */
 
 #include <functional>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"
