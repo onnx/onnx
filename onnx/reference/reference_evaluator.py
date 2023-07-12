@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 from onnx import load
-from onnx.helper import make_graph, make_model, make_tensor_value_info
 from onnx.defs import onnx_opset_version
+from onnx.helper import make_graph, make_model, make_tensor_value_info
 from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
 from onnx.reference.op_run import (
     OpFunctionContextDependant,
@@ -303,6 +303,8 @@ class ReferenceEvaluator:
                     continue
                 self.new_ops_[key] = cl
         self.save_intermediate = save_intermediate
+        if save_intermediate is not None:
+            self._cached_saved_results = {}
         self._init()
 
     def _log_arg(self, a: Any) -> Any:
@@ -500,7 +502,7 @@ class ReferenceEvaluator:
             f"is unknown, known functions: {sorted(self.functions_)}."
         )
 
-    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Dict[str, Any] | None = None):  # type: ignore
+    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Optional[Dict[str, Any]] = None):  # type: ignore
         """
         Executes the onnx model.
 
@@ -575,8 +577,6 @@ class ReferenceEvaluator:
         def get_shape(t):
             return list(t.dims)
 
-        if not hasattr(self, "_cached_saved_results"):
-            self._cached_saved_results = {}
         input_protos = [
             from_array_extended(inp, name) for name, inp in zip(node.input, inputs)
         ]

@@ -5,12 +5,8 @@
 import os
 import platform
 import unittest
-from typing import Any
-
-import numpy
 
 from onnx.reference.reference_backend import create_reference_backend
-
 
 backend_test = create_reference_backend()
 

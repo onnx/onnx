@@ -10,6 +10,7 @@ import unittest
 import numpy as np
 
 from onnx import TensorProto
+from onnx.backend.test.loader import load_model_tests
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
@@ -20,13 +21,12 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.reference import ReferenceEvaluator
-from onnx.backend.test.loader import load_model_tests
 from onnx.reference.reference_backend import create_reference_backend
 
 
 class TestReferenceEvaluatorSave(unittest.TestCase):
     @staticmethod
-    def _linear_regression(min_value=-1.0, max_value=1.0):
+    def _linear_regression():
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         A = make_tensor_value_info("A", TensorProto.FLOAT, [None, None])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None])

@@ -94,7 +94,7 @@ class Runner:
                     self._add_model_test(ot, kind)
         else:
             if kind is None:
-                raise ValueError(f"path_to_test is defined, so kind must be as well.")
+                raise ValueError("path_to_test is defined, so kind must be as well.")
             for ot in load_model_tests(path_to_test, kind=kind):
                 self._add_model_test(ot, kind)
 
