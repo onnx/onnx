@@ -125,9 +125,9 @@ class InliningRenamer : private MutableVisitor {
  private:
   std::string suffix;
   NameGenerator& generator;
-  std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
+  std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
 
-  InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(suffix_), generator(generator_) {
+  InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
   }
@@ -235,7 +235,7 @@ class InliningRenamer : private MutableVisitor {
   // (ii) Rename inputs and outputs using names of actual parameters.
   static void
   Rename(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
-    InliningRenamer renamer(unique_suffix, generator);
+    InliningRenamer renamer(std::move(unique_suffix), generator);
 
     renamer.Bind<false>(*callee.mutable_input(), callnode.input());
     renamer.Bind<true>(*callee.mutable_output(), callnode.output());
@@ -254,7 +254,7 @@ class ComputeInputs : private Visitor {
  private:
   std::vector<std::unordered_set<std::string>> namescopes;
 
-  bool InNestedScope() {
+  bool InNestedScope() const {
     return !namescopes.empty();
   }
 
@@ -262,7 +262,7 @@ class ComputeInputs : private Visitor {
     return namescopes.back();
   }
 
-  bool IsLocalVar(const std::string& name) {
+  bool IsLocalVar(const std::string& name) const {
     for (auto& scope : namescopes) {
       if (scope.count(name) > 0)
         return true;
