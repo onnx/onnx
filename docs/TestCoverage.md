@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 174/187 (93.05%, 5 generators excluded) common operators.
+Node tests have covered 175/188 (93.09%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -7936,6 +7936,7 @@ node = onnx.helper.make_node(
     inputs=["data"],
     outputs=["output"],
     pixel_format="RGB",
+    domain=ONNX_IO_DOMAIN,
 )
 
 data, output = generate_test_data(".bmp", "RGB")
@@ -7957,6 +7958,7 @@ node = onnx.helper.make_node(
     inputs=["data"],
     outputs=["output"],
     pixel_format="RGB",
+    domain=ONNX_IO_DOMAIN,
 )
 
 data, output = generate_test_data(".jp2", "RGB")
@@ -7978,6 +7980,7 @@ node = onnx.helper.make_node(
     inputs=["data"],
     outputs=["output"],
     pixel_format="BGR",
+    domain=ONNX_IO_DOMAIN,
 )
 
 data, output = generate_test_data(".jpg", "BGR")
@@ -7999,6 +8002,7 @@ node = onnx.helper.make_node(
     inputs=["data"],
     outputs=["output"],
     pixel_format="Grayscale",
+    domain=ONNX_IO_DOMAIN,
 )
 
 data, output = generate_test_data(".jpg", "Grayscale")
@@ -8020,6 +8024,7 @@ node = onnx.helper.make_node(
     inputs=["data"],
     outputs=["output"],
     pixel_format="RGB",
+    domain=ONNX_IO_DOMAIN,
 )
 
 data, output = generate_test_data(".jpg", "RGB")
@@ -8041,6 +8046,7 @@ node = onnx.helper.make_node(
     inputs=["data"],
     outputs=["output"],
     pixel_format="RGB",
+    domain=ONNX_IO_DOMAIN,
 )
 
 data, output = generate_test_data(".png", "RGB")
@@ -8062,6 +8068,7 @@ node = onnx.helper.make_node(
     inputs=["data"],
     outputs=["output"],
     pixel_format="RGB",
+    domain=ONNX_IO_DOMAIN,
 )
 
 data, output = generate_test_data(".pnm", "RGB")
@@ -8083,6 +8090,7 @@ node = onnx.helper.make_node(
     inputs=["data"],
     outputs=["output"],
     pixel_format="RGB",
+    domain=ONNX_IO_DOMAIN,
 )
 
 data, output = generate_test_data(".tiff", "RGB")
@@ -8104,6 +8112,7 @@ node = onnx.helper.make_node(
     inputs=["data"],
     outputs=["output"],
     pixel_format="RGB",
+    domain=ONNX_IO_DOMAIN,
 )
 
 data, output = generate_test_data(".webp", "RGB")

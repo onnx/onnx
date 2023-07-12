@@ -654,7 +654,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   const auto* schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
   if (!schema) {
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN || node.domain() == "ai.onnx" ||
-        node.domain() == AI_ONNX_TRAINING_DOMAIN || node.domain() == AI_ONNX_IO_IMAGE_DOMAIN) {
+        node.domain() == AI_ONNX_TRAINING_DOMAIN || node.domain() == AI_ONNX_IO_DOMAIN) {
       // fail the checker if op in built-in domains has no schema
       fail_check(
           "No Op registered for " + node.op_type() + " with domain_version of " +

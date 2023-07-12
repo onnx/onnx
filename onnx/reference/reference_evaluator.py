@@ -478,6 +478,11 @@ class ReferenceEvaluator:
 
             return load_op_ml(node.domain, node.op_type, version)
 
+        if node.domain == "ai.onnx.io":
+            from onnx.reference.ops.aionnxio import load_op as load_op_io
+
+            return load_op_io(node.domain, node.op_type, version)
+
         # It has to be a function.
         if key in self.functions_:
             from onnx.reference.ops import load_op

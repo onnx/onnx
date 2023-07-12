@@ -58,6 +58,7 @@ jobs:
       call activate py$(python.version)
       python -m pip install --upgrade pip
       python -m pip install -r requirements-release.txt
+      python -m pip install -r requirements-dev.txt
 
       git submodule update --init --recursive
       set ONNX_BUILD_TESTS=1

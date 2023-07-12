@@ -60,6 +60,7 @@ jobs:
       git submodule update --init --recursive
       python -m pip install --upgrade pip
       python -m pip install -r requirements-release.txt
+      python -m pip install -r requirements-dev.txt
 
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1

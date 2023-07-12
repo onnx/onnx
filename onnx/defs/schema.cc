@@ -8,9 +8,9 @@
 #include <utility>
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
+#include "onnx/defs/operator_sets_io_image.h"
 #include "onnx/defs/operator_sets_preview.h"
 #include "onnx/defs/operator_sets_training.h"
-#include "onnx/defs/operator_sets_io_image.h"
 
 #ifdef ONNX_ML
 #include "onnx/defs/operator_sets_ml.h"
@@ -1075,7 +1075,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       RegisterOnnxMLOperatorSetSchema();
 #endif
 
-      RegisterOnnxIOImageOperatorSetSchema();
+      RegisterOnnxIOOperatorSetSchema();
 
       // Invoke register of training operators.
       RegisterOnnxTrainingOperatorSetSchema();

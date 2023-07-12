@@ -1114,6 +1114,9 @@ class OpSet_Onnx_ver20 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Gelu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ConstantOfShape)>());
   }
+};
+
+inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
   RegisterOpSetSchema<OpSet_Onnx_ver3>();
