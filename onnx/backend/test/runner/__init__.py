@@ -55,7 +55,11 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
 
 class Runner:
     def __init__(
-        self, backend: type[Backend], parent_module: str | None = None
+        self,
+        backend: type[Backend],
+        parent_module: str | None = None,
+        path_to_test: str | None = None,
+        kind: str | None = None,
     ) -> None:
         self.backend = backend
         self._parent_module = parent_module
@@ -69,20 +73,30 @@ class Runner:
         # {category: {name: func}}
         self._test_items: dict[str, dict[str, TestItem]] = defaultdict(dict)
 
-        for rt in load_model_tests(kind="node"):
-            self._add_model_test(rt, "Node")
+        if path_to_test is None:
+            if kind is None:
+                for rt in load_model_tests(kind="node"):
+                    self._add_model_test(rt, "Node")
 
-        for rt in load_model_tests(kind="real"):
-            self._add_model_test(rt, "Real")
+                for rt in load_model_tests(kind="real"):
+                    self._add_model_test(rt, "Real")
 
-        for rt in load_model_tests(kind="simple"):
-            self._add_model_test(rt, "Simple")
+                for rt in load_model_tests(kind="simple"):
+                    self._add_model_test(rt, "Simple")
 
-        for ct in load_model_tests(kind="pytorch-converted"):
-            self._add_model_test(ct, "PyTorchConverted")
+                for ct in load_model_tests(kind="pytorch-converted"):
+                    self._add_model_test(ct, "PyTorchConverted")
 
-        for ot in load_model_tests(kind="pytorch-operator"):
-            self._add_model_test(ot, "PyTorchOperator")
+                for ot in load_model_tests(kind="pytorch-operator"):
+                    self._add_model_test(ot, "PyTorchOperator")
+            else:
+                for ot in load_model_tests(kind=kind):
+                    self._add_model_test(ot, kind)
+        else:
+            if kind is None:
+                raise ValueError(f"path_to_test is defined, so kind must be as well.")
+            for ot in load_model_tests(path_to_test, kind=kind):
+                self._add_model_test(ot, kind)
 
     def _get_test_case(self, name: str) -> type[unittest.TestCase]:
         test_case = type(str(name), (unittest.TestCase,), {})

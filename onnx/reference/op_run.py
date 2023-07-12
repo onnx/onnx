@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0912
 
@@ -9,7 +11,7 @@ import numpy as np
 from onnx import TensorProto
 from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
 from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
-from onnx.numpy_helper import to_array
+from onnx.numpy_helper import to_array, from_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 from onnx.reference.custom_element_types import (
     bfloat16,
@@ -164,6 +166,38 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
             y[i] = d
         return y.reshape(shape)
     return to_array(tensor)
+
+
+def from_array_extended(tensor: np.array, name: Optional[str] = None) -> TensorProto:
+    """
+    Converts an array into a TensorProto.
+
+    :param tensor: numpy array
+    :param name: name
+    :return: TensorProto
+    """
+    dt = tensor.dtype
+    if dt == float8e4m3fn and dt.descr[0][0] == "e4m3fn":
+        to = TensorProto.FLOAT8E4M3FN
+        dt_to = np.uint8
+    elif dt == float8e4m3fnuz and dt.descr[0][0] == "e4m3fnuz":
+        to = TensorProto.FLOAT8E4M3FNUZ
+        dt_to = np.uint8
+    elif dt == float8e5m2 and dt.descr[0][0] == "e5m2":
+        to = TensorProto.FLOAT8E5M2
+        dt_to = np.uint8
+    elif dt == float8e5m2fnuz and dt.descr[0][0] == "e5m2fnuz":
+        to = TensorProto.FLOAT8E5M2FNUZ
+        dt_to = np.uint8
+    elif dt == bfloat16 and dt.descr[0][0] == "bfloat16":
+        to = TensorProto.BFLOAT16
+        dt_to = np.uint16
+    else:
+        return from_array(tensor, name)
+
+    t = from_array(tensor.astype(dt_to), name)
+    t.data_type = to
+    return t
 
 
 class Graph:

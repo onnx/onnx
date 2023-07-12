@@ -2,12 +2,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C3001,C0415,R0902,R0912,R0913,R0914,R0915
+import os
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
 from onnx import load
+from onnx.helper import make_graph, make_model, make_tensor_value_info
 from onnx.defs import onnx_opset_version
 from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
 from onnx.reference.op_run import (
@@ -15,6 +17,7 @@ from onnx.reference.op_run import (
     OpRun,
     OpRunExpand,
     RuntimeContextError,
+    from_array_extended,
     to_array_extended,
 )
 from onnx.reference.ops_optimized import optimized_operators
@@ -51,6 +54,12 @@ class ReferenceEvaluator:
         kernels are added in `new_ops` and are used instead of the
         inner implementation if list *new_ops* does not already contain
         one.
+    :param save_intermediate: None or a folder, if not empty,
+        this folder is used to save every intermediate inputs and
+        outputs of every node in the main graph,
+        following the same organization of the backend test,
+        it can be used later to compare intermediate outputs
+        or two different runtimes.
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
@@ -198,6 +207,7 @@ class ReferenceEvaluator:
         verbose: int = 0,
         new_ops: Optional[List[OpRun]] = None,
         optimized: bool = True,
+        save_intermediate: Optional[str] = None,
     ):
         if optimized:
             if new_ops is None:
@@ -292,6 +302,7 @@ class ReferenceEvaluator:
                     # Already an implementation, the first one is used.
                     continue
                 self.new_ops_[key] = cl
+        self.save_intermediate = save_intermediate
         self._init()
 
     def _log_arg(self, a: Any) -> Any:
@@ -489,7 +500,7 @@ class ReferenceEvaluator:
             f"is unknown, known functions: {sorted(self.functions_)}."
         )
 
-    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Dict[str, Any] = None):  # type: ignore
+    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Dict[str, Any] | None = None):  # type: ignore
         """
         Executes the onnx model.
 
@@ -514,7 +525,7 @@ class ReferenceEvaluator:
             self._log(2, " +I %s: %s", k, v)  # type: ignore[arg-type]
 
         # step 2: execute nodes
-        for node in self.rt_nodes_:
+        for index, node in enumerate(self.rt_nodes_):
             self._log(1, "%s(%s) -> %s", node.op_type, node.input, node.output)
             inputs = [results[i] for i in node.input]
             linked_attributes = {}
@@ -531,6 +542,8 @@ class ReferenceEvaluator:
                     )
                 self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
+            if self.save_intermediate is not None:
+                self._save_intermerdiate_results(index, node, inputs, outputs)
 
         # return the results
         list_results: List[Any] = []
@@ -541,3 +554,70 @@ class ReferenceEvaluator:
                 )
             list_results.append(results[name])
         return list_results
+
+    def _save_intermerdiate_results(
+        self,
+        index: int,
+        node: NodeProto,
+        inputs: List[np.array],
+        outputs: List[np.array],
+    ) -> str:
+        """
+        Saves intermediate results into a folder with the same organization as the backend tests.
+
+        :param index: index of the node in the graph
+        :param node: node proto
+        :param inputs: inputs of the node
+        :param outputs: outputs of the node, supposedly the expected outputs
+        :return: test folder
+        """
+
+        def get_shape(t):
+            return list(t.dims)
+
+        if not hasattr(self, "_cached_saved_results"):
+            self._cached_saved_results = {}
+        input_protos = [
+            from_array_extended(inp, name) for name, inp in zip(node.input, inputs)
+        ]
+        output_protos = [
+            from_array_extended(out, name) for name, out in zip(node.output, outputs)
+        ]
+        model = make_model(
+            make_graph(
+                [node.onnx_node],
+                f"test_{node.op_type}",
+                [
+                    make_tensor_value_info(i.name, i.data_type, get_shape(i))
+                    for i in input_protos
+                ],
+                [
+                    make_tensor_value_info(o.name, o.data_type, get_shape(o))
+                    for o in output_protos
+                ],
+            ),
+            opset_imports=self.proto_.opset_import,
+        )
+        model_bytes = model.SerializeToString()
+        if model_bytes not in self._cached_saved_results:
+            sub = f"test_node_{index}_{node.op_type}"
+            path = os.path.join(self.save_intermediate, sub)
+            if not os.path.exists(path):
+                os.makedirs(path)
+            self._cached_saved_results[model_bytes] = [path, -1]
+            model_file = os.path.join(path, "model.onnx")
+            with open(model_file, "wb") as f:
+                f.write(model_bytes)
+        path, n_example = self._cached_saved_results[model_bytes]
+        self._cached_saved_results[model_bytes][1] += 1
+        n_example += 1
+        sub_path = os.path.join(path, f"test_data_set_{n_example}")
+        if not os.path.exists(sub_path):
+            os.mkdir(sub_path)
+        for i, t in enumerate(input_protos):
+            with open(os.path.join(sub_path, f"input_{i}.pb"), "wb") as f:
+                f.write(t.SerializeToString())
+        for i, t in enumerate(output_protos):
+            with open(os.path.join(sub_path, f"output_{i}.pb"), "wb") as f:
+                f.write(t.SerializeToString())
+        return path
