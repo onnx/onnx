@@ -264,8 +264,9 @@ class ComputeInputs : private Visitor {
 
   bool IsLocalVar(const std::string& name) const {
     for (auto& scope : namescopes) {
-      if (scope.count(name) > 0)
+      if (scope.count(name) > 0) {
         return true;
+      }
     }
     return false;
   }
