@@ -46,6 +46,21 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
 
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
+    cls_inference = ReferenceEvaluator
+
+    @classmethod
+    def __class_getitem__(cls, cls_inference: type, name: str | None = None):
+        """
+        Creates a new class inheriting from this one but with
+        static attribute `cls_inference` equal to *cls_inference*.
+        The goal is to make it easier to evaluate a runtime
+        sharing the same API as the :class:`ReferenceEvaluator`
+        on CPU.
+        """
+        if name is None:
+            name = f"{cls.__name__}{cls_inference.__name__}"
+        return type(name, (cls,), dict(cls_inference=cls_inference))
+
     @classmethod
     def is_opset_supported(cls, model):  # pylint: disable=unused-argument
         return True, ""
@@ -57,15 +72,13 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
 
     @classmethod
     def create_inference_session(cls, model):
-        return ReferenceEvaluator(model)
+        return cls.cls_inference(model)
 
     @classmethod
     def prepare(
         cls, model: Any, device: str = "CPU", **kwargs: Any
     ) -> ReferenceEvaluatorBackendRep:
-        # if isinstance(model, ReferenceEvaluatorBackendRep):
-        #    return model
-        if isinstance(model, ReferenceEvaluator):
+        if isinstance(model, cls.cls_inference):
             return ReferenceEvaluatorBackendRep(model)
         if isinstance(model, (str, bytes, ModelProto)):
             inf = cls.create_inference_session(model)
