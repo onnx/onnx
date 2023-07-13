@@ -96,7 +96,7 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
 
 
 def create_reference_backend(
-    backend: type[Backend] | None = None,
+    backend: Optional[type[Backend]] = None,
     path_to_test: str | None = None,
     kind: str | None = None,
 ):
