@@ -13,7 +13,7 @@ import onnx.backend.test
 import onnx.shape_inference
 import onnx.version_converter
 from onnx import ModelProto
-from onnx.backend.base import Backend, Device, DeviceType
+from onnx.backend.base import Device, DeviceType
 from onnx.reference import ReferenceEvaluator
 
 
