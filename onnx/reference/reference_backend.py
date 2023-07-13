@@ -2,7 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Any, Optional
+from __future__ import annotations
+
+from typing import Any
 
 import numpy
 
@@ -49,7 +51,7 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     cls_inference = ReferenceEvaluator
 
     @classmethod
-    def __class_getitem__(cls, cls_inference: type, name: Optional[str] = None):
+    def __class_getitem__(cls, cls_inference: type, name: str | None = None):
         """
         Creates a new class inheriting from this one but with
         static attribute `cls_inference` equal to *cls_inference*.
@@ -96,9 +98,9 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
 
 
 def create_reference_backend(
-    backend: Optional[type[Backend]] = None,
-    path_to_test: Optional[str] = None,
-    kind: Optional[str] = None,
+    backend: type | None = None,
+    path_to_test: str | None = None,
+    kind: str | None = None,
 ):
     return onnx.backend.test.BackendTest(
         backend or ReferenceEvaluatorBackend,
