@@ -5,6 +5,7 @@
 # pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
 
 import os
+import shutil
 import unittest
 
 import numpy as np
@@ -22,8 +23,8 @@ from onnx.helper import (
 )
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.reference_backend import (
-    create_reference_backend,
     ReferenceEvaluatorBackend,
+    create_reference_backend,
 )
 
 try:
@@ -83,6 +84,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
                 except unittest.case.SkipTest:
                     continue
         self.assertEqual(names, ["test_node_0_MatMul_cpu", "test_node_1_Add_cpu"])
+        shutil.rmtree(path)
 
     def test_reference_evaluator_custom_runtime_save(self):
         onx = self._linear_regression()
@@ -103,7 +105,9 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
 
             def __init__(self, *args, **kwargs):
                 NewRef.n_inits += 1
-                ReferenceEvaluator.__init__(self, *args, **kwargs)
+                ReferenceEvaluator.__init__(  # pylint: disable=non-parent-init-called
+                    self, *args, **kwargs
+                )
 
             def run(self, *args, **kwargs):
                 NewRef.n_calls += 1
@@ -130,6 +134,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
         self.assertEqual(names, ["test_node_0_MatMul_cpu", "test_node_1_Add_cpu"])
         self.assertEqual(NewRef.n_inits, 2)
         self.assertEqual(NewRef.n_calls, 2)
+        shutil.rmtree(path)
 
     @unittest.skipIf(InferenceSession is None, reason="onnxruntime not available")
     def test_reference_evaluator_onnxruntime_runtime_save(self):
@@ -151,7 +156,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
 
             def __init__(self, model, *args, providers=None, **kwargs):
                 NewRef.n_inits += 1
-                InferenceSession.__init__(
+                InferenceSession.__init__(  # pylint: disable=non-parent-init-called
                     self,
                     model.SerializeToString(),
                     *args,
@@ -194,6 +199,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
         self.assertEqual(names, ["test_node_0_MatMul_cpu", "test_node_1_Add_cpu"])
         self.assertEqual(NewRef.n_inits, 2)
         self.assertEqual(NewRef.n_calls, 2)
+        shutil.rmtree(path)
 
 
 if __name__ == "__main__":

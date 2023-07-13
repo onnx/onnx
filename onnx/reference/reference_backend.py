@@ -59,7 +59,7 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
         """
         if name is None:
             name = f"{cls.__name__}{cls_inference.__name__}"
-        return type(name, (cls,), dict(cls_inference=cls_inference))
+        return type(name, (cls,), {"cls_inference": cls_inference})
 
     @classmethod
     def is_opset_supported(cls, model):  # pylint: disable=unused-argument

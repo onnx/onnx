@@ -179,19 +179,19 @@ def from_array_extended(tensor: np.ndarray, name: Optional[str] = None) -> Tenso
     dt = tensor.dtype
     if dt == float8e4m3fn and dt.descr[0][0] == "e4m3fn":
         to = TensorProto.FLOAT8E4M3FN
-        dt_to = np.uint8
+        dt_to = np.uint8  # type: ignore[assignment]
     elif dt == float8e4m3fnuz and dt.descr[0][0] == "e4m3fnuz":
         to = TensorProto.FLOAT8E4M3FNUZ
-        dt_to = np.uint8
+        dt_to = np.uint8  # type: ignore[assignment]
     elif dt == float8e5m2 and dt.descr[0][0] == "e5m2":
         to = TensorProto.FLOAT8E5M2
-        dt_to = np.uint8
+        dt_to = np.uint8  # type: ignore[assignment]
     elif dt == float8e5m2fnuz and dt.descr[0][0] == "e5m2fnuz":
         to = TensorProto.FLOAT8E5M2FNUZ
-        dt_to = np.uint8
+        dt_to = np.uint8  # type: ignore[assignment]
     elif dt == bfloat16 and dt.descr[0][0] == "bfloat16":
         to = TensorProto.BFLOAT16
-        dt_to = np.uint16
+        dt_to = np.uint16  # type: ignore[assignment]
     else:
         return from_array(tensor, name)
 
