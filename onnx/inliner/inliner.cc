@@ -14,7 +14,9 @@
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"
 #include "onnx/common/interned_strings.h"
+#include "onnx/common/visitor.h"
 #include "onnx/inliner/inliner.h"
+#include "onnx/shape_inference/attribute_binder.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
@@ -23,10 +25,7 @@ namespace inliner {
 
 namespace { // internal/private API
 
-// Attribute lookup function. Returns nullptr if attribute is not found.
-using AttributeLookupFunction = std::function<const AttributeProto*(const std::string& name)>;
-
-using AttributeMap = std::unordered_map<std::string, const AttributeProto*>;
+using namespace internal;
 
 // Function lookup function. Returns true iff lookup is successful, in which case
 // the found FunctionProto is copied into *return_value. The opset version is not
@@ -71,50 +70,7 @@ struct OpsetMap : public OpsetMapBase {
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
-// A visitor class for visiting all nodes and subgraphs in a graph.
-struct NodeVisitorBase {
-  void VisitGraph(const GraphProto& graph) {
-    if (ProcessGraph(graph))
-      for (auto& node : graph.node())
-        VisitNode(node);
-  }
-
-  void VisitNode(const NodeProto& node) {
-    if (ProcessNode(node)) {
-      for (auto& attr : node.attribute()) {
-        if (attr.has_g()) {
-          VisitGraph(attr.g());
-        }
-        for (auto& graph : attr.graphs())
-          VisitGraph(graph);
-      }
-    }
-  }
-
-  virtual bool ProcessGraph(const GraphProto& graph) {
-    ONNX_UNUSED_PARAMETER(graph);
-    return true;
-  }
-
-  virtual bool ProcessNode(const NodeProto& node) {
-    ONNX_UNUSED_PARAMETER(node);
-    return true;
-  }
-
-  virtual ~NodeVisitorBase() {}
-};
-
-struct NodeVisitor : public NodeVisitorBase {
-  std::function<bool(const NodeProto&)> process_node;
-
-  NodeVisitor(std::function<bool(const NodeProto&)> process_node_fun) : process_node(process_node_fun) {}
-
-  bool ProcessNode(const NodeProto& node) override {
-    return process_node(node);
-  }
-};
-
-class NameGenerator : public NodeVisitorBase {
+class NameGenerator : private Visitor {
  public:
   NameGenerator(const GraphProto& graph) : index_(0) {
     VisitGraph(graph);
@@ -165,15 +121,13 @@ class NameGenerator : public NodeVisitorBase {
   std::unordered_set<std::string> existing_names_;
 };
 
-class Specializer {
+class InliningRenamer : private MutableVisitor {
  private:
   std::string suffix;
   NameGenerator& generator;
-  AttributeLookupFunction attr_map;
-  std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
+  std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
 
-  Specializer(std::string suffix_, NameGenerator& generator_, AttributeLookupFunction attr_map_)
-      : suffix(suffix_), generator(generator_), attr_map(attr_map_) {
+  InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
   }
@@ -246,103 +200,115 @@ class Specializer {
   }
 
   // Process a node:
-  void Transform(NodeProto& n) {
-    if (!n.name().empty())
-      n.set_name(MakeUnique(n.name()));
+  bool ProcessNode(NodeProto* node) override {
+    if (!node->name().empty())
+      node->set_name(MakeUnique(node->name()));
 
-    for (auto& x : *n.mutable_input()) {
+    for (auto& x : *node->mutable_input()) {
       LookupOrRename(x, false);
     }
-    for (auto& y : *n.mutable_output()) {
+    for (auto& y : *node->mutable_output()) {
       LookupOrRename(y, true);
     }
-    auto& attributes = *n.mutable_attribute();
-    for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
-      auto& attr = *attr_iter;
-      if (!attr.ref_attr_name().empty()) {
-        // Attribute-references must be replaced by the corresponding attribute-value in the call-node
-        // if the call-node contains the attribute. Otherwise, this attribute must be removed.
-        auto* attr_val = attr_map(attr.ref_attr_name());
-        if (attr_val != nullptr) {
-          // Copy value of attribute, but retain original name:
-          std::string name = attr.name();
-          attr = *attr_val;
-          attr.set_name(name);
-        } else {
-          attr_iter = attributes.erase(attr_iter);
-          continue;
-        }
-      }
-      // Subgraphs must be recursively processed.
-      if (attr.has_g()) {
-        Transform(*attr.mutable_g());
-      }
-      for (auto& graph : *attr.mutable_graphs())
-        Transform(graph);
-      ++attr_iter;
-    }
+    return true; // Process attribute subgraphs in traversal
   }
 
   // Process a sub-graph, contained as an attribute in a control-flow op node.
-  void Transform(GraphProto& graph) {
+  // Since we need both pre-processing and post-processing in the traversal, we
+  // override the VisitGraph method.
+  void VisitGraph(GraphProto* graph) override {
     rename_scopes.emplace_back();
-    for (auto& x : *graph.mutable_input())
+    for (auto& x : *graph->mutable_input())
       Rename(*x.mutable_name());
-    for (auto& init : *graph.mutable_initializer())
+    for (auto& init : *graph->mutable_initializer())
       Rename(*init.mutable_name());
-    for (auto& y : *graph.mutable_output())
+    for (auto& y : *graph->mutable_output())
       Rename(*y.mutable_name());
-    for (auto& n : *graph.mutable_node())
-      Transform(n);
+    for (auto& n : *graph->mutable_node())
+      VisitNode(&n);
     rename_scopes.pop_back();
   }
 
  public:
-  // The main specialization method: specialize a FunctionProto for a particular call-site.
+  // Renames variables in a FunctionProto for inlining a particular call-site. This does the following:
+  // (i)  Rename all intermediate variables in the function to ensure that they are unique (wrt the main graph).
+  // (ii) Rename inputs and outputs using names of actual parameters.
   static void
-  Specialize(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
-    AttributeMap map;
-    for (auto& attr : callnode.attribute()) {
-      map[attr.name()] = &attr;
-    }
-    auto lookup = [&](const std::string& name) -> const AttributeProto* {
-      auto iter = map.find(name);
-      return (iter != map.end()) ? iter->second : nullptr;
-    };
-    Specializer specializer(unique_suffix, generator, lookup);
+  Rename(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
+    InliningRenamer renamer(std::move(unique_suffix), generator);
 
-    specializer.Bind<false>(*callee.mutable_input(), callnode.input());
-    specializer.Bind<true>(*callee.mutable_output(), callnode.output());
+    renamer.Bind<false>(*callee.mutable_input(), callnode.input());
+    renamer.Bind<true>(*callee.mutable_output(), callnode.output());
 
-    for (auto& n : *callee.mutable_node())
-      specializer.Transform(n);
+    renamer.VisitFunction(&callee);
   }
 };
 
 // Identify the set of all "input" variables used by a given node.
 // This includes the variables listed as node.input, as well as
 // implicit inputs referred to in any graph-valued-attribute of the node.
+// In the case of variables referenced in sub-graphs, only non-local variables
+// are treated as implicit inputs.
 
-struct ComputeUsedVars : public NodeVisitorBase {
-  std::vector<std::string> result;
+class ComputeInputs : private Visitor {
+ private:
+  std::vector<std::unordered_set<std::string>> namescopes;
+
+  bool InNestedScope() const {
+    return !namescopes.empty();
+  }
+
+  std::unordered_set<std::string>& CurrentScope() {
+    return namescopes.back();
+  }
+
+  bool IsLocalVar(const std::string& name) const {
+    for (auto& scope : namescopes) {
+      if (scope.count(name) > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void VisitGraph(const GraphProto& graph) override {
+    namescopes.emplace_back();
+    for (auto& x : graph.input())
+      CurrentScope().insert(x.name());
+    for (auto& init : graph.initializer())
+      CurrentScope().insert(init.name());
+    for (auto& n : graph.node())
+      VisitNode(n);
+    namescopes.pop_back();
+  }
 
   bool ProcessNode(const NodeProto& node) override {
     for (auto& var : node.input()) {
-      if (!var.empty()) {
+      if (!var.empty() && !IsLocalVar(var)) {
         result.push_back(var);
+      }
+    }
+    if (InNestedScope()) {
+      for (auto& var : node.output()) {
+        if (!var.empty()) {
+          CurrentScope().insert(var);
+        }
       }
     }
     return true; // process sub-graphs
   }
 
-  ComputeUsedVars(const NodeProto& node) {
+ public:
+  std::vector<std::string> result;
+
+  ComputeInputs(const NodeProto& node) {
     result.reserve(node.input_size());
     VisitNode(node);
   }
 };
 
 std::vector<std::string> GetUsedVars(const NodeProto& node) {
-  return ComputeUsedVars(node).result;
+  return ComputeInputs(node).result;
 }
 
 using ConstNodeMap = std::unordered_map<std::string, const NodeProto*>;
@@ -448,8 +414,11 @@ void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
     if (iter != map.end()) {
       callee = *iter->second.first;
       int64_t target_version = iter->second.second;
-      // Rename and specialize called function body
-      Specializer::Specialize(node, callee, "__" + std::to_string(++inline_count), name_generator);
+      // Bind attribute parameters
+      internal::AttributeBinder::BindAttributes(node, callee);
+
+      // Rename variable names in callee
+      InliningRenamer::Rename(node, callee, "__" + std::to_string(++inline_count), name_generator);
       if (target_version != kNoConversion) {
         ONNX_ASSERTM(
             convert_version,
