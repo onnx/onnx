@@ -3763,6 +3763,26 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(got.dtype, np.uint16)
         assert_allclose(np.array(1, dtype=np.uint16), got)
 
+    @parameterized.parameterized.expand(
+        [
+            (["abc", "def"], [".com", ".net"], ["abc.com", "def.net"], (2,)),
+            (["cat", "dog", "snake"], ["s"], ["cats", "dogs", "snakes"], (3,)),
+            ("cat", "s", "cats", ()),
+            (["a", "ß", "y"], ["a", "ß", "y"], ["aa", "ßß", "yy"], (3,)),
+        ]
+    )
+    def test_string_concat(self, a, b, expected, expected_shape):
+        A = make_tensor_value_info("A", TensorProto.STRING, None)
+        B = make_tensor_value_info("B", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.STRING, None)
+        node = make_node("StringConcat", inputs=["A", "B"], outputs=["Y"])
+        model = make_model(make_graph([node], "g", [A, B], [Y]))
+        ref = ReferenceEvaluator(model)
+        result, *_ = ref.run(None, {"A": np.array(a), "B": np.array(b)})
+        np.testing.assert_array_equal(result, expected)
+        self.assertEqual(result.dtype.kind, "O")
+        self.assertEqual(result.shape, expected_shape)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
