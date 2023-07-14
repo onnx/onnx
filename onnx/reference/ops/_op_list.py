@@ -148,6 +148,7 @@ from onnx.reference.ops.op_optional_get_element import OptionalGetElement
 from onnx.reference.ops.op_optional_has_element import OptionalHasElement
 from onnx.reference.ops.op_or import Or
 from onnx.reference.ops.op_pad import Pad_1, Pad_2, Pad_11, Pad_18
+from onnx.reference.ops.op_parsedatetime import ParseDateTime
 from onnx.reference.ops.op_pow import Pow
 from onnx.reference.ops.op_prelu import PRelu
 from onnx.reference.ops.op_qlinear_conv import QLinearConv
