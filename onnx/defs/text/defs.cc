@@ -36,11 +36,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     20,
     OpSchema()
         .Input(0, "X", "Tensor with strings to match on.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Attr(
-            "pattern",
-            "Regex pattern to match on. This must be in the RE2 syntax.",
-            AttributeProto::STRING,
-            false)
+        .Attr("pattern", "Regex pattern to match on. This must be in the RE2 syntax.", AttributeProto::STRING, false)
         .Output(
             0,
             "Y",
