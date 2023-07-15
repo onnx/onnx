@@ -24034,7 +24034,7 @@ This version of the operator has been available since version 20 of the default 
 
 <dl>
 <dt><tt>pattern</tt> : string</dt>
-<dd>Regex pattern to match on. This must be in the [RE2](https://github.com/google/re2/wiki/Syntax) syntax.</dd>
+<dd>Regex pattern to match on. This must be in the RE2 syntax.</dd>
 </dl>
 
 #### Inputs
@@ -24058,6 +24058,37 @@ This version of the operator has been available since version 20 of the default 
 <dd>Inputs must be UTF-8 strings</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Outputs are bools and are True where there is a full regex match and False otherwise.</dd>
+</dl>
+
+### <a name="StringConcat-20"></a>**StringConcat-20**</a>
+
+  StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Tensor to prepend in concatenation</dd>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Tensor to append in concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
+<dd>Concatenated string tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>Inputs and outputs must be UTF-8 strings</dd>
 </dl>
 
 # ai.onnx.preview.training

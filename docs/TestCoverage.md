@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 175/188 (93.09%, 5 generators excluded) common operators.
+Node tests have covered 176/189 (93.12%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -20639,6 +20639,71 @@ x = np.random.randn(1, 3, 1, 5).astype(np.float32)
 axes = np.array([-2], dtype=np.int64)
 y = np.squeeze(x, axis=-2)
 expect(node, inputs=[x, axes], outputs=[y], name="test_squeeze_negative_axes")
+```
+
+</details>
+
+
+### StringConcat
+There are 1 test cases, listed as following:
+<details>
+<summary>stringconcat</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringConcat",
+    inputs=["x", "y"],
+    outputs=["result"],
+)
+x = np.array(["abc", "def"]).astype("object")
+y = np.array([".com", ".net"]).astype("object")
+result = np.array(["abc.com", "def.net"]).astype("object")
+
+expect(node, inputs=[x, y], outputs=[result], name="test_string_concat")
+
+x = np.array(["cat", "dog", "snake"]).astype("object")
+y = np.array(["s"]).astype("object")
+result = np.array(["cats", "dogs", "snakes"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_broadcasting",
+)
+
+x = np.array("cat").astype("object")
+y = np.array("s").astype("object")
+result = np.array("cats").astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_zero_dimensional",
+)
+
+x = np.array(["abc", ""]).astype("object")
+y = np.array(["", "abc"]).astype("object")
+result = np.array(["abc", "abc"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_empty_string",
+)
+
+x = np.array(["的", "中"]).astype("object")
+y = np.array(["的", "中"]).astype("object")
+result = np.array(["的的", "中中"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_utf8",
+)
 ```
 
 </details>

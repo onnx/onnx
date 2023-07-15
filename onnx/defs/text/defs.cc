@@ -1,6 +1,34 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
+static const char* StringConcat_doc =
+    R"DOC(StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support))DOC";
+ONNX_OPERATOR_SET_SCHEMA(
+    StringConcat,
+    20,
+    OpSchema()
+        .Input(
+            0,
+            "X",
+            "Tensor to prepend in concatenation",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(1, "Y", "Tensor to append in concatenation", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Z", "Concatenated string tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .TypeConstraint("T", {"tensor(string)"}, "Inputs and outputs must be UTF-8 strings")
+        .SetDoc(StringConcat_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        }));
+
 static const char* RegexFullMatch_doc =
     R"DOC(RegexFullMatch performs a full regex match on each element of the input element. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.)DOC";
 ONNX_OPERATOR_SET_SCHEMA(
@@ -10,7 +38,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "X", "Tensor with strings to match on.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
             "pattern",
-            "Regex pattern to match on. This must be in the [RE2](https://github.com/google/re2/wiki/Syntax) syntax.",
+            "Regex pattern to match on. This must be in the RE2 syntax.",
             AttributeProto::STRING,
             false)
         .Output(

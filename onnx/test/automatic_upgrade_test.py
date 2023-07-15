@@ -1789,6 +1789,14 @@ class TestAutomaticUpgrade(unittest.TestCase):
             attrs={"epsilon": 1e-5, "num_groups": 2},
         )
 
+    def test_StringConcat(self) -> None:
+        self._test_op_upgrade(
+            "StringConcat",
+            20,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+        )
+
     def test_RegexFullMatch(self) -> None:
         self._test_op_upgrade(
             "RegexFullMatch",
