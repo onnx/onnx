@@ -62,7 +62,7 @@ Community Meetups are held at least once a year. Content from previous community
 * 2021.10.21 <https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=46989689>
 * 2022.06.24 <https://wiki.lfaidata.foundation/display/DL/ONNX+Community+Day+-+June+24>
 * 2023.06.28 <https://wiki.lfaidata.foundation/display/DL/ONNX+Community+Day+2023+-+June+28>
-  
+
 # Discuss
 
 We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-o65errpw-gMTbwNr7FnNbVXNVFkmyNA) to join the group) for more real-time discussion.
