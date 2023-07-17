@@ -105,9 +105,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
 
             def __init__(self, *args, **kwargs):
                 NewRef.n_inits += 1
-                ReferenceEvaluator.__init__(  # pylint: disable=non-parent-init-called
-                    self, *args, **kwargs
-                )
+                super().__init__(*args, **kwargs)
 
             def run(self, *args, **kwargs):
                 NewRef.n_calls += 1
@@ -156,8 +154,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
 
             def __init__(self, model, *args, providers=None, **kwargs):
                 NewRef.n_inits += 1
-                InferenceSession.__init__(  # pylint: disable=non-parent-init-called
-                    self,
+                super().__init__(
                     model.SerializeToString(),
                     *args,
                     providers=providers or ["CPUExecutionProvider"],
