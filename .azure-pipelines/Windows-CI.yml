@@ -24,17 +24,17 @@ jobs:
         onnx_ml: 0
         onnx_verify_proto: 0
         protobuf_type: 'External'
+      py39_ml_internal_protobuf:
+        python.version: '3.9'
+        onnx_ml: 1
+        onnx_verify_proto: 0
+        protobuf_type: 'External'
       py38_internal_protobuf:
         python.version: '3.8'
         onnx_ml: 0
         onnx_verify_proto: 0
         protobuf_type: 'Internal'
-      py38_onnx_ml:
-        python.version: '3.8'
-        onnx_ml: 1
-        onnx_verify_proto: 0
-        protobuf_type: 'External'
-    maxParallel: 4
+    maxParallel: 6
 
   steps:
   - task: UsePythonVersion@0
