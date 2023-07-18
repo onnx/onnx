@@ -34,7 +34,7 @@ jobs:
         onnx_ml: 0
         onnx_verify_proto: 0
         protobuf_type: 'Internal'
-    maxParallel: 4
+    maxParallel: 6
 
   steps:
   - task: UsePythonVersion@0
