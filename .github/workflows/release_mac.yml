@@ -17,6 +17,9 @@ env:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
 
 jobs:
   build:

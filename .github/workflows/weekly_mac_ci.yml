@@ -13,6 +13,10 @@ on:
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
 jobs:
   build:
     if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'test ONNX Model Zoo')
