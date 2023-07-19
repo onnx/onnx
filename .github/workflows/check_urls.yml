@@ -1,0 +1,46 @@
+name: Check URLs
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: urls-checker-code
+      uses: urlstechie/urlchecker-action@master
+      with:
+        subfolder: onnx
+        file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
+        print_all: false
+        timeout: 2
+        retry_count# : 2
+        # exclude_urls: https://...,...
+        # exclude_patterns: https://...
+        # force_pass : true
+
+    - name: urls-checker-docs
+      uses: urlstechie/urlchecker-action@master
+      with:
+        subfolder: docs
+        file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
+        print_all: false
+        timeout: 2
+        retry_count# : 2
+        # exclude_urls: https://...,...
+        # exclude_patterns: https://...
+        # force_pass : true
+
+    - name: urls-checker-community
+      uses: urlstechie/urlchecker-action@master
+      with:
+        subfolder: community
+        file_types: .md,.py,.rst
+        print_all: false
+        timeout: 2
+        retry_count# : 2
+        # exclude_urls: https://...,...
+        # exclude_patterns: https://...
+        # force_pass : true
