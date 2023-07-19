@@ -14,10 +14,6 @@ on:
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
-  cancel-in-progress: true
-
 jobs:
   optional-lint:
     name: Optional Lint
