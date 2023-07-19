@@ -9,6 +9,7 @@ on:
     branches:
       - main
   pull_request:
+  merge_group:
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -40,6 +41,13 @@ jobs:
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
+      - name: cpplint # Static check C++ code
+        uses: reviewdog/action-cpplint@d5ddf147384ab68e12432bf02815d0e49e5388b2 # v1.0.0
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: warning
+          flags: --linelength=120
 
 
   enforce-style:
@@ -50,7 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Setup Python
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
         with:
           # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
           python-version: "3.10"

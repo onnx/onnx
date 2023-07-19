@@ -149,7 +149,7 @@ class ReferenceEvaluator:
     The class name must be the same. The domain does not have
     to be specified for the default domain. However, by default,
     class `OpRun` will load the most recent for this operator.
-    It can be explicirely specified by adding static attribute
+    It can be explicitly specified by adding static attribute
     `op_schema` of type :class:`OpSchema
     <onnx.onnx_cpp2py_export.defs.OpSchema>`.
 
@@ -489,7 +489,7 @@ class ReferenceEvaluator:
             f"is unknown, known functions: {sorted(self.functions_)}."
         )
 
-    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Dict[str, Any] = None):  # type: ignore
+    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Optional[Dict[str, Any]] = None):  # type: ignore
         """
         Executes the onnx model.
 
