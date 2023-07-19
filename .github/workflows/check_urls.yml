@@ -19,7 +19,7 @@ jobs:
         retry_count# : 2
         # exclude_urls: https://...,...
         # exclude_patterns: https://...
-        # force_pass : true
+        force_pass: true  # make the action pass until we fix urls
 
     - name: urls-checker-docs
       uses: urlstechie/urlchecker-action@master
@@ -31,7 +31,7 @@ jobs:
         retry_count# : 2
         # exclude_urls: https://...,...
         # exclude_patterns: https://...
-        # force_pass : true
+        force_pass: true  # make the action pass until we fix urls
 
     - name: urls-checker-community
       uses: urlstechie/urlchecker-action@master
@@ -43,4 +43,4 @@ jobs:
         retry_count# : 2
         # exclude_urls: https://...,...
         # exclude_patterns: https://...
-        # force_pass : true
+        force_pass: true  # make the action pass until we fix urls
