@@ -1590,6 +1590,38 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    @parameterized.expand(all_versions_for("StringConcat"))
+    def test_stringconcat(self, _, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2, 3, 4)),
+                ("y", TensorProto.STRING, (2, 3, 4)),
+            ],
+            [make_node("StringConcat", ["x", "y"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("z", TensorProto.STRING, (2, 3, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringConcat"))
+    def test_stringconcat_broadcasting(self, _, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2, 3, 4)),
+                ("y", TensorProto.STRING, (1, 3, 1)),
+            ],
+            [make_node("StringConcat", ["x", "y"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("z", TensorProto.STRING, (2, 3, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_unsqueeze_regular(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axes", TensorProto.INT64, (4,))],
