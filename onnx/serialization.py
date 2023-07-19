@@ -45,9 +45,14 @@ class ProtoSerializer(Protocol):
 class _Registry:
     def __init__(self) -> None:
         self._serializers: dict[str, ProtoSerializer] = {}
+        # A mapping from file extension to format
+        self._extension_to_format: dict[str, str] = {}
 
     def register(self, serializer: ProtoSerializer) -> None:
         self._serializers[serializer.supported_format] = serializer
+        self._extension_to_format.update(
+            {ext: serializer.supported_format for ext in serializer.file_extensions}
+        )
 
     def get(self, fmt: str) -> ProtoSerializer:
         """Get a serializer for a format.
@@ -77,10 +82,7 @@ class _Registry:
         Returns:
             The format for the file extension, or None if not found.
         """
-        for fmt, serializer in self._serializers.items():
-            if file_extension in serializer.file_extensions:
-                return fmt
-        return None
+        return self._extension_to_format.get(file_extension)
 
 
 class _ProtobufSerializer(ProtoSerializer):
