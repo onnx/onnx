@@ -2,11 +2,13 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import os
 import platform
 import sys
 import unittest
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy
 from packaging.version import Version
@@ -65,7 +67,7 @@ class InferenceSessionBackendRep(onnx.backend.base.BackendRep):
 
 
 class InferenceSessionBackend(onnx.backend.base.Backend):
-    providers = set(get_available_providers())
+    providers: ClassVar[set[str]] = set(get_available_providers())
 
     @classmethod
     def is_opset_supported(cls, model):  # pylint: disable=unused-argument
