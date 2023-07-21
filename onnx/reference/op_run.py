@@ -490,6 +490,18 @@ class OpRun(ABC):
         return res
 
     @classmethod
+    def infer_name(cls):
+        name = cls.__name__
+        if "_" not in name:
+            return name, onnx_opset_version()
+        name, vers = name.rsplit("_", 1)
+        try:
+            vers = int(vers)
+        except ValueError:
+            return cls.__name__, onnx_opset_version()
+        return name, vers
+
+    @classmethod
     def make_node(
         cls,
         n_inputs: Optional[int] = None,
@@ -516,20 +528,21 @@ class OpRun(ABC):
             onnx_node = Celu.make_node(alpha=0.5)
             print(onnx_node)
         """
+        op_type, opset = cls.infer_name()
         domain = cls.op_domain
         schema = None
         if n_inputs is None:
             if schema is None:
-                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+                schema = get_schema(op_type, opset, domain)
             n_inputs = schema.min_input
         if n_outputs is None:
             if schema is None:
-                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+                schema = get_schema(op_type, opset, domain)
             n_outputs = schema.min_output
 
         names_in = [f"x{i}" for i in range(n_inputs)]
         names_out = [f"y{i}" for i in range(n_outputs)]
-        node = make_node(cls.__name__, names_in, names_out, **kwargs)
+        node = make_node(op_type, names_in, names_out, **kwargs)
         return node
 
     @classmethod

@@ -50,7 +50,7 @@ from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
-from onnx.reference.ops._op_list import Celu
+from onnx.reference.ops._op_list import Cast_19, Celu
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
 from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
@@ -1392,6 +1392,13 @@ class TestReferenceEvaluator(unittest.TestCase):
         y = Celu.eval(x, alpha=0.5)
         expected = _vcelu1(x, alpha=0.5)
         assert_allclose(expected, y)
+
+    def test_eval_cast(self):
+        x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
+        y = Cast_19.eval(x, to=TensorProto.FLOAT8E4M3FN)
+        dy = Cast_19.eval(y, to=TensorProto.FLOAT)
+        expected = x
+        assert_allclose(expected, dy)
 
     def test_eval_celu_load_op(self):
         celu = load_op("", "Celu")
