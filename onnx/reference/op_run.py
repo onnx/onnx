@@ -498,10 +498,10 @@ class OpRun(abc.ABC):
             return name, onnx_opset_version()
         name, vers = name.rsplit("_", 1)
         try:
-            vers = int(vers)
+            i_vers = int(vers)
         except ValueError:
             return cls.__name__, onnx_opset_version()
-        return name, vers
+        return name, i_vers
 
     @classmethod
     def make_node(
