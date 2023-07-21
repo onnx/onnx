@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0912
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from __future__ import annotations
+
+import abc
+from typing import Any, ClassVar, Iterable
 
 import numpy as np
 
@@ -72,8 +74,8 @@ class RefAttrName:
         return f"{self.__class__.__name__}({self.name!r})"
 
 
-def _build_schemas() -> Dict[str, type]:
-    res: Dict[str, type] = {}
+def _build_schemas() -> dict[str, type]:
+    res: dict[str, type] = {}
     for schema in get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
@@ -111,7 +113,7 @@ class SparseTensor:
     """
 
     def __init__(
-        self, values: np.ndarray, indices: np.ndarray, shape: Tuple[int]
+        self, values: np.ndarray, indices: np.ndarray, shape: tuple[int]
     ) -> None:
         self.values = values
         self.indices = indices
@@ -167,13 +169,13 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
 
 
 class Graph:
-    __slots__ = ["g"]
+    __slots__ = ("g",)
 
     def __init__(self, g: GraphProto) -> None:
         self.g = g
 
 
-class OpRun(ABC):
+class OpRun(abc.ABC):
     """
     Ancestor to all operators in this subfolder.
 
@@ -186,7 +188,7 @@ class OpRun(ABC):
 
     op_domain = ""
 
-    _attribute_conversion_functions = {
+    _attribute_conversion_functions: ClassVar[dict[Any, Any]] = {
         AttributeProto.FLOAT: lambda att: np.float32(att.f),
         AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
         AttributeProto.GRAPH: lambda att: Graph(att.g),
@@ -206,7 +208,7 @@ class OpRun(ABC):
     }
 
     def __init__(
-        self, onnx_node: NodeProto, run_params: Dict[str, Any], schema: Any = None
+        self, onnx_node: NodeProto, run_params: dict[str, Any], schema: Any = None
     ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
@@ -238,7 +240,7 @@ class OpRun(ABC):
         self.run_params["log"](pattern, *args)
 
     def _extract_attribute_value(
-        self, att: AttributeProto, ref_att: Optional[AttributeProto] = None
+        self, att: AttributeProto, ref_att: AttributeProto | None = None
     ) -> Any:
         """
         Converts an attribute value into a python value.
@@ -316,7 +318,7 @@ class OpRun(ABC):
         self.attributes_names_ = set(added_attributes)
 
     @staticmethod
-    def implicit_inputs(graph: GraphProto) -> List[str]:
+    def implicit_inputs(graph: GraphProto) -> list[str]:
         """
         Returns all varibles not registered as inputs and not produced by
         an node inside the graph. This inputs are part of the context
@@ -379,7 +381,7 @@ class OpRun(ABC):
         atts.append(")")
         return "\n".join(atts)
 
-    @abstractmethod
+    @abc.abstractmethod
     def _run(self, *args, **kwargs):  # type: ignore
         """
         Should be overwritten.
@@ -504,8 +506,8 @@ class OpRun(ABC):
     @classmethod
     def make_node(
         cls,
-        n_inputs: Optional[int] = None,
-        n_outputs: Optional[int] = None,
+        n_inputs: int | None = None,
+        n_outputs: int | None = None,
         **kwargs: Any,
     ) -> NodeProto:  # type: ignore
         """
@@ -548,8 +550,8 @@ class OpRun(ABC):
     @classmethod
     def create(
         cls,
-        n_inputs: Optional[int] = None,
-        n_outputs: Optional[int] = None,
+        n_inputs: int | None = None,
+        n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
     ) -> Any:
@@ -580,8 +582,8 @@ class OpRun(ABC):
     @classmethod
     def eval(
         cls,
-        *args: List[Any],
-        n_outputs: Optional[int] = None,
+        *args: list[Any],
+        n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
     ) -> Any:  # type: ignore
@@ -629,7 +631,7 @@ class OpFunction(OpRun):
         onnx_node: NodeProto,
         log_function: Any,
         impl: Any = None,
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ):
         if impl is None:
             raise RuntimeError(

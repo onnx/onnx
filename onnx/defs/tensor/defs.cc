@@ -2,14 +2,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <algorithm>
+#include <cmath>
+#include <numeric>
+
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
 #include "onnx/defs/tensor_proto_util.h"
-
-#include <algorithm>
-#include <cmath>
-#include <numeric>
 
 namespace ONNX_NAMESPACE {
 
@@ -799,14 +799,14 @@ https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-a
 Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
 of its input `data` tensor.
 
-An effective `start[i]`, `end[i]`, and `step[i]` must be computed for each `i`
+An effective `starts[i]`, `ends[i]`, and `steps[i]` must be computed for each `i`
 in `[0, ... r-1]` where `r = rank(input)` as follows:
 
 If `axes` are omitted, they are set to `[0, ..., r-1]`.
 If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
-`dims` are the dimensions of `input` and `step[i] = `1.
+The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+`dims` are the dimensions of `input` and `steps[i] = `1.
 
 All negative elements of `axes` are made non-negatve by adding `r` to them, where
 `r =rank(input)`.
@@ -818,10 +818,10 @@ and `[0, dims[axes[i]]-1]` for negative stepping.
 
 The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
 accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
-`end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
+`ends[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
 is clamped to `[-1, dims[axes[i]]-1]`.
 
-Finally, `step[axes[i]] = steps[i]`.
+Finally, `steps[axes[i]] = steps[i]`.
 
 For slicing to the end of a dimension with unknown size, it is recommended to pass
 in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.

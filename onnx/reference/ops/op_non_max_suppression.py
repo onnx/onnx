@@ -26,7 +26,7 @@ class PrepareContext:
 
 
 class SelectedIndex:
-    __slots__ = ["batch_index_", "class_index_", "box_index_"]
+    __slots__ = ("batch_index_", "class_index_", "box_index_")
 
     def __init__(
         self, batch_index: int = 0, class_index: int = 0, box_index: int = 0
