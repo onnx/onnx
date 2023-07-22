@@ -160,7 +160,7 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
         }
 
         if tensor.HasField("raw_data"):
-            data = list(tensor.raw_data)
+            data = tensor.raw_data
         else:
             data = tensor.int32_data
         shape = tuple(tensor.dims)
