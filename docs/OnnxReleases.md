@@ -74,7 +74,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
  * Test with ONNX converters: Create GitHub issues in converters repos to provide them the package links and have them test the TestPyPI packages.
    * https://github.com/pytorch/pytorch
-   * https://github.com/onnx/onnx-tensorflow
+   * https://github.com/onnx/onnx-tensorflow (not actively maintained)
    * https://github.com/onnx/tensorflow-onnx
    * https://github.com/onnx/sklearn-onnx
    * https://github.com/onnx/onnxmltools
