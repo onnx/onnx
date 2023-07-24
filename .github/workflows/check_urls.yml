@@ -14,7 +14,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: urls-checker-code
-      uses: urlstechie/urlchecker-action@master
+      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4
       with:
         subfolder: onnx
         file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
@@ -26,7 +26,7 @@ jobs:
         force_pass: true  # make the action pass until we fix urls
 
     - name: urls-checker-docs
-      uses: urlstechie/urlchecker-action@master
+      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4
       with:
         subfolder: docs
         file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
@@ -38,7 +38,7 @@ jobs:
         force_pass: true  # make the action pass until we fix urls
 
     - name: urls-checker-community
-      uses: urlstechie/urlchecker-action@master
+      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4
       with:
         subfolder: community
         file_types: .md,.py,.rst
