@@ -16,6 +16,7 @@ from datetime import date
 from distutils import log, sysconfig
 from distutils.spawn import find_executable
 from textwrap import dedent
+from typing import ClassVar
 
 import setuptools
 import setuptools.command.build_ext
@@ -110,7 +111,7 @@ def cd(path):
 
 
 class ONNXCommand(setuptools.Command):
-    user_options = []
+    user_options: ClassVar[list] = []
 
     def initialize_options(self):
         pass
@@ -148,7 +149,9 @@ class CmakeBuild(setuptools.Command):
     to `setup.py build`.  By default all CPUs are used.
     """
 
-    user_options = [("jobs=", "j", "Specifies the number of jobs to use with make")]
+    user_options: ClassVar[list] = [
+        ("jobs=", "j", "Specifies the number of jobs to use with make")
+    ]
 
     built = False
 

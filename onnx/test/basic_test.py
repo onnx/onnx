@@ -7,8 +7,9 @@ import os
 import pathlib
 import tempfile
 import unittest
-from typing import Literal
 
+import google.protobuf.message
+import google.protobuf.text_format
 import parameterized
 
 import onnx
@@ -38,7 +39,7 @@ def _simple_tensor() -> onnx.TensorProto:
     ]
 )
 class TestIO(unittest.TestCase):
-    format: Literal["protobuf", "textproto"]
+    format: str
 
     def test_load_model_when_input_is_bytes(self) -> None:
         proto = _simple_model()
@@ -104,6 +105,86 @@ class TestIO(unittest.TestCase):
             onnx.save_tensor(proto, model_path, format=self.format)
             loaded_proto = onnx.load_tensor(model_path, format=self.format)
             self.assertEqual(proto, loaded_proto)
+
+
+class TestSaveAndLoadFileExtensions(unittest.TestCase):
+    def test_save_model_picks_correct_format_from_extension(self) -> None:
+        proto = _simple_model()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = os.path.join(temp_dir, "model.textproto")
+            # No format is specified, so the extension should be used to determine the format
+            onnx.save_model(proto, model_path)
+            loaded_proto = onnx.load_model(model_path, format="textproto")
+            self.assertEqual(proto, loaded_proto)
+
+    def test_load_model_picks_correct_format_from_extension(self) -> None:
+        proto = _simple_model()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = os.path.join(temp_dir, "model.textproto")
+            onnx.save_model(proto, model_path, format="textproto")
+            # No format is specified, so the extension should be used to determine the format
+            loaded_proto = onnx.load_model(model_path)
+            self.assertEqual(proto, loaded_proto)
+
+    def test_save_model_uses_format_when_it_is_specified(self) -> None:
+        proto = _simple_model()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = os.path.join(temp_dir, "model.textproto")
+            # `format` is specified. It should take precedence over the extension
+            onnx.save_model(proto, model_path, format="protobuf")
+            loaded_proto = onnx.load_model(model_path, format="protobuf")
+            self.assertEqual(proto, loaded_proto)
+            with self.assertRaises(google.protobuf.text_format.ParseError):
+                # Loading it as textproto (by file extension) should fail
+                onnx.load_model(model_path)
+
+    def test_load_model_uses_format_when_it_is_specified(self) -> None:
+        proto = _simple_model()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            model_path = os.path.join(temp_dir, "model.protobuf")
+            onnx.save_model(proto, model_path)
+            with self.assertRaises(google.protobuf.text_format.ParseError):
+                # `format` is specified. It should take precedence over the extension
+                # Loading it as textproto should fail
+                onnx.load_model(model_path, format="textproto")
+
+            loaded_proto = onnx.load_model(model_path, format="protobuf")
+            self.assertEqual(proto, loaded_proto)
+
+    def test_load_and_save_model_to_path_without_specifying_extension_succeeds(
+        self,
+    ) -> None:
+        proto = _simple_model()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # No extension is specified
+            model_path = os.path.join(temp_dir, "model")
+            onnx.save_model(proto, model_path, format="textproto")
+            with self.assertRaises(google.protobuf.message.DecodeError):
+                # `format` is not specified. load_model should assume protobuf
+                # and fail to load it
+                onnx.load_model(model_path)
+
+            loaded_proto = onnx.load_model(model_path, format="textproto")
+            self.assertEqual(proto, loaded_proto)
+
+    def test_load_and_save_model_without_specifying_extension_or_format_defaults_to_protobuf(
+        self,
+    ) -> None:
+        proto = _simple_model()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # No extension is specified
+            model_path = os.path.join(temp_dir, "model")
+            onnx.save_model(proto, model_path)
+            with self.assertRaises(google.protobuf.text_format.ParseError):
+                # The model is saved as protobuf, so loading it as textproto should fail
+                onnx.load_model(model_path, format="textproto")
+
+            loaded_proto = onnx.load_model(model_path)
+            self.assertEqual(proto, loaded_proto)
+            loaded_proto_as_explicitly_protobuf = onnx.load_model(
+                model_path, format="protobuf"
+            )
+            self.assertEqual(proto, loaded_proto_as_explicitly_protobuf)
 
 
 class TestBasicFunctions(unittest.TestCase):
