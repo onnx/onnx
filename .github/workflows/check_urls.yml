@@ -1,6 +1,10 @@
 name: Check URLs
 
-on: [push]
+on:
+  push:
+    branches: [ "main", rel-* ]
+  pull_request:
+    branches: [ "main", rel-* ]
 
 jobs:
   build:
