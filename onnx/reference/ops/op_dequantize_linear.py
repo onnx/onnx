@@ -77,10 +77,7 @@ class DequantizeLinear(OpRun):
                 x_zero_point, x.shape, axis
             )
         else:
-            if (
-                f8_type
-                and x_zero_point is not None
-            ):
+            if f8_type and x_zero_point is not None:
                 u_x_zero_point = x_zero_point.astype(np.uint8)
                 umi = u_x_zero_point.min()
                 uma = u_x_zero_point.max()
