@@ -1,7 +1,6 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# type: ignore
 
 import os
 import shutil
