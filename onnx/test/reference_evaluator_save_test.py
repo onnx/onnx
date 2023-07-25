@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-import shutil
+import tempfile
 import unittest
 
 import numpy as np
@@ -119,7 +119,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
             tests = backend.tests()
             names = []
             for att in dir(tests):
-                if m.startswith("test_"):
+                if att.startswith("test_"):
                     test = getattr(tests, att)
                     try:
                         test()
@@ -182,7 +182,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
             tests = backend.tests()
             names = []
             for att in dir(tests):
-                if m.startswith("test_"):
+                if att.startswith("test_"):
                     test = getattr(tests, att)
                     try:
                         test()

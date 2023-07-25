@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, ClassVar, Iterable
+from typing import Any, ClassVar, Iterable, Optional
 
 import numpy as np
 
