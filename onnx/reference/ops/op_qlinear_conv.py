@@ -41,7 +41,7 @@ class QLinearConv(OpRun):
         W = w.astype(np.int32)
         if w_zero_point is not None:
             if len(w_zero_point.shape) == 1 and w_zero_point.shape[0] == W.shape[0]:
-                missing = (w_zero_point.shape[0], ) + (1, ) * (len(W.shape) - 1)                
+                missing = (w_zero_point.shape[0],) + (1,) * (len(W.shape) - 1)
                 W -= w_zero_point.reshape(missing)
             else:
                 W -= w_zero_point
