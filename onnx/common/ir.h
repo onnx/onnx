@@ -10,6 +10,7 @@
 #pragma once
 
 #include <stdint.h>
+
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
