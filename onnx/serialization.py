@@ -24,7 +24,11 @@ _ENCODING = "utf-8"
 class ProtoSerializer(Protocol):
     """A serializer-deserializer to and from in-memory Protocol Buffers representations."""
 
-    supported_formats: Collection[str]
+    # Format supported by the serializer. E.g. "protobuf"
+    supported_format: str
+    # File extensions supported by the serializer. E.g. frozenset({".onnx", ".pb"})
+    # Be careful to include the dot in the file extension.
+    file_extensions: Collection[str]
 
     # NOTE: The methods defined are serialize_proto and deserialize_proto and not the
     # more generic serialize and deserialize to leave space for future protocols
@@ -41,16 +45,20 @@ class ProtoSerializer(Protocol):
 class _Registry:
     def __init__(self) -> None:
         self._serializers: dict[str, ProtoSerializer] = {}
+        # A mapping from file extension to format
+        self._extension_to_format: dict[str, str] = {}
 
     def register(self, serializer: ProtoSerializer) -> None:
-        for fmt in serializer.supported_formats:
-            self._serializers[fmt] = serializer
+        self._serializers[serializer.supported_format] = serializer
+        self._extension_to_format.update(
+            {ext: serializer.supported_format for ext in serializer.file_extensions}
+        )
 
     def get(self, fmt: str) -> ProtoSerializer:
         """Get a serializer for a format.
 
         Args:
-            fmt (str): The format to get a serializer for.
+            fmt: The format to get a serializer for.
 
         Returns:
             ProtoSerializer: The serializer for the format.
@@ -65,11 +73,23 @@ class _Registry:
                 f"Unsupported format: '{fmt}'. Supported formats are: {self._serializers.keys()}"
             ) from None
 
+    def get_format_from_file_extension(self, file_extension: str) -> str | None:
+        """Get the corresponding format from a file extension.
+
+        Args:
+            file_extension: The file extension to get a format for.
+
+        Returns:
+            The format for the file extension, or None if not found.
+        """
+        return self._extension_to_format.get(file_extension)
+
 
 class _ProtobufSerializer(ProtoSerializer):
     """Serialize and deserialize protobuf message."""
 
-    supported_formats = ("protobuf",)
+    supported_format = "protobuf"
+    file_extensions = frozenset({".onnx", ".pb"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         if hasattr(proto, "SerializeToString") and callable(proto.SerializeToString):
@@ -103,7 +123,8 @@ class _ProtobufSerializer(ProtoSerializer):
 class _TextProtoSerializer(ProtoSerializer):
     """Serialize and deserialize text proto."""
 
-    supported_formats = ("textproto",)
+    supported_format = "textproto"
+    file_extensions = frozenset({".textproto", ".prototxt", ".pbtxt"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         textproto = google.protobuf.text_format.MessageToString(proto)
