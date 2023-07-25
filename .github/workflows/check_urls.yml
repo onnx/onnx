@@ -26,7 +26,7 @@ jobs:
         force_pass: false
 
     - name: urls-checker-docs
-      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4
+      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4 # v0.0.34
       with:
         subfolder: docs
         file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
