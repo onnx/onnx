@@ -21,9 +21,9 @@ jobs:
         print_all: false
         timeout: 2
         retry_count# : 2
-        # exclude_urls: https://...,...
+        exclude_urls: https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/,https://media.githubusercontent.com/media/,https://download.onnxruntime.ai/onnx/models
         # exclude_patterns: https://...
-        force_pass: true  # make the action pass until we fix urls
+        force_pass: false
 
     - name: urls-checker-docs
       uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4
@@ -33,9 +33,8 @@ jobs:
         print_all: false
         timeout: 2
         retry_count# : 2
-        # exclude_urls: https://...,...
-        # exclude_patterns: https://...
-        force_pass: true  # make the action pass until we fix urls
+        exclude_urls: https://github.com/onnx/onnx/blob/main/docs/Operators,https://github.com/onnx/onnx/pull/436
+        force_pass: false
 
     - name: urls-checker-community
       uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4
@@ -45,6 +44,4 @@ jobs:
         print_all: false
         timeout: 2
         retry_count# : 2
-        # exclude_urls: https://...,...
-        # exclude_patterns: https://...
-        force_pass: true  # make the action pass until we fix urls
+        force_pass: false
