@@ -56,145 +56,142 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
 
     def test_reference_evaluator_save(self):
         onx = self._linear_regression()
-        root = "."
-        path = os.path.join(root, "reference_evaluator_test_save")
-        ref = ReferenceEvaluator(onx, save_intermediate=path)
-        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-        a = np.array([1, 1], dtype=np.float32)
-        b = np.array([11], dtype=np.float32)
-        ref.run(None, {"X": x, "A": a, "B": b})
-        self.assertTrue(os.path.exists(path))
-        examples = load_model_tests(root, "reference_evaluator_test_save")
-        self.assertEqual(len(examples), 2)
+        with tempfile.TemporaryDirectory() as root:
+            path = os.path.join(root, "reference_evaluator_test_save")
+            ref = ReferenceEvaluator(onx, save_intermediate=path)
+            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+            a = np.array([1, 1], dtype=np.float32)
+            b = np.array([11], dtype=np.float32)
+            ref.run(None, {"X": x, "A": a, "B": b})
+            self.assertTrue(os.path.exists(path))
+            examples = load_model_tests(root, "reference_evaluator_test_save")
+            self.assertEqual(len(examples), 2)
 
-        backend = create_reference_backend(
-            path_to_test=root, kind="reference_evaluator_test_save"
-        )
-        backend.exclude("cuda")
-        tests = backend.tests()
-        names = []
-        for m in dir(tests):
-            if m.startswith("test_"):
-                test = getattr(tests, m)
-                try:
-                    test()
-                    names.append(m)
-                except unittest.case.SkipTest:
-                    continue
-        self.assertEqual(names, ["test_node_0_MatMul_cpu", "test_node_1_Add_cpu"])
-        shutil.rmtree(path)
+            backend = create_reference_backend(
+                path_to_test=root, kind="reference_evaluator_test_save"
+            )
+            backend.exclude("cuda")
+            tests = backend.tests()
+            names = []
+            for att in dir(tests):
+                if att.startswith("test_"):
+                    test = getattr(tests, att)
+                    try:
+                        test()
+                        names.append(att)
+                    except unittest.case.SkipTest:
+                        continue
+            self.assertEqual(names, ["test_node_0_MatMul_cpu", "test_node_1_Add_cpu"])
 
     def test_reference_evaluator_custom_runtime_save(self):
         onx = self._linear_regression()
-        root = "."
-        path = os.path.join(root, "reference_evaluator_test_save_ref")
-        ref = ReferenceEvaluator(onx, save_intermediate=path)
-        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-        a = np.array([1, 1], dtype=np.float32)
-        b = np.array([11], dtype=np.float32)
-        ref.run(None, {"X": x, "A": a, "B": b})
-        self.assertTrue(os.path.exists(path))
-        examples = load_model_tests(root, "reference_evaluator_test_save_ref")
-        self.assertEqual(len(examples), 2)
+        with tempfile.TemporaryDirectory() as root:
+            path = os.path.join(root, "reference_evaluator_test_save_ref")
+            ref = ReferenceEvaluator(onx, save_intermediate=path)
+            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+            a = np.array([1, 1], dtype=np.float32)
+            b = np.array([11], dtype=np.float32)
+            ref.run(None, {"X": x, "A": a, "B": b})
+            self.assertTrue(os.path.exists(path))
+            examples = load_model_tests(root, "reference_evaluator_test_save_ref")
+            self.assertEqual(len(examples), 2)
 
-        class NewRef(ReferenceEvaluator):
-            n_inits = 0
-            n_calls = 0
+            class NewRef(ReferenceEvaluator):
+                n_inits = 0
+                n_calls = 0
 
-            def __init__(self, *args, **kwargs):
-                NewRef.n_inits += 1
-                super().__init__(*args, **kwargs)
+                def __init__(self, *args, **kwargs):
+                    NewRef.n_inits += 1
+                    super().__init__(*args, **kwargs)
 
-            def run(self, *args, **kwargs):
-                NewRef.n_calls += 1
-                return ReferenceEvaluator.run(self, *args, **kwargs)
+                def run(self, *args, **kwargs):
+                    NewRef.n_calls += 1
+                    return ReferenceEvaluator.run(self, *args, **kwargs)
 
-        new_cls = ReferenceEvaluatorBackend[NewRef]
-        self.assertEqual(new_cls.__name__, "ReferenceEvaluatorBackendNewRef")
-        self.assertTrue(issubclass(new_cls.cls_inference, NewRef))
+            new_cls = ReferenceEvaluatorBackend[NewRef]
+            self.assertEqual(new_cls.__name__, "ReferenceEvaluatorBackendNewRef")
+            self.assertTrue(issubclass(new_cls.cls_inference, NewRef))
 
-        backend = create_reference_backend(
-            new_cls, path_to_test=root, kind="reference_evaluator_test_save_ref"
-        )
-        backend.exclude("cuda")
-        tests = backend.tests()
-        names = []
-        for m in dir(tests):
-            if m.startswith("test_"):
-                test = getattr(tests, m)
-                try:
-                    test()
-                    names.append(m)
-                except unittest.case.SkipTest:
-                    continue
-        self.assertEqual(names, ["test_node_0_MatMul_cpu", "test_node_1_Add_cpu"])
-        self.assertEqual(NewRef.n_inits, 2)
-        self.assertEqual(NewRef.n_calls, 2)
-        shutil.rmtree(path)
+            backend = create_reference_backend(
+                new_cls, path_to_test=root, kind="reference_evaluator_test_save_ref"
+            )
+            backend.exclude("cuda")
+            tests = backend.tests()
+            names = []
+            for att in dir(tests):
+                if m.startswith("test_"):
+                    test = getattr(tests, att)
+                    try:
+                        test()
+                        names.append(att)
+                    except unittest.case.SkipTest:
+                        continue
+            self.assertEqual(names, ["test_node_0_MatMul_cpu", "test_node_1_Add_cpu"])
+            self.assertEqual(NewRef.n_inits, 2)
+            self.assertEqual(NewRef.n_calls, 2)
 
     @unittest.skipIf(InferenceSession is None, reason="onnxruntime not available")
     def test_reference_evaluator_onnxruntime_runtime_save(self):
         onx = self._linear_regression(True)
-        root = "."
-        path = os.path.join(root, "reference_evaluator_test_save_ort")
-        ref = ReferenceEvaluator(onx, save_intermediate=path)
-        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
-        a = np.array([1, 1], dtype=np.float32)
-        b = np.array([11], dtype=np.float32)
-        ref.run(None, {"X": x, "A": a, "B": b})
-        self.assertTrue(os.path.exists(path))
-        examples = load_model_tests(root, "reference_evaluator_test_save_ort")
-        self.assertEqual(len(examples), 2)
+        with tempfile.TemporaryDirectory() as root:
+            path = os.path.join(root, "reference_evaluator_test_save_ort")
+            ref = ReferenceEvaluator(onx, save_intermediate=path)
+            x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+            a = np.array([1, 1], dtype=np.float32)
+            b = np.array([11], dtype=np.float32)
+            ref.run(None, {"X": x, "A": a, "B": b})
+            self.assertTrue(os.path.exists(path))
+            examples = load_model_tests(root, "reference_evaluator_test_save_ort")
+            self.assertEqual(len(examples), 2)
 
-        class NewRef(InferenceSession):
-            n_inits = 0
-            n_calls = 0
+            class NewRef(InferenceSession):
+                n_inits = 0
+                n_calls = 0
 
-            def __init__(self, model, *args, providers=None, **kwargs):
-                NewRef.n_inits += 1
-                super().__init__(
-                    model.SerializeToString(),
-                    *args,
-                    providers=providers or ["CPUExecutionProvider"],
-                    **kwargs,
-                )
+                def __init__(self, model, *args, providers=None, **kwargs):
+                    NewRef.n_inits += 1
+                    super().__init__(
+                        model.SerializeToString(),
+                        *args,
+                        providers=providers or ["CPUExecutionProvider"],
+                        **kwargs,
+                    )
 
-            def run(self, *args, **kwargs):
-                NewRef.n_calls += 1
-                return InferenceSession.run(self, *args, **kwargs)
+                def run(self, *args, **kwargs):
+                    NewRef.n_calls += 1
+                    return InferenceSession.run(self, *args, **kwargs)
 
-            @property
-            def input_names(self):
-                inputs = self.get_inputs()
-                return [i.name for i in inputs]
+                @property
+                def input_names(self):
+                    inputs = self.get_inputs()
+                    return [i.name for i in inputs]
 
-            @property
-            def output_names(self):
-                outputs = self.get_outputs()
-                return [o.name for o in outputs]
+                @property
+                def output_names(self):
+                    outputs = self.get_outputs()
+                    return [o.name for o in outputs]
 
-        new_cls = ReferenceEvaluatorBackend[NewRef]
-        self.assertEqual(new_cls.__name__, "ReferenceEvaluatorBackendNewRef")
-        self.assertTrue(issubclass(new_cls.cls_inference, NewRef))
+            new_cls = ReferenceEvaluatorBackend[NewRef]
+            self.assertEqual(new_cls.__name__, "ReferenceEvaluatorBackendNewRef")
+            self.assertTrue(issubclass(new_cls.cls_inference, NewRef))
 
-        backend = create_reference_backend(
-            new_cls, path_to_test=root, kind="reference_evaluator_test_save_ort"
-        )
-        backend.exclude("cuda")
-        tests = backend.tests()
-        names = []
-        for m in dir(tests):
-            if m.startswith("test_"):
-                test = getattr(tests, m)
-                try:
-                    test()
-                    names.append(m)
-                except unittest.case.SkipTest:
-                    continue
-        self.assertEqual(names, ["test_node_0_MatMul_cpu", "test_node_1_Add_cpu"])
-        self.assertEqual(NewRef.n_inits, 2)
-        self.assertEqual(NewRef.n_calls, 2)
-        shutil.rmtree(path)
+            backend = create_reference_backend(
+                new_cls, path_to_test=root, kind="reference_evaluator_test_save_ort"
+            )
+            backend.exclude("cuda")
+            tests = backend.tests()
+            names = []
+            for att in dir(tests):
+                if m.startswith("test_"):
+                    test = getattr(tests, att)
+                    try:
+                        test()
+                        names.append(att)
+                    except unittest.case.SkipTest:
+                        continue
+            self.assertEqual(names, ["test_node_0_MatMul_cpu", "test_node_1_Add_cpu"])
+            self.assertEqual(NewRef.n_inits, 2)
+            self.assertEqual(NewRef.n_calls, 2)
 
 
 if __name__ == "__main__":
