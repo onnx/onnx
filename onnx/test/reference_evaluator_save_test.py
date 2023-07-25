@@ -108,7 +108,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
                     NewRef.n_calls += 1
                     return ReferenceEvaluator.run(self, *args, **kwargs)
 
-            new_cls = ReferenceEvaluatorBackend[NewRef]
+            new_cls = ReferenceEvaluatorBackend[NewRef]  # type: ignore[type-arg]
             self.assertEqual(new_cls.__name__, "ReferenceEvaluatorBackendNewRef")
             self.assertTrue(issubclass(new_cls.cls_inference, NewRef))
 
@@ -171,7 +171,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
                     outputs = self.get_outputs()
                     return [o.name for o in outputs]
 
-            new_cls = ReferenceEvaluatorBackend[NewRef]
+            new_cls = ReferenceEvaluatorBackend[NewRef]  # type: ignore[type-arg]
             self.assertEqual(new_cls.__name__, "ReferenceEvaluatorBackendNewRef")
             self.assertTrue(issubclass(new_cls.cls_inference, NewRef))
 

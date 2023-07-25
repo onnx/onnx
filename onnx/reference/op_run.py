@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, ClassVar, Iterable, Optional
+from typing import Any, ClassVar, Iterable
 
 import numpy as np
 
@@ -170,7 +170,7 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
     return to_array(tensor)
 
 
-def from_array_extended(tensor: np.ndarray, name: Optional[str] = None) -> TensorProto:
+def from_array_extended(tensor: np.ndarray, name: str | None = None) -> TensorProto:
     """
     Converts an array into a TensorProto.
 
