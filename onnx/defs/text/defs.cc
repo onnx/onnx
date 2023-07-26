@@ -5,6 +5,44 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
+static const char* ParseDateTime_doc = R"DOC(Parse a datetime string into a (floating point) Unix time stamp.)DOC";
+ONNX_OPERATOR_SET_SCHEMA(
+    ParseDateTime,
+    20,
+    OpSchema()
+        .Input(0, "X", "Tensor with datetime strings", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "y", "Unix time stamps", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Attr("format", "Format description in the syntax of C's `strptime`.", AttributeProto::STRING)
+        .Attr(
+            "unit",
+            "Unit of the returned time stamp. Allowed values are: 's' (second), 'ms' (millisecond), 'us' (microsecond) or 'ns' (nanosecond).",
+            AttributeProto::STRING)
+        .Attr(
+            "default",
+            "Default value to be used if the parsing fails. The tensor must be of rank 0 and either of type `tensor(int64)` or `tensor(double)`. The tensor type is the output type. If 'default' is specified, the output type is `tensor(int64)` and the behavior for failing to parse an input element is implementation defined.",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
+
+        .TypeConstraint("T1", {"tensor(string)"}, "UTF-8 datetime strings")
+        .TypeConstraint("T2", {"tensor(double)", "tensor(int64)"}, "Output type depends on 'default' attribute.")
+        .SetDoc(ParseDateTime_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          auto* default_value = ctx.getAttribute("default");
+
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+
+          if (nullptr == default_value) {
+            updateOutputElemType(ctx, 0, TensorProto::INT64);
+            return;
+          } else {
+            const TensorProto& tensor_proto = default_value->t();
+            updateOutputElemType(ctx, 0, tensor_proto.data_type());
+            return;
+          }
+        }));
+
 static const char* StringConcat_doc =
     R"DOC(StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support))DOC";
 ONNX_OPERATOR_SET_SCHEMA(
