@@ -30,7 +30,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* RegexFullMatch_doc =
-    R"DOC(RegexFullMatch performs a full regex match on each element of the input element. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.)DOC";
+    R"DOC(RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.)DOC";
 ONNX_OPERATOR_SET_SCHEMA(
     RegexFullMatch,
     20,

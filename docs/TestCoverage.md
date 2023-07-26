@@ -14791,7 +14791,7 @@ expect(
 
 
 ### RegexFullMatch
-There are 2 test cases, listed as following:
+There are 3 test cases, listed as following:
 <details>
 <summary>basic</summary>
 
@@ -14834,6 +14834,28 @@ expect(
     inputs=[x],
     outputs=[result],
     name="test_regex_full_match_email_domain",
+)
+```
+
+</details>
+<details>
+<summary>match_empty</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+)
+
+x = np.array([[], []]).astype(object)
+result = np.array([[], []]).astype(bool)
+expect(
+    node,
+    inputs=[x],
+    outputs=[result],
+    name="test_regex_full_match_empty",
 )
 ```
 

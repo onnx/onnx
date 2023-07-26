@@ -22034,7 +22034,7 @@ expect(
 
 ### <a name="RegexFullMatch"></a><a name="regexfullmatch">**RegexFullMatch**</a>
 
-  RegexFullMatch performs a full regex match on each element of the input element. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.
+  RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.
 
 #### Version
 
@@ -22117,6 +22117,30 @@ expect(
     inputs=[x],
     outputs=[result],
     name="test_regex_full_match_email_domain",
+)
+```
+
+</details>
+
+
+<details>
+<summary>match_empty</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+)
+
+x = np.array([[], []]).astype(object)
+result = np.array([[], []]).astype(bool)
+expect(
+    node,
+    inputs=[x],
+    outputs=[result],
+    name="test_regex_full_match_empty",
 )
 ```
 
