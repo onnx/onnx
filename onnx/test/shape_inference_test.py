@@ -31,7 +31,6 @@ from onnx.defs import (
     AI_ONNX_PREVIEW_TRAINING_DOMAIN,
     ONNX_DOMAIN,
     ONNX_ML_DOMAIN,
-    ONNX_IO_IMAGE_DOMAIN,
     OpSchema,
     SchemaError,
 )

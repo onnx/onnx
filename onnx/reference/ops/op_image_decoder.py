@@ -14,7 +14,15 @@ class ImageDecoder(OpRun):
         self,
         encoded,
         pixel_format="RGB",
+        dtype=None,
+        chroma_upsampling="linear",
     ):
+        if dtype is not None:
+            raise RuntimeError(f"dtype={dtype!r} is not supported.")
+        if chroma_upsampling != "linear":
+            raise RuntimeError(
+                f'Unsupported chroma_upsampling value "{chroma_upsampling}"'
+            )
         decoded = None
         if pixel_format == "BGR":
             decoded = cv2.imdecode(encoded, cv2.IMREAD_COLOR)

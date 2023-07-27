@@ -8,7 +8,6 @@ import numpy as np
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.defs import ONNX_IO_IMAGE_DOMAIN
 
 
 def generate_checkerboard(width, height, square_size):
@@ -65,7 +64,6 @@ class ImageDecoder(Base):
             inputs=["data"],
             outputs=["output"],
             pixel_format="RGB",
-            domain=ONNX_IO_IMAGE_DOMAIN,
         )
 
         data, output = generate_test_data(".jpg", "RGB")
@@ -83,7 +81,6 @@ class ImageDecoder(Base):
             inputs=["data"],
             outputs=["output"],
             pixel_format="Grayscale",
-            domain=ONNX_IO_IMAGE_DOMAIN,
         )
 
         data, output = generate_test_data(".jpg", "Grayscale")
@@ -101,7 +98,6 @@ class ImageDecoder(Base):
             inputs=["data"],
             outputs=["output"],
             pixel_format="BGR",
-            domain=ONNX_IO_IMAGE_DOMAIN,
         )
 
         data, output = generate_test_data(".jpg", "BGR")
@@ -119,7 +115,6 @@ class ImageDecoder(Base):
             inputs=["data"],
             outputs=["output"],
             pixel_format="RGB",
-            domain=ONNX_IO_IMAGE_DOMAIN,
         )
 
         data, output = generate_test_data(".jp2", "RGB")
@@ -137,7 +132,6 @@ class ImageDecoder(Base):
             inputs=["data"],
             outputs=["output"],
             pixel_format="RGB",
-            domain=ONNX_IO_IMAGE_DOMAIN,
         )
 
         data, output = generate_test_data(".bmp", "RGB")
@@ -155,7 +149,6 @@ class ImageDecoder(Base):
             inputs=["data"],
             outputs=["output"],
             pixel_format="RGB",
-            domain=ONNX_IO_IMAGE_DOMAIN,
         )
 
         data, output = generate_test_data(".png", "RGB")
@@ -173,7 +166,6 @@ class ImageDecoder(Base):
             inputs=["data"],
             outputs=["output"],
             pixel_format="RGB",
-            domain=ONNX_IO_IMAGE_DOMAIN,
         )
 
         data, output = generate_test_data(".tiff", "RGB")
@@ -191,7 +183,6 @@ class ImageDecoder(Base):
             inputs=["data"],
             outputs=["output"],
             pixel_format="RGB",
-            domain=ONNX_IO_IMAGE_DOMAIN,
         )
 
         data, output = generate_test_data(".webp", "RGB")
@@ -209,7 +200,6 @@ class ImageDecoder(Base):
             inputs=["data"],
             outputs=["output"],
             pixel_format="RGB",
-            domain=ONNX_IO_IMAGE_DOMAIN,
         )
 
         data, output = generate_test_data(".pnm", "RGB")
