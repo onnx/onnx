@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C3001,C0415,R0902,R0912,R0913,R0914,R0915
+
+from __future__ import annotations
+
 import os
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
