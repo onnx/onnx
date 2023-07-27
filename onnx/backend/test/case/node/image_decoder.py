@@ -53,6 +53,7 @@ def generate_test_data(extension, pixel_format="RGB", h=40, w=40, tile_sz=5):
         output = cv2.cvtColor(output_bgr, cv2.COLOR_BGR2RGB)
     elif pixel_format == "Grayscale":
         output = cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
+        output = np.expand_dims(output, axis=2)  # (H, W) to (H, W, 1)
     return data, output
 
 

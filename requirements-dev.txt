@@ -13,3 +13,5 @@ twine
 lintrunner>=0.10.7
 lintrunner-adapters>=0.8
 # Edit additional linter dependencies in requirements-lintrunner.txt
+# Dependencies for the reference implementation.
+-r requirements-reference.txt

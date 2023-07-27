@@ -64,7 +64,7 @@ jobs:
         set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=OFF
       )
 
-      pip install -e .[image] -v
+      pip install -e .[reference] -v
       pytest
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "pytest failed"
