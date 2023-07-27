@@ -68,7 +68,7 @@ jobs:
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       # enable more sanitizer
       export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
-      pip install -e ".[text]" -v
+      pip install -e ".[reference]" -v
     displayName: 'Install ONNX and dependencies'
 
   - script: |

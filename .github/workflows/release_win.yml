@@ -40,19 +40,20 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
-    - name: Prepare compiler environment for Windows
-      uses: ilammy/msvc-dev-cmd@v1
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@1ff57057b5cfdc39105cd07a01d78e9b0ea0c14c # v1.3.1
       with:
-        arch: ${{ matrix.architecture }}
+        msbuild-architecture: ${{ matrix.architecture }}
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
-        vcpkg install re2:${{ matrix.architecture }}-windows
-        vcpkg integrate install
         python -m pip install -q --upgrade pip
         cd onnx
-        python -m pip install -r requirements-release.txt
-        python -c "import re2; print(dir(re2))"
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          sed -i '' '/google-re2/d' requirements-release.txt
+        }
+        python -m pip install -q -r requirements-release.txt
+
     - name: Build ONNX wheel
       run: |
         $arch = 'x64'

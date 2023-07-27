@@ -4,6 +4,7 @@
 
 import os
 import platform
+import sys
 import unittest
 from typing import Any
 
@@ -171,6 +172,11 @@ backend_test.exclude("(test_eyelike_without_dtype)")
 
 # The following tests fail due to discrepancies (small but still higher than 1e-7).
 backend_test.exclude("test_adam_multiple")  # 1e-2
+
+if sys.platform == "win32":
+    backend_test.exclude("test_regex_full_match_basic_cpu")
+    backend_test.exclude("test_regex_full_match_email_domain_cpu")
+    backend_test.exclude("test_regex_full_match_empty_cpu")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
