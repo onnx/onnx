@@ -44,11 +44,7 @@ from onnx import (
     mapping,
 )
 
-VersionRowType = Union[
-    Tuple[str, int, int, int],
-    Tuple[str, int, int, int, int],
-    Tuple[str, int, int, int, int, int],
-]
+VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
 VersionTableType = List[VersionRowType]
 AssignmentBindingType = List[Tuple[str, str]]
 
@@ -56,7 +52,7 @@ AssignmentBindingType = List[Tuple[str, str]]
 # Both must be updated whenever a new version of ONNX is released.
 VERSION_TABLE: VersionTableType = [
     # Release-version, IR version, ai.onnx version, ai.onnx.ml version,
-    # (optional) ai.onnx.training version, (optional) ai.onnx.io
+    # (optional) ai.onnx.training version, (optional) ai.onnx.io.image
     ("1.0", 3, 1, 1),
     ("1.1", 3, 5, 1),
     ("1.1.2", 3, 6, 1),
@@ -76,7 +72,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.12.0", 8, 17, 3, 1),
     ("1.13.0", 8, 18, 3, 1),
     ("1.13.1", 8, 18, 3, 1),
-    ("1.14.0", 9, 19, 3, 1, 1),
+    ("1.14.0", 9, 19, 3, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -88,9 +84,7 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
         del release_version  # Unused
-        for pair in zip(
-            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training", "ai.onnx.io"], args
-        ):
+        for pair in zip(["ai.onnx", "ai.onnx.ml", "ai.onnx.training", "ai.onnx.io.image"], args):
             if pair not in result:
                 result[pair] = ir_version
                 if pair[0] == "ai.onnx.training":

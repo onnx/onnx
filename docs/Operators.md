@@ -71,6 +71,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
 |<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-19">19</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
 |<a href="#If">If</a>|<a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
+|<a href="#ImageDecoder">ImageDecoder</a>|<a href="Changelog.md#ImageDecoder-20">20</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
 |<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-10">10</a>|
 |<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
@@ -200,11 +201,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|18|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|18|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
-
-### ai.onnx.io
-|**Operator**|**Since version**||
-|-|-|-|
-|<a href="#ai.onnx.io.ImageDecoder">ai.onnx.io.ImageDecoder</a>|<a href="Changelog.md#ai.onnx.io.ImageDecoder-1">1</a>|
 
 ### ai.onnx.preview.training
 |**Operator**|**Since version**||
@@ -11723,6 +11719,262 @@ expect(
     outputs=[res],
     name="test_if_seq",
     opset_imports=[onnx.helper.make_opsetid("", 13)],
+)
+```
+
+</details>
+
+
+### <a name="ImageDecoder"></a><a name="imagedecoder">**ImageDecoder**</a>
+
+  Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded stream, invalid format, it will return an empty matrix).
+
+  The following image formats are supported: BMP, JPEG, JPEG2000, TIFF, PNG, WebP, Portable image format (PBM, PGM, PPM, PXM, PNM).
+
+  Decoded images follow a channel-last layout: (Height, Width, Channels).
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>chroma_upsampling</tt> : string (default is linear)</dt>
+<dd>(Optional). Interpolation method used for JPEG chroma upsampling. Currently supporting "linear" only: When upsampling the chroma components by a factor of 2, the pixels are interpolated so that the  centers of the output pixels are 1/4 and 3/4 of the way between input pixel centers. When rounding, 0.5 is rounded down and up at alternative pixels locations to prevent bias towards larger values (ordered dither pattern). Considering adjacent input pixels A, B, and C, B is upsampled to pixels B0 and B1 so that B0 = round_half_down((1/4) * A + (3/4) * B), and B1 = round_half_up((3/4) * B + (1/4) * C). </dd>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional). Specifies data type for the elements of the output tensor T2. Meant for future extensions, currently limited to uint8 only. If requested a data type other than the original, the image will be normalized to the dynamic range of the requested type.</dd>
+<dt><tt>pixel_format</tt> : string (default is RGB)</dt>
+<dd>Pixel format. Can be one of "RGB", "BGR", or "Grayscale".</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>encoded_stream</tt> (non-differentiable) : T1</dt>
+<dd>Encoded stream</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>image</tt> (non-differentiable) : T2</dt>
+<dd>Decoded image</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8)</dt>
+<dd>Constrain input types to 8-bit unsigned integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8)</dt>
+<dd>Constrain output types to 8-bit unsigned integer tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>image_decoder_decode_bmp_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".bmp", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_bmp_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_jpeg2k_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".jp2", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg2k_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_jpeg_bgr</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="BGR",
+)
+
+data, output = generate_test_data(".jpg", "BGR")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg_bgr",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_jpeg_grayscale</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="Grayscale",
+)
+
+data, output = generate_test_data(".jpg", "Grayscale")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg_grayscale",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_jpeg_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".jpg", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_png_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".png", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_png_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_pnm_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".pnm", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_pnm_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_tiff_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".tiff", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_tiff_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_webp_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = generate_test_data(".webp", "RGB")
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_webp_rgb",
 )
 ```
 
@@ -32707,293 +32959,6 @@ x = (np.random.randn(1, 4, 1, 6) > 0).astype(bool)
 y = (np.random.randn(3, 1, 5, 6) > 0).astype(bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
-```
-
-</details>
-
-
-## ai.onnx.io
-### <a name="ai.onnx.io.ImageDecoder"></a><a name="ai.onnx.io.imagedecoder">**ai.onnx.io.ImageDecoder**</a>
-
-  Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded
-  stream, invalid format, it will return an empty matrix).
-
-  The following image formats are supported:
-
-  * BMP
-  * JPEG (note: Lossless JPEG support is optional)
-  * JPEG2000
-  * TIFF
-  * PNG
-  * WebP
-  * Portable image format (PBM, PGM, PPM, PXM, PNM)
-
-  Decoded images follow a channel-last layout: (Height, Width, Channels).
-
-  **JPEG chroma upsampling method:**
-
-  When upsampling the chroma components by a factor of 2, the pixels are linearly interpolated so that the
-  centers of the output pixels are 1/4 and 3/4 of the way between input pixel centers.
-  When rounding, 0.5 is rounded down and up at alternative pixels locations to prevent bias towards
-  larger values (ordered dither pattern).
-
-  Considering adjacent input pixels A, B, and C, B is upsampled to pixels B0 and B1 so that
-  ```
-  B0 = round_half_down((1/4) * A + (3/4) * B)
-  B1 = round_half_up((3/4) * B + (1/4) * C)
-  ```
-
-  This method,  is the default chroma upsampling method in the well-established libjpeg-turbo library,
-  also referred as "smooth" or "fancy" upsampling.
-
-#### Version
-
-This version of the operator has been available since version 1 of the 'ai.onnx.io' operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>pixel_format</tt> : string (default is RGB)</dt>
-<dd>Pixel format. Can be one of "RGB", "BGR", or "Grayscale".</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>encoded_stream</tt> (non-differentiable) : T1</dt>
-<dd>Encoded stream</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>image</tt> (non-differentiable) : T2</dt>
-<dd>Decoded image</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(uint8)</dt>
-<dd>Constrain input types to 8-bit unsigned integer tensor.</dd>
-<dt><tt>T2</tt> : tensor(uint8)</dt>
-<dd>Constrain output types to 8-bit unsigned integer tensor.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>image_decoder_decode_bmp_rgb</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ImageDecoder",
-    inputs=["data"],
-    outputs=["output"],
-    pixel_format="RGB",
-    domain=ONNX_IO_DOMAIN,
-)
-
-data, output = generate_test_data(".bmp", "RGB")
-expect(
-    node,
-    inputs=[data],
-    outputs=[output],
-    name="test_image_decoder_decode_bmp_rgb",
-)
-```
-
-</details>
-
-
-<details>
-<summary>image_decoder_decode_jpeg2k_rgb</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ImageDecoder",
-    inputs=["data"],
-    outputs=["output"],
-    pixel_format="RGB",
-    domain=ONNX_IO_DOMAIN,
-)
-
-data, output = generate_test_data(".jp2", "RGB")
-expect(
-    node,
-    inputs=[data],
-    outputs=[output],
-    name="test_image_decoder_decode_jpeg2k_rgb",
-)
-```
-
-</details>
-
-
-<details>
-<summary>image_decoder_decode_jpeg_bgr</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ImageDecoder",
-    inputs=["data"],
-    outputs=["output"],
-    pixel_format="BGR",
-    domain=ONNX_IO_DOMAIN,
-)
-
-data, output = generate_test_data(".jpg", "BGR")
-expect(
-    node,
-    inputs=[data],
-    outputs=[output],
-    name="test_image_decoder_decode_jpeg_bgr",
-)
-```
-
-</details>
-
-
-<details>
-<summary>image_decoder_decode_jpeg_grayscale</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ImageDecoder",
-    inputs=["data"],
-    outputs=["output"],
-    pixel_format="Grayscale",
-    domain=ONNX_IO_DOMAIN,
-)
-
-data, output = generate_test_data(".jpg", "Grayscale")
-expect(
-    node,
-    inputs=[data],
-    outputs=[output],
-    name="test_image_decoder_decode_jpeg_grayscale",
-)
-```
-
-</details>
-
-
-<details>
-<summary>image_decoder_decode_jpeg_rgb</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ImageDecoder",
-    inputs=["data"],
-    outputs=["output"],
-    pixel_format="RGB",
-    domain=ONNX_IO_DOMAIN,
-)
-
-data, output = generate_test_data(".jpg", "RGB")
-expect(
-    node,
-    inputs=[data],
-    outputs=[output],
-    name="test_image_decoder_decode_jpeg_rgb",
-)
-```
-
-</details>
-
-
-<details>
-<summary>image_decoder_decode_png_rgb</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ImageDecoder",
-    inputs=["data"],
-    outputs=["output"],
-    pixel_format="RGB",
-    domain=ONNX_IO_DOMAIN,
-)
-
-data, output = generate_test_data(".png", "RGB")
-expect(
-    node,
-    inputs=[data],
-    outputs=[output],
-    name="test_image_decoder_decode_png_rgb",
-)
-```
-
-</details>
-
-
-<details>
-<summary>image_decoder_decode_pnm_rgb</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ImageDecoder",
-    inputs=["data"],
-    outputs=["output"],
-    pixel_format="RGB",
-    domain=ONNX_IO_DOMAIN,
-)
-
-data, output = generate_test_data(".pnm", "RGB")
-expect(
-    node,
-    inputs=[data],
-    outputs=[output],
-    name="test_image_decoder_decode_pnm_rgb",
-)
-```
-
-</details>
-
-
-<details>
-<summary>image_decoder_decode_tiff_rgb</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ImageDecoder",
-    inputs=["data"],
-    outputs=["output"],
-    pixel_format="RGB",
-    domain=ONNX_IO_DOMAIN,
-)
-
-data, output = generate_test_data(".tiff", "RGB")
-expect(
-    node,
-    inputs=[data],
-    outputs=[output],
-    name="test_image_decoder_decode_tiff_rgb",
-)
-```
-
-</details>
-
-
-<details>
-<summary>image_decoder_decode_webp_rgb</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ImageDecoder",
-    inputs=["data"],
-    outputs=["output"],
-    pixel_format="RGB",
-    domain=ONNX_IO_DOMAIN,
-)
-
-data, output = generate_test_data(".webp", "RGB")
-expect(
-    node,
-    inputs=[data],
-    outputs=[output],
-    name="test_image_decoder_decode_webp_rgb",
-)
 ```
 
 </details>

@@ -6,7 +6,7 @@ __all__ = [
     "C",
     "ONNX_DOMAIN",
     "ONNX_ML_DOMAIN",
-    "ONNX_IO_DOMAIN",
+    "ONNX_IO_IMAGE_DOMAIN",
     "AI_ONNX_PREVIEW_TRAINING_DOMAIN",
     "has",
     "get_schema",
@@ -25,7 +25,7 @@ from onnx import AttributeProto, FunctionProto
 
 ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = "ai.onnx.ml"
-ONNX_IO_DOMAIN = "ai.onnx.io"
+ONNX_IO_IMAGE_DOMAIN = "ai.onnx.io.image"
 AI_ONNX_PREVIEW_TRAINING_DOMAIN = "ai.onnx.preview.training"
 
 
