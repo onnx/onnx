@@ -2,6 +2,10 @@ name: Auto update documentation
 on:
   pull_request:
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+    cancel-in-progress: true
+
 jobs:
   auto-update-doc:
     if: contains( github.event.pull_request.labels.*.name, 'auto update doc')
@@ -13,8 +17,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      with:
-        ref: ${{ github.head_ref }}
     - name: Setup Python
       uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
     - name: Install ONNX from source and update documentation
