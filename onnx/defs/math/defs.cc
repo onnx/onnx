@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <functional>
+
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"

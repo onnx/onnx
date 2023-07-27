@@ -3,6 +3,7 @@
  */
 
 #include "onnx/defs/tensor/utils.h"
+
 #include <algorithm>
 #include <limits>
 #include <numeric>

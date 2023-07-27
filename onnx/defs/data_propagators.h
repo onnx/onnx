@@ -5,6 +5,7 @@
  */
 
 #include <utility>
+
 #include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {

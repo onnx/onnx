@@ -318,8 +318,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self, version, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
-            np.arange(np.product(shape1)).reshape(shape1),
-            np.arange(np.product(shape2)).reshape(shape2),
+            np.arange(np.prod(shape1)).reshape(shape1),
+            np.arange(np.prod(shape2)).reshape(shape2),
         ).shape
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, shape1), ("y", TensorProto.FLOAT, shape2)],
@@ -1589,6 +1589,38 @@ class TestShapeInference(TestShapeInferenceHelper):
                 [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))],
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
+
+    @parameterized.expand(all_versions_for("StringConcat"))
+    def test_stringconcat(self, _, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2, 3, 4)),
+                ("y", TensorProto.STRING, (2, 3, 4)),
+            ],
+            [make_node("StringConcat", ["x", "y"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("z", TensorProto.STRING, (2, 3, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringConcat"))
+    def test_stringconcat_broadcasting(self, _, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2, 3, 4)),
+                ("y", TensorProto.STRING, (1, 3, 1)),
+            ],
+            [make_node("StringConcat", ["x", "y"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("z", TensorProto.STRING, (2, 3, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
     def test_unsqueeze_regular(self) -> None:
         graph = self._make_graph(
@@ -5033,8 +5065,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
-            np.arange(np.product(shape1)).reshape(shape1),
-            np.arange(np.product(shape2)).reshape(shape2),
+            np.arange(np.prod(shape1)).reshape(shape1),
+            np.arange(np.prod(shape2)).reshape(shape2),
         ).shape
         graph = self._make_graph(
             [
@@ -5131,8 +5163,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
-            np.arange(np.product(shape1)).reshape(shape1),
-            np.arange(np.product(shape2)).reshape(shape2),
+            np.arange(np.prod(shape1)).reshape(shape1),
+            np.arange(np.prod(shape2)).reshape(shape2),
         ).shape
         graph = self._make_graph(
             [
