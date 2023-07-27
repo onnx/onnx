@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import os
 from io import BytesIO
-from typing import Any, Optional, Union
+from typing import Any
 
 import numpy as np
 
@@ -300,7 +300,7 @@ class ReferenceEvaluator:
         self,
         proto: Any,
         opsets: dict[str, int] | None = None,
-        functions: list[Union["ReferenceEvaluator", FunctionProto]] | None = None,  # type: ignore
+        functions: list[FunctionProto | "ReferenceEvaluator"] | None = None,  # type: ignore
         verbose: int = 0,
         new_ops: list[OpRun] | None = None,
         optimized: bool = True,
@@ -322,7 +322,7 @@ class ReferenceEvaluator:
         elif isinstance(proto, bytes):
             proto = load(BytesIO(proto))
         self.proto_ = proto
-        self.functions_: dict[Tuple[str, str], ReferenceEvaluator] = {}
+        self.functions_: dict[tuple[str, str], ReferenceEvaluator] = {}
         self.attributes_: list[str] = []
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
@@ -385,7 +385,7 @@ class ReferenceEvaluator:
                 else:
                     raise TypeError(f"Unexpected type {type(f)!r} for a function.")
         self.verbose = verbose
-        self.new_ops_: dict[Tuple[str, str], OpRun] = {}
+        self.new_ops_: dict[tuple[str, str], OpRun] = {}
         if new_ops is not None:
             for cl in new_ops:
                 if not hasattr(cl, "op_domain"):
@@ -527,7 +527,7 @@ class ReferenceEvaluator:
             self.rt_nodes_.append(inst)
 
     def _load_impl(
-        self, node: NodeProto, input_types: Optional[TypeProto] = None
+        self, node: NodeProto, input_types: TypeProto | None = None
     ) -> Any:
         """
         Loads the implementation for a specified runtime.
