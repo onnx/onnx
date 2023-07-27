@@ -20,7 +20,11 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
-        architecture: ['x64', 'x86']
+        include:
+          - architecture: 'x64'
+            alt-arch-name: 'x64'
+          - architecture: 'x86'
+            alt-arch-name: 'win32'
     steps:
     - name: Checkout ONNX
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -40,20 +44,21 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@1ff57057b5cfdc39105cd07a01d78e9b0ea0c14c # v1.3.1
+    - name: Prepare compiler environment for Windows
+      uses: ilammy/msvc-dev-cmd@v1
       with:
-        msbuild-architecture: ${{ matrix.architecture }}
+        arch: ${{ matrix.alt-arch-name }}
 
     - name: Install Python dependencies
       run: |
         if ('${{ matrix.architecture }}' -eq 'x86') {
-          vcpkg install re2:x86-windows pybind11:x86-windows
+          vcpkg install re2:x86-windows
+          vcpkg integrate install
         }
         python -m pip install -q --upgrade pip
         cd onnx
-        python -m pip install -q -r requirements-release.txt
-
+        python -m pip install -r requirements-release.txt
+        python -c "import re2; print(dir(re2))"
     - name: Build ONNX wheel
       run: |
         $arch = 'x64'
