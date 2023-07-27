@@ -47,6 +47,9 @@ jobs:
 
     - name: Install Python dependencies
       run: |
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          vcpkg install re2:x86-windows pybind11:x86-windows
+        }
         python -m pip install -q --upgrade pip
         cd onnx
         python -m pip install -q -r requirements-release.txt
