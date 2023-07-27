@@ -53,7 +53,7 @@ class Loop(OpRun):
 
         k_carried_away = [[] for i in range(self.K)]  # type: ignore
         it = 0
-        while cond and it < M:
+        while cond and it < int(M):
             self._log("  -- loop> {%r}", context)
             if len(body.input_names) > 0 and body.input_names[0] is not None:
                 inputs[body.input_names[0]] = np.array(it, dtype=M.dtype)  # type: ignore

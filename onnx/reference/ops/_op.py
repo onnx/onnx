@@ -87,7 +87,7 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
         if x.dtype != y.dtype:
             raise RuntimeTypeError(
                 f"Input type mismatch: {x.dtype} != {y.dtype} "
-                f"(operator '{self.__class__.__name__!r}', "
+                f"(operator {self.__class__.__name__!r}, "
                 f"shapes {x.shape}, {y.shape})."
             )
         try:
