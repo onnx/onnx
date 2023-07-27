@@ -13,6 +13,7 @@ You can run a specific test by using the following syntax.
 
 import itertools
 import math
+import sys
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
@@ -3783,6 +3784,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(result.dtype.kind, "O")
         self.assertEqual(result.shape, expected_shape)
 
+    @unittest.skipIf(
+        sys.platform == "win32", "google-re2 package is not built for win32"
+    )
     @parameterized.parameterized.expand(
         [
             (

@@ -341,7 +341,6 @@ if not os.path.exists(requirements_path):
 with open(requirements_path) as f:
     install_requires = f.read().splitlines()
 
-extras_require["text"] = ["google-re2"]
 ################################################################################
 # Test
 ################################################################################
@@ -355,6 +354,11 @@ extras_require["lint"] = [
     "lintrunner>=0.10.0",
     "lintrunner-adapters>=0.3",
 ]
+
+if os.path.exists("requirements-reference.txt"):
+    extras_require["reference"] = open("requirements-reference.txt").read().splitlines()
+else:
+    extras_require["reference"] = []
 
 ################################################################################
 # Final

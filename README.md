@@ -82,7 +82,7 @@ A roadmap process takes place every year. More details can be found [here](https
 ONNX released packages are published in PyPi.
 
 ```sh
-pip install onnx  # or pip install onnx[text]
+pip install onnx  # or pip install onnx[reference] for optional reference implementation dependencies
 ```
 
 [ONNX weekly packages](https://pypi.org/project/onnx-weekly/) are published in PyPI to enable experimentation and early testing.
