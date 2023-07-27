@@ -8,7 +8,6 @@ import onnx
 from onnx import TensorProto
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.reference import ReferenceEvaluator
 from onnx.reference.ops.op_affine_grid import (
     apply_affine_transform,
     construct_original_grid,
@@ -174,7 +173,7 @@ class AffineGrid(Base):
             original_grid = construct_original_grid(data_size, align_corners)
             grid = apply_affine_transform(theta_2d, original_grid)
 
-            test_name = "test_affine_grid_2d_no_reference_evaluator"
+            test_name = "test_affine_grid_2d"
             if align_corners == 1:
                 test_name += "_align_corners"
             expect(
@@ -200,88 +199,12 @@ class AffineGrid(Base):
             original_grid = construct_original_grid(data_size, align_corners)
             grid = apply_affine_transform(theta_3d, original_grid)
 
-            test_name = "test_affine_grid_3d_no_reference_evaluator"
+            test_name = "test_affine_grid_3d"
             if align_corners == 1:
                 test_name += "_align_corners"
             expect(
                 node,
                 inputs=[theta_3d, np.array([N, C, D, W, H], dtype=np.int64)],
                 outputs=[grid],
-                name=test_name,
-            )
-
-    @staticmethod
-    def export_2d() -> None:
-        theta_2d = create_theta_2d()
-        N, C, W, H = len(theta_2d), 3, 5, 6
-        size_input = np.array([N, C, W, H], dtype=np.int64)
-        for align_corners in (0, 1):
-            node = onnx.helper.make_node(
-                "AffineGrid",
-                inputs=["theta", "size"],
-                outputs=["grid"],
-                align_corners=align_corners,
-            )
-
-            theta = onnx.helper.make_tensor_value_info(
-                "theta", TensorProto.FLOAT, [2, 3]
-            )
-            size = onnx.helper.make_tensor_value_info("size", TensorProto.INT64, [4])
-            grid = onnx.helper.make_tensor_value_info(
-                "grid", TensorProto.FLOAT, [None, None, None, None]
-            )
-
-            graph = onnx.helper.make_graph([node], "g", [theta, size], [grid])
-            opset = 20
-            onnx_model = onnx.helper.make_model(
-                graph, opset_imports=[onnx.helper.make_opsetid("", opset)]
-            )
-            ref = ReferenceEvaluator(onnx_model)
-            expected_grid = ref.run(None, {"theta": theta_2d, "size": size_input})[0]
-            test_name = "test_affine_grid_2d"
-            if align_corners == 1:
-                test_name += "_align_corners"
-            expect(
-                node,
-                inputs=[theta_2d, size_input],
-                outputs=[expected_grid],
-                name=test_name,
-            )
-
-    @staticmethod
-    def export_3d() -> None:
-        theta_3d = create_theta_3d()
-        N, C, D, W, H = len(theta_3d), 3, 4, 5, 6
-        size_input = np.array([N, C, D, W, H], dtype=np.int64)
-        for align_corners in (0, 1):
-            node = onnx.helper.make_node(
-                "AffineGrid",
-                inputs=["theta", "size"],
-                outputs=["grid"],
-                align_corners=align_corners,
-            )
-
-            theta = onnx.helper.make_tensor_value_info(
-                "theta", TensorProto.FLOAT, [3, 4]
-            )
-            size = onnx.helper.make_tensor_value_info("size", TensorProto.INT64, [5])
-            grid = onnx.helper.make_tensor_value_info(
-                "grid", TensorProto.FLOAT, [None, None, None, None, None]
-            )
-
-            graph = onnx.helper.make_graph([node], "g", [theta, size], [grid])
-            opset = 20
-            onnx_model = onnx.helper.make_model(
-                graph, opset_imports=[onnx.helper.make_opsetid("", opset)]
-            )
-            ref = ReferenceEvaluator(onnx_model)
-            expected_grid = ref.run(None, {"theta": theta_3d, "size": size_input})[0]
-            test_name = "test_affine_grid_3d"
-            if align_corners == 1:
-                test_name += "_align_corners"
-            expect(
-                node,
-                inputs=[theta_3d, size_input],
-                outputs=[expected_grid],
                 name=test_name,
             )

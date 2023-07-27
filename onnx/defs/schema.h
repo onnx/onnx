@@ -742,10 +742,7 @@ class OpSchema final {
 
   static const std::vector<std::string>& all_float_types_ir4() {
     static const std::vector<std::string> all_float_types_ir4 = {
-        "tensor(bfloat16)",
-        "tensor(float16)",
-        "tensor(float)",
-        "tensor(double)"};
+        "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"};
     return all_float_types_ir4;
   }
 
