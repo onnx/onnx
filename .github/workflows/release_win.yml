@@ -20,11 +20,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
-        include:
-          - architecture: 'x64'
-            alt-arch-name: 'x64'
-          - architecture: 'x86'
-            alt-arch-name: 'win32'
+        architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
@@ -47,14 +43,12 @@ jobs:
     - name: Prepare compiler environment for Windows
       uses: ilammy/msvc-dev-cmd@v1
       with:
-        arch: ${{ matrix.alt-arch-name }}
+        arch: ${{ matrix.architecture }}
 
-    - name: Install Python dependencies
+    - name: Install dependencies
       run: |
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          vcpkg install re2:x86-windows
-          vcpkg integrate install
-        }
+        vcpkg install re2:${{ matrix.architecture }}-windows
+        vcpkg integrate install
         python -m pip install -q --upgrade pip
         cd onnx
         python -m pip install -r requirements-release.txt
