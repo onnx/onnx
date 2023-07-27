@@ -2533,10 +2533,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(AffineGrid_ver20_doc)
         .FunctionBody(R"ONNX(
         {
-          int_zero = Constant<value_int: int=0>()
-          int_four = Constant<value_int: int=4>()
+          int_zero = Constant <value_int: int=0> ()
+          int_four = Constant <value_int: int=4> ()
 
-          constant_align_corners = Constant<value_int: int=@align_corners>()
+          constant_align_corners = Constant <value_int: int=@align_corners> ()
           constant_align_corners_equal_zero = Equal (constant_align_corners, int_zero)
 
           size_ndim = Size (size)
@@ -2544,15 +2544,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           grid = If (condition_is_2d) <
               then_branch = g1 () => (grid_2d_then) { # => (float[N, H, W, 2])
-                  int_one = Constant<value_int: int=1>()
-                  minus_one = Constant <value = float {-1.0}>()
-                  zero = Constant <value = float {0.0}>()
-                  one = Constant <value = float {1.0}>()
-                  two = Constant <value = float {2.0}>()
-                  N, C, H, W = Split <num_outputs: int=4>(size)
-                  int_two_1d = Constant<value_ints=[2]>()
-                  int_four_1d = Constant<value_ints=[4]>()
-                  constant_H_W_shape = Slice(size, int_two_1d, int_four_1d) # [N, C, H, W] => [H, W]
+                  int_one = Constant <value_int: int=1> ()
+                  minus_one = Constant <value = float {-1.0}> ()
+                  zero = Constant <value = float {0.0}> ()
+                  one = Constant <value = float {1.0}> ()
+                  two = Constant <value = float {2.0}> ()
+                  N, C, H, W = Split <num_outputs: int=4> (size)
+                  int_two_1d = Constant <value_ints=[2]> ()
+                  int_four_1d = Constant <value_ints=[4]> ()
+                  constant_H_W_shape = Slice (size, int_two_1d, int_four_1d) # [N, C, H, W] => [H, W]
                   zeros_H_by_W = ConstantOfShape (constant_H_W_shape)
                   ones_H_by_W = Add (zeros_H_by_W, one)
 
@@ -2608,16 +2608,16 @@ ONNX_OPERATOR_SET_SCHEMA(
                   grid_2d_then = CastLike (grid_2d_then_, theta)
                   },
               else_branch = g2 () => (grid_3d_else) { # => (float[N, D, H, W, 3])
-                  int_one = Constant<value_int: int=1>()
-                  minus_one = Constant <value = float {-1.0}>()
-                  zero = Constant <value = float {0.0}>()
-                  one = Constant <value = float {1.0}>()
-                  two = Constant <value = float {2.0}>()
-                  N, C, D, H, W = Split <num_outputs: int=5>(size)
-                  int_two_1d = Constant<value_ints=[2]>()
-                  int_three_1d = Constant<value_ints=[3]>()
-                  int_five_1d = Constant<value_ints=[5]>()
-                  constant_D_H_W_shape = Slice(size, int_two_1d, int_five_1d) # [N, C, D, H, W] => [D, H, W]
+                  int_one = Constant <value_int: int=1> ()
+                  minus_one = Constant <value = float {-1.0}> ()
+                  zero = Constant <value = float {0.0}> ()
+                  one = Constant <value = float {1.0}> ()
+                  two = Constant <value = float {2.0}> ()
+                  N, C, D, H, W = Split <num_outputs: int=5> (size)
+                  int_two_1d = Constant <value_ints=[2]> ()
+                  int_three_1d = Constant <value_ints=[3]> ()
+                  int_five_1d = Constant <value_ints=[5]> ()
+                  constant_D_H_W_shape = Slice (size, int_two_1d, int_five_1d) # [N, C, D, H, W] => [D, H, W]
                   zeros_D_H_W = ConstantOfShape (constant_D_H_W_shape)
                   ones_D_H_W = Add (zeros_D_H_W, one)
 
@@ -2668,11 +2668,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
                   zeros_H_W_D = Transpose <perm = [1, 2, 0]> (zeros_D_H_W)
                   grid_d_1 = Add (zeros_H_W_D, grid_d_0)
-                  grid_d = Transpose <perm = [2, 0, 1]>(grid_d_1)
+                  grid_d = Transpose <perm = [2, 0, 1]> (grid_d_1)
 
                   zeros_D_W_H = Transpose <perm = [0, 2, 1]> (zeros_D_H_W)
                   grid_h_1 = Add (zeros_D_W_H, grid_h_0)
-                  grid_h = Transpose <perm = [0, 2, 1]>(grid_h_1)
+                  grid_h = Transpose <perm = [0, 2, 1]> (grid_h_1)
 
                   grid_w = Add (grid_w_0, zeros_D_H_W)
 
@@ -2682,13 +2682,13 @@ ONNX_OPERATOR_SET_SCHEMA(
                   original_grid_DHW_4 = Reshape (original_grid, constant_shape_DHW_4)
                   original_grid_4_DHW_ = Transpose (original_grid_DHW_4)
 
-                  original_grid_4_DHW = CastLike(original_grid_4_DHW_, theta)
+                  original_grid_4_DHW = CastLike (original_grid_4_DHW_, theta)
                   grid_N_3_DHW = MatMul (theta, original_grid_4_DHW)
                   grid_N_DHW_3 = Transpose <perm = [0, 2, 1]> (grid_N_3_DHW)
                   N_D_H_W_3_seq = SequenceConstruct (N, D, H, W, int_three_1d)
                   N_D_H_W_3 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_D_H_W_3_seq)
-                  grid_3d_else_ = Reshape(grid_N_DHW_3, N_D_H_W_3)
-                  grid_3d_else = CastLike(grid_3d_else_, theta)
+                  grid_3d_else_ = Reshape (grid_N_DHW_3, N_D_H_W_3)
+                  grid_3d_else = CastLike (grid_3d_else_, theta)
                   }
               >
         }

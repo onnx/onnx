@@ -150,6 +150,8 @@ struct FunctionOpAttributeMap {
     addTestCase("HammingWindow", 17, {"output_datatype = 1", "periodic = 1"});
     addTestCase("BlackmanWindow", 17, {"output_datatype = 1", "periodic = 1"});
     addTestCase("MeanValueNormalization", 13, {});
+    addTestCase("AffineGrid", 20, {"align_corners = 0"});
+    addTestCase("AffineGrid", 20, {"align_corners = 1"});
 
     // The following test-cases fails, correctly so: Some clarification/changes required
     // to handle unsigned integers or similar issues:

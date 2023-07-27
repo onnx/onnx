@@ -7734,7 +7734,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "AffineGrid",
                     ["theta", "size"],
                     ["grid"],
-                    align_corners=1,
                 )
             ],
             [],
