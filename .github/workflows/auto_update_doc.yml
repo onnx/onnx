@@ -1,6 +1,8 @@
 name: Auto update documentation
 on:
   pull_request:
+  pull_request_target:
+  workflow_dispatch:
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
