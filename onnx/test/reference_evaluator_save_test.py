@@ -8,7 +8,7 @@ import unittest
 
 import numpy as np
 
-from onnx import TensorProto, helper, numpy_helper
+from onnx import ModelProto, TensorProto, helper, numpy_helper
 from onnx.backend.test.loader import load_model_tests
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
@@ -188,7 +188,7 @@ class TestReferenceEvaluatorSave(unittest.TestCase):
             self.assertEqual(NewRef.n_inits, 2)
             self.assertEqual(NewRef.n_calls, 2)
 
-    def _get_loop_model(self) -> None:
+    def _get_loop_model(self) -> ModelProto:
         return helper.make_model(
             opset_imports=[helper.make_operatorsetid("", 18)],
             ir_version=8,
