@@ -31,7 +31,8 @@ bar (x) => (y) {
 class _OnnxTestTextualSerializer(onnx.serialization.ProtoSerializer):
     """Serialize and deserialize the ONNX textual representation."""
 
-    supported_formats = ("onnxtext",)
+    supported_format = "onnxtext"
+    file_extensions = frozenset({".onnxtext"})
 
     def serialize_proto(self, proto) -> bytes:
         text = onnx.printer.to_text(proto)
