@@ -11,6 +11,13 @@ _acceptable_str_dtypes = ("U", "O")
 
 
 class RegexFullMatch(OpRun):
+    try:
+        import re2
+    except ImportError:
+        raise ImportError(
+            "re2 must be installed to use the RegexFullMatch operator reference implementation"
+        )
+
     def _run(self, x, pattern=None):
         try:
             # pylint: disable=import-outside-toplevel`
