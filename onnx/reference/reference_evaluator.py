@@ -300,7 +300,7 @@ class ReferenceEvaluator:
         self,
         proto: Any,
         opsets: dict[str, int] | None = None,
-        functions: list[FunctionProto | "ReferenceEvaluator"] | None = None,  # type: ignore
+        functions: list[FunctionProto | ReferenceEvaluator] | None = None,  # type: ignore
         verbose: int = 0,
         new_ops: list[OpRun] | None = None,
         optimized: bool = True,
@@ -526,9 +526,7 @@ class ReferenceEvaluator:
                 ) from e
             self.rt_nodes_.append(inst)
 
-    def _load_impl(
-        self, node: NodeProto, input_types: TypeProto | None = None
-    ) -> Any:
+    def _load_impl(self, node: NodeProto, input_types: TypeProto | None = None) -> Any:
         """
         Loads the implementation for a specified runtime.
         """
