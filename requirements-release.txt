@@ -7,4 +7,4 @@ wheel
 setuptools
 twine
 parameterized
-google-re2
+pyre2
