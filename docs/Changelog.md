@@ -18114,14 +18114,14 @@ This version of the operator has been available since version 13 of the default 
   Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
   of its input `data` tensor.
 
-  An effective `start[i]`, `end[i]`, and `step[i]` must be computed for each `i`
+  An effective `starts[i]`, `ends[i]`, and `steps[i]` must be computed for each `i`
   in `[0, ... r-1]` where `r = rank(input)` as follows:
 
   If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-  The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
-  `dims` are the dimensions of `input` and `step[i] = `1.
+  The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+  `dims` are the dimensions of `input` and `steps[i] = `1.
 
   All negative elements of `axes` are made non-negatve by adding `r` to them, where
   `r =rank(input)`.
@@ -18133,10 +18133,10 @@ This version of the operator has been available since version 13 of the default 
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
-  `end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
+  `ends[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
   is clamped to `[-1, dims[axes[i]]-1]`.
 
-  Finally, `step[axes[i]] = steps[i]`.
+  Finally, `steps[axes[i]] = steps[i]`.
 
   For slicing to the end of a dimension with unknown size, it is recommended to pass
   in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
@@ -22338,8 +22338,8 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
   ```
   When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
   ```
-  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
+  output[indices[i][j]][j] = f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+  output[i][indices[i][j]] = f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
   ```
   where the `f` is `+`, `*`, `max` or `min` as specified.
 
@@ -24024,6 +24024,37 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain input `X` and output `Y` types to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain grid types to float tensors.</dd>
+</dl>
+
+### <a name="StringConcat-20"></a>**StringConcat-20**</a>
+
+  StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Tensor to prepend in concatenation</dd>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Tensor to append in concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
+<dd>Concatenated string tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>Inputs and outputs must be UTF-8 strings</dd>
 </dl>
 
 # ai.onnx.preview.training

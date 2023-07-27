@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/shape_inference/implementation.h"
+
 #include <algorithm>
 #include <fstream>
 #include <list>
@@ -10,11 +11,13 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 #include "onnx/checker.h"
 #include "onnx/common/common.h"
 #include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
+#include "onnx/shape_inference/attribute_binder.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -64,6 +67,9 @@ std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
   return ONNX_NAMESPACE::to_string(type.elem_type());
 }
 
+inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
+  return (IsOnnxDomain(node.domain()) && (node.op_type() == op_type));
+}
 } // namespace
 
 template <class T>
@@ -304,7 +310,7 @@ class ShapeInferenceImplBase {
   void preprocess(const NodeProto& n) {
     if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
-    } else if (n.op_type() == "Constant" && n.output().size() == 1) {
+    } else if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
       const std::string& output_name = n.output(0);
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {
@@ -404,9 +410,9 @@ class ShapeInferenceImplBase {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
-      // Both "" and "ai.onnx" refer to the default ONNX domain
-      if (n.domain() == "") {
-        dit = opset_imports.find("ai.onnx");
+      // Both "" (ONNX_DOMAIN) and "ai.onnx" (AI_ONNX_DOMAIN) refer to the default ONNX domain
+      if (n.domain() == ONNX_DOMAIN) {
+        dit = opset_imports.find(AI_ONNX_DOMAIN);
       }
       if (dit == opset_imports.end()) {
         fail_type_inference(
@@ -568,44 +574,9 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void replaceAttrRefs(NodeProto& n, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
-    auto& attributes = *n.mutable_attribute();
-    for (auto attr_iter = attributes.begin(); attr_iter != attributes.end();) {
-      auto& attr = *attr_iter;
-      if (!attr.ref_attr_name().empty()) {
-        // Attribute-references must be replaced by the corresponding attribute-value in the call-node
-        // if the call-node contains the attribute. Otherwise, this attribute must be removed.
-        auto entry = attr_map.find(attr.ref_attr_name());
-        if (entry != attr_map.cend()) {
-          // Copy value of attribute, but retain original name:
-          std::string name = attr.name();
-          attr = *(entry->second);
-          attr.set_name(name);
-        } else {
-          attr_iter = attributes.erase(attr_iter);
-          continue;
-        }
-      }
-      // Subgraphs must be recursively processed.
-      if (attr.has_g()) {
-        replaceAttrRefs(*attr.mutable_g(), attr_map);
-      }
-      for (auto& graph : *attr.mutable_graphs()) {
-        replaceAttrRefs(graph, attr_map);
-      }
-      ++attr_iter;
-    }
-  }
-
-  void replaceAttrRefs(GraphProto& graph, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
-    for (auto& n : *graph.mutable_node()) {
-      replaceAttrRefs(n, attr_map);
-    }
-  }
-
-  void process(const NodeProto& n, const std::unordered_map<std::string, const AttributeProto*>& attr_map) {
+  void process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
     NodeProto copy_n(n);
-    replaceAttrRefs(copy_n, attr_map);
+    attribute_binder.VisitNode(&copy_n);
     process(copy_n);
   }
 
@@ -656,8 +627,9 @@ class ShapeInferenceImplBase {
       attr_map[name] = (value != nullptr) ? value : &default_value;
     }
 
+    internal::AttributeBinder attribute_binder(attr_map);
     for (auto& n : func_proto.node()) {
-      process(n, attr_map);
+      process(n, attribute_binder);
     }
 
     for (int i = 0; i < func_proto.output_size(); ++i) {

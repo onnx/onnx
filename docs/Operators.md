@@ -146,6 +146,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
 |<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
+|<a href="#StringConcat">StringConcat</a>|<a href="Changelog.md#StringConcat-20">20</a>|
 |<a href="#StringNormalizer">StringNormalizer</a>|<a href="Changelog.md#StringNormalizer-10">10</a>|
 |<a href="#Sub">Sub</a>|<a href="Changelog.md#Sub-14">14</a>, <a href="Changelog.md#Sub-13">13</a>, <a href="Changelog.md#Sub-7">7</a>, <a href="Changelog.md#Sub-6">6</a>, <a href="Changelog.md#Sub-1">1</a>|
 |<a href="#Sum">Sum</a>|<a href="Changelog.md#Sum-13">13</a>, <a href="Changelog.md#Sum-8">8</a>, <a href="Changelog.md#Sum-6">6</a>, <a href="Changelog.md#Sum-1">1</a>|
@@ -25826,8 +25827,8 @@ expect(
   ```
   When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
   ```
-  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
+  output[indices[i][j]][j] = f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+  output[i][indices[i][j]] = f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
   ```
   where the `f` is `+`, `*`, `max` or `min` as specified.
 
@@ -27671,14 +27672,14 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
   Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
   of its input `data` tensor.
 
-  An effective `start[i]`, `end[i]`, and `step[i]` must be computed for each `i`
+  An effective `starts[i]`, `ends[i]`, and `steps[i]` must be computed for each `i`
   in `[0, ... r-1]` where `r = rank(input)` as follows:
 
   If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-  The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
-  `dims` are the dimensions of `input` and `step[i] = `1.
+  The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+  `dims` are the dimensions of `input` and `steps[i] = `1.
 
   All negative elements of `axes` are made non-negatve by adding `r` to them, where
   `r =rank(input)`.
@@ -27690,10 +27691,10 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
-  `end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
+  `ends[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
   is clamped to `[-1, dims[axes[i]]-1]`.
 
-  Finally, `step[axes[i]] = steps[i]`.
+  Finally, `steps[axes[i]] = steps[i]`.
 
   For slicing to the end of a dimension with unknown size, it is recommended to pass
   in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
@@ -30440,6 +30441,103 @@ x = np.random.randn(1, 3, 1, 5).astype(np.float32)
 axes = np.array([-2], dtype=np.int64)
 y = np.squeeze(x, axis=-2)
 expect(node, inputs=[x, axes], outputs=[y], name="test_squeeze_negative_axes")
+```
+
+</details>
+
+
+### <a name="StringConcat"></a><a name="stringconcat">**StringConcat**</a>
+
+  StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Tensor to prepend in concatenation</dd>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Tensor to append in concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
+<dd>Concatenated string tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>Inputs and outputs must be UTF-8 strings</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>stringconcat</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringConcat",
+    inputs=["x", "y"],
+    outputs=["result"],
+)
+x = np.array(["abc", "def"]).astype("object")
+y = np.array([".com", ".net"]).astype("object")
+result = np.array(["abc.com", "def.net"]).astype("object")
+
+expect(node, inputs=[x, y], outputs=[result], name="test_string_concat")
+
+x = np.array(["cat", "dog", "snake"]).astype("object")
+y = np.array(["s"]).astype("object")
+result = np.array(["cats", "dogs", "snakes"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_broadcasting",
+)
+
+x = np.array("cat").astype("object")
+y = np.array("s").astype("object")
+result = np.array("cats").astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_zero_dimensional",
+)
+
+x = np.array(["abc", ""]).astype("object")
+y = np.array(["", "abc"]).astype("object")
+result = np.array(["abc", "abc"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_empty_string",
+)
+
+x = np.array(["的", "中"]).astype("object")
+y = np.array(["的", "中"]).astype("object")
+result = np.array(["的的", "中中"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_utf8",
+)
 ```
 
 </details>

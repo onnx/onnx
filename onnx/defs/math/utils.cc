@@ -3,6 +3,7 @@
  */
 
 #include "onnx/defs/math/utils.h"
+
 #include <string>
 
 namespace ONNX_NAMESPACE {
