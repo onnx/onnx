@@ -24,6 +24,7 @@ jobs:
         # Checkout the branch made in the fork. Will automatically push changes
         # back to this branch.
         ref: ${{ github.head_ref }}
+        token: ${{ secrets.GH_TOKEN}}
     - name: Setup Python
       uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
     - name: Install ONNX from source and update documentation
@@ -42,6 +43,5 @@ jobs:
     - name: Commit changes with updated documentation
       uses: stefanzweifel/git-auto-commit-action@3ea6ae190baf489ba007f7c92608f33ce20ef04a # v4.16.0
       with:
-        commit_message: apply auto updated documentation
+        commit_message: CI:apply auto updated documentation
         commit_options: "--signoff"
-        commit_user_name: ${{ github.actor }}
