@@ -22087,7 +22087,7 @@ expect(node, inputs=[x], outputs=[y], name="test_relu")
 
 ### <a name="Reshape"></a><a name="reshape">**Reshape**</a>
 
-  Reshape the input tensor similar to numpy.reshape.
+  Reshape the input tensor similar to NumPy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
@@ -27301,7 +27301,7 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
 
 ### <a name="Slice"></a><a name="slice">**Slice**</a>
 
-  Produces a slice of the input tensor along multiple axes. Similar to numpy:
+  Produces a slice of the input tensor along multiple axes. Similar to NumPy:
   https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-and-striding
 
   Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
@@ -31358,7 +31358,7 @@ expect(
 
 ### <a name="Transpose"></a><a name="transpose">**Transpose**</a>
 
-  Transpose the input tensor similar to numpy.transpose. For example, when
+  Transpose the input tensor similar to NumPy.transpose. For example, when
   perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
