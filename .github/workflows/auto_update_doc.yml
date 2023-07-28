@@ -10,6 +10,7 @@ concurrency:
 
 jobs:
   auto-update-doc:
+    # if: contains( github.event.pull_request.labels.*.name, 'auto update doc')
     runs-on: ubuntu-latest
 
     permissions:
@@ -18,6 +19,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        # Checkout the branch made in the fork. Will automatically push changes
+        # back to this branch.
+        ref: ${{ github.head_ref }}
     - name: Setup Python
       uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
     - name: Install ONNX from source and update documentation
