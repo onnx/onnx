@@ -1,5 +1,6 @@
 name: Auto update documentation
 on:
+  pull_request:
   pull_request_target:
   workflow_dispatch:
 
@@ -43,3 +44,4 @@ jobs:
       with:
         commit_message: apply auto updated documentation
         commit_options: "--signoff"
+        commit_user_name: ${{ github.actor }}
