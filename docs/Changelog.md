@@ -3846,7 +3846,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Slice-1"></a>**Slice-1**</a>
 
-  Produces a slice of the input tensor along multiple axes. Similar to numpy:
+  Produces a slice of the input tensor along multiple axes. Similar to NumPy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
   Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
   dimension for each axis in the list of axes, it uses this information to
@@ -10072,7 +10072,7 @@ This version of the operator has been available since version 10 of the default 
 
 ### <a name="Slice-10"></a>**Slice-10**</a>
 
-  Produces a slice of the input tensor along multiple axes. Similar to numpy:
+  Produces a slice of the input tensor along multiple axes. Similar to NumPy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
   Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
   dimension and step for each axis in the list of axes, it uses this information to
@@ -13400,7 +13400,7 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="Slice-11"></a>**Slice-11**</a>
 
-  Produces a slice of the input tensor along multiple axes. Similar to numpy:
+  Produces a slice of the input tensor along multiple axes. Similar to NumPy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
   Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
   dimension and step for each axis in the list of axes, it uses this information to
