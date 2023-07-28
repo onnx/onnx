@@ -258,7 +258,7 @@ class OpRun(abc.ABC):
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
-                new_ops=None if new_ops is None else new_ops.values(),
+                new_ops=None if new_ops is None else list(new_ops.values()),
             )
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
