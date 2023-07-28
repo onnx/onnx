@@ -965,7 +965,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Slice_ver11_doc = R"DOC(
-Produces a slice of the input tensor along multiple axes. Similar to NumPy:
+Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
 Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
 dimension and step for each axis in the list of axes, it uses this information to
@@ -3588,7 +3588,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
 static const char* Slice_ver1_doc = R"DOC(
-Produces a slice of the input tensor along multiple axes. Similar to NumPy:
+Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
 Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
 dimension for each axis in the list of axes, it uses this information to
@@ -3699,7 +3699,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Slice_ver10_doc = R"DOC(
-Produces a slice of the input tensor along multiple axes. Similar to NumPy:
+Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
 Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
 dimension and step for each axis in the list of axes, it uses this information to

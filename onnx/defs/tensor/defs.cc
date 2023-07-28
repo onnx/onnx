@@ -264,7 +264,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }));
 
 static const char* Reshape_ver19_doc = R"DOC(
-Reshape the input tensor similar to NumPy.reshape.
+Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
@@ -793,7 +793,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Slice_ver13_doc = R"DOC(
-Produces a slice of the input tensor along multiple axes. Similar to NumPy:
+Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-and-striding
 
 Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
@@ -1121,7 +1121,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* Transpose_ver13_doc = R"DOC(
-Transpose the input tensor similar to NumPy.transpose. For example, when
+Transpose the input tensor similar to numpy.transpose. For example, when
 perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
 will be (2, 1, 3).
 )DOC";

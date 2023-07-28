@@ -55,7 +55,7 @@ std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
-Performs element-wise binary {name} (with NumPy-style broadcasting support).
+Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
@@ -103,7 +103,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Sub"); }));
 
 static const char* Mod_doc = R"DOC(
-  Performs element-wise binary modulus (with NumPy-style broadcasting support).
+  Performs element-wise binary modulus (with Numpy-style broadcasting support).
   The sign of the remainder is the same as that of the Divisor.
 
   Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
@@ -115,7 +115,7 @@ static const char* Mod_doc = R"DOC(
 
   In case of dividend being zero, the results will be platform dependent.
 
-  This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -911,7 +911,7 @@ std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) 
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
-Element-wise {name} of each of the input tensors (with NumPy-style broadcasting support).
+Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
 {broadcast_doc}
 )DOC";

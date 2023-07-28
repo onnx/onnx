@@ -3846,7 +3846,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Slice-1"></a>**Slice-1**</a>
 
-  Produces a slice of the input tensor along multiple axes. Similar to NumPy:
+  Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
   Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
   dimension for each axis in the list of axes, it uses this information to
@@ -10072,7 +10072,7 @@ This version of the operator has been available since version 10 of the default 
 
 ### <a name="Slice-10"></a>**Slice-10**</a>
 
-  Produces a slice of the input tensor along multiple axes. Similar to NumPy:
+  Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
   Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
   dimension and step for each axis in the list of axes, it uses this information to
@@ -13400,7 +13400,7 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="Slice-11"></a>**Slice-11**</a>
 
-  Produces a slice of the input tensor along multiple axes. Similar to NumPy:
+  Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
   Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
   dimension and step for each axis in the list of axes, it uses this information to
@@ -18106,7 +18106,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="Slice-13"></a>**Slice-13**</a>
 
-  Produces a slice of the input tensor along multiple axes. Similar to NumPy:
+  Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-and-striding
 
   Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
@@ -18608,7 +18608,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="Transpose-13"></a>**Transpose-13**</a>
 
-  Transpose the input tensor similar to NumPy.transpose. For example, when
+  Transpose the input tensor similar to numpy.transpose. For example, when
   perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
@@ -23426,7 +23426,7 @@ This version of the operator has been available since version 19 of the default 
 
 ### <a name="Reshape-19"></a>**Reshape-19**</a>
 
-  Reshape the input tensor similar to NumPy.reshape.
+  Reshape the input tensor similar to numpy.reshape.
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
