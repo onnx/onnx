@@ -22044,7 +22044,7 @@ This version of the operator has been available since version 20 of the default 
 
 <dl>
 <dt><tt>pattern</tt> : string</dt>
-<dd>Regex pattern to match on. This must be in the RE2 syntax.</dd>
+<dd>Regex pattern to match on. This must be valid RE2 syntax.</dd>
 </dl>
 
 #### Inputs

@@ -15,18 +15,20 @@ class RegexFullMatch(OpRun):
         try:
             # pylint: disable=import-outside-toplevel`
             import re2
-
-            # As per onnx/mapping.py, object numpy dtype corresponds to TensorProto.STRING
-            if x.dtype.kind not in _acceptable_str_dtypes:
-                raise TypeError(
-                    f"Input must be string tensor, received dtype {x.dtype}"
-                )
-            regex = re2.compile(pattern)
-            fullmatch_func = np.vectorize(
-                lambda x: regex.fullmatch(x) is not None, otypes=[np.bool_]
-            )
-            return (fullmatch_func(x),)
         except ImportError as e:
             raise ImportError(
-                "re2 must be installed to use the RegexFullMatch operator reference implementation"
+                "re2 must be installed to use the reference implementation of the RegexFullMatch operator"
             ) from e
+
+            # As per onnx/mapping.py, object numpy dtype corresponds to TensorProto.STRING
+        if x.dtype.kind not in _acceptable_str_dtypes:
+            raise TypeError(f"Input must be string tensor, received dtype {x.dtype}")
+        try:
+            regex = re2.compile(pattern)
+        except re2.error as e:
+            raise ValueError(f"Invalid regex pattern {pattern}") from e
+
+        fullmatch_func = np.vectorize(
+            lambda x: regex.fullmatch(x) is not None, otypes=[np.bool_]
+        )
+        return (fullmatch_func(x),)

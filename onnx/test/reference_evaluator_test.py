@@ -3825,6 +3825,15 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(result.dtype.kind, "b")
         self.assertEqual(result.shape, expected_shape)
 
+    def test_regex_invalid_pattern(self):
+        X = make_tensor_value_info("X", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
+        node = make_node("RegexFullMatch", inputs=["X"], outputs=["Y"], pattern="x)")
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        with self.assertRaises(ValueError):
+            ref.run(None, {"X": np.array(["x"])})
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
