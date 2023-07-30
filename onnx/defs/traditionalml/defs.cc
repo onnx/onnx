@@ -358,7 +358,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("default_float", "A float.", AttributeProto::FLOAT, -0.f)
         .Attr(
             "default_as_tensor",
-            "A default tensor. Must be set if values_as_tensor is set, optional otherwise",
+            "A default tensor. Must be set if values_as_tensor is set, optional otherwise.",
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
