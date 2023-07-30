@@ -63,25 +63,20 @@ ALL_OP_VERSIONS: dict[str, tuple[str, frozenset[int]]] = {
 }
 
 
-def all_versions_for(
-    op_name: str, min_version=None, max_version=None
-) -> list[tuple[str, int]]:
+def all_versions_for(op_name: str) -> list[tuple[str, int]]:
     domain, versions_set = ALL_OP_VERSIONS[op_name]
     if not versions_set:
         raise ValueError(f"No versions available for operator {op_name}")
     versions = sorted(versions_set)
-    if domain == ONNX_DOMAIN and min_version is None:
-        # FIXME(#5289): Reshape errors in self._make_graph when version <= 5.
-        # Issue reference: https://github.com/onnx/onnx/issues/5289.
-        min_version = 6
     return [
         (
             f"version{version}",
             version,
         )
         for version in versions
-        if (min_version is None or min_version <= version)
-        and (max_version is None or version <= max_version)
+        # FIXME(#5289): Reshape errors in self._make_graph when version <= 5.
+        # Issue reference: https://github.com/onnx/onnx/issues/5289.
+        if version > 5 and domain == ONNX_DOMAIN
     ]
 
 
@@ -5476,9 +5471,13 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (15, "C", 1, 1))])  # type: ignore
 
-    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
-    @parameterized.expand(all_versions_for("LabelEncoder", min_version=2))
+    @parameterized.expand(
+        all_versions_for("LabelEncoder") if ONNX_ML else [], skip_on_empty=True
+    )
     def test_label_encoder_string_int64(self, _, version) -> None:
+        self.skipIf(
+            version < 2, "keys_* attributes were introduced in ai.onnx.ml opset 2"
+        )
         string_list = ["A", "m", "y"]
         float_list = [94.17, 36.00]
         int64_list = [12, 28, 86]
@@ -5620,9 +5619,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
-    @parameterized.expand(all_versions_for("LabelEncoder", min_version=4))
+    @parameterized.expand(
+        all_versions_for("LabelEncoder") if ONNX_ML else [], skip_on_empty=True
+    )
     def test_label_encoder_tensor_attributes(self, _, version) -> None:
+        self.skipIf(
+            version < 4, "tensor attributes were introduced in ai.onnx.ml opset 4"
+        )
         key_tensor = make_tensor(
             "keys_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
         )
@@ -5655,9 +5658,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
-    @parameterized.expand(all_versions_for("LabelEncoder", min_version=4))
-    def test_label_encoder_tensor_attributes_invalid_configurations(self, *_) -> None:
+    @parameterized.expand(
+        all_versions_for("LabelEncoder") if ONNX_ML else [], skip_on_empty=True
+    )
+    def test_label_encoder_tensor_attributes_invalid_configurations(
+        self, _, version
+    ) -> None:
+        self.skipIf(version < 4, "tensor attributes introduced in ai.onnx.ml opset 4")
         key_tensor = make_tensor(
             "values_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
         )
