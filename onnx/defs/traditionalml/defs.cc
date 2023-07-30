@@ -366,6 +366,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           int32_t key_type = TensorProto_DataType_UNDEFINED;
           const AttributeProto* keys_as_tensor = ctx.getAttribute("keys_as_tensor");
           if (keys_as_tensor != nullptr) {
+            // Ensure keys_as_tensor is 1D
+            if (keys_as_tensor->t().dims_size() != 1) {
+              fail_shape_inference("keys_as_tensor must be 1D.");
+            }
             key_type = keys_as_tensor->t().data_type();
           }
           const AttributeProto* keys_strings = ctx.getAttribute("keys_strings");
@@ -399,16 +403,17 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           int32_t value_type = TensorProto_DataType_UNDEFINED;
           const AttributeProto* values_as_tensor = ctx.getAttribute("values_as_tensor");
           if (values_as_tensor != nullptr) {
-            value_type = values_as_tensor->t().data_type();
+            // Ensure values_as_tensor is 1D
+            if (values_as_tensor->t().dims_size() != 1) {
+              fail_shape_inference("values_as_tensor must be 1D.");
+            }
             if (keys_as_tensor == nullptr) {
               fail_shape_inference("keys_as_tensor must be set if values_as_tensor is set.");
             }
-            // Ensure keys and values have the same shape exactly
-            auto keys_shape = keys_as_tensor->t().dims();
-            auto values_shape = values_as_tensor->t().dims();
-            if (!std::equal(keys_shape.begin(), keys_shape.end(), values_shape.begin(), values_shape.end())) {
-              fail_shape_inference("keys_as_tensor and values_as_tensor must have the same shape.");
+            if (keys_as_tensor->t().dims_size() != values_as_tensor->t().dims_size()) {
+              fail_shape_inference("keys_as_tensor and values_as_tensor must have same length.");
             }
+
             const AttributeProto* default_as_tensor = ctx.getAttribute("default_as_tensor");
             // Ensure default_as_tensor is set
             if (default_as_tensor == nullptr) {
@@ -422,6 +427,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             if (default_as_tensor->t().dims_size() != 1 || default_as_tensor->t().dims(0) != 1) {
               fail_shape_inference("default_as_tensor must be a singleton.");
             }
+            value_type = values_as_tensor->t().data_type();
           } else if (keys_as_tensor != nullptr) {
             fail_shape_inference("keys_as_tensor must be set if values_as_tensor is set.");
           }
