@@ -5476,8 +5476,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (15, "C", 1, 1))])  # type: ignore
 
-    @parameterized.expand(all_versions_for("LabelEncoder", min_version=2))
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    @parameterized.expand(all_versions_for("LabelEncoder", min_version=2))
     def test_label_encoder_string_int64(self, _, version) -> None:
         string_list = ["A", "m", "y"]
         float_list = [94.17, 36.00]
@@ -5620,8 +5620,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    @parameterized.expand(all_versions_for("LabelEncoder", min_version=4))
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    @parameterized.expand(all_versions_for("LabelEncoder", min_version=4))
     def test_label_encoder_tensor_attributes(self, _, version) -> None:
         key_tensor = make_tensor(
             "keys_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
@@ -5655,8 +5655,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    @parameterized.expand(all_versions_for("LabelEncoder", min_version=4))
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    @parameterized.expand(all_versions_for("LabelEncoder", min_version=4))
     def test_label_encoder_tensor_attributes_invalid_configurations(self, *_) -> None:
         key_tensor = make_tensor(
             "values_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
