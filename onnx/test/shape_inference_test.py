@@ -49,31 +49,39 @@ def get_available_versions(schema: OpSchema) -> set[int]:
     versions: set[int] = set()
     for version in range(schema.since_version, 0, -1):
         try:
-            versions.add(defs.get_schema(schema.name, version).since_version)
+            versions.add(
+                defs.get_schema(schema.name, version, schema.domain).since_version
+            )
         except SchemaError:
             break
     return versions
 
 
-ALL_OP_VERSIONS: dict[str, frozenset[int]] = {
-    schema.name: frozenset(get_available_versions(schema))
+ALL_OP_VERSIONS: dict[str, tuple[str, frozenset[int]]] = {
+    schema.name: (schema.domain, frozenset(get_available_versions(schema)))
     for schema in defs.get_all_schemas()
 }
 
 
-def all_versions_for(op_name: str) -> list[tuple[str, int]]:
-    versions_set = ALL_OP_VERSIONS[op_name]
-    assert versions_set
+def all_versions_for(
+    op_name: str, min_version=None, max_version=None
+) -> list[tuple[str, int]]:
+    domain, versions_set = ALL_OP_VERSIONS[op_name]
+    if not versions_set:
+        raise ValueError(f"No versions available for operator {op_name}")
     versions = sorted(versions_set)
+    if domain == ONNX_DOMAIN and min_version is None:
+        # FIXME(#5289): Reshape errors in self._make_graph when version <= 5.
+        # Issue reference: https://github.com/onnx/onnx/issues/5289.
+        min_version = 6
     return [
         (
             f"version{version}",
             version,
         )
         for version in versions
-        # FIXME(#5289): Reshape errors in self._make_graph when version <= 5.
-        # Issue reference: https://github.com/onnx/onnx/issues/5289.
-        if version > 5
+        if (min_version is None or min_version <= version)
+        and (max_version is None or version <= max_version)
     ]
 
 
@@ -5468,8 +5476,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (15, "C", 1, 1))])  # type: ignore
 
+    @parameterized.expand(all_versions_for("LabelEncoder", min_version=2))
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
-    def test_label_encoder_string_int64(self) -> None:
+    def test_label_encoder_string_int64(self, _, version) -> None:
         string_list = ["A", "m", "y"]
         float_list = [94.17, 36.00]
         int64_list = [12, 28, 86]
@@ -5606,10 +5615,134 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
+
+    @parameterized.expand(all_versions_for("LabelEncoder", min_version=4))
+    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    def test_label_encoder_tensor_attributes(self, _, version) -> None:
+        key_tensor = make_tensor(
+            "values_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+        )
+        values_tensor = make_tensor(
+            "keys_as_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+        )
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ("M", None, 3, 12))],
+            [
+                make_node(
+                    "LabelEncoder",
+                    ["x"],
+                    ["y"],
+                    domain=ONNX_ML_DOMAIN,
+                    keys_as_tensor=key_tensor,
+                    values_as_tensor=values_tensor,
+                    default_as_tensor=make_tensor(
+                        "default_as_tensor", TensorProto.INT64, [1], [0]
+                    ),
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, ("M", None, 3, 12))],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, version),
+                make_opsetid(ONNX_DOMAIN, 11),
+            ],
+        )
+
+    @parameterized.expand(all_versions_for("LabelEncoder", min_version=4))
+    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    def test_label_encoder_tensor_attributes_invalid_configurations(self, *_) -> None:
+        key_tensor = make_tensor(
+            "values_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+        )
+        values_tensor = make_tensor(
+            "keys_as_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+        )
+
+        # default_as_tensor should be INT64, same type as values_as_tensor
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ("M", None, 3, 12))],
+            [
+                make_node(
+                    "LabelEncoder",
+                    ["x"],
+                    ["y"],
+                    domain=ONNX_ML_DOMAIN,
+                    keys_as_tensor=key_tensor,
+                    values_as_tensor=values_tensor,
+                    default_as_tensor=make_tensor(
+                        "default_as_tensor", TensorProto.STRING, [1], [0]
+                    ),
+                )
+            ],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+        # default_as_tensor is required when keys_as_tensor and values_as_tensor are provided
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ("M", None, 3, 12))],
+            [
+                make_node(
+                    "LabelEncoder",
+                    ["x"],
+                    ["y"],
+                    domain=ONNX_ML_DOMAIN,
+                    keys_as_tensor=key_tensor,
+                    values_as_tensor=values_tensor,
+                )
+            ],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+        # when keys_as_tensor is provided, values_as_tensor should be provided as well (and vice-versa)
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ("M", None, 3, 12))],
+            [
+                make_node(
+                    "LabelEncoder",
+                    ["x"],
+                    ["y"],
+                    domain=ONNX_ML_DOMAIN,
+                    keys_as_tensor=key_tensor,
+                    values_strings=["a", "b", "cc", "ddd"],
+                    default_as_tensor=make_tensor(
+                        "default_as_tensor", TensorProto.STRING, [1], [0]
+                    ),
+                )
+            ],
+            [],
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+        # default_as_tensor should be a singleton of shape (1,)
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ("M", None, 3, 12))],
+            [
+                make_node(
+                    "LabelEncoder",
+                    ["x"],
+                    ["y"],
+                    domain=ONNX_ML_DOMAIN,
+                    keys_as_tensor=key_tensor,
+                    values_strings=["a", "b", "cc", "ddd"],
+                    default_as_tensor=make_tensor(
+                        "default_as_tensor", TensorProto.STRING, [1, 2], [0, 0]
+                    ),
+                )
+            ],
+            [],
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
     def make_sparse(
         self,

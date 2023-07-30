@@ -72,6 +72,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.13.0", 8, 18, 3, 1),
     ("1.13.1", 8, 18, 3, 1),
     ("1.14.0", 9, 19, 3, 1),
+    ("1.15.0", 9, 20, 4, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -694,6 +695,8 @@ def make_tensor(
             )
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)
+        elif data_type == TensorProto.STRING:
+            vals = np.array(vals).astype(bytes)
         field = tensor_dtype_to_field(data_type)
         getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)

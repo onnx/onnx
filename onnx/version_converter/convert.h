@@ -566,8 +566,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<GridSample_19_20>());
     registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
-  }
 
+    /******** ai.onnx.ml ********/
+    /******** 2 -> 4 ********/
+    registerAdapter(
+        std::make_unique<CompatibleAdapter>("LabelEncoder", OpSetID("ai.onnx.ml", 2), OpSetID("ai.onnx.ml", 4)));
+
+    /******** 4 -> 2 ********/
+    // TODO: adapt back to 2 by removing any tensor attributes and checking at least one and one value is set
+  }
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
       const override;
 };

@@ -298,7 +298,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("imputed_value_int64s", "Value(s) to change to.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("replaced_value_int64", "A value that needs replacing.", AttributeProto::INT, static_cast<int64_t>(0)));
 
-static const char* LabelEncoder_ver2_doc = R"DOC(
+static const char* LabelEncoder_ver4_doc = R"DOC(
     Maps each element in the input tensor to another value.<br>
     The mapping is determined by the two parallel attributes, 'keys_*' and
     'values_*' attribute. The i-th value in the specified 'keys_*' attribute
@@ -314,15 +314,19 @@ static const char* LabelEncoder_ver2_doc = R"DOC(
     "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
     Since this operator is an one-to-one mapping, its input and output shapes
     are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
+    When 'keys_as_tensor' and 'values_as_tensor' are used, the default value
+    must be specified in 'default_as_tensor' attribute as a singleton with the
+    same type as 'values_as_tensor'. Additionally, 'keys_as_tensor' and
+    'values_as_tensor' must have identical shapes.<br>
     For key look-up, bit-wise comparison is used so even a float NaN can be
     mapped to a value in 'values_*' attribute.<br>
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     LabelEncoder,
-    2,
+    4,
     OpSchema()
-        .SetDoc(LabelEncoder_ver2_doc)
+        .SetDoc(LabelEncoder_ver4_doc)
         .Input(0, "X", "Input data. It can be either tensor or scalar.", "T1")
         .Output(0, "Y", "Output data.", "T2")
         .TypeConstraint(
@@ -334,83 +338,115 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             {"tensor(string)", "tensor(int64)", "tensor(float)"},
             "Output type is determined by the specified 'values_*' attribute.")
         .Attr(
-            "keys_strings",
-            "A list of strings. One and only one of 'keys_*'s should be set.",
-            AttributeProto::STRINGS,
+            "keys_as_tensor",
+            "Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.",
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
+        .Attr("keys_strings", "A list of strings.", AttributeProto::STRINGS, OPTIONAL_VALUE)
         .Attr("keys_int64s", "A list of ints.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("keys_floats", "A list of floats.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr(
-            "values_strings",
-            "A list of strings. One and only one of 'value_*'s should be set.",
-            AttributeProto::STRINGS,
+            "values_as_tensor",
+            "Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.",
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
+        .Attr("values_strings", "A list of strings.", AttributeProto::STRINGS, OPTIONAL_VALUE)
         .Attr("values_int64s", "A list of ints.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("values_floats", "A list of floats.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr("default_string", "A string.", AttributeProto::STRING, std::string("_Unused"))
         .Attr("default_int64", "An integer.", AttributeProto::INT, static_cast<int64_t>(-1))
         .Attr("default_float", "A float.", AttributeProto::FLOAT, -0.f)
+        .Attr(
+            "default_as_tensor",
+            "A default tensor. Must be set if values_as_tensor is set, optional otherwise",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Label encoder is one-to-one mapping.
-          if (ctx.getNumInputs() != 1) {
-            fail_shape_inference("Label encoder has only one input.");
+          // Ensure only one keys_* attribute is set, and get the corresponding attribute type
+          int32_t key_type = TensorProto_DataType_UNDEFINED;
+          const AttributeProto* keys_as_tensor = ctx.getAttribute("keys_as_tensor");
+          if (keys_as_tensor != nullptr) {
+            key_type = keys_as_tensor->t().data_type();
           }
-          if (ctx.getNumOutputs() != 1) {
-            fail_shape_inference("Label encoder has only one output.");
+          const AttributeProto* keys_strings = ctx.getAttribute("keys_strings");
+          if (keys_strings != nullptr) {
+            key_type = TensorProto_DataType_STRING;
           }
-
-          // Load all key_* attributes.
-          std::vector<std::string> keys_strings;
-          bool keys_strings_result = getRepeatedAttribute(ctx, "keys_strings", keys_strings);
-          std::vector<int64_t> keys_int64s;
-          bool keys_int64s_result = getRepeatedAttribute(ctx, "keys_int64s", keys_int64s);
-          std::vector<float> keys_floats;
-          bool keys_floats_result = getRepeatedAttribute(ctx, "keys_floats", keys_floats);
-
-          // Check if only one keys_* attribute is set.
-          if (static_cast<int>(keys_strings_result) + static_cast<int>(keys_int64s_result) +
-                  static_cast<int>(keys_floats_result) !=
+          const AttributeProto* keys_int64s = ctx.getAttribute("keys_int64s");
+          if (keys_int64s != nullptr) {
+            key_type = TensorProto_DataType_INT64;
+          }
+          const AttributeProto* keys_floats = ctx.getAttribute("keys_floats");
+          if (keys_floats != nullptr) {
+            key_type = TensorProto_DataType_FLOAT;
+          }
+          if (static_cast<int>(keys_as_tensor != nullptr) + static_cast<int>(keys_strings != nullptr) +
+                  static_cast<int>(keys_int64s != nullptr) + static_cast<int>(keys_floats != nullptr) !=
               1) {
-            fail_shape_inference("Only one of keys_*'s can be set in label encoder.");
+            fail_shape_inference(
+                "One and only one of keys_as_tensor, keys_strings, keys_int64s, keys_floats must be set.");
+          }
+          if (key_type != ctx.getInputType(0)->tensor_type().elem_type()) {
+            fail_shape_inference(
+                "The input the key types must be identical but were ",
+                ctx.getInputType(0)->tensor_type().elem_type(),
+                " and ",
+                key_type,
+                " respectively.");
           }
 
-          // Check if the specified keys_* matches input type.
-          auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
-          if (keys_strings_result && input_elem_type != TensorProto::STRING) {
-            fail_shape_inference("Input type is not string tensor but key_strings is set");
-          }
-          if (keys_int64s_result && input_elem_type != TensorProto::INT64) {
-            fail_shape_inference("Input type is not int64 tensor but keys_int64s is set");
-          }
-          if (keys_floats_result && input_elem_type != TensorProto::FLOAT) {
-            fail_shape_inference("Input type is not float tensor but keys_floats is set");
+          // Ensure only one values_* attribute is set, and get the corresponding attribute type
+          int32_t value_type = TensorProto_DataType_UNDEFINED;
+          const AttributeProto* values_as_tensor = ctx.getAttribute("values_as_tensor");
+          if (values_as_tensor != nullptr) {
+            value_type = values_as_tensor->t().data_type();
+            if (keys_as_tensor == nullptr) {
+              fail_shape_inference("keys_as_tensor must be set if values_as_tensor is set.");
+            }
+            // Ensure keys and values have the same shape exactly
+            auto keys_shape = keys_as_tensor->t().dims();
+            auto values_shape = values_as_tensor->t().dims();
+            if (!std::equal(keys_shape.begin(), keys_shape.end(), values_shape.begin(), values_shape.end())) {
+              fail_shape_inference("keys_as_tensor and values_as_tensor must have the same shape.");
+            }
+            const AttributeProto* default_as_tensor = ctx.getAttribute("default_as_tensor");
+            // Ensure default_as_tensor is set
+            if (default_as_tensor == nullptr) {
+              fail_shape_inference("default_as_tensor must be set if values_as_tensor is set.");
+            }
+            // Ensure default_as_tensor has same element type
+            if (default_as_tensor->t().data_type() != value_type) {
+              fail_shape_inference("default_as_tensor must have same element type as values_as_tensor.");
+            }
+            // Ensure default_as_tensor is singleton
+            if (default_as_tensor->t().dims_size() != 1 || default_as_tensor->t().dims(0) != 1) {
+              fail_shape_inference("default_as_tensor must be a singleton.");
+            }
+          } else if (keys_as_tensor != nullptr) {
+            fail_shape_inference("keys_as_tensor must be set if values_as_tensor is set.");
           }
 
-          // Load all values_* attributes.
-          std::vector<std::string> values_strings;
-          bool values_strings_result = getRepeatedAttribute(ctx, "values_strings", values_strings);
-          std::vector<int64_t> values_int64s;
-          bool values_int64s_result = getRepeatedAttribute(ctx, "values_int64s", values_int64s);
-          std::vector<float> values_floats;
-          bool values_floats_result = getRepeatedAttribute(ctx, "values_floats", values_floats);
-
-          // Check if only one values_* attribute is set.
-          if (static_cast<int>(values_strings_result) + static_cast<int>(values_int64s_result) +
-                  static_cast<int>(values_floats_result) !=
+          const AttributeProto* values_strings = ctx.getAttribute("values_strings");
+          if (values_strings != nullptr) {
+            value_type = TensorProto_DataType_STRING;
+          }
+          const AttributeProto* values_int64s = ctx.getAttribute("values_int64s");
+          if (values_int64s != nullptr) {
+            value_type = TensorProto_DataType_INT64;
+          }
+          const AttributeProto* values_floats = ctx.getAttribute("values_floats");
+          if (values_floats != nullptr) {
+            value_type = TensorProto_DataType_FLOAT;
+          }
+          if (static_cast<int>(values_as_tensor != nullptr) + static_cast<int>(values_strings != nullptr) +
+                  static_cast<int>(values_int64s != nullptr) + static_cast<int>(values_floats != nullptr) !=
               1) {
-            fail_shape_inference("Only one of values_*'s can be set in label encoder.");
+            fail_shape_inference(
+                "One and only one of values_as_tensor, values_strings, values_int64s, values_floats must be set.");
           }
 
-          // Assign output type based on the specified values_*.
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
-          if (values_strings_result)
-            output_elem_type->set_elem_type(TensorProto::STRING);
-          if (values_int64s_result)
-            output_elem_type->set_elem_type(TensorProto::INT64);
-          if (values_floats_result)
-            output_elem_type->set_elem_type(TensorProto::FLOAT);
-
-          // Input and output shapes are the same.
+          //  Propagate shape from input type and assign output type based on value type
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(value_type);
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 

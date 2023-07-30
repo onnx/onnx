@@ -18,7 +18,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ai.onnx.ml.DictVectorizer">ai.onnx.ml.DictVectorizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.DictVectorizer-1">1</a>|
 |<a href="#ai.onnx.ml.FeatureVectorizer">ai.onnx.ml.FeatureVectorizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.FeatureVectorizer-1">1</a>|
 |<a href="#ai.onnx.ml.Imputer">ai.onnx.ml.Imputer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Imputer-1">1</a>|
-|<a href="#ai.onnx.ml.LabelEncoder">ai.onnx.ml.LabelEncoder</a>|<a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>|
+|<a href="#ai.onnx.ml.LabelEncoder">ai.onnx.ml.LabelEncoder</a>|<a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-4">4</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>|
 |<a href="#ai.onnx.ml.LinearClassifier">ai.onnx.ml.LinearClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.LinearClassifier-1">1</a>|
 |<a href="#ai.onnx.ml.LinearRegressor">ai.onnx.ml.LinearRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.LinearRegressor-1">1</a>|
 |<a href="#ai.onnx.ml.Normalizer">ai.onnx.ml.Normalizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Normalizer-1">1</a>|
@@ -408,36 +408,46 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
       Since this operator is an one-to-one mapping, its input and output shapes
       are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
+      When 'keys_as_tensor' and 'values_as_tensor' are used, the default value
+      must be specified in 'default_as_tensor' attribute as a singleton with the
+      same type as 'values_as_tensor'. Additionally, 'keys_as_tensor' and
+      'values_as_tensor' must have identical shapes.<br>
       For key look-up, bit-wise comparison is used so even a float NaN can be
       mapped to a value in 'values_*' attribute.<br>
 
 #### Version
 
-This version of the operator has been available since version 2 of the 'ai.onnx.ml' operator set.
+This version of the operator has been available since version 4 of the 'ai.onnx.ml' operator set.
 
-Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>
 
 #### Attributes
 
 <dl>
+<dt><tt>default_as_tensor</tt> : tensor</dt>
+<dd>A default tensor. Must be set if values_as_tensor is set, optional otherwise</dd>
 <dt><tt>default_float</tt> : float (default is -0.0)</dt>
 <dd>A float.</dd>
 <dt><tt>default_int64</tt> : int (default is -1)</dt>
 <dd>An integer.</dd>
 <dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string.</dd>
+<dt><tt>keys_as_tensor</tt> : tensor</dt>
+<dd>Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.</dd>
 <dt><tt>keys_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>keys_int64s</tt> : list of ints</dt>
 <dd>A list of ints.</dd>
 <dt><tt>keys_strings</tt> : list of strings</dt>
-<dd>A list of strings. One and only one of 'keys_*'s should be set.</dd>
+<dd>A list of strings.</dd>
+<dt><tt>values_as_tensor</tt> : tensor</dt>
+<dd>Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.</dd>
 <dt><tt>values_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>values_int64s</tt> : list of ints</dt>
 <dd>A list of ints.</dd>
 <dt><tt>values_strings</tt> : list of strings</dt>
-<dd>A list of strings. One and only one of 'value_*'s should be set.</dd>
+<dd>A list of strings.</dd>
 </dl>
 
 #### Inputs
