@@ -5624,10 +5624,10 @@ class TestShapeInference(TestShapeInferenceHelper):
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_label_encoder_tensor_attributes(self, _, version) -> None:
         key_tensor = make_tensor(
-            "values_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+            "keys_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
         )
         values_tensor = make_tensor(
-            "keys_as_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+            "values_as_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
         )
         graph = self._make_graph(
             [("x", TensorProto.STRING, ("M", None, 3, 12))],
@@ -5683,6 +5683,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
+
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
         # default_as_tensor is required when keys_as_tensor and values_as_tensor are provided
@@ -5700,6 +5701,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
+
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
         # when keys_as_tensor is provided, values_as_tensor should be provided as well (and vice-versa)

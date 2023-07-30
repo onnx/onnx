@@ -317,7 +317,7 @@ static const char* LabelEncoder_ver4_doc = R"DOC(
     When 'keys_as_tensor' and 'values_as_tensor' are used, the default value
     must be specified in 'default_as_tensor' attribute as a singleton with the
     same type as 'values_as_tensor'. Additionally, 'keys_as_tensor' and
-    'values_as_tensor' must have identical shapes.<br>
+    'values_as_tensor' must be one dimensional and have the same length.<br>
     For key look-up, bit-wise comparison is used so even a float NaN can be
     mapped to a value in 'values_*' attribute.<br>
 )DOC";
@@ -419,6 +419,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             if (default_as_tensor == nullptr) {
               fail_shape_inference("default_as_tensor must be set if values_as_tensor is set.");
             }
+
+            value_type = values_as_tensor->t().data_type();
+
             // Ensure default_as_tensor has same element type
             if (default_as_tensor->t().data_type() != value_type) {
               fail_shape_inference("default_as_tensor must have same element type as values_as_tensor.");
@@ -427,7 +430,6 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             if (default_as_tensor->t().dims_size() != 1 || default_as_tensor->t().dims(0) != 1) {
               fail_shape_inference("default_as_tensor must be a singleton.");
             }
-            value_type = values_as_tensor->t().data_type();
           } else if (keys_as_tensor != nullptr) {
             fail_shape_inference("keys_as_tensor must be set if values_as_tensor is set.");
           }

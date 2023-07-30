@@ -1168,7 +1168,7 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
       When 'keys_as_tensor' and 'values_as_tensor' are used, the default value
       must be specified in 'default_as_tensor' attribute as a singleton with the
       same type as 'values_as_tensor'. Additionally, 'keys_as_tensor' and
-      'values_as_tensor' must have identical shapes.<br>
+      'values_as_tensor' must be one dimensional and have the same length.<br>
       For key look-up, bit-wise comparison is used so even a float NaN can be
       mapped to a value in 'values_*' attribute.<br>
 
