@@ -567,6 +567,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<GridSample_19_20>());
     registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
   }
+
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
       const override;
 };
