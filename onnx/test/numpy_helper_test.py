@@ -205,6 +205,12 @@ class TestNumpyHelper(unittest.TestCase):
                     self.assertEqual(f32, f32_1)
                     self.assertEqual(f32, f32_2)
 
+    @parameterized.parameterized.expand([(1.8131605, 1.875)])
+    def test_float8e4m3_to_float32_round(self, val, expected):
+        f8 = helper.float32_to_float8e4m3(val)
+        f32 = numpy_helper.float8e4m3_to_float32(f8)
+        self.assertEqual(f32, expected)
+
     def test_float8e5m2_to_float32(self):
         self.assertEqual(numpy_helper.float8e5m2_to_float32(int("1111011", 2)), 57344)
         self.assertEqual(numpy_helper.float8e5m2_to_float32(int("100", 2)), 2 ** (-14))

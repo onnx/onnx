@@ -414,7 +414,9 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                 else:
                     ret |= ex << 3
                     ret |= m >> 20
-                if m & 0x80000:
+                if (m & 0x80000) and (
+                    (m & 0x100000) or (m & 0x7FFFF)
+                ):  # round to nearest even
                     if (ret & 0x7F) < 0x7F:
                         # rounding
                         ret += 1
@@ -464,7 +466,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                     if (ret & 0x7F) == 0x7F:
                         ret &= 0xFE
                 if (m & 0x80000) and (
-                    (m & 0x100000) or (m & 0x7C000)
+                    (m & 0x100000) or (m & 0x7FFFF)
                 ):  # round to nearest even
                     if (ret & 0x7F) < 0x7E:
                         # rounding
@@ -532,7 +534,9 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 ex = e - 111  # 127 - 16
                 ret |= ex << 2
                 ret |= m >> 21
-                if m & 0x100000:
+                if (m & 0x100000) and (
+                    (m & 0xFFFFF) or (m & 0x200000)
+                ):  # round to nearest even
                     if (ret & 0x7F) < 0x7F:
                         # rounding
                         ret += 1
