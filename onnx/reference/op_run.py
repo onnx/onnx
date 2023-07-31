@@ -159,7 +159,10 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
             TensorProto.FLOAT8E5M2FNUZ: float8e5m2fnuz,
         }
 
-        data = tensor.int32_data
+        if tensor.HasField("raw_data"):
+            data = tensor.raw_data  # type: ignore[assignment]
+        else:
+            data = tensor.int32_data
         shape = tuple(tensor.dims)
         y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
         for i, d in enumerate(data):
@@ -255,7 +258,7 @@ class OpRun(abc.ABC):
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
-                new_ops=None if new_ops is None else new_ops.values(),
+                new_ops=None if new_ops is None else list(new_ops.values()),
             )
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
@@ -492,6 +495,18 @@ class OpRun(abc.ABC):
         return res
 
     @classmethod
+    def infer_name(cls):
+        name = cls.__name__
+        if "_" not in name:
+            return name, onnx_opset_version()
+        name, vers = name.rsplit("_", 1)
+        try:
+            i_vers = int(vers)
+        except ValueError:
+            return cls.__name__, onnx_opset_version()
+        return name, i_vers
+
+    @classmethod
     def make_node(
         cls,
         n_inputs: int | None = None,
@@ -518,20 +533,21 @@ class OpRun(abc.ABC):
             onnx_node = Celu.make_node(alpha=0.5)
             print(onnx_node)
         """
+        op_type, opset = cls.infer_name()
         domain = cls.op_domain
         schema = None
         if n_inputs is None:
             if schema is None:
-                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+                schema = get_schema(op_type, opset, domain)
             n_inputs = schema.min_input
         if n_outputs is None:
             if schema is None:
-                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+                schema = get_schema(op_type, opset, domain)
             n_outputs = schema.min_output
 
         names_in = [f"x{i}" for i in range(n_inputs)]
         names_out = [f"y{i}" for i in range(n_outputs)]
-        node = make_node(cls.__name__, names_in, names_out, **kwargs)
+        node = make_node(op_type, names_in, names_out, **kwargs)
         return node
 
     @classmethod
