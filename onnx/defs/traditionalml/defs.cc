@@ -331,11 +331,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output data.", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            {"tensor(string)", "tensor(int64)", "tensor(float)", "tensor(int32)", "tensor(int16)"},
             "The input type is a tensor of any shape.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            {"tensor(string)", "tensor(int64)", "tensor(float)", "tensor(int32)", "tensor(int16)"},
             "Output type is determined by the specified 'values_*' attribute.")
         .Attr(
             "keys_as_tensor",

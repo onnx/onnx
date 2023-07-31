@@ -83,7 +83,12 @@ node = onnx.helper.make_node(
 )
 x = np.array(["a", "b", "d", "c", "g"]).astype(object)
 y = np.array([0, 1, 42, 2, 42]).astype(np.int64)
-expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_label_encoder_string_int")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int",
+)
 
 node = onnx.helper.make_node(
     "LabelEncoder",
@@ -95,7 +100,12 @@ node = onnx.helper.make_node(
 )
 x = np.array(["a", "b", "d", "c", "g"]).astype(object)
 y = np.array([0, 1, -1, 2, -1]).astype(np.int64)
-expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_label_encoder_string_int_no_default")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int_no_default",
+)
 ```
 
 </details>
@@ -108,13 +118,24 @@ node = onnx.helper.make_node(
     inputs=["X"],
     outputs=["Y"],
     domain="ai.onnx.ml",
-    keys_as_tensor=make_tensor("keys_as_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]),
-    values_as_tensor=make_tensor("values_as_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]),
-    default_as_tensor=make_tensor("default_as_tensor", onnx.TensorProto.INT16, (1,), [42]),
+    keys_as_tensor=make_tensor(
+        "keys_as_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
+    ),
+    values_as_tensor=make_tensor(
+        "values_as_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_as_tensor=make_tensor(
+        "default_as_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
 )
 x = np.array(["a", "b", "d", "c", "g"]).astype(object)
 y = np.array([0, 1, 42, 2, 42]).astype(np.int16)
-expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_label_encoder_tensor_mapping")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_mapping",
+)
 ```
 
 </details>

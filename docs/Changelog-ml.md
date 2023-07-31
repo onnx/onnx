@@ -1222,9 +1222,9 @@ This version of the operator has been available since version 4 of the 'ai.onnx.
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16)</dt>
 <dd>The input type is a tensor of any shape.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16)</dt>
 <dd>Output type is determined by the specified 'values_*' attribute.</dd>
 </dl>
 
