@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 175/188 (93.09%, 5 generators excluded) common operators.
+Node tests have covered 176/189 (93.12%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -339,6 +339,70 @@ node = onnx.helper.make_node(
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
+```
+
+</details>
+
+
+### AffineGrid
+There are 2 test cases, listed as following:
+<details>
+<summary>2d_no_reference_evaluator</summary>
+
+```python
+theta_2d = create_theta_2d()
+N, C, W, H = len(theta_2d), 3, 5, 6
+data_size = (W, H)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_2d, original_grid)
+
+    test_name = "test_affine_grid_2d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_2d, np.array([N, C, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
+```
+
+</details>
+<details>
+<summary>3d_no_reference_evaluator</summary>
+
+```python
+theta_3d = create_theta_3d()
+N, C, D, W, H = len(theta_3d), 3, 4, 5, 6
+data_size = (D, W, H)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_3d, original_grid)
+
+    test_name = "test_affine_grid_3d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_3d, np.array([N, C, D, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
 ```
 
 </details>
