@@ -40,12 +40,12 @@ def generate_checkerboard(width, height, square_size):
 
 
 def generate_test_data(extension, pixel_format="RGB", h=40, w=40, tile_sz=5):
+    data, output = None, None
     np.random.seed(12345)
     image = generate_checkerboard(h, w, tile_sz)
     image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     _, encoded_image = cv2.imencode(extension, image_bgr)
     data = np.frombuffer(encoded_image, dtype=np.uint8)
-
     if pixel_format == "BGR":
         output = cv2.imdecode(data, cv2.IMREAD_COLOR)
     elif pixel_format == "RGB":
