@@ -31,15 +31,19 @@ class LabelEncoder(OpRunAiOnnxMl):
 
         if values is values_as_tensor:
             defval = default_as_tensor.item()
+            otype = default_as_tensor.dtype
         elif values is values_floats:
             defval = default_float
+            otype = np.float32
         elif values is values_int64s:
             defval = default_int64
+            otype = np.int64
         elif values is values_strings:
             defval = default_string
+            otype = np.str_
             if not isinstance(defval, str):
                 defval = ""
-        lookup_func = np.vectorize(lambda x: classes.get(x, defval))
+        lookup_func = np.vectorize(lambda x: classes.get(x, defval), otypes=[otype])
         output = lookup_func(x)
         if output.dtype == object:
             output = output.astype(np.str_)
