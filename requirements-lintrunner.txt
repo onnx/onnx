@@ -11,6 +11,6 @@ isort==5.12.0
 # CLANG-FORMAT
 clang-format==16.0.6
 # PYLINT
-pylint==2.17.4
+pylint==2.17.5
 # EDITORCONFIG-CHECKER
 editorconfig-checker==2.7.2
