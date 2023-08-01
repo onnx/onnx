@@ -394,20 +394,16 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
         if e != 0:
             if e < 116:
                 pass
-            elif e < 117:
-                # first positive number
-                if m > 0:
-                    ret |= 1
-                if (m >> 23) & 1:
-                    # rounding
-                    ret += 1
             elif e < 120:
                 # denormalized number
                 ex = e - 119
-                ret |= 1 << (2 + ex)
-                ret |= m >> (21 - ex)
+                if ex >= -2:
+                    ret |= 1 << (2 + ex)
+                    ret |= m >> (21 - ex)
+                elif m > 0:
+                    ret |= 1
                 mask = 1 << (20 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -416,7 +412,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                     ret += 1
             elif e < 135:
                 # normalized number
-                ex = e - 119
+                ex = e - 119  # 127 - 8
                 if ex == 0:
                     ret |= 0x4
                     ret |= m >> 21
@@ -430,7 +426,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                     elif not saturate:
                         return 0x80
             elif saturate:
-                ret |= 0x7F
+                ret |= 0x7F  # 01111110
             else:
                 ret = 0x80
         elif m == 0:
@@ -450,17 +446,16 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
         if e != 0:
             if e < 117:
                 pass
-            elif e < 118:
-                # first positive number
-                if m > 0:
-                    ret |= 1
             elif e < 121:
                 # denormalized number
                 ex = e - 120
-                ret |= 1 << (2 + ex)
-                ret |= m >> (21 - ex)
+                if ex >= -2:
+                    ret |= 1 << (2 + ex)
+                    ret |= m >> (21 - ex)
+                elif m > 0:
+                    ret |= 1
                 mask = 1 << (20 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -528,20 +523,16 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
         if e != 0:
             if e < 109:
                 pass
-            elif e < 110:
-                # first positive number
-                if m > 0:
-                    ret |= 1
-                if (m >> 23) & 1:
-                    # rounding
-                    ret += 1
             elif e < 112:
                 # denormalized number
                 ex = e - 111
-                ret |= 1 << (1 + ex)
-                ret |= m >> (22 - ex)
+                if ex >= -1:
+                    ret |= 1 << (1 + ex)
+                    ret |= m >> (22 - ex)
+                elif m > 0:
+                    ret |= 1
                 mask = 1 << (21 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -582,20 +573,16 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
         if e != 0:
             if e < 110:
                 pass
-            elif e < 111:
-                # first positive number
-                if m > 0:
-                    ret |= 1
-                if (m >> 23) & 1:
-                    # rounding
-                    ret += 1
             elif e < 113:
                 # denormalized number
                 ex = e - 112
-                ret |= 1 << (1 + ex)
-                ret |= m >> (22 - ex)
+                if ex >= -1:
+                    ret |= 1 << (1 + ex)
+                    ret |= m >> (22 - ex)
+                elif m > 0:
+                    ret |= 1
                 mask = 1 << (21 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
