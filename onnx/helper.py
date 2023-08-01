@@ -403,7 +403,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (20 - ex)
-                if m & mask and (
+                if m & mask and (  # noqa: R0916
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -455,7 +455,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (20 - ex)
-                if m & mask and (
+                if m & mask and (  # noqa: R0916
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -532,7 +532,7 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (21 - ex)
-                if m & mask and (
+                if m & mask and (  # noqa: R0916
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -582,7 +582,7 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (21 - ex)
-                if m & mask and (
+                if m & mask and (  # noqa: R0916
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
