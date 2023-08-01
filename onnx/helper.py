@@ -386,7 +386,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
             return 0x80
         if np.isinf(x):
             if saturate:
-                return ret | 0x7F
+                return ret | 127
             return 0x80
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
@@ -395,35 +395,42 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
             if e < 116:
                 pass
             elif e < 117:
-                ret |= 1
+                # first positive number
+                if m > 0:
+                    ret |= 1
                 if (m >> 23) & 1:
                     # rounding
                     ret += 1
-            elif e < 120:  # 127 - 8 + 1
-                d = 119 - e
-                ret |= 1 << (2 - d)
-                ret |= m >> (21 + d)
-                if (m >> (20 + d)) & 1:
+            elif e < 120:
+                # denormalized number
+                ex = e - 119
+                ret |= 1 << (2 + ex)
+                ret |= m >> (21 - ex)
+                mask = 1 << (20 - ex)
+                if m & mask and (
+                    ret & 1
+                    or m & (mask - 1) > 0
+                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+                ):
                     # rounding
                     ret += 1
-            elif e < 135:  # 127 + 8
-                ex = e - 119  # 127 - 8
+            elif e < 135:
+                # normalized number
+                ex = e - 119
                 if ex == 0:
                     ret |= 0x4
                     ret |= m >> 21
                 else:
                     ret |= ex << 3
                     ret |= m >> 20
-                if (m & 0x80000) and (
-                    (m & 0x100000) or (m & 0x7FFFF)
-                ):  # round to nearest even
+                if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
                     if (ret & 0x7F) < 0x7F:
                         # rounding
                         ret += 1
                     elif not saturate:
                         return 0x80
             elif saturate:
-                ret |= 0x7F  # 01111110
+                ret |= 0x7F
             else:
                 ret = 0x80
         elif m == 0:
@@ -444,19 +451,25 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
             if e < 117:
                 pass
             elif e < 118:
-                ret |= 1
-                if (m >> 23) & 1:
+                # first positive number
+                if m > 0:
+                    ret |= 1
+            elif e < 121:
+                # denormalized number
+                ex = e - 120
+                ret |= 1 << (2 + ex)
+                ret |= m >> (21 - ex)
+                mask = 1 << (20 - ex)
+                if m & mask and (
+                    ret & 1
+                    or m & (mask - 1) > 0
+                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+                ):
                     # rounding
                     ret += 1
-            elif e < 121:  # 127 - 7 + 1
-                d = 120 - e
-                ret |= 1 << (2 - d)
-                ret |= m >> (21 + d)
-                if (m >> (20 + d)) & 1:
-                    # rounding
-                    ret += 1
-            elif e < 136:  # 127 + 8 + 1
-                ex = e - 120  # 127 - 7
+            elif e < 136:
+                # normalized number
+                ex = e - 120
                 if ex == 0:
                     ret |= 0x4
                     ret |= m >> 21
@@ -465,9 +478,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                     ret |= m >> 20
                     if (ret & 0x7F) == 0x7F:
                         ret &= 0xFE
-                if (m & 0x80000) and (
-                    (m & 0x100000) or (m & 0x7FFFF)
-                ):  # round to nearest even
+                if (m & 0x80000) and ((m & 0x100000) or (m & 0x7FFFF)):
                     if (ret & 0x7F) < 0x7E:
                         # rounding
                         ret += 1
@@ -518,25 +529,31 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
             if e < 109:
                 pass
             elif e < 110:
-                ret |= 1
+                # first positive number
+                if m > 0:
+                    ret |= 1
                 if (m >> 23) & 1:
                     # rounding
-                    # may be unused
                     ret += 1
-            elif e < 112:  # 127 - 16 + 1
-                d = 111 - e
-                ret |= 1 << (1 - d)
-                ret |= m >> (22 + d)
-                if (m >> (21 + d)) & 1:
+            elif e < 112:
+                # denormlized number
+                ex = e - 111
+                ret |= 1 << (1 + ex)
+                ret |= m >> (22 - ex)
+                mask = 1 << (21 - ex)
+                if m & mask and (
+                    ret & 1
+                    or m & (mask - 1) > 0
+                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+                ):
                     # rounding
                     ret += 1
-            elif e < 143:  # 127 + 15 + 1
-                ex = e - 111  # 127 - 16
+            elif e < 143:
+                # normalized number
+                ex = e - 111
                 ret |= ex << 2
                 ret |= m >> 21
-                if (m & 0x100000) and (
-                    (m & 0xFFFFF) or (m & 0x200000)
-                ):  # round to nearest even
+                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
                     if (ret & 0x7F) < 0x7F:
                         # rounding
                         ret += 1
@@ -566,25 +583,31 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
             if e < 110:
                 pass
             elif e < 111:
-                ret |= 1
+                # first positive number
+                if m > 0:
+                    ret |= 1
                 if (m >> 23) & 1:
                     # rounding
-                    # may be unused
                     ret += 1
-            elif e < 113:  # 127 - 15 + 1
-                d = 112 - e
-                ret |= 1 << (1 - d)
-                ret |= m >> (22 + d)
-                if (m >> (21 + d)) & 1:
+            elif e < 113:
+                # denormlized number
+                ex = e - 112
+                ret |= 1 << (1 + ex)
+                ret |= m >> (22 - ex)
+                mask = 1 << (21 - ex)
+                if m & mask and (
+                    ret & 1
+                    or m & (mask - 1) > 0
+                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+                ):
                     # rounding
                     ret += 1
-            elif e < 143:  # 127 + 15 + 1
-                ex = e - 112  # 127 - 15
+            elif e < 143:
+                # normalized number
+                ex = e - 112
                 ret |= ex << 2
                 ret |= m >> 21
-                if (m & 0x100000) and (
-                    (m & 0xFFFFF) or (m & 0x200000)
-                ):  # round to nearest even
+                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
                     if (ret & 0x7F) < 0x7B:
                         # rounding
                         ret += 1
