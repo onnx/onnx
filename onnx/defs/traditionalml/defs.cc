@@ -361,7 +361,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          const auto& [key_type, key_length] =
+          int key_length, key_type;
+          std::tie(key_type, key_length) =
               getAttributeElementTypeAndLength(ctx, {"keys_as_tensor", "keys_strings", "keys_int64s", "keys_floats"});
           if (key_type == TensorProto::UNDEFINED) {
             fail_shape_inference("At least one of keys_as_tensor, keys_strings, keys_int64s, keys_floats must be set.");
@@ -375,14 +376,16 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                 " are different, which is not permitted for LabelEncoders.");
           }
 
-          const auto& [value_type, value_length] = getAttributeElementTypeAndLength(
+          int value_length, value_type;
+          std::tie(value_type, value_length) = getAttributeElementTypeAndLength(
               ctx, {"values_as_tensor", "values_strings", "values_int64s", "values_floats"});
           if (value_type == TensorProto::UNDEFINED) {
             fail_shape_inference(
                 "At least one of values_as_tensor, values_strings, values_int64s, values_floats must be set.");
           }
 
-          const auto& [default_type, default_length] = getAttributeElementTypeAndLength(
+          int default_length, default_type;
+          std::tie(default_type, default_length) = getAttributeElementTypeAndLength(
               ctx, {"default_as_tensor", "default_string", "default_int64", "default_float"});
           if (default_type != TensorProto::UNDEFINED) {
             if (value_type != default_type) {
