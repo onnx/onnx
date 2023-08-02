@@ -76,7 +76,7 @@ def all_versions_for(op_name: str) -> list[tuple[str, int]]:
         for version in versions
         # FIXME(#5289): Reshape errors in self._make_graph when version <= 5.
         # Issue reference: https://github.com/onnx/onnx/issues/5289.
-        if version > 5 and domain == ONNX_DOMAIN
+        if version > 5 or domain != ONNX_DOMAIN
     ]
 
 
@@ -5479,7 +5479,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             version < 2, "keys_* attributes were introduced in ai.onnx.ml opset 2"
         )
         string_list = ["A", "m", "y"]
-        float_list = [94.17, 36.00]
+        float_list = [94.17, 36.00, -99.0]
         int64_list = [12, 28, 86]
         graph = self._make_graph(
             [("x", TensorProto.STRING, (6, 1))],
@@ -5499,7 +5499,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.INT64, (6, 1))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5522,7 +5522,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.STRING, (2, 3))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5545,7 +5545,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.INT64, (2,))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5568,7 +5568,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (8,))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5591,7 +5591,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.STRING, ())],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5666,11 +5666,16 @@ class TestShapeInference(TestShapeInferenceHelper):
     ) -> None:
         self.skipIf(version < 4, "tensor attributes introduced in ai.onnx.ml opset 4")
         key_tensor = make_tensor(
-            "values_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+            "keys_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
         )
         values_tensor = make_tensor(
-            "keys_as_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+            "values_as_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
         )
+
+        opset_imports = [
+            make_opsetid(ONNX_ML_DOMAIN, version),
+            make_opsetid(ONNX_DOMAIN, 11),
+        ]
 
         # default_as_tensor should be INT64, same type as values_as_tensor
         graph = self._make_graph(
@@ -5691,7 +5696,12 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=opset_imports,
+        )
 
         # default_as_tensor is required when keys_as_tensor and values_as_tensor are provided
         graph = self._make_graph(
@@ -5709,28 +5719,12 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
-
-        # when keys_as_tensor is provided, values_as_tensor should be provided as well (and vice-versa)
-        graph = self._make_graph(
-            [("x", TensorProto.STRING, ("M", None, 3, 12))],
-            [
-                make_node(
-                    "LabelEncoder",
-                    ["x"],
-                    ["y"],
-                    domain=ONNX_ML_DOMAIN,
-                    keys_as_tensor=key_tensor,
-                    values_strings=["a", "b", "cc", "ddd"],
-                    default_as_tensor=make_tensor(
-                        "default_as_tensor", TensorProto.STRING, [1], [0]
-                    ),
-                )
-            ],
-            [],
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=opset_imports,
         )
-
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
         # default_as_tensor should be a singleton of shape (1,)
         graph = self._make_graph(
@@ -5751,7 +5745,12 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=opset_imports,
+        )
 
     def make_sparse(
         self,

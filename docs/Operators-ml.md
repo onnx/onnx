@@ -399,19 +399,18 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       would be mapped to the i-th value in the specified 'values_*' attribute. It
       implies that input's element type and the element type of the specified
       'keys_*' should be identical while the output type is identical to the
-      specified 'values_*' attribute. If an input element can not be found in the
+      specified 'values_*' attribute. Note that the 'keys_*' and 'values_*' attributes
+      must have the same length. If an input element can not be found in the
       specified 'keys_*' attribute, the 'default_*' that matches the specified
-      'values_*' attribute may be used as its output value.<br>
+      'values_*' attribute may be used as its output value. The type of the 'default_*'
+      attribute must match the 'values_*' attribute chosen. <br>
       Let's consider an example which maps a string tensor to an integer tensor.
       Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
       and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
       "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
       Since this operator is an one-to-one mapping, its input and output shapes
       are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
-      When 'keys_as_tensor' and 'values_as_tensor' are used, the default value
-      must be specified in 'default_as_tensor' attribute as a singleton with the
-      same type as 'values_as_tensor'. Additionally, 'keys_as_tensor' and
-      'values_as_tensor' must be one dimensional and have the same length.<br>
+      When 'values_as_tensor' is used, a default value must be specified.<br>
       For key look-up, bit-wise comparison is used so even a float NaN can be
       mapped to a value in 'values_*' attribute.<br>
 
@@ -454,14 +453,14 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncode
 
 <dl>
 <dt><tt>X</tt> : T1</dt>
-<dd>Input data. It can be either tensor or scalar.</dd>
+<dd>Input data. It must have the same element type as the keys_* attribute set.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T2</dt>
-<dd>Output data.</dd>
+<dd>Output data. This tensor's element type is based on the values_* attribute set.</dd>
 </dl>
 
 #### Type Constraints
@@ -523,14 +522,19 @@ expect(
 <summary>tensor_based_label_encoder</summary>
 
 ```python
+tensor_keys = make_tensor(
+    "keys_as_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
+)
+repeated_string_keys = ["a", "b", "c"]
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, 42, 2, 42]).astype(np.int16)
+
 node = onnx.helper.make_node(
     "LabelEncoder",
     inputs=["X"],
     outputs=["Y"],
     domain="ai.onnx.ml",
-    keys_as_tensor=make_tensor(
-        "keys_as_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
-    ),
+    keys_as_tensor=tensor_keys,
     values_as_tensor=make_tensor(
         "values_as_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
     ),
@@ -538,13 +542,33 @@ node = onnx.helper.make_node(
         "default_as_tensor", onnx.TensorProto.INT16, (1,), [42]
     ),
 )
-x = np.array(["a", "b", "d", "c", "g"]).astype(object)
-y = np.array([0, 1, 42, 2, 42]).astype(np.int16)
+
 expect(
     node,
     inputs=[x],
     outputs=[y],
     name="test_ai_onnx_ml_label_encoder_tensor_mapping",
+)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=repeated_string_keys,
+    values_as_tensor=make_tensor(
+        "values_as_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_as_tensor=make_tensor(
+        "default_as_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_value_only_mapping",
 )
 ```
 
