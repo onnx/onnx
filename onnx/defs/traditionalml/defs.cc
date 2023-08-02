@@ -317,8 +317,8 @@ static const char* LabelEncoder_ver4_doc = R"DOC(
     Since this operator is an one-to-one mapping, its input and output shapes
     are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
     When 'values_as_tensor' is used, a default value must be specified.<br>
-    For key look-up, bit-wise comparison is used so even a float NaN can be
-    mapped to a value in 'values_*' attribute.<br>
+    Float keys with value 'NaN' match any input 'NaN' value regardless of bit
+    value. If a key is repeated, the last key takes precedence.
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
