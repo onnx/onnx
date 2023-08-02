@@ -4851,6 +4851,104 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(result.dtype.kind, "O")
         self.assertEqual(result.shape, expected_shape)
 
+    @parameterized.parameterized.expand(
+        [
+            (
+                ["1,2,3", "4,5,6"],
+                ",",
+                None,
+                [["1", "2", "3"], ["4", "5", "6"]],
+                [3, 3],
+            ),
+            (
+                ["1,", "4,6", ""],
+                ",",
+                None,
+                [["1", ""], ["4", "6"], ["", ""]],
+                [2, 2, 1],
+            ),
+            (
+                ["1", "4,6", "4,5,6"],
+                ",",
+                1,
+                [["1", ""], ["4", "6"], ["4", "5,6"]],
+                [1, 2, 2],
+            ),
+            (
+                [["1,", "4,6", "4,5,6"], ["1,", "4,6", "4,5,6"]],
+                ",",
+                None,
+                [
+                    [["1", "", ""], ["4", "6", ""], ["4", "5", "6"]],
+                    [["1", "", ""], ["4", "6", ""], ["4", "5", "6"]],
+                ],
+                [[2, 2, 3], [2, 2, 3]],
+            ),
+            (
+                ["hello world !", "  hello   world !", " hello world   ! "],
+                None,
+                None,
+                [
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                ],
+                [3, 3, 3],
+            ),
+            (
+                ["hello world !", "  hello   world !", " hello world   ! "],
+                "",
+                None,
+                [
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                ],
+                [3, 3, 3],
+            ),
+            (
+                ["o-n-n--x-", "o-n----nx"],
+                "-",
+                None,
+                [["o", "n", "n", "", "x", ""], ["o", "n", "", "", "", "nx"]],
+                [6, 6],
+            ),
+            (
+                [],
+                " ",
+                2,
+                np.array([]).reshape((0, 0)),
+                [],
+            ),
+        ]
+    )
+    def test_string_split(
+        self,
+        x,
+        delimiter,
+        maxsplit,
+        expected_split,
+        expected_num_splits,
+    ):
+        X = make_tensor_value_info("X", TensorProto.STRING, (None))
+        Splits = make_tensor_value_info("Splits", TensorProto.STRING, (None))
+        MaxSplits = make_tensor_value_info("MaxSplits", TensorProto.INT32, (None))
+        node = make_node(
+            "StringSplit",
+            inputs=["X"],
+            outputs=["Splits", "MaxSplits"],
+            delimiter=delimiter,
+            maxsplit=maxsplit,
+        )
+        model = make_model(make_graph([node], "g", [X], [Splits, MaxSplits]))
+        ref = ReferenceEvaluator(model)
+        x = np.array(x, dtype=object)
+        result, num_splits, *_ = ref.run(None, {"X": x})
+        np.testing.assert_array_equal(result, np.array(expected_split, dtype=object))
+        np.testing.assert_array_equal(
+            num_splits, np.array(expected_num_splits, dtype=np.int64)
+        )
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -33,6 +33,73 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
+static const char* StringSplit_doc =
+    R"DOC(StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
+
+The first output of this operator is a tensor of strings representing the substrings from splitting each input string on the `delimiter` substring. This tensor has one additional rank compared to the input tensor in order to store the substrings for each input element (where the input tensor is not empty). Note that, in order to ensure the same number of elements are present in the final dimension, this tensor will pad empty strings as illustrated in the examples below. Consecutive delimiters are not grouped together and are deemed to delimit empty strings, except if the `delimiter` is unspecified or is the empty string (""). In the case where the `delimiter` is unspecified or the empty string, consecutive whitespace characters are regarded as a single separator and leading or trailing whitespace is removed in the output.
+
+The second output tensor represents the number of substrings generated. `maxsplit` can be used to limit the number of splits performed - after the `maxsplit`th split if the string is not fully split, the trailing suffix of input string after the final split point is also added. For elements where fewer splits are possible than specified in `maxsplit`, it has no effect.)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    StringSplit,
+    20,
+    OpSchema()
+        .Input(0, "X", "Tensor of strings to split.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Attr(
+            "delimiter",
+            "Delimiter to split on. If left unset or set to the empty string (\"\"), the input is split on consecutive whitespace.",
+            AttributeProto::STRING,
+            false)
+        .Attr(
+            "maxsplit",
+            "Maximum number of splits (from left to right). If left unset (or if the number of possible splits are less than maxsplit), it will make as many splits as possible. Note that the maximum possible number of substrings returned with `maxsplit` specified is `maxsplit+1` since the remaining suffix after the `maxsplit`th split is included in the output.",
+            AttributeProto::INT,
+            false)
+        .Output(
+            0,
+            "Y",
+            "Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            1,
+            "Z",
+            "The number of substrings generated for each input element.",
+            "T3",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint("T1", {"tensor(string)"}, "The input must be a UTF-8 string tensor")
+        .TypeConstraint("T2", {"tensor(string)"}, "Tensor of substrings.")
+        .TypeConstraint("T3", {"tensor(int64)"}, "The number of substrings generated.")
+        .SetDoc(StringSplit_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (!hasInputShape(ctx, 0)) {
+            return;
+          }
+          const TypeProto* input_type = ctx.getInputType(0);
+          if (input_type == nullptr || !input_type->has_tensor_type() ||
+              input_type->tensor_type().elem_type() != TensorProto::STRING) {
+            return;
+          }
+
+          // We produce a string tensor per input element. Therefore we have one additional rank with a runtime
+          // dependent number of elements. All except the final dimension of the output shape can be inferred directly
+          // from the input.
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+          getOutputShape(ctx, 0)->add_dim();
+
+          // The output tensor containing the number of substrings has identical shape to the input but produces int32
+          // results.
+          ctx.getOutputType(1)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+          propagateShapeFromInputToOutput(ctx, 0, 1);
+        }));
+
 static const char* StringNormalizer_ver10_doc = R"DOC(
 StringNormalization performs string operations for basic cleaning.
 This operator has only one input (denoted by X) and only one output
