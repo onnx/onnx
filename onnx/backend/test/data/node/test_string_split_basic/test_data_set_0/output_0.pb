@@ -1,2 +1,2 @@
-
-result2abc2com2def2net
+2abc2com2def2netB
+substrings

@@ -31,6 +31,5 @@ python onnx/backend/test/stat_coverage.py
 
 echo -e "\n===> regenerate the docs"
 python onnx/defs/gen_doc.py
-ONNX_ML=0 python onnx/defs/gen_doc.py
 
 echo -e "\n===> the update is done!"

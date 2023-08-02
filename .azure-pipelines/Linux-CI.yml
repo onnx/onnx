@@ -1,5 +1,5 @@
 trigger:
-- main
+- gh-readonly-queue/**
 
 jobs:
 - job: 'Test'
@@ -7,37 +7,31 @@ jobs:
     vmImage: 'Ubuntu-20.04'
   strategy:
     matrix:
-      py311-ml-debug:
+      py311-ml-debug-external-protobuf:
         python.version: '3.11'
         onnx_ml: 1
         build_type: 'Debug'
         documentation: 0
         protobuf_type: 'External'
-      py310-InternalProtobuf:
+      py310-internal-protobuf:
         python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
         documentation: 0
         protobuf_type: 'Internal'
-      py39-ml:
+      py39-ml-doc-external-protobuf:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Release'
         documentation: 1
         protobuf_type: 'External'
-      py38-InternalProtobuf:
+      py38-internal-protobuf:
         python.version: '3.8'
         onnx_ml: 0
         build_type: 'Release'
         documentation: 0
         protobuf_type: 'Internal'
-      py38-ml:
-        python.version: '3.8'
-        onnx_ml: 1
-        build_type: 'Release'
-        documentation: 0
-        protobuf_type: 'External'
-    maxParallel: 6
+    maxParallel: 4
 
   steps:
   - task: UsePythonVersion@0

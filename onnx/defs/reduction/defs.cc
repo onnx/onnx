@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <functional>
+
 #include "onnx/defs/function.h"
 #include "onnx/defs/reduction/utils.h"
 #include "onnx/defs/schema.h"
@@ -168,7 +169,7 @@ The type of the output tensor is integer.)DOC";
       }
     });
   };
-} // namespace ONNX_NAMESPACE
+}
 
 ONNX_OPERATOR_SET_SCHEMA(ArgMax, 13, OpSchema().FillUsing(ArgReduceDocGenerator("max")));
 

@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0912
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from __future__ import annotations
+
+import abc
+from typing import Any, ClassVar, Iterable
 
 import numpy as np
 
@@ -72,8 +74,8 @@ class RefAttrName:
         return f"{self.__class__.__name__}({self.name!r})"
 
 
-def _build_schemas() -> Dict[str, type]:
-    res: Dict[str, type] = {}
+def _build_schemas() -> dict[str, type]:
+    res: dict[str, type] = {}
     for schema in get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
@@ -111,7 +113,7 @@ class SparseTensor:
     """
 
     def __init__(
-        self, values: np.ndarray, indices: np.ndarray, shape: Tuple[int]
+        self, values: np.ndarray, indices: np.ndarray, shape: tuple[int]
     ) -> None:
         self.values = values
         self.indices = indices
@@ -157,7 +159,10 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
             TensorProto.FLOAT8E5M2FNUZ: float8e5m2fnuz,
         }
 
-        data = tensor.int32_data
+        if tensor.HasField("raw_data"):
+            data = tensor.raw_data  # type: ignore[assignment]
+        else:
+            data = tensor.int32_data
         shape = tuple(tensor.dims)
         y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
         for i, d in enumerate(data):
@@ -167,13 +172,13 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
 
 
 class Graph:
-    __slots__ = ["g"]
+    __slots__ = ("g",)
 
     def __init__(self, g: GraphProto) -> None:
         self.g = g
 
 
-class OpRun(ABC):
+class OpRun(abc.ABC):
     """
     Ancestor to all operators in this subfolder.
 
@@ -186,7 +191,7 @@ class OpRun(ABC):
 
     op_domain = ""
 
-    _attribute_conversion_functions = {
+    _attribute_conversion_functions: ClassVar[dict[Any, Any]] = {
         AttributeProto.FLOAT: lambda att: np.float32(att.f),
         AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
         AttributeProto.GRAPH: lambda att: Graph(att.g),
@@ -206,7 +211,7 @@ class OpRun(ABC):
     }
 
     def __init__(
-        self, onnx_node: NodeProto, run_params: Dict[str, Any], schema: Any = None
+        self, onnx_node: NodeProto, run_params: dict[str, Any], schema: Any = None
     ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
@@ -238,7 +243,7 @@ class OpRun(ABC):
         self.run_params["log"](pattern, *args)
 
     def _extract_attribute_value(
-        self, att: AttributeProto, ref_att: Optional[AttributeProto] = None
+        self, att: AttributeProto, ref_att: AttributeProto | None = None
     ) -> Any:
         """
         Converts an attribute value into a python value.
@@ -253,7 +258,7 @@ class OpRun(ABC):
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
-                new_ops=None if new_ops is None else new_ops.values(),
+                new_ops=None if new_ops is None else list(new_ops.values()),
             )
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
@@ -316,7 +321,7 @@ class OpRun(ABC):
         self.attributes_names_ = set(added_attributes)
 
     @staticmethod
-    def implicit_inputs(graph: GraphProto) -> List[str]:
+    def implicit_inputs(graph: GraphProto) -> list[str]:
         """
         Returns all varibles not registered as inputs and not produced by
         an node inside the graph. This inputs are part of the context
@@ -379,7 +384,7 @@ class OpRun(ABC):
         atts.append(")")
         return "\n".join(atts)
 
-    @abstractmethod
+    @abc.abstractmethod
     def _run(self, *args, **kwargs):  # type: ignore
         """
         Should be overwritten.
@@ -453,7 +458,7 @@ class OpRun(ABC):
                 )
             kwargs[att] = getattr(self, att)
         if self.has_subgraph:
-            if self.has_linked_attribute and len(linked_attributes) == 0:
+            if self.has_linked_attribute and not linked_attributes:
                 raise RuntimeError(
                     f"A subgraph has linked attribute but none was given to {type(self)}."
                 )
@@ -461,7 +466,7 @@ class OpRun(ABC):
         if context is not None:
             kwargs["context"] = context
         try:
-            if len(overridden_attributes) > 0:
+            if overridden_attributes:
                 res = self._run(*args, **overridden_attributes, **kwargs)
             else:
                 res = self._run(*args, **kwargs)
@@ -490,10 +495,22 @@ class OpRun(ABC):
         return res
 
     @classmethod
+    def infer_name(cls):
+        name = cls.__name__
+        if "_" not in name:
+            return name, onnx_opset_version()
+        name, vers = name.rsplit("_", 1)
+        try:
+            i_vers = int(vers)
+        except ValueError:
+            return cls.__name__, onnx_opset_version()
+        return name, i_vers
+
+    @classmethod
     def make_node(
         cls,
-        n_inputs: Optional[int] = None,
-        n_outputs: Optional[int] = None,
+        n_inputs: int | None = None,
+        n_outputs: int | None = None,
         **kwargs: Any,
     ) -> NodeProto:  # type: ignore
         """
@@ -516,27 +533,28 @@ class OpRun(ABC):
             onnx_node = Celu.make_node(alpha=0.5)
             print(onnx_node)
         """
+        op_type, opset = cls.infer_name()
         domain = cls.op_domain
         schema = None
         if n_inputs is None:
             if schema is None:
-                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+                schema = get_schema(op_type, opset, domain)
             n_inputs = schema.min_input
         if n_outputs is None:
             if schema is None:
-                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+                schema = get_schema(op_type, opset, domain)
             n_outputs = schema.min_output
 
         names_in = [f"x{i}" for i in range(n_inputs)]
         names_out = [f"y{i}" for i in range(n_outputs)]
-        node = make_node(cls.__name__, names_in, names_out, **kwargs)
+        node = make_node(op_type, names_in, names_out, **kwargs)
         return node
 
     @classmethod
     def create(
         cls,
-        n_inputs: Optional[int] = None,
-        n_outputs: Optional[int] = None,
+        n_inputs: int | None = None,
+        n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
     ) -> Any:
@@ -567,8 +585,8 @@ class OpRun(ABC):
     @classmethod
     def eval(
         cls,
-        *args: List[Any],
-        n_outputs: Optional[int] = None,
+        *args: list[Any],
+        n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
     ) -> Any:  # type: ignore
@@ -616,7 +634,7 @@ class OpFunction(OpRun):
         onnx_node: NodeProto,
         log_function: Any,
         impl: Any = None,
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ):
         if impl is None:
             raise RuntimeError(

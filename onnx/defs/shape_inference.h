@@ -4,7 +4,12 @@
 
 #pragma once
 
+#include <algorithm>
 #include <functional>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"

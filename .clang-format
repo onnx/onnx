@@ -1,5 +1,6 @@
 ---
-Language:        Cpp
+Language: Cpp
+BasedOnStyle: Google
 AccessModifierOffset: -1
 AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveAssignments: false
@@ -37,7 +38,6 @@ BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
 BreakConstructorInitializers: BeforeColon
-BreakAfterJavaFieldAnnotations: false
 BreakStringLiterals: false
 ColumnLimit:     120
 CommentPragmas:  '^ IWYU pragma:'
@@ -54,13 +54,6 @@ ForEachMacros:
   - FOR_EACH_RANGE
   - FOR_EACH
   - BOOST_FOREACH
-IncludeCategories:
-  - Regex:           '^<.*\.h(pp)?>'
-    Priority:        1
-  - Regex:           '^<.*'
-    Priority:        2
-  - Regex:           '.*'
-    Priority:        3
 IncludeIsMainRegex: '(Test)?$'
 IndentCaseLabels: true
 IndentWidth:     2
@@ -96,6 +89,5 @@ SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard:        Cpp11
 TabWidth:        8
 UseTab:          Never

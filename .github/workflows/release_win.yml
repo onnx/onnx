@@ -35,7 +35,7 @@ jobs:
          git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
+      uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -66,7 +66,7 @@ jobs:
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
         if ('${{ github.event_name }}' -eq 'schedule') {
-          echo "Build weekly TestPyPI package"
+          echo "Build weekly PyPI package"
           python setup.py bdist_wheel --weekly_build
         } else {
           python setup.py bdist_wheel
@@ -83,7 +83,7 @@ jobs:
         name: wheels
         path: ./onnx/dist
 
-    - name: Upload onnx-weekly wheel to TestPyPI/PyPI weekly
+    - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
@@ -126,12 +126,11 @@ jobs:
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.11'
       run: |
         cd onnx
         python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime
-        $Env:ORT_MAX_IR_SUPPORTED_VERSION=8
+        $Env:ORT_MAX_IR_SUPPORTED_VERSION=9
         $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
         pytest

@@ -3,6 +3,7 @@
  */
 
 #include <functional>
+
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
 #include "onnx/defs/schema.h"
@@ -2081,7 +2082,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "slope",
-            "Slope tensor. The shape of slope can be smaller then first input X; "
+            "Slope tensor. The shape of slope can be smaller than first input X; "
             "if so, its shape must be unidirectional broadcastable to X",
             "T")
         .Output(0, "Y", "Output tensor (same size as X)", "T")
@@ -2935,7 +2936,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "slope",
-            "Slope tensor. The shape of slope can be smaller then first input X; "
+            "Slope tensor. The shape of slope can be smaller than first input X; "
             "if so, its shape must be unidirectional broadcastable to X",
             "T",
             OpSchema::Single,

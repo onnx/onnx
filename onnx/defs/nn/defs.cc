@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
@@ -1333,7 +1334,8 @@ output_shape can also be explicitly specified in which case pads values are auto
     schema.Attr(
         "output_shape",
         "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
-        "pads values are ignored. See doc for details for equations to generate pads",
+        "pads values are ignored. See doc for details for equations to generate pads. Note that the output_shape attribute value "
+        "should not include dimensions for batch size and channels, which are automatically inferred.",
         AttributeProto::INTS,
         OPTIONAL_VALUE);
     schema.Attr(
@@ -2227,130 +2229,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
-
-static const char* StringSplit_doc =
-    R"DOC(StringSplit splits a string tensor based on a delimiter attribute and a maxsplit attribute. The output of this operator is a (potentially nested) Sequence of tensors of strings. The shape of the output nested Sequence is the same as the input tensor shape, and the string tensors contain the substrings split by the delimiter at the same position as in the input.)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    StringSplit,
-    20,
-    OpSchema()
-        .Input(0, "X", "String Tensor to split", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Attr(
-            "delimiter",
-            "Delimiter to split on. If left unset this defaults to a space character.",
-            AttributeProto::STRING,
-            false)
-        .Attr(
-            "maxsplit",
-            "Maximum number of splits. If left unset, it will make as many splits as many times the delimiter appears.",
-            AttributeProto::INT,
-            false)
-        .Output(
-            0,
-            "Y",
-            "Sequence of split strings (with equal Sequence shape as the input tensor)",
-            "S",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint("T", {"tensor(string)"}, "The input must be a UTF-8 string tensor")
-        .TypeConstraint(
-            "S",
-            {"seq(tensor(string))", "seq(seq(tensor(string)))"},
-            "The output is a sequence of string tensors")
-        .SetDoc(StringSplit_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (!hasInputShape(ctx, 0)) {
-            return;
-          }
-          const TypeProto* input_type = ctx.getInputType(0);
-          if (input_type == nullptr || !input_type->has_tensor_type() ||
-              input_type->tensor_type().elem_type() != TensorProto::STRING) {
-            return;
-          }
-          TensorShapeProto input_shape = getInputShape(ctx, 0);
-          // We produce a string tensor per input element. The sequence "rank" and more generally, "shape", is therefore
-          // the same as the input. The extent that this can be inferred is to propagate "rank".
-          TypeProto* output_type = ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type();
-          for (auto i = 0; i < input_shape.dim_size() - 1; ++i) {
-            output_type = output_type->mutable_sequence_type()->mutable_elem_type();
-          }
-          // For each input element, we have a 1D tensor of strings in the output
-          auto* tensor_type = output_type->mutable_tensor_type();
-          tensor_type->mutable_shape()->add_dim();
-          tensor_type->set_elem_type(TensorProto::STRING);
-        }));
-
-static const char* StringNormalizer_ver10_doc = R"DOC(
-StringNormalization performs string operations for basic cleaning.
-This operator has only one input (denoted by X) and only one output
-(denoted by Y). This operator first examines the elements in the X,
-and removes elements specified in "stopwords" attribute.
-After removing stop words, the intermediate result can be further lowercased,
-uppercased, or just returned depending the "case_change_action" attribute.
-This operator only accepts [C]- and [1, C]-tensor.
-If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
-if input shape is [C] and shape [1, 1] if input shape is [1, C].
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    StringNormalizer,
-    10,
-    OpSchema()
-        .Input(0, "X", "UTF-8 strings to normalize", "tensor(string)")
-        .Output(0, "Y", "UTF-8 Normalized strings", "tensor(string)")
-        .Attr(
-            std::string("case_change_action"),
-            std::string("string enum that cases output to be lowercased/uppercases/unchanged."
-                        " Valid values are \"LOWER\", \"UPPER\", \"NONE\". Default is \"NONE\""),
-            AttributeProto::STRING,
-            std::string("NONE"))
-        .Attr(
-            std::string("is_case_sensitive"),
-            std::string("Boolean. Whether the identification of stop words in X is case-sensitive. Default is false"),
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Attr(
-            "stopwords",
-            "List of stop words. If not set, no word would be removed from X.",
-            AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "locale",
-            "Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased."
-            "Default en_US or platform specific equivalent as decided by the implementation.",
-            AttributeProto::STRING,
-            OPTIONAL_VALUE)
-        .SetDoc(StringNormalizer_ver10_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
-          output_elem_type->set_elem_type(TensorProto::STRING);
-          if (!hasInputShape(ctx, 0)) {
-            return;
-          }
-          TensorShapeProto output_shape;
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-          auto dim_size = input_shape.dim_size();
-          // Last axis dimension is unknown if we have stop-words since we do
-          // not know how many stop-words are dropped
-          if (dim_size == 1) {
-            // Unknown output dimension
-            output_shape.add_dim();
-          } else if (dim_size == 2) {
-            // Copy B-dim
-            auto& b_dim = input_shape.dim(0);
-            if (!b_dim.has_dim_value() || b_dim.dim_value() != 1) {
-              fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
-            }
-            *output_shape.add_dim() = b_dim;
-            output_shape.add_dim();
-          } else {
-            fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
-          }
-          updateOutputShape(ctx, 0, output_shape);
-        }));
 
 static const char* mvn_ver13_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
