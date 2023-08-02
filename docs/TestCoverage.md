@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 175/188 (93.09%, 5 generators excluded) common operators.
+Node tests have covered 176/189 (93.12%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -339,6 +339,70 @@ node = onnx.helper.make_node(
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
+```
+
+</details>
+
+
+### AffineGrid
+There are 2 test cases, listed as following:
+<details>
+<summary>2d_no_reference_evaluator</summary>
+
+```python
+theta_2d = create_theta_2d()
+N, C, W, H = len(theta_2d), 3, 5, 6
+data_size = (W, H)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_2d, original_grid)
+
+    test_name = "test_affine_grid_2d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_2d, np.array([N, C, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
+```
+
+</details>
+<details>
+<summary>3d_no_reference_evaluator</summary>
+
+```python
+theta_3d = create_theta_3d()
+N, C, D, W, H = len(theta_3d), 3, 4, 5, 6
+data_size = (D, W, H)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_3d, original_grid)
+
+    test_name = "test_affine_grid_3d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_3d, np.array([N, C, D, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
 ```
 
 </details>
@@ -4858,7 +4922,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 ### DequantizeLinear
-There are 4 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -4928,18 +4992,70 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
 x_scale = np.float32(2)
-y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
 
 expect(
     node,
     inputs=[x, x_scale],
     outputs=[y],
     name="test_dequantizelinear_e4m3fn",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
+x_scale = np.float16(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_float16",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn_zero_point</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
+zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+x_scale = np.float32(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_zero_point",
 )
 ```
 
@@ -4952,12 +5068,13 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
+x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, -96])
 x_scale = np.float32(2)
-y = np.array([0.0, 1.0, 2.0, 98304.0, 192.0], dtype=np.float32)
+y = np.array([0.0, 1.0, 2.0, 98304.0, -192.0], dtype=np.float32)
 
 expect(
     node,

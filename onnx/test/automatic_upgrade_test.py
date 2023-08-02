@@ -156,6 +156,14 @@ class TestAutomaticUpgrade(unittest.TestCase):
             attrs={"consumed_inputs": [0], "broadcast": 1, "axis": 0},
         )
 
+    def test_AffineGrid_2D(self) -> None:
+        N, _, H, W = 2, 3, 5, 6
+        self._test_op_upgrade("AffineGrid", 20, [[N, 2, 3], [4]], [[N, H, W, 2]])
+
+    def test_AffineGrid_3D(self) -> None:
+        N, _, D, H, W = 2, 3, 4, 5, 6
+        self._test_op_upgrade("AffineGrid", 20, [[N, 3, 4], [5]], [[N, D, H, W, 3]])
+
     def test_ArgMax_1(self) -> None:
         self._test_op_upgrade(
             "ArgMax", 7, [[2, 3, 4]], [[1, 3, 4]], output_types=[TensorProto.INT64]

@@ -163,6 +163,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|**Function version**|
+|<a href="#AffineGrid">AffineGrid</a>|<a href="Changelog.md#AffineGrid-20">20</a>|20|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|15|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|19|
@@ -482,6 +483,139 @@ node = onnx.helper.make_node(
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
+```
+
+</details>
+
+
+### <a name="AffineGrid"></a><a name="affinegrid">**AffineGrid**</a>
+
+  Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
+  (https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
+  An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
+  ```
+  [r00, r01, r02, t0]   [x]   [x']
+  [r10, r11, r12, t1] * [y] = [y']
+  [r20, r21, r22, t2]   [z]   [z']
+  [0,   0,   0,   1 ]   [1]   [1 ]
+  ```
+  where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
+  The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
+
+  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
+  The output `grid` contains positions in the output space.
+
+  When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
+  ```
+  v            v            v            v
+  |-------------------|------------------|
+  -1                  0                  1
+  ```
+  When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
+  ```
+      v        v         v         v
+  |------------------|-------------------|
+  -1                 0                   1
+  ```
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>align_corners</tt> : int (default is 0)</dt>
+<dd>if align_corners=1, consider -1 and 1 to refer to the centers of the corner pixels. if align_corners=0, consider -1 and 1 to refer to the outer edge the corner pixels.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>theta</tt> (non-differentiable) : T1</dt>
+<dd>input batch of affine matrices with shape (N, 2, 3) for 2D or (N, 3, 4) for 3D</dd>
+<dt><tt>size</tt> (non-differentiable) : T2</dt>
+<dd>the target output image size (N, C, H, W) for 2D or (N, C, D, H, W) for 3D</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>grid</tt> (differentiable) : T1</dt>
+<dd>output tensor of shape (N, C, H, W, 2) of 2D sample coordinates or (N, C, D, H, W, 3) of 3D sample coordinates.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain grid types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain size's type to int64 tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>2d_no_reference_evaluator</summary>
+
+```python
+theta_2d = create_theta_2d()
+N, C, W, H = len(theta_2d), 3, 5, 6
+data_size = (W, H)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_2d, original_grid)
+
+    test_name = "test_affine_grid_2d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_2d, np.array([N, C, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>3d_no_reference_evaluator</summary>
+
+```python
+theta_3d = create_theta_3d()
+N, C, D, W, H = len(theta_3d), 3, 4, 5, 6
+data_size = (D, W, H)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_3d, original_grid)
+
+    test_name = "test_affine_grid_3d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_3d, np.array([N, C, D, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
 ```
 
 </details>
@@ -7042,18 +7176,74 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
 x_scale = np.float32(2)
-y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
 
 expect(
     node,
     inputs=[x, x_scale],
     outputs=[y],
     name="test_dequantizelinear_e4m3fn",
+)
+```
+
+</details>
+
+
+<details>
+<summary>e4m3fn_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
+x_scale = np.float16(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_float16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>e4m3fn_zero_point</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
+zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+x_scale = np.float32(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_zero_point",
 )
 ```
 
@@ -7068,12 +7258,13 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
+x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, -96])
 x_scale = np.float32(2)
-y = np.array([0.0, 1.0, 2.0, 98304.0, 192.0], dtype=np.float32)
+y = np.array([0.0, 1.0, 2.0, 98304.0, -192.0], dtype=np.float32)
 
 expect(
     node,
