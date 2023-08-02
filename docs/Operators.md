@@ -149,6 +149,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
 |<a href="#StringConcat">StringConcat</a>|<a href="Changelog.md#StringConcat-20">20</a>|
 |<a href="#StringNormalizer">StringNormalizer</a>|<a href="Changelog.md#StringNormalizer-10">10</a>|
+|<a href="#StringSplit">StringSplit</a>|<a href="Changelog.md#StringSplit-20">20</a>|
 |<a href="#Sub">Sub</a>|<a href="Changelog.md#Sub-14">14</a>, <a href="Changelog.md#Sub-13">13</a>, <a href="Changelog.md#Sub-7">7</a>, <a href="Changelog.md#Sub-6">6</a>, <a href="Changelog.md#Sub-1">1</a>|
 |<a href="#Sum">Sum</a>|<a href="Changelog.md#Sum-13">13</a>, <a href="Changelog.md#Sum-8">8</a>, <a href="Changelog.md#Sum-6">6</a>, <a href="Changelog.md#Sum-1">1</a>|
 |<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-7">7</a>|
@@ -30700,6 +30701,226 @@ expect(
     inputs=[input],
     outputs=[output],
     name="test_strnormalizer_nostopwords_nochangecase",
+)
+```
+
+</details>
+
+
+### <a name="StringSplit"></a><a name="stringsplit">**StringSplit**</a>
+
+  StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
+
+  The first output of this operator is a tensor of strings representing the substrings from splitting each input string on the `delimiter` substring. This tensor has one additional rank compared to the input tensor in order to store the substrings for each input element (where the input tensor is not empty). Note that, in order to ensure the same number of elements are present in the final dimension, this tensor will pad empty strings as illustrated in the examples below. Consecutive delimiters are not grouped together and are deemed to delimit empty strings, except if the `delimiter` is unspecified or is the empty string (""). In the case where the `delimiter` is unspecified or the empty string, consecutive whitespace characters are regarded as a single separator and leading or trailing whitespace is removed in the output.
+
+  The second output tensor represents the number of substrings generated. `maxsplit` can be used to limit the number of splits performed - after the `maxsplit`th split if the string is not fully split, the trailing suffix of input string after the final split point is also added. For elements where fewer splits are possible than specified in `maxsplit`, it has no effect.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>delimiter</tt> : string</dt>
+<dd>Delimiter to split on. If left unset or set to the empty string (""), the input is split on consecutive whitespace.</dd>
+<dt><tt>maxsplit</tt> : int</dt>
+<dd>Maximum number of splits (from left to right). If left unset (or if the number of possible splits are less than maxsplit), it will make as many splits as possible. Note that the maximum possible number of substrings returned with `maxsplit` specified is `maxsplit+1` since the remaining suffix after the `maxsplit`th split is included in the output.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor of strings to split.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.</dd>
+<dt><tt>Z</tt> (non-differentiable) : T3</dt>
+<dd>The number of substrings generated for each input element.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>The input must be a UTF-8 string tensor</dd>
+<dt><tt>T2</tt> : tensor(string)</dt>
+<dd>Tensor of substrings.</dd>
+<dt><tt>T3</tt> : tensor(int64)</dt>
+<dd>The number of substrings generated.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    delimiter=".",
+    maxsplit=None,
+)
+
+x = np.array(["abc.com", "def.net"]).astype(object)
+
+substrings = np.array([["abc", "com"], ["def", "net"]]).astype(object)
+
+length = np.array([2, 2], dtype=np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_basic",
+)
+```
+
+</details>
+
+
+<details>
+<summary>consecutive_delimiters</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    delimiter="-",
+    maxsplit=None,
+)
+
+x = np.array(["o-n-n--x-", "o-n----nx"]).astype(object)
+
+substrings = np.array(
+    [["o", "n", "n", "", "x", ""], ["o", "n", "", "", "", "nx"]]
+).astype(object)
+
+length = np.array([6, 6], dtype=np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_consecutive_delimiters",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_string_delimiter</summary>
+
+```python
+for delimiter, test_name in (
+    ("", "test_string_split_empty_string_delimiter"),
+    (None, "test_string_split_no_delimiter"),
+):
+    node = onnx.helper.make_node(
+        "StringSplit",
+        inputs=["x"],
+        outputs=["substrings", "length"],
+        delimiter=delimiter,
+        maxsplit=None,
+    )
+
+    x = np.array(
+        ["hello world !", "  hello   world !", " hello world   ! "]
+    ).astype(object)
+
+    substrings = np.array(
+        [
+            ["hello", "world", "!"],
+            ["hello", "world", "!"],
+            ["hello", "world", "!"],
+        ]
+    ).astype(object)
+
+    length = np.array([3, 3, 3], dtype=np.int64)
+
+    expect(
+        node,
+        inputs=[x],
+        outputs=[substrings, length],
+        name=test_name,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>empty_string_split</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    delimiter=None,
+    maxsplit=None,
+)
+
+x = np.array([]).astype(object)
+
+substrings = np.array([]).astype(object).reshape(0, 0)
+
+length = np.array([], dtype=np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_empty_tensor",
+    output_type_protos=[
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.STRING, (0, None)),
+        None,
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>maxsplit</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    maxsplit=2,
+)
+
+x = np.array(
+    [["hello world", "def.net"], ["o n n x", "the quick brown fox"]]
+).astype(object)
+
+substrings = np.array(
+    [
+        [["hello", "world", ""], ["def.net", "", ""]],
+        [["o", "n", "n x"], ["the", "quick", "brown fox"]],
+    ]
+).astype(object)
+
+length = np.array([[2, 1], [3, 3]], np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_maxsplit",
 )
 ```
 

@@ -1833,6 +1833,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             "Optional",
             "OptionalGetElement",
             "OptionalHasElement",
+            "StringSplit",
         ]
         all_op_names = [op for op in all_op_names if op not in excluded_ops]
 
