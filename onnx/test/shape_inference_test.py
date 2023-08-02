@@ -7574,6 +7574,105 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(graph, [output_tensor_val_info])  # type: ignore
 
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_basic(self, _, version) -> None:
+        substrings = make_tensor_value_info(
+            "substrings",
+            TensorProto.STRING,
+            (2, None),
+        )
+        length = make_tensor_value_info("length", TensorProto.INT64, (2,))
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2,)),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"])],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_symbolic(self, _, version) -> None:
+        substrings = make_tensor_value_info(
+            "substrings",
+            TensorProto.STRING,
+            ("A", None),
+        )
+        length = make_tensor_value_info("length", TensorProto.INT64, ("A",))
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, ("A",)),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"])],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_nested(self, _, version) -> None:
+        substrings = make_tensor_value_info(
+            "substrings", TensorProto.STRING, (2, 4, 3, None)
+        )
+        length = make_tensor_value_info("length", TensorProto.INT64, (2, 4, 3))
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2, 4, 3)),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"], maxsplit=2)],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_zero_dimensional_input(self, _, version) -> None:
+        substrings = make_tensor_value_info("substrings", TensorProto.STRING, (None,))
+        length = make_tensor_value_info("length", TensorProto.INT64, ())
+
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, ()),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"], maxsplit=2)],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_empty_input(self, _, version) -> None:
+        substrings = make_tensor_value_info(
+            "substrings", TensorProto.STRING, ("M", 3, 0, None)
+        )
+        length = make_tensor_value_info("length", TensorProto.INT64, ("M", 3, 0))
+
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, ("M", 3, 0)),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"], maxsplit=2)],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_optional_tensor_get_element(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
             elem_type=TensorProto.DOUBLE, shape=[2, 1, 4]
@@ -7689,6 +7788,59 @@ class TestShapeInference(TestShapeInferenceHelper):
         self.assertFalse(
             inferred_model.graph.output[0].type.tensor_type.HasField("shape")
         )
+
+        graph = self._make_graph(
+            [("x", TensorProto.UINT8, (1, 0, 0)), ("shape", TensorProto.INT64, (3,))],
+            [make_node("Reshape", ["x", "shape"], ["y"], allowzero=1)],
+            [],
+            initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 1, 1))],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.UINT8, (0, 1, 1))]
+        )
+
+    def test_affinegrid_2d(self) -> None:
+        N, C, H, W = 2, 3, 4, 5
+        graph = self._make_graph(
+            [
+                ("theta", TensorProto.FLOAT, (N, 2, 3)),
+                ("size", TensorProto.INT64, (4,)),
+            ],
+            [
+                make_node(
+                    "AffineGrid",
+                    ["theta", "size"],
+                    ["grid"],
+                    align_corners=1,
+                )
+            ],
+            [],
+            initializer=[make_tensor("size", TensorProto.INT64, (4,), (N, C, H, W))],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, (N, H, W, 2))]
+        )  # type: ignore
+
+    def test_affinegrid_3d(self) -> None:
+        N, C, D, H, W = 2, 3, 4, 5, 6
+        graph = self._make_graph(
+            [
+                ("theta", TensorProto.FLOAT, (N, 3, 4)),
+                ("size", TensorProto.INT64, (5,)),
+            ],
+            [
+                make_node(
+                    "AffineGrid",
+                    ["theta", "size"],
+                    ["grid"],
+                )
+            ],
+            [],
+            initializer=[make_tensor("size", TensorProto.INT64, (5,), (N, C, D, H, W))],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, (N, D, H, W, 3))]
+        )  # type: ignore
 
     def test_gridsample_2d(self) -> None:
         graph = self._make_graph(

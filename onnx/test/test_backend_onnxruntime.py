@@ -189,6 +189,7 @@ backend_test.exclude(
     "|test_dequantizelinear"  # No corresponding Numpy type for Tensor Type.
     "|test_quantizelinear_axis"  # y_scale must be a scalar or 1D tensor of size 1.
     "|test_quantizelinear"  # No corresponding Numpy type for Tensor Type.
+    "|test_affine_grid_"  # new IR version 9 and opset version 20 not supported yet.
     ")"
 )
 
@@ -251,6 +252,7 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|equal"
         "|identity"
         "|reshape"
+        "|string_split"
         "|string_concat"
         "|gelu"
         "|image_decoder"
