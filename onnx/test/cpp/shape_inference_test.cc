@@ -412,7 +412,8 @@ static void doInferencingTest(bool use_scan_opset8) {
   std::vector<const TypeProto*> subgraphInputTypes = {&simple_tensor, &simple_tensor};
 
   std::vector<const TensorProto*> subgraphInputData = {};
-  auto output = graphInferencer.doInferencing(subgraphInputTypes, subgraphInputData);
+  ShapeInferenceOptions options{false, 0, false};
+  auto output = graphInferencer.doInferencing(subgraphInputTypes, subgraphInputData, options);
 
   // check the subgraph outputs had their shape inferred when we called
   // doInferencing directly
@@ -485,7 +486,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   valueTypesByName["loop_state_start"] = &loop_state_in_tensor;
   valueTypesByName["scan_op_in"] = &scan_in_tensor;
 
-  InferenceContextImpl ctx(scan, valueTypesByName, {}, {}, {}, &graphInfCtx);
+  InferenceContextImpl ctx(scan, valueTypesByName, {}, {}, options, {}, &graphInfCtx);
   if (use_scan_opset8)
     ScanInferenceFunctionOpset8(ctx);
   else

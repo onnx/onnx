@@ -526,7 +526,7 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
       input_data.push_back(ctx.getInputData(i));
     }
 
-    output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    output_types = graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   // if empty(), assume inferencing was skipped
@@ -689,7 +689,7 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
       input_data.push_back(nullptr);
     }
 
-    output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    output_types = graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   // if empty(), assume inferencing was skipped
@@ -969,7 +969,8 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
       input_data.push_back(ctx.getInputData(i));
     }
 
-    subgraph_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    subgraph_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   // if empty(), assume inferencing was skipped
@@ -1240,7 +1241,8 @@ void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
       input_data.push_back(ctx.getInputData(i));
     }
 
-    subgraph_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    subgraph_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   // if empty(), assume inferencing was skipped
@@ -1689,12 +1691,14 @@ void IfInferenceFunction1(InferenceContext& ctx) {
   // Run inferencing on the subgraph
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("then_branch");
   if (graphInferencer) {
-    then_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    then_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   graphInferencer = ctx.getGraphAttributeInferencer("else_branch");
   if (graphInferencer) {
-    else_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    else_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -1785,12 +1789,14 @@ void IfInferenceFunction_11(InferenceContext& ctx) {
   // Run inferencing on the subgraph
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("then_branch");
   if (graphInferencer) {
-    then_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    then_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   graphInferencer = ctx.getGraphAttributeInferencer("else_branch");
   if (graphInferencer) {
-    else_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    else_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -1892,12 +1898,14 @@ void IfInferenceFunction_13(InferenceContext& ctx) {
   // Run inferencing on the subgraph
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("then_branch");
   if (graphInferencer) {
-    then_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    then_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   graphInferencer = ctx.getGraphAttributeInferencer("else_branch");
   if (graphInferencer) {
-    else_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    else_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -2034,7 +2042,8 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
       input_data.push_back(ctx.getInputData(i));
     }
 
-    subgraph_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+    subgraph_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
   }
 
   // if empty(), assume inferencing was skipped
