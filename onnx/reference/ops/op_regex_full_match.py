@@ -26,7 +26,7 @@ class RegexFullMatch(OpRun):
         try:
             regex = re2.compile(pattern)
         except re2.error as e:
-            raise ValueError(f"Invalid regex pattern {pattern}") from e
+            raise ValueError(f"Invalid regex pattern {pattern!r}") from e
 
         fullmatch_func = np.vectorize(
             lambda x: regex.fullmatch(x) is not None, otypes=[np.bool_]
