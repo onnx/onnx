@@ -29,19 +29,27 @@ def estimation_quantization_scale(
         if to == onnx.TensorProto.FLOAT8E4M3FN:
             fct = onnx.numpy_helper.float8e4m3_to_float32
         elif to == onnx.TensorProto.FLOAT8E4M3FNUZ:
-            fct = lambda x: onnx.numpy_helper.float8e4m3_to_float32(x, uz=True)
+
+            def fct(x):
+                return onnx.numpy_helper.float8e4m3_to_float32(x, uz=True)
+
         elif to == onnx.TensorProto.FLOAT8E5M2:
             fct = onnx.numpy_helper.float8e5m2_to_float32
         elif to == onnx.TensorProto.FLOAT8E5M2FNUZ:
-            fct = lambda x: onnx.numpy_helper.float8e5m2_to_float32(x, uz=True, fn=True)
+
+            def fct(x):
+                return onnx.numpy_helper.float8e5m2_to_float32(x, uz=True, fn=True)
+
         else:
             raise ValueError(f"Unexpected to={to!r}.")
 
-        float8 = [onnx.numpy_helper.float8e4m3_to_float32(i) for i in range(0, 256)]
+        float8 = [fct(i) for i in range(0, 256)]
         quant_float = [f for f in float8 if not np.isnan(f)]
         cr = coef.ravel()
         ca = np.abs(cr)
-        std_coef = np.std(ca ** (1.0 / 3.0) * cr / ca)
+        ca_den = ca.copy()
+        ca_den[ca == 0] = 1
+        std_coef = np.std(ca ** (1.0 / 3.0) * cr / ca_den)
         std_quant = np.std(np.array(quant_float, dtype=np.float32))
         zero = 0.0
         scale = std_quant / std_coef

@@ -236,7 +236,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(DynamicQuantizeLinear_ver20_doc)
         .Attr(
             "to",
-            "The data type to which the elements of the input tensor are quantized. "
+            "(Optional) The data type to which the elements of the input tensor are quantized. "
             "Default is UINT8.",
             AttributeProto::INT,
             OPTIONAL_VALUE)

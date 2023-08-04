@@ -161,8 +161,13 @@ class TestShapeInferenceHelper(unittest.TestCase):
         vis = sorted(vis, key=lambda x: x.name)  # type: ignore[no-any-return]
         inferred_vis = sorted(inferred_vis, key=lambda x: x.name)  # type: ignore
         assert len(vis) == len(inferred_vis)
-        for v, inferred_v in zip(vis, inferred_vis):
-            self._compare_value_infos(v.type, inferred_v.type)
+        for index, (v, inferred_v) in enumerate(zip(vis, inferred_vis)):
+            try:
+                self._compare_value_infos(v.type, inferred_v.type)
+            except AssertionError as e:
+                raise AssertionError(
+                    f"Wrong inferred shape or type for output {index}."
+                ) from e
 
     def _compare_value_infos(
         self, vi_type: TypeProto, inferred_vi_type: TypeProto
@@ -171,27 +176,33 @@ class TestShapeInferenceHelper(unittest.TestCase):
             assert inferred_vi_type.HasField("tensor_type")
             assert vi_type.tensor_type.HasField("elem_type")
             assert inferred_vi_type.tensor_type.HasField("elem_type")
-            assert (
-                vi_type.tensor_type.elem_type == inferred_vi_type.tensor_type.elem_type
+            self.assertEqual(
+                vi_type.tensor_type.elem_type, inferred_vi_type.tensor_type.elem_type
             )
-            assert vi_type.tensor_type.HasField(
-                "shape"
-            ) == inferred_vi_type.tensor_type.HasField("shape")
+            self.assertEqual(
+                vi_type.tensor_type.HasField("shape"),
+                inferred_vi_type.tensor_type.HasField("shape"),
+            )
             if vi_type.tensor_type.HasField("shape"):
-                assert len(vi_type.tensor_type.shape.dim) == len(
-                    inferred_vi_type.tensor_type.shape.dim
+                self.assertEqual(
+                    len(vi_type.tensor_type.shape.dim),
+                    len(inferred_vi_type.tensor_type.shape.dim),
                 )
                 for dim_i, dim in enumerate(vi_type.tensor_type.shape.dim):
                     inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
                     # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
                     if dim.dim_param:
-                        assert (
-                            dim.dim_param == inferred_dim.dim_param
-                        ), f"\n{vi_type}\n{inferred_vi_type}\n"
+                        self.assertEqual(
+                            dim.dim_param,
+                            inferred_dim.dim_param,
+                            f"\n{vi_type}\n{inferred_vi_type}\n",
+                        )
                     else:
-                        assert (
-                            dim.dim_value == inferred_dim.dim_value
-                        ), f"\n{vi_type}\n{inferred_vi_type}\n"
+                        self.assertEqual(
+                            dim.dim_value,
+                            inferred_dim.dim_value,
+                            f"\n{vi_type}\n{inferred_vi_type}\n",
+                        )
         elif vi_type.HasField("sequence_type"):
             assert inferred_vi_type.HasField("sequence_type")
             vi = vi_type.sequence_type.elem_type
@@ -209,7 +220,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
                 vi_type.map_type.value_type, inferred_vi_type.map_type.value_type
             )
         elif vi_type == onnx.TypeProto():
-            assert inferred_vi_type == onnx.TypeProto()
+            self.assertEqual(inferred_vi_type, onnx.TypeProto())
         else:
             raise NotImplementedError(
                 "Unrecognized value info type in _compare_value_infos: ", str(vi_type)
@@ -5259,7 +5270,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             [("x", to, (30, 4, 5))],
             [
                 make_node(
-                    "DynamicQuantizeLinear", ["x"], ["y", "y_scale", "y_zero_point"]
+                    "DynamicQuantizeLinear",
+                    ["x"],
+                    ["y", "y_scale", "y_zero_point"],
+                    to=quto,
                 )
             ],
             [],
@@ -5270,6 +5284,30 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", quto, (30, 4, 5)),
                 make_tensor_value_info("y_scale", to, ()),
                 make_tensor_value_info("y_zero_point", quto, ()),
+            ],
+        )
+
+    @parameterized.expand(
+        itertools.product(
+            [TensorProto.FLOAT, TensorProto.FLOAT16, TensorProto.BFLOAT16],
+        )
+    )
+    def test_dynamicquantizelinear_default(self, quto, to) -> None:
+        graph = self._make_graph(
+            [("x", to, (30, 4, 5))],
+            [
+                make_node(
+                    "DynamicQuantizeLinear", ["x"], ["y", "y_scale", "y_zero_point"]
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", quto, (30, 4, 5)),
+                make_tensor_value_info("y_scale", to, ()),
+                make_tensor_value_info("y_zero_point", 2, ()),
             ],
         )
 
