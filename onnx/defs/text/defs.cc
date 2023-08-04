@@ -33,6 +33,34 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
+static const char* RegexFullMatch_doc =
+    R"DOC(RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.)DOC";
+ONNX_OPERATOR_SET_SCHEMA(
+    RegexFullMatch,
+    20,
+    OpSchema()
+        .Input(0, "X", "Tensor with strings to match on.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Attr("pattern", "Regex pattern to match on. This must be valid RE2 syntax.", AttributeProto::STRING, false)
+        .Output(
+            0,
+            "Y",
+            "Tensor of bools indicating if each input string fully matches the regex pattern specified.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint("T1", {"tensor(string)"}, "Inputs must be UTF-8 strings")
+        .TypeConstraint(
+            "T2",
+            {"tensor(bool)"},
+            "Outputs are bools and are True where there is a full regex match and False otherwise.")
+        .SetDoc(RegexFullMatch_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+        }));
+
 static const char* StringSplit_doc =
     R"DOC(StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
 

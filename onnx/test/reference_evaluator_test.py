@@ -13,6 +13,7 @@ You can run a specific test by using the following syntax.
 
 import itertools
 import math
+import sys
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
@@ -5025,6 +5026,59 @@ class TestReferenceEvaluator(unittest.TestCase):
         np.testing.assert_array_equal(
             np.array([[41, -12, -9], [1, -75, 20]], dtype=np.int8), got[0]
         )
+
+    @parameterized.parameterized.expand(
+        [
+            (
+                ["www.google.com", "www.facebook.com", "www.bbc.co.uk"],
+                r"www\.[\w.-]+\.\bcom\b",
+                [True, True, False],
+                (3,),
+            ),
+            (
+                [["Onnx", "tensorflow", "Numpy"], ["Pytorch", "Cython", "numba"]],
+                r"^[A-Z][a-z]*$",
+                [[True, False, True], [True, True, False]],
+                (2, 3),
+            ),
+            (
+                [
+                    "account@gmail.com",
+                    "account@hotmail.com",
+                    "not email",
+                    "account2@yahoo.com",
+                ],
+                r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+                [True, False, False, True],
+                (4,),
+            ),
+        ]
+    )
+    @unittest.skipIf(
+        sys.platform == "win32", "google-re2 package is not built for win32"
+    )
+    def test_regex_full_match(self, x, pattern, expected, expected_shape):
+        X = make_tensor_value_info("X", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
+        node = make_node("RegexFullMatch", inputs=["X"], outputs=["Y"], pattern=pattern)
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        result, *_ = ref.run(None, {"X": np.array(x)})
+        np.testing.assert_array_equal(result, expected)
+        self.assertEqual(result.dtype.kind, "b")
+        self.assertEqual(result.shape, expected_shape)
+
+    @unittest.skipIf(
+        sys.platform == "win32", "google-re2 package is not built for win32"
+    )
+    def test_regex_invalid_pattern(self):
+        X = make_tensor_value_info("X", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
+        node = make_node("RegexFullMatch", inputs=["X"], outputs=["Y"], pattern="x)")
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        with self.assertRaises(ValueError):
+            ref.run(None, {"X": np.array(["x"])})
 
 
 if __name__ == "__main__":
