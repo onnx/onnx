@@ -19,8 +19,13 @@ def estimation_quantization_scale(
     Estimates the scale parameter for the quantization to float 8 assuming
     the distribution of the coefficients is gaussian.
     """
-    
-    if to in(onnx.TensorProto.FLOAT8E4M3FN, onnx.TensorProto.FLOAT8E4M3FNUZ, onnx.TensorProto.FLOAT8E5M2, onnx.TensorProto.FLOAT8E5M2FNUZ):
+
+    if to in (
+        onnx.TensorProto.FLOAT8E4M3FN,
+        onnx.TensorProto.FLOAT8E4M3FNUZ,
+        onnx.TensorProto.FLOAT8E5M2,
+        onnx.TensorProto.FLOAT8E5M2FNUZ,
+    ):
         if to == onnx.TensorProto.FLOAT8E4M3FN:
             fct = onnx.numpy_helper.float8e4m3_to_float32
         elif to == onnx.TensorProto.FLOAT8E4M3FNUZ:
@@ -231,7 +236,9 @@ class DynamicQuantizeLinear(Base):
             Y8 = onnx.helper.make_tensor(
                 "Y", getattr(onnx.TensorProto, to), [X.size], Y_scaled.tolist()
             )
-            y_zero_point = onnx.helper.make_tensor("y_zero_point", getattr(onnx.TensorProto, to), [1], [0])
+            y_zero_point = onnx.helper.make_tensor(
+                "y_zero_point", getattr(onnx.TensorProto, to), [1], [0]
+            )
 
             expect(
                 node,
