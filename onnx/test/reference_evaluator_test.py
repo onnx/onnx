@@ -4949,6 +4949,83 @@ class TestReferenceEvaluator(unittest.TestCase):
             num_splits, np.array(expected_num_splits, dtype=np.int64)
         )
 
+    def test_qlinearconv(self):
+        a = make_tensor_value_info("a", TensorProto.FLOAT, [None, None, None, None])
+        Y = make_tensor_value_info("a_scale", TensorProto.FLOAT, [None])
+        B = make_tensor_value_info(
+            "a_zero_point", TensorProto.FLOAT, [None, None, None, None]
+        )
+
+        W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
+        node = make_node(
+            "QLinearMatMul",
+            inputs=[
+                "a",
+                "a_scale",
+                "a_zero_point",
+                "b",
+                "b_scale",
+                "b_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ],
+            outputs=["y"],
+        )
+        graph = make_graph(
+            [node],
+            "g",
+            [
+                make_tensor_value_info("a", TensorProto.FLOAT, [None, None]),
+                make_tensor_value_info("a_scale", TensorProto.FLOAT, [1]),
+                make_tensor_value_info("a_zero_point", TensorProto.INT8, [1]),
+                make_tensor_value_info("b", TensorProto.FLOAT, [None, None]),
+                make_tensor_value_info("b_scale", TensorProto.FLOAT, [1]),
+                make_tensor_value_info("b_zero_point", TensorProto.INT8, [1]),
+                make_tensor_value_info("y_scale", TensorProto.FLOAT, [1]),
+                make_tensor_value_info("y_zero_point", TensorProto.INT8, [1]),
+            ],
+            [make_tensor_value_info("y", TensorProto.FLOAT, [None, None])],
+        )
+        onnx_model = make_model(
+            graph, opset_imports=[make_opsetid("", 20)], ir_version=9
+        )
+        sess = ReferenceEvaluator(onnx_model)
+
+        a = np.array([[208, 236, 0, 238], [3, 214, 255, 29]])
+        a -= 127
+        a = a.astype(np.int8)
+
+        a_scale = np.array([0.0066], dtype=np.float32)
+        a_zero_point = np.array([113 - 127], dtype=np.int8)
+
+        b = np.array([[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]])
+        b -= 127
+        b = b.astype(np.int8)
+
+        b_scale = np.array([0.00705], dtype=np.float32)
+        b_zero_point = np.array([114 - 127], dtype=np.int8)
+
+        y_scale = np.array([0.0107], dtype=np.float32)
+        y_zero_point = np.array([118 - 127], dtype=np.int8)
+
+        got = sess.run(
+            None,
+            dict(
+                a=a,
+                a_scale=a_scale,
+                a_zero_point=a_zero_point,
+                b=b,
+                b_scale=b_scale,
+                b_zero_point=b_zero_point,
+                y_scale=y_scale,
+                y_zero_point=y_zero_point,
+            ),
+        )
+
+        np.testing.assert_array_equal(
+            np.array([[41, -12, -9], [1, -75, 20]], dtype=np.int8), got[0]
+        )
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

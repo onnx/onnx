@@ -24092,6 +24092,65 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
 
+### <a name="QLinearMatMul-20"></a>**QLinearMatMul-20**</a>
+
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
+  and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
+  For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+  Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor
+  (per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row
+  or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be
+  an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K]
+  for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may
+  have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
+  Production must never overflow, and accumulation may overflow if and only if in 32 bits.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>a</tt> (non-differentiable) : T1</dt>
+<dd>N-dimensional quantized matrix a</dd>
+<dt><tt>a_scale</tt> (non-differentiable) : TS</dt>
+<dd>scale of quantized input a</dd>
+<dt><tt>a_zero_point</tt> (non-differentiable) : T1</dt>
+<dd>zero point of quantized input a</dd>
+<dt><tt>b</tt> (non-differentiable) : T2</dt>
+<dd>N-dimensional quantized matrix b</dd>
+<dt><tt>b_scale</tt> (non-differentiable) : TS</dt>
+<dd>scale of quantized input b</dd>
+<dt><tt>b_zero_point</tt> (non-differentiable) : T2</dt>
+<dd>zero point of quantized input b</dd>
+<dt><tt>y_scale</tt> (non-differentiable) : TS</dt>
+<dd>scale of quantized output y</dd>
+<dt><tt>y_zero_point</tt> (non-differentiable) : T3</dt>
+<dd>zero point of quantized output y</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> (non-differentiable) : T3</dt>
+<dd>Quantized matrix multiply results from a * b</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>TS</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain scales.</dd>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain input a and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain input b and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain output y and its zero point data type to 8-bit integer tensor.</dd>
+</dl>
+
 ### <a name="StringConcat-20"></a>**StringConcat-20**</a>
 
   StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
