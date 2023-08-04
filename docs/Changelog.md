@@ -22947,7 +22947,7 @@ This version of the operator has been available since version 19 of the default 
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'x_scale' determines the output type.</dd>
+<dd>'y_scale' determines the output type.</dd>
 </dl>
 
 ### <a name="Equal-19"></a>**Equal-19**</a>
@@ -23987,6 +23987,74 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain input types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain output types to be numerics.</dd>
+</dl>
+
+### <a name="DynamicQuantizeLinear-20"></a>**DynamicQuantizeLinear-20**</a>
+
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+  Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
+  Scale is calculated as:
+  ```
+  y_scale = (max(x) - min(x))/(qmax - qmin)
+  ```
+
+  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * data range is adjusted to include 0.
+
+  Zero point is calculated as:
+  ```
+  intermediate_zero_point = qmin - min(x)/y_scale
+  y_zero_point = cast(round(saturate(itermediate_zero_point)))
+  ```
+
+  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8, or [-f8_max, f8_max]
+    for any float 8 types
+  * rounding to nearest ties to even.
+
+  Data quantization formula is:
+  ```
+  y = saturate (round (x / y_scale) + y_zero_point)
+  ```
+
+  y_zero_point must be 0 for any float 8 type.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int</dt>
+<dd>The data type to which the elements of the input tensor are quantized. Default is UINT8.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T2</dt>
+<dd>Quantized output tensor</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Output scale. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>y_zero_point</tt> : T2</dt>
+<dd>Output zero point. It's a scalar, which means a per-tensor/layer quantization.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain 'x' to float tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(int8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer or float tensor.</dd>
 </dl>
 
 ### <a name="Gelu-20"></a>**Gelu-20**</a>

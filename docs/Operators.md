@@ -171,7 +171,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|12|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
-|<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
+|<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-20">20</a>, <a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|20|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
@@ -7243,7 +7243,7 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'x_scale' determines the output type.</dd>
+<dd>'y_scale' determines the output type.</dd>
 </dl>
 
 
@@ -7915,7 +7915,8 @@ expect(
   ```
 
   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
-  * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
+  * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8, or [-f8_max, f8_max]
+    for any float 8 types
   * rounding to nearest ties to even.
 
   Data quantization formula is:
@@ -7923,12 +7924,20 @@ expect(
   y = saturate (round (x / y_scale) + y_zero_point)
   ```
 
-  * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
-  * rounding to nearest ties to even.
+  y_zero_point must be 0 for any float 8 type.
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#DynamicQuantizeLinear-11">11</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int</dt>
+<dd>The data type to which the elements of the input tensor are quantized. Default is UINT8.</dd>
+</dl>
 
 #### Inputs
 
@@ -7951,17 +7960,162 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float)</dt>
+<dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>Constrain 'x' to float tensor.</dd>
-<dt><tt>T2</tt> : tensor(uint8)</dt>
-<dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(int8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer or float tensor.</dd>
 </dl>
 
 
 #### Examples
 
 <details>
-<summary>dynamicquantizelinear</summary>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DynamicQuantizeLinear",
+    inputs=["x"],
+    outputs=["y", "y_scale", "y_zero_point"],
+)
+
+X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float16)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_float16",
+)
+
+X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float16)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (127 + 127))  # int8 -> [-127, 127]
+Y_ZeroPoint = np.clip(round((-127 - x_min) / Y_Scale), -127, 127).astype(
+    np.int8
+)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_int8_float16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>float8e4m3fn</summary>
+
+```python
+for to in ["FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"]:
+    node = onnx.helper.make_node(
+        "DynamicQuantizeLinear",
+        inputs=["x"],
+        outputs=["y", "y_scale", "y_zero_point"],
+        to=getattr(onnx.TensorProto, to),
+    )
+
+    # expected scale 0.0196078438 and zero point 153
+    X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
+    scale, zero = estimation_quantization_scale(X)
+    Y_scaled = (X / scale).astype(X.dtype)
+    Y8 = onnx.helper.make_tensor(
+        "Y", getattr(onnx.TensorProto, to), [X.size], Y_scaled.tolist()
+    )
+    y_zero_point = onnx.helper.make_tensor("y_zero_point", getattr(onnx.TensorProto, to), [1], [0])
+
+    expect(
+        node,
+        inputs=[X],
+        outputs=[Y8, np.array([scale]), y_zero_point],
+        name=f"test_dynamicquantizelinear_{to.lower()}",
+    )
+```
+
+</details>
+
+
+<details>
+<summary>int8</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DynamicQuantizeLinear",
+    inputs=["x"],
+    outputs=["y", "y_scale", "y_zero_point"],
+    to=3,
+)
+
+# expected scale 0.0196078438 and zero point 153
+X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (127 + 127))  # int8 -> [-127, 127]
+Y_ZeroPoint = np.clip(round((-127 - x_min) / Y_Scale), -127, 127).astype(
+    np.int8
+)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_int8",
+)
+
+# expected scale 0.0156862754 and zero point 255
+X = np.array([-1.0, -2.1, -1.3, -2.5, -3.34, -4.0]).astype(np.float32)
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (127 + 127))  # int8 -> [-127, 127]
+Y_ZeroPoint = np.clip(round((-127 - x_min) / Y_Scale), -127, 127).astype(
+    np.int8
+)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_max_adjusted_int8",
+)
+
+X = (
+    np.array([1, 2.1, 1.3, 2.5, 3.34, 4.0, 1.5, 2.6, 3.9, 4.0, 3.0, 2.345])
+    .astype(np.float32)
+    .reshape((3, 4))
+)
+
+# expected scale 0.0156862754 and zero point 0
+x_min = np.minimum(0, np.min(X))
+x_max = np.maximum(0, np.max(X))
+Y_Scale = np.float32((x_max - x_min) / (127 + 127))  # uint8 -> [-127, 127]
+Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), -127, 127).astype(np.int8)
+Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
+
+expect(
+    node,
+    inputs=[X],
+    outputs=[Y, Y_Scale, Y_ZeroPoint],
+    name="test_dynamicquantizelinear_min_adjusted_int8",
+)
+```
+
+</details>
+
+
+<details>
+<summary>uint8</summary>
 
 ```python
 node = onnx.helper.make_node(

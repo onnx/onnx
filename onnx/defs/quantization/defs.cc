@@ -126,7 +126,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
-            "'x_scale' determines the output type.")
+            "'y_scale' determines the output type.")
         .SetDoc(DequantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto y_type = ctx.getOutputType(0);
@@ -140,7 +140,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
+static const char* DynamicQuantizeLinear_ver20_doc = R"DOC(
 A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
 Scale is calculated as:
@@ -158,7 +158,8 @@ y_zero_point = cast(round(saturate(itermediate_zero_point)))
 ```
 
 * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
-* for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
+* for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8, or [-f8_max, f8_max]
+  for any float 8 types
 * rounding to nearest ties to even.
 
 Data quantization formula is:
@@ -166,15 +167,79 @@ Data quantization formula is:
 y = saturate (round (x / y_scale) + y_zero_point)
 ```
 
-* for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8. Right now only uint8 is supported.
-* rounding to nearest ties to even.
+y_zero_point must be 0 for any float 8 type.
 )DOC";
+
+bool BuildContextDependentFunctionBodyDynamicQuantizeLinear(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  auto to_attr = ctx.getAttribute("to");
+  int64_t to = to_attr == nullptr ? 2 : to_attr->i();
+  FunctionBuilder builder(functionProto);
+
+  auto mktensori = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+    auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+    tp.add_dims(1);
+    return tp;
+  };
+
+  auto mktensorf = [](float val) -> ONNX_NAMESPACE::TensorProto {
+    auto tp = ONNX_NAMESPACE::ToTensor(std::vector<float>{val});
+    tp.add_dims(1);
+    return tp;
+  };
+
+  if (to == TensorProto_DataType_UINT8 || to == TensorProto_DataType_INT8) {
+    float qmin = to == TensorProto_DataType_UINT8 ? 0.0 : -127.0;
+    float qmax = to == TensorProto_DataType_UINT8 ? 0.0 : 127.0;
+
+    builder.Add("Q_Min32 = Constant()", "value", mktensorf(qmin));
+    builder.Add("Q_Max32 = Constant()", "value", mktensorf(qmax));
+    builder.Add("Q_Min = CastLike (Q_Min32, X)");
+    builder.Add("Q_Max = CastLike (Q_Max32, X)");
+    builder.Add("X_Min = ReduceMin <keepdims = 0> (x)");
+    builder.Add("X_Min_Adjusted = Min (X_Min, Q_Min)");
+    builder.Add("X_Max = ReduceMax <keepdims = 0> (x)");
+    builder.Add("X_Max_Adjusted = Max (X_Max, Q_Min)");
+    builder.Add("X_Range = Sub (X_Max_Adjusted, X_Min_Adjusted)");
+    builder.Add("Scale = Div (X_Range, Q_Max)");
+    builder.Add("Min_Scaled = Div (X_Min_Adjusted, Scale)");
+    builder.Add("Initial_ZeroPoint_FP = Sub (Q_Min, Min_Scaled)");
+    builder.Add("Clipped_ZeroPoint_FP = Clip (Initial_ZeroPoint_FP, Q_Min, Q_Max)");
+    builder.Add("Rounded_ZeroPoint_FP = Round (Clipped_ZeroPoint_FP)");
+    builder.Add("Zeropoint = Cast (Rounded_ZeroPoint_FP)", "to", to);
+    builder.Add("y_scale = Identity (Scale)");
+    builder.Add("y_zero_point = Identity (Zeropoint)");
+    builder.Add("y = QuantizeLinear (x, Scale, Zeropoint)");
+  } else {
+    // float 8 types
+    builder.Add("zeroi = Constant()", "value", mktensori(0));
+    builder.Add("zero = Cast(zeroi)", "to", to);
+    builder.Add("pi = Constant()", "value", mktensorf(0.33));
+    builder.Add("p = CastList(pi, X)");
+    builder.Add("X3 = Pow(X, p)");
+    builder.Add("Std = ReduceMean( X3 )");
+    builder.Add("Scale = Sqrt(Ave)");
+    builder.Add("y_scale = Identity (Scale)");
+    builder.Add("y_zero_point = Identity (Zeropoint)");
+    builder.Add("y = QuantizeLinear (x, Scale, Zeropoint)");
+  }
+  schema.BuildFunction(functionProto);
+  return true;
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     DynamicQuantizeLinear,
-    11,
+    20,
     OpSchema()
-        .SetDoc(DynamicQuantizeLinear_ver11_doc)
+        .SetDoc(DynamicQuantizeLinear_ver20_doc)
+        .Attr(
+            "to",
+            "The data type to which the elements of the input tensor are quantized. "
+            "Default is UINT8.",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
         .Input(0, "x", "Input tensor", "T1")
         .Output(0, "y", "Quantized output tensor", "T2")
         .Output(
@@ -187,32 +252,26 @@ ONNX_OPERATOR_SET_SCHEMA(
             "y_zero_point",
             "Output zero point. It's a scalar, which means a per-tensor/layer quantization.",
             "T2")
-        .TypeConstraint("T1", {"tensor(float)"}, "Constrain 'x' to float tensor.")
-        .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
-        .FunctionBody(R"ONNX(
-        {
-           Q_Min = Constant<value = float {0.0}>()
-           Q_Max = Constant<value = float {255.0}>()
-           X_Min = ReduceMin <keepdims = 0> (x)
-           X_Min_Adjusted = Min (X_Min, Q_Min)
-           X_Max = ReduceMax <keepdims = 0> (x)
-           X_Max_Adjusted = Max (X_Max, Q_Min)
-           X_Range = Sub (X_Max_Adjusted, X_Min_Adjusted)
-           Scale = Div (X_Range, Q_Max)
-           Min_Scaled = Div (X_Min_Adjusted, Scale)
-           Initial_ZeroPoint_FP = Sub (Q_Min, Min_Scaled)
-           Clipped_ZeroPoint_FP = Clip (Initial_ZeroPoint_FP, Q_Min, Q_Max)
-           Rounded_ZeroPoint_FP = Round (Clipped_ZeroPoint_FP)
-           Zeropoint = Cast <to = 2> (Rounded_ZeroPoint_FP)
-           y_scale = Identity (Scale)
-           y_zero_point = Identity (Zeropoint)
-           y = QuantizeLinear (x, Scale, Zeropoint)
-        }
-        )ONNX")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
+            "Constrain 'x' to float tensor.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(uint8)",
+             "tensor(int8)",
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)"},
+            "Constrain 'y_zero_point' and 'y' to 8-bit integer or float tensor.")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyDynamicQuantizeLinear)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          updateOutputElemType(ctx, 0, TensorProto::UINT8);
-          updateOutputElemType(ctx, 1, TensorProto::FLOAT);
-          updateOutputElemType(ctx, 2, TensorProto::UINT8);
+          auto to_attr = ctx.getAttribute("to");
+          int64_t to = to_attr == nullptr ? 2 : to_attr->i();
+          updateOutputElemType(ctx, 0, to);
+          updateOutputElemType(ctx, 1, ctx.getInputType(0)->tensor_type().elem_type());
+          updateOutputElemType(ctx, 2, to);
 
           ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
           ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();

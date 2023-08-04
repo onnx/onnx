@@ -185,10 +185,12 @@ def _extract_value_info(
             elem_type = input.data_type
             shape = tuple(input.dims)
             type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
-        else:
+        elif isinstance(input, (np.ndarray, np.int32, np.float32, np.int8, np.uint8, np.float16, np.bool_, np.float64)):
             elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
             shape = input.shape
             type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
+        else:
+            raise TypeError(f"Unexpected type {type(input)} for input name {name!r}.")
 
     return onnx.helper.make_value_info(name, type_proto)
 

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import itertools
 import unittest
 from typing import Any, Sequence
 
@@ -5240,9 +5241,22 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (30, 4, 5))]
         )
 
-    def test_dynamicquantizelinear(self) -> None:
+    @parameterized.expand(
+        itertools.product(
+            [
+                TensorProto.UINT8,
+                TensorProto.INT8,
+                TensorProto.FLOAT8E4M3FN,
+                TensorProto.FLOAT8E4M3FNUZ,
+                TensorProto.FLOAT8E5M2,
+                TensorProto.FLOAT8E5M2FNUZ,
+            ],
+            [TensorProto.FLOAT, TensorProto.FLOAT16, TensorProto.BFLOAT16],
+        )
+    )
+    def test_dynamicquantizelinear(self, quto, to) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (30, 4, 5))],
+            [("x", to, (30, 4, 5))],
             [
                 make_node(
                     "DynamicQuantizeLinear", ["x"], ["y", "y_scale", "y_zero_point"]
@@ -5253,9 +5267,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("y", TensorProto.UINT8, (30, 4, 5)),
-                make_tensor_value_info("y_scale", TensorProto.FLOAT, ()),
-                make_tensor_value_info("y_zero_point", TensorProto.UINT8, ()),
+                make_tensor_value_info("y", quto, (30, 4, 5)),
+                make_tensor_value_info("y_scale", to, ()),
+                make_tensor_value_info("y_zero_point", quto, ()),
             ],
         )
 
