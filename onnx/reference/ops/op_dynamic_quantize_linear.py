@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from onnx import TensorProto, numpy_helper, helper
+from onnx import TensorProto, helper, numpy_helper
 from onnx.reference.custom_element_types import (
     float8e4m3fn,
     float8e4m3fnuz,
