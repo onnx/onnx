@@ -1634,6 +1634,32 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @parameterized.expand(all_versions_for("RegexFullMatch"))
+    def test_regex_full_match(self, _, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, (2, 4, 3, 9))],
+            [make_node("RegexFullMatch", ["x"], ["y"], pattern=r"^[A-Z][a-z]*$")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.BOOL, (2, 4, 3, 9))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("RegexFullMatch"))
+    def test_regex_full_match_empty_shape(self, _, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ())],
+            [make_node("RegexFullMatch", ["x"], ["y"], pattern=r"^[A-Z][a-z]*$")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.BOOL, ())],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_unsqueeze_regular(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axes", TensorProto.INT64, (4,))],
