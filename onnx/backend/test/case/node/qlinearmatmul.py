@@ -11,7 +11,7 @@ from onnx.backend.test.case.node import expect
 
 class QLinearMatMul(Base):
     @staticmethod
-    def export() -> None:
+    def export_int() -> None:
         node = onnx.helper.make_node(
             "QLinearMatMul",
             inputs=[

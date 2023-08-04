@@ -7,6 +7,7 @@
 #include <string>
 
 namespace ONNX_NAMESPACE {
+
 std::function<void(OpSchema&)>
 SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {
   return [=](OpSchema& schema) {
@@ -69,4 +70,47 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
     });
   };
 }
+
+void qlinear_matmul_shape_inference(ONNX_NAMESPACE::InferenceContext& ctx) {
+  auto a_type = ctx.getInputType(0);
+  auto b_type = ctx.getInputType(3);
+  if (nullptr == a_type || nullptr == b_type || a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
+      b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
+    fail_type_inference("inputs are expected to have tensor type.");
+  }
+
+  auto a_zero_point_type = ctx.getInputType(2);
+  if (nullptr == a_zero_point_type ||
+      a_zero_point_type->tensor_type().elem_type() != a_type->tensor_type().elem_type()) {
+    fail_type_inference("input and zero_point pair is expected to have be same type.");
+  }
+
+  auto b_zero_point_type = ctx.getInputType(5);
+  if (nullptr == b_zero_point_type ||
+      b_zero_point_type->tensor_type().elem_type() != b_type->tensor_type().elem_type()) {
+    fail_type_inference("input and zero_point pair is expected to have same type.");
+  }
+
+  propagateElemTypeFromInputToOutput(ctx, 7, 0);
+
+  matmulShapeInference(ctx, 0, 3);
+}
+
+const char* qlinear_matmul_doc() {
+  static const char* QLinearMatMul_doc = R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
+and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
+For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor
+(per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row
+or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be
+an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K]
+for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may
+have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
+Production must never overflow, and accumulation may overflow if and only if in 32 bits.
+)DOC";
+  return QLinearMatMul_doc;
+}
+
 } // namespace ONNX_NAMESPACE
