@@ -11,7 +11,7 @@ from onnx.backend.test.case.node import expect
 
 class QLinearMatMul(Base):
     @staticmethod
-    def export() -> None:
+    def export_int() -> None:
         for quant_type_name in ["uint8", "int8"]:
             quant_type = getattr(np, quant_type_name)
             for dtype_name in ["float32", "float16"]:
@@ -54,7 +54,7 @@ class QLinearMatMul(Base):
                     [114 - 127] if quant_type == np.int8 else [114], dtype=quant_type
                 )
 
-                y_scale = np.array([0.0107], dtype=np.float32)
+                y_scale = np.array([0.0107], dtype=dtype)
                 y_zero_point = np.array(
                     [118 - 127] if quant_type == np.int8 else [118], dtype=quant_type
                 )
@@ -94,7 +94,7 @@ class QLinearMatMul(Base):
 
                 a_scale = np.array([0.0066], dtype=dtype)
                 a_zero_point = np.array(
-                    [113 - 127] if quant_type == np.int8 else [113], dtype=dtype
+                    [113 - 127] if quant_type == np.int8 else [113], dtype=quant_type
                 )
 
                 b = np.array(

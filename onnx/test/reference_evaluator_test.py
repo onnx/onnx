@@ -4951,13 +4951,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
     def test_qlinearconv(self):
-        a = make_tensor_value_info("a", TensorProto.FLOAT, [None, None, None, None])
-        Y = make_tensor_value_info("a_scale", TensorProto.FLOAT, [None])
-        B = make_tensor_value_info(
-            "a_zero_point", TensorProto.FLOAT, [None, None, None, None]
-        )
-
-        W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
         node = make_node(
             "QLinearMatMul",
             inputs=[
