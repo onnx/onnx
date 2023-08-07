@@ -5557,8 +5557,8 @@ X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float16)
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
 Y_Scale = np.float16((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
-Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
-Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+Y_ZeroPoint = np.clip(round(0 - x_min / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.rint(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
 expect(
     node,
@@ -5571,10 +5571,10 @@ X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float16)
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
 Y_Scale = np.float16((x_max - x_min) / (127 + 127))  # int8 -> [-127, 127]
-Y_ZeroPoint = np.clip(round((-127 - x_min) / Y_Scale), -127, 127).astype(
+Y_ZeroPoint = np.clip(round(-127 - x_min / Y_Scale), -127, 127).astype(
     np.int8
 )
-Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
+Y = np.clip(np.rint(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
 
 expect(
     node,
@@ -5586,7 +5586,7 @@ expect(
 
 </details>
 <details>
-<summary>float8e4m3fn</summary>
+<summary>float8</summary>
 
 ```python
 for to in ["FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"]:
@@ -5605,7 +5605,7 @@ for to in ["FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"]:
         "Y", getattr(onnx.TensorProto, to), [X.size], Y_scaled.tolist()
     )
     y_zero_point = onnx.helper.make_tensor(
-        "y_zero_point", getattr(onnx.TensorProto, to), [], [0]
+        "y_zero_point", getattr(onnx.TensorProto, to), [], [0.]
     )
 
     expect(
@@ -5633,10 +5633,10 @@ X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
 Y_Scale = np.float32((x_max - x_min) / (127 + 127))  # int8 -> [-127, 127]
-Y_ZeroPoint = np.clip(round((-127 - x_min) / Y_Scale), -127, 127).astype(
+Y_ZeroPoint = np.clip(round(-127 - x_min / Y_Scale), -127, 127).astype(
     np.int8
 )
-Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
+Y = np.clip(np.rint(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
 
 expect(
     node,
@@ -5650,10 +5650,10 @@ X = np.array([-1.0, -2.1, -1.3, -2.5, -3.34, -4.0]).astype(np.float32)
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
 Y_Scale = np.float32((x_max - x_min) / (127 + 127))  # int8 -> [-127, 127]
-Y_ZeroPoint = np.clip(round((-127 - x_min) / Y_Scale), -127, 127).astype(
+Y_ZeroPoint = np.clip(round(-127 - x_min / Y_Scale), -127, 127).astype(
     np.int8
 )
-Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
+Y = np.clip(np.rint(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
 
 expect(
     node,
@@ -5672,8 +5672,8 @@ X = (
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
 Y_Scale = np.float32((x_max - x_min) / (127 + 127))  # uint8 -> [-127, 127]
-Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), -127, 127).astype(np.int8)
-Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
+Y_ZeroPoint = np.clip(round(0 - x_min / Y_Scale), -127, 127).astype(np.int8)
+Y = np.clip(np.rint(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
 
 expect(
     node,
@@ -5699,8 +5699,8 @@ X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
 Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
-Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
-Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+Y_ZeroPoint = np.clip(round(0 - x_min / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.rint(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
 expect(
     node,
@@ -5714,8 +5714,8 @@ X = np.array([-1.0, -2.1, -1.3, -2.5, -3.34, -4.0]).astype(np.float32)
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
 Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
-Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
-Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+Y_ZeroPoint = np.clip(round(0 - x_min / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.rint(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
 expect(
     node,
@@ -5734,8 +5734,8 @@ X = (
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
 Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
-Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
-Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
+Y_ZeroPoint = np.clip(round(0 - x_min / Y_Scale), 0, 255).astype(np.uint8)
+Y = np.clip(np.rint(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
 expect(
     node,
