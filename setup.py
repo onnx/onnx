@@ -347,6 +347,7 @@ def load_packages_from_requirements(requirements_file: str) -> List[str]:
         requirements_path = os.path.join(this, requirements_file)
     if not os.path.exists(requirements_path):
         raise FileNotFoundError("Unable to find " + requirements_file)
+    requires_list = []
     with open(requirements_path) as f:
         requires_list = f.read().splitlines()
     return requires_list
