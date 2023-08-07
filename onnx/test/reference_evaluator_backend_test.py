@@ -484,11 +484,19 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
 
     @classmethod
     def add_test_methods(cls):
+        verbosity = 0
+        for v in sys.argv:
+            if v in ("-v", "--verbose"):
+                verbosity += 1
         for folder in ["node", "pytorch-converted", "pytorch-operator", "simple"]:
             for te in enumerate_onnx_tests(folder):
 
                 def _test_(
-                    self, te=te, check_other_runtime=None, verbose=0, print_io=False
+                    self,
+                    te=te,
+                    check_other_runtime=None,
+                    verbose=verbosity,
+                    print_io=False,
                 ):
                     if te.fname in getattr(cls, "skip_test", set()):
                         cls.skipped.append((te, None))

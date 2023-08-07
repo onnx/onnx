@@ -74,6 +74,8 @@ def estimation_quantization_scale(
     ca_den = ca.copy()
     ca_den[ca == 0] = 1
     std_coef = np.std(ca ** (1.0 / 3.0) * cr / ca_den)
+    if std_coef == 0:
+        std_coef = 1
     std_quant = np.std(np.array(quant_float, dtype=np.float32))
     scale = std_quant / std_coef
 
@@ -117,4 +119,6 @@ class DynamicQuantizeLinear_20(OpRun):
         def cvt(x):
             return fv(x).astype(dtype)
 
-        return (cvt(y), y_scale.astype(x.dtype), cvt(np.array(0, dtype=np.float32)))
+        y_final = cvt(y)
+        print(y.dtype, y_final.dtype)
+        return (y_final, y_scale.astype(x.dtype), cvt(np.array(0, dtype=np.float32)))

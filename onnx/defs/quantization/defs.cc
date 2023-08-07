@@ -176,34 +176,37 @@ bool BuildContextDependentFunctionBodyDynamicQuantizeLinear(
     FunctionProto& functionProto) {
   auto to_attr = ctx.getAttribute("to");
   int64_t to = to_attr == nullptr ? 2 : to_attr->i();
-  FunctionBuilder builder(functionProto);
 
   auto mktensori = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
     auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
-    tp.add_dims(1);
+    // tp.add_dims(1);
     return tp;
   };
 
   auto mktensorf = [](float val) -> ONNX_NAMESPACE::TensorProto {
     auto tp = ONNX_NAMESPACE::ToTensor(std::vector<float>{val});
-    tp.add_dims(1);
+    // tp.add_dims(1);
     return tp;
   };
 
+  FunctionBuilder builder(functionProto);
   if (to == TensorProto_DataType_UINT8 || to == TensorProto_DataType_INT8) {
     float qmin = to == TensorProto_DataType_UINT8 ? 0.0 : -127.0;
-    float qmax = to == TensorProto_DataType_UINT8 ? 0.0 : 127.0;
+    float qmax = to == TensorProto_DataType_UINT8 ? 255.0 : 127.0;
 
+    builder.Add("zerof = Constant()", "value", mktensorf(0));
     builder.Add("Q_Min32 = Constant()", "value", mktensorf(qmin));
     builder.Add("Q_Max32 = Constant()", "value", mktensorf(qmax));
-    builder.Add("Q_Min = CastLike (Q_Min32, X)");
-    builder.Add("Q_Max = CastLike (Q_Max32, X)");
+    builder.Add("Zero = CastLike (zerof, x)");
+    builder.Add("Q_Min = CastLike (Q_Min32, x)");
+    builder.Add("Q_Max = CastLike (Q_Max32, x)");
     builder.Add("X_Min = ReduceMin <keepdims = 0> (x)");
-    builder.Add("X_Min_Adjusted = Min (X_Min, Q_Min)");
+    builder.Add("X_Min_Adjusted = Min (X_Min, Zero)");
     builder.Add("X_Max = ReduceMax <keepdims = 0> (x)");
-    builder.Add("X_Max_Adjusted = Max (X_Max, Q_Min)");
+    builder.Add("X_Max_Adjusted = Max (X_Max, Zero)");
     builder.Add("X_Range = Sub (X_Max_Adjusted, X_Min_Adjusted)");
-    builder.Add("Scale = Div (X_Range, Q_Max)");
+    builder.Add("Q_Range = Sub (Q_Max, Q_Min)");
+    builder.Add("Scale = Div (X_Range, Q_Range)");
     builder.Add("Min_Scaled = Div (X_Min_Adjusted, Scale)");
     builder.Add("Initial_ZeroPoint_FP = Sub (Q_Min, Min_Scaled)");
     builder.Add("Clipped_ZeroPoint_FP = Clip (Initial_ZeroPoint_FP, Q_Min, Q_Max)");
@@ -217,7 +220,7 @@ bool BuildContextDependentFunctionBodyDynamicQuantizeLinear(
     builder.Add("zeroi = Constant()", "value", mktensori(0));
     builder.Add("zero = Cast(zeroi)", "to", to);
     builder.Add("pi = Constant()", "value", mktensorf(0.33f));
-    builder.Add("p = CastList(pi, X)");
+    builder.Add("p = CastList(pi, x)");
     builder.Add("X3 = Pow(X, p)");
     builder.Add("Std = ReduceMean( X3 )");
     builder.Add("Scale = Sqrt(Ave)");
