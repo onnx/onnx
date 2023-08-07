@@ -216,7 +216,7 @@ bool BuildContextDependentFunctionBodyDynamicQuantizeLinear(
     // float 8 types
     builder.Add("zeroi = Constant()", "value", mktensori(0));
     builder.Add("zero = Cast(zeroi)", "to", to);
-    builder.Add("pi = Constant()", "value", mktensorf(0.33));
+    builder.Add("pi = Constant()", "value", mktensorf(0.33f));
     builder.Add("p = CastList(pi, X)");
     builder.Add("X3 = Pow(X, p)");
     builder.Add("Std = ReduceMean( X3 )");
