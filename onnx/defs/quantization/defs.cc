@@ -234,11 +234,10 @@ bool BuildContextDependentFunctionBodyDynamicQuantizeLinear(
         break;
     }
     builder.Add("zeroi = Constant()", "value", mktensori(0));
-    builder.Add("zero = Cast(zeroi)", "to", to);
-    builder.Add("pi = Constant()", "value", mktensorf(0.33333f));
-    builder.Add("p = CastLike(pi, x)");
-    builder.Add("Std = ReduceMean( X )");
-    builder.Add("Scale = Sqrt(Ave)");
+    builder.Add("Zeropoint = Cast(zeroi)", "to", to);
+    builder.Add("xsquare = Mul( x, x )");
+    builder.Add("Dev = ReduceMean <keepdims = 0> ( xsquare )");
+    builder.Add("Scale = Sqrt(Dev)");
     builder.Add("stdf = Constant()", "value", mktensorf(std8));
     builder.Add("std = CastLike(stdf, Scale)");
     builder.Add("ScaleScaled = Div( Scale, std )");

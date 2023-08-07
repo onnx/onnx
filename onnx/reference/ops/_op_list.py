@@ -88,10 +88,6 @@ from onnx.reference.ops.op_det import Det
 from onnx.reference.ops.op_dft import DFT
 from onnx.reference.ops.op_div import Div
 from onnx.reference.ops.op_dropout import Dropout_7, Dropout_12
-from onnx.reference.ops.op_dynamic_quantize_linear import (
-    DynamicQuantizeLinear_11,
-    DynamicQuantizeLinear_20,
-)
 from onnx.reference.ops.op_einsum import Einsum
 from onnx.reference.ops.op_elu import Elu
 from onnx.reference.ops.op_equal import Equal

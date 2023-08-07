@@ -44,25 +44,11 @@ def estimation_quantization_scale(
             raise ValueError(f"Unexpected to={to!r}.")
 
         float8 = [fct(i) for i in range(0, 256)]
-        quant_float = [f for f in float8 if not np.isnan(f)]
-        cr = coef.ravel()
-        ca = np.abs(cr)
-        ca_den = ca.copy()
-        ca_den[ca == 0] = 1
-        std_coef = np.std(ca ** (1.0 / 3.0) * cr / ca_den)
-
-        # standard deviation of all finite values for a float 8 type
-        stds = {
-            onnx.TensorProto.FLOAT8E4M3FN: 100.057724,
-            onnx.TensorProto.FLOAT8E4M3FNUZ: 54.26635,
-            onnx.TensorProto.FLOAT8E5M2: 9535.286,
-            onnx.TensorProto.FLOAT8E5M2FNUZ: 9403.499,
-        }
-        std_coef /= stds[to]
-
+        quant_float = [f for f in float8 if not np.isnan(f) and not np.isinf(f)]
+        std_coef = np.mean(coef.ravel() ** 2) ** 0.5
         std_quant = np.std(np.array(quant_float, dtype=np.float32))
         zero = 0.0
-        scale = std_quant / std_coef
+        scale = std_quant.astype(coef.dtype) / std_coef.astype(coef.dtype)
     elif to == onnx.TensorProto.UINT8:
         qu = np.quantile(coef.ravel(), [1 - threshold, threshold])
         scale = 255 / (qu[1] - qu[0])
@@ -250,7 +236,9 @@ class DynamicQuantizeLinear(Base):
 
             # expected scale 0.0196078438 and zero point 153
             X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
-            scale, zero = estimation_quantization_scale(X)
+            scale, zero = estimation_quantization_scale(
+                X, to=getattr(onnx.TensorProto, to)
+            )
             Y_scaled = (X / scale).astype(X.dtype)
             Y8 = onnx.helper.make_tensor(
                 "Y", getattr(onnx.TensorProto, to), [X.size], Y_scaled.tolist()
