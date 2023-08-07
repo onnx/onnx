@@ -19405,7 +19405,7 @@ Other versions of this operator: <a href="Changelog.md#QLinearMatMul-10">10</a>
 #### Examples
 
 <details>
-<summary>qlinearmatmul</summary>
+<summary>int</summary>
 
 ```python
 for quant_type_name in ["uint8", "int8"]:
@@ -19450,7 +19450,7 @@ for quant_type_name in ["uint8", "int8"]:
             [114 - 127] if quant_type == np.int8 else [114], dtype=quant_type
         )
 
-        y_scale = np.array([0.0107], dtype=np.float32)
+        y_scale = np.array([0.0107], dtype=dtype)
         y_zero_point = np.array(
             [118 - 127] if quant_type == np.int8 else [118], dtype=quant_type
         )
@@ -19490,7 +19490,7 @@ for quant_type_name in ["uint8", "int8"]:
 
         a_scale = np.array([0.0066], dtype=dtype)
         a_zero_point = np.array(
-            [113 - 127] if quant_type == np.int8 else [113], dtype=dtype
+            [113 - 127] if quant_type == np.int8 else [113], dtype=quant_type
         )
 
         b = np.array(
