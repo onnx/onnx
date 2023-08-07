@@ -419,7 +419,10 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 
-void checkShapesAndTypes(const TypeProto_Sequence& inferredType, const TypeProto_Sequence& existingType, const std::string& err_msg);
+void checkShapesAndTypes(
+    const TypeProto_Sequence& inferredType,
+    const TypeProto_Sequence& existingType,
+    const std::string& err_msg);
 
 void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existingType, const std::string& err_msg);
 
@@ -428,11 +431,20 @@ void GenerateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTab
 
 void MaterializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable);
 
-void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor* existingType, const std::string& unused);
+void mergeShapesAndTypes(
+    const TypeProto_Tensor& inferredType,
+    TypeProto_Tensor* existingType,
+    const std::string& unused);
 
-void mergeShapesAndTypes(const TypeProto_SparseTensor& inferredType, TypeProto_SparseTensor* existingType, const std::string& unused);
+void mergeShapesAndTypes(
+    const TypeProto_SparseTensor& inferredType,
+    TypeProto_SparseTensor* existingType,
+    const std::string& unused);
 
-void mergeShapesAndTypes(const TypeProto_Sequence& inferredType, TypeProto_Tensor* existingType, const std::string& unused);
+void mergeShapesAndTypes(
+    const TypeProto_Sequence& inferredType,
+    TypeProto_Tensor* existingType,
+    const std::string& unused);
 
 void mergeShapesAndTypes(const TypeProto& inferredType, TypeProto* existingType, const std::string& err_msg);
 

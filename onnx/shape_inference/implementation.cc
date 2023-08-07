@@ -152,7 +152,8 @@ void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existi
     }
     checkShapesAndTypes(inferred_type.map_type().value_type(), existing_type.map_type().value_type(), err_msg);
   } else {
-    fail_type_inference("type case unsupported. existing=", existing_value_case, " inferred=", inferred_value_case, ". ", err_msg);
+    fail_type_inference(
+        "type case unsupported. existing=", existing_value_case, " inferred=", inferred_value_case, ". ", err_msg);
   }
 }
 
@@ -179,7 +180,10 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor
   }
 }
 
-void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type, const std::string&) {
+void mergeShapesAndTypes(
+    const TypeProto_SparseTensor& inferred_type,
+    TypeProto_SparseTensor* existing_type,
+    const std::string&) {
   if (existing_type->elem_type() == TensorProto::UNDEFINED) {
     existing_type->set_elem_type(inferred_type.elem_type());
   }
@@ -212,15 +216,20 @@ void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_typ
     mergeShapesAndTypes(inferred_type.sparse_tensor_type(), existing_type->mutable_sparse_tensor_type(), err_msg);
   } else if (inferred_val_case == TypeProto::kSequenceType) {
     mergeShapesAndTypes(
-        inferred_type.sequence_type().elem_type(), existing_type->mutable_sequence_type()->mutable_elem_type(), err_msg);
+        inferred_type.sequence_type().elem_type(),
+        existing_type->mutable_sequence_type()->mutable_elem_type(),
+        err_msg);
   } else if (inferred_val_case == TypeProto::kOptionalType) {
     mergeShapesAndTypes(
-        inferred_type.optional_type().elem_type(), existing_type->mutable_optional_type()->mutable_elem_type(), err_msg);
+        inferred_type.optional_type().elem_type(),
+        existing_type->mutable_optional_type()->mutable_elem_type(),
+        err_msg);
   } else if (inferred_val_case == TypeProto::kMapType) {
     if (existing_type->map_type().key_type() == TensorProto::UNDEFINED) {
       existing_type->mutable_map_type()->set_key_type(inferred_type.map_type().key_type());
     }
-    mergeShapesAndTypes(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type(), err_msg);
+    mergeShapesAndTypes(
+        inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type(), err_msg);
   }
 }
 
