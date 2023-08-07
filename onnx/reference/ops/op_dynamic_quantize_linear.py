@@ -117,4 +117,4 @@ class DynamicQuantizeLinear_20(OpRun):
         def cvt(x):
             return fv(x).astype(dtype)
 
-        return (cvt(y), y_scale.astype(x.dtype), cvt(np.array([0], dtype=np.float32)))
+        return (cvt(y), y_scale.astype(x.dtype), cvt(np.array(0, dtype=np.float32)))

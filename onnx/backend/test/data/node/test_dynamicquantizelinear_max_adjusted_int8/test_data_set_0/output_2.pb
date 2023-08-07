@@ -1,1 +1,1 @@
-By_zero_pointJÅ
+By_zero_pointJ
