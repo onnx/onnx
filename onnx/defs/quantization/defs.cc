@@ -246,7 +246,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "y_scale",
             "Output scale. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)")
+            "T1")
         .Output(
             2,
             "y_zero_point",

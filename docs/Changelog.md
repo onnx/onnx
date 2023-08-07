@@ -24042,7 +24042,7 @@ This version of the operator has been available since version 20 of the default 
 <dl>
 <dt><tt>y</tt> : T2</dt>
 <dd>Quantized output tensor</dd>
-<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dt><tt>y_scale</tt> : T1</dt>
 <dd>Output scale. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>y_zero_point</tt> : T2</dt>
 <dd>Output zero point. It's a scalar, which means a per-tensor/layer quantization.</dd>
