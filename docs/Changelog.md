@@ -22947,7 +22947,7 @@ This version of the operator has been available since version 19 of the default 
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'x_scale' determines the output type.</dd>
+<dd>'y_scale' determines the output type.</dd>
 </dl>
 
 ### <a name="Equal-19"></a>**Equal-19**</a>
@@ -23989,6 +23989,74 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain output types to be numerics.</dd>
 </dl>
 
+### <a name="DynamicQuantizeLinear-20"></a>**DynamicQuantizeLinear-20**</a>
+
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+  Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
+  Scale is calculated as:
+  ```
+  y_scale = (max(x) - min(x))/(qmax - qmin)
+  ```
+
+  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * data range is adjusted to include 0.
+
+  Zero point is calculated as:
+  ```
+  intermediate_zero_point = qmin - min(x)/y_scale
+  y_zero_point = cast(round(saturate(itermediate_zero_point)))
+  ```
+
+  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * for saturation, it saturates to [0, 255] if it's uint8, or [-127, 127] if it's int8, or [-f8_max, f8_max]
+    for any float 8 types
+  * rounding to nearest ties to even.
+
+  Data quantization formula is:
+  ```
+  y = saturate (round (x / y_scale) + y_zero_point)
+  ```
+
+  y_zero_point must be 0 for any float 8 type.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int</dt>
+<dd>(Optional) The data type to which the elements of the input tensor are quantized. Default is UINT8.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> : T1</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> : T2</dt>
+<dd>Quantized output tensor</dd>
+<dt><tt>y_scale</tt> : tensor(float)</dt>
+<dd>Output scale. It's a scalar, which means a per-tensor/layer quantization.</dd>
+<dt><tt>y_zero_point</tt> : T2</dt>
+<dd>Output zero point. It's a scalar, which means a per-tensor/layer quantization.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain 'x' to float tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(int8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer or float tensor.</dd>
+</dl>
+
 ### <a name="Gelu-20"></a>**Gelu-20**</a>
 
   Gelu takes one input data (Tensor<T>) and produces one
@@ -24090,65 +24158,6 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain input `X` and output `Y` types to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain grid types to float tensors.</dd>
-</dl>
-
-### <a name="QLinearMatMul-20"></a>**QLinearMatMul-20**</a>
-
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
-  It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
-  and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
-  For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
-  Scale and zero point must have same shape. They must be either scalar (per tensor) or N-D tensor
-  (per row for 'a' and per column for 'b'). Scalar refers to per tensor quantization whereas N-D refers to per row
-  or per column quantization. If the input is 2D of shape [M, K] then zero point and scale tensor may be
-  an M element vector [v_1, v_2, ..., v_M] for per row quantization and K element vector of shape [v_1, v_2, ..., v_K]
-  for per column quantization. If the input is N-D tensor with shape [D1, D2, M, K] then zero point and scale tensor may
-  have shape [D1, D2, M, 1] for per row quantization and shape [D1, D2, 1, K] for per column quantization.
-  Production must never overflow, and accumulation may overflow if and only if in 32 bits.
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>a</tt> (non-differentiable) : T1</dt>
-<dd>N-dimensional quantized matrix a</dd>
-<dt><tt>a_scale</tt> (non-differentiable) : TS</dt>
-<dd>scale of quantized input a</dd>
-<dt><tt>a_zero_point</tt> (non-differentiable) : T1</dt>
-<dd>zero point of quantized input a</dd>
-<dt><tt>b</tt> (non-differentiable) : T2</dt>
-<dd>N-dimensional quantized matrix b</dd>
-<dt><tt>b_scale</tt> (non-differentiable) : TS</dt>
-<dd>scale of quantized input b</dd>
-<dt><tt>b_zero_point</tt> (non-differentiable) : T2</dt>
-<dd>zero point of quantized input b</dd>
-<dt><tt>y_scale</tt> (non-differentiable) : TS</dt>
-<dd>scale of quantized output y</dd>
-<dt><tt>y_zero_point</tt> (non-differentiable) : T3</dt>
-<dd>zero point of quantized output y</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>y</tt> (non-differentiable) : T3</dt>
-<dd>Quantized matrix multiply results from a * b</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>TS</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>Constrain scales.</dd>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain input a and its zero point data type to 8-bit integer tensor.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain input b and its zero point data type to 8-bit integer tensor.</dd>
-<dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain output y and its zero point data type to 8-bit integer tensor.</dd>
 </dl>
 
 ### <a name="RegexFullMatch-20"></a>**RegexFullMatch-20**</a>
