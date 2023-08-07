@@ -256,6 +256,10 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|string_split"
         "|string_concat"
         "|gelu"
+        "|qlinearmatmul_2D_int8"
+        "|qlinearmatmul_2D_uint8_float16"
+        "|qlinearmatmul_3D_int8"
+        "|qlinearmatmul_3D_uint8_float16"
         ")"
     )
 

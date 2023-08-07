@@ -4950,7 +4950,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             num_splits, np.array(expected_num_splits, dtype=np.int64)
         )
 
-    def test_qlinearconv(self):
+    def test_qlinearconv_int8(self):
         node = make_node(
             "QLinearMatMul",
             inputs=[
