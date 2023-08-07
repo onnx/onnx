@@ -334,7 +334,7 @@ packages = setuptools.find_packages() + setuptools.find_namespace_packages(
 
 def load_packages_from_requirements(requirements_file: str) -> List[str]:
     """Load required packages from requirements-*.txt.
-    
+
     Arguments:
         requirements_file {str} -- requirements file name (e.g. requirements.txt)
     Returns:
@@ -352,6 +352,7 @@ def load_packages_from_requirements(requirements_file: str) -> List[str]:
         requires_list = f.read().splitlines()
     return requires_list
 
+
 install_requires = load_packages_from_requirements("requirements.txt")
 
 ################################################################################
@@ -368,7 +369,9 @@ extras_require["lint"] = [
     "lintrunner-adapters>=0.3",
 ]
 
-extras_require["reference"] = load_packages_from_requirements("requirements-reference.txt")
+extras_require["reference"] = load_packages_from_requirements(
+    "requirements-reference.txt"
+)
 
 ################################################################################
 # Final
