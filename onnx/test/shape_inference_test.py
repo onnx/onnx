@@ -5315,6 +5315,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(
         itertools.product(
+            [TensorProto.UINT8],
             [TensorProto.FLOAT, TensorProto.FLOAT16, TensorProto.BFLOAT16],
         )
     )

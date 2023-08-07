@@ -73,12 +73,14 @@ inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
 } // namespace
 
 template <class T>
-void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_type) {
+void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_type, const std::string& err_msg = "") {
   if (inferred_type.elem_type() != TensorProto::UNDEFINED && existing_type.elem_type() != TensorProto::UNDEFINED &&
       existing_type.elem_type() != inferred_type.elem_type()) {
     std::stringstream ss;
     ss << "Inferred elem type differs from existing elem type: (" << GetElemTypeString(inferred_type) << ") vs ("
        << GetElemTypeString(existing_type) << ")";
+    if (!err_msg.empty())
+      ss << ", " << err_msg;
     fail_type_inference(ss.str());
   }
 
@@ -90,6 +92,8 @@ void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_type) {
     std::stringstream ss;
     ss << "Inferred shape and existing shape differ in rank: (" << inferred_type.shape().dim_size() << ") vs ("
        << existing_type.shape().dim_size() << ")";
+    if (!err_msg.empty())
+      ss << ", " << err_msg;
     fail_shape_inference(ss.str());
   }
 
@@ -101,12 +105,14 @@ void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_type) {
       std::stringstream ss;
       ss << "Inferred shape and existing shape differ in dimension " << i << ": (" << inferred_dim.dim_value()
          << ") vs (" << existing_dim.dim_value() << ")";
+      if (!err_msg.empty())
+        ss << ", " << err_msg;
       fail_shape_inference(ss.str());
     }
   }
 }
 
-void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existing_type) {
+void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existing_type, const std::string& err_msg) {
   const auto inferred_value_case = inferred_type.value_case();
   const auto existing_value_case = existing_type.value_case();
   if (inferred_value_case == TypeProto::ValueCase::VALUE_NOT_SET ||
@@ -119,18 +125,20 @@ void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existi
         "type case mismatch. existing=",
         GetValueCaseString(existing_type),
         " inferred=",
-        GetValueCaseString(inferred_type));
+        GetValueCaseString(inferred_type),
+        ". ",
+        err_msg);
   }
 
   if (inferred_value_case == TypeProto::kTensorType && existing_value_case == TypeProto::kTensorType) {
-    CheckTensorShapesAndTypes(inferred_type.tensor_type(), existing_type.tensor_type());
+    CheckTensorShapesAndTypes(inferred_type.tensor_type(), existing_type.tensor_type(), err_msg);
   } else if (
       inferred_value_case == TypeProto::kSparseTensorType && existing_value_case == TypeProto::kSparseTensorType) {
-    CheckTensorShapesAndTypes(inferred_type.sparse_tensor_type(), existing_type.sparse_tensor_type());
+    CheckTensorShapesAndTypes(inferred_type.sparse_tensor_type(), existing_type.sparse_tensor_type(), err_msg);
   } else if (inferred_value_case == TypeProto::kSequenceType && existing_value_case == TypeProto::kSequenceType) {
-    checkShapesAndTypes(inferred_type.sequence_type().elem_type(), existing_type.sequence_type().elem_type());
+    checkShapesAndTypes(inferred_type.sequence_type().elem_type(), existing_type.sequence_type().elem_type(), err_msg);
   } else if (inferred_value_case == TypeProto::kOptionalType && existing_value_case == TypeProto::kOptionalType) {
-    checkShapesAndTypes(inferred_type.optional_type().elem_type(), existing_type.optional_type().elem_type());
+    checkShapesAndTypes(inferred_type.optional_type().elem_type(), existing_type.optional_type().elem_type(), err_msg);
   } else if (
       inferred_value_case == TypeProto::TypeProto::kMapType && existing_value_case == TypeProto::TypeProto::kMapType) {
     if (inferred_type.map_type().key_type() != existing_type.map_type().key_type()) {
@@ -138,15 +146,17 @@ void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existi
           "key type mismatch from MapProto. existing=",
           Utils::DataTypeUtils::ToDataTypeString(existing_type.map_type().key_type()),
           " inferred=",
-          Utils::DataTypeUtils::ToDataTypeString(inferred_type.map_type().key_type()));
+          Utils::DataTypeUtils::ToDataTypeString(inferred_type.map_type().key_type()),
+          ". ",
+          err_msg);
     }
-    checkShapesAndTypes(inferred_type.map_type().value_type(), existing_type.map_type().value_type());
+    checkShapesAndTypes(inferred_type.map_type().value_type(), existing_type.map_type().value_type(), err_msg);
   } else {
-    fail_type_inference("type case unsupported. existing=", existing_value_case, " inferred=", inferred_value_case);
+    fail_type_inference("type case unsupported. existing=", existing_value_case, " inferred=", inferred_value_case, ". ", err_msg);
   }
 }
 
-void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type) {
+void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type, const std::string&) {
   if (existing_type->elem_type() == TensorProto::UNDEFINED) {
     existing_type->set_elem_type(inferred_type.elem_type());
   }
@@ -169,7 +179,7 @@ void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor
   }
 }
 
-void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type) {
+void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type, const std::string&) {
   if (existing_type->elem_type() == TensorProto::UNDEFINED) {
     existing_type->set_elem_type(inferred_type.elem_type());
   }
@@ -192,25 +202,25 @@ void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_
   }
 }
 
-void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type) {
+void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type, const std::string& err_msg) {
   // Check before merge
-  checkShapesAndTypes(inferred_type, *existing_type);
+  checkShapesAndTypes(inferred_type, *existing_type, err_msg);
   const auto inferred_val_case = inferred_type.value_case();
   if (inferred_val_case == TypeProto::kTensorType) {
-    mergeShapesAndTypes(inferred_type.tensor_type(), existing_type->mutable_tensor_type());
+    mergeShapesAndTypes(inferred_type.tensor_type(), existing_type->mutable_tensor_type(), err_msg);
   } else if (inferred_val_case == TypeProto::kSparseTensorType) {
-    mergeShapesAndTypes(inferred_type.sparse_tensor_type(), existing_type->mutable_sparse_tensor_type());
+    mergeShapesAndTypes(inferred_type.sparse_tensor_type(), existing_type->mutable_sparse_tensor_type(), err_msg);
   } else if (inferred_val_case == TypeProto::kSequenceType) {
     mergeShapesAndTypes(
-        inferred_type.sequence_type().elem_type(), existing_type->mutable_sequence_type()->mutable_elem_type());
+        inferred_type.sequence_type().elem_type(), existing_type->mutable_sequence_type()->mutable_elem_type(), err_msg);
   } else if (inferred_val_case == TypeProto::kOptionalType) {
     mergeShapesAndTypes(
-        inferred_type.optional_type().elem_type(), existing_type->mutable_optional_type()->mutable_elem_type());
+        inferred_type.optional_type().elem_type(), existing_type->mutable_optional_type()->mutable_elem_type(), err_msg);
   } else if (inferred_val_case == TypeProto::kMapType) {
     if (existing_type->map_type().key_type() == TensorProto::UNDEFINED) {
       existing_type->mutable_map_type()->set_key_type(inferred_type.map_type().key_type());
     }
-    mergeShapesAndTypes(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type());
+    mergeShapesAndTypes(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type(), err_msg);
   }
 }
 
@@ -287,7 +297,7 @@ class ShapeInferenceImplBase {
 
     // TODO: cleanup this by merging with previous if-else
     // Now we can merge pre-existing and inferred info
-    mergeShapesAndTypes(*inferred_type, existing_type);
+    mergeShapesAndTypes(*inferred_type, existing_type, std::string("updateType: ") + name);
 
     // Make merged info available to further inference.
     value_types_by_name[name] = existing_type;
@@ -511,7 +521,7 @@ class ShapeInferenceImplBase {
     // If it already exists in input, check input and initializer is sync
     // use shape info from input (input has priority over initializer)
     if (iter != value_types_by_name.end()) {
-      checkShapesAndTypes(initializer_type, *iter->second);
+      checkShapesAndTypes(initializer_type, *iter->second, std::string("Initializer: ") + name);
       // CheckTensorShapesAndTypes(*initializer_tensor_type, *iter->second->mutable_tensor_type());
     }
     // Support IR>=4: some tensors can only exist in initializer and not in input
@@ -1016,7 +1026,9 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
     TypeProto* graph_input = g_->mutable_input(i)->mutable_type();
     // Even if graphInput doesn't have defined type, it will assign inferredType to it
-    mergeShapesAndTypes(*inferred_input, graph_input);
+    std::stringstream ss;
+    ss << "processing input " << i;
+    mergeShapesAndTypes(*inferred_input, graph_input, ss.str());
 
     if (symbol_table) {
       MaterializeSymbolicShape(graph_input, *symbol_table);

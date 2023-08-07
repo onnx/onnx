@@ -200,7 +200,7 @@ class DynamicQuantizeLinear(Base):
         X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float16)
         x_min = np.minimum(0, np.min(X))
         x_max = np.maximum(0, np.max(X))
-        Y_Scale = np.float32((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
+        Y_Scale = np.float16((x_max - x_min) / (255 - 0))  # uint8 -> [0, 255]
         Y_ZeroPoint = np.clip(round((0 - x_min) / Y_Scale), 0, 255).astype(np.uint8)
         Y = np.clip(np.round(X / Y_Scale) + Y_ZeroPoint, 0, 255).astype(np.uint8)
 
@@ -214,7 +214,7 @@ class DynamicQuantizeLinear(Base):
         X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float16)
         x_min = np.minimum(0, np.min(X))
         x_max = np.maximum(0, np.max(X))
-        Y_Scale = np.float32((x_max - x_min) / (127 + 127))  # int8 -> [-127, 127]
+        Y_Scale = np.float16((x_max - x_min) / (127 + 127))  # int8 -> [-127, 127]
         Y_ZeroPoint = np.clip(round((-127 - x_min) / Y_Scale), -127, 127).astype(
             np.int8
         )
@@ -245,12 +245,12 @@ class DynamicQuantizeLinear(Base):
                 "Y", getattr(onnx.TensorProto, to), [X.size], Y_scaled.tolist()
             )
             y_zero_point = onnx.helper.make_tensor(
-                "y_zero_point", getattr(onnx.TensorProto, to), [1], [0]
+                "y_zero_point", getattr(onnx.TensorProto, to), [], [0]
             )
 
             expect(
                 node,
                 inputs=[X],
-                outputs=[Y8, np.array([scale]), y_zero_point],
+                outputs=[Y8, np.array(scale, dtype=X.dtype), y_zero_point],
                 name=f"test_dynamicquantizelinear_{to.lower()}",
             )
