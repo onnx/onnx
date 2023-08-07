@@ -8033,7 +8033,9 @@ for to in ["FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"]:
 
     # expected scale 0.0196078438 and zero point 153
     X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float32)
-    scale, zero = estimation_quantization_scale(X)
+    scale, zero = estimation_quantization_scale(
+        X, to=getattr(onnx.TensorProto, to)
+    )
     Y_scaled = (X / scale).astype(X.dtype)
     Y8 = onnx.helper.make_tensor(
         "Y", getattr(onnx.TensorProto, to), [X.size], Y_scaled.tolist()
