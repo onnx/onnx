@@ -13085,7 +13085,7 @@ expect(
 ### QLinearMatMul
 There are 1 test cases, listed as following:
 <details>
-<summary>qlinearmatmul</summary>
+<summary>int</summary>
 
 ```python
 for quant_type_name in ["uint8", "int8"]:
