@@ -7994,6 +7994,13 @@ expect(
     name="test_dynamicquantizelinear_float16",
 )
 
+node = onnx.helper.make_node(
+    "DynamicQuantizeLinear",
+    inputs=["x"],
+    outputs=["y", "y_scale", "y_zero_point"],
+    to=onnx.TensorProto.INT8,
+)
+
 X = np.array([0, 2, -3, -2.5, 1.34, 0.5]).astype(np.float16)
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
@@ -8097,7 +8104,7 @@ X = (
 x_min = np.minimum(0, np.min(X))
 x_max = np.maximum(0, np.max(X))
 Y_Scale = np.float32((x_max - x_min) / (127 + 127))  # uint8 -> [-127, 127]
-Y_ZeroPoint = np.clip(round(0 - x_min / Y_Scale), -127, 127).astype(np.int8)
+Y_ZeroPoint = np.clip(round(-127 - x_min / Y_Scale), -127, 127).astype(np.int8)
 Y = np.clip(np.rint(X / Y_Scale) + Y_ZeroPoint, -127, 127).astype(np.int8)
 
 expect(
