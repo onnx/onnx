@@ -217,16 +217,34 @@ bool BuildContextDependentFunctionBodyDynamicQuantizeLinear(
     builder.Add("y = QuantizeLinear (x, Scale, Zeropoint)");
   } else {
     // float 8 types
+    // standard deviation of all finite float 8 values
+    float std8 = 1.0f;
+    switch (to) {
+      case TensorProto_DataType_FLOAT8E4M3FN:
+        std8 = 100.057724f;
+        break;
+      case TensorProto_DataType_FLOAT8E4M3FNUZ:
+        std8 = 54.26635f;
+        break;
+      case TensorProto_DataType_FLOAT8E5M2:
+        std8 = 9535.286f;
+        break;
+      case TensorProto_DataType_FLOAT8E5M2FNUZ:
+        std8 = 9403.499f;
+        break;
+    }
     builder.Add("zeroi = Constant()", "value", mktensori(0));
     builder.Add("zero = Cast(zeroi)", "to", to);
-    builder.Add("pi = Constant()", "value", mktensorf(0.33f));
-    builder.Add("p = CastList(pi, x)");
-    builder.Add("X3 = Pow(X, p)");
-    builder.Add("Std = ReduceMean( X3 )");
+    builder.Add("pi = Constant()", "value", mktensorf(0.33333f));
+    builder.Add("p = CastLike(pi, x)");
+    builder.Add("Std = ReduceMean( X )");
     builder.Add("Scale = Sqrt(Ave)");
-    builder.Add("y_scale = Identity (Scale)");
+    builder.Add("stdf = Constant()", "value", mktensorf(std8));
+    builder.Add("std = CastLike(stdf, Scale)");
+    builder.Add("ScaleScaled = Div( Scale, std )");
+    builder.Add("y_scale = Identity (ScaleScaled)");
     builder.Add("y_zero_point = Identity (Zeropoint)");
-    builder.Add("y = QuantizeLinear (x, Scale, Zeropoint)");
+    builder.Add("y = QuantizeLinear (x, ScaleScaled, Zeropoint)");
   }
   schema.BuildFunction(functionProto);
   return true;
@@ -245,11 +263,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Input(0, "x", "Input tensor", "T1")
         .Output(0, "y", "Quantized output tensor", "T2")
-        .Output(
-            1,
-            "y_scale",
-            "Output scale. It's a scalar, which means a per-tensor/layer quantization.",
-            "T1")
+        .Output(1, "y_scale", "Output scale. It's a scalar, which means a per-tensor/layer quantization.", "T1")
         .Output(
             2,
             "y_zero_point",

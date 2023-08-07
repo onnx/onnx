@@ -76,6 +76,16 @@ def estimation_quantization_scale(
     std_coef = np.std(ca ** (1.0 / 3.0) * cr / ca_den)
     if std_coef == 0:
         std_coef = 1
+
+    # standard deviation of all finite values for a float 8 type
+    stds = {
+        TensorProto.FLOAT8E4M3FN: 100.057724,
+        TensorProto.FLOAT8E4M3FNUZ: 54.26635,
+        TensorProto.FLOAT8E5M2: 9535.286,
+        TensorProto.FLOAT8E5M2FNUZ: 9403.499,
+    }
+    std_coef /= stds[to]
+
     std_quant = np.std(np.array(quant_float, dtype=np.float32))
     scale = std_quant / std_coef
 
