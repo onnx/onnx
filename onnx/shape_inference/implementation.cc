@@ -418,7 +418,7 @@ class ShapeInferenceImplBase {
         fail_type_inference(
             "Cannot infer type and shape for node name ",
             n.name(),
-            ". No opset import for domain",
+            ". No opset import for domain ",
             n.domain(),
             " optype ",
             n.op_type());
