@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,6 +9,7 @@
 
 #pragma once
 #include <stdint.h>
+
 #include <string>
 #include <unordered_map>
 #include <vector>

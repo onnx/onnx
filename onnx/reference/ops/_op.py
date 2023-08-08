@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Any, Dict
@@ -163,7 +165,7 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
                     self.axes = None
                 else:
                     self.axes = tuple(self.axes)
-            elif self.axes in [[], tuple()]:
+            elif self.axes in [[], ()]:
                 self.axes = None
             elif isinstance(self.axes, list):
                 self.axes = tuple(self.axes)

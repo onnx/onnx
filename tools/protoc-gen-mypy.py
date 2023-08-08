@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# Copyright (c) ONNX Project Contributors
+
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy
@@ -31,10 +35,11 @@ except ImportError as e:
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet
 d: Any = d_typed
 
-GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is generated
+# Split the string so phabricator doesn't think this file is generated
+GENERATED = "@ge" + "nerated"  # noqa: ISC003
 HEADER = (
     f"# {GENERATED} by protoc-gen-mypy.py.  Do not edit!\n"
-    + "# mypy: disable-error-code=override\n"
+    "# mypy: disable-error-code=override\n"
 )
 
 

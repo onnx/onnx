@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0902,R0911,R0912,R0913,R0914,W0221
 
@@ -24,7 +26,7 @@ class PrepareContext:
 
 
 class SelectedIndex:
-    __slots__ = ["batch_index_", "class_index_", "box_index_"]
+    __slots__ = ("batch_index_", "class_index_", "box_index_")
 
     def __init__(
         self, batch_index: int = 0, class_index: int = 0, box_index: int = 0
@@ -50,7 +52,7 @@ def suppress_by_iou(
     box1 = boxes_data[box_index1]
     box2 = boxes_data[box_index2]
     # center_point_box_ only support 0 or 1
-    if 0 == center_point_box:
+    if center_point_box == 0:
         # boxes data format [y1, x1, y2, x2]
         x1_min, x1_max = max_min(box1[1], box1[3])
         x2_min, x2_max = max_min(box2[1], box2[3])
@@ -232,7 +234,7 @@ class NonMaxSuppression(OpRun):
                             BoxInfo(class_scores[box_index], box_index)
                         )
 
-                sorted_boxes = list(sorted(candidate_boxes))
+                sorted_boxes = sorted(candidate_boxes)
 
                 selected_boxes_inside_class = []  # type: ignore
                 # Get the next box with top score, filter by iou_threshold.

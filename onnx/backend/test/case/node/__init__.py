@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
@@ -15,6 +17,7 @@ from onnx.onnx_pb import (
     GraphProto,
     ModelProto,
     NodeProto,
+    TensorProto,
     TypeProto,
 )
 
@@ -72,8 +75,7 @@ def _rename_edges_helper(
                 def subgraph_rename_helper(name: str) -> Any:
                     if name in sg_rename:  # noqa: B023
                         return sg_rename[name]  # noqa: B023
-                    else:
-                        return rename_helper(name)
+                    return rename_helper(name)
 
                 new_nodes = [
                     _rename_edges_helper(
@@ -91,7 +93,7 @@ def _rename_edges_helper(
 def function_expand_helper(
     node: NodeProto, function_proto: FunctionProto, op_prefix: str
 ) -> List[NodeProto]:
-    io_names_map = dict()
+    io_names_map = {}
     attribute_map = {a.name: a for a in node.attribute}
 
     for idx in range(len(function_proto.input)):
@@ -114,8 +116,7 @@ def function_expand_helper(
             return io_names_map[internal_name]
         elif internal_name == "":
             return ""
-        else:
-            return op_prefix + internal_name
+        return op_prefix + internal_name
 
     new_node_list = [
         _rename_edges_helper(internal_node, rename_helper, attribute_map, op_prefix)
@@ -129,7 +130,7 @@ def function_testcase_helper(
 ) -> Tuple[List[Tuple[List[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, node.domain)
+    schema = onnx.defs.get_schema(test_op, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
     # opset versions include the op's since_version and other opset versions
@@ -180,6 +181,10 @@ def _extract_value_info(
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
             type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+        elif isinstance(input, TensorProto):
+            elem_type = input.data_type
+            shape = tuple(input.dims)
+            type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
         else:
             elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
             shape = input.shape
@@ -196,7 +201,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
             # directly use make_model to create a model with the latest ir version
             if (
                 (
-                    (opset.domain == "" or opset.domain == "ai.onnx")
+                    (opset.domain in {"", "ai.onnx"})
                     and opset.version == latest_onnx_version + 1
                 )
                 or (
@@ -205,8 +210,8 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
                 )
                 or (
                     (
-                        opset.domain == "ai.onnx.training version"
-                        or opset.domain == "ai.onnx.preview.training"
+                        opset.domain
+                        in {"ai.onnx.training version", "ai.onnx.preview.training"}
                     )
                     and opset.version == latest_training_version + 1
                 )
@@ -228,8 +233,8 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # the latest opset vesion that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
-    inputs: Sequence[np.ndarray],
-    outputs: Sequence[np.ndarray],
+    inputs: Sequence[Union[np.ndarray, TensorProto]],
+    outputs: Sequence[Union[np.ndarray, TensorProto]],
     name: str,
     **kwargs: Any,
 ) -> None:
@@ -268,7 +273,7 @@ def expect(
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
         produce_opset_version = onnx.defs.get_schema(
-            node.op_type, node.domain
+            node.op_type, domain=node.domain
         ).since_version
         kwargs["opset_imports"] = [
             onnx.helper.make_operatorsetid(node.domain, produce_opset_version)
@@ -339,7 +344,7 @@ def expect(
 
         function_test_name = name + "_expanded"
         if onnx_ai_opset_version and onnx_ai_opset_version != since_version:
-            function_test_name += "_ver" + str(onnx_ai_opset_version)
+            function_test_name += f"_ver{onnx_ai_opset_version}"
         graph = onnx.helper.make_graph(
             nodes=expanded_function_nodes,
             name=function_test_name,

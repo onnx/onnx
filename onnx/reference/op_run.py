@@ -1,15 +1,25 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0912
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from __future__ import annotations
+
+import abc
+from typing import Any, ClassVar, Iterable
 
 import numpy as np
 
+from onnx import TensorProto
 from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
-from onnx.helper import make_node
+from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
 from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
+from onnx.reference.custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+)
 
 
 def _split_class_name(name):  # type: ignore
@@ -64,8 +74,8 @@ class RefAttrName:
         return f"{self.__class__.__name__}({self.name!r})"
 
 
-def _build_schemas() -> Dict[str, type]:
-    res: Dict[str, type] = {}
+def _build_schemas() -> dict[str, type]:
+    res: dict[str, type] = {}
     for schema in get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
@@ -103,7 +113,7 @@ class SparseTensor:
     """
 
     def __init__(
-        self, values: np.ndarray, indices: np.ndarray, shape: Tuple[int]
+        self, values: np.ndarray, indices: np.ndarray, shape: tuple[int]
     ) -> None:
         self.values = values
         self.indices = indices
@@ -122,14 +132,53 @@ def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
     return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
 
 
+def to_array_extended(tensor: TensorProto) -> np.ndarray:
+    """
+    Similar to :func:`to_array` but deals with bfloat16,
+    float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz.
+    """
+    elem_type = tensor.data_type
+    if elem_type == TensorProto.BFLOAT16:
+        data = tensor.int32_data
+        shape = tuple(tensor.dims)
+        y = np.empty(shape, dtype=bfloat16).ravel()
+        for i, d in enumerate(data):
+            y[i] = d
+        return y.reshape(shape)
+
+    if elem_type in (
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+    ):
+        m = {
+            TensorProto.FLOAT8E4M3FN: float8e4m3fn,
+            TensorProto.FLOAT8E4M3FNUZ: float8e4m3fnuz,
+            TensorProto.FLOAT8E5M2: float8e5m2,
+            TensorProto.FLOAT8E5M2FNUZ: float8e5m2fnuz,
+        }
+
+        if tensor.HasField("raw_data"):
+            data = tensor.raw_data  # type: ignore[assignment]
+        else:
+            data = tensor.int32_data
+        shape = tuple(tensor.dims)
+        y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
+        for i, d in enumerate(data):
+            y[i] = d
+        return y.reshape(shape)
+    return to_array(tensor)
+
+
 class Graph:
-    __slots__ = ["g"]
+    __slots__ = ("g",)
 
     def __init__(self, g: GraphProto) -> None:
         self.g = g
 
 
-class OpRun(ABC):
+class OpRun(abc.ABC):
     """
     Ancestor to all operators in this subfolder.
 
@@ -142,7 +191,7 @@ class OpRun(ABC):
 
     op_domain = ""
 
-    _attribute_conversion_functions = {
+    _attribute_conversion_functions: ClassVar[dict[Any, Any]] = {
         AttributeProto.FLOAT: lambda att: np.float32(att.f),
         AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
         AttributeProto.GRAPH: lambda att: Graph(att.g),
@@ -155,14 +204,14 @@ class OpRun(ABC):
         ],
         AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
         AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
-        AttributeProto.TENSOR: lambda att: to_array(att.t),
-        AttributeProto.TENSORS: lambda att: [to_array(t) for t in att.tensors],
+        AttributeProto.TENSOR: lambda att: to_array_extended(att.t),
+        AttributeProto.TENSORS: lambda att: [to_array_extended(t) for t in att.tensors],
         AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
         AttributeProto.TYPE_PROTOS: lambda att: [OnnxType(t) for t in att.type_protos],
     }
 
     def __init__(
-        self, onnx_node: NodeProto, run_params: Dict[str, Any], schema: Any = None
+        self, onnx_node: NodeProto, run_params: dict[str, Any], schema: Any = None
     ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
@@ -170,7 +219,7 @@ class OpRun(ABC):
             if att not in run_params:
                 raise RuntimeError(
                     f"Attribute {att!r} must be in run_params, only "
-                    f"{list(sorted(run_params))} was found."
+                    f"{sorted(run_params)} was found."
                 )
         if "log" not in run_params:
             raise KeyError("run_params must contains key 'log'.")
@@ -194,7 +243,7 @@ class OpRun(ABC):
         self.run_params["log"](pattern, *args)
 
     def _extract_attribute_value(
-        self, att: AttributeProto, ref_att: Optional[AttributeProto] = None
+        self, att: AttributeProto, ref_att: AttributeProto | None = None
     ) -> Any:
         """
         Converts an attribute value into a python value.
@@ -209,7 +258,7 @@ class OpRun(ABC):
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
-                new_ops=None if new_ops is None else new_ops.values(),
+                new_ops=None if new_ops is None else list(new_ops.values()),
             )
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
@@ -272,7 +321,7 @@ class OpRun(ABC):
         self.attributes_names_ = set(added_attributes)
 
     @staticmethod
-    def implicit_inputs(graph: GraphProto) -> List[str]:
+    def implicit_inputs(graph: GraphProto) -> list[str]:
         """
         Returns all varibles not registered as inputs and not produced by
         an node inside the graph. This inputs are part of the context
@@ -335,7 +384,7 @@ class OpRun(ABC):
         atts.append(")")
         return "\n".join(atts)
 
-    @abstractmethod
+    @abc.abstractmethod
     def _run(self, *args, **kwargs):  # type: ignore
         """
         Should be overwritten.
@@ -409,7 +458,7 @@ class OpRun(ABC):
                 )
             kwargs[att] = getattr(self, att)
         if self.has_subgraph:
-            if self.has_linked_attribute and len(linked_attributes) == 0:
+            if self.has_linked_attribute and not linked_attributes:
                 raise RuntimeError(
                     f"A subgraph has linked attribute but none was given to {type(self)}."
                 )
@@ -417,14 +466,14 @@ class OpRun(ABC):
         if context is not None:
             kwargs["context"] = context
         try:
-            if len(overridden_attributes) > 0:
+            if overridden_attributes:
                 res = self._run(*args, **overridden_attributes, **kwargs)
             else:
                 res = self._run(*args, **kwargs)
         except (TypeError, AttributeError) as e:
             raise TypeError(
                 f"Issues with types {[type(_) for _ in args]} and attributes "
-                f"{list(sorted(kwargs))} and linked attributes={list(sorted(overridden_attributes))} "
+                f"{sorted(kwargs)} and linked attributes={sorted(overridden_attributes)} "
                 f"(operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
@@ -436,7 +485,7 @@ class OpRun(ABC):
             raise ValueError(
                 f"Method '_run' of class {self.__class__.__name__!r} does not return any result."
             )
-        if any(map(lambda t: isinstance(t, tuple), res)):
+        if any(isinstance(t, tuple) for t in res):
             dtypes = [type(t) for t in res]
             raise TypeError(
                 f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
@@ -446,10 +495,22 @@ class OpRun(ABC):
         return res
 
     @classmethod
+    def infer_name(cls):
+        name = cls.__name__
+        if "_" not in name:
+            return name, onnx_opset_version()
+        name, vers = name.rsplit("_", 1)
+        try:
+            i_vers = int(vers)
+        except ValueError:
+            return cls.__name__, onnx_opset_version()
+        return name, i_vers
+
+    @classmethod
     def make_node(
         cls,
-        n_inputs: Optional[int] = None,
-        n_outputs: Optional[int] = None,
+        n_inputs: int | None = None,
+        n_outputs: int | None = None,
         **kwargs: Any,
     ) -> NodeProto:  # type: ignore
         """
@@ -472,27 +533,28 @@ class OpRun(ABC):
             onnx_node = Celu.make_node(alpha=0.5)
             print(onnx_node)
         """
+        op_type, opset = cls.infer_name()
         domain = cls.op_domain
         schema = None
         if n_inputs is None:
             if schema is None:
-                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+                schema = get_schema(op_type, opset, domain)
             n_inputs = schema.min_input
         if n_outputs is None:
             if schema is None:
-                schema = get_schema(cls.__name__, onnx_opset_version(), domain)
+                schema = get_schema(op_type, opset, domain)
             n_outputs = schema.min_output
 
         names_in = [f"x{i}" for i in range(n_inputs)]
         names_out = [f"y{i}" for i in range(n_outputs)]
-        node = make_node(cls.__name__, names_in, names_out, **kwargs)
+        node = make_node(op_type, names_in, names_out, **kwargs)
         return node
 
     @classmethod
     def create(
         cls,
-        n_inputs: Optional[int] = None,
-        n_outputs: Optional[int] = None,
+        n_inputs: int | None = None,
+        n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
     ) -> Any:
@@ -511,20 +573,20 @@ class OpRun(ABC):
                 print(pattern % tuple(args))
 
         node = cls.make_node(n_inputs, n_outputs, **kwargs)
-        run_params = dict(
-            verbose=verbose,
-            log=log_function,
-            new_ops=None,
-            opsets={"": onnx_opset_version()},
-        )
+        run_params = {
+            "verbose": verbose,
+            "log": log_function,
+            "new_ops": None,
+            "opsets": {"": onnx_opset_version()},
+        }
         cl = cls(node, run_params)
         return cl
 
     @classmethod
     def eval(
         cls,
-        *args: List[Any],
-        n_outputs: Optional[int] = None,
+        *args: list[Any],
+        n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
     ) -> Any:  # type: ignore
@@ -544,12 +606,36 @@ class OpRun(ABC):
         return res
 
 
+class OpRunExpand(OpRun):
+    """
+    Class any operator to avoid must inherit from.
+    """
+
+    def __init__(
+        self, onnx_node: NodeProto, log_function: Any, impl: Any = None
+    ):  # pylint: disable=super-init-not-called
+        raise RuntimeError(
+            f"The reference implementation must not use this node ({type(self)})."
+        )
+
+    def _run(self, *inputs, **kwargs):
+        raise RuntimeError(
+            f"The reference implementation must not use this node ({type(self)})."
+        )
+
+
 class OpFunction(OpRun):
     """
     Runs a custom function.
     """
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
+    def __init__(
+        self,
+        onnx_node: NodeProto,
+        log_function: Any,
+        impl: Any = None,
+        attributes: dict[str, Any] | None = None,
+    ):
         if impl is None:
             raise RuntimeError(
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
@@ -560,24 +646,69 @@ class OpFunction(OpRun):
         # The function implementation is the same whenever the function is called
         # but the attributes may be different at every call.
         self.attributes_ = {
-            name: getattr(self, name) for name in self.impl_.attributes_
+            name: getattr(self, name)
+            for name in getattr(self.impl_, "attributes_", attributes)  # type: ignore[union-attr]
         }
 
     def _run(self, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
-        if len(self.impl_.input_names) != len(inputs):
+        return self._run_impl(self.impl_, *inputs, **kwargs)
+
+    def _run_impl(self, impl, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
+        if len(impl.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(self.impl_.inputs)} "
+                f"and the expected number of inputs {len(impl.inputs)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
-        feeds = dict(zip(self.impl_.input_names, inputs))
+        feeds = dict(zip(impl.input_names, inputs))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
-        results = self.impl_.run(None, feeds, attributes=attributes)
-        if len(self.impl_.output_names) != len(results):
+        results = impl.run(None, feeds, attributes=attributes)
+        if len(impl.output_names) != len(results):
             raise RuntimeError(
                 f"Mismatch lengths between the number of outputs {len(results)} "
-                f"and the expected number of outputs {len(self.impl_.output_names)} "
+                f"and the expected number of outputs {len(impl.output_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         return tuple(results)
+
+
+class OpFunctionContextDependant(OpFunction):
+    """
+    The function can be instantiated but only at execution time.
+    An instance of OpFunction is created everytime to node is executed.
+    This is needed when the schema of an operator defines a context dependant function.
+    """
+
+    def __init__(self, onnx_node: NodeProto, log_function: Any, parent: Any = None):
+        OpFunction.__init__(self, onnx_node, log_function, impl=self, attributes={})
+        self.parent = parent
+        version = parent.opsets[onnx_node.domain]
+        self.schema_ = get_schema(onnx_node.op_type, version, onnx_node.domain)
+
+    def _run(self, *inputs, **kwargs):
+        # Input types are known. They are used to properly
+        # created the body for this operator.
+        types = []
+        for t in inputs:
+            try:
+                ttype = np_dtype_to_tensor_dtype(t.dtype)
+            except KeyError as e:
+                if t.dtype == float8e4m3fn:
+                    ttype = TensorProto.FLOAT8E4M3FN  # type: ignore[attr-defined]
+                elif t.dtype == float8e4m3fnuz:
+                    ttype = TensorProto.FLOAT8E4M3FNUZ  # type: ignore[attr-defined]
+                elif t.dtype == float8e5m2:
+                    ttype = TensorProto.FLOAT8E5M2  # type: ignore[attr-defined]
+                elif t.dtype == float8e5m2fnuz:
+                    ttype = TensorProto.FLOAT8E5M2FNUZ  # type: ignore[attr-defined]
+                elif t.dtype == bfloat16:
+                    ttype = TensorProto.BLOFAT16  # type: ignore[attr-defined]
+                else:
+                    raise e
+            types.append(make_tensor_type_proto(ttype, t.shape))
+        cl = self.parent._load_impl(  # pylint: disable=protected-access
+            self.onnx_node, types
+        )
+        inst = cl(self.onnx_node, self.run_params)
+        return self._run_impl(inst.impl_, *inputs, **kwargs)

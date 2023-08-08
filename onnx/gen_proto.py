@@ -36,20 +36,20 @@ def process_ifs(lines: Iterable[str], onnx_ml: bool) -> Iterable[str]:
     in_if = 0
     for line in lines:
         if IF_ONNX_ML_REGEX.match(line):
-            assert 0 == in_if
+            assert in_if == 0
             in_if = 1
         elif ELSE_ONNX_ML_REGEX.match(line):
-            assert 1 == in_if
+            assert in_if == 1
             in_if = 2
         elif ENDIF_ONNX_ML_REGEX.match(line):
-            assert 1 == in_if or 2 == in_if  # pylint: disable=consider-using-in
+            assert in_if == 1 or in_if == 2  # pylint: disable=consider-using-in
             in_if = 0
         else:
-            if 0 == in_if:
+            if in_if == 0:
                 yield line
-            elif 1 == in_if and onnx_ml:
+            elif in_if == 1 and onnx_ml:
                 yield line
-            elif 2 == in_if and not onnx_ml:
+            elif in_if == 2 and not onnx_ml:
                 yield line
 
 
@@ -222,7 +222,7 @@ def main() -> None:
         "-p",
         "--package",
         default="onnx",
-        help="package name in the generated proto files" " (default: %(default)s)",
+        help="package name in the generated proto files (default: %(default)s)",
     )
     parser.add_argument("-m", "--ml", action="store_true", help="ML mode")
     parser.add_argument(
@@ -244,7 +244,7 @@ def main() -> None:
         "stems",
         nargs="*",
         default=["onnx", "onnx-operators", "onnx-data"],
-        help="list of .in.proto file stems " "(default: %(default)s)",
+        help="list of .in.proto file stems (default: %(default)s)",
     )
     args = parser.parse_args()
 

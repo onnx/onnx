@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 172/185 (92.97%, 5 generators excluded) common operators.
+Node tests have covered 178/191 (93.19%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -339,6 +339,70 @@ node = onnx.helper.make_node(
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
+```
+
+</details>
+
+
+### AffineGrid
+There are 2 test cases, listed as following:
+<details>
+<summary>2d_no_reference_evaluator</summary>
+
+```python
+theta_2d = create_theta_2d()
+N, C, W, H = len(theta_2d), 3, 5, 6
+data_size = (W, H)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_2d, original_grid)
+
+    test_name = "test_affine_grid_2d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_2d, np.array([N, C, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
+```
+
+</details>
+<details>
+<summary>3d_no_reference_evaluator</summary>
+
+```python
+theta_3d = create_theta_3d()
+N, C, D, W, H = len(theta_3d), 3, 4, 5, 6
+data_size = (D, W, H)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_3d, original_grid)
+
+    test_name = "test_affine_grid_3d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_3d, np.array([N, C, D, W, H], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
 ```
 
 </details>
@@ -1041,7 +1105,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### AveragePool
-There are 14 test cases, listed as following:
+There are 16 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
@@ -1058,11 +1122,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_1d_default")
 ```
@@ -1118,11 +1185,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_default")
 ```
@@ -1140,12 +1210,26 @@ node = onnx.helper.make_node(
     "AveragePool",
     inputs=["x"],
     outputs=["y"],
-    kernel_shape=[3, 3],
+    kernel_shape=[2, 2],
     strides=[1, 1],
     dilations=[2, 2],
     ceil_mode=True,
 )
-x = (np.arange(16) + 1).astype(np.float32).reshape((1, 1, 4, 4))
+
+# input shape: [1, 1, 4, 4]
+x = np.array(
+    [
+        [
+            [
+                [1, 2, 3, 4],
+                [5, 6, 7, 8],
+                [9, 10, 11, 12],
+                [13, 14, 15, 16],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
 y = np.array([[[[6, 7], [10, 11]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
@@ -1176,17 +1260,17 @@ pad_bottom = 2
 pad_top = 2
 pad_right = 2
 pad_left = 2
-pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides, ceil_mode=False
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+    ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_pads")
 ```
@@ -1211,19 +1295,20 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 28, 28).astype(np.float32)
 x_shape = np.shape(x)
+dilations = (1, 1)
 kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = 2
 pad_top = 2
 pad_right = 2
 pad_left = 2
-pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode=False
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+    ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
     mode="constant",
     constant_values=0,
 )
@@ -1233,8 +1318,8 @@ y = pool(
     kernel_shape,
     strides,
     out_shape,
-    pad_shape,
     "AVG",
+    pads,
     count_include_pad=1,
 )
 
@@ -1451,7 +1536,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_LOWER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_LOWER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_LOWER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -1465,7 +1552,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "AVG")
+pads = (pad_top, pad_left, pad_bottom, pad_right)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_lower")
 ```
@@ -1491,7 +1579,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_UPPER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_UPPER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_UPPER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -1505,7 +1595,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "AVG")
+pads = (pad_top, pad_left, pad_bottom, pad_right)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_upper")
 ```
@@ -1530,9 +1621,11 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, pads = get_output_shape_explicit_padding(
+    None, x_shape[2:], kernel_shape, strides, ceil_mode=False
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_strides")
 ```
@@ -1554,13 +1647,137 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_3d_default")
+```
+
+</details>
+<details>
+<summary>averagepool_3d_dilations</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2],
+    strides=[1, 1, 1],
+    dilations=[2, 2, 2],
+    ceil_mode=True,
+)
+
+# input shape: [1, 1, 4, 4, 4]
+x = np.array(
+    [
+        [
+            [
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+y = np.array([[[[[6, 7], [10, 11]], [[6, 7], [10, 11]]]]]).astype(np.float32)
+
+expect(
+    node, inputs=[x], outputs=[y], name="test_averagepool_3d_dilations_small"
+)
+```
+
+</details>
+<details>
+<summary>averagepool_3d_dilations_large</summary>
+
+```python
+x_shape = (32, 32, 32)
+dilations = (2, 2, 2)
+kernel_shape = (5, 5, 5)
+strides = (3, 3, 3)
+count_include_pad = 0
+
+for count_include_pad in (0, 1):
+    for ceil_mode in (True, False):
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=kernel_shape,
+            strides=strides,
+            dilations=dilations,
+            count_include_pad=count_include_pad,
+            ceil_mode=ceil_mode,
+        )
+
+        x = np.random.randn(1, 1, *x_shape).astype(np.float32)
+        out_shape, pads = get_output_shape_explicit_padding(
+            None,
+            x_shape,
+            kernel_shape,
+            strides,
+            dilations=dilations,
+            ceil_mode=ceil_mode,
+        )
+        padded = np.pad(
+            x,
+            (
+                (0, 0),
+                (0, 0),
+                (pads[0], pads[3]),
+                (pads[1], pads[4]),
+                (pads[2], pads[5]),
+            ),
+            mode="constant",
+            constant_values=0 if count_include_pad == 1 else np.nan,
+        )
+        y = pool(
+            padded,
+            (1, 1, *x_shape),
+            kernel_shape,
+            strides,
+            out_shape,
+            "AVG",
+            pads=pads,
+            dilations=dilations,
+            count_include_pad=count_include_pad,
+        )
+
+        test_name = f"test_averagepool_3d_dilations_large_count_include_pad_is_{count_include_pad}_ceil_mode_is_{ceil_mode}"
+        expect(node, inputs=[x], outputs=[y], name=test_name)
 ```
 
 </details>
@@ -2069,8 +2286,8 @@ a0 = 0.42
 a1 = -0.5
 a2 = 0.08
 y = a0
-y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
-y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
 
 # Test symmetric window
@@ -2083,10 +2300,10 @@ a1 = -0.5
 a2 = 0.08
 y = a0
 y += a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 y += a2 * np.cos(
-    4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 ```
@@ -2095,7 +2312,7 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 
 
 ### Cast
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>cast</summary>
 
@@ -2112,12 +2329,32 @@ test_cases = [
     ("STRING", "FLOAT"),
     ("FLOAT", "BFLOAT16"),
     ("BFLOAT16", "FLOAT"),
+    ("FLOAT", "FLOAT8E4M3FN"),
+    ("FLOAT16", "FLOAT8E4M3FN"),
+    ("FLOAT", "FLOAT8E4M3FNUZ"),
+    ("FLOAT16", "FLOAT8E4M3FNUZ"),
+    ("FLOAT8E4M3FN", "FLOAT"),
+    ("FLOAT8E4M3FN", "FLOAT16"),
+    ("FLOAT8E4M3FNUZ", "FLOAT"),
+    ("FLOAT8E4M3FNUZ", "FLOAT16"),
+    ("FLOAT", "FLOAT8E5M2"),
+    ("FLOAT16", "FLOAT8E5M2"),
+    ("FLOAT", "FLOAT8E5M2FNUZ"),
+    ("FLOAT16", "FLOAT8E5M2FNUZ"),
+    ("FLOAT8E5M2", "FLOAT"),
+    ("FLOAT8E5M2", "FLOAT16"),
+    ("FLOAT8E5M2FNUZ", "FLOAT"),
+    ("FLOAT8E5M2FNUZ", "FLOAT16"),
 ]
+
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
 
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -2140,7 +2377,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -2167,11 +2404,106 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+    elif from_type in f8_types or to_type in f8_types:
+        np_fp32 = np.array(
+            [
+                "0.47892547",
+                "0.48033667",
+                "0.49968487",
+                "0.81910545",
+                "0.47031248",
+                "0.7229038",
+                "1000000",
+                "1e-7",
+                "NaN",
+                "INF",
+                "+INF",
+                "-INF",
+            ],
+            dtype=np.float32,
+        )
+
+        if from_type == "FLOAT":
+            input_values = np_fp32
+            input = make_tensor(
+                "x", TensorProto.FLOAT, [3, 4], np_fp32.tolist()
+            )
+        elif from_type == "FLOAT16":
+            input_values = np_fp32.astype(np.float16).astype(np.float32)
+            input = make_tensor(
+                "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E4M3FN":
+            input_values = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32)
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FN, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E4M3FNUZ":
+            input_values = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32, uz=True), uz=True
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E5M2":
+            input_values = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32)
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E5M2, [3, 4], input_values.tolist()
+            )
+        elif from_type == "FLOAT8E5M2FNUZ":
+            input_values = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32, fn=True, uz=True),
+                fn=True,
+                uz=True,
+            )
+            input = make_tensor(
+                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 4], input_values.tolist()
+            )
+        else:
+            raise ValueError(
+                "Conversion from {from_type} to {to_type} is not tested."
+            )
+
+        if to_type == "FLOAT8E4M3FN":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(input_values)
+            )
+        elif to_type == "FLOAT8E4M3FNUZ":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(input_values, uz=True), uz=True
+            )
+        elif to_type == "FLOAT8E5M2":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(input_values)
+            )
+        elif to_type == "FLOAT8E5M2FNUZ":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(input_values, fn=True, uz=True),
+                fn=True,
+                uz=True,
+            )
+        elif to_type == "FLOAT16":
+            expected = input_values.astype(np.float16).astype(np.float32)
+        elif to_type == "FLOAT":
+            expected = input_values
+        else:
+            raise ValueError(
+                "Conversion from {from_type} to {to_type} is not tested."
+            )
+        expected_tensor = make_tensor(
+            "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
+        )
+        output = expected_tensor
+
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -2230,6 +2562,98 @@ for from_type, to_type in test_cases:
 ```
 
 </details>
+<details>
+<summary>saturate_false</summary>
+
+```python
+test_cases = [
+    ("FLOAT", "FLOAT8E4M3FN"),
+    ("FLOAT16", "FLOAT8E4M3FN"),
+    ("FLOAT", "FLOAT8E4M3FNUZ"),
+    ("FLOAT16", "FLOAT8E4M3FNUZ"),
+    ("FLOAT", "FLOAT8E5M2"),
+    ("FLOAT16", "FLOAT8E5M2"),
+    ("FLOAT", "FLOAT8E5M2FNUZ"),
+    ("FLOAT16", "FLOAT8E5M2FNUZ"),
+]
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+
+for from_type, to_type in test_cases:
+    np_fp32 = np.array(
+        [
+            "0.47892547",
+            "0.48033667",
+            "0.49968487",
+            "0.81910545",
+            "0.47031248",
+            "0.7229038",
+            "1000000",
+            "1e-7",
+            "NaN",
+            "INF",
+            "+INF",
+            "-INF",
+        ],
+        dtype=np.float32,
+    )
+
+    if from_type == "FLOAT":
+        input_values = np_fp32
+        input = make_tensor("x", TensorProto.FLOAT, [3, 4], np_fp32.tolist())
+    elif from_type == "FLOAT16":
+        input_values = np_fp32.astype(np.float16).astype(np.float32)
+        input = make_tensor(
+            "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+        )
+    else:
+        raise ValueError(
+            "Conversion from {from_type} to {to_type} is not tested."
+        )
+
+    if to_type == "FLOAT8E4M3FN":
+        expected = vect_float32_to_float8e4m3(input_values, saturate=False)
+    elif to_type == "FLOAT8E4M3FNUZ":
+        expected = vect_float32_to_float8e4m3(
+            input_values, uz=True, saturate=False
+        )
+    elif to_type == "FLOAT8E5M2":
+        expected = vect_float32_to_float8e5m2(input_values, saturate=False)
+    elif to_type == "FLOAT8E5M2FNUZ":
+        expected = vect_float32_to_float8e5m2(
+            input_values, fn=True, uz=True, saturate=False
+        )
+    else:
+        raise ValueError(
+            "Conversion from {from_type} to {to_type} is not tested."
+        )
+
+    ivals = bytes([int(i) for i in expected])
+    tensor = TensorProto()
+    tensor.data_type = getattr(TensorProto, to_type)
+    tensor.name = "x"
+    tensor.dims.extend([3, 4])
+    field = tensor_dtype_to_field(tensor.data_type)
+    getattr(tensor, field).extend(ivals)
+
+    output = tensor
+
+    node = onnx.helper.make_node(
+        "Cast",
+        inputs=["input"],
+        outputs=["output"],
+        to=getattr(TensorProto, to_type),
+        saturate=0,
+    )
+    expect(
+        node,
+        inputs=[input],
+        outputs=[output],
+        name="test_cast_no_saturate_" + from_type + "_to_" + to_type,
+    )
+```
+
+</details>
 
 
 ### CastLike
@@ -2250,12 +2674,23 @@ test_cases = [
     ("STRING", "FLOAT"),
     ("FLOAT", "BFLOAT16"),
     ("BFLOAT16", "FLOAT"),
+    ("FLOAT", "FLOAT8E4M3FN"),
+    ("FLOAT", "FLOAT8E4M3FNUZ"),
+    ("FLOAT8E4M3FN", "FLOAT"),
+    ("FLOAT8E4M3FNUZ", "FLOAT"),
+    ("FLOAT", "FLOAT8E5M2"),
+    ("FLOAT", "FLOAT8E5M2FNUZ"),
+    ("FLOAT8E5M2", "FLOAT"),
+    ("FLOAT8E5M2FNUZ", "FLOAT"),
 ]
+
+vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
 
 for from_type, to_type in test_cases:
     input_type_proto = None
     output_type_proto = None
-    if "BFLOAT16" == from_type or "BFLOAT16" == to_type:
+    if from_type == "BFLOAT16" or to_type == "BFLOAT16":
         np_fp32 = np.array(
             [
                 "0.47892547",
@@ -2278,7 +2713,7 @@ for from_type, to_type in test_cases:
         np_bfp16 = (
             np_uint16_view[1::2] if little_endisan else np_uint16_view[0::2]
         )
-        if "BFLOAT16" == to_type:
+        if to_type == "BFLOAT16":
             assert from_type == "FLOAT"
             input = np_fp32.reshape([3, 4])
             output = np_bfp16.reshape([3, 4])
@@ -2305,11 +2740,91 @@ for from_type, to_type in test_cases:
             output_type_proto = onnx.helper.make_tensor_type_proto(
                 int(TensorProto.FLOAT), output.shape
             )
-    elif "STRING" != from_type:
+        like = output.flatten()[0:1]
+    elif from_type in (
+        "FLOAT8E4M3FN",
+        "FLOAT8E4M3FNUZ",
+        "FLOAT8E5M2",
+        "FLOAT8E5M2FNUZ",
+    ) or to_type in (
+        "FLOAT8E4M3FN",
+        "FLOAT8E4M3FNUZ",
+        "FLOAT8E5M2",
+        "FLOAT8E5M2FNUZ",
+    ):
+        np_fp32 = np.array(
+            [
+                "0.47892547",
+                "0.48033667",
+                "0.49968487",
+                "0.81910545",
+                "0.47031248",
+                "0.816468",
+                "0.21087195",
+                "0.7229038",
+                "NaN",
+                "INF",
+                "+INF",
+                "-INF",
+            ],
+            dtype=np.float32,
+        )
+        if to_type == "FLOAT8E4M3FN":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32)
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FN, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FN, [1], expected[:1]
+            )
+        elif to_type == "FLOAT8E4M3FNUZ":
+            expected = float8e4m3_to_float32(
+                vect_float32_to_float8e4m3(np_fp32, uz=True), uz=True
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E4M3FNUZ, [1], expected[:1]
+            )
+        elif to_type == "FLOAT8E5M2":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32)
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2, [1], expected[:1]
+            )
+        elif to_type == "FLOAT8E5M2FNUZ":
+            expected = float8e5m2_to_float32(
+                vect_float32_to_float8e5m2(np_fp32, fn=True, uz=True),
+                fn=True,
+                uz=True,
+            )
+            expected_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 4], expected.tolist()
+            )
+            like_tensor = make_tensor(
+                "x", TensorProto.FLOAT8E5M2FNUZ, [1], expected[:1]
+            )
+        if from_type == "FLOAT":
+            input = np_fp32.reshape((3, 4))
+            output = expected_tensor
+            like = like_tensor
+        else:
+            assert to_type == "FLOAT"
+            input = expected_tensor
+            output = expected.reshape((3, 4))
+            like = output.flatten()[:1]
+    elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
         )
-        if "STRING" == to_type:
+        if to_type == "STRING":
             # Converting input to str, then give it object dtype for generating script
             ss = []
             for i in input.flatten():
@@ -2322,6 +2837,7 @@ for from_type, to_type in test_cases:
             output = input.astype(
                 helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
             )
+        like = output.flatten()[0:1]
     else:
         input = np.array(
             [
@@ -2343,19 +2859,23 @@ for from_type, to_type in test_cases:
         output = input.astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, to_type))
         )
-    like = output.flatten()[0:1]
+        like = output.flatten()[0:1]
     node = onnx.helper.make_node(
         "CastLike",
         inputs=["input", "like"],
         outputs=["output"],
     )
     if input_type_proto and output_type_proto:
+        like_type_proto = onnx.helper.make_tensor_type_proto(
+            output_type_proto.tensor_type.elem_type, like.shape
+        )
+
         expect(
             node,
             inputs=[input, like],
             outputs=[output],
             name="test_castlike_" + from_type + "_to_" + to_type,
-            input_type_protos=[input_type_proto, output_type_proto],
+            input_type_protos=[input_type_proto, like_type_proto],
             output_type_protos=[output_type_proto],
         )
     else:
@@ -2441,7 +2961,7 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
 
 
 ### CenterCropPad
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>center_crop_pad_crop</summary>
 
@@ -2534,6 +3054,32 @@ expect(
     inputs=[x, shape],
     outputs=[y],
     name="test_center_crop_pad_crop_axes_hwc",
+)
+```
+
+</details>
+<details>
+<summary>center_crop_pad_crop_negative_axes_hwc</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CenterCropPad",
+    inputs=["x", "shape"],
+    outputs=["y"],
+    axes=[-3, -2],
+)
+
+# Cropping on first dim, padding on second, third stays the same
+x = np.random.randn(20, 8, 3).astype(np.float32)
+shape = np.array([10, 9], dtype=np.int64)
+y = np.zeros([10, 9, 3], dtype=np.float32)
+y[:, :8, :] = x[5:15, :, :]
+
+expect(
+    node,
+    inputs=[x, shape],
+    outputs=[y],
+    name="test_center_crop_pad_crop_negative_axes_hwc",
 )
 ```
 
@@ -3180,12 +3726,12 @@ for test_case, values_ in test_cases.items():
     for i in range(len(values[0].shape)):
         in_args = ["value" + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
-            "Concat", inputs=[s for s in in_args], outputs=["output"], axis=i
+            "Concat", inputs=list(in_args), outputs=["output"], axis=i
         )
         output = np.concatenate(values, i)
         expect(
             node,
-            inputs=[v for v in values],
+            inputs=list(values),
             outputs=[output],
             name="test_concat_" + test_case + "_axis_" + str(i),
         )
@@ -3193,12 +3739,12 @@ for test_case, values_ in test_cases.items():
     for i in range(-len(values[0].shape), 0):
         in_args = ["value" + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
-            "Concat", inputs=[s for s in in_args], outputs=["output"], axis=i
+            "Concat", inputs=list(in_args), outputs=["output"], axis=i
         )
         output = np.concatenate(values, i)
         expect(
             node,
-            inputs=[v for v in values],
+            inputs=list(values),
             outputs=[output],
             name="test_concat_" + test_case + "_axis_negative_" + str(abs(i)),
         )
@@ -4241,6 +4787,181 @@ expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
 </details>
 
 
+### DeformConv
+There are 3 test cases, listed as following:
+<details>
+<summary>deformconv</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+
+# Convolution with padding
+offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
+offset_with_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_with_padding[
+    0, 5, 1, 2
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [1, 2]
+
+node_with_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_with_padding"],
+    outputs=["Y_with_padding"],
+    kernel_shape=[2, 2],
+    pads=[1, 1, 1, 1],
+)
+Y_with_padding = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 2.0],  # (1, 1, 4, 4) output tensor
+                [3.0, 8.0, 11.9, 7.0],
+                [9.0, 20.0, 24.0, 13.0],
+                [6.0, 13.0, 15.0, 8.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_with_padding,
+    inputs=[X, W, offset_with_padding],
+    outputs=[Y_with_padding],
+    name="test_basic_deform_conv_with_padding",
+)
+
+# Convolution without padding
+offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset_without_padding[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_without_padding[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+node_without_padding = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset_without_padding"],
+    outputs=["Y_without_padding"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y_without_padding = np.array(
+    [
+        [
+            [
+                [9.5, 11.9],  # (1, 1, 2, 2) output tensor
+                [20.0, 24.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node_without_padding,
+    inputs=[X, W, offset_without_padding],
+    outputs=[Y_without_padding],
+    name="test_basic_deform_conv_without_padding",
+)
+```
+
+</details>
+<details>
+<summary>deformconv_with_mask_bias</summary>
+
+```python
+X = np.arange(9).astype(np.float32)
+X.shape = (1, 1, 3, 3)
+W = np.ones((1, 1, 2, 2), dtype=np.float32)
+B = np.ones((1,), dtype=np.float32)
+
+offset = np.zeros((1, 8, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset[
+    0, 5, 0, 1
+] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+
+mask = np.ones((1, 4, 2, 2), dtype=np.float32)
+mask[0, 2, 1, 1] = 0.2  # [1, 0] element of kernel at output position [1, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset", "B", "mask"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+)
+Y = np.array(
+    [
+        [
+            [
+                [10.5, 12.9],  # (1, 1, 2, 2) output tensor
+                [21.0, 19.4],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset, B, mask],
+    outputs=[Y],
+    name="test_deform_conv_with_mask_bias",
+)
+```
+
+</details>
+<details>
+<summary>deformconv_with_multiple_offset_groups</summary>
+
+```python
+X = np.zeros((1, 2, 3, 3), dtype=np.float32)
+X[0, 0] = np.reshape(np.arange(9).astype(np.float32), (3, 3))
+X[0, 1] = np.reshape(np.arange(8, -1, -1).astype(np.float32), (3, 3))
+X.shape = (1, 2, 3, 3)
+W = np.ones((1, 2, 2, 2), dtype=np.float32)
+
+offset = np.zeros((1, 16, 2, 2), dtype=np.float32)
+offset[
+    0, 0, 0, 0
+] = 0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
+offset[
+    0, 13, 0, 1
+] = (
+    -0.1
+)  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+
+node = onnx.helper.make_node(
+    "DeformConv",
+    inputs=["X", "W", "offset"],
+    outputs=["Y"],
+    kernel_shape=[2, 2],
+    pads=[0, 0, 0, 0],
+    offset_group=2,
+)
+Y = np.array(
+    [
+        [
+            [
+                [33.5, 32.1],  # (1, 1, 2, 2) output tensor
+                [32.0, 32.0],
+            ]
+        ]
+    ]
+).astype(np.float32)
+expect(
+    node,
+    inputs=[X, W, offset],
+    outputs=[Y],
+    name="test_deform_conv_with_multiple_offset_groups",
+)
+```
+
+</details>
+
+
 ### DepthToSpace
 There are 2 test cases, listed as following:
 <details>
@@ -4340,7 +5061,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 ### DequantizeLinear
-There are 2 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -4398,6 +5119,107 @@ expect(
     inputs=[x, x_scale, x_zero_point],
     outputs=[y],
     name="test_dequantizelinear",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
+x_scale = np.float32(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
+x_scale = np.float16(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_float16",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn_zero_point</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
+zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+x_scale = np.float32(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_zero_point",
+)
+```
+
+</details>
+<details>
+<summary>e5m2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, -96])
+x_scale = np.float32(2)
+y = np.array([0.0, 1.0, 2.0, 98304.0, -192.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e5m2",
 )
 ```
 
@@ -5675,6 +6497,56 @@ expect(
 </details>
 
 
+### Gelu
+There are 2 test cases, listed as following:
+<details>
+<summary>gelu_default</summary>
+
+```python
+node = onnx.helper.make_node("Gelu", inputs=["x"], outputs=["y"])
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+# expected output [-0.15865526, 0., 0.84134474]
+y = (0.5 * x * (1 + np.vectorize(math.erf)(x / np.sqrt(2)))).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_default_1")
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+# expected output [2.99595031, 3.99987331, 4.99999857]
+y = (0.5 * x * (1 + np.vectorize(math.erf)(x / np.sqrt(2)))).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_default_2")
+```
+
+</details>
+<details>
+<summary>gelu_tanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Gelu", inputs=["x"], outputs=["y"], approximate="tanh"
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+# expected output [-0.158808, 0., 0.841192]
+y = (
+    0.5
+    * x
+    * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * np.power(x, 3))))
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_tanh_1")
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+# expected output [2.9963627, 3.99993, 4.9999995]
+y = (
+    0.5
+    * x
+    * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * np.power(x, 3))))
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_tanh_2")
+```
+
+</details>
+
+
 ### Gemm
 There are 11 test cases, listed as following:
 <details>
@@ -6120,7 +6992,7 @@ expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_bcast")
 
 
 ### GridSample
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>gridsample</summary>
 
@@ -6129,7 +7001,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     padding_mode="zeros",
     align_corners=0,
 )
@@ -6258,7 +7130,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bilinear = np.array(
@@ -6278,7 +7150,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bilinear",
+    mode="linear",
     align_corners=1,
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
@@ -6316,7 +7188,7 @@ node = onnx.helper.make_node(
     "GridSample",
     inputs=["X", "Grid"],
     outputs=["Y"],
-    mode="bicubic",
+    mode="cubic",
 )
 # Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
 Y_bicubic = np.array(
@@ -6326,6 +7198,155 @@ Y_bicubic = np.array(
 
 expect(
     node, inputs=[X, Grid], outputs=[Y_bicubic], name="test_gridsample_bicubic"
+)
+
+# ============================================================================
+# Additional tests
+# The reference output tensors were generated using PyTorch 2.0.
+Grid = np.array(
+    [
+        [
+            [[-1.0, -0.8], [-0.6, -0.5], [-0.1, -0.2], [0.7, 0.0]],
+            [[0.0, 0.4], [0.2, -0.2], [-0.3, 0.5], [-1.0, 1.0]],
+        ]
+    ],
+    dtype=np.float32,
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [[[[0.0, 0.0, 2.0, 3.0], [4.0, 3.0, 4.0, 4.0]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_nearest_align_corners_0_additional_1",
+)
+
+# setting mode = 'nearest'
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [[[[0.0, 0.0, 2.0, 3.0], [2.0, 3.0, 4.0, 4.0]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_nearest_align_corners_1_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [[[[0.0000, 0.4500, 1.8000, 2.4000], [3.7000, 2.1000, 3.7000, 1.0000]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_bilinear_align_corners_0_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [[[[0.4000, 1.2000, 2.0500, 2.8500], [3.3000, 2.2000, 3.3500, 4.0000]]]],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_bilinear_align_corners_1_additional_1",
+)
+
+# These two new bicubic tests produces slightly higher error ~5e-5
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="cubic",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [-0.173250, 0.284265, 1.923106, 2.568000],
+                [5.170375, 2.284414, 4.744844, 1.046875],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bicubic],
+    name="test_gridsample_bicubic_align_corners_0_additional_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="cubic",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bicubic = np.array(
+    [
+        [
+            [
+                [0.304001, 1.128750, 2.266270, 3.144844],
+                [4.531500, 2.455360, 4.599819, 4.000000],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bicubic],
+    name="test_gridsample_bicubic_align_corners_1_additional_1",
 )
 ```
 
@@ -6422,6 +7443,173 @@ expect(
 ```
 
 </details>
+<details>
+<summary>volumeetric_gridsample_mode_aligncorners</summary>
+
+```python
+X = np.array(
+    [
+        [
+            [
+                [[1.0, 2.0], [3.0, 4.0]],
+                [[5.0, 6.0], [7.0, 8.0]],
+                [[9.0, 10.0], [11.0, 12.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+Grid = np.array(
+    [
+        [
+            [
+                [[-1.0, -1.0, -1.0], [-1.0, -0.5, 0.3]],
+                [[-0.5, -0.5, -0.5], [1.0, -0.6, -1.0]],
+                [[-0.2, -0.2, -0.2], [0.4, 0.2, 0.6]],
+                [[0.0, 0.0, 0.0], [-1.0, 0.0, 0.0]],
+            ],
+            [
+                [[0.0, 0.0, 0.0], [-1.0, 1.0, 0.0]],
+                [[-0.2, -0.2, -0.2], [1.0, 0.4, -0.2]],
+                [[0.5, 0.5, 0.5], [-1.0, -0.8, 0.8]],
+                [[1.0, 1.0, 1.0], [0.4, 0.6, -0.3]],
+            ],
+        ]
+    ],
+    dtype=np.float32,
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [[1.0, 5.0], [1.0, 0.0], [5.0, 12.0], [5.0, 5.0]],
+                [[5.0, 0.0], [5.0, 0.0], [12.0, 9.0], [0.0, 8.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_volumetric_nearest_align_corners_0",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="nearest",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_nearest = np.array(
+    [
+        [
+            [
+                [[1.0, 5.0], [1.0, 2.0], [5.0, 12.0], [5.0, 5.0]],
+                [[5.0, 7.0], [5.0, 8.0], [12.0, 9.0], [12.0, 8.0]],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_nearest],
+    name="test_gridsample_volumetric_nearest_align_corners_1",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=0,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [
+                    [0.1250, 3.4000],
+                    [2.0000, 0.4500],
+                    [4.7000, 10.9000],
+                    [6.5000, 3.0000],
+                ],
+                [
+                    [6.5000, 1.7500],
+                    [4.7000, 3.3000],
+                    [11.0000, 2.5200],
+                    [1.5000, 5.4900],
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_volumetric_bilinear_align_corners_0",
+)
+
+node = onnx.helper.make_node(
+    "GridSample",
+    inputs=["X", "Grid"],
+    outputs=["Y"],
+    mode="linear",
+    align_corners=1,
+)
+# Y shape, [N, C, H_out, W_out] - [1, 1, 2, 4]
+Y_bilinear = np.array(
+    [
+        [
+            [
+                [
+                    [1.0000, 6.7000],
+                    [3.7500, 2.4000],
+                    [5.4000, 9.3000],
+                    [6.5000, 6.0000],
+                ],
+                [
+                    [6.5000, 7.0000],
+                    [5.4000, 6.6000],
+                    [9.2500, 8.4000],
+                    [12.0000, 6.1000],
+                ],
+            ]
+        ]
+    ],
+    dtype=np.float32,
+)
+
+expect(
+    node,
+    inputs=[X, Grid],
+    outputs=[Y_bilinear],
+    name="test_gridsample_volumetric_bilinear_align_corners_1",
+)
+```
+
+</details>
 
 
 ### GroupNormalization
@@ -6491,9 +7679,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
 
 # Test symmetric window
@@ -6504,7 +7690,7 @@ size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
 ```
@@ -6527,9 +7713,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow")
 
 # Test symmetric window
@@ -6540,7 +7724,7 @@ size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
 ```
@@ -8181,9 +9365,12 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+pads = None
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "LPPOOL", p=p)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_1d_default")
 ```
@@ -8207,13 +9394,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
-padded = x
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_default")
 ```
@@ -8288,9 +9476,9 @@ x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
-pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -8298,9 +9486,7 @@ padded = np.pad(
     mode="constant",
     constant_values=0,
 )
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
-)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
 ```
@@ -8328,7 +9514,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_LOWER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_LOWER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_LOWER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -8342,9 +9530,8 @@ padded = np.pad(
     mode="constant",
     constant_values=0,
 )
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
-)
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
 ```
@@ -8372,7 +9559,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_UPPER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_UPPER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_UPPER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -8386,9 +9575,8 @@ padded = np.pad(
     mode="constant",
     constant_values=0,
 )
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
-)
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
 ```
@@ -8413,13 +9601,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
-padded = x
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_strides")
 ```
@@ -8443,13 +9632,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
-padded = x
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "LPPOOL", p=p
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_3d_default")
 ```
@@ -8613,7 +9803,7 @@ for op_dtype in all_numeric_dtypes:
 
 
 ### MaxPool
-There are 15 test cases, listed as following:
+There are 18 test cases, listed as following:
 <details>
 <summary>maxpool_1d_default</summary>
 
@@ -8630,11 +9820,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "MAX")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX")
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_1d_default")
 ```
@@ -8690,11 +9883,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX")
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_default")
 ```
@@ -8755,9 +9951,9 @@ x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
-pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -8765,7 +9961,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "MAX")
+
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_pads")
 ```
@@ -8908,7 +10105,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_LOWER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_LOWER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_LOWER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -8922,7 +10121,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "MAX")
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_lower")
 ```
@@ -8948,7 +10148,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_UPPER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_UPPER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_UPPER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -8962,7 +10164,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "MAX")
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_upper")
 ```
@@ -8981,11 +10184,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX")
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_strides")
 ```
@@ -9054,13 +10260,203 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "MAX")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX")
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_3d_default")
+```
+
+</details>
+<details>
+<summary>maxpool_3d_dilations</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4, 4]
+output_shape: [1, 1, 2, 2, 2]
+"""
+node = onnx.helper.make_node(
+    "MaxPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2],
+    strides=[1, 1, 1],
+    dilations=[2, 2, 2],
+)
+x = np.array(
+    [
+        [
+            [
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+            ]
+        ]
+    ]
+).astype(np.float32)
+y = np.array([[[[[11, 12], [15, 16]], [[11, 12], [15, 16]]]]]).astype(
+    np.float32
+)
+
+expect(node, inputs=[x], outputs=[y], name="test_maxpool_3d_dilations")
+```
+
+</details>
+<details>
+<summary>maxpool_3d_dilations_use_ref_impl</summary>
+
+```python
+"""
+input_shape: [1, 1, 4, 4, 4]
+output_shape: [1, 1, 2, 2, 2]
+"""
+dilations = [2, 2, 2]
+kernel_shape = [2, 2, 2]
+strides = [1, 1, 1]
+ceil_mode = False
+node = onnx.helper.make_node(
+    "MaxPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2],
+    strides=[1, 1, 1],
+    dilations=dilations,
+)
+x = np.array(
+    [
+        [
+            [
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+x_shape = x.shape[2:]
+out_shape, pads = get_output_shape_explicit_padding(
+    None, x_shape, kernel_shape, strides, dilations, ceil_mode=ceil_mode
+)
+padded = x
+y = pool(
+    padded,
+    (1, 1, *x_shape),
+    kernel_shape,
+    strides,
+    out_shape,
+    "MAX",
+    pads,
+    dilations=dilations,
+)
+
+expect(
+    node, inputs=[x], outputs=[y], name="test_maxpool_3d_dilations_use_ref_impl"
+)
+```
+
+</details>
+<details>
+<summary>maxpool_3d_dilations_use_ref_impl_large</summary>
+
+```python
+x_shape = (32, 32, 32)
+dilations = (2, 2, 2)
+kernel_shape = (5, 5, 5)
+strides = (3, 3, 3)
+ceil_mode = True
+
+node = onnx.helper.make_node(
+    "MaxPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=kernel_shape,
+    strides=strides,
+    dilations=dilations,
+    ceil_mode=ceil_mode,
+)
+
+x = np.random.randn(1, 1, *x_shape).astype(np.float32)
+out_shape, pads = get_output_shape_explicit_padding(
+    None, x_shape, kernel_shape, strides, dilations, ceil_mode=ceil_mode
+)
+padded = np.pad(
+    x,
+    (
+        (0, 0),
+        (0, 0),
+        (pads[0], pads[3]),
+        (pads[1], pads[4]),
+        (pads[2], pads[5]),
+    ),
+    mode="constant",
+    constant_values=0,
+)
+y = pool(
+    padded,
+    (1, 1, *x_shape),
+    kernel_shape,
+    strides,
+    out_shape,
+    "MAX",
+    pads,
+    dilations=dilations,
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_maxpool_3d_dilations_use_ref_impl_large",
+)
 ```
 
 </details>
@@ -11403,7 +12799,7 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
 
 ### Pad
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>constant_pad</summary>
 
@@ -11453,10 +12849,40 @@ expect(
 
 </details>
 <details>
+<summary>constant_pad_negative_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Pad", inputs=["x", "pads", "value", "axes"], outputs=["y"], mode="constant"
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+pads = np.array([0, 3, 0, 4]).astype(
+    np.int64
+)  # pad order [x1_begin, x2_begin, ..., x1_end, x2_end, ...]
+value = np.float32(1.2)
+axes = np.array([-3, -1], dtype=np.int64)
+y = pad_impl(
+    x,
+    pads,
+    "constant",
+    1.2,
+    [-3, -1],
+)
+
+expect(
+    node,
+    inputs=[x, pads, value, axes],
+    outputs=[y],
+    name="test_constant_pad_negative_axes",
+)
+```
+
+</details>
+<details>
 <summary>reflection_edge_and_wrap_pad</summary>
 
 ```python
-for mode in ["edge", "reflect", "wrap"]:
+for mode in ("edge", "reflect", "wrap"):
     node = onnx.helper.make_node(
         "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
     )
@@ -11776,7 +13202,7 @@ expect(
 
 
 ### QuantizeLinear
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -11808,6 +13234,58 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_axis",
+)
+```
+
+</details>
+<details>
+<summary>e4m3fn</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
+y_scale = np.float32(2)
+y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+y = make_tensor(
+    "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96]
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_e4m3fn",
+)
+```
+
+</details>
+<details>
+<summary>e5m2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
+y_scale = np.float32(2)
+y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
+y = make_tensor(
+    "zero_point", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96]
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_e5m2",
 )
 ```
 
@@ -13774,6 +15252,78 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_negative_axes_keepdims_random",
+)
+```
+
+</details>
+
+
+### RegexFullMatch
+There are 3 test cases, listed as following:
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"www\.[\w.-]+\.\bcom\b",
+)
+
+x = np.array(["www.google.com", "www.facebook.com", "www.bbc.co.uk"]).astype(
+    object
+)
+result = np.array([True, True, False])
+expect(node, inputs=[x], outputs=[result], name="test_regex_full_match_basic")
+```
+
+</details>
+<details>
+<summary>match_email_domain</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+)
+
+x = np.array(
+    [
+        ["account@gmail.com", "account@hotmail.com"],
+        ["not email", "account2@yahoo.com"],
+    ]
+).astype(object)
+result = np.array([[True, False], [False, True]])
+expect(
+    node,
+    inputs=[x],
+    outputs=[result],
+    name="test_regex_full_match_email_domain",
+)
+```
+
+</details>
+<details>
+<summary>match_empty</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+)
+
+x = np.array([[], []]).astype(object)
+result = np.array([[], []]).astype(bool)
+expect(
+    node,
+    inputs=[x],
+    outputs=[result],
+    name="test_regex_full_match_empty",
 )
 ```
 
@@ -16218,7 +17768,7 @@ node = onnx.helper.make_node(
 a0 = 0.5
 a1 = 0.5
 window = a0 + a1 * np.cos(
-    2 * 3.1415 * np.arange(0, length, 1, dtype=np.float32) / length
+    2 * np.pi * np.arange(0, length, 1, dtype=np.float32) / length
 )
 nstfts = 1 + (signal.shape[1] - window.shape[0]) // step
 
@@ -19455,7 +21005,7 @@ node = onnx.helper.make_node(
     keepdims=0,
 )
 
-expected_outputs = [list(data[:, i] for i in range(data.shape[1]))]
+expected_outputs = [[data[:, i] for i in range(data.shape[1])]]
 
 expect(
     node,
@@ -19579,6 +21129,71 @@ x = np.random.randn(1, 3, 1, 5).astype(np.float32)
 axes = np.array([-2], dtype=np.int64)
 y = np.squeeze(x, axis=-2)
 expect(node, inputs=[x, axes], outputs=[y], name="test_squeeze_negative_axes")
+```
+
+</details>
+
+
+### StringConcat
+There are 1 test cases, listed as following:
+<details>
+<summary>stringconcat</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringConcat",
+    inputs=["x", "y"],
+    outputs=["result"],
+)
+x = np.array(["abc", "def"]).astype("object")
+y = np.array([".com", ".net"]).astype("object")
+result = np.array(["abc.com", "def.net"]).astype("object")
+
+expect(node, inputs=[x, y], outputs=[result], name="test_string_concat")
+
+x = np.array(["cat", "dog", "snake"]).astype("object")
+y = np.array(["s"]).astype("object")
+result = np.array(["cats", "dogs", "snakes"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_broadcasting",
+)
+
+x = np.array("cat").astype("object")
+y = np.array("s").astype("object")
+result = np.array("cats").astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_zero_dimensional",
+)
+
+x = np.array(["abc", ""]).astype("object")
+y = np.array(["", "abc"]).astype("object")
+result = np.array(["abc", "abc"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_empty_string",
+)
+
+x = np.array(["的", "中"]).astype("object")
+y = np.array(["的", "中"]).astype("object")
+result = np.array(["的的", "中中"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_utf8",
+)
 ```
 
 </details>
@@ -19742,6 +21357,169 @@ expect(
     inputs=[input],
     outputs=[output],
     name="test_strnormalizer_nostopwords_nochangecase",
+)
+```
+
+</details>
+
+
+### StringSplit
+There are 5 test cases, listed as following:
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    delimiter=".",
+    maxsplit=None,
+)
+
+x = np.array(["abc.com", "def.net"]).astype(object)
+
+substrings = np.array([["abc", "com"], ["def", "net"]]).astype(object)
+
+length = np.array([2, 2], dtype=np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_basic",
+)
+```
+
+</details>
+<details>
+<summary>consecutive_delimiters</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    delimiter="-",
+    maxsplit=None,
+)
+
+x = np.array(["o-n-n--x-", "o-n----nx"]).astype(object)
+
+substrings = np.array(
+    [["o", "n", "n", "", "x", ""], ["o", "n", "", "", "", "nx"]]
+).astype(object)
+
+length = np.array([6, 6], dtype=np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_consecutive_delimiters",
+)
+```
+
+</details>
+<details>
+<summary>empty_string_delimiter</summary>
+
+```python
+for delimiter, test_name in (
+    ("", "test_string_split_empty_string_delimiter"),
+    (None, "test_string_split_no_delimiter"),
+):
+    node = onnx.helper.make_node(
+        "StringSplit",
+        inputs=["x"],
+        outputs=["substrings", "length"],
+        delimiter=delimiter,
+        maxsplit=None,
+    )
+
+    x = np.array(
+        ["hello world !", "  hello   world !", " hello world   ! "]
+    ).astype(object)
+
+    substrings = np.array(
+        [
+            ["hello", "world", "!"],
+            ["hello", "world", "!"],
+            ["hello", "world", "!"],
+        ]
+    ).astype(object)
+
+    length = np.array([3, 3, 3], dtype=np.int64)
+
+    expect(
+        node,
+        inputs=[x],
+        outputs=[substrings, length],
+        name=test_name,
+    )
+```
+
+</details>
+<details>
+<summary>empty_string_split</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    delimiter=None,
+    maxsplit=None,
+)
+
+x = np.array([]).astype(object)
+
+substrings = np.array([]).astype(object).reshape(0, 0)
+
+length = np.array([], dtype=np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_empty_tensor",
+    output_type_protos=[
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.STRING, (0, None)),
+        None,
+    ],
+)
+```
+
+</details>
+<details>
+<summary>maxsplit</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    maxsplit=2,
+)
+
+x = np.array(
+    [["hello world", "def.net"], ["o n n x", "the quick brown fox"]]
+).astype(object)
+
+substrings = np.array(
+    [
+        [["hello", "world", ""], ["def.net", "", ""]],
+        [["o", "n", "n x"], ["the", "quick", "brown fox"]],
+    ]
+).astype(object)
+
+length = np.array([[2, 1], [3, 3]], np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_maxsplit",
 )
 ```
 
@@ -20902,9 +22680,9 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True)
 
 # prepare index mapping from sorted to unsorted
 argsorted_indices = np.argsort(indices)
-inverse_indices_map = {
-    i: si for i, si in zip(argsorted_indices, np.arange(len(argsorted_indices)))
-}
+inverse_indices_map = dict(
+    zip(argsorted_indices, np.arange(len(argsorted_indices)))
+)
 
 indices = indices[argsorted_indices]
 y = np.take(x, indices, axis=0)
@@ -21419,12 +23197,17 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 # Model Test Coverage
 ## bvlc_alexnet
 
-bvlc_alexnet has 24 nodes. Of these, 24 are covered by node tests (100.0%)
+bvlc_alexnet has 40 nodes. Of these, 40 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
+</details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
 
@@ -21472,7 +23255,7 @@ strides: 1
 
 ## densenet121
 
-densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
+densenet121 has 1746 nodes. Of these, 1746 are covered by node tests (100.0%)
 
 
 <details>
@@ -21500,6 +23283,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21552,7 +23340,7 @@ strides: 1
 
 ## inception_v1
 
-inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
+inception_v1 has 237 nodes. Of these, 237 are covered by node tests (100.0%)
 
 
 <details>
@@ -21580,6 +23368,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21632,7 +23425,7 @@ strides: 2
 
 ## inception_v2
 
-inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
+inception_v2 has 916 nodes. Of these, 916 are covered by node tests (100.0%)
 
 
 <details>
@@ -21660,6 +23453,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21712,7 +23510,7 @@ strides: 2
 
 ## resnet50
 
-resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
+resnet50 has 415 nodes. Of these, 415 are covered by node tests (100.0%)
 
 
 <details>
@@ -21740,6 +23538,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21792,7 +23595,7 @@ strides: 2
 
 ## shufflenet
 
-shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
+shufflenet has 446 nodes. Of these, 446 are covered by node tests (100.0%)
 
 
 <details>
@@ -21820,6 +23623,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21877,7 +23685,7 @@ perm: 1
 
 ## squeezenet_old
 
-squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
+squeezenet_old has 105 nodes. Of these, 105 are covered by node tests (100.0%)
 
 
 <details>
@@ -21905,6 +23713,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -21962,7 +23775,7 @@ perm: 1
 
 ## vgg19
 
-vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
+vgg19 has 82 nodes. Of these, 82 are covered by node tests (100.0%)
 
 
 <details>
@@ -21990,6 +23803,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>
@@ -22047,7 +23865,7 @@ perm: 1
 
 ## zfnet512
 
-zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
+zfnet512 has 38 nodes. Of these, 38 are covered by node tests (100.0%)
 
 
 <details>
@@ -22075,6 +23893,11 @@ training_mode: 0
 <summary>Concat: 1 out of 1 attributes covered</summary>
 
 axis: 1
+</details>
+<details>
+<summary>ConstantOfShape: 1 out of 1 attributes covered</summary>
+
+value: 1
 </details>
 <details>
 <summary>Conv: 4 out of 6 attributes covered</summary>

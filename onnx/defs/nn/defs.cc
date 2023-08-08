@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
@@ -212,20 +213,27 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
  subset of the input tensor according to the kernel size and downsampling the
- data into the output tensor Y for further processing. The output spatial shape will be following:
+ data into the output tensor Y for further processing. The output spatial shape is calculated differently
+ depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+ With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
  ```
- output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+ output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
  ```
  or
  ```
- output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+ output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
  ```
- if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+ if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
 
- `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+ `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
  ```
  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+ ```
+ or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
+ ```
+ VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i]) + 1
+ SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
  ```
  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
  ```
@@ -313,8 +321,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "AveragePool",
             "average",
             "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).",
-            false,
-            false))
+            true, /* use_dilation: dilations attribute has been added in opset 19. */
+            false /* supports8bit: does not support 8bit. */))
         .Attr(
             "dilations",
             "Dilation value along each spatial axis of filter. If not present, the dilation defaults to 1 along each spatial axis.",
@@ -1328,7 +1336,8 @@ output_shape can also be explicitly specified in which case pads values are auto
     schema.Attr(
         "output_shape",
         "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
-        "pads values are ignored. See doc for details for equations to generate pads",
+        "pads values are ignored. See doc for details for equations to generate pads. Note that the output_shape attribute value "
+        "should not include dimensions for batch size and channels, which are automatically inferred.",
         AttributeProto::INTS,
         OPTIONAL_VALUE);
     schema.Attr(
@@ -1367,6 +1376,104 @@ output_shape can also be explicitly specified in which case pads values are auto
 }
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 11, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
+
+static const char* DeformConv_ver19_doc = R"DOC(
+Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
+This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    DeformConv,
+    19,
+    OpSchema()
+        .SetDoc(DeformConv_ver19_doc)
+        .Input(
+            0,
+            "X",
+            "Input data tensor. For 2D image data, it has shape (N, C, H, W) where N is the batch size, "
+            "C is the number of input channels, and H and W are the height and width. "
+            "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
+            "D1 to Dn are the spatial dimension sizes. Most common use cases have n = 2 or 3.",
+            "T")
+        .Input(
+            1,
+            "W",
+            "Weight tensor that will be used in the convolutions. It has shape (oC, C/group, kH, kW), "
+            "where oC is the number of output channels and kH and kW are the kernel height and width. "
+            "For more than 2 dimensions, it has shape (oC, C/group, k1, k2, ... , kn).",
+            "T")
+        .Input(
+            2,
+            "offset",
+            "Offset tensor denoting the offset for the sampling locations in the convolution kernel. "
+            "It has shape (N, offset_group * kH * kW * 2, oH, oW) for 2D data or "
+            "(N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Use linear interpolation"
+            "for fractional offset values. Sampling locations outside of the padded input tensor gives zero.",
+            "T")
+        .Input(
+            3,
+            "B",
+            "Optional 1D bias of length oC to be added to the convolution. Default is a tensor of zeros.",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "mask",
+            "The mask tensor to be applied to each position in the convolution kernel. "
+            "It has shape (N, offset_group * kH * kW, oH, oW) for 2D data or "
+            "(N, offset_group * k1 * k2 * ... * kn * n, o1, o2, ... , on) for nD data. Default is a "
+            "tensor of ones.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "Y",
+            "Output data tensor that contains the result of convolution. It has shape (N, oC, oH, oW) "
+            "for 2D data or (N, oC, o1, o2, ..., on) for nD data",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .Attr(
+            "dilations",
+            "Dilation value along each spatial axis of the kernel. Default is 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "group",
+            "Number of groups the input and output channels, C and oC, are divided into. C and oC must both "
+            "be divisible by group. Default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "kernel_shape",
+            "Shape of the convolution kernel. If not present, it is inferred from the shape of input W.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "offset_group",
+            "Number of groups of offset. C must be divisible by offset_group. Default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "pads",
+            "Padding for the beginning and end along each spatial axis. The values represent the number of pixels "
+            "added to the beginning and end of the corresponding axis and can take any nonnegative value. "
+            "The format should be as follows: [x1_begin, x2_begin, ..., x1_end, x2_end, ...], where xi_begin "
+            "is the number of pixels added at the beginning of axis `i` and xi_end is the number of pixels "
+            "added at the end of axis `i`. Default is 0 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "strides",
+            "Stride along each spatial axis. Default is 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          convPoolShapeInference(ctx, true, false, 0, 1);
+        }));
 
 // For GlobalPool operations.
 void globalPoolTypeShapeInference(InferenceContext& ctx) {
@@ -1914,10 +2021,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            OpSchema::all_tensor_types_with_bfloat(),
-            "Constrain input and output to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output to all tensor types.")
         .Attr(
             "axis",
             "Indicate up to which input dimensions "
@@ -2127,75 +2231,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
-
-static const char* StringNormalizer_ver10_doc = R"DOC(
-StringNormalization performs string operations for basic cleaning.
-This operator has only one input (denoted by X) and only one output
-(denoted by Y). This operator first examines the elements in the X,
-and removes elements specified in "stopwords" attribute.
-After removing stop words, the intermediate result can be further lowercased,
-uppercased, or just returned depending the "case_change_action" attribute.
-This operator only accepts [C]- and [1, C]-tensor.
-If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
-if input shape is [C] and shape [1, 1] if input shape is [1, C].
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    StringNormalizer,
-    10,
-    OpSchema()
-        .Input(0, "X", "UTF-8 strings to normalize", "tensor(string)")
-        .Output(0, "Y", "UTF-8 Normalized strings", "tensor(string)")
-        .Attr(
-            std::string("case_change_action"),
-            std::string("string enum that cases output to be lowercased/uppercases/unchanged."
-                        " Valid values are \"LOWER\", \"UPPER\", \"NONE\". Default is \"NONE\""),
-            AttributeProto::STRING,
-            std::string("NONE"))
-        .Attr(
-            std::string("is_case_sensitive"),
-            std::string("Boolean. Whether the identification of stop words in X is case-sensitive. Default is false"),
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Attr(
-            "stopwords",
-            "List of stop words. If not set, no word would be removed from X.",
-            AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "locale",
-            "Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased."
-            "Default en_US or platform specific equivalent as decided by the implementation.",
-            AttributeProto::STRING,
-            OPTIONAL_VALUE)
-        .SetDoc(StringNormalizer_ver10_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
-          output_elem_type->set_elem_type(TensorProto::STRING);
-          if (!hasInputShape(ctx, 0)) {
-            return;
-          }
-          TensorShapeProto output_shape;
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-          auto dim_size = input_shape.dim_size();
-          // Last axis dimension is unknown if we have stop-words since we do
-          // not know how many stop-words are dropped
-          if (dim_size == 1) {
-            // Unknown output dimension
-            output_shape.add_dim();
-          } else if (dim_size == 2) {
-            // Copy B-dim
-            auto& b_dim = input_shape.dim(0);
-            if (!b_dim.has_dim_value() || b_dim.dim_value() != 1) {
-              fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
-            }
-            *output_shape.add_dim() = b_dim;
-            output_shape.add_dim();
-          } else {
-            fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
-          }
-          updateOutputShape(ctx, 0, output_shape);
-        }));
 
 static const char* mvn_ver13_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
@@ -2438,7 +2473,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_with_bfloat(),
+            OpSchema::all_tensor_types_ir4(),
             "Constrain input and output types to all numeric tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { col2imShapeInference(ctx); }));
 

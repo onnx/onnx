@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 import typing
 import unittest
@@ -201,6 +203,24 @@ class TestModelInference(unittest.TestCase):
             }
             """
         self._check_shape(model, [4, 4], [8, 8, 8])
+
+    def test_mi_function_default_attr(self):
+        """Test use of default values of function attributes."""
+        model = """
+            <ir_version: 7, opset_import: [ "" : 17, "local" : 1]>
+            agraph (float[N] x) => (y, z)
+            {
+                y = local.cast <target=6> (x) # casts to INT32 type (encoding value 6)
+                z = local.cast (x)  # uses default-attribute value of 1 (FLOAT type)
+            }
+
+            <opset_import: [ "" : 17 ], domain: "local">
+            cast <target: int = 1> (x) => (y)
+            {
+                y = Cast <to:int = @target> (x)
+            }
+        """
+        self._check(model, onnx.TensorProto.INT32, onnx.TensorProto.FLOAT)
 
 
 if __name__ == "__main__":

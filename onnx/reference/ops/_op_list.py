@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0611,W0603
 """
@@ -29,6 +31,7 @@ from onnx.reference.ops.op_abs import Abs
 from onnx.reference.ops.op_acos import Acos
 from onnx.reference.ops.op_acosh import Acosh
 from onnx.reference.ops.op_add import Add
+from onnx.reference.ops.op_affine_grid import AffineGrid
 from onnx.reference.ops.op_and import And
 from onnx.reference.ops.op_argmax import ArgMax_1, ArgMax_12
 from onnx.reference.ops.op_argmin import ArgMin_1, ArgMin_12
@@ -55,8 +58,8 @@ from onnx.reference.ops.op_bitwise_not import BitwiseNot
 from onnx.reference.ops.op_bitwise_or import BitwiseOr
 from onnx.reference.ops.op_bitwise_xor import BitwiseXor
 from onnx.reference.ops.op_blackman_window import BlackmanWindow
-from onnx.reference.ops.op_cast import Cast
-from onnx.reference.ops.op_cast_like import CastLike
+from onnx.reference.ops.op_cast import Cast_1, Cast_19
+from onnx.reference.ops.op_cast_like import CastLike_15, CastLike_19
 from onnx.reference.ops.op_ceil import Ceil
 from onnx.reference.ops.op_celu import Celu
 from onnx.reference.ops.op_center_crop_pad import CenterCropPad
@@ -78,6 +81,7 @@ from onnx.reference.ops.op_conv_transpose import ConvTranspose
 from onnx.reference.ops.op_cos import Cos
 from onnx.reference.ops.op_cosh import Cosh
 from onnx.reference.ops.op_cum_sum import CumSum
+from onnx.reference.ops.op_deform_conv import DeformConv
 from onnx.reference.ops.op_depth_to_space import DepthToSpace
 from onnx.reference.ops.op_dequantize_linear import DequantizeLinear
 from onnx.reference.ops.op_det import Det
@@ -149,7 +153,7 @@ from onnx.reference.ops.op_pow import Pow
 from onnx.reference.ops.op_prelu import PRelu
 from onnx.reference.ops.op_qlinear_conv import QLinearConv
 from onnx.reference.ops.op_qlinear_matmul import QLinearMatMul
-from onnx.reference.ops.op_quantize_linear import QuantizeLinear
+from onnx.reference.ops.op_quantize_linear import QuantizeLinear_10, QuantizeLinear_19
 from onnx.reference.ops.op_random_normal import RandomNormal
 from onnx.reference.ops.op_random_normal_like import RandomNormalLike
 from onnx.reference.ops.op_random_uniform import RandomUniform
@@ -172,6 +176,7 @@ from onnx.reference.ops.op_reduce_sum_square import (
     ReduceSumSquare_1,
     ReduceSumSquare_18,
 )
+from onnx.reference.ops.op_regex_full_match import RegexFullMatch
 from onnx.reference.ops.op_relu import Relu
 from onnx.reference.ops.op_reshape import Reshape_5, Reshape_14
 from onnx.reference.ops.op_resize import Resize
@@ -208,7 +213,9 @@ from onnx.reference.ops.op_split_to_sequence import SplitToSequence
 from onnx.reference.ops.op_sqrt import Sqrt
 from onnx.reference.ops.op_squeeze import Squeeze_1, Squeeze_11, Squeeze_13
 from onnx.reference.ops.op_stft import STFT
+from onnx.reference.ops.op_string_concat import StringConcat
 from onnx.reference.ops.op_string_normalizer import StringNormalizer
+from onnx.reference.ops.op_string_split import StringSplit
 from onnx.reference.ops.op_sub import Sub
 from onnx.reference.ops.op_sum import Sum
 from onnx.reference.ops.op_tan import Tan
@@ -237,6 +244,7 @@ def load_op(
     custom: Any = None,
     node: Union[None, NodeProto] = None,
     input_types: Union[None, List[TypeProto]] = None,
+    expand: bool = False,
 ) -> Any:
     """
     Loads the implemented for a specified operator.
@@ -249,6 +257,8 @@ def load_op(
         which is context dependant
     :param input_types: used if no implementation was found and the operator defines a function
         which is context dependant
+    :param expand: use the function implemented in the schema instead
+        of its reference implementation
     :return: class
     """
     global _registered_operators
@@ -261,7 +271,7 @@ def load_op(
         version = onnx_opset_version()
     if domain != "":
         raise ValueError(f"Domain must be '' not {domain!r}.")
-    if op_type in _registered_operators:  # type: ignore
+    if op_type in _registered_operators and not expand:  # type: ignore
         found = True
     else:
         # maybe the operator can be replacted by a function
@@ -283,7 +293,7 @@ def load_op(
                 raise RuntimeContextError(
                     f"No registered implementation for operator {op_type!r} "
                     f"and domain {domain!r}, the operator has a context dependent function. "
-                    f"but argument node or input_types is not defined."
+                    f"but argument node or input_types is not defined (input_types={input_types})."
                 )
             from onnx.reference import ReferenceEvaluator
 
@@ -340,6 +350,4 @@ def load_op(
     return cl
 
 
-# Python 3.7 does not support this annotation for a global variable.
-# _registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRun]]] = None
-_registered_operators = None  # type: ignore
+_registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRun]]] = None

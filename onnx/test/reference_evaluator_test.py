@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
 # pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
@@ -10,24 +12,32 @@ You can run a specific test by using the following syntax.
 """
 
 import itertools
+import math
+import sys
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
+from os import getenv
 from textwrap import dedent
+from typing import Sequence, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 import parameterized
-from numpy.testing import assert_allclose  # type: ignore
+from numpy.testing import assert_allclose
 
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
 from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
+    float32_to_bfloat16,
+    float32_to_float8e4m3,
+    float32_to_float8e5m2,
     make_function,
     make_graph,
     make_model,
+    make_model_gen_version,
     make_node,
     make_opsetid,
     make_sequence_type_proto,
@@ -36,17 +46,27 @@ from onnx.helper import (
     make_tensor_value_info,
     make_value_info,
 )
-from onnx.numpy_helper import from_array
+from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, from_array
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.op_run import OpRun
+from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
-from onnx.reference.ops._op_list import Celu
+from onnx.reference.ops._op_common_indices import _get_indices, _is_out
+from onnx.reference.ops._op_list import Cast_19, Celu
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
-from onnx.reference.ops.experimental.op_im2col import im2col
 from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
     col2im_naive_implementation,
+)
+from onnx.reference.ops.op_conv import Conv, _conv_implementation
+from onnx.reference.ops_optimized import Conv as ConvOptimized
+from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_im2col
+
+# TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
+# For now, bump the version in CIs whenever there is a new onnxruntime release
+ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
+ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
+    getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
 )
 
 
@@ -58,7 +78,7 @@ def skip_if_no_onnxruntime(fn):
 
             del onnxruntime
         except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed")
+            raise unittest.SkipTest("onnxruntime not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -72,7 +92,7 @@ def skip_if_no_torch(fn):
 
             del torch
         except ImportError:
-            raise unittest.SkipTest("torch not installed")
+            raise unittest.SkipTest("torch not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -86,7 +106,7 @@ def skip_if_no_torchvision(fn):
 
             del torchvision
         except ImportError:
-            raise unittest.SkipTest("torchvision not installed")
+            raise unittest.SkipTest("torchvision not installed") from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -97,6 +117,93 @@ def make_sequence_value_info(name, elem_type, shape):
         return make_tensor_sequence_value_info(name, elem_type, shape)
     s_type = make_sequence_type_proto(elem_type)
     return make_value_info(name, s_type, shape)
+
+
+def run_ort_inference(onnx_model):
+    import onnxruntime as ort
+
+    onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+    for opset in onnx_model.opset_import:
+        if opset.domain in ("", "ai.onnx"):
+            onnx_domain_opset = opset.version
+            break
+    # The new IR or opset version is not supported by onnxruntime yet
+    if (
+        onnx_model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
+        or onnx_domain_opset > ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
+    ):
+        return None
+
+    return ort.InferenceSession(
+        onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
+    )
+
+
+def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  # type: ignore
+    """
+    Naive implementation for `im2col`.
+
+    :param image: image (float)
+    :param kernel_shape: kernel shape
+    :param dilations: dilations
+    :param pads: pads
+    :param strides: strides
+    :return: result
+    """
+    if not isinstance(kernel_shape, tuple):
+        raise TypeError(f"Unexpected type {type(kernel_shape)!r} for kernel_shape.")
+    if len(data.shape) != len(kernel_shape):
+        raise ValueError(f"Shape mismatch {data.shape!r} and {kernel_shape!r}.")
+    n_dims = len(pads) // 2
+    new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
+    list_output_shape = list(data.shape + kernel_shape)
+    for d in range(n_dims):
+        kd = kernel_shape[d] + (kernel_shape[d] - 1) * (dilations[d] - 1)
+        nd = int(
+            ((list_output_shape[d] - kd + new_pads[d][0] + new_pads[d][1]) / strides[d])
+            + 1
+        )
+        list_output_shape[d] = nd
+    output_shape = tuple(list_output_shape)
+
+    res = np.zeros(output_shape, dtype=data.dtype)
+    kernel_size = np.prod(kernel_shape)
+    res_size = np.prod(res.shape[:-n_dims])
+    for i in range(res_size):
+        i_res = _get_indices(i, res.shape[:-n_dims])
+        t_res = tuple(i_res)
+        for j in range(kernel_size):
+            i_kernel = _get_indices(j, kernel_shape)
+            t_kernel = tuple(i_kernel)
+
+            i_img = i_res * strides - new_pads[:, 0] + i_kernel * dilations
+            t_img = tuple(i_img)
+            if _is_out(t_img, data.shape):
+                res[t_res + t_kernel] = 0
+            else:
+                res[t_res + t_kernel] = data[tuple(t_img)]
+    return res
+
+
+def im2col(
+    img: np.ndarray,
+    kernel_shape: Tuple[int, ...],
+    dilations: Sequence[int],
+    pads: Sequence[int],
+    strides: Sequence[int],
+) -> np.ndarray:
+    res = None
+    for n in range(img.shape[0]):
+        for c in range(img.shape[1]):
+            out = im2col_naive_implementation(
+                img[n, c, ...], kernel_shape, dilations, pads, strides
+            )
+            if res is None:
+                new_shape = img.shape[:2] + out.shape
+                res = np.empty(new_shape, dtype=img.dtype)
+            res[n, c, ...] = out
+    new_shape = res.shape[: -len(kernel_shape)] + (-1,)  # type: ignore
+    return res.reshape(new_shape)  # type: ignore
 
 
 class TestReferenceEvaluator(unittest.TestCase):
@@ -174,7 +281,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         try:
             check_model(onnx_model)
         except Exception as e:
-            raise AssertionError(f"checker fails for\n{str(onnx_model)}") from e
+            raise AssertionError(f"checker fails for\n{onnx_model}") from e
         return onnx_model, f
 
     def test_reference_evaluator_exceptions(self):
@@ -1073,9 +1180,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
         graph = make_graph([node1], "rs", [X], [Y])
         onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
-        with self.assertRaises(ValueError):
-            ReferenceEvaluator(onnx_model, new_ops=[InvAlpha, InvAlpha])
-        sess = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        sess = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha, InvAlpha])
         got = sess.run(None, {"X": x})[0]
         expected = 1 / (x + 0.5)
         assert_allclose(expected, got)
@@ -1289,6 +1394,13 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = _vcelu1(x, alpha=0.5)
         assert_allclose(expected, y)
 
+    def test_eval_cast(self):
+        x = np.array([[0, 1], [-1, 2]], dtype=np.float32)
+        y = Cast_19.eval(x, to=TensorProto.FLOAT8E4M3FN)
+        dy = Cast_19.eval(y, to=TensorProto.FLOAT)
+        expected = x
+        assert_allclose(expected, dy)
+
     def test_eval_celu_load_op(self):
         celu = load_op("", "Celu")
         self.assertEqual(celu.op_domain, "")
@@ -1305,8 +1417,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @skip_if_no_onnxruntime
     def test_conv(self):
-        import onnxruntime as ort
-
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
         B = make_tensor_value_info("B", TensorProto.FLOAT, [None, None, None, None])
@@ -1320,12 +1430,16 @@ class TestReferenceEvaluator(unittest.TestCase):
             strides=[2, 2],
         )
         graph = make_graph([node], "g", [X, W, B], [Y])
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-
-        sess1 = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
-        sess2 = ReferenceEvaluator(onnx_model)
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
+        sess1 = run_ort_inference(onnx_model)
+        if sess1 is None:
+            return
+        sess2 = ReferenceEvaluator(onnx_model, optimized=False)
+        self.assertIsInstance(sess2.rt_nodes_[0], Conv)
+        sess3 = ReferenceEvaluator(onnx_model, new_ops=[ConvOptimized], optimized=False)
+        self.assertIsInstance(sess3.rt_nodes_[0], ConvOptimized)
+        sess4 = ReferenceEvaluator(onnx_model, optimized=True)
+        self.assertIsInstance(sess4.rt_nodes_[0], ConvOptimized)
 
         sH, sW = 5, 6
         for i in range(sH):
@@ -1339,11 +1453,13 @@ class TestReferenceEvaluator(unittest.TestCase):
                 expected = sess1.run(None, {"X": X, "W": W, "B": B})[0]
                 got = sess2.run(None, {"X": X, "W": W, "B": B})[0]
                 assert_allclose(expected, got)
+                got3 = sess3.run(None, {"X": X, "W": W, "B": B})[0]
+                assert_allclose(expected, got3)
+                got4 = sess4.run(None, {"X": X, "W": W, "B": B})[0]
+                assert_allclose(expected, got4)
 
     @skip_if_no_onnxruntime
     def test_qlinearconv(self):
-        import onnxruntime as ort
-
         x = make_tensor_value_info("x", TensorProto.UINT8, [None, None, None, None])
         w = make_tensor_value_info("w", TensorProto.UINT8, [None, None, None, None])
         y = make_tensor_value_info("y", TensorProto.UINT8, [None, None, None, None])
@@ -1374,11 +1490,11 @@ class TestReferenceEvaluator(unittest.TestCase):
             [x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point],
             [y],
         )
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
 
-        sess1 = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        sess1 = run_ort_inference(onnx_model)
+        if sess1 is None:
+            return
         sess2 = ReferenceEvaluator(onnx_model)
 
         sH, sW = 3, 3
@@ -1491,13 +1607,9 @@ class TestReferenceEvaluator(unittest.TestCase):
             domain="experimental",
         )
         node_flat = make_node("Flatten", ["W"], ["wflat"])
-        node_axes = make_node(
-            "Constant", [], ["axes"], value=from_array(np.array([0], dtype=np.int64))
-        )
-        node_qu = make_node("Squeeze", ["wflat", "axes"], ["wsqu"])
-        node_gem = make_node("MatMul", ["xim", "wsqu"], ["Y2"])
+        node_gem = make_node("MatMul", ["wflat", "xim"], ["Y2"])
         graph = make_graph(
-            [node, node_shape, node_im, node_axes, node_flat, node_qu, node_gem],
+            [node, node_shape, node_im, node_flat, node_gem],
             "g",
             [X, W],
             [Y1, Y2],
@@ -1506,15 +1618,15 @@ class TestReferenceEvaluator(unittest.TestCase):
             graph, opset_imports=[make_opsetid("", 16), make_opsetid("experimental", 1)]
         )
         graph_conv = make_graph([node], "g", [X, W], [Y1])
-        onnx_model_conv = make_model(graph_conv, opset_imports=[make_opsetid("", 16)])
+        onnx_model_conv = make_model_gen_version(
+            graph_conv, opset_imports=[make_opsetid("", 16)]
+        )
         sess = ReferenceEvaluator(onnx_model)
 
         try:
-            import onnxruntime as ort
-
-            sess_conv = ort.InferenceSession(
-                onnx_model_conv.SerializeToString(), providers=["CPUExecutionProvider"]
-            )
+            sess_conv = run_ort_inference(onnx_model_conv)
+            if sess_conv is None:
+                return
         except ImportError:
             sess_conv = None
 
@@ -1535,9 +1647,9 @@ class TestReferenceEvaluator(unittest.TestCase):
                 got = sess.run(None, {"X": X, "W": W})
                 if sess_conv is not None:
                     ort_res = sess_conv.run(None, {"X": X, "W": W})[0]
-                    assert_allclose(got[1], ort_res)
+                    assert_allclose(got[1].ravel(), ort_res.ravel())
                 try:
-                    assert_allclose(got[0], got[1])
+                    assert_allclose(got[0].ravel(), got[1].ravel())
                 except AssertionError as e:
                     raise AssertionError(
                         f"Discrepancies: pads={pads}, dilations={dilations}, strides={strides}, "
@@ -1568,11 +1680,6 @@ class TestReferenceEvaluator(unittest.TestCase):
     def test_im2col_3x3_strides(self):
         self.common_test_im2col(
             (3, 3), pads=[0, 1, 1, 1], strides=[1, 2], dilations=[1, 1]
-        )
-
-    def test_im2col_3x3_dilations(self):
-        self.common_test_im2col(
-            (3, 3), pads=[1, 1, 1, 2], strides=[1, 1], dilations=[1, 2]
         )
 
     def test_im2col_5x5(self):
@@ -1976,6 +2083,30 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = np.array([[1.0, 1.1, 3.0, 4.0, 5.0]], dtype=np.float32)
         assert_allclose(expected, got1[0])
 
+    def test_scatternd(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Ind = make_tensor_value_info("I", TensorProto.INT64, [None, None])
+        U = make_tensor_value_info("U", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
+
+        node = make_node(
+            "ScatterND",
+            ["X", "I", "U"],
+            ["Y"],
+        )
+        graph = make_graph([node], "g", [X, Ind, U], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
+        feeds = {
+            "X": np.array([[1.0, 2.0]], dtype=np.float32),
+            "I": np.array([[0, 0]]),
+            "U": np.array([3.0], dtype=np.float32),
+        }
+
+        ref1 = ReferenceEvaluator(onnx_model)
+        got1 = ref1.run(None, feeds)
+        expected = np.array([[3.0, 2.0]], dtype=np.float32)
+        assert_allclose(expected, got1[0])
+
     def test_col2im_impl(self):
         def get_im2col_indices(
             x_shape, field_height, field_width, padding=None, stride=1
@@ -2243,7 +2374,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             "signal": np.arange(128).reshape((1, 128, 1)).astype(np.float32),
             "frame_step": np.array(8, dtype=np.int64),
             "window": 0.5
-            + 0.5 * np.cos(2 * 3.1415 * np.arange(0, 16, 1, dtype=np.float32) / 16),
+            + 0.5 * np.cos(2 * np.pi * np.arange(0, 16, 1, dtype=np.float32) / 16),
             "frame_length": np.array(16, dtype=np.int64),
         }
 
@@ -2295,18 +2426,15 @@ class TestReferenceEvaluator(unittest.TestCase):
             mode=mode,
         )
         graph = make_graph([node], "g", [X, rois, IS], [Y])
-        return make_model(graph, opset_imports=[make_opsetid("", 17)])
+        return make_model_gen_version(graph, opset_imports=[make_opsetid("", 17)])
 
     def common_test_roi_align(self, mode):
-        import onnxruntime as ort
-
         onnx_model = self.get_roi_align_model(mode)
         X, batch_indices, rois = get_roi_align_input_values()
         feeds = {"X": X, "rois": rois, "I": batch_indices}
-
-        sess = ort.InferenceSession(
-            onnx_model.SerializeToString(), providers=["CPUExecutionProvider"]
-        )
+        sess = run_ort_inference(onnx_model)
+        if sess is None:
+            return
         expected = sess.run(None, feeds)
         ref = ReferenceEvaluator(onnx_model)
         got = ref.run(None, feeds)
@@ -3013,10 +3141,1867 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         data = np.arange(18).reshape((1, 3, 6)).astype(np.float32)
         got = ref.run(None, {"X": data})
-        expected = [list(data[:, :, i] for i in range(data.shape[2]))]
+        expected = [[data[:, :, i] for i in range(data.shape[2])]]
         self.assertEqual(len(expected[0]), len(got[0]))
         for a, b in zip(expected[0], got[0]):
             assert_allclose(a, b)
+
+    def test_cast_float8(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        F1 = make_tensor_value_info("F1", TensorProto.FLOAT, [None])
+        F2 = make_tensor_value_info("F2", TensorProto.FLOAT, [None])
+        F3 = make_tensor_value_info("F3", TensorProto.FLOAT, [None])
+        F4 = make_tensor_value_info("F4", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["f81"], to=TensorProto.FLOAT8E4M3FN),
+                    make_node("Cast", ["X"], ["f82"], to=TensorProto.FLOAT8E5M2),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["C1"],
+                        value=make_tensor(
+                            "C1", TensorProto.FLOAT8E4M3FN, [5], [0, 1, 2, 5e-2, 200]
+                        ),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["C2"],
+                        value=make_tensor(
+                            "C2", TensorProto.FLOAT8E5M2, [5], [0, 1, 2, 5e-2, 200]
+                        ),
+                    ),
+                    make_node("Cast", ["f81"], ["F1"], to=TensorProto.FLOAT),
+                    make_node("Cast", ["f82"], ["F2"], to=TensorProto.FLOAT),
+                    make_node("Cast", ["C1"], ["F3"], to=TensorProto.FLOAT),
+                    make_node("Cast", ["C2"], ["F4"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [F1, F2, F3, F4],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
+        expected1 = np.array(
+            [float8e4m3_to_float32(float32_to_float8e4m3(x)) for x in data]
+        )
+        expected2 = np.array(
+            [float8e5m2_to_float32(float32_to_float8e5m2(x)) for x in data]
+        )
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected1)
+        assert_allclose(got[1], expected2)
+        assert_allclose(got[2], expected1)
+        assert_allclose(got[3], expected2)
+
+    def test_cast_like_float8(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["f8"], to=TensorProto.FLOAT8E4M3FNUZ),
+                    make_node("CastLike", ["X", "f8"], ["f32"], saturate=0),
+                    make_node("Cast", ["f32"], ["Y"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        data = np.array([0, 1e7], dtype=np.float32)
+        expected = np.array(
+            [
+                float8e4m3_to_float32(
+                    float32_to_float8e4m3(x, uz=True, saturate=False), uz=True
+                )
+                for x in data
+            ]
+        )
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected)
+
+        # Forces ReferenceEvaluator to not use the associated implementation for CastLike
+        # but its implementation as a function instead.
+        class CastLike(OpRunExpand):
+            op_domain = ""
+
+        ref = ReferenceEvaluator(model, new_ops=[CastLike])
+        got = ref.run(None, {"X": data})
+        assert_allclose(got[0], expected)
+
+    def test_cast_float8_output(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        F1 = make_tensor_value_info("F1", TensorProto.FLOAT8E4M3FN, [None])
+        F2 = make_tensor_value_info("F2", TensorProto.FLOAT8E5M2, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["F1"], to=TensorProto.FLOAT8E4M3FN),
+                    make_node("Cast", ["X"], ["F2"], to=TensorProto.FLOAT8E5M2),
+                ],
+                "g",
+                [X],
+                [F1, F2],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
+        expected1 = np.array([float32_to_float8e4m3(x) for x in data])
+        expected2 = np.array([float32_to_float8e5m2(x) for x in data])
+        got = ref.run(None, {"X": data})
+        self.assertEqual(expected1.tolist(), got[0].tolist())
+        self.assertEqual(expected2.tolist(), got[1].tolist())
+
+    def test_float8_4_types(self):
+        x = np.array(
+            [
+                0.4068359375,
+                352,
+                416,
+                336,
+                304,
+                272,
+                -248,
+                -100,
+                1e-4,
+                1e-2,
+                416,
+                432,
+                1e5,
+                np.inf,
+                -np.inf,
+                np.nan,
+            ],
+            dtype=np.float32,
+        )
+        expected = {
+            TensorProto.FLOAT8E4M3FN: np.array(
+                [
+                    0.40625,
+                    352.0,
+                    416.0,
+                    320.0,
+                    320.0,
+                    256.0,
+                    -256.0,
+                    -96.0,
+                    0.0,
+                    0.009765625,
+                    416.0,
+                    448.0,
+                    448.0,
+                    448.0,
+                    -448.0,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+            TensorProto.FLOAT8E4M3FNUZ: np.array(
+                [
+                    0.40625,
+                    240.0,
+                    240.0,
+                    240.0,
+                    240.0,
+                    240.0,
+                    -240.0,
+                    -96.0,
+                    0.0,
+                    0.009765625,
+                    240.0,
+                    240.0,
+                    240.0,
+                    240.0,
+                    -240.0,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+            TensorProto.FLOAT8E5M2: np.array(
+                [
+                    0.4375,
+                    384.0,
+                    384.0,
+                    320.0,
+                    320.0,
+                    256.0,
+                    -256.0,
+                    -96.0,
+                    0.0001068115234375,
+                    0.009765625,
+                    384.0,
+                    448.0,
+                    57344.0,
+                    57344.0,
+                    -57344.0,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+            TensorProto.FLOAT8E5M2FNUZ: np.array(
+                [
+                    4.3750000e-01,
+                    3.8400000e02,
+                    3.8400000e02,
+                    3.2000000e02,
+                    3.2000000e02,
+                    2.5600000e02,
+                    -2.5600000e02,
+                    -9.6000000e01,
+                    1.0681152e-04,
+                    9.7656250e-03,
+                    3.8400000e02,
+                    4.4800000e02,
+                    5.7344000e04,
+                    5.7344000e04,
+                    -5.7344000e04,
+                    np.nan,
+                ],
+                dtype=np.float32,
+            ),
+        }
+
+        def model_cast_cast(to):
+            X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+            Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+            node1 = make_node("Cast", ["X"], ["T"], to=to)
+            node2 = make_node("Cast", ["T"], ["Y"], to=TensorProto.FLOAT)
+            graph = make_graph([node1, node2], "lr", [X], [Y])
+            onnx_model = make_model(graph)
+            check_model(onnx_model)
+            return onnx_model
+
+        for to, expect in expected.items():
+            with self.subTest(to=to):
+                onnx_model = model_cast_cast(to)
+                ref = ReferenceEvaluator(onnx_model)
+                y = ref.run(None, {"X": x})[0]
+                assert_allclose(expect, y)
+                self.assertEqual(expect.shape, y.shape)
+                self.assertEqual(expect.dtype, y.dtype)
+
+    def test_cast_bfloat16_output(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.BFLOAT16, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Y"], to=TensorProto.BFLOAT16),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected1 = np.array([float32_to_bfloat16(x) for x in data])
+        got = ref.run(None, {"X": data})
+        self.assertEqual(expected1.tolist(), got[0].tolist())
+
+    def test_quantize_linear_e4m3(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "Constant",
+                        [],
+                        ["scale"],
+                        value=make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["zero"],
+                        value=make_tensor("zero", TensorProto.FLOAT8E4M3FN, [1], [0.0]),
+                    ),
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0, 1, 2, 896, 192], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_quantize_linear_e4m3_initializer(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    make_tensor("zero", TensorProto.FLOAT8E4M3FN, [1], [0.0]),
+                ],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0, 1, 2, 896, 192], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_quantize_linear_e5m2(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "Constant",
+                        [],
+                        ["scale"],
+                        value=make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["zero"],
+                        value=make_tensor("zero", TensorProto.FLOAT8E5M2, [1], [0.0]),
+                    ),
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
+        expected = np.array([0, 1, 2, 98304, 192], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_lrn(self):
+        def _expected(x, alpha, beta, bias, size):
+            square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+            for n, c, h, w in np.ndindex(x.shape):
+                square_sum[n, c, h, w] = sum(
+                    x[
+                        n,
+                        max(0, c - int(math.floor((size - 1) / 2))) : min(
+                            5, c + int(math.ceil((size - 1) / 2)) + 1
+                        ),
+                        h,
+                        w,
+                    ]
+                    ** 2
+                )
+            y = x / ((bias + (alpha / size) * square_sum) ** beta)
+            return y
+
+        # keepdims is ignored in that case
+        alpha = 0.0002
+        beta = 0.5
+        bias = 2.0
+        size = 3
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [5, 5, 50, 50])
+        Z = make_tensor_value_info("Z", TensorProto.UNDEFINED, None)
+        nodes = [
+            make_node("LRN", ["X"], ["Z"], alpha=alpha, beta=beta, bias=bias, size=size)
+        ]
+        model = make_model(make_graph(nodes, "g", [X], [Z]))
+        ref = ReferenceEvaluator(model)
+        data = np.random.rand(5, 5, 5, 5).astype(np.float32)
+        got = ref.run(None, {"X": data})
+        expected = _expected(data, alpha, beta, bias, size)
+        self.assertEqual(len(expected), len(got[0]))
+
+    def test_conv_im2col_1d(self):
+        feeds = {
+            "X": np.arange(1 * 1 * 11).reshape((1, 1, 11)).astype(np.float32) + 1,
+            "W": np.arange(3).reshape((1, 1, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1],
+            kernel_shape=[3],
+            pads=[1, 1],
+            strides=[1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_1d_pad0(self):
+        feeds = {
+            "X": np.arange(2 * 4 * 3).reshape((2, 4, -1)).astype(np.float32) + 1,
+            "W": np.arange(2 * 4 * 3).reshape((-1, 4, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1],
+            kernel_shape=[3],
+            pads=[0, 0],
+            strides=[1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d(self):
+        feeds = {
+            "X": np.arange(1 * 1 * 11 * 23).reshape((1, 1, 11, 23)).astype(np.float32)
+            + 1,
+            "W": np.arange(9).reshape((1, 1, 3, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[1, 1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_pad0(self):
+        feeds = {
+            "X": np.arange(2 * 3 * 5 * 2).reshape((2, 3, 5, -1)).astype(np.float32) + 1,
+            "W": 2
+            ** np.arange(3 * 3 * 1 * 2).reshape((-1, 3, 1, 2)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[1, 2],
+            pads=[0, 0, 0, 0],
+            strides=[1, 1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_autopad(self):
+        feeds = {
+            "X": np.arange(5 * 5).reshape((1, 1, 5, -1)).astype(np.float32) + 1,
+            "W": 2 ** np.arange(3 * 3).reshape((1, 1, 3, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            strides=[2, 2],
+            pads=None,
+            auto_pad="SAME_LOWER",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_3d(self):
+        feeds = {
+            "X": np.arange(1 * 1 * 11 * 5 * 13)
+            .reshape((1, 1, 11, 5, 13))
+            .astype(np.float32)
+            + 1,
+            "W": np.arange(27).reshape((1, 1, 3, 3, 3)).astype(np.float32),
+            "B": np.zeros((1,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1, 1],
+            kernel_shape=[3, 3, 3],
+            pads=[1, 1, 1, 1, 1, 1],
+            strides=[1, 1, 1],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_strides(self):
+        feeds = {
+            "X": np.arange(1 * 3 * 6 * 6).reshape((1, 3, 6, 6)).astype(np.float32) + 1,
+            "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
+            "B": np.zeros((2,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[1, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    def test_conv_im2col_2d_dilations(self):
+        feeds = {
+            "X": np.arange(1 * 3 * 6 * 6).reshape((1, 3, 6, 6)).astype(np.float32) + 1,
+            "W": np.arange(2 * 3 * 3 * 3).reshape((2, 3, 3, 3)).astype(np.float32),
+            "B": np.zeros((2,), dtype=np.float32),
+        }
+        kwargs = dict(
+            group=1,
+            dilations=[2, 1],
+            kernel_shape=[3, 3],
+            pads=[1, 1, 1, 1],
+            strides=[2, 2],
+            auto_pad="NOTSET",
+        )
+        expected = _conv_implementation(**feeds, **kwargs)
+        got = _conv_implementation_im2col(**feeds, **kwargs)
+        assert_allclose(expected, got)
+
+    @parameterized.parameterized.expand(
+        [
+            ("ReduceSum",),
+            ("ReduceL1",),
+            ("ReduceL2",),
+            ("ReduceMin",),
+            ("ReduceMax",),
+            ("ReduceProd",),
+            ("ReduceSumSquare",),
+        ]
+    )
+    def test_reduce_op_no_axis(self, op):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        data = np.arange(6).reshape((1, 3, 2)).astype(np.float32)
+        nodes = [make_node(op, ["X"], ["Y"], keepdims=0)]
+        model = make_model(make_graph(nodes, "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"X": data})
+        r = got[0]
+        self.assertIsInstance(r, np.ndarray)
+        self.assertEqual(r.shape, ())
+
+    @parameterized.parameterized.expand([(1,), (2,), (3,), (4,), (5,), (6,)])
+    def test_pad(self, dim):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        P = make_tensor_value_info("P", TensorProto.INT64, None)
+        V = make_tensor_value_info("V", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+        value = np.array([-5], dtype=np.float32)
+
+        node = make_node("Pad", inputs=["X", "P", "V"], outputs=["Y"], mode="constant")
+        model = make_model(make_graph([node], "g", [X, P, V], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.array([1], dtype=np.float32).reshape((1,) * dim)
+
+        p = np.array([1, 1] * dim, dtype=np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        self.assertEqual(got.shape, (3,) * dim)
+        self.assertEqual(got.dtype, np.float32)
+
+        p = np.repeat([7, 3], dim).astype(np.int64)
+        got = ref.run(None, {"X": x, "P": p, "V": value})[0]
+        self.assertEqual(got.shape, (11,) * dim)
+        self.assertEqual(got.dtype, np.float32)
+
+    def test_constant_of_shape(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        nodes = [
+            make_node("Shape", inputs=["X"], outputs=["shape"]),
+            make_node(
+                "ConstantOfShape",
+                inputs=["shape"],
+                outputs=["Y"],
+                value=make_tensor("value", TensorProto.UINT16, [1], [1]),
+            ),
+        ]
+        model = make_model(make_graph(nodes, "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.array(1, dtype=np.float32)
+        got = ref.run(None, {"X": x})[0]
+        self.assertEqual(got.shape, tuple())
+        self.assertEqual(got.dtype, np.uint16)
+        assert_allclose(np.array(1, dtype=np.uint16), got)
+
+    def test_constant_of_shape_castlike(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, None)
+
+        nodes = [
+            make_node(
+                "Constant",
+                [],
+                ["like"],
+                value=make_tensor("c", TensorProto.UINT16, [1], [2]),
+            ),
+            make_node("Shape", inputs=["X"], outputs=["shape"]),
+            make_node(
+                "ConstantOfShape",
+                inputs=["shape"],
+                outputs=["cst"],
+                value=make_tensor("value", TensorProto.INT64, [1], [1]),
+            ),
+            make_node("CastLike", ["cst", "like"], ["Y"]),
+        ]
+        model = make_model(make_graph(nodes, "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        x = np.array(1, dtype=np.float32)
+        got = ref.run(None, {"X": x})[0]
+        self.assertEqual(got.shape, tuple())
+        self.assertEqual(got.dtype, np.uint16)
+        assert_allclose(np.array(1, dtype=np.uint16), got)
+
+    def test_dynamic_quantize_linear(self):
+        feeds = {
+            "X": np.array(
+                [
+                    [
+                        -7.80749545e-02,
+                        -3.80597055e-01,
+                        1.33831516e-01,
+                        -8.20474699e-02,
+                        7.56645501e-02,
+                        5.65112457e-02,
+                        2.56818235e-01,
+                        9.42316353e-02,
+                        1.88027292e-01,
+                        1.44878656e-01,
+                        1.34825557e-01,
+                        -2.04576910e-01,
+                        1.68852255e-01,
+                        6.23253360e-02,
+                        4.30482924e-01,
+                        -5.50433956e-02,
+                        9.10681635e-02,
+                        1.55332625e-01,
+                        -4.53630984e-02,
+                        3.99910688e-01,
+                        -1.28678545e-01,
+                        3.77916731e-02,
+                        1.29872710e-01,
+                        -1.12420328e-01,
+                        -2.97306702e-02,
+                        2.20508516e-01,
+                        -5.88933006e-03,
+                        4.81076002e-01,
+                        -1.18835129e-01,
+                        -4.45004404e-02,
+                        -7.53675848e-02,
+                        1.41112670e-01,
+                        1.97793499e-01,
+                        -7.71476865e-01,
+                        8.64694864e-02,
+                        1.73293594e-02,
+                        1.28247693e-01,
+                        7.58144110e-02,
+                        -2.71435380e-01,
+                        1.75212905e-01,
+                        -2.47283235e-01,
+                        -3.02810557e-02,
+                        8.45039487e-02,
+                        6.02229357e-01,
+                        -1.04913145e-01,
+                        -2.46705681e-01,
+                        2.92073280e-01,
+                        -3.88464853e-02,
+                        4.26557302e-01,
+                        -3.71325493e-01,
+                        -3.11283618e-01,
+                        7.85303488e-02,
+                        3.18069518e-01,
+                        -1.51467413e-01,
+                        -1.02828763e-01,
+                        9.29131880e-02,
+                        2.55233884e-01,
+                        5.00160515e-01,
+                        -1.49993747e-01,
+                        4.29408073e-01,
+                        -1.91787735e-01,
+                        3.16187665e-02,
+                        -1.84284449e-02,
+                        -1.62873864e-01,
+                        -2.73632705e-01,
+                        2.84725696e-01,
+                        -2.87029266e-01,
+                        -7.15534389e-02,
+                        2.24836454e-01,
+                        -1.70527741e-01,
+                        -2.65601039e-01,
+                        -2.68008932e-03,
+                        1.44260898e-01,
+                        7.80707747e-02,
+                        2.73875445e-02,
+                        -1.18391573e-01,
+                        -6.44972250e-02,
+                        -5.22445887e-03,
+                        -2.96754301e-01,
+                        1.05800219e-01,
+                        2.62558222e-01,
+                        3.62841524e-02,
+                        9.44730639e-03,
+                        1.75837606e-01,
+                        2.69956529e-01,
+                        3.02758247e-01,
+                        -1.13724738e-01,
+                        2.98936248e-01,
+                        8.54668319e-02,
+                        -6.74555600e-01,
+                        4.38643873e-01,
+                        1.27896462e-02,
+                        9.20789093e-02,
+                        1.93946883e-01,
+                        1.97548166e-01,
+                        2.82558739e-01,
+                        -2.48879120e-01,
+                        -3.93428057e-01,
+                        6.45540953e-02,
+                        -9.66283306e-03,
+                    ],
+                    [
+                        -2.42438495e-01,
+                        -3.58334243e-01,
+                        1.22619808e-01,
+                        -1.21529415e-01,
+                        -5.23974374e-02,
+                        -6.74922541e-02,
+                        1.09727375e-01,
+                        -3.56835872e-03,
+                        1.51029706e-01,
+                        1.18043356e-01,
+                        8.16475376e-02,
+                        -2.36466587e-01,
+                        9.44180191e-02,
+                        5.61679937e-02,
+                        3.67988586e-01,
+                        1.29441261e-01,
+                        1.15772486e-01,
+                        5.30351102e-02,
+                        -1.04345076e-01,
+                        1.29062623e-01,
+                        -2.17205048e-01,
+                        2.58089490e-02,
+                        2.18848974e-01,
+                        -8.36039707e-02,
+                        5.43577969e-03,
+                        7.87076280e-02,
+                        1.19966723e-01,
+                        2.81631678e-01,
+                        -3.58020402e-02,
+                        -9.65647772e-02,
+                        3.17915753e-02,
+                        2.49396205e-01,
+                        2.23600790e-01,
+                        -3.82718384e-01,
+                        1.16506606e-01,
+                        -3.19400802e-02,
+                        1.60812005e-01,
+                        9.81735960e-02,
+                        -1.99046463e-01,
+                        8.81427377e-02,
+                        -1.65171087e-01,
+                        -1.10251531e-01,
+                        1.15387037e-01,
+                        3.19312930e-01,
+                        -1.14400804e-01,
+                        -2.02447772e-01,
+                        2.33669549e-01,
+                        9.20853689e-02,
+                        3.91551465e-01,
+                        -3.58036369e-01,
+                        -2.35071778e-01,
+                        -5.00670634e-02,
+                        1.65313914e-01,
+                        -1.60922945e-01,
+                        -1.95520848e-01,
+                        1.82456985e-01,
+                        3.80704433e-01,
+                        4.19890225e-01,
+                        -2.98131555e-02,
+                        3.66110623e-01,
+                        -2.81170905e-01,
+                        -1.23942450e-01,
+                        9.58625227e-02,
+                        -5.90450205e-02,
+                        -1.56236291e-01,
+                        2.11865619e-01,
+                        -1.75286919e-01,
+                        -8.36539492e-02,
+                        1.29381597e-01,
+                        -1.66115880e-01,
+                        -1.66922957e-01,
+                        1.65688396e-01,
+                        8.41224194e-02,
+                        1.67839468e-01,
+                        -4.03967649e-02,
+                        -8.34071711e-02,
+                        -5.65301552e-02,
+                        1.67074010e-01,
+                        -3.19734544e-01,
+                        7.71123618e-02,
+                        5.57036921e-02,
+                        1.20709330e-01,
+                        -6.63790107e-02,
+                        1.36002287e-01,
+                        3.42324018e-01,
+                        3.42968374e-01,
+                        -1.42380476e-01,
+                        2.89662749e-01,
+                        1.82179566e-02,
+                        -4.96056974e-01,
+                        2.64364302e-01,
+                        7.38918930e-02,
+                        1.11150607e-01,
+                        -5.95749579e-02,
+                        1.18562862e-01,
+                        6.90007359e-02,
+                        -2.08283514e-01,
+                        -1.70682222e-01,
+                        7.82715827e-02,
+                        1.35489792e-01,
+                    ],
+                    [
+                        -6.35757595e-02,
+                        -3.20629895e-01,
+                        9.38569903e-02,
+                        -1.15190029e-01,
+                        1.03646070e-02,
+                        -4.31734361e-02,
+                        2.31717676e-01,
+                        4.01005745e-02,
+                        1.18915148e-01,
+                        2.10071519e-01,
+                        -2.99234912e-02,
+                        -2.93135524e-01,
+                        -2.39588290e-01,
+                        6.71441257e-02,
+                        3.15238893e-01,
+                        -5.08778207e-02,
+                        1.16147280e-01,
+                        -6.72954097e-02,
+                        -1.63787514e-01,
+                        1.60288364e-01,
+                        -2.30847582e-01,
+                        -2.22037435e-01,
+                        4.50191796e-02,
+                        -1.09636143e-01,
+                        -6.00997508e-02,
+                        2.14693844e-01,
+                        -8.51289369e-03,
+                        3.88416052e-01,
+                        -1.18085533e-01,
+                        -8.57385695e-02,
+                        -1.18666515e-02,
+                        3.29741478e-01,
+                        2.03779504e-01,
+                        -1.69492334e-01,
+                        1.94324687e-01,
+                        4.16374728e-02,
+                        6.83876276e-02,
+                        -1.85160581e-02,
+                        -3.73600274e-02,
+                        7.14804307e-02,
+                        -3.01446438e-01,
+                        1.74035393e-02,
+                        3.35123807e-01,
+                        4.17102218e-01,
+                        -1.58562332e-01,
+                        -2.54483074e-02,
+                        1.99573949e-01,
+                        7.95029774e-02,
+                        4.82958555e-01,
+                        -4.58213627e-01,
+                        -2.67229170e-01,
+                        1.27542794e-01,
+                        4.47799414e-02,
+                        -1.68686539e-01,
+                        -8.92183557e-02,
+                        9.79782715e-02,
+                        2.77656261e-02,
+                        2.96871901e-01,
+                        6.29860088e-02,
+                        1.77246213e-01,
+                        -3.15523535e-01,
+                        -1.74582571e-01,
+                        1.25724282e-02,
+                        -4.54988703e-02,
+                        -1.29154682e-01,
+                        2.13568255e-01,
+                        -1.40891463e-01,
+                        -2.66211092e-01,
+                        2.62144595e-01,
+                        -1.42889306e-01,
+                        -6.67349845e-02,
+                        1.63380653e-02,
+                        -1.92995071e-02,
+                        1.14811368e-01,
+                        1.43584609e-01,
+                        -2.65347548e-02,
+                        9.32592154e-02,
+                        2.23325342e-01,
+                        -1.87100068e-01,
+                        5.71197420e-02,
+                        2.71253467e-01,
+                        1.02890521e-01,
+                        -3.04941833e-03,
+                        1.10537663e-01,
+                        2.75728375e-01,
+                        2.11693868e-01,
+                        -1.80009842e-01,
+                        2.99300496e-02,
+                        1.77923322e-01,
+                        -4.53491032e-01,
+                        1.94149211e-01,
+                        2.47100577e-01,
+                        -9.95091349e-03,
+                        1.99301094e-01,
+                        2.06564650e-01,
+                        -1.99648179e-02,
+                        -1.89629450e-01,
+                        1.61689930e-02,
+                        1.04817756e-01,
+                        2.06400946e-01,
+                    ],
+                    [
+                        -3.86251360e-02,
+                        -3.07115853e-01,
+                        3.74236181e-02,
+                        -1.71237886e-01,
+                        -2.77359486e-02,
+                        -4.08068746e-02,
+                        6.91853091e-02,
+                        2.65322998e-03,
+                        1.23958819e-01,
+                        2.20951259e-01,
+                        8.36500078e-02,
+                        -3.14413190e-01,
+                        1.34745941e-01,
+                        -8.25274512e-02,
+                        3.36270213e-01,
+                        -2.49634441e-02,
+                        -1.06189884e-02,
+                        7.18819201e-02,
+                        -1.73392966e-01,
+                        2.98084319e-01,
+                        -1.25626653e-01,
+                        -2.17043106e-02,
+                        2.87982523e-01,
+                        -3.41932476e-03,
+                        -6.89984411e-02,
+                        -7.14176893e-03,
+                        4.49542440e-02,
+                        5.16424477e-01,
+                        -1.02622584e-01,
+                        2.02640779e-02,
+                        2.30106711e-02,
+                        1.93037808e-01,
+                        2.03393996e-01,
+                        -4.34632808e-01,
+                        5.74068353e-02,
+                        9.66466218e-02,
+                        -7.19890296e-02,
+                        4.23505977e-02,
+                        -1.60067812e-01,
+                        3.88947129e-02,
+                        -3.32329512e-01,
+                        1.91072702e-01,
+                        3.79437394e-02,
+                        4.33839470e-01,
+                        -1.29231960e-01,
+                        -1.46881789e-01,
+                        2.47269243e-01,
+                        2.86379829e-02,
+                        2.92926908e-01,
+                        -2.97341049e-01,
+                        -3.40239167e-01,
+                        1.52589783e-01,
+                        8.81168991e-02,
+                        1.40633471e-02,
+                        -8.83188471e-02,
+                        2.48367310e-01,
+                        3.41982782e-01,
+                        3.18781316e-01,
+                        -1.15148552e-01,
+                        2.54325420e-01,
+                        -1.82771236e-01,
+                        5.33889830e-02,
+                        2.12034155e-02,
+                        -9.78844613e-02,
+                        -1.61611915e-01,
+                        3.54084134e-01,
+                        -1.25332132e-01,
+                        -2.07989410e-01,
+                        2.35610008e-02,
+                        -1.35993093e-01,
+                        -1.97377697e-01,
+                        -1.21356212e-02,
+                        7.86775351e-03,
+                        4.71337497e-01,
+                        9.49376822e-03,
+                        4.25345525e-02,
+                        1.14162050e-01,
+                        6.27847165e-02,
+                        -2.31957644e-01,
+                        -8.33211765e-02,
+                        2.02719584e-01,
+                        -4.64919358e-02,
+                        7.57966787e-02,
+                        1.01521172e-01,
+                        3.16580981e-01,
+                        1.49488643e-01,
+                        -1.20770879e-01,
+                        2.56563038e-01,
+                        1.66572407e-01,
+                        -6.11343801e-01,
+                        2.09183827e-01,
+                        6.66101649e-02,
+                        1.77328646e-01,
+                        1.77777156e-01,
+                        2.03266457e-01,
+                        1.37545317e-01,
+                        -1.38004154e-01,
+                        -2.57656008e-01,
+                        1.83920860e-01,
+                        2.87696868e-02,
+                    ],
+                    [
+                        5.14136627e-04,
+                        -2.88997203e-01,
+                        -3.34554128e-02,
+                        -6.80408552e-02,
+                        -4.61972654e-02,
+                        1.75428241e-01,
+                        1.86710209e-01,
+                        -1.51355267e-01,
+                        1.28381401e-01,
+                        2.87129283e-01,
+                        5.22154570e-03,
+                        -3.53413224e-01,
+                        -3.87947261e-02,
+                        5.81918843e-02,
+                        3.17016482e-01,
+                        -2.51671404e-01,
+                        7.01867491e-02,
+                        -4.92945537e-02,
+                        -2.73323953e-01,
+                        1.27938241e-01,
+                        -4.11552131e-01,
+                        -2.23789401e-02,
+                        1.95418939e-01,
+                        -3.25946212e-01,
+                        4.60528135e-02,
+                        1.86884090e-01,
+                        6.98191971e-02,
+                        2.95638293e-01,
+                        -1.80322871e-01,
+                        -2.98620313e-02,
+                        2.11789399e-01,
+                        3.15145910e-01,
+                        3.11763227e-01,
+                        -5.78147054e-01,
+                        6.43244758e-02,
+                        -3.14367823e-02,
+                        1.86190963e-01,
+                        1.71108633e-01,
+                        -6.29745722e-02,
+                        7.48428777e-02,
+                        -4.58003521e-01,
+                        -3.01471800e-01,
+                        2.17973694e-01,
+                        5.73273778e-01,
+                        -1.01379365e-01,
+                        -2.46951967e-01,
+                        1.58989042e-01,
+                        -1.79126799e-01,
+                        5.24153829e-01,
+                        -4.64852840e-01,
+                        -2.94867605e-01,
+                        1.83558539e-01,
+                        2.50552952e-01,
+                        -8.56962949e-02,
+                        -2.57554710e-01,
+                        2.30709136e-01,
+                        3.53280157e-01,
+                        3.20184112e-01,
+                        2.99184099e-02,
+                        3.09098989e-01,
+                        -2.02217728e-01,
+                        -9.29201543e-02,
+                        -1.20569356e-02,
+                        -1.37087986e-01,
+                        -2.16524690e-01,
+                        1.39787242e-01,
+                        -1.27902150e-01,
+                        -2.64347821e-01,
+                        9.29943919e-02,
+                        -1.57217175e-01,
+                        -3.86638314e-01,
+                        7.90465698e-02,
+                        4.07211930e-02,
+                        -3.07695866e-02,
+                        1.27393469e-01,
+                        -1.18648581e-01,
+                        -7.21216127e-02,
+                        -3.71141285e-02,
+                        -3.37082207e-01,
+                        -6.23112544e-02,
+                        3.52166295e-01,
+                        1.51260465e-01,
+                        5.03427610e-02,
+                        1.90433189e-01,
+                        5.21304548e-01,
+                        3.85341585e-01,
+                        -1.26457050e-01,
+                        1.54961571e-01,
+                        5.29025272e-02,
+                        -5.06486952e-01,
+                        2.28533953e-01,
+                        1.78438187e-01,
+                        -4.14765030e-02,
+                        2.01903239e-01,
+                        -3.89365852e-02,
+                        8.84043872e-02,
+                        -1.55351788e-01,
+                        -9.06582028e-02,
+                        9.95599255e-02,
+                        -4.79989760e-02,
+                    ],
+                ],
+                dtype=np.float32,
+            )
+        }
+
+        expected = [
+            np.array(
+                [
+                    [
+                        129,
+                        72,
+                        168,
+                        128,
+                        157,
+                        153,
+                        191,
+                        160,
+                        178,
+                        170,
+                        168,
+                        105,
+                        174,
+                        155,
+                        223,
+                        133,
+                        160,
+                        172,
+                        135,
+                        217,
+                        119,
+                        150,
+                        167,
+                        122,
+                        137,
+                        184,
+                        142,
+                        232,
+                        121,
+                        135,
+                        129,
+                        169,
+                        180,
+                        0,
+                        159,
+                        146,
+                        167,
+                        157,
+                        93,
+                        176,
+                        97,
+                        137,
+                        159,
+                        255,
+                        124,
+                        97,
+                        197,
+                        136,
+                        222,
+                        74,
+                        85,
+                        158,
+                        202,
+                        115,
+                        124,
+                        160,
+                        190,
+                        236,
+                        115,
+                        223,
+                        107,
+                        149,
+                        140,
+                        113,
+                        92,
+                        196,
+                        90,
+                        130,
+                        185,
+                        111,
+                        94,
+                        143,
+                        170,
+                        157,
+                        148,
+                        121,
+                        131,
+                        142,
+                        88,
+                        163,
+                        192,
+                        150,
+                        145,
+                        176,
+                        193,
+                        199,
+                        122,
+                        198,
+                        159,
+                        18,
+                        224,
+                        145,
+                        160,
+                        179,
+                        180,
+                        195,
+                        97,
+                        70,
+                        155,
+                        141,
+                    ],
+                    [
+                        98,
+                        76,
+                        166,
+                        120,
+                        133,
+                        130,
+                        163,
+                        142,
+                        171,
+                        165,
+                        158,
+                        99,
+                        161,
+                        153,
+                        211,
+                        167,
+                        164,
+                        153,
+                        124,
+                        167,
+                        103,
+                        148,
+                        184,
+                        127,
+                        144,
+                        158,
+                        165,
+                        195,
+                        136,
+                        125,
+                        149,
+                        189,
+                        185,
+                        72,
+                        165,
+                        137,
+                        173,
+                        161,
+                        106,
+                        159,
+                        112,
+                        123,
+                        164,
+                        202,
+                        122,
+                        105,
+                        186,
+                        160,
+                        216,
+                        77,
+                        99,
+                        134,
+                        174,
+                        113,
+                        107,
+                        177,
+                        214,
+                        221,
+                        137,
+                        211,
+                        91,
+                        120,
+                        161,
+                        132,
+                        114,
+                        182,
+                        110,
+                        127,
+                        167,
+                        112,
+                        112,
+                        174,
+                        159,
+                        174,
+                        136,
+                        128,
+                        133,
+                        174,
+                        84,
+                        157,
+                        153,
+                        165,
+                        131,
+                        168,
+                        207,
+                        207,
+                        117,
+                        197,
+                        146,
+                        51,
+                        192,
+                        157,
+                        164,
+                        132,
+                        165,
+                        156,
+                        104,
+                        111,
+                        158,
+                        168,
+                    ],
+                    [
+                        131,
+                        83,
+                        160,
+                        122,
+                        145,
+                        135,
+                        186,
+                        150,
+                        165,
+                        182,
+                        137,
+                        89,
+                        99,
+                        155,
+                        202,
+                        134,
+                        165,
+                        131,
+                        113,
+                        173,
+                        100,
+                        102,
+                        151,
+                        123,
+                        132,
+                        183,
+                        141,
+                        215,
+                        121,
+                        127,
+                        141,
+                        204,
+                        181,
+                        112,
+                        179,
+                        151,
+                        156,
+                        140,
+                        136,
+                        156,
+                        87,
+                        146,
+                        205,
+                        220,
+                        114,
+                        138,
+                        180,
+                        158,
+                        233,
+                        58,
+                        93,
+                        167,
+                        151,
+                        112,
+                        126,
+                        161,
+                        148,
+                        198,
+                        155,
+                        176,
+                        84,
+                        111,
+                        145,
+                        135,
+                        119,
+                        183,
+                        117,
+                        94,
+                        192,
+                        116,
+                        131,
+                        146,
+                        139,
+                        164,
+                        170,
+                        138,
+                        160,
+                        184,
+                        108,
+                        154,
+                        193,
+                        162,
+                        142,
+                        164,
+                        194,
+                        182,
+                        110,
+                        149,
+                        176,
+                        59,
+                        179,
+                        189,
+                        141,
+                        180,
+                        181,
+                        139,
+                        108,
+                        146,
+                        162,
+                        181,
+                    ],
+                    [
+                        136,
+                        86,
+                        150,
+                        111,
+                        138,
+                        135,
+                        156,
+                        143,
+                        166,
+                        184,
+                        159,
+                        85,
+                        168,
+                        128,
+                        205,
+                        138,
+                        141,
+                        156,
+                        111,
+                        198,
+                        120,
+                        139,
+                        196,
+                        142,
+                        130,
+                        142,
+                        151,
+                        239,
+                        124,
+                        147,
+                        147,
+                        179,
+                        181,
+                        62,
+                        154,
+                        161,
+                        130,
+                        151,
+                        113,
+                        150,
+                        81,
+                        178,
+                        150,
+                        224,
+                        119,
+                        116,
+                        189,
+                        148,
+                        197,
+                        88,
+                        80,
+                        171,
+                        159,
+                        146,
+                        127,
+                        189,
+                        206,
+                        202,
+                        122,
+                        190,
+                        109,
+                        153,
+                        147,
+                        125,
+                        113,
+                        209,
+                        120,
+                        104,
+                        147,
+                        118,
+                        106,
+                        141,
+                        144,
+                        230,
+                        145,
+                        151,
+                        164,
+                        155,
+                        100,
+                        128,
+                        181,
+                        134,
+                        157,
+                        162,
+                        202,
+                        171,
+                        121,
+                        191,
+                        174,
+                        30,
+                        182,
+                        155,
+                        176,
+                        176,
+                        181,
+                        169,
+                        117,
+                        95,
+                        177,
+                        148,
+                    ],
+                    [
+                        143,
+                        89,
+                        137,
+                        130,
+                        134,
+                        176,
+                        178,
+                        115,
+                        167,
+                        196,
+                        144,
+                        77,
+                        136,
+                        154,
+                        202,
+                        96,
+                        156,
+                        134,
+                        92,
+                        167,
+                        67,
+                        139,
+                        179,
+                        82,
+                        152,
+                        178,
+                        156,
+                        198,
+                        110,
+                        137,
+                        182,
+                        202,
+                        201,
+                        36,
+                        155,
+                        137,
+                        178,
+                        175,
+                        131,
+                        157,
+                        58,
+                        87,
+                        183,
+                        249,
+                        124,
+                        97,
+                        173,
+                        110,
+                        240,
+                        57,
+                        88,
+                        177,
+                        190,
+                        127,
+                        95,
+                        186,
+                        209,
+                        202,
+                        149,
+                        200,
+                        105,
+                        126,
+                        141,
+                        118,
+                        103,
+                        169,
+                        119,
+                        94,
+                        160,
+                        114,
+                        71,
+                        158,
+                        151,
+                        137,
+                        167,
+                        121,
+                        130,
+                        136,
+                        80,
+                        131,
+                        208,
+                        171,
+                        152,
+                        178,
+                        240,
+                        215,
+                        120,
+                        172,
+                        153,
+                        49,
+                        185,
+                        176,
+                        135,
+                        180,
+                        136,
+                        159,
+                        114,
+                        126,
+                        161,
+                        134,
+                    ],
+                ],
+                dtype=np.uint8,
+            ),
+            np.array(0.005387083161622286, dtype=np.float32),
+            np.array(143, dtype=np.uint8),
+        ]
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, None)
+        Y = make_tensor_value_info("Y", TensorProto.UINT8, None)
+        Scale = make_tensor_value_info("scale", TensorProto.FLOAT, None)
+        Zp = make_tensor_value_info("zp", TensorProto.UINT8, None)
+
+        nodes = [
+            make_node(
+                "DynamicQuantizeLinear",
+                ["X"],
+                ["Y", "scale", "zp"],
+            ),
+        ]
+        model = make_model(
+            make_graph(nodes, "g", [X], [Y, Scale, Zp]),
+            opset_imports=[make_opsetid("", onnx_opset_version() - 1)],
+        )
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, feeds)
+        self.assertEqual(len(got), 3)
+        for i in range(2, -1, -1):
+            assert_allclose(expected[i], got[i])
+
+    @parameterized.parameterized.expand(
+        [
+            (["abc", "def"], [".com", ".net"], ["abc.com", "def.net"], (2,)),
+            (["cat", "dog", "snake"], ["s"], ["cats", "dogs", "snakes"], (3,)),
+            ("cat", "s", "cats", ()),
+            (["a", "ß", "y"], ["a", "ß", "y"], ["aa", "ßß", "yy"], (3,)),
+        ]
+    )
+    def test_string_concat(self, a, b, expected, expected_shape):
+        A = make_tensor_value_info("A", TensorProto.STRING, None)
+        B = make_tensor_value_info("B", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.STRING, None)
+        node = make_node("StringConcat", inputs=["A", "B"], outputs=["Y"])
+        model = make_model(make_graph([node], "g", [A, B], [Y]))
+        ref = ReferenceEvaluator(model)
+        result, *_ = ref.run(None, {"A": np.array(a), "B": np.array(b)})
+        np.testing.assert_array_equal(result, expected)
+        self.assertEqual(result.dtype.kind, "O")
+        self.assertEqual(result.shape, expected_shape)
+
+    @parameterized.parameterized.expand(
+        [
+            (
+                ["1,2,3", "4,5,6"],
+                ",",
+                None,
+                [["1", "2", "3"], ["4", "5", "6"]],
+                [3, 3],
+            ),
+            (
+                ["1,", "4,6", ""],
+                ",",
+                None,
+                [["1", ""], ["4", "6"], ["", ""]],
+                [2, 2, 1],
+            ),
+            (
+                ["1", "4,6", "4,5,6"],
+                ",",
+                1,
+                [["1", ""], ["4", "6"], ["4", "5,6"]],
+                [1, 2, 2],
+            ),
+            (
+                [["1,", "4,6", "4,5,6"], ["1,", "4,6", "4,5,6"]],
+                ",",
+                None,
+                [
+                    [["1", "", ""], ["4", "6", ""], ["4", "5", "6"]],
+                    [["1", "", ""], ["4", "6", ""], ["4", "5", "6"]],
+                ],
+                [[2, 2, 3], [2, 2, 3]],
+            ),
+            (
+                ["hello world !", "  hello   world !", " hello world   ! "],
+                None,
+                None,
+                [
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                ],
+                [3, 3, 3],
+            ),
+            (
+                ["hello world !", "  hello   world !", " hello world   ! "],
+                "",
+                None,
+                [
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                ],
+                [3, 3, 3],
+            ),
+            (
+                ["o-n-n--x-", "o-n----nx"],
+                "-",
+                None,
+                [["o", "n", "n", "", "x", ""], ["o", "n", "", "", "", "nx"]],
+                [6, 6],
+            ),
+            (
+                [],
+                " ",
+                2,
+                np.array([]).reshape((0, 0)),
+                [],
+            ),
+        ]
+    )
+    def test_string_split(
+        self,
+        x,
+        delimiter,
+        maxsplit,
+        expected_split,
+        expected_num_splits,
+    ):
+        X = make_tensor_value_info("X", TensorProto.STRING, (None))
+        Splits = make_tensor_value_info("Splits", TensorProto.STRING, (None))
+        MaxSplits = make_tensor_value_info("MaxSplits", TensorProto.INT32, (None))
+        node = make_node(
+            "StringSplit",
+            inputs=["X"],
+            outputs=["Splits", "MaxSplits"],
+            delimiter=delimiter,
+            maxsplit=maxsplit,
+        )
+        model = make_model(make_graph([node], "g", [X], [Splits, MaxSplits]))
+        ref = ReferenceEvaluator(model)
+        x = np.array(x, dtype=object)
+        result, num_splits, *_ = ref.run(None, {"X": x})
+        np.testing.assert_array_equal(result, np.array(expected_split, dtype=object))
+        np.testing.assert_array_equal(
+            num_splits, np.array(expected_num_splits, dtype=np.int64)
+        )
+
+    @parameterized.parameterized.expand(
+        [
+            (
+                ["www.google.com", "www.facebook.com", "www.bbc.co.uk"],
+                r"www\.[\w.-]+\.\bcom\b",
+                [True, True, False],
+                (3,),
+            ),
+            (
+                [["Onnx", "tensorflow", "Numpy"], ["Pytorch", "Cython", "numba"]],
+                r"^[A-Z][a-z]*$",
+                [[True, False, True], [True, True, False]],
+                (2, 3),
+            ),
+            (
+                [
+                    "account@gmail.com",
+                    "account@hotmail.com",
+                    "not email",
+                    "account2@yahoo.com",
+                ],
+                r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+                [True, False, False, True],
+                (4,),
+            ),
+        ]
+    )
+    @unittest.skipIf(
+        sys.platform == "win32", "google-re2 package is not built for win32"
+    )
+    def test_regex_full_match(self, x, pattern, expected, expected_shape):
+        X = make_tensor_value_info("X", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
+        node = make_node("RegexFullMatch", inputs=["X"], outputs=["Y"], pattern=pattern)
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        result, *_ = ref.run(None, {"X": np.array(x)})
+        np.testing.assert_array_equal(result, expected)
+        self.assertEqual(result.dtype.kind, "b")
+        self.assertEqual(result.shape, expected_shape)
+
+    @unittest.skipIf(
+        sys.platform == "win32", "google-re2 package is not built for win32"
+    )
+    def test_regex_invalid_pattern(self):
+        X = make_tensor_value_info("X", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
+        node = make_node("RegexFullMatch", inputs=["X"], outputs=["Y"], pattern="x)")
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        with self.assertRaises(ValueError):
+            ref.run(None, {"X": np.array(["x"])})
 
 
 if __name__ == "__main__":

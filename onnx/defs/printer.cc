@@ -3,7 +3,10 @@
  */
 
 #include "onnx/defs/printer.h"
+
 #include <iomanip>
+#include <vector>
+
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
@@ -306,6 +309,12 @@ void ProtoPrinter::print(const AttributeProto& attr) {
       break;
     case AttributeProto_AttributeType_TENSORS:
       printSet("[", ", ", "]", attr.tensors());
+      break;
+    case AttributeProto_AttributeType_TYPE_PROTO:
+      print(attr.tp());
+      break;
+    case AttributeProto_AttributeType_TYPE_PROTOS:
+      printSet("[", ", ", "]", attr.type_protos());
       break;
     default:
       break;

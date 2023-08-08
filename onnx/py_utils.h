@@ -1,10 +1,11 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <pybind11/pybind11.h>
+
 #include "onnx/proto_utils.h"
 
 namespace ONNX_NAMESPACE {

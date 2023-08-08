@@ -1,0 +1,71 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Feature request
+description: Create a feature request for a functionality that does not currently exist in the ONNX.
+title: "[Feature request] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to create a feature request!
+  - type: textarea
+    id: system-info
+    attributes:
+      label: System information
+      description: "ONNX version (you are using):"
+    validations:
+      required: false
+  - type: textarea
+    id: solves-problem
+    attributes:
+      label: What is the problem that this feature solves?
+      description: Please detail the discrepancy with our current functionality.
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe the alternatives you have considered
+      placeholder: A clear and concise description of any alternative solutions or features you've considered.
+    validations:
+      required: false
+  - type: textarea
+    id: feature
+    attributes:
+      label: Describe the feature
+      description: Why is this feature necessary? What does it accomplish?
+    validations:
+      required: false
+  - type: textarea
+    id: api-impact
+    attributes:
+      label: Will this influence the current api (Y/N)?
+      placeholder: If yes, how?
+    validations:
+      required: false
+  - type: textarea
+    id: feature-area
+    attributes:
+      label: Feature Area
+      description: Which area in ONNX does this impact?  e.g., model usage, backend, best practices, converters, shape_inference, version_converter, training, test, operators, IR, ONNX Hub, data preprocessing, CI pipelines.
+    validations:
+      required: false
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: "Are you willing to contribute it (Y/N)"
+      options:
+        - "Yes"
+        - "No"
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Any additional information
+    validations:
+      required: false

@@ -1,9 +1,13 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "status.h"
+
 #include <assert.h>
+
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {

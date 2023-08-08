@@ -4,7 +4,12 @@
 
 #pragma once
 
+#include <algorithm>
 #include <functional>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
@@ -291,12 +296,12 @@ inline bool hasShape(const TypeProto& type) {
 }
 
 template <typename Context>
-inline bool hasInputShape(Context& ctx, size_t n) {
+inline bool hasInputShape(const Context& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) && hasShape(*ctx.getInputType(n));
 }
 
 template <typename Context>
-inline bool hasNInputShapes(Context& ctx, size_t n) {
+inline bool hasNInputShapes(const Context& ctx, size_t n) {
   for (size_t i = 0; i < n; i++) {
     if (!hasInputShape(ctx, i)) {
       return false;
@@ -305,7 +310,7 @@ inline bool hasNInputShapes(Context& ctx, size_t n) {
   return true;
 }
 
-inline const TensorShapeProto& getInputShape(InferenceContext& ctx, size_t n) {
+inline const TensorShapeProto& getInputShape(const InferenceContext& ctx, size_t n) {
   const auto* input_type = ctx.getInputType(n);
   const auto value_case = input_type->value_case();
   if (value_case != TypeProto::kTensorType && value_case != TypeProto::kSparseTensorType) {
@@ -532,7 +537,7 @@ inline void updateOutputShape(
 // If neither is available, try rank inference.
 // When one of above succeeds, `true` is stored in `found`.
 // Otherwise, `false` is stored, which means that returned TensorShapeProto does not make sense.
-TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& found);
+TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found);
 
 // Infer shape of an output from the value of a specified attribute, which is
 // expected to be a list of integers specifying a valid shape.
@@ -821,5 +826,33 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor
 //    target: sequence of tensor, elem_type: float, shape: None
 //    output: sequence of tensor, elem_type: float, shape: None
 void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type);
+
+// adjustNegativeAxes: Negative axes values are translated to the right axis in the positive range
+template <typename Axes>
+void adjustNegativeAxes(Axes& axes, int rank) {
+  std::transform(
+      axes.begin(), axes.end(), axes.begin(), [&](int64_t axis) -> int64_t { return axis < 0 ? axis + rank : axis; });
+}
+
+// checkAxesRange: Checks that values are within the range [-rank, rank)
+template <typename Axes>
+void checkAxesRange(Axes& axes, int rank) {
+  for (auto axis : axes) {
+    if (axis < -rank || axis > (rank - 1))
+      fail_shape_inference("Unexpected axis value: ", axis, ". Expected range [", -rank, ", ", rank, ")");
+  }
+}
+
+// checkDuplicateAxes: Check that there are no duplicated axes
+template <typename Axes>
+void checkDuplicateAxes(Axes& axes, int rank) {
+  std::vector<bool> tmp(rank, false);
+  for (auto axis : axes) {
+    int actual_axis = axis < 0 ? axis + rank : axis;
+    if (tmp[actual_axis])
+      fail_shape_inference("Axis ", axis, " is referred to more than once.");
+    tmp[actual_axis] = true;
+  }
+}
 
 } // namespace ONNX_NAMESPACE

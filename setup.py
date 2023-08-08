@@ -1,8 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import glob
 import multiprocessing
 import os
+import pathlib
 import platform
 import shlex
 import subprocess
@@ -13,6 +16,7 @@ from datetime import date
 from distutils import log, sysconfig
 from distutils.spawn import find_executable
 from textwrap import dedent
+from typing import ClassVar
 
 import setuptools
 import setuptools.command.build_ext
@@ -46,6 +50,9 @@ ONNX_VERIFY_PROTO3 = bool(os.getenv("ONNX_VERIFY_PROTO3") == "1")
 ONNX_NAMESPACE = os.getenv("ONNX_NAMESPACE", "onnx")
 ONNX_BUILD_TESTS = bool(os.getenv("ONNX_BUILD_TESTS") == "1")
 ONNX_DISABLE_EXCEPTIONS = bool(os.getenv("ONNX_DISABLE_EXCEPTIONS") == "1")
+ONNX_DISABLE_STATIC_REGISTRATION = bool(
+    os.getenv("ONNX_DISABLE_STATIC_REGISTRATION") == "1"
+)
 
 USE_MSVC_STATIC_RUNTIME = bool(os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1")
 DEBUG = bool(os.getenv("DEBUG", "0") == "1")
@@ -104,7 +111,7 @@ def cd(path):
 
 
 class ONNXCommand(setuptools.Command):
-    user_options = []
+    user_options: ClassVar[list] = []
 
     def initialize_options(self):
         pass
@@ -142,7 +149,9 @@ class CmakeBuild(setuptools.Command):
     to `setup.py build`.  By default all CPUs are used.
     """
 
-    user_options = [("jobs=", "j", "Specifies the number of jobs to use with make")]
+    user_options: ClassVar[list] = [
+        ("jobs=", "j", "Specifies the number of jobs to use with make")
+    ]
 
     built = False
 
@@ -210,6 +219,8 @@ class CmakeBuild(setuptools.Command):
                 cmake_args.append("-DONNX_BUILD_TESTS=ON")
             if ONNX_DISABLE_EXCEPTIONS:
                 cmake_args.append("-DONNX_DISABLE_EXCEPTIONS=ON")
+            if ONNX_DISABLE_STATIC_REGISTRATION:
+                cmake_args.append("-DONNX_DISABLE_STATIC_REGISTRATION=ON")
             if "CMAKE_ARGS" in os.environ:
                 extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
                 # prevent crossfire with downstream scripts
@@ -222,6 +233,18 @@ class CmakeBuild(setuptools.Command):
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."
                 )
+            if (
+                "PYTHONPATH" in os.environ
+                and "pip-build-env" in os.environ["PYTHONPATH"]
+            ):
+                # When the users use `pip install -e .` to install onnx and
+                # the cmake executable is a python entry script, there will be
+                # `Fix ModuleNotFoundError: No module named 'cmake'` from the cmake script.
+                # This is caused by the additional PYTHONPATH environment variable added by pip,
+                # which makes cmake python entry script not able to find correct python cmake packages.
+                # Actually, sys.path is well enough for `pip install -e .`.
+                # Therefore, we delete the PYTHONPATH variable.
+                del os.environ["PYTHONPATH"]
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, "--build", os.curdir]
@@ -338,6 +361,12 @@ extras_require["lint"] = [
     "lintrunner-adapters>=0.3",
 ]
 
+if not os.path.exists("requirements-reference.txt"):
+    raise FileNotFoundError("Unable to find requirements-reference.txt")
+
+with open("requirements-reference.txt") as f:
+    extras_require["reference"] = f.read().splitlines()
+
 ################################################################################
 # Final
 ################################################################################
@@ -346,7 +375,7 @@ setuptools.setup(
     name=PACKAGE_NAME,
     version=VersionInfo.version,
     description="Open Neural Network Exchange",
-    long_description=open("README.md").read(),
+    long_description=pathlib.Path("README.md").read_text(),
     long_description_content_type="text/markdown",
     ext_modules=ext_modules,
     cmdclass=CMDCLASS,

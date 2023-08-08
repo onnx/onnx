@@ -1,10 +1,12 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Helper Methods for Adapters
 
 #include "onnx/version_converter/helper.h"
+
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {

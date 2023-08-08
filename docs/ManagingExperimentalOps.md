@@ -1,4 +1,10 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+# Managing Experimental Operators
 
 ## Deprecated Experimental Operators
 

@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,8 @@
 // Adapter for Cast in default domain from version 9 to 8
 
 #pragma once
+
+#include <memory>
 
 #include "onnx/version_converter/adapters/adapter.h"
 

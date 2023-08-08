@@ -1,6 +1,9 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
 
-# Metadata
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Metadata
 
 In addition to the core metadata recommendations listed in the [extensibility documentation](IR.md#optional-metadata) there is additional experimental metadata to help provide information for model inputs and outputs.

@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=W0221
 
@@ -17,5 +19,5 @@ class HannWindow(_CommonWindow):
 
     def _run(self, size, output_datatype=None, periodic=None):  # type: ignore
         ni, N_1 = self._begin(size, periodic, output_datatype)
-        res = np.sin(ni * 3.1415 / N_1) ** 2
+        res = np.sin(ni * np.pi / N_1) ** 2
         return self._end(size, res, output_datatype)

@@ -1,18 +1,24 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 """onnx shape inference. Shape inference is not guaranteed to be
 complete.
 
 """
 
-from typing import Dict, List, Optional, Union
+from __future__ import annotations
+
+import os
+from typing import Sequence
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
-from onnx import ModelProto
+from onnx import AttributeProto, FunctionProto, ModelProto, TypeProto
 
 
 def infer_shapes(
-    model: Union[ModelProto, bytes],
+    model: ModelProto | bytes,
     check_type: bool = False,
     strict_mode: bool = False,
     data_prop: bool = False,
@@ -53,8 +59,8 @@ def infer_shapes(
 
 
 def infer_shapes_path(
-    model_path: str,
-    output_path: str = "",
+    model_path: str | os.PathLike,
+    output_path: str | os.PathLike = "",
     check_type: bool = False,
     strict_mode: bool = False,
     data_prop: bool = False,
@@ -68,28 +74,35 @@ def infer_shapes_path(
             "infer_shapes_path only accepts model Path (String),"
             "you can use infer_shapes for the ModelProto."
         )
-    # Directly output the inferred model into the specified path, return nothing
-    if isinstance(model_path, str):
-        # If output_path is not defined, default output_path would be the original model path
-        if output_path == "":
-            output_path = model_path
-        C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
+    try:
+        model_path = os.fspath(model_path)
+    except TypeError as exp:
+        raise TypeError(
+            "infer_shapes_path only accepts model path as a string or PathLike, "
+            f"incorrect model path type: {type(model_path)}"
+        ) from exp
+    try:
+        output_path = os.fspath(output_path)
+    except TypeError as exp:
+        raise TypeError(
+            "infer_shapes_path only accepts output path as a string or PathLike, "
+            f"incorrect output path type: {type(output_path)}"
+        ) from exp
 
-    raise TypeError(
-        "infer_shapes_path only accepts model path (String), "
-        f"incorrect type: {type(model_path)}"
-    )
+    if output_path == "":
+        output_path = model_path
+    C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
 
 
 def infer_node_outputs(
     schema: onnx.defs.OpSchema,
     node: onnx.NodeProto,
-    input_types: Dict[str, onnx.TypeProto],
-    input_data: Optional[Dict[str, onnx.TensorProto]] = None,
-    input_sparse_data: Optional[Dict[str, onnx.SparseTensorProto]] = None,
-    opset_imports: Optional[List[onnx.OperatorSetIdProto]] = None,
+    input_types: dict[str, onnx.TypeProto],
+    input_data: dict[str, onnx.TensorProto] | None = None,
+    input_sparse_data: dict[str, onnx.SparseTensorProto] | None = None,
+    opset_imports: list[onnx.OperatorSetIdProto] | None = None,
     ir_version: int = onnx.IR_VERSION,
-) -> Dict[str, onnx.TypeProto]:
+) -> dict[str, onnx.TypeProto]:
     if not schema.has_type_and_shape_inference_function:  # type: ignore
         return {}
     if input_data is None:
@@ -129,6 +142,29 @@ def infer_node_outputs(
         ir_version,
     )  # type: ignore[call-arg]
     return {key: onnx.TypeProto.FromString(out) for key, out in outputs.items()}
+
+
+def infer_function_output_types(
+    function: FunctionProto,
+    input_types: Sequence[TypeProto],
+    attributes: Sequence[AttributeProto],
+) -> list[TypeProto]:
+    """
+    Apply type-and-shape-inference to given function body, with given input types
+    and given input attribute values.
+    """
+    result = C.infer_function_output_types(
+        function.SerializeToString(),
+        [x.SerializeToString() for x in input_types],
+        [x.SerializeToString() for x in attributes],
+    )
+
+    def to_type_proto(x) -> TypeProto:
+        type_proto = onnx.TypeProto()
+        type_proto.ParseFromString(x)
+        return type_proto
+
+    return [to_type_proto(x) for x in result]
 
 
 InferenceError = C.InferenceError

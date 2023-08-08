@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0911,R0913,R0914,W0221
 
@@ -39,7 +41,7 @@ class TreeEnsemble:
         for name, value in kwargs.items():
             self.atts.add(name, value)
 
-        self.tree_ids = list(sorted(set(self.atts.nodes_treeids)))  # type: ignore
+        self.tree_ids = sorted(set(self.atts.nodes_treeids))  # type: ignore
         self.root_index = {
             tid: len(self.atts.nodes_treeids) for tid in self.tree_ids  # type: ignore
         }

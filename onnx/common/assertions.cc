@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -6,8 +8,10 @@
 // Adventurous users should note that the APIs will probably change.
 
 #include "onnx/common/assertions.h"
+
 #include <cstdarg>
 #include <cstdio>
+
 #include "onnx/common/common.h"
 
 namespace ONNX_NAMESPACE {

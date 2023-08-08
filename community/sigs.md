@@ -1,4 +1,8 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # SIGs - Special Interest Groups
 
@@ -6,7 +10,7 @@ As described in the ONNX [governance](/community/readme.md#sig---special-interes
 
 ## Joining a SIG
 
-If you are interested in participating, please [join the discussion](https://slack.lfai.foundation/) in the respective Slack channels. Details about any upcoming meetings will also be shared in the Slack channels. SIG artifacts can be found in the [sigs repository](https://github.com/onnx/sigs).
+If you are interested in participating, please [join the discussion](https://join.slack.com/t/lfaifoundation/shared_invite/zt-o65errpw-gMTbwNr7FnNbVXNVFkmyNA) in the respective Slack channels. Details about any upcoming meetings will also be shared in the Slack channels. SIG artifacts can be found in the [sigs repository](https://github.com/onnx/sigs).
 
 You can find the schedule of SIG meetings on the [LF AI calendar](https://wiki.lfai.foundation/pages/viewpage.action?pageId=18481196)
 

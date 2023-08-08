@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 # pylint: disable=unidiomatic-typecheck
@@ -48,19 +50,19 @@ def check_overlapping_names(
 
     # Edges already cover input/output
     overlap = _overlapping(_edge_names(g1), _edge_names(g2, exclude=io_map_inputs))
-    if len(overlap) > 0:
+    if overlap:
         result.append(("edge", overlap))
 
     overlap = _overlapping(
         [e.name for e in g1.value_info], [e.name for e in g2.value_info]
     )
-    if len(overlap) > 0:
+    if overlap:
         result.append(("value_info", overlap))
 
     overlap = _overlapping(
         [e.name for e in g1.initializer], [e.name for e in g2.initializer]
     )
-    if len(overlap) > 0:
+    if overlap:
         result.append(("initializer", overlap))
 
     overlap = _overlapping(
@@ -70,7 +72,7 @@ def check_overlapping_names(
         [e.indices.name for e in g1.sparse_initializer],
         [e.indices.name for e in g2.sparse_initializer],
     )
-    if len(overlap) > 0:
+    if overlap:
         result.append(("sparse_initializer", overlap))
 
     return result
@@ -463,13 +465,13 @@ def add_prefix_graph(  # pylint: disable=too-many-branches
                 name_map[e] = _prefixed(prefix, e)
             for e in n.output:
                 name_map[e] = _prefixed(prefix, e)
-    else:
-        if rename_outputs:
-            for entry in g.output:
-                name_map[entry.name] = _prefixed(prefix, entry.name)
-        if rename_inputs:
-            for entry in g.input:
-                name_map[entry.name] = _prefixed(prefix, entry.name)
+
+    if rename_inputs:
+        for entry in g.input:
+            name_map[entry.name] = _prefixed(prefix, entry.name)
+    if rename_outputs:
+        for entry in g.output:
+            name_map[entry.name] = _prefixed(prefix, entry.name)
 
     if rename_nodes:
         for n in g.node:

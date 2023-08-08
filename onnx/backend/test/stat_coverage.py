@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import os
@@ -12,10 +14,7 @@ from onnx.backend.test.runner import Runner
 
 
 def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:
-    for s in schemas:
-        if s.domain == "ai.onnx.ml":
-            return True
-    return False
+    return any(s.domain == "ai.onnx.ml" for s in schemas)
 
 
 def gen_outlines(f: IO[Any], ml: bool) -> None:
@@ -151,16 +150,25 @@ def gen_model_test_coverage(
 ) -> None:
     f.write("# Model Test Coverage\n")
     # Process schemas
-    schema_dict = dict()
+    schema_dict = {}
     for schema in schemas:
         schema_dict[schema.name] = schema
     # Load models from each model test using Runner.prepare_model_data
     # Need to grab associated nodes
-    attrs: Dict[str, Dict[str, List[Any]]] = dict()
+    attrs: Dict[str, Dict[str, List[Any]]] = {}
     model_paths: List[Any] = []
     for rt in load_model_tests(kind="real"):
-        model_dir = Runner.prepare_model_data(rt)
-        model_paths.append(os.path.join(model_dir, "model.onnx"))
+        if rt.url.startswith("onnx/backend/test/data/light/"):
+            # testing local files
+            model_name = os.path.normpath(
+                os.path.join(os.path.dirname(__file__), "..", "..", "..", rt.url)
+            )
+            if not os.path.exists(model_name):
+                raise FileNotFoundError(f"Unable to find model {model_name!r}.")
+            model_paths.append(model_name)
+        else:
+            model_dir = Runner.prepare_model_data(rt)
+            model_paths.append(os.path.join(model_dir, "model.onnx"))
     model_paths.sort()
     model_written = False
     for model_pb_path in model_paths:
@@ -184,7 +192,7 @@ def gen_model_test_coverage(
                 # Iterate through and store each node's attributes
                 for attr in node.attribute:
                     if node.op_type not in attrs:
-                        attrs[node.op_type] = dict()
+                        attrs[node.op_type] = {}
                     if attr.name not in attrs[node.op_type]:
                         attrs[node.op_type][attr.name] = []
                     if attr.type == AttributeProto.FLOAT:

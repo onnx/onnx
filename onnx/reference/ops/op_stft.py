@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0913,R0914,R0915,W0613,W0221
 
@@ -10,7 +12,7 @@ from onnx.reference.ops.op_slice import _slice
 
 
 def _concat(*args, axis=0):  # type: ignore
-    return np.concatenate(tuple(args), axis=axis)
+    return np.concatenate(args, axis=axis)
 
 
 def _unsqueeze(a, axis):  # type: ignore

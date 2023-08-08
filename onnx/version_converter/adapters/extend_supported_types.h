@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -6,6 +8,11 @@
 // definitions
 
 #pragma once
+
+#include <memory>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 #include "onnx/version_converter/adapters/adapter.h"
 

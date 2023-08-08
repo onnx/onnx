@@ -85,7 +85,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
             "The input must be a tensor of a numeric type. The output will be of the same tensor type.")
-        .Attr("threshold", "Values greater than this are mapped to 1, others to 0.", AttributeProto::FLOAT, 0.f));
+        .Attr("threshold", "Values greater than this are mapped to 1, others to 0.", AttributeProto::FLOAT, 0.f)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
 static const char* CastMap_ver1_doc = R"DOC(
     Converts a map to a tensor.<br>The map key must be an int64 and the values will be ordered
@@ -1076,7 +1077,12 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           std::vector<std::string> classlabels_strings;
           bool result = getRepeatedAttribute(ctx, "classlabels_strings", classlabels_strings);
           auto output_map_type = ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_map_type();
-          output_map_type->mutable_value_type()->mutable_tensor_type()->set_elem_type(TensorProto::FLOAT);
+          auto output_value_tensor_type = output_map_type->mutable_value_type()->mutable_tensor_type();
+          output_value_tensor_type->set_elem_type(TensorProto::FLOAT);
+          output_value_tensor_type->mutable_shape(); // Initialize to scalar
+          if (hasInputShape(ctx, 0) && getInputShape(ctx, 0).dim_size() != 1 && getInputShape(ctx, 0).dim_size() != 2) {
+            fail_shape_inference("ZipMap input shape should be 1D or 2D.")
+          }
           if (result && !classlabels_strings.empty()) {
             output_map_type->set_key_type(TensorProto::STRING);
           }

@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 from __future__ import annotations
@@ -13,25 +15,14 @@ import tempfile
 import time
 import unittest
 from collections import defaultdict
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Pattern,
-    Sequence,
-    Set,
-    Type,
-    Union,
-)
+from typing import Any, Callable, Iterable, Pattern, Sequence
 from urllib.request import urlretrieve
 
 import numpy as np
 
 import onnx
-from onnx import ModelProto, NodeProto, TypeProto, numpy_helper
+import onnx.reference
+from onnx import ONNX_ML, ModelProto, NodeProto, TypeProto, ValueInfoProto, numpy_helper
 from onnx.backend.base import Backend
 from onnx.backend.test.case.test_case import TestCase
 from onnx.backend.test.loader import load_model_tests
@@ -42,7 +33,7 @@ class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
     pass
 
 
-def retry_excute(times: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     assert times >= 1
 
     def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -64,19 +55,19 @@ def retry_excute(times: int) -> Callable[[Callable[..., Any]], Callable[..., Any
 
 class Runner:
     def __init__(
-        self, backend: Type[Backend], parent_module: Optional[str] = None
+        self, backend: type[Backend], parent_module: str | None = None
     ) -> None:
         self.backend = backend
         self._parent_module = parent_module
-        self._include_patterns: Set[Pattern[str]] = set()
-        self._exclude_patterns: Set[Pattern[str]] = set()
-        self._xfail_patterns: Set[Pattern[str]] = set()
+        self._include_patterns: set[Pattern[str]] = set()
+        self._exclude_patterns: set[Pattern[str]] = set()
+        self._xfail_patterns: set[Pattern[str]] = set()
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
         # derived from it.
         # {category: {name: func}}
-        self._test_items: Dict[str, Dict[str, TestItem]] = defaultdict(dict)
+        self._test_items: dict[str, dict[str, TestItem]] = defaultdict(dict)
 
         for rt in load_model_tests(kind="node"):
             self._add_model_test(rt, "Node")
@@ -93,7 +84,7 @@ class Runner:
         for ot in load_model_tests(kind="pytorch-operator"):
             self._add_model_test(ot, "PyTorchOperator")
 
-    def _get_test_case(self, name: str) -> Type[unittest.TestCase]:
+    def _get_test_case(self, name: str) -> type[unittest.TestCase]:
         test_case = type(str(name), (unittest.TestCase,), {})
         if self._parent_module:
             test_case.__module__ = self._parent_module
@@ -120,8 +111,8 @@ class Runner:
         return self
 
     @property
-    def _filtered_test_items(self) -> Dict[str, Dict[str, TestItem]]:
-        filtered: Dict[str, Dict[str, TestItem]] = {}
+    def _filtered_test_items(self) -> dict[str, dict[str, TestItem]]:
+        filtered: dict[str, dict[str, TestItem]] = {}
         for category, items_map in self._test_items.items():
             filtered[category] = {}
             for name, item in items_map.items():
@@ -141,7 +132,7 @@ class Runner:
         return filtered
 
     @property
-    def test_cases(self) -> Dict[str, Type[unittest.TestCase]]:
+    def test_cases(self) -> dict[str, type[unittest.TestCase]]:
         """
         List of test cases to be applied on the parent scope
         Example usage:
@@ -172,7 +163,7 @@ class Runner:
 
     # For backward compatibility (we used to expose `.tests`)
     @property
-    def tests(self) -> Type[unittest.TestCase]:
+    def tests(self) -> type[unittest.TestCase]:
         """
         One single unittest.TestCase that hosts all the test functions
         Example usage:
@@ -211,7 +202,7 @@ class Runner:
                     )
 
     @classmethod
-    @retry_excute(3)
+    @retry_execute(3)
     def download_model(
         cls, model_test: TestCase, model_dir: str, models_dir: str
     ) -> None:
@@ -263,7 +254,7 @@ class Runner:
         category: str,
         test_name: str,
         test_func: Callable[..., Any],
-        report_item: List[Optional[Union[ModelProto, NodeProto]]],
+        report_item: list[ModelProto | NodeProto | None],
         devices: Iterable[str] = ("CPU", "CUDA"),
     ) -> None:
         # We don't prepend the 'test_' prefix to improve greppability
@@ -297,17 +288,76 @@ class Runner:
         for device in devices:
             add_device_test(device)
 
+    @staticmethod
+    def generate_dummy_data(
+        x: ValueInfoProto, seed: int = 0, name: str = "", random: bool = False
+    ) -> np.ndarray:
+        """
+        Generates a random tensor based on the input definition.
+        """
+        if not x.type.tensor_type:
+            raise NotImplementedError(
+                f"Input expected to have tensor type. "
+                f"Unable to generate random data for model {name!r} and input {x}."
+            )
+        if x.type.tensor_type.elem_type != 1:
+            raise NotImplementedError(
+                f"Currently limited to float tensors. "
+                f"Unable to generate random data for model {name!r} and input {x}."
+            )
+        shape = tuple(
+            d.dim_value if d.HasField("dim_value") else 1
+            for d in x.type.tensor_type.shape.dim
+        )
+        if random:
+            gen = np.random.default_rng(seed=seed)
+            return gen.random(shape, np.float32)
+        n = np.prod(shape)
+        return (np.arange(n).reshape(shape) / n).astype(np.float32)
+
     def _add_model_test(self, model_test: TestCase, kind: str) -> None:
         # model is loaded at runtime, note sometimes it could even
         # never loaded if the test skipped
-        model_marker: List[Optional[Union[ModelProto, NodeProto]]] = [None]
+        model_marker: list[ModelProto | NodeProto | None] = [None]
 
         def run(test_self: Any, device: str) -> None:
-            if model_test.model_dir is None:
-                model_dir = self.prepare_model_data(model_test)
+            if model_test.url is not None and model_test.url.startswith(
+                "onnx/backend/test/data/light/"
+            ):
+                # testing local files
+                model_pb_path = os.path.normpath(
+                    os.path.join(
+                        os.path.dirname(__file__),
+                        "..",
+                        "..",
+                        "..",
+                        "..",
+                        model_test.url,
+                    )
+                )
+                if not os.path.exists(model_pb_path):
+                    raise FileNotFoundError(f"Unable to find model {model_pb_path!r}.")
+                onnx_home = os.path.expanduser(
+                    os.getenv("ONNX_HOME", os.path.join("~", ".onnx"))
+                )
+                models_dir = os.getenv(
+                    "ONNX_MODELS", os.path.join(onnx_home, "models", "light")
+                )
+                model_dir: str = os.path.join(models_dir, model_test.model_name)
+                if not os.path.exists(model_dir):
+                    os.makedirs(model_dir)
+                use_dummy = True
             else:
-                model_dir = model_test.model_dir
-            model_pb_path = os.path.join(model_dir, "model.onnx")
+                if model_test.model_dir is None:
+                    model_dir = self.prepare_model_data(model_test)
+                else:
+                    model_dir = model_test.model_dir
+                model_pb_path = os.path.join(model_dir, "model.onnx")
+                use_dummy = False
+
+            if not ONNX_ML and "ai_onnx_ml" in model_dir:
+                return
+
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             if (
@@ -316,18 +366,76 @@ class Runner:
                 and not self.backend.is_compatible(model)
             ):
                 raise unittest.SkipTest("Not compatible with backend")
+
             prepared_model = self.backend.prepare(model, device)
             assert prepared_model is not None
 
-            # TODO after converting all npz files to protobuf, we can delete this.
-            for test_data_npz in glob.glob(os.path.join(model_dir, "test_data_*.npz")):
-                test_data = np.load(test_data_npz, encoding="bytes")
-                inputs = list(test_data["inputs"])
-                outputs = list(prepared_model.run(inputs))
-                ref_outputs = test_data["outputs"]
-                self.assert_similar_outputs(
-                    ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
-                )
+            if use_dummy:
+                # When the backend test goes through a test involving a
+                # model stored in onnx/backend/test/data/light,
+                # this function generates expected output coming from
+                # from ReferenceEvaluator run with random inputs.
+                # A couple of models include many Conv operators and the
+                # python implementation is slow (such as test_bvlc_alexnet).
+                with open(model_pb_path, "rb") as f:
+                    onx = onnx.load(f)
+
+                test_data_set = os.path.join(model_dir, "test_data_set_0")
+                if not os.path.exists(test_data_set):
+                    os.mkdir(test_data_set)
+                feeds = {}
+                inits = {i.name for i in onx.graph.initializer}
+                n_input = 0
+                inputs = []
+                for i in range(len(onx.graph.input)):
+                    if onx.graph.input[i].name in inits:
+                        continue
+                    name = os.path.join(test_data_set, f"input_{n_input}.pb")
+                    inputs.append(name)
+                    n_input += 1
+                    x = onx.graph.input[i]
+                    value = self.generate_dummy_data(
+                        x, seed=0, name=model_test.model_name, random=False
+                    )
+                    feeds[x.name] = value
+                    with open(name, "wb") as f:
+                        f.write(onnx.numpy_helper.from_array(value).SerializeToString())
+
+                # loads expected output if any available
+                prefix = os.path.splitext(model_pb_path)[0]
+                expected_outputs = []
+                for i in range(len(onx.graph.output)):
+                    name = f"{prefix}_output_{i}.pb"
+                    if os.path.exists(name):
+                        expected_outputs.append(name)
+                        continue
+                    expected_outputs = None
+                    break
+
+                if expected_outputs is None:
+                    ref = onnx.reference.ReferenceEvaluator(onx)
+                    outputs = ref.run(None, feeds)
+                    for i, o in enumerate(outputs):
+                        name = os.path.join(test_data_set, f"output_{i}.pb")
+                        with open(name, "wb") as f:
+                            f.write(onnx.numpy_helper.from_array(o).SerializeToString())
+                else:
+                    for i, o in enumerate(expected_outputs):
+                        name = os.path.join(test_data_set, f"output_{i}.pb")
+                        shutil.copy(o, name)
+            else:
+                # TODO after converting all npz files to protobuf, we can delete this.
+                for test_data_npz in glob.glob(
+                    os.path.join(model_dir, "test_data_*.npz")
+                ):
+                    test_data = np.load(test_data_npz, encoding="bytes")
+                    inputs = list(test_data["inputs"])
+                    outputs = list(prepared_model.run(inputs))
+                    ref_outputs = test_data["outputs"]
+                    self.assert_similar_outputs(
+                        ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
+                    )
+
             for test_data_dir in glob.glob(os.path.join(model_dir, "test_data_set*")):
                 inputs = []
                 inputs_num = len(glob.glob(os.path.join(test_data_dir, "input_*.pb")))
@@ -353,7 +461,7 @@ class Runner:
     def _load_proto(
         self,
         proto_filename: str,
-        target_list: List[Union[np.ndarray, List[Any]]],
+        target_list: list[np.ndarray | list[Any]],
         model_type_proto: TypeProto,
     ) -> None:
         with open(proto_filename, "rb") as f:

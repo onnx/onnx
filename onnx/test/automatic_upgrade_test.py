@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 import string
 import unittest
@@ -27,12 +29,12 @@ class TestAutomaticUpgrade(unittest.TestCase):
         output_shapes: Sequence[Sequence[Optional[int]]] = ((3, 4, 5),),
         input_types: Optional[Sequence[Any]] = None,
         output_types: Optional[Sequence[Any]] = None,
-        initializer: Sequence[Any] = tuple(),
+        initializer: Sequence[Any] = (),
         attrs: Optional[Dict[str, Any]] = None,
-        seq_inputs: Sequence[int] = tuple(),
-        seq_outputs: Sequence[int] = tuple(),
-        optional_inputs: Sequence[int] = tuple(),
-        optional_outputs: Sequence[int] = tuple(),
+        seq_inputs: Sequence[int] = (),
+        seq_outputs: Sequence[int] = (),
+        optional_inputs: Sequence[int] = (),
+        optional_outputs: Sequence[int] = (),
     ) -> None:
         if attrs is None:
             attrs = {}
@@ -153,6 +155,14 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[3, 4, 5], [3]],
             attrs={"consumed_inputs": [0], "broadcast": 1, "axis": 0},
         )
+
+    def test_AffineGrid_2D(self) -> None:
+        N, _, H, W = 2, 3, 5, 6
+        self._test_op_upgrade("AffineGrid", 20, [[N, 2, 3], [4]], [[N, H, W, 2]])
+
+    def test_AffineGrid_3D(self) -> None:
+        N, _, D, H, W = 2, 3, 4, 5, 6
+        self._test_op_upgrade("AffineGrid", 20, [[N, 3, 4], [5]], [[N, D, H, W, 3]])
 
     def test_ArgMax_1(self) -> None:
         self._test_op_upgrade(
@@ -328,6 +338,14 @@ class TestAutomaticUpgrade(unittest.TestCase):
             "ConvTranspose", 1, [[1, 1, 5, 5], [1, 1, 3, 3]], [[1, 1, 7, 7]]
         )
 
+    def test_DeformConv(self) -> None:
+        self._test_op_upgrade(
+            "DeformConv",
+            19,
+            [[1, 1, 3, 3], [1, 1, 2, 2], [1, 8, 2, 2]],
+            [[1, 1, 2, 2]],
+        )
+
     def test_Cosh(self) -> None:
         self._test_op_upgrade("Cosh", 9)
 
@@ -453,6 +471,12 @@ class TestAutomaticUpgrade(unittest.TestCase):
 
     def test_GatherND(self) -> None:
         self._test_op_upgrade("GatherND", 11, [[1, 2, 3], [1, 2, 3]], [[1, 2]])
+
+    def test_Gelu_approximate_tanh(self) -> None:
+        self._test_op_upgrade("Gelu", 20, attrs={"approximate": "tanh"})
+
+    def test_Gelu(self) -> None:
+        self._test_op_upgrade("Gelu", 20)
 
     def test_Gemm(self) -> None:
         self._test_op_upgrade("Gemm", 1, [[5, 4], [4, 3], [3]], [[5, 3]])
@@ -1773,6 +1797,24 @@ class TestAutomaticUpgrade(unittest.TestCase):
             attrs={"epsilon": 1e-5, "num_groups": 2},
         )
 
+    def test_StringConcat(self) -> None:
+        self._test_op_upgrade(
+            "StringConcat",
+            20,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+        )
+
+    def test_RegexFullMatch(self) -> None:
+        self._test_op_upgrade(
+            "RegexFullMatch",
+            20,
+            [[2, 3]],
+            [[2, 3]],
+            [TensorProto.STRING],
+            [TensorProto.BOOL],
+        )
+
     def test_ops_tested(self) -> None:
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == ""]
@@ -1791,6 +1833,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             "Optional",
             "OptionalGetElement",
             "OptionalHasElement",
+            "StringSplit",
         ]
         all_op_names = [op for op in all_op_names if op not in excluded_ops]
 

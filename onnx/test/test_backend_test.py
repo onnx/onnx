@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import itertools
@@ -100,10 +102,7 @@ test_coverage_safelist = {
 def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
     if model.graph.name not in test_coverage_safelist:
         return False
-    for node in model.graph.node:
-        if node.op_type in {"RNN", "LSTM", "GRU"}:
-            return False
-    return True
+    return all(node.op_type not in {"RNN", "LSTM", "GRU"} for node in model.graph.node)
 
 
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
@@ -111,6 +110,9 @@ if os.getenv("APPVEYOR"):
     backend_test.exclude(r"(test_vgg19|test_zfnet)")
 if platform.architecture()[0] == "32bit":
     backend_test.exclude(r"(test_vgg19|test_zfnet|test_bvlc_alexnet)")
+
+# Needs investigation on onnxruntime.
+backend_test.exclude("test_dequantizelinear_e4m3fn_float16")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

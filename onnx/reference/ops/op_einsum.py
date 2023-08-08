@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=E0203,W0221
 
@@ -11,7 +13,7 @@ class Einsum(OpRun):
         if not isinstance(equation, str):
             raise TypeError(f"equation must be string but is {type(equation)!r}.")
         equation = equation.strip()
-        if len(equation) == 0:
+        if not equation:
             raise TypeError("equation is empty.")
         try:
             return (np.einsum(equation, *args, optimize=True),)

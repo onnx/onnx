@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,8 @@
 // Adapter for Scatter in default domain from version 10 to 11
 
 #pragma once
+
+#include <memory>
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {

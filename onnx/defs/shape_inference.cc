@@ -3,6 +3,9 @@
  */
 
 #include "shape_inference.h"
+
+#include <vector>
+
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
@@ -230,6 +233,28 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& targ
   UnionShapeInfoForTensor(source_shape, target_type);
 }
 
+void UnionShapeInfo(const TypeProto_Tensor& source_type, TypeProto_Tensor& target_type) {
+  // The union of a tensor of unknown rank and a tensor of known rank is a tensor of unknown rank.
+  // Hence, if the source_type had unknown rank, we clear the shape of the target_type.
+  // Otherwise, UnionShapeInfoForTensor handles the rest.
+  if (source_type.has_shape()) {
+    UnionShapeInfoForTensor(source_type.shape(), target_type);
+  } else {
+    target_type.clear_shape();
+  }
+}
+
+void UnionShapeInfo(const TypeProto_SparseTensor& source_type, TypeProto_SparseTensor& target_type) {
+  // The union of a tensor of unknown rank and a tensor of known rank is a tensor of unknown rank.
+  // Hence, if the source_type had unknown rank, we clear the shape of the target_type.
+  // Otherwise, UnionShapeInfoForTensor handles the rest.
+  if (source_type.has_shape()) {
+    UnionShapeInfoForTensor(source_type.shape(), target_type);
+  } else {
+    target_type.clear_shape();
+  }
+}
+
 void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor& target_type) {
   UnionShapeInfoForTensor(source_shape, target_type);
 }
@@ -249,7 +274,7 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
           "Mismatched tensor element type:", " source=", source_elem_type, " target=", target_elem_type);
     }
 
-    UnionShapeInfoForTensor(source_type.tensor_type().shape(), *target_type.mutable_tensor_type());
+    UnionShapeInfo(source_type.tensor_type(), *target_type.mutable_tensor_type());
   } else if (target_case == TypeProto::ValueCase::kSparseTensorType) {
     auto source_elem_type = source_type.sparse_tensor_type().elem_type();
     auto target_elem_type = target_type.sparse_tensor_type().elem_type();
@@ -257,8 +282,7 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
       fail_type_inference(
           "Mismatched sparse tensor element type:", " source=", source_elem_type, " target=", target_elem_type);
     }
-
-    UnionShapeInfoForTensor(source_type.sparse_tensor_type().shape(), *target_type.mutable_sparse_tensor_type());
+    UnionShapeInfo(source_type.sparse_tensor_type(), *target_type.mutable_sparse_tensor_type());
   } else if (target_case == TypeProto::ValueCase::kSequenceType) {
     if (!source_type.sequence_type().has_elem_type()) {
       fail_type_inference("source sequence type missing element type.");
@@ -425,7 +449,7 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
   }
 }
 
-TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& found) {
+TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found) {
   TensorShapeProto shape_input;
 
   // First, check initializer.

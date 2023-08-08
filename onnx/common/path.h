@@ -3,14 +3,15 @@
  */
 
 // Copyright (c) ONNX Project Contributors.
-// Licensed under the MIT license.
 
 #pragma once
 
 #include <string>
 #ifdef _WIN32
 #include <windows.h>
+
 #include <filesystem>
+
 #include "onnx/checker.h"
 #endif
 

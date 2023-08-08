@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=R0912,R0913,R0914,W0221
 
@@ -93,7 +95,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
             "PROBIT": probit,
         }
         if binary:
-            if res.shape[1] == 1 and len(classes) == 1:
+            if res.shape[1] == len(classes) == 1:
                 new_res = np.zeros((res.shape[0], 2), res.dtype)
                 new_res[:, 1] = res[:, 0]
                 res = new_res
@@ -114,7 +116,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
                     labels = np.array([d.get(i, 0) for i in labels], dtype=np.int64)
                 else:
                     raise NotImplementedError(
-                        f"classlabels_int64s={classlabels_int64s}, " f"not supported."
+                        f"classlabels_int64s={classlabels_int64s}, not supported."
                     )
             else:
                 labels = np.array(
@@ -123,7 +125,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
         elif classlabels_strings is not None:
             if len(classlabels_strings) == 1:
                 raise NotImplementedError(
-                    f"classlabels_strings={classlabels_strings}, " f"not supported."
+                    f"classlabels_strings={classlabels_strings}, not supported."
                 )
             labels = np.array([classlabels_strings[i] for i in labels])
 
