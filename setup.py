@@ -16,7 +16,7 @@ from datetime import date
 from distutils import log, sysconfig
 from distutils.spawn import find_executable
 from textwrap import dedent
-from typing import ClassVar
+from typing import ClassVar, List
 
 import setuptools
 import setuptools.command.build_ext
@@ -331,15 +331,29 @@ packages = setuptools.find_packages() + setuptools.find_namespace_packages(
     include=include_dirs
 )
 
-requirements_file = "requirements.txt"
-requirements_path = os.path.join(os.getcwd(), requirements_file)
-if not os.path.exists(requirements_path):
-    this = os.path.dirname(__file__)
-    requirements_path = os.path.join(this, requirements_file)
-if not os.path.exists(requirements_path):
-    raise FileNotFoundError("Unable to find " + requirements_file)
-with open(requirements_path) as f:
-    install_requires = f.read().splitlines()
+
+def load_packages_from_requirements(requirements_file: str) -> List[str]:
+    """Load required packages from requirements-*.txt.
+
+    Arguments:
+        requirements_file {str} -- requirements file name (e.g. requirements.txt)
+    Returns:
+        List[str] -- list of required packages
+    """
+
+    requirements_path = os.path.join(os.getcwd(), requirements_file)
+    if not os.path.exists(requirements_path):
+        this = os.path.dirname(__file__)
+        requirements_path = os.path.join(this, requirements_file)
+    if not os.path.exists(requirements_path):
+        raise FileNotFoundError("Unable to find " + requirements_file)
+    requires_list = []
+    with open(requirements_path) as f:
+        requires_list = f.read().splitlines()
+    return requires_list
+
+
+install_requires = load_packages_from_requirements("requirements.txt")
 
 ################################################################################
 # Test
@@ -355,11 +369,9 @@ extras_require["lint"] = [
     "lintrunner-adapters>=0.3",
 ]
 
-if not os.path.exists("requirements-reference.txt"):
-    raise FileNotFoundError("Unable to find requirements-reference.txt")
-
-with open("requirements-reference.txt") as f:
-    extras_require["reference"] = f.read().splitlines()
+extras_require["reference"] = load_packages_from_requirements(
+    "requirements-reference.txt"
+)
 
 ################################################################################
 # Final
