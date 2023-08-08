@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Tuple
+
 import numpy as np
 
 import onnx
@@ -14,7 +16,7 @@ def estimation_quantization_scale(
     to: int = onnx.TensorProto.FLOAT8E4M3FN,
     method: str = "naive",
     threshold: float = 0.99999,
-) -> tuple[float, float]:
+) -> Tuple[float, float]:
     """
     Estimates the scale parameter for the quantization to float 8 assuming
     the distribution of the coefficients is gaussian.
