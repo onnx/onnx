@@ -7964,7 +7964,7 @@ Other versions of this operator: <a href="Changelog.md#DynamicQuantizeLinear-11"
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>Constrain 'x' to float tensor.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(int8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer or float tensor.</dd>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer or float 8 tensor.</dd>
 </dl>
 
 
