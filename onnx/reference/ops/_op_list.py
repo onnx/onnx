@@ -176,6 +176,7 @@ from onnx.reference.ops.op_reduce_sum_square import (
     ReduceSumSquare_1,
     ReduceSumSquare_18,
 )
+from onnx.reference.ops.op_regex_full_match import RegexFullMatch
 from onnx.reference.ops.op_relu import Relu
 from onnx.reference.ops.op_reshape import Reshape_5, Reshape_14
 from onnx.reference.ops.op_resize import Resize
@@ -214,6 +215,7 @@ from onnx.reference.ops.op_squeeze import Squeeze_1, Squeeze_11, Squeeze_13
 from onnx.reference.ops.op_stft import STFT
 from onnx.reference.ops.op_string_concat import StringConcat
 from onnx.reference.ops.op_string_normalizer import StringNormalizer
+from onnx.reference.ops.op_string_split import StringSplit
 from onnx.reference.ops.op_sub import Sub
 from onnx.reference.ops.op_sum import Sum
 from onnx.reference.ops.op_tan import Tan

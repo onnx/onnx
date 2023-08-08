@@ -22,6 +22,7 @@ adding an item in method `setUpClass` and attributes
 
 import os
 import pprint
+import sys
 import unittest
 
 try:
@@ -68,8 +69,6 @@ SKIP_TESTS = {
     # not implemented
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
-    "test_lppool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
-    "test_averagepool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
 }
 
 if version(npver) < version("1.21.5"):
@@ -83,6 +82,12 @@ if version(npver) < version("1.21.5"):
         "test_cast_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16_expanded",
+    }
+if sys.platform == "win32":
+    SKIP_TESTS |= {
+        "test_regex_full_match_basic",
+        "test_regex_full_match_email_domain",
+        "test_regex_full_match_empty",
     }
 
 

@@ -355,6 +355,12 @@ extras_require["lint"] = [
     "lintrunner-adapters>=0.3",
 ]
 
+if not os.path.exists("requirements-reference.txt"):
+    raise FileNotFoundError("Unable to find requirements-reference.txt")
+
+with open("requirements-reference.txt") as f:
+    extras_require["reference"] = f.read().splitlines()
+
 ################################################################################
 # Final
 ################################################################################

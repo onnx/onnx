@@ -252,6 +252,8 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|equal"
         "|identity"
         "|reshape"
+        "|regex_full_match"
+        "|string_split"
         "|string_concat"
         "|gelu"
         "|label_encoder"

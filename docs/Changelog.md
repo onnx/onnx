@@ -14473,25 +14473,27 @@ This version of the operator has been available since version 12 of the default 
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
+   data into the output tensor Y for further processing. The output spatial shape is calculated differently
+   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
-   or when ceil_mode is disabled:
+   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -22580,25 +22582,27 @@ This version of the operator has been available since version 18 of the default 
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
+   data into the output tensor Y for further processing. The output spatial shape is calculated differently
+   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
-   or when ceil_mode is disabled:
+   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -24088,6 +24092,44 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
 
+### <a name="RegexFullMatch-20"></a>**RegexFullMatch-20**</a>
+
+  RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>pattern</tt> : string</dt>
+<dd>Regex pattern to match on. This must be valid RE2 syntax.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor with strings to match on.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Tensor of bools indicating if each input string fully matches the regex pattern specified.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>Inputs must be UTF-8 strings</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Outputs are bools and are True where there is a full regex match and False otherwise.</dd>
+</dl>
+
 ### <a name="StringConcat-20"></a>**StringConcat-20**</a>
 
   StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
@@ -24117,6 +24159,54 @@ This version of the operator has been available since version 20 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(string)</dt>
 <dd>Inputs and outputs must be UTF-8 strings</dd>
+</dl>
+
+### <a name="StringSplit-20"></a>**StringSplit-20**</a>
+
+  StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
+
+  The first output of this operator is a tensor of strings representing the substrings from splitting each input string on the `delimiter` substring. This tensor has one additional rank compared to the input tensor in order to store the substrings for each input element (where the input tensor is not empty). Note that, in order to ensure the same number of elements are present in the final dimension, this tensor will pad empty strings as illustrated in the examples below. Consecutive delimiters are not grouped together and are deemed to delimit empty strings, except if the `delimiter` is unspecified or is the empty string (""). In the case where the `delimiter` is unspecified or the empty string, consecutive whitespace characters are regarded as a single separator and leading or trailing whitespace is removed in the output.
+
+  The second output tensor represents the number of substrings generated. `maxsplit` can be used to limit the number of splits performed - after the `maxsplit`th split if the string is not fully split, the trailing suffix of input string after the final split point is also added. For elements where fewer splits are possible than specified in `maxsplit`, it has no effect.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>delimiter</tt> : string</dt>
+<dd>Delimiter to split on. If left unset or set to the empty string (""), the input is split on consecutive whitespace.</dd>
+<dt><tt>maxsplit</tt> : int</dt>
+<dd>Maximum number of splits (from left to right). If left unset (or if the number of possible splits are less than maxsplit), it will make as many splits as possible. Note that the maximum possible number of substrings returned with `maxsplit` specified is `maxsplit+1` since the remaining suffix after the `maxsplit`th split is included in the output.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor of strings to split.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.</dd>
+<dt><tt>Z</tt> (non-differentiable) : T3</dt>
+<dd>The number of substrings generated for each input element.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>The input must be a UTF-8 string tensor</dd>
+<dt><tt>T2</tt> : tensor(string)</dt>
+<dd>Tensor of substrings.</dd>
+<dt><tt>T3</tt> : tensor(int64)</dt>
+<dd>The number of substrings generated.</dd>
 </dl>
 
 # ai.onnx.preview.training

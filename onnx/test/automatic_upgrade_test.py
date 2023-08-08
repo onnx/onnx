@@ -1805,6 +1805,16 @@ class TestAutomaticUpgrade(unittest.TestCase):
             [[2, 3]],
         )
 
+    def test_RegexFullMatch(self) -> None:
+        self._test_op_upgrade(
+            "RegexFullMatch",
+            20,
+            [[2, 3]],
+            [[2, 3]],
+            [TensorProto.STRING],
+            [TensorProto.BOOL],
+        )
+
     def test_ops_tested(self) -> None:
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == ""]
@@ -1823,6 +1833,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             "Optional",
             "OptionalGetElement",
             "OptionalHasElement",
+            "StringSplit",
         ]
         all_op_names = [op for op in all_op_names if op not in excluded_ops]
 

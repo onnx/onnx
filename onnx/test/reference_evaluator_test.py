@@ -13,6 +13,7 @@ You can run a specific test by using the following syntax.
 
 import itertools
 import math
+import sys
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
@@ -4850,6 +4851,157 @@ class TestReferenceEvaluator(unittest.TestCase):
         np.testing.assert_array_equal(result, expected)
         self.assertEqual(result.dtype.kind, "O")
         self.assertEqual(result.shape, expected_shape)
+
+    @parameterized.parameterized.expand(
+        [
+            (
+                ["1,2,3", "4,5,6"],
+                ",",
+                None,
+                [["1", "2", "3"], ["4", "5", "6"]],
+                [3, 3],
+            ),
+            (
+                ["1,", "4,6", ""],
+                ",",
+                None,
+                [["1", ""], ["4", "6"], ["", ""]],
+                [2, 2, 1],
+            ),
+            (
+                ["1", "4,6", "4,5,6"],
+                ",",
+                1,
+                [["1", ""], ["4", "6"], ["4", "5,6"]],
+                [1, 2, 2],
+            ),
+            (
+                [["1,", "4,6", "4,5,6"], ["1,", "4,6", "4,5,6"]],
+                ",",
+                None,
+                [
+                    [["1", "", ""], ["4", "6", ""], ["4", "5", "6"]],
+                    [["1", "", ""], ["4", "6", ""], ["4", "5", "6"]],
+                ],
+                [[2, 2, 3], [2, 2, 3]],
+            ),
+            (
+                ["hello world !", "  hello   world !", " hello world   ! "],
+                None,
+                None,
+                [
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                ],
+                [3, 3, 3],
+            ),
+            (
+                ["hello world !", "  hello   world !", " hello world   ! "],
+                "",
+                None,
+                [
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                    ["hello", "world", "!"],
+                ],
+                [3, 3, 3],
+            ),
+            (
+                ["o-n-n--x-", "o-n----nx"],
+                "-",
+                None,
+                [["o", "n", "n", "", "x", ""], ["o", "n", "", "", "", "nx"]],
+                [6, 6],
+            ),
+            (
+                [],
+                " ",
+                2,
+                np.array([]).reshape((0, 0)),
+                [],
+            ),
+        ]
+    )
+    def test_string_split(
+        self,
+        x,
+        delimiter,
+        maxsplit,
+        expected_split,
+        expected_num_splits,
+    ):
+        X = make_tensor_value_info("X", TensorProto.STRING, (None))
+        Splits = make_tensor_value_info("Splits", TensorProto.STRING, (None))
+        MaxSplits = make_tensor_value_info("MaxSplits", TensorProto.INT32, (None))
+        node = make_node(
+            "StringSplit",
+            inputs=["X"],
+            outputs=["Splits", "MaxSplits"],
+            delimiter=delimiter,
+            maxsplit=maxsplit,
+        )
+        model = make_model(make_graph([node], "g", [X], [Splits, MaxSplits]))
+        ref = ReferenceEvaluator(model)
+        x = np.array(x, dtype=object)
+        result, num_splits, *_ = ref.run(None, {"X": x})
+        np.testing.assert_array_equal(result, np.array(expected_split, dtype=object))
+        np.testing.assert_array_equal(
+            num_splits, np.array(expected_num_splits, dtype=np.int64)
+        )
+
+    @parameterized.parameterized.expand(
+        [
+            (
+                ["www.google.com", "www.facebook.com", "www.bbc.co.uk"],
+                r"www\.[\w.-]+\.\bcom\b",
+                [True, True, False],
+                (3,),
+            ),
+            (
+                [["Onnx", "tensorflow", "Numpy"], ["Pytorch", "Cython", "numba"]],
+                r"^[A-Z][a-z]*$",
+                [[True, False, True], [True, True, False]],
+                (2, 3),
+            ),
+            (
+                [
+                    "account@gmail.com",
+                    "account@hotmail.com",
+                    "not email",
+                    "account2@yahoo.com",
+                ],
+                r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+                [True, False, False, True],
+                (4,),
+            ),
+        ]
+    )
+    @unittest.skipIf(
+        sys.platform == "win32", "google-re2 package is not built for win32"
+    )
+    def test_regex_full_match(self, x, pattern, expected, expected_shape):
+        X = make_tensor_value_info("X", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
+        node = make_node("RegexFullMatch", inputs=["X"], outputs=["Y"], pattern=pattern)
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        result, *_ = ref.run(None, {"X": np.array(x)})
+        np.testing.assert_array_equal(result, expected)
+        self.assertEqual(result.dtype.kind, "b")
+        self.assertEqual(result.shape, expected_shape)
+
+    @unittest.skipIf(
+        sys.platform == "win32", "google-re2 package is not built for win32"
+    )
+    def test_regex_invalid_pattern(self):
+        X = make_tensor_value_info("X", TensorProto.STRING, None)
+        Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
+        node = make_node("RegexFullMatch", inputs=["X"], outputs=["Y"], pattern="x)")
+        model = make_model(make_graph([node], "g", [X], [Y]))
+        ref = ReferenceEvaluator(model)
+        with self.assertRaises(ValueError):
+            ref.run(None, {"X": np.array(["x"])})
 
 
 if __name__ == "__main__":
