@@ -408,7 +408,6 @@ class ShapeInferenceImplBase {
 
   void process(NodeProto& n) {
     // Resolve domain for node
-    std::cout << n.op_type() << std::endl;
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
       // Both "" (ONNX_DOMAIN) and "ai.onnx" (AI_ONNX_DOMAIN) refer to the default ONNX domain
