@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221
 
 import numpy as np
 
 from onnx.reference.ops._op import OpRunUnaryNum
+
+# pylint: disable=W0221
 
 
 class HardSigmoid(OpRunUnaryNum):

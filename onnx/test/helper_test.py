@@ -3,12 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-# pylint: disable=unnecessary-lambda
-
 import random
 import struct
 import unittest
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 import pytest
@@ -26,6 +24,8 @@ from onnx import (
     helper,
     numpy_helper,
 )
+
+# pylint: disable=unnecessary-lambda
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -247,7 +247,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         def _extend(
             attr: AttributeProto,
             type_: AttributeProto.AttributeType,
-            var: List[Any],
+            var: list[Any],
             value: Any,
         ) -> None:
             var.extend(value)
@@ -376,14 +376,14 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
     def test_model_irversion(self) -> None:
-        def mk_model(opset_versions: List[Tuple[str, int]]) -> ModelProto:
+        def mk_model(opset_versions: list[tuple[str, int]]) -> ModelProto:
             graph = helper.make_graph([], "my graph", [], [])
             return helper.make_model_gen_version(
                 graph,
                 opset_imports=[helper.make_opsetid(*pair) for pair in opset_versions],
             )
 
-        def test(opset_versions: List[Tuple[str, int]], ir_version: int) -> None:
+        def test(opset_versions: list[tuple[str, int]], ir_version: int) -> None:
             model = mk_model(opset_versions)
             self.assertEqual(model.ir_version, ir_version)
 

@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0913,R0914,R0915,W0613,W0221
 
 import numpy as np
 
@@ -10,6 +9,8 @@ from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_concat_from_sequence import _concat_from_sequence
 from onnx.reference.ops.op_dft import _cfft as _dft
 from onnx.reference.ops.op_slice import _slice
+
+# pylint: disable=R0913,R0914,R0915,W0613,W0221
 
 
 def _concat(*args, axis=0):  # type: ignore

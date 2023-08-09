@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 """ONNX Model Hub
 
 This implements the python client for the ONNX model hub.
@@ -13,7 +14,7 @@ import sys
 import tarfile
 from io import BytesIO
 from os.path import join
-from typing import IO, Any, Dict, List, Optional, Set, Tuple, cast
+from typing import IO, Any, Dict, List, cast
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
@@ -41,7 +42,7 @@ class ModelInfo:
         opset: The opset version of the model.
     """
 
-    def __init__(self, raw_model_info: Dict[str, Any]) -> None:
+    def __init__(self, raw_model_info: dict[str, Any]) -> None:
         """
         Parameters:
             raw_model_info: A JSON dict containing the model info.
@@ -49,17 +50,17 @@ class ModelInfo:
         self.model = cast(str, raw_model_info["model"])
 
         self.model_path = cast(str, raw_model_info["model_path"])
-        self.metadata: Dict[str, Any] = cast(Dict[str, Any], raw_model_info["metadata"])
-        self.model_sha: Optional[str] = None
+        self.metadata: dict[str, Any] = cast(Dict[str, Any], raw_model_info["metadata"])
+        self.model_sha: str | None = None
         if "model_sha" in self.metadata:
             self.model_sha = cast(str, self.metadata["model_sha"])
 
-        self.tags: Set[str] = set()
+        self.tags: set[str] = set()
         if "tags" in self.metadata:
             self.tags = set(cast(List[str], self.metadata["tags"]))
 
         self.opset = cast(int, raw_model_info["opset_version"])
-        self.raw_model_info: Dict[str, Any] = raw_model_info
+        self.raw_model_info: dict[str, Any] = raw_model_info
 
     def __str__(self) -> str:
         return f"ModelInfo(model={self.model}, opset={self.opset}, path={self.model_path}, metadata={self.metadata})"
@@ -87,7 +88,7 @@ def get_dir() -> str:
     return _ONNX_HUB_DIR
 
 
-def _parse_repo_info(repo: str) -> Tuple[str, str, str]:
+def _parse_repo_info(repo: str) -> tuple[str, str, str]:
     """
     Gets the repo owner, name and ref from a repo specification string.
     """
@@ -144,9 +145,9 @@ def _download_file(url: str, file_name: str) -> None:
 
 def list_models(
     repo: str = "onnx/models:main",
-    model: Optional[str] = None,
-    tags: Optional[List[str]] = None,
-) -> List[ModelInfo]:
+    model: str | None = None,
+    tags: list[str] | None = None,
+) -> list[ModelInfo]:
     """
     Gets the list of model info consistent with a given name and tags
 
@@ -160,7 +161,7 @@ def list_models(
     manifest_url = base_url + "ONNX_HUB_MANIFEST.json"
     try:
         with urlopen(manifest_url) as response:
-            manifest: List[ModelInfo] = [
+            manifest: list[ModelInfo] = [
                 ModelInfo(info) for info in json.load(cast(IO[str], response))
             ]
     except HTTPError as e:
@@ -178,7 +179,7 @@ def list_models(
         return matching_models
 
     canonical_tags = {t.lower() for t in tags}
-    matching_info_list: List[ModelInfo] = []
+    matching_info_list: list[ModelInfo] = []
     for m in matching_models:
         model_tags = {t.lower() for t in m.tags}
         if len(canonical_tags.intersection(model_tags)) > 0:
@@ -187,7 +188,7 @@ def list_models(
 
 
 def get_model_info(
-    model: str, repo: str = "onnx/models:main", opset: Optional[int] = None
+    model: str, repo: str = "onnx/models:main", opset: int | None = None
 ) -> ModelInfo:
     """
     Gets the model info matching the given name and opset.
@@ -217,10 +218,10 @@ def get_model_info(
 def load(
     model: str,
     repo: str = "onnx/models:main",
-    opset: Optional[int] = None,
+    opset: int | None = None,
     force_reload: bool = False,
     silent: bool = False,
-) -> Optional[onnx.ModelProto]:
+) -> onnx.ModelProto | None:
     """
     Downloads a model by name from the onnx model hub
 
@@ -275,10 +276,10 @@ def load(
 def download_model_with_test_data(
     model: str,
     repo: str = "onnx/models:main",
-    opset: Optional[int] = None,
+    opset: int | None = None,
     force_reload: bool = False,
     silent: bool = False,
-) -> Optional[str]:
+) -> str | None:
     """
     Downloads a model along with test data by name from the onnx model hub and returns the directory to which the files have been extracted.
 
@@ -358,10 +359,10 @@ def load_composite_model(
     preprocessing_model: str,
     network_repo: str = "onnx/models:main",
     preprocessing_repo: str = "onnx/models:main",
-    opset: Optional[int] = None,
+    opset: int | None = None,
     force_reload: bool = False,
     silent: bool = False,
-) -> Optional[onnx.ModelProto]:
+) -> onnx.ModelProto | None:
     """
     Builds a composite model including data preprocessing by downloading a network and a preprocessing model
     and combine it into a single model
@@ -385,9 +386,9 @@ def load_composite_model(
     if network is None:
         raise RuntimeError(f"Could not load the network model: {network_model}")
 
-    all_domains: Set[str] = set()
-    domains_to_version_network: Dict[str, int] = {}
-    domains_to_version_preprocessing: Dict[str, int] = {}
+    all_domains: set[str] = set()
+    domains_to_version_network: dict[str, int] = {}
+    domains_to_version_preprocessing: dict[str, int] = {}
 
     for opset_import_entry in network.opset_import:
         domain = (

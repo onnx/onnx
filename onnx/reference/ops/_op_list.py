@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0611,W0603
 """
 Every class imported in this module defines an implementation of
@@ -234,17 +235,17 @@ from onnx.reference.ops.op_where import Where
 from onnx.reference.ops.op_xor import Xor
 
 
-def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRun]]:
+def _build_registered_operators() -> dict[str, dict[int | None, OpRun]]:
     return build_registered_operators_any_domain(globals().copy())
 
 
 def load_op(
     domain: str,
     op_type: str,
-    version: Union[None, int] = None,
+    version: None | int = None,
     custom: Any = None,
-    node: Union[None, NodeProto] = None,
-    input_types: Union[None, List[TypeProto]] = None,
+    node: None | NodeProto = None,
+    input_types: None | list[TypeProto] = None,
     expand: bool = False,
 ) -> Any:
     """
@@ -351,4 +352,4 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRun]]] = None
+_registered_operators: dict[str, dict[int | None, OpRun]] | None = None

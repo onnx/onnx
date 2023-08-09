@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# type: ignore
-# pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
 
 import unittest
 from functools import wraps
@@ -23,6 +21,10 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.reference import ReferenceEvaluator
+
+# type: ignore
+# pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
+
 
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
 # For now, bump the version in CIs whenever there is a new onnxruntime release

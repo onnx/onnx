@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0913,R0914,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_conv import _conv_implementation
+
+# pylint: disable=R0913,R0914,W0221
 
 
 class QLinearConv(OpRun):

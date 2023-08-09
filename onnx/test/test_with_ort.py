@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 # This file is for testing ONNX with ONNX Runtime
 # Create a general scenario to use ONNX Runtime with ONNX
 # pylint: disable=C0415

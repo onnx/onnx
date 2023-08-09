@@ -2,10 +2,11 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221,W0622
 
 from onnx.helper import tensor_dtype_to_np_dtype
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=W0221,W0622
 
 
 class Optional(OpRun):

@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0622,W0622,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=W0622,W0622,W0221
 
 
 class Clip_6(OpRun):

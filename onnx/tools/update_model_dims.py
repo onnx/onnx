@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Any, Dict, List, Set
+from typing import Any
 
 import onnx.checker
 from onnx import ModelProto, ValueInfoProto
@@ -11,8 +11,8 @@ from onnx import ModelProto, ValueInfoProto
 
 def update_inputs_outputs_dims(
     model: ModelProto,
-    input_dims: Dict[str, List[Any]],
-    output_dims: Dict[str, List[Any]],
+    input_dims: dict[str, list[Any]],
+    output_dims: dict[str, list[Any]],
 ) -> ModelProto:
     """
     This function updates the dimension sizes of the model's inputs and outputs to the values
@@ -45,10 +45,10 @@ def update_inputs_outputs_dims(
         updated_model = update_inputs_outputs_dims(model, input_dims, output_dims)
         onnx.save(updated_model, 'model.onnx')
     """
-    dim_param_set: Set[str] = set()
+    dim_param_set: set[str] = set()
 
     def init_dim_param_set(
-        dim_param_set: Set[str], value_infos: List[ValueInfoProto]
+        dim_param_set: set[str], value_infos: list[ValueInfoProto]
     ) -> None:
         for info in value_infos:
             shape = info.type.tensor_type.shape

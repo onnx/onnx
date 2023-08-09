@@ -2,13 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0902,R0912,R0913,R0914,R0915,R1702,W0221
-
-from typing import Tuple
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=R0902,R0912,R0913,R0914,R0915,R1702,W0221
 
 
 class PreCalc:
@@ -118,7 +117,7 @@ class RoiAlign(OpRun):
 
     @staticmethod
     def roi_align_forward(  # type: ignore
-        output_shape: Tuple[int, int, int, int],
+        output_shape: tuple[int, int, int, int],
         bottom_data,
         spatial_scale,
         height: int,

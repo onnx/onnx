@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 """Graph utilities for checking whether an ONNX proto message is legal."""
 
 from __future__ import annotations

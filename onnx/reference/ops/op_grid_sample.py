@@ -2,15 +2,15 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0912,R0913,R0914,R0915,R1702,R1716,W0221
 
 import numbers
-from typing import List
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_resize import _get_all_coords
+
+# pylint: disable=R0912,R0913,R0914,R0915,R1702,R1716,W0221
 
 
 class GridSample(OpRun):
@@ -208,7 +208,7 @@ class GridSample(OpRun):
             return hi
         return val
 
-    def _pixel_at_ndarray(self, ndarray, x: List, border, padding_mode):  # type: ignore
+    def _pixel_at_ndarray(self, ndarray, x: list, border, padding_mode):  # type: ignore
         # boarder: [x_1_min, x_2_min, ..., x_1_max, x_2_max, ...]
         num_dims = ndarray.ndim
         assert num_dims == len(x) == int(len(border) / 2)

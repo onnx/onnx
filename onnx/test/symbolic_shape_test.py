@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import unittest
-from typing import List, Optional
 
 import onnx.shape_inference
 from onnx import ModelProto, TensorProto, TensorShapeProto, ValueInfoProto, helper
@@ -13,7 +12,7 @@ from onnx.helper import make_model, make_tensor_value_info
 
 class TestSymbolicShape(unittest.TestCase):
     def _assert_valueinfo_shape(
-        self, onnx_model: ModelProto, value_infos: List[ValueInfoProto]
+        self, onnx_model: ModelProto, value_infos: list[ValueInfoProto]
     ) -> None:
         """
         Assert onnx_model.value_info should be the same as expected value_infos
@@ -52,7 +51,7 @@ class TestSymbolicShape(unittest.TestCase):
 
     def _get_shape_from_name(
         self, onnx_model: ModelProto, name: str
-    ) -> Optional[TensorShapeProto]:
+    ) -> TensorShapeProto | None:
         """
         Get shape from tensor_type or sparse_tensor_type according to given name
         """

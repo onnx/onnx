@@ -2,13 +2,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0913,W0221
 
 import math
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=R0913,W0221
 
 
 class LRN(OpRun):

@@ -112,7 +112,7 @@ def _op_schema_attribute_repr(self) -> str:
 OpSchema.Attribute.__repr__ = _op_schema_attribute_repr  # type: ignore
 
 
-def get_function_ops() -> List[OpSchema]:
+def get_function_ops() -> list[OpSchema]:
     """
     Return operators defined as functions.
     """

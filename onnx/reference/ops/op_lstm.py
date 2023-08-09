@@ -2,13 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0913,R0914,W0221,W0613
-
-from typing import Tuple
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=R0913,R0914,W0221,W0613
 
 
 class CommonLSTM(OpRun):
@@ -36,7 +35,7 @@ class CommonLSTM(OpRun):
         C_0: np.ndarray,
         P: np.ndarray,
         num_directions: int,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]

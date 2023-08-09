@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 
@@ -17,7 +17,7 @@ class OpRunUnary(OpRun):  # pylint: disable=W0223
     Checks that input and output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+    def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
 
     def run(self, x):  # type: ignore # pylint: disable=W0221
@@ -45,7 +45,7 @@ class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
     are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+    def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRunUnary.__init__(self, onnx_node, run_params)
 
     def run(self, x):  # type: ignore # pylint: disable=W0221
@@ -71,7 +71,7 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
     Checks that input and output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+    def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore # pylint: disable=W0221
@@ -108,7 +108,7 @@ class OpRunBinaryComparison(OpRunBinary):  # pylint: disable=W0223
     comparing tensors.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+    def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRunBinary.__init__(self, onnx_node, run_params)
 
 
@@ -118,7 +118,7 @@ class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
     Checks that input oud output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+    def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRunBinary.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore # pylint: disable=W0221
@@ -143,7 +143,7 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
     """
 
     def __init__(
-        self, numpy_fct: Any, onnx_node: NodeProto, run_params: Dict[str, Any]
+        self, numpy_fct: Any, onnx_node: NodeProto, run_params: dict[str, Any]
     ):
         OpRunBinaryNum.__init__(self, onnx_node, run_params)
         self.numpy_fct = numpy_fct
@@ -158,7 +158,7 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
     It must have a parameter *axes*.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+    def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "axes"):
             if isinstance(self.axes, np.ndarray):  # type: ignore # pylint: disable=E0203

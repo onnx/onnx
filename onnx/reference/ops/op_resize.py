@@ -2,18 +2,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=C0123,C3001,R0912,R0913,R0914,R1730,W0221,W0613
 
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 
+# pylint: disable=C0123,C3001,R0912,R0913,R0914,R1730,W0221,W0613
 
-def _cartesian(
-    arrays: List[np.ndarray], out: Optional[np.ndarray] = None
-) -> np.ndarray:
+
+def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.ndarray:
     """
     From https://stackoverflow.com/a/1235363
     Generate a cartesian product of input arrays.
@@ -76,7 +75,7 @@ def _nearest_coeffs(ratio: float, mode: str = "round_prefer_floor") -> np.ndarra
 
 
 def _cubic_coeffs(
-    ratio: float, scale: Optional[float] = None, A: float = -0.75
+    ratio: float, scale: float | None = None, A: float = -0.75
 ) -> np.ndarray:
     # scale is unused
     coeffs = [
@@ -111,7 +110,7 @@ def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.
     return np.array(coeffs) / sum(coeffs)
 
 
-def _linear_coeffs(ratio: float, scale: Optional[float] = None) -> np.ndarray:
+def _linear_coeffs(ratio: float, scale: float | None = None) -> np.ndarray:
     # scale is unused
     return np.array([1 - ratio, ratio])
 
@@ -152,7 +151,7 @@ def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
     return np.array(idxes)
 
 
-def _get_neighbor(x: float, n: int, data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def _get_neighbor(x: float, n: int, data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Pad `data` in 'edge' mode, and get n nearest elements in the padded array
     and their indexes in the original array.
@@ -179,7 +178,7 @@ def _interpolate_1d_with_x(
     output_width_int: int,
     x: float,
     get_coeffs: Callable[[float, float], np.ndarray],
-    roi: Optional[np.ndarray] = None,
+    roi: np.ndarray | None = None,
     extrapolation_value: float = 0.0,
     coordinate_transformation_mode: str = "half_pixel",
     exclude_outside: bool = False,
@@ -248,11 +247,11 @@ def _interpolate_1d_with_x(
 def _interpolate_nd_with_x(
     data: np.ndarray,
     n: int,
-    scale_factors: List[float],
-    output_size: List[int],
-    x: List[float],
+    scale_factors: list[float],
+    output_size: list[int],
+    x: list[float],
     get_coeffs: Callable[[float, float], np.ndarray],
-    roi: Optional[np.ndarray] = None,
+    roi: np.ndarray | None = None,
     exclude_outside: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -304,11 +303,11 @@ def _get_all_coords(data: np.ndarray) -> np.ndarray:
 def _interpolate_nd(
     data: np.ndarray,
     get_coeffs: Callable[[float, float], np.ndarray],
-    output_size: Optional[List[int]] = None,
-    scale_factors: Optional[List[float]] = None,
-    axes: Optional[List[int]] = None,
-    roi: Optional[np.ndarray] = None,
-    keep_aspect_ratio_policy: Optional[str] = "stretch",
+    output_size: list[int] | None = None,
+    scale_factors: list[float] | None = None,
+    axes: list[int] | None = None,
+    roi: np.ndarray | None = None,
+    keep_aspect_ratio_policy: str | None = "stretch",
     exclude_outside: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:

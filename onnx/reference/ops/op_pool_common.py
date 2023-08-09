@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import itertools
 import math
-from typing import Sequence, Tuple, Union
+from typing import Sequence
 
 import numpy as np
 
@@ -55,9 +55,9 @@ def get_output_shape_explicit_padding(
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
-    dilations: Union[Sequence[int], None] = None,
+    dilations: Sequence[int] | None = None,
     ceil_mode: bool = False,
-) -> Tuple[Sequence[int], Sequence[int]]:
+) -> tuple[Sequence[int], Sequence[int]]:
     """
     compute output shape according to:
     https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html?highlight=max+pool#torch.nn.MaxPool1d
@@ -170,8 +170,8 @@ def pool(
     strides: Sequence[int],
     out_shape: Sequence[int],
     pooling_type: str,
-    pads: Union[Sequence[int], None] = None,
-    dilations: Union[Sequence[int], None] = None,
+    pads: Sequence[int] | None = None,
+    dilations: Sequence[int] | None = None,
     count_include_pad: int = 0,
     p: int = 1,
 ) -> np.ndarray:

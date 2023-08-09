@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0913,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=R0913,W0221
 
 
 def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ignore

@@ -2,13 +2,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221
 
 import numpy as np
 
 from onnx.helper import tensor_dtype_to_np_dtype
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=W0221
 
 
 class EyeLike(OpRun):

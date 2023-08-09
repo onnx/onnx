@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 import numpy as np
 
@@ -13,8 +13,8 @@ from onnx.backend.test.case.node import expect
 
 
 def sequence_insert_reference_implementation(
-    sequence: List[Any], tensor: np.ndarray, position: np.ndarray = None
-) -> List[Any]:
+    sequence: list[Any], tensor: np.ndarray, position: np.ndarray = None
+) -> list[Any]:
     # make a copy of input sequence
     seq = list(sequence)
     if position is not None:

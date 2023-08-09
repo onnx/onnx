@@ -6,7 +6,6 @@ from __future__ import annotations
 import importlib
 import pkgutil
 from types import ModuleType
-from typing import List, Optional
 
 import numpy as np
 
@@ -31,7 +30,7 @@ def import_recursive(package: ModuleType) -> None:
     """
     Takes a package and imports all modules underneath it
     """
-    pkg_dir: Optional[List[str]] = None
+    pkg_dir: list[str] | None = None
     pkg_dir = package.__path__  # type: ignore
     module_location = package.__name__
     for _module_loader, name, ispkg in pkgutil.iter_modules(pkg_dir):

@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 # type: ignore
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0613,W0640,W0703
 """

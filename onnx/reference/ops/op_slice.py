@@ -2,21 +2,20 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0912,R0913,W0221
-
-from typing import Optional
 
 import numpy as np
 
 from onnx.reference.ops._op import OpRun
+
+# pylint: disable=R0912,R0913,W0221
 
 
 def _slice(
     data: np.ndarray,
     starts: np.ndarray,
     ends: np.ndarray,
-    axes: Optional[np.ndarray] = None,
-    steps: Optional[np.ndarray] = None,
+    axes: np.ndarray | None = None,
+    steps: np.ndarray | None = None,
 ) -> np.ndarray:
     if isinstance(starts, list):
         starts = np.array(starts)

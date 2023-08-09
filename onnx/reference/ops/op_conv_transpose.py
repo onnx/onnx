@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0912,R0913,R0914,R0915,R1702,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_col2im import col2im_naive_implementation
+
+# pylint: disable=R0912,R0913,R0914,R0915,R1702,W0221
 
 
 class ConvTranspose(OpRun):

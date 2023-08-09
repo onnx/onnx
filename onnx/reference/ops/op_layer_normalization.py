@@ -2,13 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0913,R0914,W0221
-
-from typing import Tuple
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=R0913,R0914,W0221
 
 
 def _layer_normalization(
@@ -17,7 +16,7 @@ def _layer_normalization(
     B: np.ndarray,
     axis: int = -1,
     epsilon: float = 1e-5,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     X_shape = X.shape
     X_rank = len(X_shape)
     if axis < 0:

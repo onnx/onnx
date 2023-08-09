@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=W0221
 
 
 def gather_numpy_2(self: np.ndarray, index: np.ndarray) -> np.ndarray:

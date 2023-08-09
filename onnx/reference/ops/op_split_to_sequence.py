@@ -2,19 +2,18 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=C0200,W0221
-
-from typing import List, Optional, Tuple
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 
+# pylint: disable=C0200,W0221
+
 
 class SplitToSequence(OpRun):
     def common_run(
-        self, mat: np.ndarray, split: Optional[np.ndarray], axis: int
-    ) -> List[np.ndarray]:
+        self, mat: np.ndarray, split: np.ndarray | None, axis: int
+    ) -> list[np.ndarray]:
         if split is None:
             split_length = [1 for _ in range(mat.shape[axis])]
         elif len(split.shape) == 0:
@@ -41,10 +40,10 @@ class SplitToSequence(OpRun):
     def _run(
         self,
         mat: np.ndarray,
-        split: Optional[np.ndarray] = None,
+        split: np.ndarray | None = None,
         axis: int = 0,
         keepdims: int = 1,
-    ) -> Tuple[np.ndarray]:
+    ) -> tuple[np.ndarray]:
         res = self.common_run(mat, split, axis=axis)
         if split is None and not keepdims:
             for i in range(len(res)):

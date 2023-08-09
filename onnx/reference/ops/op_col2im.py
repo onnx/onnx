@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0913,R0914,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
+
+# pylint: disable=R0913,R0914,W0221
 
 
 def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strides):  # type: ignore

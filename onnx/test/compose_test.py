@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Callable, Sequence
 
 import numpy as np
 
@@ -40,7 +40,7 @@ def _prefixed(prefix: str, s: str) -> str:
     return prefix + s if len(s) > 0 else s
 
 
-def _get_shape(value_info: ValueInfoProto) -> List[int]:
+def _get_shape(value_info: ValueInfoProto) -> list[int]:
     """
     Returns a list of integers representing the shape of the provided ValueInfoProto
     """
@@ -104,12 +104,12 @@ class TestComposeFunctions(unittest.TestCase):
         self,
         m1def: str,
         m2def: str,
-        io_map: List[Tuple[str, str]],
+        io_map: list[tuple[str, str]],
         check_expectations: Callable[[GraphProto, GraphProto, GraphProto], None],
-        inputs: Optional[List[str]] = None,
-        outputs: Optional[List[str]] = None,
-        prefix1: Optional[str] = None,
-        prefix2: Optional[str] = None,
+        inputs: list[str] | None = None,
+        outputs: list[str] | None = None,
+        prefix1: str | None = None,
+        prefix2: str | None = None,
     ) -> None:
         m1, m2 = _load_model(m1def), _load_model(m2def)
         g3 = compose.merge_graphs(
@@ -814,9 +814,9 @@ class TestComposeFunctions(unittest.TestCase):
         def _make_function(
             domain: str,
             fname: str,
-            inputs: List[str],
-            outputs: List[str],
-            nodes: List[NodeProto],
+            inputs: list[str],
+            outputs: list[str],
+            nodes: list[NodeProto],
         ) -> FunctionProto:
             f = FunctionProto()
             f.domain = domain

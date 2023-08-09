@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221
 
 import numpy as np
 
 from onnx.reference.ops.op_softmax import Softmax
+
+# pylint: disable=W0221
 
 
 class LogSoftmax(Softmax):

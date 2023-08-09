@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221
 
 from onnx.helper import np_dtype_to_tensor_dtype
 from onnx.onnx_pb import TensorProto
@@ -15,6 +14,8 @@ from onnx.reference.ops.op_cast import (
     float8e5m2,
     float8e5m2fnuz,
 )
+
+# pylint: disable=W0221
 
 
 def _cast_like(x, y, saturate):

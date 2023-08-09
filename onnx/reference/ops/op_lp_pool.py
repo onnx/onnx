@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221,R0913,R0914
 
 import numpy as np
 
 from onnx.reference.ops.op_pool_common import CommonPool
+
+# pylint: disable=W0221,R0913,R0914
 
 
 class LpPool(CommonPool):

@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=E1123,W0221
 
 import numpy as np
 
 from onnx.reference.ops._op import OpRunReduceNumpy
+
+# pylint: disable=E1123,W0221
 
 
 class ReduceMax_1(OpRunReduceNumpy):

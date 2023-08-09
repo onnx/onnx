@@ -2,8 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=too-many-statements,too-many-branches
-from typing import List, Optional, Union
 
 import numpy as np
 
@@ -29,10 +27,12 @@ from onnx.helper import (
 )
 from onnx.numpy_helper import from_array
 
+# pylint: disable=too-many-statements,too-many-branches
+
 
 def _replace_constant(
     node: NodeProto, threshold: int, value_constant_of_shape: float
-) -> List[NodeProto]:
+) -> list[NodeProto]:
     """
     Replaces a Constant node with a large tensor (with more than threshold elements)
     by a sequence of nodes that produces a dummy constant of same shape as original tensor.
@@ -74,8 +74,8 @@ def _replace_constant(
 
 
 def _replace_constant_of_shape_with_range(
-    onx: Union[GraphProto, FunctionProto]
-) -> Union[GraphProto, FunctionProto]:
+    onx: GraphProto | FunctionProto,
+) -> GraphProto | FunctionProto:
     """
     Replaces all *ConstantOfShape* by node *Range* to avoid constant tensors.
     The function is not recursive. The recursivity is done by
@@ -163,8 +163,8 @@ def _replace_constant_of_shape_with_range(
 
 
 def _replace_constant_of_shape_value(
-    onx: Union[GraphProto, FunctionProto], value_constant_of_shape: float
-) -> Union[GraphProto, FunctionProto]:
+    onx: GraphProto | FunctionProto, value_constant_of_shape: float
+) -> GraphProto | FunctionProto:
     """
     Replaces all fill value of all nodes *ConstantOfShape*.
     *replace_initializer_by_constant_of_shape*.
@@ -222,9 +222,9 @@ def _replace_constant_of_shape_value(
 
 
 def replace_initializer_by_constant_of_shape(
-    onx: Union[FunctionProto, GraphProto, ModelProto],
+    onx: FunctionProto | GraphProto | ModelProto,
     threshold: int = 128,
-    ir_version: Optional[int] = None,
+    ir_version: int | None = None,
     use_range: bool = False,
     value_constant_of_shape: float = 0.5,
 ):
@@ -249,7 +249,7 @@ def replace_initializer_by_constant_of_shape(
     """
     if isinstance(onx, FunctionProto):
         modified = False
-        new_nodes: List[NodeProto] = []
+        new_nodes: list[NodeProto] = []
         for node in onx.node:
             if node.op_type == "Constant":
                 cst_nodes = _replace_constant(node, threshold, value_constant_of_shape)
@@ -336,7 +336,7 @@ def replace_initializer_by_constant_of_shape(
     removed = set()
     additional_inputs = []
 
-    new_inits: List[TensorProto] = []
+    new_inits: list[TensorProto] = []
     for init in onx.initializer:
         dims = tuple(init.dims)
         size = np.prod(dims)
@@ -362,7 +362,7 @@ def replace_initializer_by_constant_of_shape(
                 make_tensor_value_info(new_name, TensorProto.INT64, [len(dims)])
             )
 
-    new_sparse_inits: List[SparseTensorProto] = []
+    new_sparse_inits: list[SparseTensorProto] = []
     for sp_init in onx.sparse_initializer:
         dims = tuple(sp_init.dims)
         size = np.prod(dims)

@@ -2,18 +2,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221
-
-from typing import Tuple
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 
+# pylint: disable=W0221
+
 
 def _gather_nd_impl(
     data: np.ndarray, indices: np.ndarray, batch_dims: int
-) -> Tuple[np.ndarray]:
+) -> tuple[np.ndarray]:
     # Note the data rank - will be reused multiple times later
     data_rank = len(data.shape)
 

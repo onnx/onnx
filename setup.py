@@ -17,7 +17,7 @@ from datetime import date
 from distutils import log, sysconfig
 from distutils.spawn import find_executable
 from textwrap import dedent
-from typing import ClassVar, List
+from typing import ClassVar
 
 import setuptools
 import setuptools.command.build_ext
@@ -339,7 +339,7 @@ packages = setuptools.find_packages() + setuptools.find_namespace_packages(
 )
 
 
-def load_packages_from_requirements(requirements_file: str) -> List[str]:
+def load_packages_from_requirements(requirements_file: str) -> list[str]:
     """Load required packages from requirements-*.txt.
 
     Arguments:

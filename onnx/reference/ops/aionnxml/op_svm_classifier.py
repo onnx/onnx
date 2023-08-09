@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0911,R0912,R0913,R0914,W0221
 
 import numpy as np
 
@@ -16,6 +15,8 @@ from onnx.reference.ops.aionnxml._common_classifier import (
 )
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 from onnx.reference.ops.aionnxml.op_svm_helper import SVMCommon
+
+# pylint: disable=R0911,R0912,R0913,R0914,W0221
 
 
 def multiclass_probability(k, R):

@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 # pylint: disable=C0302,R0912
 import collections.abc
 import numbers
@@ -13,7 +14,6 @@ from typing import (
     Dict,
     KeysView,
     List,
-    Optional,
     Sequence,
     Tuple,
     TypeVar,
@@ -99,7 +99,7 @@ OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
 
 
 def find_min_ir_version_for(
-    opsetidlist: List[OperatorSetIdProto], ignore_unknown: bool = False
+    opsetidlist: list[OperatorSetIdProto], ignore_unknown: bool = False
 ) -> int:
     """Given list of opset ids, determine minimum IR version required.
 
@@ -111,7 +111,7 @@ def find_min_ir_version_for(
     """
     default_min_version = 3
 
-    def find_min(domain: Union[str, None], version: int) -> int:
+    def find_min(domain: str | None, version: int) -> int:
         key = (domain or "ai.onnx", version)
         if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
@@ -128,9 +128,9 @@ def make_node(
     op_type: str,
     inputs: Sequence[str],
     outputs: Sequence[str],
-    name: Optional[str] = None,
-    doc_string: Optional[str] = None,
-    domain: Optional[str] = None,
+    name: str | None = None,
+    doc_string: str | None = None,
+    domain: str | None = None,
     **kwargs: Any,
 ) -> NodeProto:
     """Construct a NodeProto.
@@ -191,10 +191,10 @@ def make_graph(
     name: str,
     inputs: Sequence[ValueInfoProto],
     outputs: Sequence[ValueInfoProto],
-    initializer: Optional[Sequence[TensorProto]] = None,
-    doc_string: Optional[str] = None,
-    value_info: Optional[Sequence[ValueInfoProto]] = None,
-    sparse_initializer: Optional[Sequence[SparseTensorProto]] = None,
+    initializer: Sequence[TensorProto] | None = None,
+    doc_string: str | None = None,
+    value_info: Sequence[ValueInfoProto] | None = None,
+    sparse_initializer: Sequence[SparseTensorProto] | None = None,
 ) -> GraphProto:
     """Construct a GraphProto
 
@@ -251,9 +251,9 @@ def make_function(
     outputs: Sequence[str],
     nodes: Sequence[NodeProto],
     opset_imports: Sequence[OperatorSetIdProto],
-    attributes: Optional[Sequence[str]] = None,
-    attribute_protos: Optional[Sequence[AttributeProto]] = None,
-    doc_string: Optional[str] = None,
+    attributes: Sequence[str] | None = None,
+    attribute_protos: Sequence[AttributeProto] | None = None,
+    doc_string: str | None = None,
 ) -> FunctionProto:
     if attributes is None:
         attributes = []
@@ -288,7 +288,7 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     model.ir_version = IR_VERSION
     model.graph.CopyFrom(graph)
 
-    opset_imports: Optional[Sequence[OperatorSetIdProto]] = None
+    opset_imports: Sequence[OperatorSetIdProto] | None = None
     opset_imports = kwargs.pop("opset_imports", None)  # type: ignore
     if opset_imports is not None:
         model.opset_import.extend(opset_imports)
@@ -297,7 +297,7 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
         imp = model.opset_import.add()
         imp.version = defs.onnx_opset_version()
 
-    functions: Optional[Sequence[FunctionProto]] = None
+    functions: Sequence[FunctionProto] | None = None
     functions = kwargs.pop("functions", None)  # type: ignore
     if functions is not None:
         model.functions.extend(functions)
@@ -319,7 +319,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
     return make_model(graph, **kwargs)
 
 
-def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
+def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     del model.metadata_props[:]
     for k, v in dict_value.items():
         entry = model.metadata_props.add()
@@ -767,7 +767,7 @@ def make_sequence(
 
 
 def make_map(
-    name: str, key_type: int, keys: List[Any], values: SequenceProto
+    name: str, key_type: int, keys: list[Any], values: SequenceProto
 ) -> MapProto:
     """
     Make a Map with specified key-value pair arguments.
@@ -801,7 +801,7 @@ def make_map(
 def make_optional(
     name: str,
     elem_type: OptionalProto.DataType,
-    value: Optional[Any],
+    value: Any | None,
 ) -> OptionalProto:
     """
     Make an Optional with specified value arguments.
@@ -829,7 +829,7 @@ def make_optional(
     return optional
 
 
-def _to_bytes(value: Union[str, bytes]) -> bytes:
+def _to_bytes(value: str | bytes) -> bytes:
     """Coerce a string (or bytes) value into UTF-8 bytes."""
     return value if isinstance(value, bytes) else value.encode("utf-8")
 
@@ -837,8 +837,8 @@ def _to_bytes(value: Union[str, bytes]) -> bytes:
 def make_attribute(  # pylint: disable=too-many-statements
     key: str,
     value: Any,
-    doc_string: Optional[str] = None,
-    attr_type: Optional[int] = None,
+    doc_string: str | None = None,
+    attr_type: int | None = None,
 ) -> AttributeProto:
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
@@ -929,7 +929,7 @@ def make_attribute(  # pylint: disable=too-many-statements
 
 
 def make_attribute_ref(
-    name: str, attr_type: AttributeProto.AttributeType, doc_string: Optional[str] = None
+    name: str, attr_type: AttributeProto.AttributeType, doc_string: str | None = None
 ) -> AttributeProto:
     """Make an AttributeProto holding a reference to the parent function's attribute of given name and type."""
     attr = AttributeProto()
@@ -991,8 +991,8 @@ def make_empty_tensor_value_info(name: str) -> ValueInfoProto:
 
 def make_tensor_type_proto(
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
-    shape_denotation: Optional[List[str]] = None,
+    shape: Sequence[str | int | None] | None,
+    shape_denotation: list[str] | None = None,
 ) -> TypeProto:
     """Makes a Tensor TypeProto based on the data type and shape."""
 
@@ -1038,9 +1038,9 @@ def make_tensor_type_proto(
 def make_tensor_value_info(
     name: str,
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
+    shape: Sequence[str | int | None] | None,
     doc_string: str = "",
-    shape_denotation: Optional[List[str]] = None,
+    shape_denotation: list[str] | None = None,
 ) -> ValueInfoProto:
     """Makes a ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
@@ -1055,8 +1055,8 @@ def make_tensor_value_info(
 
 def make_sparse_tensor_type_proto(
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
-    shape_denotation: Optional[List[str]] = None,
+    shape: Sequence[str | int | None] | None,
+    shape_denotation: list[str] | None = None,
 ) -> TypeProto:
     """Makes a SparseTensor TypeProto based on the data type and shape."""
 
@@ -1102,9 +1102,9 @@ def make_sparse_tensor_type_proto(
 def make_sparse_tensor_value_info(
     name: str,
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
+    shape: Sequence[str | int | None] | None,
     doc_string: str = "",
-    shape_denotation: Optional[List[str]] = None,
+    shape_denotation: list[str] | None = None,
 ) -> ValueInfoProto:
     """Makes a SparseTensor ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
@@ -1165,7 +1165,7 @@ def make_value_info(
     return value_info_proto
 
 
-def _sanitize_str(s: Union[str, bytes]) -> str:
+def _sanitize_str(s: str | bytes) -> str:
     if isinstance(s, str):
         sanitized = s
     elif isinstance(s, bytes):
@@ -1180,9 +1180,9 @@ def _sanitize_str(s: Union[str, bytes]) -> str:
 def make_tensor_sequence_value_info(
     name: str,
     elem_type: int,
-    shape: Optional[Sequence[Union[str, int, None]]],
+    shape: Sequence[str | int | None] | None,
     doc_string: str = "",
-    elem_shape_denotation: Optional[List[str]] = None,
+    elem_shape_denotation: list[str] | None = None,
 ) -> ValueInfoProto:
     """Makes a Sequence[Tensors] ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
@@ -1199,7 +1199,7 @@ def make_tensor_sequence_value_info(
 
 def printable_attribute(
     attr: AttributeProto, subgraphs: bool = False
-) -> Union[str, Tuple[str, List[GraphProto]]]:
+) -> str | tuple[str, list[GraphProto]]:
     content = []
     content.append(attr.name)
     content.append("=")
@@ -1315,13 +1315,13 @@ def printable_tensor_proto(t: TensorProto) -> str:
 
 def printable_node(
     node: NodeProto, prefix: str = "", subgraphs: bool = False
-) -> Union[str, Tuple[str, List[GraphProto]]]:
+) -> str | tuple[str, list[GraphProto]]:
     content = []
     if len(node.output):
         content.append(", ".join([f"%{name}" for name in node.output]))
         content.append("=")
     # To deal with nested graphs
-    graphs: List[GraphProto] = []
+    graphs: list[GraphProto] = []
     printed_attrs = []
     for attr in node.attribute:
         if subgraphs:
@@ -1408,7 +1408,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
 
     header.append("{")
     content.append(prefix + " ".join(header))
-    graphs: List[GraphProto] = []
+    graphs: list[GraphProto] = []
     # body
     for node in graph.node:
         contents_subgraphs = printable_node(node, indent, subgraphs=True)
@@ -1450,8 +1450,8 @@ def strip_doc_string(proto: google.protobuf.message.Message) -> None:
 def make_training_info(
     algorithm: GraphProto,
     algorithm_bindings: AssignmentBindingType,
-    initialization: Optional[GraphProto],
-    initialization_bindings: Optional[AssignmentBindingType],
+    initialization: GraphProto | None,
+    initialization_bindings: AssignmentBindingType | None,
 ) -> TrainingInfoProto:
     training_info = TrainingInfoProto()
     training_info.algorithm.CopyFrom(algorithm)

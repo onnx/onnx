@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Tuple
-
 import numpy as np
 
 import onnx
@@ -13,7 +11,7 @@ from onnx.backend.test.case.node import expect
 
 
 def einsum_reference_implementation(
-    Eqn: str, Operands: Tuple[np.ndarray, ...]
+    Eqn: str, Operands: tuple[np.ndarray, ...]
 ) -> np.ndarray:
     Z = np.einsum(Eqn, *Operands)
     return Z

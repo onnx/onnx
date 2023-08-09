@@ -2,9 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 # pylint: disable=C3001,C0415,R0902,R0912,R0913,R0914,R0915
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 
@@ -194,10 +195,10 @@ class ReferenceEvaluator:
     def __init__(  # type: ignore
         self,
         proto: Any,
-        opsets: Optional[Dict[str, int]] = None,
-        functions: Optional[List[Union["ReferenceEvaluator", FunctionProto]]] = None,  # type: ignore
+        opsets: dict[str, int] | None = None,
+        functions: list[ReferenceEvaluator | FunctionProto] | None = None,  # type: ignore
         verbose: int = 0,
-        new_ops: Optional[List[OpRun]] = None,
+        new_ops: list[OpRun] | None = None,
         optimized: bool = True,
     ):
         if optimized:
@@ -216,8 +217,8 @@ class ReferenceEvaluator:
         elif isinstance(proto, bytes):
             proto = load(BytesIO(proto))
         self.proto_ = proto
-        self.functions_: Dict[Tuple[str, str], ReferenceEvaluator] = {}
-        self.attributes_: List[str] = []
+        self.functions_: dict[tuple[str, str], ReferenceEvaluator] = {}
+        self.attributes_: list[str] = []
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
@@ -279,7 +280,7 @@ class ReferenceEvaluator:
                 else:
                     raise TypeError(f"Unexpected type {type(f)!r} for a function.")
         self.verbose = verbose
-        self.new_ops_: Dict[Tuple[str, str], OpRun] = {}
+        self.new_ops_: dict[tuple[str, str], OpRun] = {}
         if new_ops is not None:
             for cl in new_ops:
                 if not hasattr(cl, "op_domain"):
@@ -310,7 +311,7 @@ class ReferenceEvaluator:
             return ", ".join(map(self._log_arg, a))
         return a
 
-    def _log(self, level: int, pattern: str, *args: List[Any]) -> None:
+    def _log(self, level: int, pattern: str, *args: list[Any]) -> None:
         if level < self.verbose:
             new_args = [self._log_arg(a) for a in args]
             print(pattern % tuple(new_args))
@@ -417,9 +418,7 @@ class ReferenceEvaluator:
                 ) from e
             self.rt_nodes_.append(inst)
 
-    def _load_impl(
-        self, node: NodeProto, input_types: Optional[TypeProto] = None
-    ) -> Any:
+    def _load_impl(self, node: NodeProto, input_types: TypeProto | None = None) -> Any:
         """
         Loads the implementation for a specified runtime.
         """
@@ -490,7 +489,7 @@ class ReferenceEvaluator:
             f"is unknown, known functions: {sorted(self.functions_)}."
         )
 
-    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Optional[Dict[str, Any]] = None):  # type: ignore
+    def run(self, output_names, feed_inputs: dict[str, Any], attributes: dict[str, Any] | None = None):  # type: ignore
         """
         Executes the onnx model.
 
@@ -534,7 +533,7 @@ class ReferenceEvaluator:
                 results[name] = value
 
         # return the results
-        list_results: List[Any] = []
+        list_results: list[Any] = []
         for name in output_names:
             if name not in results:
                 raise RuntimeError(

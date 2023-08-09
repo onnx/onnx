@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=R0912,R0913,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=R0912,R0913,W0221
 
 
 def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mean", ignore_index=None):  # type: ignore

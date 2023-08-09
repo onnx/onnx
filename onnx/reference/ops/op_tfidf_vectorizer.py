@@ -2,14 +2,14 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=C0200,R0902,R0912,R0913,R0914,R0915,R1716,W0611,W0612,W0613,W0221
 
 from enum import IntEnum
-from typing import List
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=C0200,R0902,R0912,R0913,R0914,R0915,R1716,W0611,W0612,W0613,W0221
 
 
 class IntMap(dict):  # type: ignore
@@ -183,7 +183,7 @@ class TfIdfVectorizer(OpRun):
             ngram_size += 1
 
     def increment_count(
-        self, ngram_id: int, row_num: int, frequencies: List[int]
+        self, ngram_id: int, row_num: int, frequencies: list[int]
     ) -> None:
         ngram_id -= 1
         # assert(ngram_id < ngram_indexes_.size());
@@ -191,8 +191,8 @@ class TfIdfVectorizer(OpRun):
         # assert(static_cast<size_t>(output_idx) < frequencies.size());
         frequencies[output_idx] += 1
 
-    def output_result(self, B: int, frequencies: List[int]) -> np.ndarray:
-        l_output_dims: List[int] = []
+    def output_result(self, B: int, frequencies: list[int]) -> np.ndarray:
+        l_output_dims: list[int] = []
         if B == 0:
             l_output_dims.append(self.output_size_)
             B = 1
@@ -245,7 +245,7 @@ class TfIdfVectorizer(OpRun):
         X: np.ndarray,
         row_num: int,
         row_size: int,
-        frequencies: List[int],
+        frequencies: list[int],
         max_gram_length=None,
         max_skip_count=None,
         min_gram_length=None,

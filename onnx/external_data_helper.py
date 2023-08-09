@@ -2,12 +2,13 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
+
 import os
 import re
 import sys
 import uuid
 from itertools import chain
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable
 
 from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
 
@@ -73,10 +74,10 @@ def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
 def set_external_data(
     tensor: TensorProto,
     location: str,
-    offset: Optional[int] = None,
-    length: Optional[int] = None,
-    checksum: Optional[str] = None,
-    basepath: Optional[str] = None,
+    offset: int | None = None,
+    length: int | None = None,
+    checksum: str | None = None,
+    basepath: str | None = None,
 ) -> None:
     if not tensor.HasField("raw_data"):
         raise ValueError(
@@ -103,7 +104,7 @@ def set_external_data(
 def convert_model_to_external_data(
     model: ModelProto,
     all_tensors_to_one_file: bool = True,
-    location: Optional[str] = None,
+    location: str | None = None,
     size_threshold: int = 1024,
     convert_attribute: bool = False,
 ) -> None:

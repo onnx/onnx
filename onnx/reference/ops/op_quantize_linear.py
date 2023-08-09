@@ -2,9 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221
-
-from typing import Optional, Tuple
 
 import numpy as np
 
@@ -22,6 +19,8 @@ from onnx.reference.custom_element_types import (
     float8e5m2fnuz,
 )
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=W0221
 
 
 class _CommonQuantizeLinear(OpRun):
@@ -52,10 +51,10 @@ class _CommonQuantizeLinear(OpRun):
         self,
         x: np.ndarray,
         y_scale: np.ndarray,
-        zero_point: Optional[np.ndarray] = None,
+        zero_point: np.ndarray | None = None,
         axis: int = 1,
         saturate: bool = True,
-    ) -> Tuple[np.ndarray]:
+    ) -> tuple[np.ndarray]:
         if len(y_scale.shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
         if len(y_scale.shape) > 0 and y_scale.size == 1:

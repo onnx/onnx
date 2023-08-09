@@ -2,11 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=E0203,W0221
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=E0203,W0221
 
 
 class Squeeze_1(OpRun):

@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221
 
 import numpy as np
 
@@ -14,6 +13,8 @@ from onnx.reference.custom_element_types import (
     float8e5m2fnuz,
 )
 from onnx.reference.op_run import OpRun, RefAttrName
+
+# pylint: disable=W0221
 
 
 def _check_dtype(val):  # type: ignore

@@ -2,13 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
-# pylint: disable=W0221
-
-from typing import Optional, Tuple
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+# pylint: disable=W0221
 
 
 class Shape_1(OpRun):
@@ -18,9 +17,7 @@ class Shape_1(OpRun):
 
 class Shape_15(Shape_1):
     @staticmethod
-    def _interval(
-        n: int, start: Optional[int], end: Optional[int]
-    ) -> Optional[Tuple[int, int]]:
+    def _interval(n: int, start: int | None, end: int | None) -> tuple[int, int] | None:
         if start == 0:
             if end is None or np.isnan(end):
                 return None
