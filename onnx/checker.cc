@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/checker.h"
+
+#include <fstream>
+#include <functional>
+#include <iterator>
+#include <set>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 #include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/defs/schema.h"
@@ -11,12 +20,9 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
-#include <fstream>
-#include <iterator>
-#include <unordered_set>
-
 #ifdef _WIN32
 #include <direct.h>
+
 #include <filesystem>
 
 #else // POSIX

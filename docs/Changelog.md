@@ -7150,7 +7150,7 @@ This version of the operator has been available since version 7 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -8746,7 +8746,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> (differentiable) : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -10777,7 +10777,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>output_padding</tt> : list of ints</dt>
 <dd>Additional elements added to the side with higher coordinate indices in the output. Each padding value in "output_padding" must be less than the corresponding stride/dilation dimension. By default, this attribute is a zero vector. Note that this attribute doesn't directly affect the computed output values. It only controls the selection of the computed values, so changing this attribute only adds or removes output elements. If "output_shape" is explicitly provided, "output_padding" does not contribute additional size to "output_shape" but participates in the computation of the needed padding amount. This is also called adjs or adjustment in some frameworks.</dd>
 <dt><tt>output_shape</tt> : list of ints</dt>
-<dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads</dd>
+<dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads. Note that the output_shape attribute value should not include dimensions for batch size and channels, which are automatically inferred.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
@@ -14473,25 +14473,27 @@ This version of the operator has been available since version 12 of the default 
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
+   data into the output tensor Y for further processing. The output spatial shape is calculated differently
+   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
-   or when ceil_mode is disabled:
+   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -18112,14 +18114,14 @@ This version of the operator has been available since version 13 of the default 
   Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
   of its input `data` tensor.
 
-  An effective `start[i]`, `end[i]`, and `step[i]` must be computed for each `i`
+  An effective `starts[i]`, `ends[i]`, and `steps[i]` must be computed for each `i`
   in `[0, ... r-1]` where `r = rank(input)` as follows:
 
   If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-  The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
-  `dims` are the dimensions of `input` and `step[i] = `1.
+  The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+  `dims` are the dimensions of `input` and `steps[i] = `1.
 
   All negative elements of `axes` are made non-negatve by adding `r` to them, where
   `r =rank(input)`.
@@ -18131,10 +18133,10 @@ This version of the operator has been available since version 13 of the default 
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
-  `end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
+  `ends[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
   is clamped to `[-1, dims[axes[i]]-1]`.
 
-  Finally, `step[axes[i]] = steps[i]`.
+  Finally, `steps[axes[i]] = steps[i]`.
 
   For slicing to the end of a dimension with unknown size, it is recommended to pass
   in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
@@ -20319,7 +20321,7 @@ This version of the operator has been available since version 16 of the default 
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> (differentiable) : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -22336,8 +22338,8 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
   ```
   When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
   ```
-  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
+  output[indices[i][j]][j] = f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+  output[i][indices[i][j]] = f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
   ```
   where the `f` is `+`, `*`, `max` or `min` as specified.
 
@@ -22580,25 +22582,27 @@ This version of the operator has been available since version 18 of the default 
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
+   data into the output tensor Y for further processing. The output spatial shape is calculated differently
+   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
-   or when ceil_mode is disabled:
+   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -23881,6 +23885,152 @@ This version of the operator has been available since version 19 of the default 
 </dl>
 
 ## Version 20 of the default ONNX operator set
+### <a name="AffineGrid-20"></a>**AffineGrid-20**</a>
+
+  Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
+  (https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
+  An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
+  ```
+  [r00, r01, r02, t0]   [x]   [x']
+  [r10, r11, r12, t1] * [y] = [y']
+  [r20, r21, r22, t2]   [z]   [z']
+  [0,   0,   0,   1 ]   [1]   [1 ]
+  ```
+  where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
+  The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
+
+  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
+  The output `grid` contains positions in the output space.
+
+  When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
+  ```
+  v            v            v            v
+  |-------------------|------------------|
+  -1                  0                  1
+  ```
+  When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
+  ```
+      v        v         v         v
+  |------------------|-------------------|
+  -1                 0                   1
+  ```
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>align_corners</tt> : int (default is 0)</dt>
+<dd>if align_corners=1, consider -1 and 1 to refer to the centers of the corner pixels. if align_corners=0, consider -1 and 1 to refer to the outer edge the corner pixels.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>theta</tt> (non-differentiable) : T1</dt>
+<dd>input batch of affine matrices with shape (N, 2, 3) for 2D or (N, 3, 4) for 3D</dd>
+<dt><tt>size</tt> (non-differentiable) : T2</dt>
+<dd>the target output image size (N, C, H, W) for 2D or (N, C, D, H, W) for 3D</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>grid</tt> (differentiable) : T1</dt>
+<dd>output tensor of shape (N, C, H, W, 2) of 2D sample coordinates or (N, C, D, H, W, 3) of 3D sample coordinates.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain grid types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain size's type to int64 tensors.</dd>
+</dl>
+
+### <a name="ConstantOfShape-20"></a>**ConstantOfShape-20**</a>
+
+  Generate a tensor with given value and shape.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>value</tt> : tensor</dt>
+<dd>(Optional) The value of the output elements.Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar. All values must be >= 0.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor of shape specified by 'input'.If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'.If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype defaults to float32.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain input types.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain output types to be numerics.</dd>
+</dl>
+
+### <a name="Gelu-20"></a>**Gelu-20**</a>
+
+  Gelu takes one input data (Tensor<T>) and produces one
+  output data (Tensor<T>) where the gaussian error linear units function,
+  $y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise.
+  If the attribute "approximate" is set to "tanh", the function estimation,
+  $y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied
+  to the tensor elementwise.
+
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>approximate</tt> : string (default is none)</dt>
+<dd>Gelu approximation algorithm: `"tanh"`, `"none"`(default).`"none"`: do not use approximation.`"tanh"`: use tanh approximation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="GridSample-20"></a>**GridSample-20**</a>
 
   Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.
@@ -23940,6 +24090,123 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain input `X` and output `Y` types to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain grid types to float tensors.</dd>
+</dl>
+
+### <a name="RegexFullMatch-20"></a>**RegexFullMatch-20**</a>
+
+  RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>pattern</tt> : string</dt>
+<dd>Regex pattern to match on. This must be valid RE2 syntax.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor with strings to match on.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Tensor of bools indicating if each input string fully matches the regex pattern specified.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>Inputs must be UTF-8 strings</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Outputs are bools and are True where there is a full regex match and False otherwise.</dd>
+</dl>
+
+### <a name="StringConcat-20"></a>**StringConcat-20**</a>
+
+  StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Tensor to prepend in concatenation</dd>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Tensor to append in concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
+<dd>Concatenated string tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>Inputs and outputs must be UTF-8 strings</dd>
+</dl>
+
+### <a name="StringSplit-20"></a>**StringSplit-20**</a>
+
+  StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
+
+  The first output of this operator is a tensor of strings representing the substrings from splitting each input string on the `delimiter` substring. This tensor has one additional rank compared to the input tensor in order to store the substrings for each input element (where the input tensor is not empty). Note that, in order to ensure the same number of elements are present in the final dimension, this tensor will pad empty strings as illustrated in the examples below. Consecutive delimiters are not grouped together and are deemed to delimit empty strings, except if the `delimiter` is unspecified or is the empty string (""). In the case where the `delimiter` is unspecified or the empty string, consecutive whitespace characters are regarded as a single separator and leading or trailing whitespace is removed in the output.
+
+  The second output tensor represents the number of substrings generated. `maxsplit` can be used to limit the number of splits performed - after the `maxsplit`th split if the string is not fully split, the trailing suffix of input string after the final split point is also added. For elements where fewer splits are possible than specified in `maxsplit`, it has no effect.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>delimiter</tt> : string</dt>
+<dd>Delimiter to split on. If left unset or set to the empty string (""), the input is split on consecutive whitespace.</dd>
+<dt><tt>maxsplit</tt> : int</dt>
+<dd>Maximum number of splits (from left to right). If left unset (or if the number of possible splits are less than maxsplit), it will make as many splits as possible. Note that the maximum possible number of substrings returned with `maxsplit` specified is `maxsplit+1` since the remaining suffix after the `maxsplit`th split is included in the output.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor of strings to split.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.</dd>
+<dt><tt>Z</tt> (non-differentiable) : T3</dt>
+<dd>The number of substrings generated for each input element.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>The input must be a UTF-8 string tensor</dd>
+<dt><tt>T2</tt> : tensor(string)</dt>
+<dd>Tensor of substrings.</dd>
+<dt><tt>T3</tt> : tensor(int64)</dt>
+<dd>The number of substrings generated.</dd>
 </dl>
 
 # ai.onnx.preview.training

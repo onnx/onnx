@@ -61,6 +61,7 @@ Community Meetups are held at least once a year. Content from previous community
 * 2021.03.24 <https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=35160391>
 * 2021.10.21 <https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=46989689>
 * 2022.06.24 <https://wiki.lfaidata.foundation/display/DL/ONNX+Community+Day+-+June+24>
+* 2023.06.28 <https://wiki.lfaidata.foundation/display/DL/ONNX+Community+Day+2023+-+June+28>
 
 # Discuss
 
@@ -81,7 +82,7 @@ A roadmap process takes place every year. More details can be found [here](https
 ONNX released packages are published in PyPi.
 
 ```sh
-pip install onnx
+pip install onnx  # or pip install onnx[reference] for optional reference implementation dependencies
 ```
 
 [ONNX weekly packages](https://pypi.org/project/onnx-weekly/) are published in PyPI to enable experimentation and early testing.
@@ -112,7 +113,9 @@ Before building from source uninstall any existing versions of onnx `pip uninsta
 
 c++17 or higher C++ compiler version is required to build ONNX from source on Windows. For other platforms, please use C++14 or higher versions.
 
-Generally speaking, you need to install [protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) before proceeding forward. Then depending on how you installed protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF".  For example, you may need to run the following command:
+If you don't have protobuf installed, ONNX will internally download and build protobuf for ONNX build.
+
+Or, you can manually install [protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) with specified version before proceeding forward. Then depending on how you installed protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF".  For example, you may need to run the following command:
 
 Linux:
 
@@ -130,7 +133,7 @@ The ON/OFF depends on what kind of protobuf library you have. Shared libraries a
 
 ### Windows
 
-If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.20.2.
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.21.12.
 
 The instructions in this README assume you are using Visual Studio.  It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
 
@@ -139,7 +142,7 @@ You can get protobuf by running the following commands:
 ```bat
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v3.20.2
+git checkout v21.12
 cd cmake
 cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=Release
@@ -193,7 +196,7 @@ A more general way is to build and install it from source. See the instructions 
   ```sh
     git clone https://github.com/protocolbuffers/protobuf.git
     cd protobuf
-    git checkout v3.20.2
+    git checkout v21.12
     git submodule update --init --recursive
     mkdir build_source && cd build_source
     cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
@@ -206,7 +209,7 @@ A more general way is to build and install it from source. See the instructions 
   ```sh
     git clone https://github.com/protocolbuffers/protobuf.git
     cd protobuf
-    git checkout v3.20.2
+    git checkout v21.12
     git submodule update --init --recursive
     mkdir build_source && cd build_source
     cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
@@ -237,9 +240,9 @@ pip install -e .
 export NUM_CORES=`sysctl -n hw.ncpu`
 brew update
 brew install autoconf && brew install automake
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.20.2/protobuf-cpp-3.20.2.tar.gz
-tar -xvf protobuf-cpp-3.20.2.tar.gz
-cd protobuf-3.20.2
+wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
+tar -xvf protobuf-cpp-3.21.12.tar.gz
+cd protobuf-3.21.12
 mkdir build_source && cd build_source
 cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j${NUM_CORES}

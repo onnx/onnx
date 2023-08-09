@@ -156,6 +156,14 @@ class TestAutomaticUpgrade(unittest.TestCase):
             attrs={"consumed_inputs": [0], "broadcast": 1, "axis": 0},
         )
 
+    def test_AffineGrid_2D(self) -> None:
+        N, _, H, W = 2, 3, 5, 6
+        self._test_op_upgrade("AffineGrid", 20, [[N, 2, 3], [4]], [[N, H, W, 2]])
+
+    def test_AffineGrid_3D(self) -> None:
+        N, _, D, H, W = 2, 3, 4, 5, 6
+        self._test_op_upgrade("AffineGrid", 20, [[N, 3, 4], [5]], [[N, D, H, W, 3]])
+
     def test_ArgMax_1(self) -> None:
         self._test_op_upgrade(
             "ArgMax", 7, [[2, 3, 4]], [[1, 3, 4]], output_types=[TensorProto.INT64]
@@ -463,6 +471,12 @@ class TestAutomaticUpgrade(unittest.TestCase):
 
     def test_GatherND(self) -> None:
         self._test_op_upgrade("GatherND", 11, [[1, 2, 3], [1, 2, 3]], [[1, 2]])
+
+    def test_Gelu_approximate_tanh(self) -> None:
+        self._test_op_upgrade("Gelu", 20, attrs={"approximate": "tanh"})
+
+    def test_Gelu(self) -> None:
+        self._test_op_upgrade("Gelu", 20)
 
     def test_Gemm(self) -> None:
         self._test_op_upgrade("Gemm", 1, [[5, 4], [4, 3], [3]], [[5, 3]])
@@ -1783,6 +1797,24 @@ class TestAutomaticUpgrade(unittest.TestCase):
             attrs={"epsilon": 1e-5, "num_groups": 2},
         )
 
+    def test_StringConcat(self) -> None:
+        self._test_op_upgrade(
+            "StringConcat",
+            20,
+            [[2, 3], [2, 3]],
+            [[2, 3]],
+        )
+
+    def test_RegexFullMatch(self) -> None:
+        self._test_op_upgrade(
+            "RegexFullMatch",
+            20,
+            [[2, 3]],
+            [[2, 3]],
+            [TensorProto.STRING],
+            [TensorProto.BOOL],
+        )
+
     def test_ops_tested(self) -> None:
         all_schemas = onnx.defs.get_all_schemas()
         all_op_names = [schema.name for schema in all_schemas if schema.domain == ""]
@@ -1801,6 +1833,7 @@ class TestAutomaticUpgrade(unittest.TestCase):
             "Optional",
             "OptionalGetElement",
             "OptionalHasElement",
+            "StringSplit",
         ]
         all_op_names = [op for op in all_op_names if op not in excluded_ops]
 

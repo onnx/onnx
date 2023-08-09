@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include <cmath>
+
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
-
-#include <cmath>
 
 namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> ReduceDocGenerator_opset13_18(

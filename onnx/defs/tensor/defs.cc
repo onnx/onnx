@@ -2,14 +2,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <algorithm>
+#include <cmath>
+#include <numeric>
+
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
 #include "onnx/defs/tensor_proto_util.h"
-
-#include <algorithm>
-#include <cmath>
-#include <numeric>
 
 namespace ONNX_NAMESPACE {
 
@@ -799,14 +799,14 @@ https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-a
 Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
 of its input `data` tensor.
 
-An effective `start[i]`, `end[i]`, and `step[i]` must be computed for each `i`
+An effective `starts[i]`, `ends[i]`, and `steps[i]` must be computed for each `i`
 in `[0, ... r-1]` where `r = rank(input)` as follows:
 
 If `axes` are omitted, they are set to `[0, ..., r-1]`.
 If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
-`dims` are the dimensions of `input` and `step[i] = `1.
+The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+`dims` are the dimensions of `input` and `steps[i] = `1.
 
 All negative elements of `axes` are made non-negatve by adding `r` to them, where
 `r =rank(input)`.
@@ -818,10 +818,10 @@ and `[0, dims[axes[i]]-1]` for negative stepping.
 
 The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
 accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
-`end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
+`ends[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
 is clamped to `[-1, dims[axes[i]]-1]`.
 
-Finally, `step[axes[i]] = steps[i]`.
+Finally, `steps[axes[i]] = steps[i]`.
 
 For slicing to the end of a dimension with unknown size, it is recommended to pass
 in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
@@ -1442,8 +1442,8 @@ output[i][indices[i][j]] = updates[i][j] if axis = 1,
 ```
 When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
 ```
-output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
+output[indices[i][j]][j] = f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+output[i][indices[i][j]] = f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
 ```
 where the `f` is `+`, `*`, `max` or `min` as specified.
 
@@ -2460,6 +2460,280 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain grid types to float tensors.")
         .SetDoc(GridSample_ver20_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
+
+static const char* AffineGrid_ver20_doc = R"DOC(
+Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
+(https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
+An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
+```
+[r00, r01, r02, t0]   [x]   [x']
+[r10, r11, r12, t1] * [y] = [y']
+[r20, r21, r22, t2]   [z]   [z']
+[0,   0,   0,   1 ]   [1]   [1 ]
+```
+where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
+The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
+
+Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
+The output `grid` contains positions in the output space.
+
+When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
+```
+v            v            v            v
+|-------------------|------------------|
+-1                  0                  1
+```
+When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
+```
+    v        v         v         v
+|------------------|-------------------|
+-1                 0                   1
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    AffineGrid,
+    20,
+    OpSchema()
+        .Attr(
+            "align_corners",
+            "if align_corners=1, consider -1 and 1 to refer to the centers of the corner pixels. "
+            "if align_corners=0, consider -1 and 1 to refer to the outer edge the corner pixels.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            0,
+            "theta",
+            "input batch of affine matrices with shape (N, 2, 3) for 2D or (N, 3, 4) for 3D",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "size",
+            "the target output image size (N, C, H, W) for 2D or (N, C, D, H, W) for 3D",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "grid",
+            "output tensor of shape (N, C, H, W, 2) of 2D sample coordinates or (N, C, D, H, W, 3) of 3D sample coordinates.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain grid types to float tensors.")
+        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain size's type to int64 tensors.")
+        .SetDoc(AffineGrid_ver20_doc)
+        .FunctionBody(R"ONNX(
+        {
+          int_zero = Constant <value_int: int=0> ()
+          int_four = Constant <value_int: int=4> ()
+
+          constant_align_corners = Constant <value_int: int=@align_corners> ()
+          constant_align_corners_equal_zero = Equal (constant_align_corners, int_zero)
+
+          size_ndim = Size (size)
+          condition_is_2d = Equal (size_ndim, int_four)
+
+          grid = If (condition_is_2d) <
+              then_branch = g1 () => (grid_2d_then) { # => (float[N, H, W, 2])
+                  int_one = Constant <value_int: int=1> ()
+                  minus_one = Constant <value = float {-1.0}> ()
+                  zero = Constant <value = float {0.0}> ()
+                  one = Constant <value = float {1.0}> ()
+                  two = Constant <value = float {2.0}> ()
+                  N, C, H, W = Split <num_outputs: int=4> (size)
+                  int_two_1d = Constant <value_ints=[2]> ()
+                  int_four_1d = Constant <value_ints=[4]> ()
+                  constant_H_W_shape = Slice (size, int_two_1d, int_four_1d) # [N, C, H, W] => [H, W]
+                  zeros_H_by_W = ConstantOfShape (constant_H_W_shape)
+                  ones_H_by_W = Add (zeros_H_by_W, one)
+
+                  H_float = CastLike (H, zero)
+                  W_float = CastLike (W, zero)
+                  start_h, step_h, start_w, step_w = If (constant_align_corners_equal_zero) <
+                      then_branch = h1 () => (start_h_then, step_h_then, start_w_then, step_w_then) { # => (float, float, float, float)
+                          step_h_then = Div (two, H_float)
+                          step_w_then = Div (two, W_float)
+                          step_h_half = Div (step_h_then, two)
+                          start_h_then = Add (minus_one, step_h_half)
+                          step_w_half = Div (step_w_then, two)
+                          start_w_then = Add (minus_one, step_w_half)
+                      },
+                      else_branch = h2 () => (start_h_else, step_h_else, start_w_else, step_w_else) { # => (float, float, float, float)
+                          H_float_minus_one = Sub (H_float, one)
+                          W_float_minus_one = Sub (W_float, one)
+                          step_h_else = Div (two, H_float_minus_one)
+                          step_w_else = Div (two, W_float_minus_one)
+                          start_h_else = Identity (minus_one)
+                          start_w_else = Identity (minus_one)
+                      }
+                  >
+                  grid_w_steps_int = Range (int_zero, W, int_one)
+                  grid_w_steps_float = CastLike (grid_w_steps_int, step_w)
+                  grid_w_steps = Mul (grid_w_steps_float, step_w)
+                  grid_w_0 = Add (start_w, grid_w_steps)
+
+                  grid_h_steps_int = Range (int_zero, H, int_one)
+                  grid_h_steps_float = CastLike (grid_h_steps_int, step_h)
+                  grid_h_steps = Mul (grid_h_steps_float, step_h)
+                  grid_h_0 = Add (start_h, grid_h_steps)
+
+                  zeros_W_by_H = Transpose (zeros_H_by_W)
+                  grid_h_1 = Add (zeros_W_by_H, grid_h_0)
+                  grid_h = Transpose (grid_h_1)
+
+                  grid_w = Add (grid_w_0, zeros_H_by_W)
+
+                  # make following a function (theta, grid_w, grid_h) =>  (grid)
+                  original_grid_seq = SequenceConstruct (grid_w, grid_h, ones_H_by_W)
+                  original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
+                  constant_shape_HW_3 = Constant <value_ints: ints = [-1, 3]> ()
+                  original_grid_HW_3 = Reshape (original_grid, constant_shape_HW_3)
+                  original_grid_3_HW_ = Transpose (original_grid_HW_3)
+
+                  original_grid_3_HW = CastLike (original_grid_3_HW_, theta)
+                  grid_N_2_HW = MatMul (theta, original_grid_3_HW)
+                  grid_N_HW_2 = Transpose <perm = [0, 2, 1]> (grid_N_2_HW)
+                  N_H_W_2_seq = SequenceConstruct (N, H, W, int_two_1d)
+                  N_H_W_2 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_H_W_2_seq)
+                  grid_2d_then_ = Reshape (grid_N_HW_2, N_H_W_2)
+                  grid_2d_then = CastLike (grid_2d_then_, theta)
+                  },
+              else_branch = g2 () => (grid_3d_else) { # => (float[N, D, H, W, 3])
+                  int_one = Constant <value_int: int=1> ()
+                  minus_one = Constant <value = float {-1.0}> ()
+                  zero = Constant <value = float {0.0}> ()
+                  one = Constant <value = float {1.0}> ()
+                  two = Constant <value = float {2.0}> ()
+                  N, C, D, H, W = Split <num_outputs: int=5> (size)
+                  int_two_1d = Constant <value_ints=[2]> ()
+                  int_three_1d = Constant <value_ints=[3]> ()
+                  int_five_1d = Constant <value_ints=[5]> ()
+                  constant_D_H_W_shape = Slice (size, int_two_1d, int_five_1d) # [N, C, D, H, W] => [D, H, W]
+                  zeros_D_H_W = ConstantOfShape (constant_D_H_W_shape)
+                  ones_D_H_W = Add (zeros_D_H_W, one)
+
+                  D_float = CastLike (D, zero)
+                  H_float = CastLike (H, zero)
+                  W_float = CastLike (W, zero)
+                  start_d, step_d, start_h, step_h, start_w, step_w = If (constant_align_corners_equal_zero) <
+                      then_branch = h1 () => (start_d_then, step_d_then, start_h_then, step_h_then, start_w_then, step_w_then) { # => (float, float, float, float, float, float)
+                          step_d_then = Div (two, D_float)
+                          step_h_then = Div (two, H_float)
+                          step_w_then = Div (two, W_float)
+
+                          step_d_half = Div (step_d_then, two)
+                          start_d_then = Add (minus_one, step_d_half)
+
+                          step_h_half = Div (step_h_then, two)
+                          start_h_then = Add (minus_one, step_h_half)
+
+                          step_w_half = Div (step_w_then, two)
+                          start_w_then = Add (minus_one, step_w_half)
+                      },
+                      else_branch = h2 () => (start_d_else, step_d_else, start_h_else, step_h_else, start_w_else, step_w_else) { # => (float, float, float, float, float, float)
+                          D_float_minus_one = Sub (D_float, one)
+                          H_float_minus_one = Sub (H_float, one)
+                          W_float_minus_one = Sub (W_float, one)
+                          step_d_else = Div (two, D_float_minus_one)
+                          step_h_else = Div (two, H_float_minus_one)
+                          step_w_else = Div (two, W_float_minus_one)
+                          start_d_else = Identity (minus_one)
+                          start_h_else = Identity (minus_one)
+                          start_w_else = Identity (minus_one)
+                      }
+                  >
+                  grid_w_steps_int = Range (int_zero, W, int_one)
+                  grid_w_steps_float = CastLike (grid_w_steps_int, step_w)
+                  grid_w_steps = Mul (grid_w_steps_float, step_w)
+                  grid_w_0 = Add (start_w, grid_w_steps)
+
+                  grid_h_steps_int = Range (int_zero, H, int_one)
+                  grid_h_steps_float = CastLike (grid_h_steps_int, step_h)
+                  grid_h_steps = Mul (grid_h_steps_float, step_h)
+                  grid_h_0 = Add (start_h, grid_h_steps)
+
+                  grid_d_steps_int = Range (int_zero, D, int_one)
+                  grid_d_steps_float = CastLike (grid_d_steps_int, step_d)
+                  grid_d_steps = Mul (grid_d_steps_float, step_d)
+                  grid_d_0 = Add (start_d, grid_d_steps)
+
+                  zeros_H_W_D = Transpose <perm = [1, 2, 0]> (zeros_D_H_W)
+                  grid_d_1 = Add (zeros_H_W_D, grid_d_0)
+                  grid_d = Transpose <perm = [2, 0, 1]> (grid_d_1)
+
+                  zeros_D_W_H = Transpose <perm = [0, 2, 1]> (zeros_D_H_W)
+                  grid_h_1 = Add (zeros_D_W_H, grid_h_0)
+                  grid_h = Transpose <perm = [0, 2, 1]> (grid_h_1)
+
+                  grid_w = Add (grid_w_0, zeros_D_H_W)
+
+                  original_grid_seq = SequenceConstruct (grid_w, grid_h, grid_d, ones_D_H_W)
+                  original_grid = ConcatFromSequence <axis: int=-1, new_axis: int=1> (original_grid_seq)
+                  constant_shape_DHW_4 = Constant <value_ints: ints = [-1, 4]> ()
+                  original_grid_DHW_4 = Reshape (original_grid, constant_shape_DHW_4)
+                  original_grid_4_DHW_ = Transpose (original_grid_DHW_4)
+
+                  original_grid_4_DHW = CastLike (original_grid_4_DHW_, theta)
+                  grid_N_3_DHW = MatMul (theta, original_grid_4_DHW)
+                  grid_N_DHW_3 = Transpose <perm = [0, 2, 1]> (grid_N_3_DHW)
+                  N_D_H_W_3_seq = SequenceConstruct (N, D, H, W, int_three_1d)
+                  N_D_H_W_3 = ConcatFromSequence <axis: int=-1, new_axis: int=0> (N_D_H_W_3_seq)
+                  grid_3d_else_ = Reshape (grid_N_DHW_3, N_D_H_W_3)
+                  grid_3d_else = CastLike (grid_3d_else_, theta)
+                  }
+              >
+        }
+        )ONNX")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          checkInputRank(ctx, 1, 1);
+
+          bool found;
+          TensorShapeProto size_proto = getShapeInput(ctx, 1, found);
+          if (!found) {
+            return;
+          }
+
+          const auto size_length = size_proto.dim_size();
+          if (size_length != 4 && size_length != 5) {
+            fail_shape_inference("Length of input 'size' is ", size_length, ". It must be 4 for 2D or 5 for 5D.");
+          }
+
+          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          const auto& N = size_proto.dim(0);
+          *output_shape->add_dim() = N;
+          // const auto& C = size_proto.dim(1); // C is not used
+          if (size_length == 4) {
+            // 2D case: size shape (N, C, H, W), output shape (N, C, H, W, 2)
+            const auto& H = size_proto.dim(2);
+            const auto& W = size_proto.dim(3);
+            *output_shape->add_dim() = H;
+            *output_shape->add_dim() = W;
+            output_shape->add_dim()->set_dim_value(2);
+          } else if (size_length == 5) {
+            // 3D case: size shape (N, C, D, H, W), output shape (N, C, D, H, W, 3)
+            const auto& D = size_proto.dim(2);
+            const auto& H = size_proto.dim(3);
+            const auto& W = size_proto.dim(4);
+            *output_shape->add_dim() = D;
+            *output_shape->add_dim() = H;
+            *output_shape->add_dim() = W;
+            output_shape->add_dim()->set_dim_value(3);
+          }
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
