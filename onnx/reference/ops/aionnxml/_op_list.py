@@ -92,6 +92,6 @@ def load_op(
     return cl
 
 
-# Python 3.7 does not support this annotation for a global variable.
-# _registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]] = None
-_registered_operators = None  # type: ignore
+_registered_operators: TOptional[
+    Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]
+] = None

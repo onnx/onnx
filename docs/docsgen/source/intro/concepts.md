@@ -49,11 +49,11 @@ It is just a kind of pseudo-code to illustrate the model.
 Input: float[M,K] x, float[K,N] a, float[N] c
 Output: float[M, N] y
 
-r = onnx.MatMul(a, x)
+r = onnx.MatMul(x, a)
 y = onnx.Add(r, c)
 ```
 
-This code implements a function `f(x, a, c) -> y = a @ x + c`.
+This code implements a function `f(x, a, c) -> y = x @ a + c`.
 And *x*, *a*, *c* are the **inputs**, *y* is the **output**.
 *r* is an intermediate result.
 *MatMul* and *Add* are the **nodes**. They also have inputs and outputs.
@@ -68,10 +68,10 @@ it is most efficient to turn it into a constant stored in the graph.
 ```
 Input: float[M,K] x
 Initializer: float[K,N] a, float[N] c
-Output: float[M, N] axc
+Output: float[M, N] xac
 
-ax = onnx.MatMul(a, x)
-axc = onnx.Add(ax, c)
+xa = onnx.MatMul(x, a)
+xac = onnx.Add(xa, c)
 ```
 
 Visually, this graph would look like the following image.
@@ -275,7 +275,7 @@ These outputs will be the output of the operator `If`.
 Operator {ref}`l-onnx-doc-Scan` implements a loop with a fixed number of iterations.
 It loops over the rows (or any other dimension) of the inputs and concatenates
 the outputs along the same axis. Let's see an example which implements
-pairwise distances: $M(i,j) = \norm{X_i - X_j}^2$.
+pairwise distances: $M(i,j) = \lVert X_i - X_j \rVert^2$.
 
 ```{image} images/dot_scan.png
 ```

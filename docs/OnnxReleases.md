@@ -4,6 +4,8 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
+# ONNX Releases
+
 The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
 ## Preparation
@@ -72,7 +74,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
  * Test with ONNX converters: Create GitHub issues in converters repos to provide them the package links and have them test the TestPyPI packages.
    * https://github.com/pytorch/pytorch
-   * https://github.com/onnx/onnx-tensorflow
+   * https://github.com/onnx/onnx-tensorflow (not actively maintained)
    * https://github.com/onnx/tensorflow-onnx
    * https://github.com/onnx/sklearn-onnx
    * https://github.com/onnx/onnxmltools
@@ -92,7 +94,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 **Source Distribution**
 * Follow the same process in TestPyPI to produce the source distribution.
 * Use ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`` instead to upload to the official PyPI.
-* Test with ``pip install --no-binary onnx onnx``
+* Test with ``pip install --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx onnx``
 
 ## After PyPI Release
 

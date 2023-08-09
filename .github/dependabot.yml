@@ -13,9 +13,16 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-    # disable version updates for pip dependencies 
-    open-pull-requests-limit: 0    
-   
+    ignore:
+      # Only update them manually since updating them might break compatibility
+      - dependency-name: "numpy"
+      - dependency-name: "protobuf"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "python"
+      - "run release CIs"
+
   - package-ecosystem: "github-actions"
     # Workflow files stored in the
     # default location of `.github/workflows`
@@ -35,5 +42,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - "dependencies"
+      - "docker"
       - "run release CIs"
       

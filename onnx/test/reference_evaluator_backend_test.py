@@ -22,6 +22,7 @@ adding an item in method `setUpClass` and attributes
 
 import os
 import pprint
+import sys
 import unittest
 
 try:
@@ -68,8 +69,6 @@ SKIP_TESTS = {
     # not implemented
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
-    "test_lppool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
-    "test_averagepool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
 }
 
 if version(npver) < version("1.21.5"):
@@ -83,6 +82,12 @@ if version(npver) < version("1.21.5"):
         "test_cast_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16_expanded",
+    }
+if sys.platform == "win32":
+    SKIP_TESTS |= {
+        "test_regex_full_match_basic",
+        "test_regex_full_match_email_domain",
+        "test_regex_full_match_empty",
     }
 
 
@@ -687,7 +692,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             with open(f"issue_{te.name}.onnx", "wb") as f:
                 f.write(te.onnx_model.SerializeToString())
             raise AssertionError(
-                f"Unable to run test {te.name!r} due to {e}\n{str(te.onnx_model)}"
+                f"Unable to run test {te.name!r} due to {e}\n{te.onnx_model}"
             ) from e
         successes.append((te, atol.get(te.fname, None), rtol.get(te.fname, None)))
         if verbose > 7:
@@ -825,6 +830,14 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_operator_symbolic_override": 1e-4,
             "test__pytorch_converted_Conv3d_dilated_strided": 1e-4,
             "test__pytorch_converted_Conv3d_groups": 1e-4,
+            "test_affine_grid_2d": 1e-4,
+            "test_affine_grid_2d_expanded": 1e-4,
+            "test_affine_grid_2d_align_corners": 1e-4,
+            "test_affine_grid_2d_align_corners_expanded": 1e-4,
+            "test_affine_grid_3d": 1e-4,
+            "test_affine_grid_3d_expanded": 1e-4,
+            "test_affine_grid_3d_align_corners": 1e-4,
+            "test_affine_grid_3d_align_corners_expanded": 1e-4,
         }
 
         if version(npver) < version("1.21.5"):

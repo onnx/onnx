@@ -3,6 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/checker.h"
+
+#include <fstream>
+#include <functional>
+#include <iterator>
+#include <set>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 #include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/defs/schema.h"
@@ -11,12 +20,9 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
-#include <fstream>
-#include <iterator>
-#include <unordered_set>
-
 #ifdef _WIN32
 #include <direct.h>
+
 #include <filesystem>
 
 #else // POSIX
@@ -183,9 +189,14 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "' points outside the directory");
         }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
-        // use stat to check whether the file exists
-        struct stat buffer;
+        // use stat64 to check whether the file exists
+#ifdef __APPLE__
+        struct stat buffer; // APPLE does not have stat64
         if (stat((data_path).c_str(), &buffer) != 0) {
+#else
+        struct stat64 buffer; // All POSIX except APPLE have stat64
+        if (stat64((data_path).c_str(), &buffer) != 0) {
+#endif
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),

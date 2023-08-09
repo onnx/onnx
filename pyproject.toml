@@ -1,5 +1,5 @@
 [tool.mypy]
-follow_imports = "slient"
+follow_imports = "silent"
 strict_optional = true
 warn_return_any = true
 warn_no_return = true
@@ -85,6 +85,7 @@ ignore = [
     "N806", # Relax: Variable name in function should be lowercase
     "N999", # Module names
     "NPY002", # np.random.Generator may not be preferred in all cases
+    "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "SIM102", # We don't perfer always combining if branches
     "SIM108", # We don't encourage ternary operators
     "SIM114", # Don't combine if branches for debugability
