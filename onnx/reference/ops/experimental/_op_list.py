@@ -1,6 +1,8 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=C0415,R0912,W0611,W0603
+
 from __future__ import annotations
 
 import textwrap
@@ -10,8 +12,6 @@ from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
 from onnx.reference.ops.experimental._op_run_experimental import OpRunExperimental
 from onnx.reference.ops.experimental.op_im2col import Im2Col  # noqa: F401
-
-# pylint: disable=C0415,R0912,W0611,W0603
 
 
 def _build_registered_operators() -> dict[str, dict[int | None, OpRunExperimental]]:

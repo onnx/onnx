@@ -18,7 +18,6 @@ __all__ = [
     "SchemaError",
 ]
 
-from typing import List
 
 import onnx.onnx_cpp2py_export.defs as C  # noqa: N812
 from onnx import AttributeProto, FunctionProto

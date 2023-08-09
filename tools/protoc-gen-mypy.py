@@ -3,7 +3,6 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-from __future__ import annotations
 
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy
 # (Apache 2.0 License)
@@ -15,8 +14,9 @@ from __future__ import annotations
 #    on CI, which by the original protoc-gen-mypy script was recognized to be
 #    camel case and therefore handled as an entry in the local package)
 
-
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
+
+from __future__ import annotations
 
 import sys
 from collections import defaultdict

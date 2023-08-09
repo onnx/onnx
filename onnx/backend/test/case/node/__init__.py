@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import sys
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Sequence
 
 import numpy as np
 

@@ -1,12 +1,12 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=C0415,R0912,W0611,W0603
+
 from __future__ import annotations
 
 import textwrap
-from typing import Any, Dict
-from typing import Optional as TOptional
-from typing import Union
+from typing import Any
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
@@ -14,8 +14,6 @@ from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTra
 from onnx.reference.ops.aionnx_preview_training.op_adagrad import Adagrad
 from onnx.reference.ops.aionnx_preview_training.op_adam import Adam
 from onnx.reference.ops.aionnx_preview_training.op_momentum import Momentum
-
-# pylint: disable=C0415,R0912,W0611,W0603
 
 
 def _build_registered_operators() -> dict[str, dict[int | None, OpRunTraining]]:

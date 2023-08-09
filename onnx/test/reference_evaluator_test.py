@@ -1,7 +1,6 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-from __future__ import annotations
 
 # type: ignore
 # pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
@@ -12,6 +11,7 @@ You can run a specific test by using the following syntax.
 
     python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
 """
+from __future__ import annotations
 
 import itertools
 import math
@@ -22,7 +22,7 @@ from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
-from typing import Sequence
+from typing import Any, Sequence
 
 import numpy as np
 import parameterized
@@ -1296,8 +1296,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
         trip_count = np.array(5).astype(np.int64)
-        seq_empty = []  # type: List[Any]
-        # seq_res = [x[:int(i)] for i in x]
+        seq_empty: list[Any] = []
         cond = np.array(1).astype(np.bool_)
 
         model_def = make_model(

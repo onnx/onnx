@@ -1,7 +1,6 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-from __future__ import annotations
 
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0611,W0603
 """
@@ -13,10 +12,10 @@ with `_`, it means the implementation is valid for every opset.
 The operator may have been updated to support more types but that
 did not change the implementation.
 """
+from __future__ import annotations
+
 import textwrap
-from typing import Any, Dict, List
-from typing import Optional as TOptional
-from typing import Union
+from typing import Any
 
 from onnx import FunctionProto, NodeProto, TypeProto
 from onnx.defs import get_schema, onnx_opset_version

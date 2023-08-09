@@ -1,13 +1,13 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-from __future__ import annotations
 
 """onnx version converter
 
 This enables users to convert their models between different opsets within the
 default domain ("" or "ai.onnx").
 """
+from __future__ import annotations
 
 import onnx
 import onnx.onnx_cpp2py_export.version_converter as C  # noqa: N812
