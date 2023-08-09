@@ -3,6 +3,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import os
 from typing import IO, Any, Dict, List, Sequence

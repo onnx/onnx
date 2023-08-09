@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
-
+#
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 """onnx version converter
 
 This enables users to convert their models between different opsets within the

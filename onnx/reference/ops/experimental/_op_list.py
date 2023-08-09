@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
-
+#
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 # pylint: disable=C0415,R0912,W0611,W0603
 
 import textwrap

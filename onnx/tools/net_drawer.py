@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
-
+#
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 # A library and utility for drawing ONNX nets. Most of this implementation has
 # been borrowed from the caffe2 implementation
 # https://github.com/pytorch/pytorch/blob/master/caffe2/python/net_drawer.py
