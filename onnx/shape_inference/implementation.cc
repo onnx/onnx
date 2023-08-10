@@ -932,8 +932,8 @@ struct FunctionInferenceContext : public InferenceContext {
     return std::move(output_types_);
   }
 
-  const ShapeInferenceOptions& getShapeInferenceOptions() const {
-   return options_;
+  const ShapeInferenceOptions& getShapeInferenceOptions() const override {
+    return options_;
   }
 
  private:
