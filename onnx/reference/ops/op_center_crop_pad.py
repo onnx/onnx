@@ -15,9 +15,7 @@ class CenterCropPad(OpRun):
         if axes is None:
             axes = list(range(input_rank))
         else:
-            axes = list(
-                map(lambda axis: axis if axis >= 0 else axis + input_rank, axes)
-            )
+            axes = [axis if axis >= 0 else axis + input_rank for axis in axes]
         pad_slices = [slice(0, s) for s in input_data.shape]
         crop_slices = [slice(0, s) for s in input_data.shape]
         new_shape = list(input_data.shape)

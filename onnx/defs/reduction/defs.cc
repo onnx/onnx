@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <functional>
+
 #include "onnx/defs/function.h"
 #include "onnx/defs/reduction/utils.h"
 #include "onnx/defs/schema.h"
@@ -126,7 +127,7 @@ The type of the output tensor is integer.)DOC";
         1,
         OpSchema::NonDifferentiable);
     schema.TypeConstraint(
-        "T", OpSchema::all_numeric_types_with_bfloat(), "Constrain input and output types to all numeric tensors.");
+        "T", OpSchema::all_numeric_types_ir4(), "Constrain input and output types to all numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
       updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
@@ -168,7 +169,7 @@ The type of the output tensor is integer.)DOC";
       }
     });
   };
-} // namespace ONNX_NAMESPACE
+}
 
 ONNX_OPERATOR_SET_SCHEMA(ArgMax, 13, OpSchema().FillUsing(ArgReduceDocGenerator("max")));
 

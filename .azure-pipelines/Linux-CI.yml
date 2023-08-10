@@ -1,5 +1,5 @@
 trigger:
-- main
+- gh-readonly-queue/**
 
 jobs:
 - job: 'Test'
@@ -7,32 +7,31 @@ jobs:
     vmImage: 'Ubuntu-20.04'
   strategy:
     matrix:
-      py39-ml-debug:
+      py311-ml-debug-external-protobuf:
+        python.version: '3.11'
+        onnx_ml: 1
+        build_type: 'Debug'
+        documentation: 0
+        protobuf_type: 'External'
+      py310-internal-protobuf:
+        python.version: '3.10'
+        onnx_ml: 0
+        build_type: 'Release'
+        documentation: 0
+        protobuf_type: 'Internal'
+      py39-ml-doc-external-protobuf:
         python.version: '3.9'
         onnx_ml: 1
-        onnx_debug: 1
-        documentation: 0
-      py38:
-        python.version: '3.8'
-        onnx_ml: 0
-        onnx_debug: 0
-        documentation: 0
-      py38-ml:
-        python.version: '3.8'
-        onnx_ml: 1
-        onnx_debug: 0
+        build_type: 'Release'
         documentation: 1
-      py37:
-        python.version: '3.7'
+        protobuf_type: 'External'
+      py38-internal-protobuf:
+        python.version: '3.8'
         onnx_ml: 0
-        onnx_debug: 0
+        build_type: 'Release'
         documentation: 0
-      py37-ml:
-        python.version: '3.7'
-        onnx_ml: 1
-        onnx_debug: 0
-        documentation: 0
-    maxParallel: 6
+        protobuf_type: 'Internal'
+    maxParallel: 4
 
   steps:
   - task: UsePythonVersion@0
@@ -45,50 +44,35 @@ jobs:
       python -m virtualenv venv
       source venv/bin/activate
 
-      sudo apt-get install libprotobuf-dev protobuf-compiler
-      python -m pip install -q --upgrade pip
-      python -m pip install -q -r requirements-release.txt
+      if [ '$(protobuf_type)' == 'External' ]; then
+        sudo apt-get install libprotobuf-dev protobuf-compiler
+      elif [ '$(protobuf_type)' == 'Internal' ]; then
+        echo "Use the internal protobuf build"
+      fi
+
+      python -m pip install --upgrade pip
+      python -m pip install -r requirements-release.txt
+      # still test protobuf==3.20.2 at least in a CI
+      python -m pip install protobuf==3.20.2
 
       sudo apt-get install -qq -o=Dpkg::Use-Pty=0 -y --no-install-recommends dos2unix
 
       git submodule update --init --recursive
       export ONNX_BUILD_TESTS=1
-      if [ '$(onnx_debug)' == '1' ]; then
+      if [ '$(build_type)' == 'Debug' ]; then
         export DEBUG=1
       fi
       if [ '$(onnx_ml)' == '1' ]; then
         export ONNX_ML=1
       fi
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-      export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
       # enable more sanitizer
       export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-g -static-libasan -fsanitize=undefined,address -fno-sanitize-recover=all -fno-omit-frame-pointer -fno-optimize-sibling-calls '"
-      python setup.py install
+      pip install -e ".[reference]" -v
     displayName: 'Install ONNX and dependencies'
 
   - script: |
       source venv/bin/activate
-
-      python -m pip install -q -r requirements-dev.txt
-
-      # check auto-gen files up-to-date
-      python onnx/defs/gen_doc.py
-      python onnx/gen_proto.py -l
-      python onnx/gen_proto.py -l --ml
-      python onnx/backend/test/stat_coverage.py
-
-      git status
-      git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
-      if [ $? -ne 0 ]; then
-        echo "git diff returned failures"
-        exit 1
-      fi
-
-      # Do not hardcode onnx's namespace in the c++ source code, so that
-      # other libraries who statically link with onnx can hide onnx symbols
-      # in a private namespace.
-      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
-      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
       pytest -sv
       if [ $? -ne 0 ]; then
@@ -129,7 +113,7 @@ jobs:
       if [ '$(documentation)' == '1' ]; then
         source venv/bin/activate
         pip install -r docs/docsgen/source/requirements.txt
-        cd docs/docsgen && make text -j auto
+        cd docs/docsgen && make text
       fi
     displayName: Test documentation
     continueOnError: true  # the documentation generates errors due to operators documentation

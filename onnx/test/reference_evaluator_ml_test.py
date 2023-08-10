@@ -590,7 +590,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 ),
             ],
         }
-        for post in ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"]:
+        for post in ("SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"):
             if post == "PROBIT":
                 coefficients = [0.058, 0.029, 0.09, 0.058, 0.029, 0.09]
                 intercepts = [0.27, 0.27, 0.05]
@@ -653,7 +653,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         }
         x = np.arange(6).reshape((-1, 3)).astype(np.float32)
-        for post in ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO"]:
+        for post in ("SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO"):
             expected = expected_post[post]
             with self.subTest(post_transform=post):
                 node1 = make_node(
@@ -701,7 +701,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         }
         x = np.arange(6).reshape((-1, 3)).astype(np.float32)
-        for post in ["NONE", "LOGISTIC", "SOFTMAX_ZERO", "SOFTMAX"]:
+        for post in ("NONE", "LOGISTIC", "SOFTMAX_ZERO", "SOFTMAX"):
             expected = expected_post[post]
             with self.subTest(post_transform=post):
                 node1 = make_node(
@@ -807,7 +807,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "MIN": np.array([[0.076923], [0.076923], [0.076923]], dtype=np.float32),
             "MAX": np.array([[0.5], [0.5], [0.5]], dtype=np.float32),
         }
-        for agg in ["SUM", "AVERAGE", "MIN", "MAX"]:
+        for agg in ("SUM", "AVERAGE", "MIN", "MAX"):
             expected = expected_agg[agg]
             with self.subTest(aggregate_function=agg):
                 onx = self._get_test_tree_ensemble_regressor(agg)
@@ -1297,9 +1297,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         In = make_tensor_value_info("I", TensorProto.INT64, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
         if linear:
-            kwargs = dict(
-                classlabels_ints=[0, 1, 2, 3],
-                coefficients=[
+            kwargs = {
+                "classlabels_ints": [0, 1, 2, 3],
+                "coefficients": [
                     -1.55181212e-01,
                     2.42698956e-01,
                     7.01893432e-03,
@@ -1313,23 +1313,23 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     4.56869105e-02,
                     -1.29375499e-02,
                 ],
-                kernel_params=[0.001, 0.0, 3.0],
-                kernel_type="LINEAR",
-                prob_a=[-5.139118194580078],
-                prob_b=[0.06399919837713242],
-                rho=[-0.07489691, -0.1764396, -0.21167431, -0.51619097],
-                post_transform=post_transform,
-            )
+                "kernel_params": [0.001, 0.0, 3.0],
+                "kernel_type": "LINEAR",
+                "prob_a": [-5.139118194580078],
+                "prob_b": [0.06399919837713242],
+                "rho": [-0.07489691, -0.1764396, -0.21167431, -0.51619097],
+                "post_transform": post_transform,
+            }
         else:
-            kwargs = dict(
-                classlabels_ints=[0, 1],
-                coefficients=[1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0],
-                kernel_params=[0.3824487328529358, 0.0, 3.0],
-                kernel_type="RBF",
-                prob_a=[-5.139118194580078],
-                prob_b=[0.06399919837713242],
-                rho=[0.16708599030971527],
-                support_vectors=[
+            kwargs = {
+                "classlabels_ints": [0, 1],
+                "coefficients": [1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0],
+                "kernel_params": [0.3824487328529358, 0.0, 3.0],
+                "kernel_type": "RBF",
+                "prob_a": [-5.139118194580078],
+                "prob_b": [0.06399919837713242],
+                "rho": [0.16708599030971527],
+                "support_vectors": [
                     0.19125767052173615,
                     -1.062204122543335,
                     0.5006636381149292,
@@ -1355,9 +1355,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     0.49261474609375,
                     0.4470972716808319,
                 ],
-                vectors_per_class=[4, 4],
-                post_transform=post_transform,
-            )
+                "vectors_per_class": [4, 4],
+                "post_transform": post_transform,
+            }
 
         if not probability:
             del kwargs["prob_a"]
@@ -1616,15 +1616,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         In = make_tensor_value_info("I", TensorProto.INT64, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
-        kwargs = dict(
-            classlabels_ints=[0, 1],
-            coefficients=[
+        kwargs = {
+            "classlabels_ints": [0, 1],
+            "coefficients": [
                 0.766398549079895,
                 0.0871576070785522,
                 0.110420741140842,
                 -0.963976919651031,
             ],
-            support_vectors=[
+            "support_vectors": [
                 4.80000019073486,
                 3.40000009536743,
                 1.89999997615814,
@@ -1638,14 +1638,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 2.5,
                 3.0,
             ],
-            kernel_params=[0.122462183237076, 0.0, 3.0],
-            kernel_type="LINEAR",
-            prob_a=[-5.139118194580078],
-            prob_b=[0.06399919837713242],
-            rho=[2.23510527610779],
-            post_transform=post_transform,
-            vectors_per_class=[3, 1],
-        )
+            "kernel_params": [0.122462183237076, 0.0, 3.0],
+            "kernel_type": "LINEAR",
+            "prob_a": [-5.139118194580078],
+            "prob_b": [0.06399919837713242],
+            "rho": [2.23510527610779],
+            "post_transform": post_transform,
+            "vectors_per_class": [3, 1],
+        }
 
         if not probability:
             del kwargs["prob_a"]
@@ -1705,15 +1705,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
     def _get_test_svm_regressor_linear(post_transform, one_class=0):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
-        kwargs = dict(
-            coefficients=[0.28290501, -0.0266512, 0.01674867],
-            kernel_params=[0.001, 0.0, 3.0],
-            kernel_type="LINEAR",
-            rho=[1.24032312],
-            post_transform=post_transform,
-            n_supports=0,
-            one_class=one_class,
-        )
+        kwargs = {
+            "coefficients": [0.28290501, -0.0266512, 0.01674867],
+            "kernel_params": [0.001, 0.0, 3.0],
+            "kernel_type": "LINEAR",
+            "rho": [1.24032312],
+            "post_transform": post_transform,
+            "n_supports": 0,
+            "one_class": one_class,
+        }
 
         node1 = make_node("SVMRegressor", ["X"], ["Y"], domain="ai.onnx.ml", **kwargs)
         graph = make_graph([node1], "ml", [X], [Y])

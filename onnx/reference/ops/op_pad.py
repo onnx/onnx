@@ -13,7 +13,7 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
     if axes is None:
         axes = list(range(input_rank))
     else:
-        axes = list(map(lambda axis: axis if axis >= 0 else axis + input_rank, axes))
+        axes = [axis if axis >= 0 else axis + input_rank for axis in axes]
     num_axes = len(axes)
     if num_axes * 2 != len(raw_pads):
         raise RuntimeError(
@@ -29,7 +29,7 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
     if mode == "constant":
         return np.pad(
             data, pad_width=pad_width, mode=mode, constant_values=constant_values
-        )
+        ).astype(data.dtype)
     return np.pad(data, pad_width=pad_width, mode=mode).astype(data.dtype)
 
 

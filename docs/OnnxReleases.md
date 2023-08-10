@@ -4,6 +4,8 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
+# ONNX Releases
+
 The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
 ## Preparation
@@ -62,13 +64,6 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Test the PyPI package installation with different combinations of various Python versions, Protobuf versions and platforms.
   * Python versions : Applicable python versions for the release.
   * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
-  * Utilize the following matrix to check:
-
-    |   | 3.7 | 3.8 | 3.9 | 3.10 |
-    -- | -- | -- | -- | -- |
-    Linux |   |   |   |   |
-    Windows |   |   |   |   |
-    Mac |   |   |   |   |
 
 
 * After installing the PyPI package, run `pytest` in the release branch.
@@ -79,7 +74,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
  * Test with ONNX converters: Create GitHub issues in converters repos to provide them the package links and have them test the TestPyPI packages.
    * https://github.com/pytorch/pytorch
-   * https://github.com/onnx/onnx-tensorflow
+   * https://github.com/onnx/onnx-tensorflow (not actively maintained)
    * https://github.com/onnx/tensorflow-onnx
    * https://github.com/onnx/sklearn-onnx
    * https://github.com/onnx/onnxmltools
@@ -99,7 +94,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 **Source Distribution**
 * Follow the same process in TestPyPI to produce the source distribution.
 * Use ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`` instead to upload to the official PyPI.
-* Test with ``pip install --no-binary onnx onnx``
+* Test with ``pip install --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx onnx``
 
 ## After PyPI Release
 
@@ -123,3 +118,6 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 **Bump opset version for ai.onnx**
 * Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes. For example, this [demo PR](https://github.com/onnx/onnx/pull/4134/files).
+
+**Update IR TBD date if there is an IR bump in the release**
+* Update the latest IR TBD date in https://github.com/onnx/onnx/blob/main/onnx/onnx.in.proto and regenerate corresponding proto files in the main branch if there is an IR bump in the release.

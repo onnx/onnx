@@ -4,49 +4,14 @@
 import argparse
 import gc
 import os
-import subprocess
 import sys
 import time
-from pathlib import Path
 from typing import List
 
 import config
 
 import onnx
-from onnx import version_converter
-
-CWD_PATH = Path.cwd()
-
-
-def run_lfs_install():
-    result = subprocess.run(
-        ["git", "lfs", "install"],
-        cwd=CWD_PATH,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    print(f"Git LFS install completed with return code= {result.returncode}")
-
-
-def pull_lfs_file(file_name):
-    result = subprocess.run(
-        ["git", "lfs", "pull", "--include", file_name, "--exclude", "''"],
-        cwd=CWD_PATH,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
-    print(f"LFS pull completed with return code= {result.returncode}")
-    print(result)
-
-
-def run_lfs_prune():
-    result = subprocess.run(
-        ["git", "lfs", "prune"],
-        cwd=CWD_PATH,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    print(f"LFS prune completed with return code= {result.returncode}")
+from onnx import hub, version_converter
 
 
 def skip_model(error_message: str, skip_list: List[str], model_name: str):
@@ -65,38 +30,20 @@ def main():
         type=str,
         help="Directory path for testing. e.g., text, vision",
     )
-    args = parser.parse_args()
-    parent_dir = []
-    # if not set, go through each directory
-    if not args.test_dir:
-        for file in os.listdir():
-            if os.path.isdir(file):
-                parent_dir.append(file)
-    else:
-        parent_dir.append(args.test_dir)
-    model_list = []
-    for directory in parent_dir:
-        for root, _, files in os.walk(directory):
-            for file in files:
-                if file.endswith(".onnx"):
-                    onnx_model_path = os.path.join(root, file)
-                    model_list.append(onnx_model_path)
-                    print(onnx_model_path)
-    # run lfs install before starting the tests
-    run_lfs_install()
-
+    model_list = hub.list_models()
     print(f"=== Running ONNX Checker on {len(model_list)} models ===")
+
     # run checker on each model
     failed_models = []
     failed_messages = []
     skip_models: List[str] = []
-    for model_path in model_list:
+    for m in model_list:
         start = time.time()
-        model_name = model_path.split("/")[-1]
+        model_name = m.model
+        model_path = m.model_path
         print(f"-----------------Testing: {model_name}-----------------")
         try:
-            pull_lfs_file(model_path)
-            model = onnx.load(model_path)
+            model = hub.load(model_name)
             # 1) Test onnx checker and shape inference
             if model.opset_import[0].version < 4:
                 # Ancient opset version does not have defined shape inference function
@@ -113,18 +60,15 @@ def main():
                 original_version = model.opset_import[0].version
                 latest_opset_version = onnx.helper.VERSION_TABLE[-1][2]
                 if original_version < latest_opset_version:
-                    if (
-                        model_path.replace("\\", "/")
-                        in config.SKIP_VERSION_CONVERTER_MODELS
-                    ):
+                    if model_path in config.SKIP_VERSION_CONVERTER_MODELS:
                         skip_model(
-                            f"[SKIP]: model {model_path} is in the skip list for version converter. ",
+                            f"[SKIP]: model {model_name} is in the skip list for version converter. ",
                             skip_models,
                             model_name,
                         )
                     elif model_path.endswith("-int8.onnx"):
                         skip_model(
-                            f"[SKIP]: model {model_path} is a quantized model using non-official ONNX domain. ",
+                            f"[SKIP]: model {model_name} is a quantized model using non-official ONNX domain. ",
                             skip_models,
                             model_name,
                         )
@@ -148,14 +92,12 @@ def main():
                     )
 
             # remove the model to save space in CIs
-            if os.path.exists(model_path):
-                os.remove(model_path)
-            # clean git lfs cache
-            run_lfs_prune()
+            if os.path.exists(model_name):
+                os.remove(model_name)
 
         except Exception as e:
             print(f"[FAIL]: {e}")
-            failed_models.append(model_path)
+            failed_models.append(model_name)
             failed_messages.append((model_name, e))
         end = time.time()
         print(f"--------------Time used: {end - start} secs-------------")

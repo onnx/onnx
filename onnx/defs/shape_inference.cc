@@ -3,6 +3,9 @@
  */
 
 #include "shape_inference.h"
+
+#include <vector>
+
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
@@ -446,7 +449,7 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
   }
 }
 
-TensorShapeProto getShapeInput(InferenceContext& ctx, size_t input_index, bool& found) {
+TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found) {
   TensorShapeProto shape_input;
 
   // First, check initializer.
