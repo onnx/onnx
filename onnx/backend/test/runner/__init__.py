@@ -55,14 +55,14 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
 
 class Runner:
     def __init__(
-        self, backend: type[Backend], parent_module: str | None = None, test_kwargs: dict = dict()
+        self, backend: type[Backend], parent_module: str | None = None, test_kwargs: dict | None  = None
     ) -> None:
         self.backend = backend
         self._parent_module = parent_module
         self._include_patterns: set[Pattern[str]] = set()
         self._exclude_patterns: set[Pattern[str]] = set()
         self._xfail_patterns: set[Pattern[str]] = set()
-        self._test_kwargs: dict = test_kwargs
+        self._test_kwargs: dict = test_kwargs or {}
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
@@ -259,11 +259,6 @@ class Runner:
         devices: Iterable[str] = ("CPU", "CUDA"),
         **kwargs1: Any,
     ) -> None:
-        # if devices is None and "devices" in kwargs1:
-        #     devices = kwargs1["devices"]
-        # elif devices is None:
-        #     devices = ("CPU", "CUDA")  # Default devices if not provided in kwargs
-
         # We don't prepend the 'test_' prefix to improve greppability
         if not test_name.startswith("test_"):
             raise ValueError(f"Test name must start with test_: {test_name}")

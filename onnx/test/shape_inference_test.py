@@ -7825,12 +7825,6 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.UINT8, (0, 1, 1))]
         )
 
-    def test_affinegrid_2d_test_case(self) -> None:
-        # model = onnx.load("c:/LiqunWA/onnx-affine_grid/onnx/backend/test/data/node/test_affine_grid_2d_expanded/model.onnx")
-        model = onnx.load("c:/LiqunWA/onnx-affine_grid/onnx/backend/test/data/node/test_affine_grid_2d/model.onnx")
-        model_shape = onnx.shape_inference.infer_shapes(model, check_type=True, strict_mode=True)
-
-
     def test_affinegrid_2d(self) -> None:
         N, C, H, W = 2, 3, 4, 5
         graph = self._make_graph(

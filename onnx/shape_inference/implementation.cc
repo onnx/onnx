@@ -934,7 +934,7 @@ struct FunctionInferenceContext : public InferenceContext {
   }
 
   const ShapeInferenceOptions& getShapeInferenceOptions() const {
-   return options_; 
+   return options_;
   }
 
  private:
