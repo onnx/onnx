@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0123,C3001,R0912,R0913,R0914,R1730,W0221,W0613
 
-import cv2
 import numpy as np
 
 from onnx.reference.op_run import OpRun
@@ -15,6 +14,13 @@ class ImageDecoder(OpRun):
         encoded,
         pixel_format="RGB",
     ):
+        try: 
+            # pylint: disable=import-outside-toplevel` 
+            import cv2
+        except ImportError as e: 
+            raise ImportError( 
+                "cv2 must be installed to use the reference implementation of the ImageDecoder operator" 
+            ) from e 
         decoded = None
         if pixel_format == "BGR":
             decoded = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
