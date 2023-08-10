@@ -14,13 +14,13 @@ class ImageDecoder(OpRun):
         encoded,
         pixel_format="RGB",
     ):
-        try: 
-            # pylint: disable=import-outside-toplevel` 
+        try:
+            # pylint: disable=import-outside-toplevel`
             import cv2
-        except ImportError as e: 
-            raise ImportError( 
-                "cv2 must be installed to use the reference implementation of the ImageDecoder operator" 
-            ) from e 
+        except ImportError as e:
+            raise ImportError(
+                "cv2 must be installed to use the reference implementation of the ImageDecoder operator"
+            ) from e
         decoded = None
         if pixel_format == "BGR":
             decoded = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
