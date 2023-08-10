@@ -256,13 +256,13 @@ class Runner:
         test_name: str,
         test_func: Callable[..., Any],
         report_item: list[ModelProto | NodeProto | None],
-        devices: Iterable[str: None],
+        devices: Iterable[str] = ("CPU", "CUDA"),
         **kwargs1: Any,
     ) -> None:
-        if devices is None and "devices" in kwargs1:
-            devices = kwargs1["devices"]
-        elif devices is None:
-            devices = ("CPU", "CUDA")  # Default devices if not provided in kwargs
+        # if devices is None and "devices" in kwargs1:
+        #     devices = kwargs1["devices"]
+        # elif devices is None:
+        #     devices = ("CPU", "CUDA")  # Default devices if not provided in kwargs
 
         # We don't prepend the 'test_' prefix to improve greppability
         if not test_name.startswith("test_"):
@@ -465,9 +465,9 @@ class Runner:
                 )
 
         if model_test.name in self._test_kwargs:
-            self._add_test(kind + "Model", model_test.name, run, model_marker, None, **self._test_kwargs[model_test.name])
+            self._add_test(kind + "Model", model_test.name, run, model_marker, **self._test_kwargs[model_test.name])
         else:
-            self._add_test(kind + "Model", model_test.name, run, model_marker, None)
+            self._add_test(kind + "Model", model_test.name, run, model_marker)
 
 
     def _load_proto(
