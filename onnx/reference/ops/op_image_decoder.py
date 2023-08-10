@@ -19,7 +19,7 @@ class ImageDecoder(OpRun):
             import cv2
         except ImportError as e:
             raise ImportError(
-                "cv2 must be installed to use the reference implementation of the ImageDecoder operator"
+                "opencv-python must be installed to use the reference implementation of the ImageDecoder operator"
             ) from e
         decoded = None
         if pixel_format == "BGR":
