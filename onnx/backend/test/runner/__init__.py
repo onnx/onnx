@@ -55,7 +55,10 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
 
 class Runner:
     def __init__(
-        self, backend: type[Backend], parent_module: str | None = None, test_kwargs: dict | None  = None
+        self,
+        backend: type[Backend],
+        parent_module: str | None = None,
+        test_kwargs: dict | None = None,
     ) -> None:
         self.backend = backend
         self._parent_module = parent_module
@@ -460,10 +463,15 @@ class Runner:
                 )
 
         if model_test.name in self._test_kwargs:
-            self._add_test(kind + "Model", model_test.name, run, model_marker, **self._test_kwargs[model_test.name])
+            self._add_test(
+                kind + "Model",
+                model_test.name,
+                run,
+                model_marker,
+                **self._test_kwargs[model_test.name],
+            )
         else:
             self._add_test(kind + "Model", model_test.name, run, model_marker)
-
 
     def _load_proto(
         self,

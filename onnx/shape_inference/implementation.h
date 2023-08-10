@@ -144,8 +144,7 @@ struct InferenceContextImpl : public InferenceContext {
       const ShapeInferenceOptions& options,
       DataValueMap* generatedShapeData = nullptr,
       GraphInferenceContext* graphInferenceContext = nullptr)
-      : graphInferenceContext_{graphInferenceContext},
-        options_(options) {
+      : graphInferenceContext_{graphInferenceContext}, options_(options) {
     for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
       if (attr.has_g()) {

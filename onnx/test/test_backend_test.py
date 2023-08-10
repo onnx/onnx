@@ -104,14 +104,17 @@ def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
         return False
     return all(node.op_type not in {"RNN", "LSTM", "GRU"} for node in model.graph.node)
 
+
 test_kwargs = {
     "test_affine_grid_2d_align_corners_expanded": {"strict_mode": False},
     "test_affine_grid_2d_expanded": {"strict_mode": False},
     "test_affine_grid_3d_align_corners_expanded": {"strict_mode": False},
     "test_affine_grid_3d_expanded": {"strict_mode": False},
-    }
+}
 
-backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__, test_kwargs=test_kwargs)
+backend_test = onnx.backend.test.BackendTest(
+    DummyBackend, __name__, test_kwargs=test_kwargs
+)
 if os.getenv("APPVEYOR"):
     backend_test.exclude(r"(test_vgg19|test_zfnet)")
 if platform.architecture()[0] == "32bit":
