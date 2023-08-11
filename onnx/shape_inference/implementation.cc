@@ -432,6 +432,7 @@ class ShapeInferenceImplBase {
         value_types_by_name,
         input_data_by_name,
         input_sparse_data_by_name,
+        options,
         generated_shape_data_by_name,
         &graph_inference_context);
 
@@ -865,8 +866,9 @@ struct FunctionInferenceContext : public InferenceContext {
   FunctionInferenceContext(
       const FunctionProto& func_proto,
       const std::vector<TypeProto>& input_types,
-      const std::vector<AttributeProto>& attributes)
-      : input_types_(input_types) {
+      const std::vector<AttributeProto>& attributes,
+      const ShapeInferenceOptions& options)
+      : input_types_(input_types), options_(options) {
     for (const auto& attr : attributes) {
       attributesByName_[attr.name()] = &attr;
     }
@@ -931,20 +933,27 @@ struct FunctionInferenceContext : public InferenceContext {
     return std::move(output_types_);
   }
 
+  const ShapeInferenceOptions& getShapeInferenceOptions() const override {
+    return options_;
+  }
+
  private:
   const std::vector<TypeProto>& input_types_;
   std::vector<TypeProto> output_types_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+  ShapeInferenceOptions options_;
 };
 
 std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,
     const std::vector<TypeProto>& input_types,
     const std::vector<AttributeProto>& attributes) {
-  FunctionInferenceContext ctx(function_proto, input_types, attributes);
+  // TODO: if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
+  // we can add them to the Python API. For now we just assume the default options.
+  ShapeInferenceOptions options{true, 1, false};
+  FunctionInferenceContext ctx(function_proto, input_types, attributes, options);
   auto opset_imports = GetOpsetImportsFromProto(function_proto);
   GraphProto g;
-  ShapeInferenceOptions options{true, 1, false};
   ShapeInferenceImplBase base(
       &g,
       {}, // outer_scope_value_types_by_name
@@ -968,7 +977,8 @@ std::vector<TypeProto> InferFunctionOutputTypes(
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& input_types,
-    const std::vector<const TensorProto*>& input_data) {
+    const std::vector<const TensorProto*>& input_data,
+    const ShapeInferenceOptions& options) {
   SymbolTable* symbol_table = context_->symbol_table;
   int num_inputs = int(input_types.size());
   std::unordered_set<std::string> initializer_name_set;
@@ -1027,7 +1037,6 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // future: pass inputData into InferShapes either directly, or indirectly by
   // updating initializers that match subgraph inputs.
   (void)input_data;
-  ShapeInferenceOptions options{};
   InferShapesImpl(
       g_,
       *context_->outer_scope_value_types_by_name, // never null

@@ -557,7 +557,7 @@ void SequenceMapInferenceFunction(InferenceContext& ctx) {
 
   std::vector<const TensorProto*> input_data(num_inputs, nullptr);
   std::vector<const TypeProto*> subgraph_output_types =
-      graphInferencer->doInferencing(subgraph_input_types, input_data);
+      graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
 
   // if empty(), assume inferencing was skipped
   if (!subgraph_output_types.empty()) {

@@ -79,8 +79,11 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
   shape_inference::GraphInferenceContext graphInferenceContext(
       valueTypes.second, opsetImports, nullptr, {}, OpSchemaRegistry::Instance(), nullptr, irVersion);
   // Construct inference context and get results - may throw InferenceError
+  // TODO: if it is desirable for infer_node_outputs to provide check_type, strict_mode, data_prop,
+  // we can add them to the Python API. For now we just assume the default options.
+  ShapeInferenceOptions options{false, 0, false};
   shape_inference::InferenceContextImpl ctx(
-      node, valueTypes.second, inputData.second, inputSparseData.second, nullptr, &graphInferenceContext);
+      node, valueTypes.second, inputData.second, inputSparseData.second, options, nullptr, &graphInferenceContext);
   schema->GetTypeAndShapeInferenceFunction()(ctx);
   // Verify the inference succeeded - may also throw ValidationError
   // Note that input types were not validated until now (except that their count was correct)

@@ -127,7 +127,8 @@ class GraphInferencerImpl : public GraphInferencer {
 
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData) override;
+      const std::vector<const TensorProto*>& inputData,
+      const ShapeInferenceOptions& options) override;
 
  private:
   GraphProto* g_;
@@ -140,9 +141,10 @@ struct InferenceContextImpl : public InferenceContext {
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
       const std::unordered_map<std::string, const TensorProto*>& inputDataByName,
       const std::unordered_map<std::string, const SparseTensorProto*>& inputSparseDataByName,
+      const ShapeInferenceOptions& options,
       DataValueMap* generatedShapeData = nullptr,
       GraphInferenceContext* graphInferenceContext = nullptr)
-      : graphInferenceContext_{graphInferenceContext} {
+      : graphInferenceContext_{graphInferenceContext}, options_(options) {
     for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
       if (attr.has_g()) {
@@ -273,6 +275,10 @@ struct InferenceContextImpl : public InferenceContext {
     return inferencer;
   }
 
+  const ShapeInferenceOptions& getShapeInferenceOptions() const override {
+    return options_;
+  }
+
   std::vector<const TensorProto*> allInputData_;
   std::vector<const SparseTensorProto*> allInputSparseData_;
   std::vector<const TensorShapeProto*> allShapeInputData_;
@@ -284,6 +290,7 @@ struct InferenceContextImpl : public InferenceContext {
 
   // mutable as internal cache of GraphInferencer instances
   mutable std::unordered_map<std::string, std::unique_ptr<GraphInferencer>> graphAttributeInferencers_;
+  ShapeInferenceOptions options_;
 };
 
 struct DataPropagationContextImpl : public DataPropagationContext {
