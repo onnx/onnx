@@ -7,4 +7,5 @@ wheel
 setuptools
 twine
 parameterized
-google-re2
+# Dependencies for the reference implementation.
+-r requirements-reference.txt
