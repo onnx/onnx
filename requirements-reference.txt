@@ -1,1 +1,2 @@
 google-re2
+opencv-python
