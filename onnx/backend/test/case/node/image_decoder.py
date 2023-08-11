@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import cv2
 import numpy as np
 
 import onnx
@@ -40,6 +39,13 @@ def generate_checkerboard(width, height, square_size):
 
 
 def generate_test_data(extension, pixel_format="RGB", h=40, w=40, tile_sz=5):
+    try:
+        # pylint: disable=import-outside-toplevel`
+        import cv2
+    except ImportError as e:
+        raise ImportError(
+            "opencv-python must be installed to use the reference implementation of the ImageDecoder operator"
+        ) from e
     data, output = None, None
     np.random.seed(12345)
     image = generate_checkerboard(h, w, tile_sz)
