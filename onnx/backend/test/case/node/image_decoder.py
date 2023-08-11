@@ -40,7 +40,7 @@ def generate_checkerboard(width, height, square_size):
 
 def generate_test_data(extension, pixel_format="RGB", h=40, w=40, tile_sz=5):
     try:
-        # pylint: disable=import-outside-toplevel`
+        # pylint: disable=import-outside-toplevel
         import cv2
     except ImportError as e:
         raise ImportError(
