@@ -2,7 +2,11 @@ name: Check URLs
 
 on:
   push:
-    branches: [ "main", rel-* ]
+    branches: [ 'rel-*' ]
+  schedule:
+    # Run every month
+    - cron:  '0 0 1 * *'
+  workflow_dispatch:
 
 jobs:
   build:
