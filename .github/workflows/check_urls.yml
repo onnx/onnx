@@ -3,8 +3,6 @@ name: Check URLs
 on:
   push:
     branches: [ "main", rel-* ]
-  pull_request:
-    branches: [ "main", rel-* ]
 
 jobs:
   build:
