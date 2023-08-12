@@ -407,7 +407,6 @@ class ShapeInferenceImplBase {
   }
 
   void process(NodeProto& n) {
-    std::cout << n.name() << std::endl;
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
