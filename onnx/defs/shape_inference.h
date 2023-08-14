@@ -215,7 +215,7 @@ inline std::pair<int, int> getAttributeElementTypeAndLength(
       } else if (attr_proto->has_t()) {
         if (attr_proto->t().dims_size() != 1) {
           fail_type_inference(
-              "Attribute ", attribute, "expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
+              "Attribute ", attribute, " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
         }
         elem_type = attr_proto->t().data_type();
         length = attr_proto->t().dims(0);
