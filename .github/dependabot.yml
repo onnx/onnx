@@ -17,7 +17,7 @@ updates:
       # Only update them manually since updating them might break compatibility
       - dependency-name: "numpy"
       - dependency-name: "protobuf"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
     labels:
       - "dependencies"
       - "python"
@@ -29,7 +29,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
     labels:
       - "dependencies"
       - "github_actions"
@@ -39,7 +39,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
     labels:
       - "dependencies"
       - "docker"
