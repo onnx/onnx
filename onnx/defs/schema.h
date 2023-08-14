@@ -469,6 +469,12 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
 
+  OpSchema& Attr(
+      std::string name,
+      std::string description,
+      std::string conditionExplanation,
+      AttributeProto::AttributeType attr_type);
+
   // Register "required" attribute without default value.
   OpSchema& Attr(std::string name, std::string description, AttributeProto::AttributeType type, bool required = true);
 

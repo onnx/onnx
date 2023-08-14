@@ -973,6 +973,8 @@ def get_attribute_value(attr: AttributeProto) -> Any:
         return list(attr.graphs)
     if attr.type == AttributeProto.TYPE_PROTOS:
         return list(attr.type_protos)
+    if attr.type == AttributeProto.UNDEFINED:
+        return None
     raise ValueError(f"Unsupported ONNX attribute: {attr}")
 
 

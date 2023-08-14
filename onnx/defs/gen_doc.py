@@ -163,9 +163,12 @@ def display_schema(  # pylint: disable=too-many-branches,too-many-statements
 
                 if isinstance(default_value, list):
                     default_value = [format_value(val) for val in default_value]
+                    opt = f"default is {default_value}"
+                elif hasattr(default_value, "doc_string"):
+                    opt = format_value(f"{attr.default_value.doc_string}")
                 else:
                     default_value = format_value(default_value)
-                opt = f"default is {default_value}"
+                    opt = f"default is {default_value}"
 
             s += f"<dt><tt>{attr.name}</tt> : {display_attr_type(attr.type)}{f' ({opt})' if opt else ''}</dt>\n"
             s += f"<dd>{attr.description}</dd>\n"

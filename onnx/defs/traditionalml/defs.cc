@@ -357,9 +357,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("default_float", "A float.", AttributeProto::FLOAT, -0.f)
         .Attr(
             "default_as_tensor",
-            "A default tensor. Must be set if values_as_tensor is set, optional otherwise.",
-            AttributeProto::TENSOR,
-            OPTIONAL_VALUE)
+            "A default tensor.",
+            "defaults to {\"_Unused\"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.",
+            AttributeProto::TENSOR)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           int key_length, key_type;
           std::tie(key_type, key_length) =
@@ -402,12 +402,6 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             if (default_as_tensor != nullptr && default_as_tensor->t().dims(0) != 1) {
               fail_shape_inference("default_as_tensor must be a singleton if set.");
             }
-          } else if (ctx.getAttribute("values_as_tensor") != nullptr) {
-            // We currently require that default_as_tensor be set if values_as_tensor is set.
-            // An alternative approach could be to infer a default value here
-            // by inserting an AttributeProto with the same element type as values_as_tensor
-            // and an appropriate value.
-            fail_shape_inference("A default value must be set if values_as_tensor is set.");
           }
 
           if (value_length != key_length) {
