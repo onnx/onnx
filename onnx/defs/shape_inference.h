@@ -765,7 +765,7 @@ inline TypeProto RemoveDimensionsFromShape(const TypeProto& proto, int num_dimen
 }
 
 // copied from GSL:
-// https://github.com/Microsoft/GSL/blob/main/include/gsl/gsl_util
+// https://github.com/microsoft/GSL/blob/main/include/gsl/util
 template <class T, class U>
 static constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));
