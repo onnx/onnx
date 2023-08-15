@@ -56,8 +56,7 @@ def multiclass_probability(k, R):
 
 
 def sigmoid_probability(score, proba, probb):
-    # ref: https://github.com/arnaudsj/libsvm/blob/
-    # eaaefac5ebd32d0e07902e1ae740e038eaaf0826/svm.cpp#L1818
+    # ref: https://github.com/arnaudsj/libsvm/blob/eaaefac5ebd32d0e07902e1ae740e038eaaf0826/svm.cpp#L1818
     val = score * proba + probb
     return 1 - compute_logistic(val)
 
