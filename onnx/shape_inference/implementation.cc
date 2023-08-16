@@ -562,17 +562,6 @@ class ShapeInferenceImplBase {
     for (auto& n : *graph.mutable_node()) {
       process(n);
     }
-    // Throw shape inference error if any. Error mode right now only supports 0 and 1.
-    // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
-    // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
-    // TODO: Add a more granular way for exception handling.
-    if (options.error_mode > 0 && !inference_errors.empty()) {
-      std::string full_errors = "Shape inference error(s): ";
-      for (const std::string& error : inference_errors) {
-        full_errors += error + "\n";
-      }
-      fail_shape_inference(full_errors);
-    }
   }
 
   void process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
@@ -683,6 +672,21 @@ class ShapeInferenceImplBase {
     }
   }
 
+  void finalizeShapeInference() {
+    auto& errors = getErrors();  
+    // Throw shape inference error if any. Error mode right now only supports 0 and 1.
+    // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
+    // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
+    // TODO: Add a more granular way for exception handling.
+    if (!errors.empty() && options.error_mode > 0) {
+        std::string full_errors = "Inference error(s): ";
+        for (const std::string& error : inference_errors) {
+          full_errors += error + "\n";
+        }
+        fail_shape_inference(full_errors);
+    }
+  }
+
   const std::vector<std::string>& getErrors() const {
     return inference_errors;
   }
@@ -743,6 +747,7 @@ static void InferShapesImpl(
       generated_shape_data_by_name,
       ir_version);
   base.process(*g);
+  base.finalizeShapeInference();
 }
 
 // Either ModelProto or FunctionProto
@@ -839,6 +844,7 @@ void InferShapeForFunctionNode(
       schema_registry,
       generated_shape_data_by_name);
   base.process(func_proto, ctx);
+  base.finalizeShapeInference();
 }
 
 void InferShapeForFunctionNode(
@@ -963,14 +969,7 @@ std::vector<TypeProto> InferFunctionOutputTypes(
       /*schema_registry*/ OpSchemaRegistry::Instance(),
       /*generated_shape_data_by_name*/ nullptr);
   base.process(function_proto, ctx);
-  auto& errors = base.getErrors();
-  if (!errors.empty()) {
-    std::string all_errors = "Inference error(s): ";
-    for (const std::string& error : errors) {
-      all_errors += error + "\n";
-    }
-    fail_shape_inference(all_errors);
-  }
+  base.finalizeShapeInference();
   return ctx.popOutputTypes();
 }
 

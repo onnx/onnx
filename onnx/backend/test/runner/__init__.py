@@ -260,7 +260,7 @@ class Runner:
         test_func: Callable[..., Any],
         report_item: list[ModelProto | NodeProto | None],
         devices: Iterable[str] = ("CPU", "CUDA"),
-        **kwargs1: Any,
+        **kwargs: Any,
     ) -> None:
         # We don't prepend the 'test_' prefix to improve greppability
         if not test_name.startswith("test_"):
@@ -278,9 +278,9 @@ class Runner:
                 f"Backend doesn't support device {device}",
             )
             @functools.wraps(test_func)
-            def device_test_func(*args: Any, **kwargs2: Any) -> Any:
+            def device_test_func(*args: Any, **device_test_kwarg: Any) -> Any:
                 try:
-                    merged_kwargs = {**kwargs1, **kwargs2}
+                    merged_kwargs = {**kwargs, **device_test_kwarg}
                     return test_func(*args, device, **merged_kwargs)
                 except BackendIsNotSupposedToImplementIt as e:
                     # hacky verbose reporting
