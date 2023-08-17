@@ -399,7 +399,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
             // Ensure default_as_tensor is a singleton if set
             const AttributeProto* default_as_tensor = ctx.getAttribute("default_as_tensor");
-            if (default_as_tensor != nullptr && default_as_tensor->t().dims(0) != 1) {
+            if (default_as_tensor != nullptr &&
+                (default_as_tensor->t().dims_size() != 1 || default_as_tensor->t().dims(0) != 1)) {
               fail_shape_inference("default_as_tensor must be a singleton if set.");
             }
           }
