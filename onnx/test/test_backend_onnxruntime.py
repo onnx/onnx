@@ -257,6 +257,7 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|string_concat"
         "|gelu"
         "|label_encoder"
+        "|image_decoder"
         ")"
     )
 
