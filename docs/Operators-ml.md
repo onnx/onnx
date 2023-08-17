@@ -423,7 +423,7 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncode
 #### Attributes
 
 <dl>
-<dt><tt>default_as_tensor</tt> : tensor (defaults to {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.)</dt>
+<dt><tt>default_as_tensor</tt> : tensor (default is {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.)</dt>
 <dd>A default tensor.</dd>
 <dt><tt>default_float</tt> : float (default is -0.0)</dt>
 <dd>A float.</dd>

@@ -493,4 +493,39 @@ TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, 
   return shape_input;
 }
 
+std::pair<int, int> getAttributeElementTypeAndLength(
+    const InferenceContext& ctx,
+    const std::initializer_list<std::string>& attribute_names) {
+  // Get element type and lengths of 1D attribute lists
+  int32_t elem_type = TensorProto::UNDEFINED;
+  int32_t length = 0;
+  for (const auto& attribute : attribute_names) {
+    const AttributeProto* attr_proto = ctx.getAttribute(attribute);
+    if (attr_proto != nullptr) {
+      if (elem_type != TensorProto::UNDEFINED) {
+        // Another attribute was already set
+        fail_shape_inference("One and only one attribute must be set out of ", stringify(attribute_names));
+      }
+      if (attr_proto->ints_size()) {
+        elem_type = TensorProto_DataType_INT64;
+        length = attr_proto->ints_size();
+      } else if (attr_proto->floats_size()) {
+        elem_type = TensorProto_DataType_FLOAT;
+        length = attr_proto->floats_size();
+      } else if (attr_proto->strings_size()) {
+        elem_type = TensorProto_DataType_STRING;
+        length = attr_proto->strings_size();
+      } else if (attr_proto->has_t()) {
+        if (attr_proto->t().dims_size() != 1) {
+          fail_type_inference(
+              "Attribute ", attribute, " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
+        }
+        elem_type = attr_proto->t().data_type();
+        length = attr_proto->t().dims(0);
+      }
+    }
+  }
+  return {elem_type, length};
+}
+
 } // namespace ONNX_NAMESPACE
