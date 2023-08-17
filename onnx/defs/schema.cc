@@ -473,7 +473,6 @@ OpSchema& OpSchema::Attr(
   a.set_type(attr_type);
   if (attr_type == AttributeProto_AttributeType_UNDEFINED) {
     a.mutable_t()->set_data_type(TensorProto_DataType_UNDEFINED);
-    a.mutable_t()->set_doc_string(std::move(conditionExplanation));
   }
   a.mutable_doc_string()->assign(std::move(conditionExplanation));
   return Attr(Attribute{std::move(name), std::move(description), std::move(a)});
