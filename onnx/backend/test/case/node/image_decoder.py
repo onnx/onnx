@@ -6,8 +6,7 @@ import numpy as np
 
 import onnx
 from onnx.backend.test.case.base import Base
-from onnx.backend.test.case.node import expect
-from onnx.backend.test.case.node import image_decoder_data
+from onnx.backend.test.case.node import expect, image_decoder_data
 
 
 def generate_checkerboard(width, height, square_size):
