@@ -150,7 +150,7 @@ class ImageDecoder(Base):
             pixel_format="RGB",
         )
 
-        # d ata, output = generate_test_data(".bmp", "RGB")
+        # data, output = generate_test_data(".bmp", "RGB")
         test_data = image_decoder_data.image_decoder_decode_bmp_rgb
         data, output = test_data.data, test_data.output
         expect(
