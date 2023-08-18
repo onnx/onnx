@@ -77,6 +77,10 @@ class NameGenerator : private Visitor {
     VisitGraph(graph);
   }
 
+  NameGenerator(const FunctionProto& function) : index_(0) {
+    VisitFunction(function);
+  }
+
   // Creates a new unique name, based on a suggested name, and adds it to the set
   // of existing names. Returns the newly created name.
   std::string CreateNew(const std::string& suggested) {
@@ -102,6 +106,14 @@ class NameGenerator : private Visitor {
     // to produce better results for invalid graphs.
     for (const auto& x : graph.output())
       Add(x.name());
+    return true;
+  }
+
+  bool ProcessFunction(const FunctionProto& function) override {
+    for (const auto& x : function.input())
+      Add(x);
+    for (const auto& x : function.output())
+      Add(x);
     return true;
   }
 
@@ -398,15 +410,13 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
 constexpr int64_t kNoConversion = -1;
 using FunctionMap = std::unordered_map<FunctionId, std::pair<const FunctionProto*, int64_t>>;
 
-void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
-  auto* graph = model.mutable_graph();
+using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
-  NameGenerator name_generator(*graph);
-
-  auto* nodes = graph->mutable_node();
-  google::protobuf::RepeatedPtrField<NodeProto> original_nodes;
+// Shared utility used for inlining into either a GraphProto or a FunctionProto.
+void InlineFunctions(NodeList& nodes, FunctionMap& map, NameGenerator& name_generator, ModelProto* model) {
+  NodeList original_nodes;
   // Move all nodes into original_nodes
-  original_nodes.Swap(nodes);
+  original_nodes.Swap(&nodes);
 
   int inline_count = 0;
   std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
@@ -422,8 +432,9 @@ void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
       InliningRenamer::Rename(node, callee, "__" + std::to_string(++inline_count), name_generator);
       if (target_version != kNoConversion) {
         ONNX_ASSERTM(
-            convert_version,
-            "Internal Error: Inlining function %s::%s requires version conversion, but convert_version is false.",
+            model != nullptr,
+            "Internal Error: Inlining function %s::%s requires version conversion, "
+            "but version conversion is supported only for models, not functions.",
             callee.domain().c_str(),
             callee.name().c_str());
         ConvertVersion(model, node, callee, target_version);
@@ -435,12 +446,24 @@ void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
       // Append node without inlining.
       // TODO: use std::move instead of copying. Use of move doesn't seem to work with
       // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
-      *nodes->Add() = node;
+      *nodes.Add() = node;
     }
   };
   for (auto& node : original_nodes) {
     append_node(node);
   }
+}
+
+void InlineFunctions(ModelProto& model, FunctionMap& map) {
+  auto* graph = model.mutable_graph();
+  NameGenerator name_generator(*graph);
+  auto* nodes = graph->mutable_node();
+  InlineFunctions(*nodes, map, name_generator, &model);
+}
+
+void InlineFunctions(FunctionProto& function, FunctionMap& map) {
+  NameGenerator name_generator(function);
+  InlineFunctions(*function.mutable_node(), map, name_generator, nullptr);
 }
 
 } // namespace
@@ -471,7 +494,7 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
     }
   }
 
-  InlineFunctions(model, map, convert_version);
+  InlineFunctions(model, map);
 
   // Remove all model-local functions. We do not remove functions with a mis-matched
   // opset version. They need to be handled some other way, eg., using a version-adapter.
