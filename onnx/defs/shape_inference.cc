@@ -120,9 +120,9 @@ void mergeInShapeInfo(const TensorShapeProto& source, TensorShapeProto& target) 
   auto num_target_dims = target.dim_size();
   if (num_source_dims != num_target_dims) {
     fail_shape_inference(
-        "Mismatch between number of source and target dimensions. Source=",
+        "Mismatch between number of inferred and declared dimensions. inferred=",
         num_source_dims,
-        " Target=",
+        " declared=",
         num_target_dims);
   }
 
@@ -261,7 +261,8 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor
 
 void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
   if (source_type.value_case() != target_type.value_case()) {
-    fail_type_inference("Mismatched type:", " source=", source_type.value_case(), " target=", target_type.value_case());
+    fail_type_inference(
+        "Mismatched type:", " inferred=", source_type.value_case(), " declared=", target_type.value_case());
   }
 
   const auto target_case = target_type.value_case();
@@ -271,7 +272,7 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
 
     if (source_elem_type != target_elem_type) {
       fail_type_inference(
-          "Mismatched tensor element type:", " source=", source_elem_type, " target=", target_elem_type);
+          "Mismatched tensor element type:", " inferred=", source_elem_type, " declared=", target_elem_type);
     }
 
     UnionShapeInfo(source_type.tensor_type(), *target_type.mutable_tensor_type());
@@ -280,7 +281,7 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
     auto target_elem_type = target_type.sparse_tensor_type().elem_type();
     if (source_elem_type != target_elem_type) {
       fail_type_inference(
-          "Mismatched sparse tensor element type:", " source=", source_elem_type, " target=", target_elem_type);
+          "Mismatched sparse tensor element type:", " inferred=", source_elem_type, " declared=", target_elem_type);
     }
     UnionShapeInfo(source_type.sparse_tensor_type(), *target_type.mutable_sparse_tensor_type());
   } else if (target_case == TypeProto::ValueCase::kSequenceType) {
@@ -311,9 +312,9 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
     if (source_key_type != target_key_type) {
       fail_type_inference(
           "Mismatched map tensor key type:",
-          " source=",
+          " inferred=",
           Utils::DataTypeUtils::ToDataTypeString(source_key_type),
-          " target=",
+          " declared=",
           Utils::DataTypeUtils::ToDataTypeString(target_key_type));
     }
 
