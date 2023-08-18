@@ -58,7 +58,7 @@ struct OpsetMap : public OpsetMapBase {
     }
   }
 
-  OpsetMapBase Mismatches(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
+  OpsetMapBase Mismatches(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) const {
     OpsetMapBase result;
     for (const auto& pair : list) {
       auto iter = this->find(NormalizeDomain(pair.domain()));
@@ -67,6 +67,23 @@ struct OpsetMap : public OpsetMapBase {
     }
     return result;
   }
+
+  bool Add(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
+    OpsetMapBase result;
+    for (const auto& pair : list) {
+      auto domain = NormalizeDomain(pair.domain());
+      auto version = pair.version();
+      auto iter = this->find(domain);
+      if (iter != this->end()) {
+       if (iter->second != version)
+        return false;
+      } else {
+        (*this)[domain] = version;
+      }
+    }
+    return true;
+  }
+
 };
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
@@ -437,7 +454,7 @@ void InlineFunctions(NodeList& nodes, FunctionMap& map, NameGenerator& name_gene
             "but version conversion is supported only for models, not functions.",
             callee.domain().c_str(),
             callee.name().c_str());
-        ConvertVersion(model, node, callee, target_version);
+        ConvertVersion(*model, node, callee, target_version);
       }
       // Append nodes of called function
       for (auto& callee_node : *callee.mutable_node())
@@ -466,9 +483,26 @@ void InlineFunctions(FunctionProto& function, FunctionMap& map) {
   InlineFunctions(*function.mutable_node(), map, name_generator, nullptr);
 }
 
+class VectorSet : public FunctionIdSet {
+public:
+  VectorSet(FunctionIdVector&& function_ids) : function_ids_(std::move(function_ids)) {}
+
+  bool contains(const std::string& function_domain, const std::string& function_name) const override {
+    return std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) != function_ids_.end();
+  }
+  
+private:
+  FunctionIdVector function_ids_;
+};
+
 } // namespace
 
 // Public API implementation:
+
+std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::create(FunctionIdVector && function_ids) {
+  auto* p = new VectorSet(std::move(function_ids));
+  return std::unique_ptr<FunctionIdSet>(p);
+}
 
 void InlineLocalFunctions(ModelProto& model, bool convert_version) {
   OpsetMap model_imports(model.opset_import());
@@ -505,6 +539,41 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
     else
       ++it;
   }
+}
+
+void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
+  OpsetMap model_imports(model.opset_import());
+  FunctionMap map;
+  std::vector<FunctionProto*> non_inlined_functions;
+
+  // If there is any mismatch between the opset versions required for any of the
+  // functions and the model, the inliner will fail.
+
+  for (auto& function : *model.mutable_functions()) {
+    // auto& function = *function_ptr;
+    if (!model_imports.Add(function.opset_import()))
+      ONNX_THROW("Model has functions with incompatible opset versions.");
+    if (to_inline.contains(function.domain(), function.name())) {
+      map[GetFunctionId(function)] = std::pair<const FunctionProto*, int64_t>(&function, kNoConversion);
+    } else {
+      non_inlined_functions.push_back(&function);
+    }
+  }
+
+  InlineFunctions(model, map);
+
+  for (auto* function_ptr : non_inlined_functions) {
+    InlineFunctions(*function_ptr, map);
+  }
+
+  // Remove all inlined model-local functions.
+  auto* local_functions = model.mutable_functions();
+  for (auto it = local_functions->begin(); it != local_functions->end();) {
+    if (map.count(GetFunctionId(*it)) > 0)
+      it = local_functions->erase(it);
+    else
+      ++it;
+  }  
 }
 
 } // namespace inliner
