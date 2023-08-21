@@ -75,15 +75,14 @@ struct OpsetMap : public OpsetMapBase {
       auto version = pair.version();
       auto iter = this->find(domain);
       if (iter != this->end()) {
-       if (iter->second != version)
-        return false;
+        if (iter->second != version)
+          return false;
       } else {
         (*this)[domain] = version;
       }
     }
     return true;
   }
-
 };
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
@@ -484,23 +483,29 @@ void InlineFunctions(FunctionProto& function, FunctionMap& map) {
 }
 
 class VectorSet : public FunctionIdSet {
-public:
-  VectorSet(FunctionIdVector&& function_ids) : function_ids_(std::move(function_ids)) {}
+ public:
+  VectorSet(FunctionIdVector&& function_ids, bool invert) : function_ids_(std::move(function_ids)), invert_(invert) {}
 
-  bool contains(const std::string& function_domain, const std::string& function_name) const override {
-    return std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) != function_ids_.end();
+  bool Contains(const std::string& function_domain, const std::string& function_name) const override {
+    bool found =
+        std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) !=
+        function_ids_.end();
+    return invert_ ? !found : found;
   }
-  
-private:
+
+ private:
   FunctionIdVector function_ids_;
+  bool invert_;
 };
 
 } // namespace
 
 // Public API implementation:
 
-std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::create(FunctionIdVector && function_ids) {
-  auto* p = new VectorSet(std::move(function_ids));
+std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::Create(
+    FunctionIdVector&& function_ids,
+    bool invert) {
+  auto* p = new VectorSet(std::move(function_ids), invert);
   return std::unique_ptr<FunctionIdSet>(p);
 }
 
@@ -553,7 +558,7 @@ void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) 
     // auto& function = *function_ptr;
     if (!model_imports.Add(function.opset_import()))
       ONNX_THROW("Model has functions with incompatible opset versions.");
-    if (to_inline.contains(function.domain(), function.name())) {
+    if (to_inline.Contains(function.domain(), function.name())) {
       map[GetFunctionId(function)] = std::pair<const FunctionProto*, int64_t>(&function, kNoConversion);
     } else {
       non_inlined_functions.push_back(&function);
@@ -573,7 +578,7 @@ void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) 
       it = local_functions->erase(it);
     else
       ++it;
-  }  
+  }
 }
 
 } // namespace inliner

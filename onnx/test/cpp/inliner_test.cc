@@ -212,7 +212,7 @@ bar (x) => (y) {
 
   ModelProto model;
   inliner::FunctionIdVector to_inline = {{"local", "foo"}};
-  auto to_inline_set = inliner::FunctionIdSet::create(std::move(to_inline));
+  auto to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline));
   InlineFunctions(model, code, to_inline_set.get());
 
   // The first node's call, to foo, must be inlined.
