@@ -956,8 +956,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           const TensorProto* axesInitializer = hasInputShape(ctx, 3) ? ctx.getInputData(3) : nullptr;
           const TensorProto* stepsInitializer = hasInputShape(ctx, 4) ? ctx.getInputData(4) : nullptr;
 
-          if (!startsInitializer || !endsInitializer || (ctx.hasInput(3) && !ctx.getInputData(3)) ||
-              (ctx.hasInput(4) && !ctx.getInputData(4))) {
+          if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
+              (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
             const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
             // we can infer the output rank - it never changes
             for (size_t i = 0; (int64_t)i < input_rank; ++i) {
