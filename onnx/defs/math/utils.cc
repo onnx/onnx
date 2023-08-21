@@ -6,7 +6,30 @@
 
 #include <string>
 
+#include "onnx/defs/tensor_proto_util.h"
+
 namespace ONNX_NAMESPACE {
+namespace defs::math::utils {
+template <typename T>
+static T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
+  if (t == nullptr) {
+    return T{};
+  }
+
+  auto data_type = t->data_type();
+  switch (data_type) {
+    case ONNX_NAMESPACE::TensorProto::FLOAT:
+      return static_cast<T>(ONNX_NAMESPACE::ParseData<float>(t).at(0));
+    case ONNX_NAMESPACE::TensorProto::DOUBLE:
+      return static_cast<T>(ONNX_NAMESPACE::ParseData<double>(t).at(0));
+    case ONNX_NAMESPACE::TensorProto::INT32:
+      return static_cast<T>(ONNX_NAMESPACE::ParseData<int32_t>(t).at(0));
+    case ONNX_NAMESPACE::TensorProto::INT64:
+      return static_cast<T>(ONNX_NAMESPACE::ParseData<int64_t>(t).at(0));
+    default:
+      fail_shape_inference("Unsupported input data type of ", data_type);
+  }
+}
 std::function<void(OpSchema&)>
 SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {
   return [=](OpSchema& schema) {
@@ -69,4 +92,6 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
     });
   };
 }
+} // namespace defs::math::utils
+
 } // namespace ONNX_NAMESPACE
