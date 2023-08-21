@@ -2989,7 +2989,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. "
             "For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. "
             "The first dimension is the batch dimension. "
-            "The following N dimentions correspond to the signal's dimensions. "
+            "The following N dimensions correspond to the signal's dimensions. "
             "The final dimension represents the real and imaginary parts of the value in that order.",
             "T1",
             OpSchema::Single,
