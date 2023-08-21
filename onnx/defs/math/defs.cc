@@ -2942,7 +2942,7 @@ static T get_scalar_value_from_tensor(const ONNX_NAMESPACE::TensorProto* t) {
   }
 }
 
-static const char* DFT_ver20_doc = R"DOC(Computes the discrete Fourier transform of input.)DOC";
+static const char* DFT_ver20_doc = R"DOC(Computes the discrete Fourier transform of the input.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     DFT,
@@ -2950,9 +2950,10 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(DFT_ver20_doc)
         .Attr(
+            // TODO(justinchuby): Double check how conjugate symmetry is specified
             "onesided",
             "If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because "
-            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. "
+            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, w] = X[m,n_fft-w]*. "
             "Note if the input or window tensors are complex, then onesided output is not possible. "
             "Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). "
             "When invoked with real or complex valued input, the default value is 0. "
@@ -2969,8 +2970,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input",
             "For real input, the following shape is expected: [signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]. "
             "For complex input, the following shape is expected: [signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]. "
-            "The first dimension is the batch dimension. "
-            "The following N dimensions correspond to the signal's dimensions. "
             "The final dimension represents the real and imaginary parts of the value in that order.",
             "T1",
             OpSchema::Single,
@@ -2980,7 +2979,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "axis",
-            "The axis on which to perform the DFT. By default this value is set to 0.",
+            "The axis on which to perform the DFT. By default this value is set to `-1`.",
             "tensor(int64)",
             OpSchema::Optional,
             true,
@@ -2989,7 +2988,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "dft_length",
-            "The length of the signal."
+            "The length of the signal. "
             "If greater than the axis dimension, the signal will be zero-padded up to dft_length. "
             "If less than the axis dimension, only the first dft_length values will be used as the signal. "
             "It's an optional value. ",
@@ -3001,7 +3000,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "output",
-            "The Fourier Transform of the input vector."
+            "The Fourier Transform of the input vector. "
             "If onesided is 0, the following shape is expected: [signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]. "
             "If axis=0 and onesided is 1, the following shape is expected: [floor(signal_dim0/2)+1][signal_dim1][signal_dim2]...[signal_dimN][2]. "
             "If axis=1 and onesided is 1, the following shape is expected: [signal_dim0][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. "

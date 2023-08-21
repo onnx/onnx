@@ -2999,7 +2999,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "dft_length",
-            "The length of the signal."
+            "The length of the signal. "
             "If greater than the axis dimension, the signal will be zero-padded up to dft_length. "
             "If less than the axis dimension, only the first dft_length values will be used as the signal. "
             "It's an optional value. ",
@@ -3011,7 +3011,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "output",
-            "The Fourier Transform of the input vector."
+            "The Fourier Transform of the input vector. "
             "If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. "
             "If axis=1 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. "
             "If axis=2 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. "
