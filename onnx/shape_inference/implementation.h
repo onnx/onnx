@@ -123,16 +123,17 @@ struct GraphInferenceContext {
 
 class GraphInferencerImpl : public GraphInferencer {
  public:
-  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context) : g_{&g}, context_{&context} {}
+  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context) : g_{&g}, context_{&context}, options_() {}
+  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context, const ShapeInferenceOptions& options) : g_{&g}, context_{&context}, options_(options) {}
 
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData,
-      const ShapeInferenceOptions& options) override;
+      const std::vector<const TensorProto*>& inputData) override;
 
  private:
   GraphProto* g_;
   GraphInferenceContext* context_;
+  ShapeInferenceOptions options_;
 };
 
 struct InferenceContextImpl : public InferenceContext {
@@ -264,7 +265,7 @@ struct InferenceContextImpl : public InferenceContext {
       }
 
       std::unique_ptr<GraphInferencer> new_inferencer{
-          new GraphInferencerImpl(*attrNameToGraphProto->second, *graphInferenceContext_)};
+          new GraphInferencerImpl(*attrNameToGraphProto->second, *graphInferenceContext_, options_)};
 
       inferencer = new_inferencer.get();
       graphAttributeInferencers_.emplace(attr_name, std::move(new_inferencer));
@@ -273,10 +274,6 @@ struct InferenceContextImpl : public InferenceContext {
     }
 
     return inferencer;
-  }
-
-  const ShapeInferenceOptions& getShapeInferenceOptions() const override {
-    return options_;
   }
 
   std::vector<const TensorProto*> allInputData_;

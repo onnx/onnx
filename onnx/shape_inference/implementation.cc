@@ -938,10 +938,6 @@ struct FunctionInferenceContext : public InferenceContext {
     return std::move(output_types_);
   }
 
-  const ShapeInferenceOptions& getShapeInferenceOptions() const override {
-    return options_;
-  }
-
  private:
   const std::vector<TypeProto>& input_types_;
   std::vector<TypeProto> output_types_;
@@ -975,8 +971,7 @@ std::vector<TypeProto> InferFunctionOutputTypes(
 
 std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& input_types,
-    const std::vector<const TensorProto*>& input_data,
-    const ShapeInferenceOptions& options) {
+    const std::vector<const TensorProto*>& input_data) {
   SymbolTable* symbol_table = context_->symbol_table;
   int num_inputs = int(input_types.size());
   std::unordered_set<std::string> initializer_name_set;
@@ -1039,7 +1034,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
-      options,
+      options_,
       symbol_table,
       context_->model_local_functions,
       context_->schema_registry,
