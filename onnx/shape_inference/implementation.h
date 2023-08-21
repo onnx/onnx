@@ -124,7 +124,8 @@ struct GraphInferenceContext {
 class GraphInferencerImpl : public GraphInferencer {
  public:
   GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context) : g_{&g}, context_{&context}, options_() {}
-  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context, const ShapeInferenceOptions& options) : g_{&g}, context_{&context}, options_(options) {}
+  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context, const ShapeInferenceOptions& options)
+  : g_{&g}, context_{&context}, options_(options) {}
 
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,

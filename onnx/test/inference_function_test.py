@@ -198,7 +198,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
         )
 
     def test_inference_with_conflow(self) -> None:
-        input = """
+        model_script = """
         <
             ir_version: 8,
             opset_import: ["" : 18, "onnxscript.atenlib" : 1],
@@ -235,13 +235,13 @@ class TestInferenceFunctionCall(unittest.TestCase):
             >
         }
         """
-        model = onnx.parser.parse_model(input)
+        model = onnx.parser.parse_model(model_script)
         onnx.shape_inference.infer_shapes(model, strict_mode=False)
         with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_inference_with_attribute(self) -> None:
-        input = """
+        model_script = """
         <
             ir_version: 8,
             opset_import: ["" : 18, "custom" : 1],
@@ -272,7 +272,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
           Y = Div (X_variance, Processed_STD)
         }
         """
-        model = onnx.parser.parse_model(input)
+        model = onnx.parser.parse_model(model_script)
         # onnx.shape_inference.infer_shapes(model, strict_mode=False)
         onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
