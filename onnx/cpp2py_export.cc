@@ -570,6 +570,21 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     return py::bytes(out);
   });
 
+  // inline_selected_functions: Inlines all functions specified in function_ids, unless
+  // exclude is true, in which case it inlines all functions except those specified in
+  // function_ids.
+  inliner.def(
+      "inline_selected_functions",
+      [](const py::bytes& bytes, std::vector<std::pair<std::string, std::string>> function_ids, bool exclude) {
+        ModelProto model{};
+        ParseProtoFromPyBytes(&model, bytes);
+        auto function_id_set = inliner::FunctionIdSet::Create(std::move(function_ids), exclude);
+        inliner::InlineSelectedFunctions(model, *function_id_set);
+        std::string out;
+        model.SerializeToString(&out);
+        return py::bytes(out);
+      });
+
   // Submodule `shape_inference`
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
