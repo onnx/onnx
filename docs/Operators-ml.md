@@ -410,7 +410,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
       Since this operator is an one-to-one mapping, its input and output shapes
       are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
-      When 'values_as_tensor' is used, a default value must be specified.<br>
+      When 'values_tensor' is used, a default value must be specified.<br>
       Float keys with value 'NaN' match any input 'NaN' value regardless of bit
       value. If a key is repeated, the last key takes precedence.
 
@@ -423,30 +423,30 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncode
 #### Attributes
 
 <dl>
-<dt><tt>default_as_tensor</tt> : tensor (default is {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.)</dt>
-<dd>A default tensor.</dd>
 <dt><tt>default_float</tt> : float (default is -0.0)</dt>
 <dd>A float.</dd>
 <dt><tt>default_int64</tt> : int (default is -1)</dt>
 <dd>An integer.</dd>
 <dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string.</dd>
-<dt><tt>keys_as_tensor</tt> : tensor</dt>
-<dd>Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.</dd>
+<dt><tt>default_tensor</tt> : tensor (default is {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.)</dt>
+<dd>A default tensor.</dd>
 <dt><tt>keys_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>keys_int64s</tt> : list of ints</dt>
 <dd>A list of ints.</dd>
 <dt><tt>keys_strings</tt> : list of strings</dt>
 <dd>A list of strings.</dd>
-<dt><tt>values_as_tensor</tt> : tensor</dt>
-<dd>Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.</dd>
+<dt><tt>keys_tensor</tt> : tensor</dt>
+<dd>Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.</dd>
 <dt><tt>values_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>values_int64s</tt> : list of ints</dt>
 <dd>A list of ints.</dd>
 <dt><tt>values_strings</tt> : list of strings</dt>
 <dd>A list of strings.</dd>
+<dt><tt>values_tensor</tt> : tensor</dt>
+<dd>Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.</dd>
 </dl>
 
 #### Inputs
@@ -523,7 +523,7 @@ expect(
 
 ```python
 tensor_keys = make_tensor(
-    "keys_as_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
+    "keys_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
 )
 repeated_string_keys = ["a", "b", "c"]
 x = np.array(["a", "b", "d", "c", "g"]).astype(object)
@@ -534,12 +534,12 @@ node = onnx.helper.make_node(
     inputs=["X"],
     outputs=["Y"],
     domain="ai.onnx.ml",
-    keys_as_tensor=tensor_keys,
-    values_as_tensor=make_tensor(
-        "values_as_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    keys_tensor=tensor_keys,
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
     ),
-    default_as_tensor=make_tensor(
-        "default_as_tensor", onnx.TensorProto.INT16, (1,), [42]
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
     ),
 )
 
@@ -556,11 +556,11 @@ node = onnx.helper.make_node(
     outputs=["Y"],
     domain="ai.onnx.ml",
     keys_strings=repeated_string_keys,
-    values_as_tensor=make_tensor(
-        "values_as_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
     ),
-    default_as_tensor=make_tensor(
-        "default_as_tensor", onnx.TensorProto.INT16, (1,), [42]
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
     ),
 )
 

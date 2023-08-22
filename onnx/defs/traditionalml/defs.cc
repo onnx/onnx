@@ -316,7 +316,7 @@ static const char* LabelEncoder_ver4_doc = R"DOC(
     "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
     Since this operator is an one-to-one mapping, its input and output shapes
     are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
-    When 'values_as_tensor' is used, a default value must be specified.<br>
+    When 'values_tensor' is used, a default value must be specified.<br>
     Float keys with value 'NaN' match any input 'NaN' value regardless of bit
     value. If a key is repeated, the last key takes precedence.
 )DOC";
@@ -337,7 +337,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             {"tensor(string)", "tensor(int64)", "tensor(float)", "tensor(int32)", "tensor(int16)"},
             "Output type is determined by the specified 'values_*' attribute.")
         .Attr(
-            "keys_as_tensor",
+            "keys_tensor",
             "Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.",
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
@@ -345,7 +345,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("keys_int64s", "A list of ints.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("keys_floats", "A list of floats.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr(
-            "values_as_tensor",
+            "values_tensor",
             "Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.",
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
@@ -356,16 +356,16 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("default_int64", "An integer.", AttributeProto::INT, static_cast<int64_t>(-1))
         .Attr("default_float", "A float.", AttributeProto::FLOAT, -0.f)
         .Attr(
-            "default_as_tensor",
+            "default_tensor",
             "A default tensor.",
             "{\"_Unused\"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.",
             AttributeProto::TENSOR)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           int key_length, key_type;
           std::tie(key_type, key_length) =
-              getAttributeElementTypeAndLength(ctx, {"keys_as_tensor", "keys_strings", "keys_int64s", "keys_floats"});
+              getAttributeElementTypeAndLength(ctx, {"keys_tensor", "keys_strings", "keys_int64s", "keys_floats"});
           if (key_type == TensorProto::UNDEFINED) {
-            fail_shape_inference("At least one of keys_as_tensor, keys_strings, keys_int64s, keys_floats must be set.");
+            fail_shape_inference("At least one of keys_tensor, keys_strings, keys_int64s, keys_floats must be set.");
           }
           if (key_type != ctx.getInputType(0)->tensor_type().elem_type()) {
             fail_shape_inference(
@@ -378,15 +378,15 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
           int value_length, value_type;
           std::tie(value_type, value_length) = getAttributeElementTypeAndLength(
-              ctx, {"values_as_tensor", "values_strings", "values_int64s", "values_floats"});
+              ctx, {"values_tensor", "values_strings", "values_int64s", "values_floats"});
           if (value_type == TensorProto::UNDEFINED) {
             fail_shape_inference(
-                "At least one of values_as_tensor, values_strings, values_int64s, values_floats must be set.");
+                "At least one of values_tensor, values_strings, values_int64s, values_floats must be set.");
           }
 
           int default_length, default_type;
           std::tie(default_type, default_length) = getAttributeElementTypeAndLength(
-              ctx, {"default_as_tensor", "default_string", "default_int64", "default_float"});
+              ctx, {"default_tensor", "default_string", "default_int64", "default_float"});
           if (default_type != TensorProto::UNDEFINED) {
             if (value_type != default_type) {
               fail_shape_inference(
@@ -397,11 +397,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                   " are different, which is not permitted for LabelEncoders.");
             }
 
-            // Ensure default_as_tensor is a singleton if set
-            const AttributeProto* default_as_tensor = ctx.getAttribute("default_as_tensor");
-            if (default_as_tensor != nullptr &&
-                (default_as_tensor->t().dims_size() != 1 || default_as_tensor->t().dims(0) != 1)) {
-              fail_shape_inference("default_as_tensor must be a singleton if set.");
+            // Ensure default_tensor is a singleton if set
+            const AttributeProto* default_tensor = ctx.getAttribute("default_tensor");
+            if (default_tensor != nullptr &&
+                (default_tensor->t().dims_size() != 1 || default_tensor->t().dims(0) != 1)) {
+              fail_shape_inference("default_tensor must be a singleton if set.");
             }
           }
 

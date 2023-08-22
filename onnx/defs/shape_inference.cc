@@ -494,6 +494,15 @@ TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, 
   return shape_input;
 }
 
+template <typename Container>
+std::string stringify(const Container& elements) {
+  std::stringstream ss;
+  for (const auto& element : elements) {
+    ss << element << ", ";
+  }
+  return ss.str();
+}
+
 std::pair<int, int> getAttributeElementTypeAndLength(
     const InferenceContext& ctx,
     const std::initializer_list<std::string>& attribute_names) {

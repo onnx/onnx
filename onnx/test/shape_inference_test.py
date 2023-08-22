@@ -5653,10 +5653,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             version < 4, "tensor attributes were introduced in ai.onnx.ml opset 4"
         )
         key_tensor = make_tensor(
-            "keys_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+            "keys_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
         )
         values_tensor = make_tensor(
-            "values_as_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+            "values_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
         )
         graph = self._make_graph(
             [("x", TensorProto.STRING, ("M", None, 3, 12))],
@@ -5666,10 +5666,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                     ["x"],
                     ["y"],
                     domain=ONNX_ML_DOMAIN,
-                    keys_as_tensor=key_tensor,
-                    values_as_tensor=values_tensor,
-                    default_as_tensor=make_tensor(
-                        "default_as_tensor", TensorProto.INT64, [1], [0]
+                    keys_tensor=key_tensor,
+                    values_tensor=values_tensor,
+                    default_tensor=make_tensor(
+                        "default_tensor", TensorProto.INT64, [1], [0]
                     ),
                 )
             ],
@@ -5692,10 +5692,10 @@ class TestShapeInference(TestShapeInferenceHelper):
     ) -> None:
         self.skipIf(version < 4, "tensor attributes introduced in ai.onnx.ml opset 4")
         key_tensor = make_tensor(
-            "keys_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+            "keys_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
         )
         values_tensor = make_tensor(
-            "values_as_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+            "values_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
         )
 
         opset_imports = [
@@ -5703,7 +5703,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             make_opsetid(ONNX_DOMAIN, 11),
         ]
 
-        # default_as_tensor should be INT64, same type as values_as_tensor
+        # default_tensor should be INT64, same type as values_tensor
         graph = self._make_graph(
             [("x", TensorProto.STRING, ("M", None, 3, 12))],
             [
@@ -5712,10 +5712,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                     ["x"],
                     ["y"],
                     domain=ONNX_ML_DOMAIN,
-                    keys_as_tensor=key_tensor,
-                    values_as_tensor=values_tensor,
-                    default_as_tensor=make_tensor(
-                        "default_as_tensor", TensorProto.STRING, [1], [0]
+                    keys_tensor=key_tensor,
+                    values_tensor=values_tensor,
+                    default_tensor=make_tensor(
+                        "default_tensor", TensorProto.STRING, [1], [0]
                     ),
                 )
             ],
@@ -5729,7 +5729,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=opset_imports,
         )
 
-        # default_as_tensor should be a singleton of shape (1,)
+        # default_tensor should be a singleton of shape (1,)
         graph = self._make_graph(
             [("x", TensorProto.STRING, ("M", None, 3, 12))],
             [
@@ -5738,10 +5738,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                     ["x"],
                     ["y"],
                     domain=ONNX_ML_DOMAIN,
-                    keys_as_tensor=key_tensor,
+                    keys_tensor=key_tensor,
                     values_strings=["a", "b", "cc", "ddd"],
-                    default_as_tensor=make_tensor(
-                        "default_as_tensor", TensorProto.STRING, [1, 2], [0, 0]
+                    default_tensor=make_tensor(
+                        "default_tensor", TensorProto.STRING, [1, 2], [0, 0]
                     ),
                 )
             ],

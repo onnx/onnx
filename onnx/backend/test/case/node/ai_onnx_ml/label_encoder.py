@@ -51,7 +51,7 @@ class LabelEncoder(Base):
     @staticmethod
     def export_tensor_based_label_encoder() -> None:
         tensor_keys = make_tensor(
-            "keys_as_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
+            "keys_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
         )
         repeated_string_keys = ["a", "b", "c"]
         x = np.array(["a", "b", "d", "c", "g"]).astype(object)
@@ -62,12 +62,12 @@ class LabelEncoder(Base):
             inputs=["X"],
             outputs=["Y"],
             domain="ai.onnx.ml",
-            keys_as_tensor=tensor_keys,
-            values_as_tensor=make_tensor(
-                "values_as_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+            keys_tensor=tensor_keys,
+            values_tensor=make_tensor(
+                "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
             ),
-            default_as_tensor=make_tensor(
-                "default_as_tensor", onnx.TensorProto.INT16, (1,), [42]
+            default_tensor=make_tensor(
+                "default_tensor", onnx.TensorProto.INT16, (1,), [42]
             ),
         )
 
@@ -84,11 +84,11 @@ class LabelEncoder(Base):
             outputs=["Y"],
             domain="ai.onnx.ml",
             keys_strings=repeated_string_keys,
-            values_as_tensor=make_tensor(
-                "values_as_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+            values_tensor=make_tensor(
+                "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
             ),
-            default_as_tensor=make_tensor(
-                "default_as_tensor", onnx.TensorProto.INT16, (1,), [42]
+            default_tensor=make_tensor(
+                "default_tensor", onnx.TensorProto.INT16, (1,), [42]
             ),
         )
 

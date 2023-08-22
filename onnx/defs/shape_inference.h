@@ -182,13 +182,7 @@ inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, T
 }
 
 template <typename Container>
-inline std::string stringify(const Container& elements) {
-  std::stringstream ss;
-  for (const auto& element : elements) {
-    ss << element << ", ";
-  }
-  return ss.str();
-}
+std::string stringify(const Container& elements);
 
 std::pair<int, int> getAttributeElementTypeAndLength(
     const InferenceContext& ctx,

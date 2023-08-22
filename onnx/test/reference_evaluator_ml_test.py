@@ -386,14 +386,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ["X"],
             ["Y"],
             domain="ai.onnx.ml",
-            keys_as_tensor=make_tensor(
-                "keys_as_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+            keys_tensor=make_tensor(
+                "keys_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
             ),
-            values_as_tensor=make_tensor(
-                "values_as_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+            values_tensor=make_tensor(
+                "values_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
             ),
-            default_as_tensor=make_tensor(
-                "default_as_tensor", TensorProto.STRING, [], ["NONE"]
+            default_tensor=make_tensor(
+                "default_tensor", TensorProto.STRING, [], ["NONE"]
             ),
         )
         graph = make_graph([node], "ml", [X], [Y])
