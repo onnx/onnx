@@ -381,7 +381,8 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
   const auto from_type_case = from_type->value_case();
   const auto to_type_case = to_type->value_case();
   if (from_type_case != to_type_case) {
-    fail_shape_inference("Mismatch between source and target type. Source=", from_type_case, " Target=", to_type_case);
+    fail_shape_inference(
+        "Mismatch between inferred and declared type. Inferred=", from_type_case, " Declared=", to_type_case);
   }
 
   if (TypeProto::kTensorType == from_type_case || TypeProto::kSparseTensorType == from_type_case) {
@@ -652,9 +653,9 @@ inline void mergeInDimensionInfo(
       if (target_value != source_value) {
         fail_shape_inference(
             "Can't merge shape info. "
-            "Both source and target dimension have values but they differ. Source=",
+            "Both inferred and declared dimension have values but they differ. Inferred=",
             source_value,
-            " Target=",
+            " Declared=",
             target_value,
             " Dimension=",
             dim_index);
@@ -724,7 +725,7 @@ inline TypeProto RemoveDimensionsFromShape(const TypeProto& proto, int num_dimen
 }
 
 // copied from GSL:
-// https://github.com/Microsoft/GSL/blob/main/include/gsl/gsl_util
+// https://github.com/microsoft/GSL/blob/main/include/gsl/util
 template <class T, class U>
 static constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));

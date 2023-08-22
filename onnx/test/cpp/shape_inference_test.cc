@@ -413,7 +413,7 @@ static void doInferencingTest(bool use_scan_opset8) {
 
   std::vector<const TensorProto*> subgraphInputData = {};
   ShapeInferenceOptions options{false, 0, false};
-  auto output = graphInferencer.doInferencing(subgraphInputTypes, subgraphInputData, options);
+  auto output = graphInferencer.doInferencing(subgraphInputTypes, subgraphInputData);
 
   // check the subgraph outputs had their shape inferred when we called
   // doInferencing directly
