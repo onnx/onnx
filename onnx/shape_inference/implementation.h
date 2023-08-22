@@ -129,8 +129,7 @@ class GraphInferencerImpl : public GraphInferencer {
 
   std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData,
-      const ShapeInferenceOptions& options) override;
+      const std::vector<const TensorProto*>& inputData) override;
 
  private:
   GraphProto* g_;
@@ -276,10 +275,6 @@ struct InferenceContextImpl : public InferenceContext {
     }
 
     return inferencer;
-  }
-
-  const ShapeInferenceOptions& getShapeInferenceOptions() const override {
-    return options_;
   }
 
   std::vector<const TensorProto*> allInputData_;

@@ -40,13 +40,13 @@ void IfInferenceFunction(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("then_branch");
   if (graphInferencer) {
     then_output_types =
-        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
   }
 
   graphInferencer = ctx.getGraphAttributeInferencer("else_branch");
   if (graphInferencer) {
     else_output_types =
-        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -124,7 +124,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
     }
 
     subgraph_output_types =
-        graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
   }
 
   // if empty(), assume inferencing was skipped
@@ -304,7 +304,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
       input_data.push_back(nullptr);
     }
 
-    output_types = graphInferencer->doInferencing(subgraph_input_types, input_data, ctx.getShapeInferenceOptions());
+    output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
   }
 
   // if empty(), assume inferencing was skipped

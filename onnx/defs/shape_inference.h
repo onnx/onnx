@@ -48,8 +48,7 @@ class GraphInferencer {
   // Returns the graph output types post-inferencing.
   virtual std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData,
-      const ShapeInferenceOptions& options) = 0;
+      const std::vector<const TensorProto*>& inputData) = 0;
   virtual ~GraphInferencer() = default;
 };
 
@@ -104,7 +103,6 @@ struct InferenceContext {
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
   // Gets the shape inputs computed by partial data propagation.
   virtual const TensorShapeProto* getSymbolicInput(size_t index) const = 0;
-  virtual const ShapeInferenceOptions& getShapeInferenceOptions() const = 0;
 };
 
 // We use data propagation to perform partial evaluation of the model, to compute statically
