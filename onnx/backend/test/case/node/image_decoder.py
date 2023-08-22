@@ -44,7 +44,7 @@ def generate_test_data(extension, pixel_format="RGB", h=32, w=32, tile_sz=5):
         import cv2
     except ImportError as e:
         raise ImportError(
-            "opencv-python must be installed to use the reference implementation of the ImageDecoder operator"
+            "opencv-python must be installed to generate test data for the ImageDecoder operator"
         ) from e
     data, output = None, None
     np.random.seed(12345)
