@@ -415,7 +415,7 @@ bool OnnxParser::NextIsType() {
   }
 }
 
-Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
+Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected) {
   // Parse a single-value
   auto next = NextChar();
   if (isalpha(next) || next == '_') {
@@ -461,6 +461,21 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr) {
         return ParseError("Unexpected literal type.");
     }
   }
+  if ((expected != AttributeProto_AttributeType_UNDEFINED) && (expected != attr.type())) {
+    // Mismatch between type-annotation and attribute-value. We do an implicit cast
+    // only in the special case of FLOAT type and integral value like 2
+    if ((expected == AttributeProto_AttributeType_FLOAT) && (attr.type() == AttributeProto_AttributeType_INT)) {
+        attr.set_type(AttributeProto_AttributeType_FLOAT);
+        attr.set_f(static_cast<float>(attr.i()));      
+    } else {
+      return ParseError("Mismatch between expected type ",
+        AttributeProto_AttributeType_Name(expected),
+        " and specified value's type",
+        AttributeProto_AttributeType_Name(attr.type())
+        );
+    }
+
+  }
   return Status::OK();
 }
 
@@ -485,6 +500,28 @@ bool IsSingletonAttribute(AttributeProto_AttributeType type) {
       return false;
   }
 }
+
+AttributeProto_AttributeType ToSingletonType(AttributeProto_AttributeType type) {
+  switch (type) {
+    case AttributeProto_AttributeType_FLOATS:
+      return AttributeProto_AttributeType_FLOAT;
+    case AttributeProto_AttributeType_INTS:
+      return AttributeProto_AttributeType_INT;
+    case AttributeProto_AttributeType_STRINGS:
+      return AttributeProto_AttributeType_STRING;
+    case AttributeProto_AttributeType_TENSORS:
+      return AttributeProto_AttributeType_TENSOR;
+    case AttributeProto_AttributeType_GRAPHS:
+      return AttributeProto_AttributeType_GRAPH;
+    case AttributeProto_AttributeType_SPARSE_TENSORS:
+      return AttributeProto_AttributeType_SPARSE_TENSOR;
+    case AttributeProto_AttributeType_TYPE_PROTOS:
+      return AttributeProto_AttributeType_TYPE_PROTO;
+    default:
+      return type;  
+  }
+}
+
 Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   attr.set_name(name);
   if (Matches(':')) {
@@ -505,7 +542,8 @@ Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
     if (NextChar() != ']') {
       do {
         AttributeProto nextval;
-        CHECK_PARSER_STATUS(ParseSingleAttributeValue(nextval));
+        auto expected_type = ToSingletonType(attr.type());
+        CHECK_PARSER_STATUS(ParseSingleAttributeValue(nextval, expected_type));
         switch (nextval.type()) {
           case AttributeProto_AttributeType_INT:
             attr.set_type(AttributeProto_AttributeType_INTS);
@@ -531,7 +569,7 @@ Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
     }
     MATCH(']');
   } else {
-    CHECK_PARSER_STATUS(ParseSingleAttributeValue(attr));
+    CHECK_PARSER_STATUS(ParseSingleAttributeValue(attr, attr.type()));
   }
   return Status::OK();
 }
