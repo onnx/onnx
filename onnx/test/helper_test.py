@@ -220,9 +220,9 @@ class TestHelperAttributeFunctions(unittest.TestCase):
 
     def test_attr_mismatch(self) -> None:
         with pytest.raises(TypeError) as te:
-            attr = helper.make_attribute("test", 6.4, attr_type=AttributeProto.STRING)
-        assert "float" in str(te.value)
-        assert "string" in str(te.value)
+            helper.make_attribute("test", 6.4, attr_type=AttributeProto.STRING)
+        assert "FLOAT" in str(te.value)
+        assert "STRING" in str(te.value)
 
     def test_is_attr_legal(self) -> None:
         # no name, no field
@@ -891,16 +891,16 @@ class TestHelperMappingFunctions(unittest.TestCase):
 
 @pytest.mark.parametrize(
     "attr_type",
-    helper.attribute_proto_type_to_str.keys(),
+    AttributeProto.AttributeType.values(),
 )
 def test_attr_type_to_str(attr_type):
-    result = helper.attr_type_to_str(attr_type)
-    assert result is not None
+    result = helper._attr_type_to_str(attr_type)
+    assert result == AttributeProto.AttributeType.keys()[attr_type]
 
 
-def test_attr_type_to_str_raises():
-    with pytest.raises(ValueError):
-        result = helper.attr_type_to_str(9999)
+def test_attr_type_to_str_undefined():
+    result = helper._attr_type_to_str(9999)
+    assert result == "UNDEFINED"
 
 
 if __name__ == "__main__":
