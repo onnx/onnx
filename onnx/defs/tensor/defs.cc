@@ -2551,7 +2551,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           zero_f = CastLike (zero, theta)
           one_f = CastLike (one, theta)
           two_f = CastLike (two, theta)
-          
+
           constant_align_corners = Constant <value_int: int=@align_corners> ()
           constant_align_corners_equal_zero = Equal (constant_align_corners, zero)
 
@@ -2562,7 +2562,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               then_branch = g1 () => (size_NCDHW_then) { # => (int64[5] = [N, C, 1, H, W])
                   # size_NCDHW_then = Identity (size)
                   N, C, H, W = Split <num_outputs: int=4> (size)
-                  size_NCDHW_then = Concat <axis=0> (N, C, one_v, H, W)                    
+                  size_NCDHW_then = Concat <axis=0> (N, C, one_v, H, W)
               },
               else_branch = g2 () => (size_NCDHW_else) { # => (int64[5] = [N, C, D, H, W])
                   # size_NCDHW_else = Identity (size)
