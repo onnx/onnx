@@ -94,6 +94,15 @@ jobs:
         EXIT 1
       )
 
+      pip uninstall -y opencv-python
+      python onnx/backend/test/cmd_tools.py generate-data --clean
+      git status
+      git diff --exit-code -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 :!*output_*.pb :!*input_*.pb
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "git diff for test generation without opencv-python returned failures. Please check updated node test files"
+        EXIT 1
+      )
+
       rm -rf .setuptools-cmake-build
       if '$(protobuf_type)' == 'External' (
         conda install -y -c conda-forge libprotobuf=3.20
