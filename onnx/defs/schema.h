@@ -469,6 +469,12 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
 
+  OpSchema& Attr(
+      std::string name,
+      std::string description,
+      std::string conditionExplanation,
+      AttributeProto::AttributeType attr_type);
+
   // Register "required" attribute without default value.
   OpSchema& Attr(std::string name, std::string description, AttributeProto::AttributeType type, bool required = true);
 
@@ -1084,7 +1090,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
       map_[ONNX_DOMAIN] = std::make_pair(1, 20);
-      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 3);
+      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 4);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
       // versining is not meaningful and that domain should have only one
