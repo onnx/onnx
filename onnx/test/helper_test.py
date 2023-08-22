@@ -218,6 +218,12 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(len(attr.strings), 0)
         self.assertRaises(ValueError, helper.make_attribute, "empty", [])
 
+    def test_attr_mismatch(self) -> None:
+        with pytest.raises(TypeError) as te:
+            attr = helper.make_attribute("test", 6.4, attr_type=AttributeProto.STRING)
+        assert "float" in str(te.value)
+        assert "string" in str(te.value)
+
     def test_is_attr_legal(self) -> None:
         # no name, no field
         attr = AttributeProto()
@@ -893,11 +899,8 @@ def test_attr_type_to_str(attr_type):
 
 
 def test_attr_type_to_str_raises():
-    try:
+    with pytest.raises(ValueError):
         result = helper.attr_type_to_str(9999)
-    except ValueError as e:
-        return
-    assert False, "Should have raised a ValueError"
 
 
 if __name__ == "__main__":

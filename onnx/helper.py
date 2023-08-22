@@ -925,7 +925,7 @@ def make_attribute(  # pylint: disable=too-many-statements
 
     if attr_type is not None and attr.type != attr_type:
         raise TypeError(
-            f"Inferred attribute type {attr.type} mismatched with specified type {attr_type}"
+            f"Inferred attribute type {attr_type_to_str(attr.type)}({attr.type}) mismatched with specified type {attr_type_to_str(attr_type)}({attr_type})"
         )
     return attr
 
