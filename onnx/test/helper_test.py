@@ -883,6 +883,23 @@ class TestHelperMappingFunctions(unittest.TestCase):
         )
 
 
+@pytest.mark.parametrize(
+    "attr_type",
+    helper.attribute_proto_type_to_str.keys(),
+)
+def test_attr_type_to_str(attr_type):
+    result = helper.attr_type_to_str(attr_type)
+    assert result is not None
+
+
+def test_attr_type_to_str_raises():
+    try:
+        result = helper.attr_type_to_str(9999)
+    except ValueError as e:
+        return
+    assert False, "Should have raised a ValueError"
+
+
 if __name__ == "__main__":
     unittest.main()
     pytest.main([__file__])

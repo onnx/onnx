@@ -1538,3 +1538,34 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     :return: all tensor types from TensorProto
     """
     return mapping.TENSOR_TYPE_MAP.keys()
+
+
+attribute_proto_type_to_str = {
+    AttributeProto.FLOAT: "float",
+    AttributeProto.FLOATS: "floats",
+    AttributeProto.GRAPH: "graph",
+    AttributeProto.GRAPHS: "graphs",
+    AttributeProto.INT: "int",
+    AttributeProto.INTS: "ints",
+    AttributeProto.SPARSE_TENSOR: "sparse_tensor",
+    AttributeProto.SPARSE_TENSORS: "sparse_tensors",
+    AttributeProto.STRING: "string",
+    AttributeProto.STRINGS: "strings",
+    AttributeProto.TENSOR: "tensor",
+    AttributeProto.TENSORS: "tensors",
+    AttributeProto.TYPE_PROTO: "proto",
+    AttributeProto.TYPE_PROTOS: "protos",
+}
+
+
+def attr_type_to_str(attr_type: int) -> str:
+    """
+    Convert AttributeProto type to string.
+
+    :param attr_type: AttributeProto type.
+    :return: String representing the supplied attr_type. Raises ValueError if
+        attr_type is not a valid AttributeProto type.
+    """
+    if attr_type in attribute_proto_type_to_str:
+        return attribute_proto_type_to_str[attr_type]
+    raise ValueError(f"Unsupported ONNX attribute type: {attr_type}")
