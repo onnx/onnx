@@ -465,16 +465,15 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
     // Mismatch between type-annotation and attribute-value. We do an implicit cast
     // only in the special case of FLOAT type and integral value like 2
     if ((expected == AttributeProto_AttributeType_FLOAT) && (attr.type() == AttributeProto_AttributeType_INT)) {
-        attr.set_type(AttributeProto_AttributeType_FLOAT);
-        attr.set_f(static_cast<float>(attr.i()));      
+      attr.set_type(AttributeProto_AttributeType_FLOAT);
+      attr.set_f(static_cast<float>(attr.i()));
     } else {
-      return ParseError("Mismatch between expected type ",
-        AttributeProto_AttributeType_Name(expected),
-        " and specified value's type",
-        AttributeProto_AttributeType_Name(attr.type())
-        );
+      return ParseError(
+          "Mismatch between expected type ",
+          AttributeProto_AttributeType_Name(expected),
+          " and specified value's type",
+          AttributeProto_AttributeType_Name(attr.type()));
     }
-
   }
   return Status::OK();
 }
@@ -518,7 +517,7 @@ AttributeProto_AttributeType ToSingletonType(AttributeProto_AttributeType type) 
     case AttributeProto_AttributeType_TYPE_PROTOS:
       return AttributeProto_AttributeType_TYPE_PROTO;
     default:
-      return type;  
+      return type;
   }
 }
 
