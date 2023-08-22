@@ -2999,7 +2999,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "dft_length",
-            "The length of the signal. "
+            "The length of the signal as a scalar. "
             "If greater than the axis dimension, the signal will be zero-padded up to dft_length. "
             "If less than the axis dimension, only the first dft_length values will be used as the signal. "
             "It's an optional value. ",
