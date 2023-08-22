@@ -89,11 +89,11 @@ using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
 class NameGenerator : private Visitor {
  public:
-  NameGenerator(const GraphProto& graph) : index_(0) {
+  explicit NameGenerator(const GraphProto& graph) : index_(0) {
     VisitGraph(graph);
   }
 
-  NameGenerator(const FunctionProto& function) : index_(0) {
+  explicit NameGenerator(const FunctionProto& function) : index_(0) {
     VisitFunction(function);
   }
 
@@ -429,7 +429,7 @@ using FunctionMap = std::unordered_map<FunctionId, std::pair<const FunctionProto
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
 // Shared utility used for inlining into either a GraphProto or a FunctionProto.
-void InlineFunctions(NodeList& nodes, FunctionMap& map, NameGenerator& name_generator, ModelProto* model) {
+void InlineFunctions(NodeList& nodes, const FunctionMap& map, NameGenerator& name_generator, ModelProto* model) {
   NodeList original_nodes;
   // Move all nodes into original_nodes
   original_nodes.Swap(&nodes);

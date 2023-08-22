@@ -4,6 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
