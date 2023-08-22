@@ -1698,7 +1698,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_slice_without_input_shape(self) -> None:
         graph = self._make_graph(
             [
-                ("x", TensorProto.FLOAT, (3, 2)),
+                ("x", TensorProto.FLOAT, (3, 2, "a")),
                 ("starts", TensorProto.INT64, (1,)),
                 ("ends", TensorProto.INT64, (1,)),
             ],
@@ -1706,7 +1706,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, None)]
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (None, None, None))]
         )
 
     def test_slice_with_input_shape(self) -> None:

@@ -316,7 +316,6 @@ static const char* LabelEncoder_ver4_doc = R"DOC(
     "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
     Since this operator is an one-to-one mapping, its input and output shapes
     are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
-    When 'values_tensor' is used, a default value must be specified.<br>
     Float keys with value 'NaN' match any input 'NaN' value regardless of bit
     value. If a key is repeated, the last key takes precedence.
 )DOC";
