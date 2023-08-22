@@ -11,7 +11,7 @@
 namespace ONNX_NAMESPACE {
 namespace defs::math::utils {
 template <typename T>
-static T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
+T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
   if (t == nullptr) {
     return T{};
   }

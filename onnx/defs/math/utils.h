@@ -9,7 +9,7 @@
 namespace ONNX_NAMESPACE {
 namespace defs::math::utils {
 template <typename T>
-static T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t);
+T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t);
 
 std::function<void(OpSchema&)>
 SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation);
