@@ -90,7 +90,6 @@ class TestBasicFunctions(unittest.TestCase):
          {
             out = custom_domain.Selu<alpha=2.0, gamma=3.0>(x)
          }
-
          <
          domain: "custom_domain",
          opset_import: [ "" : 15],

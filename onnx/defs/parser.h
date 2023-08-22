@@ -421,7 +421,7 @@ class OnnxParser : public ParserBase {
 
   Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
 
-  Status ParseSingleAttributeValue(AttributeProto& attr);
+  Status ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected);
 
   Status Parse(ValueInfoProto& valueinfo);
 
