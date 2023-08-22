@@ -44,7 +44,7 @@ def generate_test_data(
     try:
         # pylint: disable=import-outside-toplevel
         import cv2
-    except ImportError as e:
+    except ImportError:
         # Since opencv-python is not installed to generate test data for the ImageDecoder operator
         # directly use the frozen data from image_decoder_data.py.
         return frozen_data.data, frozen_data.output
