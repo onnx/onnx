@@ -38,7 +38,7 @@ def generate_checkerboard(width, height, square_size):
     return image
 
 
-def generate_test_data(extension, pixel_format="RGB", h=40, w=40, tile_sz=5):
+def generate_test_data(extension, pixel_format="RGB", h=32, w=32, tile_sz=5):
     try:
         # pylint: disable=import-outside-toplevel
         import cv2
