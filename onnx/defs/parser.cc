@@ -471,6 +471,20 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   return Parse(attr, name);
 }
 
+bool IsSingletonAttribute(AttributeProto_AttributeType type) {
+  switch (type) {
+    case AttributeProto_AttributeType_FLOAT:
+    case AttributeProto_AttributeType_INT:
+    case AttributeProto_AttributeType_STRING:
+    case AttributeProto_AttributeType_TENSOR:
+    case AttributeProto_AttributeType_GRAPH:
+    case AttributeProto_AttributeType_SPARSE_TENSOR:
+    case AttributeProto_AttributeType_TYPE_PROTO:
+      return true;
+    default:
+      return false;
+  }
+}
 Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   attr.set_name(name);
   if (Matches(':')) {
@@ -484,30 +498,37 @@ Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   }
   MATCH('=');
   if (NextChar() == '[') {
-    // Parse a list of values. For now, empty list is not allowed, as we need to
-    // figure out a type for the attribute.
+    // Parse a list of values. For an empty list, the type MUST be specified
+    // using the type-annotation syntax of ": type".
     std::vector<Literal> vals;
     MATCH('[');
-    do {
-      AttributeProto nextval;
-      CHECK_PARSER_STATUS(ParseSingleAttributeValue(nextval));
-      switch (nextval.type()) {
-        case AttributeProto_AttributeType_INT:
-          attr.set_type(AttributeProto_AttributeType_INTS);
-          attr.add_ints(nextval.i());
-          break;
-        case AttributeProto_AttributeType_FLOAT:
-          attr.set_type(AttributeProto_AttributeType_FLOATS);
-          attr.add_floats(nextval.f());
-          break;
-        case AttributeProto_AttributeType_STRING:
-          attr.add_strings(nextval.s());
-          attr.set_type(AttributeProto_AttributeType_STRINGS);
-          break;
-        default:
-          break;
-      }
-    } while (Matches(','));
+    if (NextChar() != ']') {
+      do {
+        AttributeProto nextval;
+        CHECK_PARSER_STATUS(ParseSingleAttributeValue(nextval));
+        switch (nextval.type()) {
+          case AttributeProto_AttributeType_INT:
+            attr.set_type(AttributeProto_AttributeType_INTS);
+            attr.add_ints(nextval.i());
+            break;
+          case AttributeProto_AttributeType_FLOAT:
+            attr.set_type(AttributeProto_AttributeType_FLOATS);
+            attr.add_floats(nextval.f());
+            break;
+          case AttributeProto_AttributeType_STRING:
+            attr.add_strings(nextval.s());
+            attr.set_type(AttributeProto_AttributeType_STRINGS);
+            break;
+          default:
+            break;
+        }
+      } while (Matches(','));
+    } else {
+      if (attr.type() == AttributeProto_AttributeType_UNDEFINED)
+        return ParseError("Empty list attribute value requires type annotation.");
+      if (IsSingletonAttribute(attr.type()))
+        return ParseError("Singleton attribute value cannot be specified as a list.");
+    }
     MATCH(']');
   } else {
     CHECK_PARSER_STATUS(ParseSingleAttributeValue(attr));
