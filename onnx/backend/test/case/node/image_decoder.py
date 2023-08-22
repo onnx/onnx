@@ -38,14 +38,16 @@ def generate_checkerboard(width, height, square_size):
     return image
 
 
-def generate_test_data(extension, pixel_format="RGB", h=32, w=32, tile_sz=5):
+def generate_test_data(
+    extension, frozen_data, pixel_format="RGB", h=32, w=32, tile_sz=5
+):
     try:
         # pylint: disable=import-outside-toplevel
         import cv2
     except ImportError as e:
-        raise ImportError(
-            "opencv-python must be installed to generate test data for the ImageDecoder operator"
-        ) from e
+        # Since opencv-python is not installed to generate test data for the ImageDecoder operator
+        # directly use the frozen data from image_decoder_data.py.
+        return frozen_data.data, frozen_data.output
     data, output = None, None
     np.random.seed(12345)
     image = generate_checkerboard(h, w, tile_sz)
@@ -73,9 +75,9 @@ class ImageDecoder(Base):
             pixel_format="RGB",
         )
 
-        # data, output = generate_test_data(".jpg", "RGB")
-        test_data = image_decoder_data.image_decoder_decode_jpeg_rgb
-        data, output = test_data.data, test_data.output
+        data, output = generate_test_data(
+            ".jpg", image_decoder_data.image_decoder_decode_jpeg_rgb, "RGB"
+        )
         expect(
             node,
             inputs=[data],
@@ -92,9 +94,9 @@ class ImageDecoder(Base):
             pixel_format="Grayscale",
         )
 
-        # data, output = generate_test_data(".jpg", "Grayscale")
-        test_data = image_decoder_data.image_decoder_decode_jpeg_grayscale
-        data, output = test_data.data, test_data.output
+        data, output = generate_test_data(
+            ".jpg", image_decoder_data.image_decoder_decode_jpeg_grayscale, "Grayscale"
+        )
         expect(
             node,
             inputs=[data],
@@ -111,9 +113,9 @@ class ImageDecoder(Base):
             pixel_format="BGR",
         )
 
-        # data, output = generate_test_data(".jpg", "BGR")
-        test_data = image_decoder_data.image_decoder_decode_jpeg_bgr
-        data, output = test_data.data, test_data.output
+        data, output = generate_test_data(
+            ".jpg", image_decoder_data.image_decoder_decode_jpeg_bgr, "BGR"
+        )
         expect(
             node,
             inputs=[data],
@@ -130,9 +132,9 @@ class ImageDecoder(Base):
             pixel_format="RGB",
         )
 
-        # data, output = generate_test_data(".jp2", "RGB")
-        test_data = image_decoder_data.image_decoder_decode_jpeg2k_rgb
-        data, output = test_data.data, test_data.output
+        data, output = generate_test_data(
+            ".jp2", image_decoder_data.image_decoder_decode_jpeg2k_rgb, "RGB"
+        )
         expect(
             node,
             inputs=[data],
@@ -149,9 +151,9 @@ class ImageDecoder(Base):
             pixel_format="RGB",
         )
 
-        # data, output = generate_test_data(".bmp", "RGB")
-        test_data = image_decoder_data.image_decoder_decode_bmp_rgb
-        data, output = test_data.data, test_data.output
+        data, output = generate_test_data(
+            ".bmp", image_decoder_data.image_decoder_decode_bmp_rgb, "RGB"
+        )
         expect(
             node,
             inputs=[data],
@@ -168,9 +170,9 @@ class ImageDecoder(Base):
             pixel_format="RGB",
         )
 
-        # data, output = generate_test_data(".png", "RGB")
-        test_data = image_decoder_data.image_decoder_decode_png_rgb
-        data, output = test_data.data, test_data.output
+        data, output = generate_test_data(
+            ".png", image_decoder_data.image_decoder_decode_png_rgb, "RGB"
+        )
         expect(
             node,
             inputs=[data],
@@ -187,9 +189,9 @@ class ImageDecoder(Base):
             pixel_format="RGB",
         )
 
-        # data, output = generate_test_data(".tiff", "RGB")
-        test_data = image_decoder_data.image_decoder_decode_tiff_rgb
-        data, output = test_data.data, test_data.output
+        data, output = generate_test_data(
+            ".tiff", image_decoder_data.image_decoder_decode_tiff_rgb, "RGB"
+        )
         expect(
             node,
             inputs=[data],
@@ -206,9 +208,9 @@ class ImageDecoder(Base):
             pixel_format="RGB",
         )
 
-        # data, output = generate_test_data(".webp", "RGB")
-        test_data = image_decoder_data.image_decoder_decode_webp_rgb
-        data, output = test_data.data, test_data.output
+        data, output = generate_test_data(
+            ".webp", image_decoder_data.image_decoder_decode_webp_rgb, "RGB"
+        )
         expect(
             node,
             inputs=[data],
@@ -225,9 +227,9 @@ class ImageDecoder(Base):
             pixel_format="RGB",
         )
 
-        # data, output = generate_test_data(".pnm", "RGB")
-        test_data = image_decoder_data.image_decoder_decode_pnm_rgb
-        data, output = test_data.data, test_data.output
+        data, output = generate_test_data(
+            ".pnm", image_decoder_data.image_decoder_decode_pnm_rgb, "RGB"
+        )
         expect(
             node,
             inputs=[data],
