@@ -9,7 +9,9 @@
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
-namespace defs::math::utils {
+namespace defs {
+namespace math {
+namespace utils {
 template <typename T>
 T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
   if (t == nullptr) {
@@ -92,6 +94,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
     });
   };
 }
-} // namespace defs::math::utils
-
+} // namespace utils
+} // namespace math
+} // namespace defs
 } // namespace ONNX_NAMESPACE
