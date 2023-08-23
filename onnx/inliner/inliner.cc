@@ -527,7 +527,7 @@ std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::Create(
 }
 
 void InlineLocalFunctions(ModelProto& model, bool convert_version) {
-  OpsetMap model_imports(model.opset_import());
+  OpsetMap model_imports(model);
   FunctionMap map;
 
   // For every function, we check if there is a mismatch between the opset versions
@@ -538,7 +538,7 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
   // standard ONNX domain.
 
   for (auto& function : model.functions()) {
-    auto mismatches = model_imports.Mismatches(function.opset_import());
+    auto mismatches = model_imports.Mismatches(function);
     auto iter = mismatches.find(ONNX_DOMAIN);
     int64_t target_onnx_version = kNoConversion;
     if (convert_version && (iter != mismatches.end())) {
@@ -564,7 +564,7 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
 }
 
 void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
-  OpsetMap model_imports(model.opset_import());
+  OpsetMap model_imports(model);
   FunctionMap map;
   std::vector<FunctionProto*> non_inlined_functions;
 
