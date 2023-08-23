@@ -34,31 +34,48 @@ using namespace internal;
 using FunctionResolver =
     std::function<bool(const std::string& domain, const std::string& op, FunctionProto* return_value)>;
 
-// We use a string of the form "domain::name" as the id for a function.
-using FunctionId = std::string;
+// We use a string of the form "domain::name" as the key for a function id.
+using FunctionIdKey = std::string;
 
-FunctionId GetFunctionId(const std::string& domain, const std::string& op) {
+FunctionIdKey GetFunctionId(const std::string& domain, const std::string& op) {
   return NormalizeDomain(domain) + "::" + op;
 }
 
-FunctionId GetFunctionId(const FunctionProto& function) {
+FunctionIdKey GetFunctionId(const FunctionProto& function) {
   return GetFunctionId(function.domain(), function.name());
 }
 
-FunctionId GetCalleeId(const NodeProto& node) {
+FunctionIdKey GetCalleeId(const NodeProto& node) {
   return GetFunctionId(node.domain(), node.op_type());
 }
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 
+// A representation of the opset versions required by a model or a function.
+// Used to check for compatibility between a model and a function or between
+// two functions.
 struct OpsetMap : public OpsetMapBase {
-  OpsetMap(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
-    for (const auto& pair : list) {
-      (*this)[NormalizeDomain(pair.domain())] = pair.version();
-    }
+ public:
+  // Construct a map representing the opset versions required by a model.
+  explicit OpsetMap(const ModelProto& model) {
+    (void)Add(model.opset_import());
   }
 
-  OpsetMapBase Mismatches(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
+  // Adds the opset versions required by a function to the map. Returns true
+  // iff the function is compatible with the map, i.e., if the function does
+  // not require a different version for any domain already in the map.
+  bool Add(const FunctionProto& function) {
+    return Add(function.opset_import());
+  }
+
+  // Returns the set of mismatches in the opset requirements of given
+  // function and the map.
+  OpsetMapBase Mismatches(const FunctionProto& function) const {
+    return Mismatches(function.opset_import());
+  }
+
+ private:
+  OpsetMapBase Mismatches(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) const {
     OpsetMapBase result;
     for (const auto& pair : list) {
       auto iter = this->find(NormalizeDomain(pair.domain()));
@@ -67,14 +84,34 @@ struct OpsetMap : public OpsetMapBase {
     }
     return result;
   }
+
+  bool Add(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
+    OpsetMapBase result;
+    for (const auto& pair : list) {
+      auto domain = NormalizeDomain(pair.domain());
+      auto version = pair.version();
+      auto iter = this->find(domain);
+      if (iter != this->end()) {
+        if (iter->second != version)
+          return false;
+      } else {
+        (*this)[domain] = version;
+      }
+    }
+    return true;
+  }
 };
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
 class NameGenerator : private Visitor {
  public:
-  NameGenerator(const GraphProto& graph) : index_(0) {
+  explicit NameGenerator(const GraphProto& graph) : index_(0) {
     VisitGraph(graph);
+  }
+
+  explicit NameGenerator(const FunctionProto& function) : index_(0) {
+    VisitFunction(function);
   }
 
   // Creates a new unique name, based on a suggested name, and adds it to the set
@@ -102,6 +139,14 @@ class NameGenerator : private Visitor {
     // to produce better results for invalid graphs.
     for (const auto& x : graph.output())
       Add(x.name());
+    return true;
+  }
+
+  bool ProcessFunction(const FunctionProto& function) override {
+    for (const auto& x : function.input())
+      Add(x);
+    for (const auto& x : function.output())
+      Add(x);
     return true;
   }
 
@@ -396,17 +441,15 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
 }
 
 constexpr int64_t kNoConversion = -1;
-using FunctionMap = std::unordered_map<FunctionId, std::pair<const FunctionProto*, int64_t>>;
+using FunctionMap = std::unordered_map<FunctionIdKey, std::pair<const FunctionProto*, int64_t>>;
 
-void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
-  auto* graph = model.mutable_graph();
+using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
-  NameGenerator name_generator(*graph);
-
-  auto* nodes = graph->mutable_node();
-  google::protobuf::RepeatedPtrField<NodeProto> original_nodes;
+// Shared utility used for inlining into either a GraphProto or a FunctionProto.
+void InlineFunctions(NodeList& nodes, const FunctionMap& map, NameGenerator& name_generator, ModelProto* model) {
+  NodeList original_nodes;
   // Move all nodes into original_nodes
-  original_nodes.Swap(nodes);
+  original_nodes.Swap(&nodes);
 
   int inline_count = 0;
   std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
@@ -422,11 +465,12 @@ void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
       InliningRenamer::Rename(node, callee, "__" + std::to_string(++inline_count), name_generator);
       if (target_version != kNoConversion) {
         ONNX_ASSERTM(
-            convert_version,
-            "Internal Error: Inlining function %s::%s requires version conversion, but convert_version is false.",
+            model != nullptr,
+            "Internal Error: Inlining function %s::%s requires version conversion, "
+            "but version conversion is supported only for models, not functions.",
             callee.domain().c_str(),
             callee.name().c_str());
-        ConvertVersion(model, node, callee, target_version);
+        ConvertVersion(*model, node, callee, target_version);
       }
       // Append nodes of called function
       for (auto& callee_node : *callee.mutable_node())
@@ -435,7 +479,7 @@ void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
       // Append node without inlining.
       // TODO: use std::move instead of copying. Use of move doesn't seem to work with
       // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
-      *nodes->Add() = node;
+      *nodes.Add() = node;
     }
   };
   for (auto& node : original_nodes) {
@@ -443,12 +487,47 @@ void InlineFunctions(ModelProto& model, FunctionMap map, bool convert_version) {
   }
 }
 
+void InlineFunctions(ModelProto& model, FunctionMap& map) {
+  auto* graph = model.mutable_graph();
+  NameGenerator name_generator(*graph);
+  auto* nodes = graph->mutable_node();
+  InlineFunctions(*nodes, map, name_generator, &model);
+}
+
+void InlineFunctions(FunctionProto& function, FunctionMap& map) {
+  NameGenerator name_generator(function);
+  InlineFunctions(*function.mutable_node(), map, name_generator, nullptr);
+}
+
+class VectorSet : public FunctionIdSet {
+ public:
+  VectorSet(FunctionIdVector&& function_ids, bool invert) : function_ids_(std::move(function_ids)), invert_(invert) {}
+
+  bool Contains(const std::string& function_domain, const std::string& function_name) const override {
+    bool found =
+        std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) !=
+        function_ids_.end();
+    return invert_ ? !found : found;
+  }
+
+ private:
+  FunctionIdVector function_ids_;
+  bool invert_;
+};
+
 } // namespace
 
 // Public API implementation:
 
+std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::Create(
+    FunctionIdVector&& function_ids,
+    bool invert) {
+  auto* p = new VectorSet(std::move(function_ids), invert);
+  return std::unique_ptr<FunctionIdSet>(p);
+}
+
 void InlineLocalFunctions(ModelProto& model, bool convert_version) {
-  OpsetMap model_imports(model.opset_import());
+  OpsetMap model_imports(model);
   FunctionMap map;
 
   // For every function, we check if there is a mismatch between the opset versions
@@ -459,7 +538,7 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
   // standard ONNX domain.
 
   for (auto& function : model.functions()) {
-    auto mismatches = model_imports.Mismatches(function.opset_import());
+    auto mismatches = model_imports.Mismatches(function);
     auto iter = mismatches.find(ONNX_DOMAIN);
     int64_t target_onnx_version = kNoConversion;
     if (convert_version && (iter != mismatches.end())) {
@@ -471,10 +550,45 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
     }
   }
 
-  InlineFunctions(model, map, convert_version);
+  InlineFunctions(model, map);
 
   // Remove all model-local functions. We do not remove functions with a mis-matched
   // opset version. They need to be handled some other way, eg., using a version-adapter.
+  auto* local_functions = model.mutable_functions();
+  for (auto it = local_functions->begin(); it != local_functions->end();) {
+    if (map.count(GetFunctionId(*it)) > 0)
+      it = local_functions->erase(it);
+    else
+      ++it;
+  }
+}
+
+void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
+  OpsetMap model_imports(model);
+  FunctionMap map;
+  std::vector<FunctionProto*> non_inlined_functions;
+
+  // If there is any mismatch between the opset versions required for any of the
+  // functions and the model, the inliner will fail.
+
+  for (auto& function : *model.mutable_functions()) {
+    // auto& function = *function_ptr;
+    if (!model_imports.Add(function))
+      ONNX_THROW("Model has functions with incompatible opset versions.");
+    if (to_inline.Contains(function.domain(), function.name())) {
+      map[GetFunctionId(function)] = std::pair<const FunctionProto*, int64_t>(&function, kNoConversion);
+    } else {
+      non_inlined_functions.push_back(&function);
+    }
+  }
+
+  InlineFunctions(model, map);
+
+  for (auto* function_ptr : non_inlined_functions) {
+    InlineFunctions(*function_ptr, map);
+  }
+
+  // Remove all inlined model-local functions.
   auto* local_functions = model.mutable_functions();
   for (auto it = local_functions->begin(); it != local_functions->end();) {
     if (map.count(GetFunctionId(*it)) > 0)
