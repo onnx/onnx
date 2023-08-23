@@ -34,30 +34,47 @@ using namespace internal;
 using FunctionResolver =
     std::function<bool(const std::string& domain, const std::string& op, FunctionProto* return_value)>;
 
-// We use a string of the form "domain::name" as the id for a function.
-using FunctionId = std::string;
+// We use a string of the form "domain::name" as the key for a function id.
+using FunctionIdKey = std::string;
 
-FunctionId GetFunctionId(const std::string& domain, const std::string& op) {
+FunctionIdKey GetFunctionId(const std::string& domain, const std::string& op) {
   return NormalizeDomain(domain) + "::" + op;
 }
 
-FunctionId GetFunctionId(const FunctionProto& function) {
+FunctionIdKey GetFunctionId(const FunctionProto& function) {
   return GetFunctionId(function.domain(), function.name());
 }
 
-FunctionId GetCalleeId(const NodeProto& node) {
+FunctionIdKey GetCalleeId(const NodeProto& node) {
   return GetFunctionId(node.domain(), node.op_type());
 }
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 
+// A representation of the opset versions required by a model or a function.
+// Used to check for compatibility between a model and a function or between
+// two functions.
 struct OpsetMap : public OpsetMapBase {
-  OpsetMap(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
-    for (const auto& pair : list) {
-      (*this)[NormalizeDomain(pair.domain())] = pair.version();
-    }
+ public:
+  // Construct a map representing the opset versions required by a model.
+  OpsetMap(const ModelProto& model) {
+    (void)Add(model.opset_import());
   }
 
+  // Adds the opset versions required by a function to the map. Returns true
+  // iff the function is compatible with the map, i.e., if the function does
+  // not require a different version for any domain already in the map.
+  bool Add(const FunctionProto& function) {
+    return Add(function.opset_import());
+  }
+
+  // Returns the set of mismatches in the opset requirements of given
+  // function and the map.
+  OpsetMapBase Mismatches(const FunctionProto& function) const {
+    return Mismatches(function.opset_import());
+  }
+
+ private:
   OpsetMapBase Mismatches(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) const {
     OpsetMapBase result;
     for (const auto& pair : list) {
@@ -424,7 +441,7 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
 }
 
 constexpr int64_t kNoConversion = -1;
-using FunctionMap = std::unordered_map<FunctionId, std::pair<const FunctionProto*, int64_t>>;
+using FunctionMap = std::unordered_map<FunctionIdKey, std::pair<const FunctionProto*, int64_t>>;
 
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
@@ -556,7 +573,7 @@ void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) 
 
   for (auto& function : *model.mutable_functions()) {
     // auto& function = *function_ptr;
-    if (!model_imports.Add(function.opset_import()))
+    if (!model_imports.Add(function))
       ONNX_THROW("Model has functions with incompatible opset versions.");
     if (to_inline.Contains(function.domain(), function.name())) {
       map[GetFunctionId(function)] = std::pair<const FunctionProto*, int64_t>(&function, kNoConversion);
