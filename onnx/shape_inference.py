@@ -20,7 +20,7 @@ from onnx import AttributeProto, FunctionProto, ModelProto, TypeProto
 def infer_shapes(
     model: ModelProto | bytes,
     check_type: bool = False,
-    strict_mode: bool = False,
+    error_mode: C.InferenceErrorMode = C.InferenceErrorMode.IgnoreInferenceError,
     data_prop: bool = False,
 ) -> ModelProto:
     """Apply shape inference to the provided ModelProto.
@@ -34,8 +34,11 @@ def infer_shapes(
     Arguments:
         model (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
         check_type (bool): Checks the type-equality for input and output
-        strict_mode (bool): Stricter shape inference, it will throw errors if any;
-            Otherwise, simply stop if any error
+        error_mode (InferenceErrorMode): 
+            IgnoreInferenceError: ignore any inference error and continue
+            FailAnyInferenceError: stop on any inference error and throw the exception combining all inference errors
+            FailShapeInferenceError: stop on shape inference error and throw the exception
+            FailTypeInferenceError: stop on type inference error and throw the exception
         data_prop (bool): Enables data propagation for limited operators to perform shape computation
 
     Returns:
@@ -44,7 +47,7 @@ def infer_shapes(
     if isinstance(model, (ModelProto, bytes)):
         model_str = model if isinstance(model, bytes) else model.SerializeToString()
         inferred_model_str = C.infer_shapes(
-            model_str, check_type, strict_mode, data_prop
+            model_str, check_type, error_mode, data_prop
         )
         return onnx.load_from_string(inferred_model_str)
     if isinstance(model, str):
@@ -62,7 +65,7 @@ def infer_shapes_path(
     model_path: str | os.PathLike,
     output_path: str | os.PathLike = "",
     check_type: bool = False,
-    strict_mode: bool = False,
+    error_mode: C.InferenceErrorMode = C.InferenceErrorMode.IgnoreInferenceError,
     data_prop: bool = False,
 ) -> None:
     """
@@ -91,7 +94,7 @@ def infer_shapes_path(
 
     if output_path == "":
         output_path = model_path
-    C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
+    C.infer_shapes_path(model_path, output_path, check_type, error_mode, data_prop)
 
 
 def infer_node_outputs(
@@ -168,3 +171,6 @@ def infer_function_output_types(
 
 
 InferenceError = C.InferenceError
+TypeInferenceError = C.TypeInferenceError
+ShapeInferenceError = C.ShapeInferenceError
+InferenceErrorMode = C.InferenceErrorMode

@@ -1036,7 +1036,7 @@ void check_model(const std::string& model_path, bool full_check, bool skip_opset
   check_model(model, ctx);
 
   if (full_check) {
-    ShapeInferenceOptions options{true, 1, false};
+    ShapeInferenceOptions options{true, FailAnyInferenceError, false};
     ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
   }
 }
@@ -1046,7 +1046,7 @@ void check_model(const ModelProto& model, bool full_check, bool skip_opset_compa
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   check_model(model, ctx);
   if (full_check) {
-    ShapeInferenceOptions options{true, 1, false};
+    ShapeInferenceOptions options{true, FailAnyInferenceError, false};
     // Do not update the model in place by the check from shape inference
     // because checker should not modify the original model
     ModelProto copy = model;

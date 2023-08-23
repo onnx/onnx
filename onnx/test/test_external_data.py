@@ -15,6 +15,7 @@ import parameterized
 
 import onnx
 from onnx import ModelProto, TensorProto, checker, helper, shape_inference
+from onnx.shape_inference import InferenceErrorMode
 from onnx.external_data_helper import (
     convert_model_from_external_data,
     convert_model_to_external_data,
@@ -602,7 +603,7 @@ class TestExternalDataToArray(unittest.TestCase):
             shape_inference.InferenceError,
             shape_inference.infer_shapes,
             model_without_external_data,
-            strict_mode=True,
+            error_mode=InferenceErrorMode.FailAnyInferenceError,
         )
 
     def test_to_array_with_external_data(self) -> None:

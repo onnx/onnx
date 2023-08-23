@@ -19,7 +19,8 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.numpy_helper import from_array
-from onnx.shape_inference import InferenceError, infer_node_outputs
+from onnx.shape_inference import InferenceError, InferenceErrorMode, infer_node_outputs
+
 
 ADD_SCHEMA = max(
     (s for s in get_all_schemas_with_history() if s.name == "Add" and s.domain == ""),
@@ -236,9 +237,9 @@ class TestInferenceFunctionCall(unittest.TestCase):
         }
         """
         model = onnx.parser.parse_model(model_script)
-        onnx.shape_inference.infer_shapes(model, strict_mode=False)
-        with self.assertRaises(onnx.shape_inference.InferenceError):
-            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        onnx.shape_inference.infer_shapes(model, error_mode=InferenceErrorMode.IgnoreInferenceError)
+        with self.assertRaises(onnx.shape_inference.ShapeInferenceError):
+            onnx.shape_inference.infer_shapes(model, error_mode=InferenceErrorMode.FailAnyInferenceError)
 
     def test_inference_with_attribute(self) -> None:
         model_script = """
@@ -273,8 +274,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
         }
         """
         model = onnx.parser.parse_model(model_script)
-        # onnx.shape_inference.infer_shapes(model, strict_mode=False)
-        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        onnx.shape_inference.infer_shapes(model, error_mode=InferenceErrorMode.FailAnyInferenceError)
 
 
 if __name__ == "__main__":

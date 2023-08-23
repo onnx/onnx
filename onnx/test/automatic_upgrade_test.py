@@ -9,6 +9,7 @@ import numpy as np
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
+from onnx.shape_inference import InferenceError, InferenceErrorMode
 
 #####################################################################################
 # Every test creates a model containing a single operator from the lowest possible
@@ -106,11 +107,11 @@ class TestAutomaticUpgrade(unittest.TestCase):
             opset_imports=[helper.make_opsetid("", from_opset)],
         )
         onnx.checker.check_model(original)
-        shape_inference.infer_shapes(original, strict_mode=True)
+        shape_inference.infer_shapes(original, error_mode=InferenceErrorMode.FailAnyInferenceError)
 
         converted = version_converter.convert_version(original, LATEST_OPSET)
         onnx.checker.check_model(converted)
-        shape_inference.infer_shapes(converted, strict_mode=True)
+        shape_inference.infer_shapes(converted, error_mode=InferenceErrorMode.FailAnyInferenceError)
 
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})

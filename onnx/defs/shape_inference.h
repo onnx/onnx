@@ -18,18 +18,22 @@ namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
 
+enum InferenceErrorMode : uint8_t {
+  IgnoreInferenceError, // Ignore any inference errors
+  FailAnyInferenceError,  // Fail on any inference error
+  FailShapeInferenceError,  // Fail on any shape inference error, like merging existing shape with inferred etc.
+  FailTypeInferenceError  // Fail on any type inference error
+};
+
 struct ShapeInferenceOptions {
   // Checks the type-equality for input and output
   bool check_type;
-  // 1: Will throw any node level shape infer errors
-  // 0: Won't throw node-level shape infer errors, but other errors
-  // like merging existing shape with inferred etc are thrown
-  int error_mode;
+  InferenceErrorMode error_mode;
   // Enables data propagation for limited operators
   // to perform shape computation
   bool enable_data_propagation;
-  ShapeInferenceOptions(bool check_type_val = false, int strict_mode_val = 0, bool data_prop_val = false)
-      : check_type(check_type_val), error_mode(strict_mode_val), enable_data_propagation(data_prop_val){};
+  ShapeInferenceOptions(bool check_type_val = false, InferenceErrorMode error_mode_val = IgnoreInferenceError, bool data_prop_val = false)
+      : check_type(check_type_val), error_mode(error_mode_val), enable_data_propagation(data_prop_val){};
 };
 
 // Maintains a SymbolTable for symbolic shape inference
@@ -52,9 +56,8 @@ class GraphInferencer {
   virtual ~GraphInferencer() = default;
 };
 
-// Exception class used for handling errors in type and shape inference
-
-class InferenceError final : public std::runtime_error {
+// Exception classes used for handling errors in type and shape inference
+class InferenceError : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
 
@@ -75,11 +78,23 @@ class InferenceError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
+class ShapeInferenceError final : public InferenceError {
+ public:
+  ShapeInferenceError(const std::string& message)
+      : InferenceError(ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", message)) {}
+};
+
+class TypeInferenceError final : public InferenceError {
+ public:
+  TypeInferenceError(const std::string& message)
+      : InferenceError(ONNX_NAMESPACE::MakeString("[TypeInferenceError] ", message)) {}
+};
+
 #define fail_type_inference(...) \
-  ONNX_THROW_EX(ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[TypeInferenceError] ", __VA_ARGS__)));
+  ONNX_THROW_EX(ONNX_NAMESPACE::TypeInferenceError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
 
 #define fail_shape_inference(...) \
-  ONNX_THROW_EX(ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", __VA_ARGS__)));
+  ONNX_THROW_EX(ONNX_NAMESPACE::ShapeInferenceError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
 
 struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;

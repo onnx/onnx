@@ -6,6 +6,7 @@ import unittest
 from typing import List, Optional
 
 import onnx.shape_inference
+from onnx.shape_inference import InferenceErrorMode
 from onnx import ModelProto, TensorProto, TensorShapeProto, ValueInfoProto, helper
 from onnx.helper import make_model, make_tensor_value_info
 
@@ -86,7 +87,7 @@ class TestSymbolicShape(unittest.TestCase):
         )
 
         onnx_model = make_model(graph_def)
-        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
+        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, error_mode=InferenceErrorMode.FailAnyInferenceError)
         self._assert_valueinfo_shape(
             inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (2, -1))]
         )
@@ -119,7 +120,7 @@ class TestSymbolicShape(unittest.TestCase):
         )
 
         onnx_model = make_model(graph_def)
-        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
+        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, error_mode=InferenceErrorMode.FailAnyInferenceError)
         self._assert_valueinfo_shape(
             inferred_model,
             [
@@ -159,7 +160,7 @@ class TestSymbolicShape(unittest.TestCase):
 
         onnx_model = make_model(graph_def)
         original_count = self._count_unique_dim_param_number(onnx_model)
-        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
+        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, error_mode=InferenceErrorMode.FailAnyInferenceError)
         inferred_count = self._count_unique_dim_param_number(inferred_model)
         # to prevent duplicate so the inferred count will be count + 2
         # new symbol 'unk__2' and 'unk__3' should be generated
@@ -189,7 +190,7 @@ class TestSymbolicShape(unittest.TestCase):
         )
 
         onnx_model = make_model(graph_def)
-        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
+        inferred_model = onnx.shape_inference.infer_shapes(onnx_model, error_mode=InferenceErrorMode.FailAnyInferenceError)
         self._assert_valueinfo_shape(
             inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (3, -1))]
         )

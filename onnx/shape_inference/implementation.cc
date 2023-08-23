@@ -951,7 +951,7 @@ std::vector<TypeProto> InferFunctionOutputTypes(
     const std::vector<AttributeProto>& attributes) {
   // TODO: if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
   // we can add them to the Python API. For now we just assume the default options.
-  ShapeInferenceOptions options{true, 1, false};
+  ShapeInferenceOptions options{true, FailAnyInferenceError, false};
   FunctionInferenceContext ctx(function_proto, input_types, attributes, options);
   auto opset_imports = GetOpsetImportsFromProto(function_proto);
   GraphProto g;

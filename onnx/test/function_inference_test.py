@@ -49,7 +49,7 @@ class TestFunctionInference(TestShapeInferenceHelper):
                 function, input_types, attributes
             )
 
-        self.assertRaises(onnx.shape_inference.InferenceError, invoke_inference)
+        self.assertRaises(onnx.shape_inference.ShapeInferenceError, invoke_inference)
 
     def test_fi_basic(self):
         code = """
