@@ -1540,6 +1540,9 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     return mapping.TENSOR_TYPE_MAP.keys()
 
 
+_ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
+
+
 def _attr_type_to_str(attr_type: int) -> str:
     """
     Convert AttributeProto type to string.
@@ -1548,5 +1551,5 @@ def _attr_type_to_str(attr_type: int) -> str:
     :return: String representing the supplied attr_type.
     """
     if attr_type in AttributeProto.AttributeType.values():
-        return AttributeProto.AttributeType.keys()[attr_type]
+        return _ATTRIBUTE_TYPE_TO_STR[attr_type]
     return AttributeProto.AttributeType.keys()[0]

@@ -889,18 +889,17 @@ class TestHelperMappingFunctions(unittest.TestCase):
         )
 
 
-@pytest.mark.parametrize(
-    "attr_type",
-    AttributeProto.AttributeType.values(),
-)
-def test_attr_type_to_str(attr_type):
-    result = helper._attr_type_to_str(attr_type)
-    assert result == AttributeProto.AttributeType.keys()[attr_type]
+class TestAttrTypeToStr(unittest.TestCase):
+    def test_attr_type_to_str(self):
+        for item in AttributeProto.AttributeType.items():
+            with self.subTest(item=item):
+                attr_str, attr_type = item
+                result = helper._attr_type_to_str(attr_type)
+                self.assertEqual(result, attr_str)
 
-
-def test_attr_type_to_str_undefined():
-    result = helper._attr_type_to_str(9999)
-    assert result == "UNDEFINED"
+    def test_attr_type_to_str_undefined(self):
+        result = helper._attr_type_to_str(9999)
+        self.assertEqual(result, "UNDEFINED")
 
 
 if __name__ == "__main__":
