@@ -431,6 +431,7 @@ class ShapeInferenceImplBase {
         value_types_by_name,
         input_data_by_name,
         input_sparse_data_by_name,
+        options,
         generated_shape_data_by_name,
         &graph_inference_context);
 
@@ -561,17 +562,6 @@ class ShapeInferenceImplBase {
     for (auto& n : *graph.mutable_node()) {
       process(n);
     }
-    // Throw shape inference error if any. Error mode right now only supports 0 and 1.
-    // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
-    // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
-    // TODO: Add a more granular way for exception handling.
-    if (options.error_mode > 0 && !inference_errors.empty()) {
-      std::string full_errors = "Shape inference error(s): ";
-      for (const std::string& error : inference_errors) {
-        full_errors += error + "\n";
-      }
-      fail_shape_inference(full_errors);
-    }
   }
 
   void process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
@@ -682,6 +672,21 @@ class ShapeInferenceImplBase {
     }
   }
 
+  void finalizeShapeInference() {
+    auto& errors = getErrors();
+    // Throw shape inference error if any. Error mode right now only supports 0 and 1.
+    // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
+    // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
+    // TODO: Add a more granular way for exception handling.
+    if (!errors.empty() && options.error_mode > 0) {
+      std::string full_errors = "Inference error(s): ";
+      for (const std::string& error : inference_errors) {
+        full_errors += error + "\n";
+      }
+      fail_shape_inference(full_errors);
+    }
+  }
+
   const std::vector<std::string>& getErrors() const {
     return inference_errors;
   }
@@ -742,6 +747,7 @@ static void InferShapesImpl(
       generated_shape_data_by_name,
       ir_version);
   base.process(*g);
+  base.finalizeShapeInference();
 }
 
 // Either ModelProto or FunctionProto
@@ -838,6 +844,7 @@ void InferShapeForFunctionNode(
       schema_registry,
       generated_shape_data_by_name);
   base.process(func_proto, ctx);
+  base.finalizeShapeInference();
 }
 
 void InferShapeForFunctionNode(
@@ -864,8 +871,9 @@ struct FunctionInferenceContext : public InferenceContext {
   FunctionInferenceContext(
       const FunctionProto& func_proto,
       const std::vector<TypeProto>& input_types,
-      const std::vector<AttributeProto>& attributes)
-      : input_types_(input_types) {
+      const std::vector<AttributeProto>& attributes,
+      const ShapeInferenceOptions& options)
+      : input_types_(input_types), options_(options) {
     for (const auto& attr : attributes) {
       attributesByName_[attr.name()] = &attr;
     }
@@ -934,16 +942,19 @@ struct FunctionInferenceContext : public InferenceContext {
   const std::vector<TypeProto>& input_types_;
   std::vector<TypeProto> output_types_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+  ShapeInferenceOptions options_;
 };
 
 std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,
     const std::vector<TypeProto>& input_types,
     const std::vector<AttributeProto>& attributes) {
-  FunctionInferenceContext ctx(function_proto, input_types, attributes);
+  // TODO: if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
+  // we can add them to the Python API. For now we just assume the default options.
+  ShapeInferenceOptions options{true, 1, false};
+  FunctionInferenceContext ctx(function_proto, input_types, attributes, options);
   auto opset_imports = GetOpsetImportsFromProto(function_proto);
   GraphProto g;
-  ShapeInferenceOptions options{true, 1, false};
   ShapeInferenceImplBase base(
       &g,
       {}, // outer_scope_value_types_by_name
@@ -954,14 +965,7 @@ std::vector<TypeProto> InferFunctionOutputTypes(
       /*schema_registry*/ OpSchemaRegistry::Instance(),
       /*generated_shape_data_by_name*/ nullptr);
   base.process(function_proto, ctx);
-  auto& errors = base.getErrors();
-  if (!errors.empty()) {
-    std::string all_errors = "Inference error(s): ";
-    for (const std::string& error : errors) {
-      all_errors += error + "\n";
-    }
-    fail_shape_inference(all_errors);
-  }
+  base.finalizeShapeInference();
   return ctx.popOutputTypes();
 }
 
@@ -1026,12 +1030,11 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // future: pass inputData into InferShapes either directly, or indirectly by
   // updating initializers that match subgraph inputs.
   (void)input_data;
-  ShapeInferenceOptions options{};
   InferShapesImpl(
       g_,
       *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
-      options,
+      options_,
       symbol_table,
       context_->model_local_functions,
       context_->schema_registry,
