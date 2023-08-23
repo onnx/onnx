@@ -465,9 +465,9 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncode
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16)</dt>
+<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
 <dd>The input type is a tensor of any shape.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16)</dt>
+<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
 <dd>Output type is determined by the specified 'values_*' attribute.</dd>
 </dl>
 
