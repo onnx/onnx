@@ -219,10 +219,8 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertRaises(ValueError, helper.make_attribute, "empty", [])
 
     def test_attr_mismatch(self) -> None:
-        with pytest.raises(TypeError) as te:
+        with self.assertRaisesRegex(TypeError, "Inferred attribute type 'FLOAT'"):
             helper.make_attribute("test", 6.4, attr_type=AttributeProto.STRING)
-        assert "FLOAT" in str(te.value)
-        assert "STRING" in str(te.value)
 
     def test_is_attr_legal(self) -> None:
         # no name, no field
