@@ -14473,25 +14473,27 @@ This version of the operator has been available since version 12 of the default 
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
+   data into the output tensor Y for further processing. The output spatial shape is calculated differently
+   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
-   or when ceil_mode is disabled:
+   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -21027,7 +21029,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r]. Negative value means counting dimensions from the back.</dd>
+<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). Negative value means counting dimensions from the back.</dd>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>stash_type</tt> : int (default is 1)</dt>
@@ -22580,25 +22582,27 @@ This version of the operator has been available since version 18 of the default 
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
+   data into the output tensor Y for further processing. The output spatial shape is calculated differently
+   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
-   or when ceil_mode is disabled:
+   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -23881,6 +23885,72 @@ This version of the operator has been available since version 19 of the default 
 </dl>
 
 ## Version 20 of the default ONNX operator set
+### <a name="AffineGrid-20"></a>**AffineGrid-20**</a>
+
+  Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
+  (https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
+  An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
+  ```
+  [r00, r01, r02, t0]   [x]   [x']
+  [r10, r11, r12, t1] * [y] = [y']
+  [r20, r21, r22, t2]   [z]   [z']
+  [0,   0,   0,   1 ]   [1]   [1 ]
+  ```
+  where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
+  The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
+
+  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
+  The output `grid` contains positions in the output space.
+
+  When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
+  ```
+  v            v            v            v
+  |-------------------|------------------|
+  -1                  0                  1
+  ```
+  When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
+  ```
+      v        v         v         v
+  |------------------|-------------------|
+  -1                 0                   1
+  ```
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>align_corners</tt> : int (default is 0)</dt>
+<dd>if align_corners=1, consider -1 and 1 to refer to the centers of the corner pixels. if align_corners=0, consider -1 and 1 to refer to the outer edge the corner pixels.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>theta</tt> (non-differentiable) : T1</dt>
+<dd>input batch of affine matrices with shape (N, 2, 3) for 2D or (N, 3, 4) for 3D</dd>
+<dt><tt>size</tt> (non-differentiable) : T2</dt>
+<dd>the target output image size (N, C, H, W) for 2D or (N, C, D, H, W) for 3D</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>grid</tt> (differentiable) : T1</dt>
+<dd>output tensor of shape (N, C, H, W, 2) of 2D sample coordinates or (N, C, D, H, W, 3) of 3D sample coordinates.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain grid types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain size's type to int64 tensors.</dd>
+</dl>
+
 ### <a name="ConstantOfShape-20"></a>**ConstantOfShape-20**</a>
 
   Generate a tensor with given value and shape.
@@ -24022,6 +24092,104 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
 
+### <a name="ImageDecoder-20"></a>**ImageDecoder-20**</a>
+
+  Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded
+  stream, invalid format, it will return an empty matrix).
+  The following image formats are supported:
+  * BMP
+  * JPEG (note: Lossless JPEG support is optional)
+  * JPEG2000
+  * TIFF
+  * PNG
+  * WebP
+  * Portable image format (PBM, PGM, PPM, PXM, PNM)
+  Decoded images follow a channel-last layout: (Height, Width, Channels).
+  **JPEG chroma upsampling method:**
+  When upsampling the chroma components by a factor of 2, the pixels are linearly interpolated so that the
+  centers of the output pixels are 1/4 and 3/4 of the way between input pixel centers.
+  When rounding, 0.5 is rounded down and up at alternative pixels locations to prevent bias towards
+  larger values (ordered dither pattern).
+  Considering adjacent input pixels A, B, and C, B is upsampled to pixels B0 and B1 so that
+  ```
+  B0 = round_half_down((1/4) * A + (3/4) * B)
+  B1 = round_half_up((3/4) * B + (1/4) * C)
+  ```
+  This method,  is the default chroma upsampling method in the well-established libjpeg-turbo library,
+  also referred as "smooth" or "fancy" upsampling.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>pixel_format</tt> : string (default is RGB)</dt>
+<dd>Pixel format. Can be one of "RGB", "BGR", or "Grayscale".</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>encoded_stream</tt> (non-differentiable) : T1</dt>
+<dd>Encoded stream</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>image</tt> (non-differentiable) : T2</dt>
+<dd>Decoded image</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8)</dt>
+<dd>Constrain input types to 8-bit unsigned integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8)</dt>
+<dd>Constrain output types to 8-bit unsigned integer tensor.</dd>
+</dl>
+
+### <a name="RegexFullMatch-20"></a>**RegexFullMatch-20**</a>
+
+  RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>pattern</tt> : string</dt>
+<dd>Regex pattern to match on. This must be valid RE2 syntax.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor with strings to match on.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Tensor of bools indicating if each input string fully matches the regex pattern specified.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>Inputs must be UTF-8 strings</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Outputs are bools and are True where there is a full regex match and False otherwise.</dd>
+</dl>
+
 ### <a name="StringConcat-20"></a>**StringConcat-20**</a>
 
   StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
@@ -24051,6 +24219,54 @@ This version of the operator has been available since version 20 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(string)</dt>
 <dd>Inputs and outputs must be UTF-8 strings</dd>
+</dl>
+
+### <a name="StringSplit-20"></a>**StringSplit-20**</a>
+
+  StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
+
+  The first output of this operator is a tensor of strings representing the substrings from splitting each input string on the `delimiter` substring. This tensor has one additional rank compared to the input tensor in order to store the substrings for each input element (where the input tensor is not empty). Note that, in order to ensure the same number of elements are present in the final dimension, this tensor will pad empty strings as illustrated in the examples below. Consecutive delimiters are not grouped together and are deemed to delimit empty strings, except if the `delimiter` is unspecified or is the empty string (""). In the case where the `delimiter` is unspecified or the empty string, consecutive whitespace characters are regarded as a single separator and leading or trailing whitespace is removed in the output.
+
+  The second output tensor represents the number of substrings generated. `maxsplit` can be used to limit the number of splits performed - after the `maxsplit`th split if the string is not fully split, the trailing suffix of input string after the final split point is also added. For elements where fewer splits are possible than specified in `maxsplit`, it has no effect.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>delimiter</tt> : string</dt>
+<dd>Delimiter to split on. If left unset or set to the empty string (""), the input is split on consecutive whitespace.</dd>
+<dt><tt>maxsplit</tt> : int</dt>
+<dd>Maximum number of splits (from left to right). If left unset (or if the number of possible splits are less than maxsplit), it will make as many splits as possible. Note that the maximum possible number of substrings returned with `maxsplit` specified is `maxsplit+1` since the remaining suffix after the `maxsplit`th split is included in the output.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor of strings to split.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.</dd>
+<dt><tt>Z</tt> (non-differentiable) : T3</dt>
+<dd>The number of substrings generated for each input element.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>The input must be a UTF-8 string tensor</dd>
+<dt><tt>T2</tt> : tensor(string)</dt>
+<dd>Tensor of substrings.</dd>
+<dt><tt>T3</tt> : tensor(int64)</dt>
+<dd>The number of substrings generated.</dd>
 </dl>
 
 # ai.onnx.preview.training

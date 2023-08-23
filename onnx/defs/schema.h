@@ -469,6 +469,12 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
 
+  OpSchema& Attr(
+      std::string name,
+      std::string description,
+      std::string conditionExplanation,
+      AttributeProto::AttributeType attr_type);
+
   // Register "required" attribute without default value.
   OpSchema& Attr(std::string name, std::string description, AttributeProto::AttributeType type, bool required = true);
 
@@ -738,6 +744,12 @@ class OpSchema final {
         "tensor(complex64)",
         "tensor(complex128)"};
     return all_tensor_types_ir4;
+  }
+
+  static const std::vector<std::string>& all_float_types_ir4() {
+    static const std::vector<std::string> all_float_types_ir4 = {
+        "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"};
+    return all_float_types_ir4;
   }
 
   // Deprecated function, use all_tensor_types_ir4 instead. It will be removed in onnx==1.15.0.

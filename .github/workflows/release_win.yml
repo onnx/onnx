@@ -49,6 +49,9 @@ jobs:
       run: |
         python -m pip install -q --upgrade pip
         cd onnx
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          sed -i '' '/google-re2/d' requirements-release.txt
+        }
         python -m pip install -q -r requirements-release.txt
 
     - name: Build ONNX wheel

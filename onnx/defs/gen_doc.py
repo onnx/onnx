@@ -149,6 +149,7 @@ def display_schema(  # pylint: disable=too-many-branches,too-many-statements
                 opt = "required"
             elif attr.default_value.name:
                 default_value = helper.get_attribute_value(attr.default_value)
+                doc_string = attr.default_value.doc_string
 
                 def format_value(value: Any) -> str:
                     if isinstance(value, float):
@@ -165,7 +166,7 @@ def display_schema(  # pylint: disable=too-many-branches,too-many-statements
                     default_value = [format_value(val) for val in default_value]
                 else:
                     default_value = format_value(default_value)
-                opt = f"default is {default_value}"
+                opt = f"default is {default_value}{doc_string}"
 
             s += f"<dt><tt>{attr.name}</tt> : {display_attr_type(attr.type)}{f' ({opt})' if opt else ''}</dt>\n"
             s += f"<dd>{attr.description}</dd>\n"
