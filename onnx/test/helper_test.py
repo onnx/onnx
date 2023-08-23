@@ -11,6 +11,7 @@ from typing import Any, List, Tuple
 
 import numpy as np
 import pytest
+import parameterized
 
 from onnx import (
     AttributeProto,
@@ -888,14 +889,27 @@ class TestHelperMappingFunctions(unittest.TestCase):
 
 
 class TestAttrTypeToStr(unittest.TestCase):
-    def test_attr_type_to_str(self):
-        for item in AttributeProto.AttributeType.items():
-            with self.subTest(item=item):
-                attr_str, attr_type = item
-                result = helper._attr_type_to_str(
-                    attr_type
-                )  # pylint: disable=protected-access
-                self.assertEqual(result, attr_str)
+    @parameterized.parameterized.expand(
+        [
+            (AttributeProto.AttributeType.FLOAT, "FLOAT"),
+            (AttributeProto.AttributeType.INT, "INT"),
+            (AttributeProto.AttributeType.STRING, "STRING"),
+            (AttributeProto.AttributeType.TENSOR, "TENSOR"),
+            (AttributeProto.AttributeType.GRAPH, "GRAPH"),
+            (AttributeProto.AttributeType.SPARSE_TENSOR, "SPARSE_TENSOR"),
+            (AttributeProto.AttributeType.TYPE_PROTO, "TYPE_PROTO"),
+            (AttributeProto.AttributeType.FLOATS, "FLOATS"),
+            (AttributeProto.AttributeType.INTS, "INTS"),
+            (AttributeProto.AttributeType.STRINGS, "STRINGS"),
+            (AttributeProto.AttributeType.TENSORS, "TENSORS"),
+            (AttributeProto.AttributeType.GRAPHS, "GRAPHS"),
+            (AttributeProto.AttributeType.SPARSE_TENSORS, "SPARSE_TENSORS"),
+            (AttributeProto.AttributeType.TYPE_PROTOS, "TYPE_PROTOS"),
+        ]
+    )
+    def test_attr_type_to_str(self, attr_type, expected_str):
+        result = helper._attr_type_to_str(attr_type)  # pylint: disable=protected-access
+        self.assertEqual(result, expected_str)
 
     def test_attr_type_to_str_undefined(self):
         result = helper._attr_type_to_str(9999)  # pylint: disable=protected-access
