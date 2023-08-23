@@ -10,8 +10,8 @@ import unittest
 from typing import Any, List, Tuple
 
 import numpy as np
-import pytest
 import parameterized
+import pytest
 
 from onnx import (
     AttributeProto,
@@ -891,20 +891,20 @@ class TestHelperMappingFunctions(unittest.TestCase):
 class TestAttrTypeToStr(unittest.TestCase):
     @parameterized.parameterized.expand(
         [
-            (AttributeProto.AttributeType.FLOAT, "FLOAT"),
-            (AttributeProto.AttributeType.INT, "INT"),
-            (AttributeProto.AttributeType.STRING, "STRING"),
-            (AttributeProto.AttributeType.TENSOR, "TENSOR"),
-            (AttributeProto.AttributeType.GRAPH, "GRAPH"),
-            (AttributeProto.AttributeType.SPARSE_TENSOR, "SPARSE_TENSOR"),
-            (AttributeProto.AttributeType.TYPE_PROTO, "TYPE_PROTO"),
-            (AttributeProto.AttributeType.FLOATS, "FLOATS"),
-            (AttributeProto.AttributeType.INTS, "INTS"),
-            (AttributeProto.AttributeType.STRINGS, "STRINGS"),
-            (AttributeProto.AttributeType.TENSORS, "TENSORS"),
-            (AttributeProto.AttributeType.GRAPHS, "GRAPHS"),
-            (AttributeProto.AttributeType.SPARSE_TENSORS, "SPARSE_TENSORS"),
-            (AttributeProto.AttributeType.TYPE_PROTOS, "TYPE_PROTOS"),
+            (AttributeProto.AttributeType.FLOAT, "FLOAT"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.INT, "INT"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.STRING, "STRING"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TENSOR, "TENSOR"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.GRAPH, "GRAPH"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.SPARSE_TENSOR, "SPARSE_TENSOR"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TYPE_PROTO, "TYPE_PROTO"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.FLOATS, "FLOATS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.INTS, "INTS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.STRINGS, "STRINGS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TENSORS, "TENSORS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.GRAPHS, "GRAPHS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.SPARSE_TENSORS, "SPARSE_TENSORS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TYPE_PROTOS, "TYPE_PROTOS"),  # type: ignore[attr-defined]
         ]
     )
     def test_attr_type_to_str(self, attr_type, expected_str):
