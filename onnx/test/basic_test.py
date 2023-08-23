@@ -36,6 +36,7 @@ def _simple_tensor() -> onnx.TensorProto:
     [
         {"format": "protobuf"},
         {"format": "textproto"},
+        {"format": "json"},
     ]
 )
 class TestIO(unittest.TestCase):
