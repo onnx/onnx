@@ -27,7 +27,7 @@ def inline_local_functions(
 
 
 def inline_selected_functions(
-    model: onnx.ModelProto, function_ids: list[tuple[str, str]], exclude: bool
+    model: onnx.ModelProto, function_ids: list[tuple[str, str]], exclude: bool = False
 ) -> onnx.ModelProto:
     """Inline selected model-local functions in given model.
 

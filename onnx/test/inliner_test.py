@@ -57,7 +57,9 @@ class InlinerTest(unittest.TestCase):
             }
         """
         )
-        inlined = inliner.inline_selected_functions(model, [("local", "square")], False)
+        inlined = inliner.inline_selected_functions(
+            model, [("local", "square")], exclude=False
+        )
         inlined_nodes = inlined.graph.node
         # function-call to square should be replaced by Add, but not the one to double_and_square
         self.assertEqual(len(inlined_nodes), 2)
@@ -93,7 +95,7 @@ class InlinerTest(unittest.TestCase):
         """
         )
         inlined = inliner.inline_selected_functions(
-            model, [("local", "double_and_square")], True
+            model, [("local", "double_and_square")], exclude=True
         )
         inlined_nodes = inlined.graph.node
         # function-call to square should be replaced by Add, but not the one to double_and_square
