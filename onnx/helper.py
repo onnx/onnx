@@ -925,7 +925,7 @@ def make_attribute(  # pylint: disable=too-many-statements
 
     if attr_type is not None and attr.type != attr_type:
         raise TypeError(
-            f"Inferred attribute type {attr.type} mismatched with specified type {attr_type}"
+            f"Inferred attribute type '{_attr_type_to_str(attr.type)}'({attr.type}) mismatched with specified type '{_attr_type_to_str(attr_type)}'({attr_type})"
         )
     return attr
 
@@ -1538,3 +1538,18 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     :return: all tensor types from TensorProto
     """
     return mapping.TENSOR_TYPE_MAP.keys()
+
+
+_ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
+
+
+def _attr_type_to_str(attr_type: int) -> str:
+    """
+    Convert AttributeProto type to string.
+
+    :param attr_type: AttributeProto type.
+    :return: String representing the supplied attr_type.
+    """
+    if attr_type in AttributeProto.AttributeType.values():
+        return _ATTRIBUTE_TYPE_TO_STR[attr_type]
+    return AttributeProto.AttributeType.keys()[0]
