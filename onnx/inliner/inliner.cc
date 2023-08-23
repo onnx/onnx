@@ -57,7 +57,7 @@ using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 struct OpsetMap : public OpsetMapBase {
  public:
   // Construct a map representing the opset versions required by a model.
-  OpsetMap(const ModelProto& model) {
+  explicit OpsetMap(const ModelProto& model) {
     (void)Add(model.opset_import());
   }
 
