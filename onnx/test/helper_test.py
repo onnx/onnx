@@ -892,11 +892,13 @@ class TestAttrTypeToStr(unittest.TestCase):
         for item in AttributeProto.AttributeType.items():
             with self.subTest(item=item):
                 attr_str, attr_type = item
-                result = helper._attr_type_to_str(attr_type)
+                result = helper._attr_type_to_str(
+                    attr_type
+                )  # pylint: disable=protected-access
                 self.assertEqual(result, attr_str)
 
     def test_attr_type_to_str_undefined(self):
-        result = helper._attr_type_to_str(9999)
+        result = helper._attr_type_to_str(9999)  # pylint: disable=protected-access
         self.assertEqual(result, "UNDEFINED")
 
 
