@@ -196,6 +196,13 @@ inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, T
   return result;
 }
 
+template <typename Container>
+std::string stringify(const Container& elements);
+
+std::pair<int, int> getAttributeElementTypeAndLength(
+    const InferenceContext& ctx,
+    const std::initializer_list<std::string>& attribute_names);
+
 inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
