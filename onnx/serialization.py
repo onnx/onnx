@@ -146,7 +146,7 @@ class _JsonSerializer(ProtoSerializer):
     """Serialize and deserialize JSON."""
 
     supported_format = "json"
-    file_extensions = frozenset({".json"})
+    file_extensions = frozenset({".json", ".onnxjson"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         json_message = google.protobuf.json_format.MessageToJson(
