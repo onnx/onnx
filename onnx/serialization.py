@@ -173,7 +173,7 @@ class _TextualSerializer(ProtoSerializer):
     file_extensions = frozenset({".onnxtxt"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
-        text = onnx.printer.to_text(proto)
+        text = onnx.printer.to_text(proto)  # type: ignore[arg-type]
         return text.encode(_ENCODING)
 
     def deserialize_proto(self, serialized: bytes | str, proto: _Proto) -> _Proto:
@@ -186,7 +186,9 @@ class _TextualSerializer(ProtoSerializer):
                 f"Parameter 'serialized' must be bytes or str, but got type: {type(serialized)}"
             )
         if isinstance(serialized, bytes):
-            serialized = serialized.decode(_ENCODING)
+            text = serialized.decode(_ENCODING)
+        else:
+            text = serialized
         if isinstance(proto, onnx.ModelProto):
             return onnx.parser.parse_model(text)
         if isinstance(proto, onnx.GraphProto):
