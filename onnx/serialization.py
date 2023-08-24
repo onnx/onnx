@@ -166,7 +166,7 @@ class _JsonSerializer(ProtoSerializer):
         return google.protobuf.json_format.Parse(serialized, proto)
 
 
-class _TextualSerializer(onnx.serialization.ProtoSerializer):
+class _TextualSerializer(ProtoSerializer):
     """Serialize and deserialize the ONNX textual representation."""
 
     supported_format = "onnxtxt"
