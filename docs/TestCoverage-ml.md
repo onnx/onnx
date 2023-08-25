@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 2/18 (11.11%, 0 generators excluded) common operators.
+Node tests have covered 3/18 (16.67%, 0 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -66,6 +66,106 @@ expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
 </details>
 
 
+### LabelEncoder
+There are 2 test cases, listed as following:
+<details>
+<summary>string_int_label_encoder</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=["a", "b", "c"],
+    values_int64s=[0, 1, 2],
+    default_int64=42,
+)
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, 42, 2, 42]).astype(np.int64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int",
+)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=["a", "b", "c"],
+    values_int64s=[0, 1, 2],
+)
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, -1, 2, -1]).astype(np.int64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int_no_default",
+)
+```
+
+</details>
+<details>
+<summary>tensor_based_label_encoder</summary>
+
+```python
+tensor_keys = make_tensor(
+    "keys_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
+)
+repeated_string_keys = ["a", "b", "c"]
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, 42, 2, 42]).astype(np.int16)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_tensor=tensor_keys,
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_mapping",
+)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=repeated_string_keys,
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_value_only_mapping",
+)
+```
+
+</details>
+
+
 <br/>
 
 ## &#x1F494;No Cover Common Operators
@@ -82,9 +182,6 @@ expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
 
 
 ### Imputer (call for test cases)
-
-
-### LabelEncoder (call for test cases)
 
 
 ### LinearClassifier (call for test cases)
