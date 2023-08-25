@@ -68,8 +68,6 @@ class TestIO(unittest.TestCase):
             model_path = os.path.join(temp_dir, "model.onnx")
             onnx.save_model(proto, model_path, format=self.format)
             loaded_proto = onnx.load_model(model_path, format=self.format)
-            print(proto)
-            print(loaded_proto)
             self.assertEqual(proto, loaded_proto)
 
     def test_save_and_load_model_when_input_is_pathlike(self) -> None:
