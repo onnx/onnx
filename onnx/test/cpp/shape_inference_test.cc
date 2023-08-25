@@ -606,6 +606,7 @@ agraph (float[1, 196608] m) => (float[?, ?, ?] z)
 }
 
 TEST(ShapeInferenceTest, CheckShapesAndTypesTest) {
+#ifndef ONNX_NO_EXCEPTIONS
   // Tensor element types mis-match should cause an exception.
   TypeProto tensor_infer;
   auto* tensor_infer_type = tensor_infer.mutable_tensor_type();
@@ -616,6 +617,7 @@ TEST(ShapeInferenceTest, CheckShapesAndTypesTest) {
   tensor_exist_type->set_elem_type(TensorProto_DataType_UINT8);
 
   EXPECT_THROW(checkShapesAndTypes(tensor_infer, tensor_exist), ONNX_NAMESPACE::InferenceError);
+#endif
 }
 
 } // namespace Test
