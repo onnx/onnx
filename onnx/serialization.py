@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from __future__ import annotations
+
 import warnings
 
 __all__ = [
@@ -190,13 +191,13 @@ class _TextualSerializer(ProtoSerializer):
         else:
             text = serialized
         if isinstance(proto, onnx.ModelProto):
-            return onnx.parser.parse_model(text)
+            return onnx.parser.parse_model(text)  # type: ignore[return-value]
         if isinstance(proto, onnx.GraphProto):
-            return onnx.parser.parse_graph(text)
+            return onnx.parser.parse_graph(text)  # type: ignore[return-value]
         if isinstance(proto, onnx.FunctionProto):
-            return onnx.parser.parse_function(text)
+            return onnx.parser.parse_function(text)  # type: ignore[return-value]
         if isinstance(proto, onnx.NodeProto):
-            return onnx.parser.parse_node(text)
+            return onnx.parser.parse_node(text)  # type: ignore[return-value]
         raise ValueError(f"Unsupported proto type: {type(proto)}")
 
 
