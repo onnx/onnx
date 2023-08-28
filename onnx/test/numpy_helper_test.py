@@ -546,6 +546,10 @@ class TestNumpyHelper(unittest.TestCase):
         back = numpy_helper.float8e4m3_to_float32(to, fn=True, uz=True)
         self.assertTrue(np.isnan(back))
 
+    def test_from_dict(self):
+        map_proto = numpy_helper.from_dict({0: np.array(0.1), 1: np.array(0.9)})
+        self.assertIsNotNone(map_proto)
+
 
 if __name__ == "__main__":
     unittest.main()
