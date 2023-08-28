@@ -449,7 +449,7 @@ def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
     if name:
         map_proto.name = name
     keys = list(dict_)
-    raw_key_type = np.array(keys[0]).dtype
+    raw_key_type = np.result_type(keys[0])
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
 
     valid_key_int_types = [
@@ -463,11 +463,8 @@ def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
         TensorProto.UINT64,
     ]
 
-    if not all(
-        isinstance(
-            key,
-            raw_key_type,  # type: ignore[arg-type]
-        )
+    if not (
+        all(np.result_type(key) == raw_key_type)  # type: ignore[arg-type]
         for key in keys
     ):
         raise TypeError(
