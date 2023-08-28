@@ -94,7 +94,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 **Source Distribution**
 * Follow the same process in TestPyPI to produce the source distribution.
 * Use ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`` instead to upload to the official PyPI.
-* Test with ``pip install --no-binary onnx onnx``
+* Test with ``pip install --use-deprecated=legacy-resolver --no-binary onnx onnx``
 
 ## After PyPI Release
 

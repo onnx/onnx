@@ -129,7 +129,7 @@ jobs:
         # Test weekly source distribution from PyPI
         python -m pip uninstall -y onnx-weekly
         python -m pip install setuptools
-        python -m pip install --no-binary onnx-weekly onnx-weekly
+        python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
