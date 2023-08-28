@@ -5,6 +5,7 @@
  */
 
 #include <assert.h>
+
 #include "onnx/defs/controlflow/utils.h"
 #include "onnx/defs/schema.h"
 

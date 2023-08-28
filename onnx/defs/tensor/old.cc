@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
@@ -1048,6 +1049,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            // we can infer the output rank - it never changes
+            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 
@@ -3779,6 +3785,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            // we can infer the output rank - it never changes
+            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 
@@ -5046,20 +5057,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          // Shape Inference if 2nd input data (the target shape) is available
-          // or the target shape is generated via partial data propagation
-          const TensorProto* targetShapeInitializer = ctx.getInputData(1);
-          const auto* shapeInput = ctx.getSymbolicInput(1);
-          // The targetShapeProto represents the specified shape for output.
-          TensorShapeProto targetShapeProto;
-          if (targetShapeInitializer) {
-            auto targetShape = ParseData<int64_t>(targetShapeInitializer);
-            for (auto val : targetShape) {
-              targetShapeProto.add_dim()->set_dim_value(val);
-            }
-          } else if (shapeInput) {
-            targetShapeProto.CopyFrom(*shapeInput);
-          } else {
+          bool found;
+          TensorShapeProto targetShapeProto = getShapeInput(ctx, 1, found);
+          if (!found) {
             return;
           }
 

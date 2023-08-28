@@ -1,5 +1,5 @@
 trigger:
-- main
+- gh-readonly-queue/**
 
 jobs:
 - job: 'Test'
@@ -7,37 +7,31 @@ jobs:
     vmImage: 'Ubuntu-20.04'
   strategy:
     matrix:
-      py311-ml-debug:
+      py311-ml-debug-external-protobuf:
         python.version: '3.11'
         onnx_ml: 1
         build_type: 'Debug'
         documentation: 0
         protobuf_type: 'External'
-      py310-InternalProtobuf:
+      py310-internal-protobuf:
         python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
         documentation: 0
         protobuf_type: 'Internal'
-      py39-ml:
+      py39-ml-doc-external-protobuf:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Release'
         documentation: 1
         protobuf_type: 'External'
-      py38-InternalProtobuf:
+      py38-internal-protobuf:
         python.version: '3.8'
         onnx_ml: 0
         build_type: 'Release'
         documentation: 0
         protobuf_type: 'Internal'
-      py38-ml:
-        python.version: '3.8'
-        onnx_ml: 1
-        build_type: 'Release'
-        documentation: 0
-        protobuf_type: 'External'
-    maxParallel: 6
+    maxParallel: 4
 
   steps:
   - task: UsePythonVersion@0
@@ -74,7 +68,7 @@ jobs:
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
       # enable more sanitizer
       export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
-      pip install -e . -v
+      pip install -e ".[reference]" -v
     displayName: 'Install ONNX and dependencies'
 
   - script: |
@@ -85,27 +79,6 @@ jobs:
         echo "pytest failed"
         exit 1
       fi
-
-      python -m pip install -r requirements-dev.txt
-
-      # check auto-gen files up-to-date
-      python onnx/defs/gen_doc.py
-      python onnx/gen_proto.py -l
-      python onnx/gen_proto.py -l --ml
-      python onnx/backend/test/stat_coverage.py
-
-      git status
-      git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
-      if [ $? -ne 0 ]; then
-        echo "git diff returned failures"
-        exit 1
-      fi
-
-      # Do not hardcode onnx's namespace in the c++ source code, so that
-      # other libraries who statically link with onnx can hide onnx symbols
-      # in a private namespace.
-      ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
-      ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
       # onnx c++ API tests
       export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"

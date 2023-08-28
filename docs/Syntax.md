@@ -4,8 +4,9 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-Overview
-========
+# ONNX Textual Syntax
+
+## Overview
 
 This document describes a textual syntax for ONNX models, which is currently an experimental feature.
 The syntax enables a compact and readable representation of ONNX models. It is motivated by a couple
@@ -16,8 +17,7 @@ use of this syntax will lead to more compact, readable, and easier-to-maintain f
 Efficient representation and efficient parsing of very large tensor-constants is *not* a goal.
 Alternative methods should be used for that.
 
-The API
--------
+## The API
 
 The key parser methods are the ```OnnxParser::Parse``` methods, used as below.
 
@@ -43,8 +43,7 @@ agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
 
 See the [test-cases](../onnx/test/cpp/parser_test.cc) for more examples illustrating the API and syntax.
 
-The Syntax
-----------
+## The Syntax
 
 The grammar below describes the syntax:
 

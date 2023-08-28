@@ -12,7 +12,7 @@ from onnx.reference.ops.op_slice import _slice
 
 
 def _concat(*args, axis=0):  # type: ignore
-    return np.concatenate(tuple(args), axis=axis)
+    return np.concatenate(args, axis=axis)
 
 
 def _unsqueeze(a, axis):  # type: ignore

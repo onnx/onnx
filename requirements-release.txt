@@ -7,3 +7,5 @@ wheel
 setuptools
 twine
 parameterized
+# Dependencies for the reference implementation.
+-r requirements-reference.txt

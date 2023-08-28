@@ -9,6 +9,7 @@ on:
     branches:
       - main
   pull_request:
+  merge_group:
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -22,9 +23,9 @@ jobs:
     name: Optional Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: misspell # Check spellings as well
-        uses: reviewdog/action-misspell@ccb0441a34ac2a3ece1206c63d7b6dd757ffde4d # v1.12.4
+        uses: reviewdog/action-misspell@9257f108197b44e37995c98bea6ee4a5b9ffc3b0 # v1.13.1
         with:
           github_token: ${{ secrets.github_token }}
           locale: "US"
@@ -34,12 +35,19 @@ jobs:
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@f52d78284b4941028952125a10c76676c3d456eb # v1.17.0
+        uses: reviewdog/action-shellcheck@50e5e1e2284575f23a1e409d9c0804cdfc4f6e31 # v1.18.1
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
+      - name: cpplint # Static check C++ code
+        uses: reviewdog/action-cpplint@d5ddf147384ab68e12432bf02815d0e49e5388b2 # v1.0.0
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: warning
+          flags: --linelength=120
 
 
   enforce-style:
@@ -48,9 +56,9 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Setup Python
-        uses: actions/setup-python@bd6b4b6205c4dbad673328db7b31b7fab9e241c0 # v4.6.1
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
         with:
           # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
           python-version: "3.10"
@@ -86,10 +94,11 @@ jobs:
         run: |
           python -m lintrunner_adapters to-sarif lint.json lintrunner.sarif
       - name: Upload SARIF file
-        # Do not display on drafts to make reviewing easier
-        if: github.event.pull_request.draft == false
+        # Use always() to always upload SARIF even if lintrunner returns with error code
+        # To toggle linter comments in the files page, press `i` on the keyboard
+        if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@0225834cc549ee0ca93cb085b92954821a145866 # v2.3.5
+        uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v2.13.4
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif
@@ -98,7 +107,8 @@ jobs:
       - name: Check auto-gen files are up-to-date
         run: |
           echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
-          python onnx/defs/gen_doc.py
+          
+          ONNX_ML=1 python onnx/defs/gen_doc.py
           python onnx/gen_proto.py -l
           python onnx/gen_proto.py -l --ml
           python onnx/backend/test/stat_coverage.py

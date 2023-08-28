@@ -18,7 +18,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ai.onnx.ml.DictVectorizer">ai.onnx.ml.DictVectorizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.DictVectorizer-1">1</a>|
 |<a href="#ai.onnx.ml.FeatureVectorizer">ai.onnx.ml.FeatureVectorizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.FeatureVectorizer-1">1</a>|
 |<a href="#ai.onnx.ml.Imputer">ai.onnx.ml.Imputer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Imputer-1">1</a>|
-|<a href="#ai.onnx.ml.LabelEncoder">ai.onnx.ml.LabelEncoder</a>|<a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>|
+|<a href="#ai.onnx.ml.LabelEncoder">ai.onnx.ml.LabelEncoder</a>|<a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-4">4</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>|
 |<a href="#ai.onnx.ml.LinearClassifier">ai.onnx.ml.LinearClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.LinearClassifier-1">1</a>|
 |<a href="#ai.onnx.ml.LinearRegressor">ai.onnx.ml.LinearRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.LinearRegressor-1">1</a>|
 |<a href="#ai.onnx.ml.Normalizer">ai.onnx.ml.Normalizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Normalizer-1">1</a>|
@@ -399,23 +399,25 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       would be mapped to the i-th value in the specified 'values_*' attribute. It
       implies that input's element type and the element type of the specified
       'keys_*' should be identical while the output type is identical to the
-      specified 'values_*' attribute. If an input element can not be found in the
+      specified 'values_*' attribute. Note that the 'keys_*' and 'values_*' attributes
+      must have the same length. If an input element can not be found in the
       specified 'keys_*' attribute, the 'default_*' that matches the specified
-      'values_*' attribute may be used as its output value.<br>
+      'values_*' attribute may be used as its output value. The type of the 'default_*'
+      attribute must match the 'values_*' attribute chosen. <br>
       Let's consider an example which maps a string tensor to an integer tensor.
       Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
       and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
       "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
       Since this operator is an one-to-one mapping, its input and output shapes
       are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
-      For key look-up, bit-wise comparison is used so even a float NaN can be
-      mapped to a value in 'values_*' attribute.<br>
+      Float keys with value 'NaN' match any input 'NaN' value regardless of bit
+      value. If a key is repeated, the last key takes precedence.
 
 #### Version
 
-This version of the operator has been available since version 2 of the 'ai.onnx.ml' operator set.
+This version of the operator has been available since version 4 of the 'ai.onnx.ml' operator set.
 
-Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>
 
 #### Attributes
 
@@ -426,42 +428,150 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncode
 <dd>An integer.</dd>
 <dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string.</dd>
+<dt><tt>default_tensor</tt> : tensor (default is {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.)</dt>
+<dd>A default tensor.</dd>
 <dt><tt>keys_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>keys_int64s</tt> : list of ints</dt>
 <dd>A list of ints.</dd>
 <dt><tt>keys_strings</tt> : list of strings</dt>
-<dd>A list of strings. One and only one of 'keys_*'s should be set.</dd>
+<dd>A list of strings.</dd>
+<dt><tt>keys_tensor</tt> : tensor</dt>
+<dd>Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.</dd>
 <dt><tt>values_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>values_int64s</tt> : list of ints</dt>
 <dd>A list of ints.</dd>
 <dt><tt>values_strings</tt> : list of strings</dt>
-<dd>A list of strings. One and only one of 'value_*'s should be set.</dd>
+<dd>A list of strings.</dd>
+<dt><tt>values_tensor</tt> : tensor</dt>
+<dd>Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T1</dt>
-<dd>Input data. It can be either tensor or scalar.</dd>
+<dd>Input data. It must have the same element type as the keys_* attribute set.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T2</dt>
-<dd>Output data.</dd>
+<dd>Output data. This tensor's element type is based on the values_* attribute set.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
 <dd>The input type is a tensor of any shape.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
 <dd>Output type is determined by the specified 'values_*' attribute.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>string_int_label_encoder</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=["a", "b", "c"],
+    values_int64s=[0, 1, 2],
+    default_int64=42,
+)
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, 42, 2, 42]).astype(np.int64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int",
+)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=["a", "b", "c"],
+    values_int64s=[0, 1, 2],
+)
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, -1, 2, -1]).astype(np.int64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int_no_default",
+)
+```
+
+</details>
+
+
+<details>
+<summary>tensor_based_label_encoder</summary>
+
+```python
+tensor_keys = make_tensor(
+    "keys_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
+)
+repeated_string_keys = ["a", "b", "c"]
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, 42, 2, 42]).astype(np.int16)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_tensor=tensor_keys,
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_mapping",
+)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=repeated_string_keys,
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_value_only_mapping",
+)
+```
+
+</details>
 
 
 ### <a name="ai.onnx.ml.LinearClassifier"></a><a name="ai.onnx.ml.linearclassifier">**ai.onnx.ml.LinearClassifier**</a>
