@@ -4,6 +4,7 @@
 
 import os
 import platform
+import sys
 import unittest
 from typing import Any
 
@@ -109,6 +110,23 @@ backend_test.exclude(
 # The following tests are about deprecated operators.
 backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
 
+# The following tests are using types not supported by numpy.
+# They could be if method to_array is extended to support custom
+# types the same as the reference implementation does
+# (see onnx.reference.op_run.to_array_extended).
+backend_test.exclude(
+    "(test_cast_FLOAT_to_FLOAT8"
+    "|test_cast_FLOAT16_to_FLOAT8"
+    "|test_castlike_FLOAT_to_FLOAT8"
+    "|test_castlike_FLOAT16_to_FLOAT8"
+    "|test_cast_no_saturate_FLOAT_to_FLOAT8"
+    "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
+    "|test_cast_BFLOAT16_to_FLOAT"
+    "|test_castlike_BFLOAT16_to_FLOAT"
+    "|test_quantizelinear_e4m3"
+    "|test_quantizelinear_e5m2"
+    ")"
+)
 
 # The following tests are using types not supported by NumPy.
 # They could be if method to_array is extended to support custom
@@ -144,7 +162,9 @@ backend_test.exclude(
 
 # The following tests fail due to a shape mismatch.
 backend_test.exclude(
-    "(test_center_crop_pad_crop_axes_hwc_expanded|test_lppool_2d_dilations)"
+    "(test_center_crop_pad_crop_axes_hwc_expanded"
+    "|test_lppool_2d_dilations"
+    "|test_averagepool_2d_dilations)"
 )
 
 # The following tests fail due to a type mismatch.
@@ -152,6 +172,12 @@ backend_test.exclude("(test_eyelike_without_dtype)")
 
 # The following tests fail due to discrepancies (small but still higher than 1e-7).
 backend_test.exclude("test_adam_multiple")  # 1e-2
+
+# Currently google-re2 is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
+if sys.platform == "win32":
+    backend_test.exclude("test_regex_full_match_basic_cpu")
+    backend_test.exclude("test_regex_full_match_email_domain_cpu")
+    backend_test.exclude("test_regex_full_match_empty_cpu")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

@@ -72,7 +72,7 @@ class LinearClassifier(OpRunAiOnnxMl):
                 for j in range(scores.shape[1]):
                     scores[i, j] = compute_probit(scores[i, j])
         else:
-            raise NotImplementedError(f"Unknown post_transform: '{post_transform}'.")
+            raise NotImplementedError("Unknown post_transform: '{post_transform}'.")
 
         if scores.shape[1] > 1:
             labels = np.argmax(scores, axis=1)
