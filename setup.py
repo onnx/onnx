@@ -17,7 +17,7 @@ import subprocess
 import sys
 import sysconfig
 import textwrap
-from typing import ClassVar, List
+from typing import ClassVar
 
 import setuptools
 import setuptools.command.build_ext
@@ -73,7 +73,7 @@ with open(os.path.join(TOP_DIR, "VERSION_NUMBER")) as version_file:
         VERSION_NUMBER += ".dev" + today_number
         PACKAGE_NAME = "onnx-weekly"
         sys.argv.remove("--weekly_build")
-    VERSION_INFO = dict(version=VERSION_NUMBER, git_version=git_version)
+    VERSION_INFO = {"version": VERSION_NUMBER, "git_version": git_version}
 
 ################################################################################
 # Pre Check
