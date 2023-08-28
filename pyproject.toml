@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "onnx"
-dynamic = ["version"]
+dynamic = ["version", "dependencies", "optional-dependencies"]
 description = "Open Neural Network Exchange"
 readme = "README.md"
 authors = [
@@ -14,11 +14,6 @@ authors = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-]
-dependencies = [
-    "numpy >= 1.16.6", # TODO: Update once TensorFlow 2.6 is end of life
-    "protobuf >= 3.20.2",
-    "typing-extensions >= 3.6.2.1",
 ]
 license = {text = "Apache License v2.0"}
 requires-python = ">=3.7"
@@ -32,11 +27,21 @@ backend-test-tools = "onnx.backend.test.cmd_tools:main"
 check-model = "onnx.bin.checker:check_model"
 check-node = "onnx.bin.checker:check_node"
 
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+
+[tool.setuptools.dynamic.optional-dependencies]
+reference = {file = "requirements-reference.txt"}
+
 [tool.setuptools.packages.find]
 include = ["onnx*"]
 
 [tool.setuptools.package-data]
-onnx = ["py.typed", "*.pyi"]
+onnx = [
+    "py.typed",
+    "*.pyi",
+    "backend/test/data/**/*",
+]
 
 [tool.mypy]
 follow_imports = "silent"
