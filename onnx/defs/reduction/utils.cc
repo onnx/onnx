@@ -9,16 +9,17 @@
 #include <vector>
 
 namespace ONNX_NAMESPACE {
-std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit) {
+std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit, bool supports_bool) {
+  auto data_types = OpSchema::numeric_types_for_math_reduction_ir4();
   if (supports8bit) {
-    auto data_types = OpSchema::numeric_types_for_math_reduction_ir4();
     data_types.push_back("tensor(uint8)");
     data_types.push_back("tensor(int8)");
-
-    return data_types;
+  }
+  if (supports_bool) {
+    data_types.push_back("tensor(bool)");
   }
 
-  return OpSchema::numeric_types_for_math_reduction_ir4();
+  return data_types;
 }
 
 std::function<void(OpSchema&)> ReduceDocGenerator_opset13_18(
@@ -26,7 +27,8 @@ std::function<void(OpSchema&)> ReduceDocGenerator_opset13_18(
     bool supports_8bit_datatypes,
     bool axes_input,
     const char* func_body,
-    ContextDependentFunctionBodyBuilder function_builder) {
+    ContextDependentFunctionBodyBuilder function_builder,
+    bool supports_boolean_datatype = false) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -76,9 +78,9 @@ False instead of True.)DOC";
     schema.Output(0, "reduced", "Reduced output tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
-        GetSupportedDataTypesForReductionOps(supports_8bit_datatypes),
-        supports_8bit_datatypes ? "Constrain input and output types to high-precision and 8 bit numeric tensors."
-                                : "Constrain input and output types to high-precision numeric tensors.");
+        GetSupportedDataTypesForReductionOps(supports_8bit_datatypes, supports_boolean_datatype),
+        supports_boolean_datatype ? "Constrain input and output types to numeric and Boolean tensors."
+                                  : "Constrain input and output types to numeric tensors.");
     if (func_body) {
       schema.FunctionBody(func_body);
     } else if (function_builder) {
