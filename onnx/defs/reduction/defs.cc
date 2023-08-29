@@ -16,9 +16,9 @@ std::function<void(OpSchema&)> ReduceDocGeneratorWithFunctionBody(const char* na
   return ReduceDocGenerator_opset13_18(name, false, true, func_body);
 }
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("max", true, true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 20, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("max", true, true)));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("min", true, true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 20, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("min", true, true)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("sum", false, true)));
 
