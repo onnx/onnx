@@ -550,6 +550,11 @@ class TestNumpyHelper(unittest.TestCase):
         map_proto = numpy_helper.from_dict({0: np.array(0.1), 1: np.array(0.9)})
         self.assertIsNotNone(map_proto)
 
+    def test_from_dict_no_np_array(self):
+        with self.assertRaises(AttributeError):
+            # from_dict expects tensors to be numpy array's or similar.
+            numpy_helper.from_dict({0: 0.1, 1: 0.9})
+
 
 if __name__ == "__main__":
     unittest.main()
