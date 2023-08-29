@@ -806,9 +806,9 @@ If `axes` are omitted, they are set to `[0, ..., r-1]`.
 If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
 The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
-`dims` are the dimensions of `input` and `steps[i] = `1.
+`dims` are the dimensions of `input` and `steps[i] = 1`.
 
-All negative elements of `axes` are made non-negatve by adding `r` to them, where
+All negative elements of `axes` are made non-negative by adding `r` to them, where
 `r =rank(input)`.
 
 All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
@@ -1834,7 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // if axes not specified, do not keep shape if the dimension is equal to one
               continue;
             } else if (!axes_not_specified && std::find(axes.begin(), axes.end(), i) != axes.end()) {
-              // if axes wants to explictly act on this dim, fail explicitly only if the
+              // if axes wants to explicitly act on this dim, fail explicitly only if the
               // dim is numerical and != 1. If the dim is 1 or symbolic, remove it. If
               // the dim is symbolic, runtime engines should check that the dimension is
               // actually 1 when the op is evaluated
@@ -2930,7 +2930,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar
           // and 1 element vector for now. In future when version update for
-          // this op is done we should only allow scalar or chage the spec to
+          // this op is done we should only allow scalar or change the spec to
           // allow both.
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
@@ -3208,7 +3208,7 @@ Otherwise the input tensor is flattened and unique values of the flattened tenso
 
 This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
 The first output tensor 'Y' contains all unique values or subtensors of the input.
-The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'..
+The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'..
 The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
 The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
 
@@ -3344,7 +3344,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "indices",
             "A 1-D INT64 tensor "
-            "containing indices of 'Y' elements' first occurance in 'X'. "
+            "containing indices of 'Y' elements' first occurrence in 'X'. "
             "When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. "
             "When 'axis' is not provided, it contains indices to values in the flattened input tensor. ",
             "tensor(int64)",
