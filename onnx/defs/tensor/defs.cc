@@ -3208,8 +3208,8 @@ Otherwise the input tensor is flattened and unique values of the flattened tenso
 
 This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
 The first output tensor 'Y' contains all unique values or subtensors of the input.
-The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'..
-The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
+The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
+The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
 The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
 
 Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
