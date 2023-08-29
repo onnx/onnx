@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 import parameterized
 
-from onnx import helper, numpy_helper
+from onnx import helper, numpy_helper, MapProto
 
 
 def bfloat16_to_float32(ival: int) -> Any:
@@ -548,7 +548,7 @@ class TestNumpyHelper(unittest.TestCase):
 
     def test_from_dict(self):
         map_proto = numpy_helper.from_dict({0: np.array(0.1), 1: np.array(0.9)})
-        self.assertIsNotNone(map_proto)
+        self.assertIsInstance(map_proto, MapProto)
 
     def test_from_dict_no_np_array(self):
         with self.assertRaises(AttributeError):
