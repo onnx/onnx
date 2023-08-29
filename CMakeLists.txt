@@ -55,12 +55,15 @@ else()
   set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
-# Required to use /std:c++17 or higher on Windows
-# For other platforms, set C++11 as standard for the whole project
-if(NOT MSVC)
-  set(CMAKE_CXX_STANDARD 11)
-else()
-  string(APPEND CMAKE_CXX_FLAGS " /std:c++17")
+# Required to use C++17 or higher on Windows
+# For other platforms, set C++14 as standard for the whole project
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(MSVC AND CMAKE_CXX_STANDARD LESS 17)
+  set(CMAKE_CXX_STANDARD 17)
+elseif(CMAKE_CXX_STANDARD LESS 14)
+  set(CMAKE_CXX_STANDARD 14)
 endif()
 
 include(GNUInstallDirs)
@@ -103,16 +106,6 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
-if(ONNX_WERROR)
-  if(MSVC)
-    string(APPEND CMAKE_CXX_FLAGS " /WX")
-    string(APPEND CMAKE_C_FLAGS " /WX")
-  else()
-    string(APPEND CMAKE_CXX_FLAGS " -Werror")
-    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
-  endif()
-endif()
-
 # find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
 # Use the following command in the future; now this is only compatible with the latest pybind11
 # find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
@@ -123,6 +116,11 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
+endif()
+
+# Build the libraries with -fPIC including the protobuf lib.
+if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
 if(ONNX_BUILD_TESTS)
@@ -176,12 +174,112 @@ else()
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
               PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
               NO_DEFAULT_PATH)
-    find_package(Protobuf REQUIRED)
+    find_package(Protobuf)
+    if (Protobuf_FOUND)
+      set(Build_Protobuf OFF)
+      if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
+        # There are extra dependencies for protobuf.
+        find_package(absl REQUIRED)
+        find_package(utf8_range REQUIRED)
+        message(STATUS "absl_VERSION: ${absl_VERSION}")
+        set(protobuf_ABSL_USED_TARGETS
+          absl::absl_check
+          absl::absl_log
+          absl::algorithm
+          absl::base
+          absl::bind_front
+          absl::bits
+          absl::btree
+          absl::cleanup
+          absl::cord
+          absl::core_headers
+          absl::debugging
+          absl::die_if_null
+          absl::dynamic_annotations
+          absl::flags
+          absl::flat_hash_map
+          absl::flat_hash_set
+          absl::function_ref
+          absl::hash
+          absl::layout
+          absl::log_initialize
+          absl::log_severity
+          absl::memory
+          absl::node_hash_map
+          absl::node_hash_set
+          absl::optional
+          absl::span
+          absl::status
+          absl::statusor
+          absl::strings
+          absl::synchronization
+          absl::time
+          absl::type_traits
+          absl::utility
+          absl::variant
+          utf8_range::utf8_range
+          utf8_range::utf8_validity
+        )
+      endif()
+    else()
+      set(Build_Protobuf ON)
+    endif()
+  else()  # Protobuf_PROTOC_EXECUTABLE not found.
+    set(Build_Protobuf ON)
   endif()
+  if (Build_Protobuf)
+    # FetchContent module requires 3.11.
+    cmake_minimum_required(VERSION 3.11)
+    include(FetchContent)
+    message("Loading Dependencies URLs ...")
+    # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.3
+    set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.tar.gz)
+    set(AbseilSHA1 e21faa0de5afbbf8ee96398ef0ef812daf416ad8)
+    FetchContent_Declare(
+      Abseil
+      URL ${AbseilURL}
+      URL_HASH SHA1=${AbseilSHA1}
+    )
+    set(ABSL_PROPAGATE_CXX_STD 1)
+    set(abseil_BUILD_TESTING 0)
+    set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+    # Use this setting to build thirdparty libs.
+    set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
+    message(STATUS "Download and build Abseil from ${AbseilURL}")
+    FetchContent_Populate(Abseil)
+    FetchContent_GetProperties(Abseil)
+    # ABSL_ROOT_DIR is required by Protobuf.
+    set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
+    message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
+    set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
+    FetchContent_Declare(
+      Protobuf
+      URL ${ProtobufURL}
+      URL_HASH SHA1=${ProtobufSHA1}
+    )
+    set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+    message(STATUS "Download and build Protobuf from ${ProtobufURL}")
+    FetchContent_MakeAvailable(Protobuf Abseil)
+    set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+    set(Protobuf_VERSION "4.22.3")
+    # Change back the BUILD_SHARED_LIBS to control the onnx project.
+    set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
+  endif()
+  message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
+  message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 endif()
 
-# Build the libraries with -fPIC
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# abseil build would fail if ONNX_WERROR is on.
+if(ONNX_WERROR)
+  if(MSVC)
+    string(APPEND CMAKE_CXX_FLAGS " /WX")
+    string(APPEND CMAKE_C_FLAGS " /WX")
+  else()
+    string(APPEND CMAKE_CXX_FLAGS " -Werror")
+    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
+  endif()
+endif()
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
@@ -405,13 +503,13 @@ target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf-lite)
+    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf-lite PRIVATE ${protobuf_ABSL_USED_TARGETS})
   else()
     target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LITE_LIBRARIES})
   endif()
 else()
   if(TARGET protobuf::libprotobuf)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
+    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf PRIVATE ${protobuf_ABSL_USED_TARGETS})
   else()
     target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
   endif()

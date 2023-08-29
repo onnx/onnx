@@ -20,6 +20,7 @@ disable = [
     "too-many-locals",
     "too-many-public-methods",
     "too-many-return-statements",
+    "use-dict-literal",     # Dict literals are sometimes preferable when creating kwargs
     "useless-return",
     "wrong-import-order",
 ]

@@ -1,6 +1,5 @@
 numpy
 protobuf
-typing-extensions
 pytest
 pytest-cov
 parameterized
@@ -10,6 +9,8 @@ jupyter
 setuptools
 twine
 # Dependencies for linting. Versions match those in setup.py.
-lintrunner
-lintrunner-adapters
-# Edit additional linter dependencies in .lintrunner.toml.
+lintrunner>=0.10.7
+lintrunner-adapters>=0.8
+# Edit additional linter dependencies in requirements-lintrunner.txt
+# Dependencies for the reference implementation.
+-r requirements-reference.txt

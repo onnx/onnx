@@ -9,6 +9,7 @@ on:
     branches:
       - main
   pull_request:
+  merge_group:
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -22,9 +23,9 @@ jobs:
     name: Optional Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: misspell # Check spellings as well
-        uses: reviewdog/action-misspell@fe8d5c98c3761ef40755a7bb95460b2a33f6b346 # v1.12.3
+        uses: reviewdog/action-misspell@9257f108197b44e37995c98bea6ee4a5b9ffc3b0 # v1.13.1
         with:
           github_token: ${{ secrets.github_token }}
           locale: "US"
@@ -34,31 +35,30 @@ jobs:
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@f52d78284b4941028952125a10c76676c3d456eb # v1.17.0
+        uses: reviewdog/action-shellcheck@50e5e1e2284575f23a1e409d9c0804cdfc4f6e31 # v1.18.1
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
-      # Pleaes note that it won't cause any failure here; it will only post comments in PRs
-      - name: clang-tidy review
-        uses: ZedThree/clang-tidy-review@ddfe311e5d2ee5ea096cedc21adcbdb83c32f62b # v0.12.1
+      - name: cpplint # Static check C++ code
+        uses: reviewdog/action-cpplint@d5ddf147384ab68e12432bf02815d0e49e5388b2 # v1.0.0
         with:
-          build_dir: '.setuptools-cmake-build'
-          apt_packages: libprotobuf-dev protobuf-compiler
-          lgtm_comment_body: ''
-          exclude: "/third_party/*"
-          split_workflow: true
-      - uses: ZedThree/clang-tidy-review/upload@ddfe311e5d2ee5ea096cedc21adcbdb83c32f62b # v0.12.1
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: warning
+          flags: --linelength=120
 
 
   enforce-style:
     name: Enforce style
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
     steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       - name: Setup Python
-        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
         with:
           # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
           python-version: "3.10"
@@ -83,9 +83,10 @@ jobs:
       - name: Run lintrunner on all files
         run: |
           set +e
-          if ! lintrunner --force-color --all-files --tee-json=lint.json; then
+          if ! lintrunner --force-color --all-files --tee-json=lint.json -v; then
               echo ""
-              echo -e "\e[1m\e[36mYou can reproduce these results locally by using \`lintrunner -m main\`.\e[0m"
+              echo -e "\e[1m\e[36mYou can reproduce these results locally by using \`lintrunner\`.\e[0m"
+              echo -e "\e[1m\e[36mSee https://github.com/onnx/onnx/blob/main/docs/CONTRIBUTING.md#code-style for setup instructions.\e[0m"
               exit 1
           fi
       - name: Produce SARIF
@@ -93,10 +94,11 @@ jobs:
         run: |
           python -m lintrunner_adapters to-sarif lint.json lintrunner.sarif
       - name: Upload SARIF file
-        # Do not display on drafts to make reviewing easier
-        if: github.event.pull_request.draft == false
+        # Use always() to always upload SARIF even if lintrunner returns with error code
+        # To toggle linter comments in the files page, press `i` on the keyboard
+        if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@04df1262e6247151b5ac09cd2c303ac36ad3f62b # v2.2.9
+        uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v2.13.4
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif
@@ -105,7 +107,8 @@ jobs:
       - name: Check auto-gen files are up-to-date
         run: |
           echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
-          python onnx/defs/gen_doc.py
+          
+          ONNX_ML=1 python onnx/defs/gen_doc.py
           python onnx/gen_proto.py -l
           python onnx/gen_proto.py -l --ml
           python onnx/backend/test/stat_coverage.py

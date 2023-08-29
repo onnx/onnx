@@ -4,6 +4,8 @@
 
 #include "onnx/defs/math/utils.h"
 
+#include <string>
+
 namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)>
 SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {

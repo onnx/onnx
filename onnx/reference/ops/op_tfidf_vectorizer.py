@@ -65,7 +65,7 @@ class NgramPart:
     def __repr__(self):
         if self.empty():
             return f"NgramPart({self.id_})"
-        return f"NgramPart({self.id_}, {repr(self.leafs_)})"
+        return f"NgramPart({self.id_}, {self.leafs_!r})"
 
     def empty(self):
         return self._leafs_ is None

@@ -26,7 +26,7 @@ class PrepareContext:
 
 
 class SelectedIndex:
-    __slots__ = ["batch_index_", "class_index_", "box_index_"]
+    __slots__ = ("batch_index_", "class_index_", "box_index_")
 
     def __init__(
         self, batch_index: int = 0, class_index: int = 0, box_index: int = 0
@@ -234,7 +234,7 @@ class NonMaxSuppression(OpRun):
                             BoxInfo(class_scores[box_index], box_index)
                         )
 
-                sorted_boxes = list(sorted(candidate_boxes))
+                sorted_boxes = sorted(candidate_boxes)
 
                 selected_boxes_inside_class = []  # type: ignore
                 # Get the next box with top score, filter by iou_threshold.

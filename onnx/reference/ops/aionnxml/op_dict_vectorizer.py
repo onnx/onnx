@@ -18,7 +18,7 @@ class DictVectorizer(OpRunAiOnnxMl):
             else:
                 for i, v in enumerate(string_vocabulary):
                     dict_labels[v] = i
-            if len(dict_labels) == 0:
+            if not dict_labels:
                 raise RuntimeError(
                     "int64_vocabulary and string_vocabulary cannot be both empty."
                 )

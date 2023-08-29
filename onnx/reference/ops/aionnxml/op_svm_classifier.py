@@ -56,8 +56,7 @@ def multiclass_probability(k, R):
 
 
 def sigmoid_probability(score, proba, probb):
-    # ref: https://github.com/arnaudsj/libsvm/blob/
-    # eaaefac5ebd32d0e07902e1ae740e038eaaf0826/svm.cpp#L1818
+    # ref: https://github.com/arnaudsj/libsvm/blob/eaaefac5ebd32d0e07902e1ae740e038eaaf0826/svm.cpp#L1818
     val = score * proba + probb
     return 1 - compute_logistic(val)
 
@@ -65,9 +64,7 @@ def sigmoid_probability(score, proba, probb):
 def write_scores(n_classes, scores, post_transform, add_second_class):
     if n_classes >= 2:
         if post_transform == "PROBIT":
-            res = []
-            for score in scores:
-                res.append(compute_probit(score))
+            res = [compute_probit(score) for score in scores]
             return np.array(res, dtype=scores.dtype)
         if post_transform == "LOGISTIC":
             return logistic(scores)

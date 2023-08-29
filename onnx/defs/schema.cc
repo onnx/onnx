@@ -3,8 +3,11 @@
  */
 
 #include "onnx/defs/schema.h"
+
 #include <stdexcept>
 #include <unordered_set>
+#include <utility>
+
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/operator_sets_preview.h"
@@ -15,7 +18,6 @@
 #endif
 
 #include "onnx/common/assertions.h"
-#include "onnx/common/stl_backports.h"
 #include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {
@@ -28,8 +30,8 @@ constexpr int OpSchema::kUninitializedSinceVersion;
 
 // By default if opset_version_to_load=0, it registers all opset schema for all opset versions
 // Otherwise, it only registers the latest schema according to opset_version_to_load
-void RegisterSchema(OpSchema schema, int opset_version_to_load) {
-  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load);
+void RegisterSchema(OpSchema schema, int opset_version_to_load, bool fail_duplicate_schema) {
+  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load, fail_duplicate_schema);
 }
 
 #ifndef NDEBUG
@@ -392,14 +394,14 @@ OpSchema& OpSchema::Deprecate() {
 }
 
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  num_inputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n) -> bool {
+  num_inputs_allowed_ = [allowed_input_nums = std::move(allowed_input_nums)](int n) -> bool {
     return allowed_input_nums.count(n);
   };
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  num_outputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
+  num_outputs_allowed_ = [allowed_output_nums = std::move(allowed_output_nums)](int n) -> bool {
     return allowed_output_nums.count(n) > 0;
   };
   return *this;
@@ -459,6 +461,21 @@ OpSchema& OpSchema::Attr(Attribute attr) {
 OpSchema& OpSchema::Attr(std::string name, std::string description, AttributeProto::AttributeType type, bool required) {
   Attr(Attribute{std::move(name), std::move(description), type, required});
   return *this;
+}
+
+OpSchema& OpSchema::Attr(
+    std::string name,
+    std::string description,
+    std::string conditionExplanation,
+    AttributeProto::AttributeType attr_type) {
+  AttributeProto a;
+  a.set_name(name);
+  a.set_type(attr_type);
+  if (attr_type == AttributeProto_AttributeType_UNDEFINED) {
+    a.mutable_t()->set_data_type(TensorProto_DataType_UNDEFINED);
+  }
+  a.mutable_doc_string()->assign(std::move(conditionExplanation));
+  return Attr(Attribute{std::move(name), std::move(description), std::move(a)});
 }
 
 OpSchema& OpSchema::Attr(const char* name, const char* description, AttributeProto::AttributeType type, bool required) {
@@ -553,6 +570,14 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
   return *this;
 }
 
+OpSchema& OpSchema::Input(int n, FormalParameter formal_parameter) {
+  if (inputs_.size() <= static_cast<size_t>(n)) {
+    inputs_.resize(n + 1);
+  }
+  inputs_[n] = std::move(formal_parameter);
+  return *this;
+}
+
 OpSchema& OpSchema::Input(
     int n,
     std::string name,
@@ -562,22 +587,20 @@ OpSchema& OpSchema::Input(
     bool is_homogeneous,
     int min_arity,
     DifferentiationCategory differentiation_category) {
-  if (int(inputs_.size()) <= n) {
-    inputs_.resize(n + 1);
-  }
-  inputs_[n] = FormalParameter(
-      std::move(name),
+  return Input(
+      n,
+      FormalParameter(
+          std::move(name),
 #ifndef __ONNX_NO_DOC_STRINGS
-      description,
+          description,
 #else
-      std::string(),
+          std::string(),
 #endif
-      std::move(type_str),
-      param_option,
-      is_homogeneous,
-      min_arity,
-      differentiation_category);
-  return *this;
+          std::move(type_str),
+          param_option,
+          is_homogeneous,
+          min_arity,
+          differentiation_category));
 }
 
 OpSchema& OpSchema::Input(
@@ -604,6 +627,14 @@ OpSchema& OpSchema::Input(
       differentiation_category);
 }
 
+OpSchema& OpSchema::Output(int n, FormalParameter formal_parameter) {
+  if (outputs_.size() <= static_cast<size_t>(n)) {
+    outputs_.resize(n + 1);
+  }
+  outputs_[n] = std::move(formal_parameter);
+  return *this;
+}
+
 OpSchema& OpSchema::Output(
     int n,
     std::string name,
@@ -613,22 +644,20 @@ OpSchema& OpSchema::Output(
     bool is_homogeneous,
     int min_arity,
     DifferentiationCategory differentiation_category) {
-  if (int(outputs_.size()) <= n) {
-    outputs_.resize(n + 1);
-  }
-  outputs_[n] = FormalParameter(
-      std::move(name),
+  return Output(
+      n,
+      FormalParameter(
+          std::move(name),
 #ifndef __ONNX_NO_DOC_STRINGS
-      description,
+          description,
 #else
-      std::string(),
+          std::string(),
 #endif
-      std::move(type_str),
-      param_option,
-      is_homogeneous,
-      min_arity,
-      differentiation_category);
-  return *this;
+          std::move(type_str),
+          param_option,
+          is_homogeneous,
+          min_arity,
+          differentiation_category));
 }
 
 OpSchema& OpSchema::Output(
