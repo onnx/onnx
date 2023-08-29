@@ -555,6 +555,16 @@ class TestNumpyHelper(unittest.TestCase):
             # from_dict expects tensors to be numpy array's or similar.
             numpy_helper.from_dict({0: 0.1, 1: 0.9})
 
+    def test_from_dict_differing_key_types(self):
+        with self.assertRaises(TypeError):
+            # Differing key types should raise a TypeError
+            numpy_helper.from_dict({0: np.array(0.1), 1.1: np.array(0.9)})
+
+    def test_from_dict_differing_value_types(self):
+        with self.assertRaises(TypeError):
+            # Differing value types should raise a TypeError
+            numpy_helper.from_dict({0: np.array(1), 1.1: np.array(0.9)})
+
 
 if __name__ == "__main__":
     unittest.main()
