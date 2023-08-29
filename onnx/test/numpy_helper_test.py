@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 import parameterized
 
-from onnx import helper, numpy_helper, MapProto
+from onnx import MapProto, helper, numpy_helper
 
 
 def bfloat16_to_float32(ival: int) -> Any:
