@@ -13722,8 +13722,8 @@ This version of the operator has been available since version 11 of the default 
 
   This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
   The first output tensor 'Y' contains all unique values or subtensors of the input.
-  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'..
-  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
+  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
+  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
   The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
 
   Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
@@ -13841,7 +13841,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
 <dt><tt>indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurance in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
+<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurrence in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
 <dt><tt>inverse_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
 <dt><tt>counts</tt> (optional, non-differentiable) : tensor(int64)</dt>
@@ -18121,9 +18121,9 @@ This version of the operator has been available since version 13 of the default 
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
   The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
-  `dims` are the dimensions of `input` and `steps[i] = `1.
+  `dims` are the dimensions of `input` and `steps[i] = 1`.
 
-  All negative elements of `axes` are made non-negatve by adding `r` to them, where
+  All negative elements of `axes` are made non-negative by adding `r` to them, where
   `r =rank(input)`.
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
