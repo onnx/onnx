@@ -1280,7 +1280,7 @@ def printable_attribute(
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
     which = dim.WhichOneof("value")
     if which is None:
-        raise TypeError(f"which cannot be {None}.")
+        return "."
     return str(getattr(dim, which))
 
 
