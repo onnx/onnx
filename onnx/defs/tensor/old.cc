@@ -1049,6 +1049,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            // we can infer the output rank - it never changes
+            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 
@@ -3773,6 +3778,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            // we can infer the output rank - it never changes
+            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 

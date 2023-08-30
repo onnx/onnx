@@ -598,6 +598,16 @@ class TestAutomaticUpgrade(unittest.TestCase):
             attrs={"then_branch": then_graph, "else_branch": else_graph},
         )
 
+    def test_ImageDecoder(self) -> None:
+        self._test_op_upgrade(
+            "ImageDecoder",
+            20,
+            [[None]],
+            [[None, None, 3]],
+            input_types=[TensorProto.UINT8],
+            output_types=[TensorProto.UINT8],
+        )
+
     def test_InstanceNormalization(self) -> None:
         self._test_op_upgrade(
             "InstanceNormalization",

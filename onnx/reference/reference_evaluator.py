@@ -85,7 +85,7 @@ class ReferenceEvaluator:
     Adding an implementation requires two changes. The first one is
     the implementation itself. Any existing node can be used as a template.
     The second is one line in file `_op_list.py
-    <https://github.com/onnx/onnx/tree/main/onnx/reference/ops/_op_file.py>`_
+    <https://github.com/onnx/onnx/tree/main/onnx/reference/ops/_op_list.py>`_
     to import the file and let the reference evaluator know it exists.
 
     This class can also be used to test an implementation of

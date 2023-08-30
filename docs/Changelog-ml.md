@@ -1147,3 +1147,82 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 <dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
 
+## Version 4 of the 'ai.onnx.ml' operator set
+### <a name="ai.onnx.ml.LabelEncoder-4"></a>**ai.onnx.ml.LabelEncoder-4**</a>
+
+  Maps each element in the input tensor to another value.<br>
+      The mapping is determined by the two parallel attributes, 'keys_*' and
+      'values_*' attribute. The i-th value in the specified 'keys_*' attribute
+      would be mapped to the i-th value in the specified 'values_*' attribute. It
+      implies that input's element type and the element type of the specified
+      'keys_*' should be identical while the output type is identical to the
+      specified 'values_*' attribute. Note that the 'keys_*' and 'values_*' attributes
+      must have the same length. If an input element can not be found in the
+      specified 'keys_*' attribute, the 'default_*' that matches the specified
+      'values_*' attribute may be used as its output value. The type of the 'default_*'
+      attribute must match the 'values_*' attribute chosen. <br>
+      Let's consider an example which maps a string tensor to an integer tensor.
+      Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
+      and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
+      "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
+      Since this operator is an one-to-one mapping, its input and output shapes
+      are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
+      Float keys with value 'NaN' match any input 'NaN' value regardless of bit
+      value. If a key is repeated, the last key takes precedence.
+
+#### Version
+
+This version of the operator has been available since version 4 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>default_float</tt> : float (default is -0.0)</dt>
+<dd>A float.</dd>
+<dt><tt>default_int64</tt> : int (default is -1)</dt>
+<dd>An integer.</dd>
+<dt><tt>default_string</tt> : string (default is _Unused)</dt>
+<dd>A string.</dd>
+<dt><tt>default_tensor</tt> : tensor (default is {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.)</dt>
+<dd>A default tensor.</dd>
+<dt><tt>keys_floats</tt> : list of floats</dt>
+<dd>A list of floats.</dd>
+<dt><tt>keys_int64s</tt> : list of ints</dt>
+<dd>A list of ints.</dd>
+<dt><tt>keys_strings</tt> : list of strings</dt>
+<dd>A list of strings.</dd>
+<dt><tt>keys_tensor</tt> : tensor</dt>
+<dd>Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.</dd>
+<dt><tt>values_floats</tt> : list of floats</dt>
+<dd>A list of floats.</dd>
+<dt><tt>values_int64s</tt> : list of ints</dt>
+<dd>A list of ints.</dd>
+<dt><tt>values_strings</tt> : list of strings</dt>
+<dd>A list of strings.</dd>
+<dt><tt>values_tensor</tt> : tensor</dt>
+<dd>Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data. It must have the same element type as the keys_* attribute set.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>Output data. This tensor's element type is based on the values_* attribute set.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
+<dd>The input type is a tensor of any shape.</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
+<dd>Output type is determined by the specified 'values_*' attribute.</dd>
+</dl>
+
