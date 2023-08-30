@@ -311,7 +311,10 @@ class OpRun(abc.ABC):
                             f"for node {self.onnx_node.op_type!r}."
                         )
                     if hasattr(v, "default_value"):
-                        if v.default_value.type == 0:
+                        if v.default_value.type == 0 or (
+                            v.default_value.type == 4
+                            and v.default_value.t.data_type == 0
+                        ):
                             # default value is undefined, it depends on the inputs
                             value = None  # type: ignore
                         else:

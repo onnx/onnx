@@ -114,6 +114,7 @@ from onnx.reference.ops.op_hard_sigmoid import HardSigmoid
 from onnx.reference.ops.op_hardmax import Hardmax
 from onnx.reference.ops.op_identity import Identity
 from onnx.reference.ops.op_if import If
+from onnx.reference.ops.op_image_decoder import ImageDecoder
 from onnx.reference.ops.op_instance_normalization import InstanceNormalization
 from onnx.reference.ops.op_isinf import IsInf
 from onnx.reference.ops.op_isnan import IsNaN

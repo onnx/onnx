@@ -14181,7 +14181,7 @@ This version of the operator has been available since version 12 of the default 
   An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
   ```
-  output[output-term] = reduce-sum( input1[term1] * input2[term] )
+  output[output-term] = reduce-sum( input1[term1] * input2[term2] )
   ```
 
   where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
@@ -21029,7 +21029,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r]. Negative value means counting dimensions from the back.</dd>
+<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). Negative value means counting dimensions from the back.</dd>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>stash_type</tt> : int (default is 1)</dt>
@@ -24090,6 +24090,66 @@ This version of the operator has been available since version 20 of the default 
 <dd>Constrain input `X` and output `Y` types to all tensor types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain grid types to float tensors.</dd>
+</dl>
+
+### <a name="ImageDecoder-20"></a>**ImageDecoder-20**</a>
+
+  Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded
+  stream, invalid format, it will return an empty matrix).
+  The following image formats are supported:
+  * BMP
+  * JPEG (note: Lossless JPEG support is optional)
+  * JPEG2000
+  * TIFF
+  * PNG
+  * WebP
+  * Portable image format (PBM, PGM, PPM, PXM, PNM)
+  Decoded images follow a channel-last layout: (Height, Width, Channels).
+  **JPEG chroma upsampling method:**
+  When upsampling the chroma components by a factor of 2, the pixels are linearly interpolated so that the
+  centers of the output pixels are 1/4 and 3/4 of the way between input pixel centers.
+  When rounding, 0.5 is rounded down and up at alternative pixels locations to prevent bias towards
+  larger values (ordered dither pattern).
+  Considering adjacent input pixels A, B, and C, B is upsampled to pixels B0 and B1 so that
+  ```
+  B0 = round_half_down((1/4) * A + (3/4) * B)
+  B1 = round_half_up((3/4) * B + (1/4) * C)
+  ```
+  This method,  is the default chroma upsampling method in the well-established libjpeg-turbo library,
+  also referred as "smooth" or "fancy" upsampling.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>pixel_format</tt> : string (default is RGB)</dt>
+<dd>Pixel format. Can be one of "RGB", "BGR", or "Grayscale".</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>encoded_stream</tt> (non-differentiable) : T1</dt>
+<dd>Encoded stream</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>image</tt> (non-differentiable) : T2</dt>
+<dd>Decoded image</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8)</dt>
+<dd>Constrain input types to 8-bit unsigned integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8)</dt>
+<dd>Constrain output types to 8-bit unsigned integer tensor.</dd>
 </dl>
 
 ### <a name="RegexFullMatch-20"></a>**RegexFullMatch-20**</a>

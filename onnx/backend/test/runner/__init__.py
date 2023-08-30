@@ -55,13 +55,17 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
 
 class Runner:
     def __init__(
-        self, backend: type[Backend], parent_module: str | None = None
+        self,
+        backend: type[Backend],
+        parent_module: str | None = None,
+        test_kwargs: dict | None = None,
     ) -> None:
         self.backend = backend
         self._parent_module = parent_module
         self._include_patterns: set[Pattern[str]] = set()
         self._exclude_patterns: set[Pattern[str]] = set()
         self._xfail_patterns: set[Pattern[str]] = set()
+        self._test_kwargs: dict = test_kwargs or {}
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
@@ -256,6 +260,7 @@ class Runner:
         test_func: Callable[..., Any],
         report_item: list[ModelProto | NodeProto | None],
         devices: Iterable[str] = ("CPU", "CUDA"),
+        **kwargs: Any,
     ) -> None:
         # We don't prepend the 'test_' prefix to improve greppability
         if not test_name.startswith("test_"):
@@ -273,9 +278,10 @@ class Runner:
                 f"Backend doesn't support device {device}",
             )
             @functools.wraps(test_func)
-            def device_test_func(*args: Any, **kwargs: Any) -> Any:
+            def device_test_func(*args: Any, **device_test_kwarg: Any) -> Any:
                 try:
-                    return test_func(*args, device=device, **kwargs)
+                    merged_kwargs = {**kwargs, **device_test_kwarg}
+                    return test_func(*args, device, **merged_kwargs)
                 except BackendIsNotSupposedToImplementIt as e:
                     # hacky verbose reporting
                     if "-v" in sys.argv or "--verbose" in sys.argv:
@@ -320,7 +326,7 @@ class Runner:
         # never loaded if the test skipped
         model_marker: list[ModelProto | NodeProto | None] = [None]
 
-        def run(test_self: Any, device: str) -> None:
+        def run(test_self: Any, device: str, **kwargs) -> None:
             if model_test.url is not None and model_test.url.startswith(
                 "onnx/backend/test/data/light/"
             ):
@@ -367,7 +373,7 @@ class Runner:
             ):
                 raise unittest.SkipTest("Not compatible with backend")
 
-            prepared_model = self.backend.prepare(model, device)
+            prepared_model = self.backend.prepare(model, device, **kwargs)
             assert prepared_model is not None
 
             if use_dummy:
@@ -456,7 +462,16 @@ class Runner:
                     ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
                 )
 
-        self._add_test(kind + "Model", model_test.name, run, model_marker)
+        if model_test.name in self._test_kwargs:
+            self._add_test(
+                kind + "Model",
+                model_test.name,
+                run,
+                model_marker,
+                **self._test_kwargs[model_test.name],
+            )
+        else:
+            self._add_test(kind + "Model", model_test.name, run, model_marker)
 
     def _load_proto(
         self,

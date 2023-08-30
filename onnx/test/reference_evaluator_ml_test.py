@@ -19,6 +19,7 @@ from onnx.helper import (
     make_model_gen_version,
     make_node,
     make_opsetid,
+    make_tensor,
     make_tensor_value_info,
 )
 from onnx.reference import ReferenceEvaluator
@@ -34,7 +35,7 @@ ORT_MAX_ML_OPSET_SUPPORTED_VERSION = int(
 )
 
 TARGET_OPSET = onnx_opset_version() - 2
-TARGET_OPSET_ML = 3
+TARGET_OPSET_ML = 4
 OPSETS = [make_opsetid("", TARGET_OPSET), make_opsetid("ai.onnx.ml", TARGET_OPSET_ML)]
 
 
@@ -373,6 +374,35 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         expected = np.array([["NONE"], ["a"], ["cc"], ["ddd"]])
         self._check_ort(onx, {"X": x}, equal=True)
         sess = ReferenceEvaluator(onx)
+        got = sess.run(None, {"X": x})[0]
+        self.assertEqual(expected.tolist(), got.tolist())
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_label_encoder_int_string_tensor_attributes(self):
+        X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.STRING, [None, None])
+        node = make_node(
+            "LabelEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            keys_tensor=make_tensor(
+                "keys_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+            ),
+            values_tensor=make_tensor(
+                "values_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+            ),
+            default_tensor=make_tensor(
+                "default_tensor", TensorProto.STRING, [], ["NONE"]
+            ),
+        )
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        check_model(model)
+        x = np.array([[0, 1, 3, 4]], dtype=np.int64).T
+        expected = np.array([["NONE"], ["a"], ["cc"], ["ddd"]])
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
         self.assertEqual(expected.tolist(), got.tolist())
 

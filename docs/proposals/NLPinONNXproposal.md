@@ -60,7 +60,7 @@ Note that there are more general forms of beam search, such as those including b
 
 ## End-to-end Example : seq2seq with attention
 
-We should endeavor to have full support for seq2seq with attention models in ONNX. Facebook is currently working on this internally and creating a pytorch→ONNX→caffe2 pathway. An example of such a model we'd like to represent in ONNX is [fairseq-py](https://github.com/facebookresearch/fairseq-py). We would love to engage with the community and collaborate on anything that will help make this a reality. Additionally, if the community has any other suggestions for prominent NLP models we should be able to represent, we would love to hear your ideas.
+We should endeavor to have full support for seq2seq with attention models in ONNX. Facebook is currently working on this internally and creating a pytorch→ONNX→caffe2 pathway. An example of such a model we'd like to represent in ONNX is [fairseq](https://github.com/facebookresearch/fairseq). We would love to engage with the community and collaborate on anything that will help make this a reality. Additionally, if the community has any other suggestions for prominent NLP models we should be able to represent, we would love to hear your ideas.
 
 ## Further Challenges
 
