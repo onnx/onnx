@@ -1515,7 +1515,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Infer output shape if:
           // (1) 'K' is available
           // (2) axis_dim has dim value
-          // Othewise cannot reliably compute output shape as axis dim value is
+          // Otherwise cannot reliably compute output shape as axis dim value is
           // unknown and hence cannot determine if axis dim value >= k (which
           // should be enforced)
           if (nullptr != k && axis_dim.has_dim_value()) {
@@ -2198,7 +2198,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Round_ver11_doc = R"DOC(
 Round takes one input Tensor and rounds the values, element-wise, meaning
 it finds the nearest integer for each value.
-In case of halfs, the rule is to round them to the nearest even integer.
+In case of halves, the rule is to round them to the nearest even integer.
 If input x is integral, +0, -0, NaN,  or infinite, x itself is returned.
 The output tensor has the same shape and type as the input.
 
@@ -2767,7 +2767,7 @@ After L is available, this operator can optionally do a reduction operator.
 * shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
   with K >= 1 in case of K-dimensional loss.
 
-The loss for one sample, l_i, can caculated as follows:
+The loss for one sample, l_i, can calculated as follows:
 ```
 l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
 ```
@@ -2975,7 +2975,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. "
             "For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. "
             "The first dimension is the batch dimension. "
-            "The following N dimentions correspond to the signal's dimensions. "
+            "The following N dimensions correspond to the signal's dimensions. "
             "The final dimension represents the real and imaginary parts of the value in that order.",
             "T1",
             OpSchema::Single,
