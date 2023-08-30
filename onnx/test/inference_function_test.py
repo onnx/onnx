@@ -7,6 +7,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
+import onnx
 from onnx import TensorProto, TypeProto
 from onnx.checker import ValidationError
 from onnx.defs import OpSchema, get_all_schemas_with_history, get_schema
@@ -195,6 +196,85 @@ class TestInferenceFunctionCall(unittest.TestCase):
                 "scan_output": (TensorProto.FLOAT, (seq_len, input_size)),
             }
         )
+
+    def test_inference_with_conflow(self) -> None:
+        model_script = """
+        <
+            ir_version: 8,
+            opset_import: ["" : 18, "onnxscript.atenlib" : 1],
+            producer_name: "pytorch",
+            producer_version: "2.1.0"
+        >
+        torch_jit (float input_0) => (float reault, int64 index)
+        {
+            reault, index = onnxscript.atenlib.aten_min_dim <dim = 0, keepdim = 1> (input_0)
+        }
+        <
+            domain: "onnxscript.atenlib",
+            opset_import: ["" : 18]
+        >
+        aten_min_dim <dim>(self) => (result_7, indices_6)
+        {
+            tmp = Shape (self)
+            tmp_0 = Size (tmp)
+            tmp_1 = Constant <value = int64 tmp_1 {0}> ()
+            tmp_1_cast = CastLike (tmp_1, tmp_0)
+            tmp_2 = Equal (tmp_0, tmp_1_cast)
+            cond = Not (tmp_2)
+            indices_6, result_7 = If (cond) <
+                then_branch = thenGraph_4 () => ( indices,  result) {
+                    dim = Constant <value_int: int = @dim> ()
+                    tmp_3 = Constant <value_ints = [-1]> ()
+                    dims = Reshape (dim, tmp_3)
+                    result = ReduceMin <keepdims: int = @keepdim> (self, dims)
+                    indices = ArgMin <axis: int = @dim, keepdims: int = @keepdim> (self)
+                }, else_branch = elseGraph_4 () => ( indices_4,  result_5) {
+                    indices_4 = Constant <value_int = 0> ()
+                    result_5 = Identity (self)
+                }
+            >
+        }
+        """
+        model = onnx.parser.parse_model(model_script)
+        onnx.shape_inference.infer_shapes(model, strict_mode=False)
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_inference_with_attribute(self) -> None:
+        model_script = """
+        <
+            ir_version: 8,
+            opset_import: ["" : 18, "custom" : 1],
+            producer_name: "",
+            producer_version: "1.0"
+        >
+        MeanVarianceNormalization (float[N] x) => (float[M] y)
+        {
+            y = custom.custom_mvn <axes = [0]> (x)
+        }
+        <
+            domain: "custom",
+            opset_import: ["" : 18]
+        >
+        custom_mvn <axes>(X) => (Y)
+        {
+          Exponent = Constant <value = float {2.0}>()
+          Epsilon = Constant <value = float {1e-9}>()
+          axes = Constant <value_ints: ints = @axes>()
+          X_RM = ReduceMean (X, axes)
+          EX_squared = Pow (X_RM, Exponent)
+          X_squared = Pow (X, Exponent)
+          E_Xsquared = ReduceMean (X_squared, axes)
+          Variance = Sub (E_Xsquared, EX_squared)
+          STD = Sqrt (Variance)
+          X_variance = Sub (X, X_RM)
+          Processed_STD = Add (STD, Epsilon)
+          Y = Div (X_variance, Processed_STD)
+        }
+        """
+        model = onnx.parser.parse_model(model_script)
+        # onnx.shape_inference.infer_shapes(model, strict_mode=False)
+        onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
 
 if __name__ == "__main__":

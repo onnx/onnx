@@ -19,6 +19,8 @@ from onnx import serialization
 def _simple_model() -> onnx.ModelProto:
     model = onnx.ModelProto()
     model.ir_version = onnx.IR_VERSION
+    model.producer_name = "onnx-test"
+    model.graph.name = "test"
     return model
 
 
@@ -36,6 +38,8 @@ def _simple_tensor() -> onnx.TensorProto:
     [
         {"format": "protobuf"},
         {"format": "textproto"},
+        {"format": "json"},
+        {"format": "onnxtxt"},
     ]
 )
 class TestIO(unittest.TestCase):
@@ -73,6 +77,20 @@ class TestIO(unittest.TestCase):
             onnx.save_model(proto, model_path, format=self.format)
             loaded_proto = onnx.load_model(model_path, format=self.format)
             self.assertEqual(proto, loaded_proto)
+
+
+@parameterized.parameterized_class(
+    [
+        {"format": "protobuf"},
+        {"format": "textproto"},
+        {"format": "json"},
+        # The onnxtxt format does not support saving/loading tensors yet
+    ]
+)
+class TestIOTensor(unittest.TestCase):
+    """Test loading and saving of TensorProto."""
+
+    format: str
 
     def test_load_tensor_when_input_is_bytes(self) -> None:
         proto = _simple_tensor()
