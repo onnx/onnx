@@ -271,9 +271,9 @@ def to_array(  # pylint: disable=too-many-branches
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
-def from_array(
+def from_array(  # pylint: disable=too-many-branches
     arr: np.ndarray, name: Optional[str] = None
-) -> TensorProto:  # pylint: disable=too-many-branches
+) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
     Args:
