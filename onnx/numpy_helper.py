@@ -281,6 +281,9 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
     Returns:
         TensorProto: the converted tensor def.
     """
+    if not isinstance(arr, np.ndarray):
+        raise TypeError(f"arr must be of type np.ndarray, got {type(arr)}")
+
     tensor = TensorProto()
     tensor.dims.extend(arr.shape)
     if name:
