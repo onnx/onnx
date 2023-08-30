@@ -8,7 +8,8 @@ from typing import Any
 import numpy as np
 import parameterized
 
-from onnx import MapProto, helper, numpy_helper
+import onnx
+from onnx import helper, numpy_helper
 
 
 def bfloat16_to_float32(ival: int) -> Any:
@@ -548,7 +549,7 @@ class TestNumpyHelper(unittest.TestCase):
 
     def test_from_dict(self):
         map_proto = numpy_helper.from_dict({0: np.array(0.1), 1: np.array(0.9)})
-        self.assertIsInstance(map_proto, MapProto)
+        self.assertIsInstance(map_proto, onnx.MapProto)
 
     def test_from_dict_no_np_array(self):
         with self.assertRaises(AttributeError):
@@ -563,7 +564,7 @@ class TestNumpyHelper(unittest.TestCase):
     def test_from_dict_differing_value_types(self):
         with self.assertRaises(TypeError):
             # Differing value types should raise a TypeError
-            numpy_helper.from_dict({0: np.array(1), 1.1: np.array(0.9)})
+            numpy_helper.from_dict({0: np.array(1), 1: np.array(0.9)})
 
 
 if __name__ == "__main__":
