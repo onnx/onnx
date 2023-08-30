@@ -57,6 +57,11 @@ The grammar below describes the syntax:
    value-info ::= type id
    value-infos ::= value-info (',' value-info)*
    value-info-list ::= '(' value-infos? ')'
+   value-info-or-initializer ::= type id [ = '{' prim-constants '}']
+   value-info-or-initializers ::= value-info-or-initializer (',' value-info-or-initializer)*
+   input-list ::= '(' value-info-or-initializers? ')'
+   output-list ::= '(' value-infos? ')'
+   initializer-list ::= '<' value-info-or-initializers? '>'
    prim-constants ::= prim-constant (',' prim-constant)*
    tensor-constant ::= tensor-type (id)? ('=')? '{' prim-constants '}'
    attr-ref ::= '@' id
@@ -69,7 +74,7 @@ The grammar below describes the syntax:
    node ::= id-list? '=' qualified-id attr-list? '(' id-list? ')'
          |  id-list? '=' qualified-id '(' id-list? ')' attr-list
    node-list ::= '{' node* '}'
-   graph ::= id value-info-list '=>' value-info-list node-list
+   graph ::= id input-list '=>' output-list initializer-list node-list
    other-data ::= id ':' value
    other-data-list ::= '<' other-data (',' other-data)* '>'
    fun-attr-list ::= '<' id | attr (',' id | attr)* '>'
