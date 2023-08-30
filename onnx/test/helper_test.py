@@ -804,7 +804,7 @@ class TestPrintableGraph(unittest.TestCase):
         checker.check_model(model)
 
         graph_str = helper.printable_graph(graph)
-        self.assertIn("X[FLOAT, .]", graph_str)
+        self.assertIn("X[FLOAT, ?]", graph_str)
 
 
 @pytest.mark.parametrize(
