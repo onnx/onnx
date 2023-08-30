@@ -283,7 +283,7 @@ def from_array(  # pylint: disable=too-many-branches
     Returns:
         TensorProto: the converted tensor def.
     """
-    if not isinstance(arr, np.ndarray) and not isinstance(arr, np.generic):
+    if not isinstance(arr, (np.ndarray, np.generic)):
         raise TypeError(
             f"arr must be of type np.generic or np.ndarray, got {type(arr)}"
         )
