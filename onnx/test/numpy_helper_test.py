@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import parameterized
 
+import onnx
 from onnx import helper, numpy_helper
 
 
@@ -545,6 +546,55 @@ class TestNumpyHelper(unittest.TestCase):
         self.assertEqual(to, 0x80)
         back = numpy_helper.float8e4m3_to_float32(to, fn=True, uz=True)
         self.assertTrue(np.isnan(back))
+
+    def test_from_dict_values_are_np_arrays_of_float(self):
+        map_proto = numpy_helper.from_dict({0: np.array(0.1), 1: np.array(0.9)})
+        self.assertIsInstance(map_proto, onnx.MapProto)
+        self.assertEqual(
+            numpy_helper.to_array(map_proto.values.tensor_values[0]), np.array(0.1)
+        )
+        self.assertEqual(
+            numpy_helper.to_array(map_proto.values.tensor_values[1]), np.array(0.9)
+        )
+
+    def test_from_dict_values_are_np_arrays_of_int(self):
+        map_proto = numpy_helper.from_dict({0: np.array(1), 1: np.array(9)})
+        self.assertIsInstance(map_proto, onnx.MapProto)
+        self.assertEqual(
+            numpy_helper.to_array(map_proto.values.tensor_values[0]), np.array(1)
+        )
+        self.assertEqual(
+            numpy_helper.to_array(map_proto.values.tensor_values[1]), np.array(9)
+        )
+
+    def test_from_dict_values_are_np_arrays_of_ints(self):
+        zero_array = np.array([1, 2])
+        one_array = np.array([9, 10])
+        map_proto = numpy_helper.from_dict({0: zero_array, 1: one_array})
+        self.assertIsInstance(map_proto, onnx.MapProto)
+
+        out_tensor = numpy_helper.to_array(map_proto.values.tensor_values[0])
+        self.assertEqual(out_tensor[0], zero_array[0])
+        self.assertEqual(out_tensor[1], zero_array[1])
+
+        out_tensor = numpy_helper.to_array(map_proto.values.tensor_values[1])
+        self.assertEqual(out_tensor[0], one_array[0])
+        self.assertEqual(out_tensor[1], one_array[1])
+
+    def test_from_dict_raises_type_error_when_values_are_not_np_arrays(self):
+        with self.assertRaises(TypeError):
+            # from_dict/from_array expects tensors to be numpy array's or similar.
+            numpy_helper.from_dict({0: 0.1, 1: 0.9})
+
+    def test_from_dict_differing_key_types(self):
+        with self.assertRaises(TypeError):
+            # Differing key types should raise a TypeError
+            numpy_helper.from_dict({0: np.array(0.1), 1.1: np.array(0.9)})
+
+    def test_from_dict_differing_value_types(self):
+        with self.assertRaises(TypeError):
+            # Differing value types should raise a TypeError
+            numpy_helper.from_dict({0: np.array(1), 1: np.array(0.9)})
 
 
 if __name__ == "__main__":
