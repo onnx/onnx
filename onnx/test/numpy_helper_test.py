@@ -552,7 +552,7 @@ class TestNumpyHelper(unittest.TestCase):
         self.assertIsInstance(map_proto, onnx.MapProto)
 
     def test_from_dict_no_np_array(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(AttributeError):
             # from_dict expects tensors to be numpy array's or similar.
             numpy_helper.from_dict({0: 0.1, 1: 0.9})
 
