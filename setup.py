@@ -260,7 +260,6 @@ class CmakeBuild(setuptools.Command):
 class BuildPy(setuptools.command.build_py.build_py):
     def run(self):
         self.run_command("create_version")
-        self.run_command("cmake_build")
 
         generated_python_files = itertools.chain(
             glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")),
@@ -276,7 +275,6 @@ class BuildPy(setuptools.command.build_py.build_py):
 class EditableWheel(setuptools.command.editable_wheel.editable_wheel):
     def run(self):
         self.run_command("create_version")
-        self.run_command("cmake_build")
         setuptools.command.editable_wheel.editable_wheel.run(self)
 
 
