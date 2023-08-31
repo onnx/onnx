@@ -54,24 +54,7 @@ Status ParserBase::Parse(Literal& result) {
     } else
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
   } else if ((isdigit(nextch) || (nextch == '-'))) {
-    bool could_be_inf = nextch == '-';
-
     ++next_;
-
-    // negative inf, has to be '-inf' now or nothing...
-    if (*next_ == 'i' && could_be_inf) {
-      ++next_;
-      if (*next_ == 'n' && next_ < end_) {
-        ++next_;
-        if (*next_ == 'f') {
-          ++next_;
-          result.value = std::string(from, next_ - from);
-          result.type = LiteralType::FLOAT_LITERAL;
-          return Status::OK();
-        }
-      }
-      return ParseError("'-inf' expected but not found.");
-    }
 
     while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
       if (*next_ == '.') {
@@ -94,19 +77,9 @@ Status ParserBase::Parse(Literal& result) {
       while ((next_ < end_) && (isdigit(*next_)))
         ++next_;
     }
+
     result.value = std::string(from, next_ - from);
     result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
-  } else if (nextch == 'i') { // positive infinity case: inf
-    ++next_;
-    if (*next_ == 'n' && next_ < end_) {
-      ++next_;
-      if (*next_ == 'f') {
-        result.value = std::string(from, next_ - from);
-        result.type = LiteralType::FLOAT_LITERAL;
-        return Status::OK();
-      }
-    }
-    return ParseError("'inf' expected but not found.");
   }
   return Status::OK();
 }
