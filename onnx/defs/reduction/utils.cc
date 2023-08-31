@@ -28,7 +28,7 @@ std::function<void(OpSchema&)> ReduceDocGenerator_opset13_20(
     bool axes_input,
     const char* func_body,
     ContextDependentFunctionBodyBuilder function_builder,
-    bool supports_boolean_datatype = false) {
+    bool supports_boolean_datatype /* = false */) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
