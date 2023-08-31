@@ -61,15 +61,20 @@ jobs:
         fi
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
-        # Currently GitHub Action agent is using macos-11, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
-        # Change -p if MACOSX_DEPLOYMENT_TARGET is different
         if [ '${{ github.event_name }}' == 'schedule' ]; then
           ONNX_PREVIEW_BUILD=1 python -m build --wheel
         else
           python -m build --wheel
         fi
-        for file in dist/*.whl; do python -m pip install --upgrade $file; done
-    # TODO(justinchuby): Specify the wheel name
+        # Currently GitHub Action agent is using macos-11, we rename the wheels
+        # to use the MACOSX_DEPLOYMENT_TARGET
+        # Rename e.g. onnx-1.15.0-cp38-cp38-macosx_11_0_x86_64.whl
+        # to onnx-1.15.0-cp38-cp38-macosx_10_12_universal2.whl
+        for file in dist/*.whl; do
+        new_name=$(echo "$file" | sed 's/macosx_11_0_x86_64/macosx_10_12_${{ matrix.target-architecture }}/')
+        mv "$file" "$new_name"
+        python -m pip install --upgrade $file;
+        done
     - name: Test the installed wheel
       run: |
         pytest
