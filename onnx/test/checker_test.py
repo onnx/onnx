@@ -16,6 +16,7 @@ from onnx import (
     numpy_helper,
     shape_inference,
 )
+import onnx.parser
 
 
 class TestChecker(unittest.TestCase):
@@ -1024,6 +1025,20 @@ class TestChecker(unittest.TestCase):
         self.assertRaises(
             shape_inference.InferenceError, checker.check_model, model, True
         )
+
+    def test_empty_list_attribute(self):
+        model = onnx.parser.parse_model("""
+            <
+                ir_version: 7,
+                opset_import: [ "" : 19]
+            >
+            agraph (float[N] x) => (int64[M] y)
+            {
+                y = Constant <value_ints: ints = []>()
+            }
+        """)
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
 
 
 if __name__ == "__main__":
