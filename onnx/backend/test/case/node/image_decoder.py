@@ -1,16 +1,19 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-import cv2
+from io import BytesIO
+
 import numpy as np
+import PIL.Image
 
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def generate_checkerboard(width, height, square_size):
+def generate_checkerboard(width: int, height: int, square_size: int):
     # Create an empty RGB image
     image = np.zeros((height, width, 3), dtype=np.uint8)
 
@@ -39,21 +42,30 @@ def generate_checkerboard(width, height, square_size):
     return image
 
 
-def generate_test_data(extension, pixel_format="RGB", h=40, w=40, tile_sz=5):
-    data, output = None, None
+def generate_test_data(
+    extension: str,
+    pixel_format: str = "RGB",
+    h: int = 40,
+    w: int = 40,
+    tile_sz: int = 5,
+) -> tuple[bytes, np.ndarray]:
     np.random.seed(12345)
     image = generate_checkerboard(h, w, tile_sz)
-    image_bgr = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    _, encoded_image = cv2.imencode(extension, image_bgr)
-    data = np.frombuffer(encoded_image, dtype=np.uint8)
+    image_pil = PIL.Image.fromarray(image)
+    with BytesIO() as f:
+        image_pil.save(f, format=extension[1:])
+        data = f.getvalue()
     if pixel_format == "BGR":
-        output = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        output_pil = PIL.Image.open(BytesIO(data))
+        output = np.array(output_pil)[:, :, ::-1]
     elif pixel_format == "RGB":
-        output_bgr = cv2.imdecode(data, cv2.IMREAD_COLOR)
-        output = cv2.cvtColor(output_bgr, cv2.COLOR_BGR2RGB)
+        output_pil = PIL.Image.open(BytesIO(data))
+        output = np.array(output_pil)
     elif pixel_format == "Grayscale":
-        output = cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
-        output = np.expand_dims(output, axis=2)  # (H, W) to (H, W, 1)
+        output_pil = PIL.Image.open(BytesIO(data)).convert("L")
+        output = np.array(output_pil)[:, :, np.newaxis]
+    else:
+        raise ValueError(f"Unsupported pixel format: {pixel_format}")
     return data, output
 
 
