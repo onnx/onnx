@@ -10,7 +10,7 @@ dynamic = ["version", "dependencies", "optional-dependencies"]
 description = "Open Neural Network Exchange"
 readme = "README.md"
 authors = [
-    {name = "ONNX", email = "onnx-technical-discuss@lists.lfaidata.foundation"},
+    {name = "ONNX Contributors", email = "onnx-technical-discuss@lists.lfaidata.foundation"},
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
