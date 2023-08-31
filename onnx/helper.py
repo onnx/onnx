@@ -72,6 +72,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.13.0", 8, 18, 3, 1),
     ("1.13.1", 8, 18, 3, 1),
     ("1.14.0", 9, 19, 3, 1),
+    ("1.14.1", 9, 19, 3, 1),
     ("1.15.0", 9, 20, 4, 1),
 ]
 
@@ -1280,7 +1281,7 @@ def printable_attribute(
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
     which = dim.WhichOneof("value")
     if which is None:
-        raise TypeError(f"which cannot be {None}.")
+        return "?"
     return str(getattr(dim, which))
 
 
