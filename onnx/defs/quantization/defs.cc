@@ -140,7 +140,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
+<<<<<<< HEAD
 static const char* DynamicQuantizeLinear_ver20_doc = R"DOC(
+=======
+static const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
+>>>>>>> e7b6561c05ba4a6f314d3a4446bb39066ad4b9e8
 A Function to fuse calculation for Scale, Zero Point and FP32->8Bit conversion of FP32 Input data.
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
 Scale is calculated as:
