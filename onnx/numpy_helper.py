@@ -271,7 +271,9 @@ def to_array(  # pylint: disable=too-many-branches
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
-def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
+def from_array(  # pylint: disable=too-many-branches
+    arr: np.ndarray, name: Optional[str] = None
+) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
     Args:
@@ -281,6 +283,11 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
     Returns:
         TensorProto: the converted tensor def.
     """
+    if not isinstance(arr, (np.ndarray, np.generic)):
+        raise TypeError(
+            f"arr must be of type np.generic or np.ndarray, got {type(arr)}"
+        )
+
     tensor = TensorProto()
     tensor.dims.extend(arr.shape)
     if name:
@@ -449,7 +456,7 @@ def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
     if name:
         map_proto.name = name
     keys = list(dict_)
-    raw_key_type = np.array(keys[0]).dtype
+    raw_key_type = np.result_type(keys[0])
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
 
     valid_key_int_types = [
@@ -463,12 +470,11 @@ def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
         TensorProto.UINT64,
     ]
 
-    if not all(
-        isinstance(
-            key,
-            raw_key_type,  # type: ignore[arg-type]
+    if not (
+        all(
+            np.result_type(key) == raw_key_type  # type: ignore[arg-type]
+            for key in keys
         )
-        for key in keys
     ):
         raise TypeError(
             "The key type in the input dictionary is not the same "
@@ -476,8 +482,8 @@ def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
         )
 
     values = list(dict_.values())
-    raw_value_type = type(values[0])
-    if not all(isinstance(val, raw_value_type) for val in values):
+    raw_value_type = np.result_type(values[0])
+    if not all(np.result_type(val) == raw_value_type for val in values):
         raise TypeError(
             "The value type in the input dictionary is not the same "
             "for all values and therefore is not valid as a map."
