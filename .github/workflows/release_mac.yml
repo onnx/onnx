@@ -64,12 +64,12 @@ jobs:
         # Currently GitHub Action agent is using macos-11, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
         # Change -p if MACOSX_DEPLOYMENT_TARGET is different
         if [ '${{ github.event_name }}' == 'schedule' ]; then
-          python setup.py bdist_wheel -p macosx_10_12_${{ matrix.target-architecture }} --weekly_build
+          ONNX_PREVIEW_BUILD=1 python -m build --wheel
         else
-          python setup.py bdist_wheel -p macosx_10_12_${{ matrix.target-architecture }}
+          python -m build --wheel
         fi
         for file in dist/*.whl; do python -m pip install --upgrade $file; done
-
+    # TODO(justinchuby): Specify the wheel name
     - name: Test the installed wheel
       run: |
         pytest
@@ -123,7 +123,7 @@ jobs:
       run: |
         # Build and upload source distribution to PyPI
         git clean -xdf
-        python setup.py sdist --weekly_build
+        ONNX_PREVIEW_BUILD=1 python -m build --sdist
         twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
         # Test weekly source distribution from PyPI

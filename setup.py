@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # NOTE: Put all metadata in pyproject.toml.
+# Set the environment variable `ONNX_PREVIEW_BUILD=1` to build the dev preview release.
 
 import contextlib
 import datetime
@@ -68,11 +69,10 @@ except (OSError, subprocess.CalledProcessError):
 
 with open(os.path.join(TOP_DIR, "VERSION_NUMBER")) as version_file:
     VERSION_NUMBER = version_file.read().strip()
-    if "--weekly_build" in sys.argv:
+    if os.getenv("ONNX_PREVIEW_BUILD") is not None:
         today_number = datetime.date.today().strftime("%Y%m%d")
         VERSION_NUMBER += ".dev" + today_number
         PACKAGE_NAME = "onnx-weekly"
-        sys.argv.remove("--weekly_build")
     VERSION_INFO = {"version": VERSION_NUMBER, "git_version": git_version}
 
 ################################################################################
