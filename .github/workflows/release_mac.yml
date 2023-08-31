@@ -74,7 +74,7 @@ jobs:
         for file in dist/*.whl; do
         new_name=$(echo "$file" | sed 's/macosx_11_0_x86_64/macosx_10_12_${{ matrix.target-architecture }}/')
         mv "$file" "$new_name"
-        python -m pip install --upgrade $file;
+        python -m pip install --upgrade $new_name;
         done
     - name: Test the installed wheel
       run: |
