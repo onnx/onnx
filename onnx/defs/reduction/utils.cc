@@ -22,7 +22,7 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit,
   return data_types;
 }
 
-std::function<void(OpSchema&)> ReduceDocGenerator_opset13_18(
+std::function<void(OpSchema&)> ReduceDocGenerator_opset13_20(
     const char* name,
     bool supports_8bit_datatypes,
     bool axes_input,
