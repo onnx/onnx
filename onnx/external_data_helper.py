@@ -147,6 +147,54 @@ def convert_model_to_external_data(
                 set_external_data(tensor, tensor_location)
 
 
+def convert_graph_to_external_data(
+    graph: GraphProto,
+    all_tensors_to_one_file: bool = True,
+    location: Optional[str] = None,
+    size_threshold: int = 1024,
+    convert_attribute: bool = False,
+) -> None:
+    """
+    Call to set all tensors with raw data as external data. This call should preceed 'save_model'.
+    'save_model' saves all the tensors data as external data after calling this function.
+
+    Arguments:
+        model (ModelProto): Model to be converted.
+        all_tensors_to_one_file (bool): If true, save all tensors to one external file specified by location.
+            If false, save each tensor to a file named with the tensor name.
+        location: specify the external file that all tensors to save to.
+            If not specified, will use the model name.
+        size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold
+            it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
+        convert_attribute (bool): If true, convert all tensors to external data
+                       If false, convert only non-attribute tensors to external data
+    """
+    tensors = _get_initializer_tensors_from_graph(graph)
+    if convert_attribute:
+        tensors = chain(_get_initializer_tensors_from_graph(graph), _get_attribute_tensors_from_graph(graph))
+
+    if all_tensors_to_one_file:
+        file_name = str(uuid.uuid1())
+        if location:
+            file_name = location
+        for tensor in tensors:
+            if (
+                tensor.HasField("raw_data")
+                and sys.getsizeof(tensor.raw_data) >= size_threshold
+            ):
+                set_external_data(tensor, file_name)
+    else:
+        for tensor in tensors:
+            if (
+                tensor.HasField("raw_data")
+                and sys.getsizeof(tensor.raw_data) >= size_threshold
+            ):
+                tensor_location = tensor.name
+                if not _is_valid_filename(tensor_location):
+                    tensor_location = str(uuid.uuid1())
+                set_external_data(tensor, tensor_location)
+
+
 def convert_model_from_external_data(model: ModelProto) -> None:
     """
     Call to set all tensors which use external data as embedded data.
@@ -315,3 +363,30 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
             tensor.ClearField("raw_data")
 
     return model
+
+
+def write_graph_external_data_tensors(graph: GraphProto, filepath: str) -> ModelProto:
+    """
+    Serializes data for all the tensors which have data location set to TensorProto.External.
+
+    Note: This function also strips basepath information from all tensors' external_data fields.
+
+    Arguments:
+        model (GraphProto): Graph object which is the source of tensors to serialize.
+        filepath: System path to the directory which should be treated as base path for external data.
+
+    Returns:
+        GraphProto: The modified graph object.
+    """
+    tensors = chain(_get_initializer_tensors_from_graph(graph),
+                    _get_attribute_tensors_from_graph(graph))
+    for tensor in tensors:
+        # Writing to external data happens in 2 passes:
+        # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
+        # 2. The raw data in these tensors is serialized to a file
+        # Thus serialize only if tensor has raw data and it was marked for serialization
+        if uses_external_data(tensor) and tensor.HasField("raw_data"):
+            save_external_data(tensor, filepath)
+            tensor.ClearField("raw_data")
+
+    return graph

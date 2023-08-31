@@ -77,7 +77,9 @@ from onnx.onnx_cpp2py_export import ONNX_ML
 from onnx.external_data_helper import (
     load_external_data_for_model,
     write_external_data_tensors,
+    write_graph_external_data_tensors,
     convert_model_to_external_data,
+    convert_graph_to_external_data,
 )
 from onnx.onnx_pb import (
     AttributeProto,
@@ -324,6 +326,29 @@ def save_model(
 
     serialized = _get_serializer(format, model_filepath).serialize_proto(proto)
     _save_bytes(serialized, f)
+
+
+def convert_graph_to_saved_external_data(
+    proto: Union[GraphProto, bytes],
+    f: Union[IO[bytes], str],
+    all_tensors_to_one_file: bool = True,
+    location: str | None = None,
+    size_threshold: int = 1024,
+    convert_attribute: bool = False,
+) -> GraphProto:
+    if isinstance(proto, bytes):
+        proto = _get_serializer(_DEFAULT_FORMAT).deserialize_proto(proto, ModelProto())
+
+    convert_graph_to_external_data(
+        proto, all_tensors_to_one_file, location, size_threshold, convert_attribute
+    )
+    
+    model_filepath = _get_file_path(f)
+    if model_filepath:
+        basepath = os.path.dirname(model_filepath)
+        proto = write_graph_external_data_tensors(proto, basepath)
+        
+    return proto    
 
 
 def save_tensor(

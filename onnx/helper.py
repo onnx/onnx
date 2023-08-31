@@ -42,6 +42,7 @@ from onnx import (
     ValueInfoProto,
     defs,
     mapping,
+    checker
 )
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
@@ -283,6 +284,11 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     Returns:
         ModelProto
     """
+    if graph.ByteSize() >= checker.MAXIMUM_PROTOBUF:
+        raise ValueError(
+            "The proto size is larger than the 2 GB limit. "
+            "Please use convert_graph_to_saved_external_data to save tensors separately from the graph."
+        )    
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
