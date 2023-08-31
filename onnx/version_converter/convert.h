@@ -563,9 +563,17 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
 
+    /******** 18 -> 20 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(18), OpSetID(20)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMin", OpSetID(18), OpSetID(20)));
+
     /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<GridSample_19_20>());
     registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
+
+    /******** 20 -> 18 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(20), OpSetID(18)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMin", OpSetID(20), OpSetID(18)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
