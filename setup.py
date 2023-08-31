@@ -8,6 +8,7 @@
 import contextlib
 import datetime
 import glob
+import itertools
 import logging
 import multiprocessing
 import os
@@ -24,6 +25,7 @@ import setuptools
 import setuptools.command.build_ext
 import setuptools.command.build_py
 import setuptools.command.develop
+import setuptools.command.editable_wheel
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, "onnx")
@@ -260,22 +262,22 @@ class BuildPy(setuptools.command.build_py.build_py):
         self.run_command("create_version")
         self.run_command("cmake_build")
 
-        generated_python_files = glob.glob(
-            os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")
-        ) + glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi"))
+        generated_python_files = itertools.chain(
+            glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")),
+            glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi")),
+        )
 
         for src in generated_python_files:
             dst = os.path.join(TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
             self.copy_file(src, dst)
-        # Review the command customizations to enable editable_mode
-        self.editable_mode = False
         return setuptools.command.build_py.build_py.run(self)
 
 
-class Develop(setuptools.command.develop.develop):
+class EditableWheel(setuptools.command.editable_wheel.editable_wheel):
     def run(self):
-        self.run_command("build_py")
-        setuptools.command.develop.develop.run(self)
+        self.run_command("create_version")
+        self.run_command("cmake_build")
+        setuptools.command.editable_wheel.editable_wheel.run(self)
 
 
 class BuildExt(setuptools.command.build_ext.build_ext):
@@ -297,7 +299,9 @@ class BuildExt(setuptools.command.build_ext.build_ext):
                 elif os.path.exists(release_lib_dir):
                     lib_path = release_lib_dir
             src = os.path.join(lib_path, filename)
-            dst = os.path.join(os.path.realpath(self.build_lib), "onnx", filename)
+            dst_dir = os.path.join(os.path.realpath(self.build_lib), "onnx")
+            os.makedirs(dst_dir, exist_ok=True)
+            dst = os.path.join(dst_dir, filename)
             self.copy_file(src, dst)
 
 
@@ -305,8 +309,8 @@ CMD_CLASS = {
     "create_version": CreateVersion,
     "cmake_build": CmakeBuild,
     "build_py": BuildPy,
-    "develop": Develop,
     "build_ext": BuildExt,
+    "editable_wheel": EditableWheel,
 }
 
 ################################################################################
