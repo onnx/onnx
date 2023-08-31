@@ -4289,7 +4289,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar
           // and 1 element vector for now. In future when version update for
-          // this op is done we should only allow scalar or chage the spec to
+          // this op is done we should only allow scalar or change the spec to
           // allow both.
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
@@ -5072,7 +5072,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto* new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
               // There is a tricky edge case here. It is possible that the value of
-              // symbolic dim can be -1 or 0 at runtime. In that case simply propgating this
+              // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
               // symbol can be erroneous. This should be a very rare scenario and in such a
               // case an option is to turn off data propagation during shape inference.
               new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());

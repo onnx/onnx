@@ -8546,7 +8546,7 @@ This version of the operator has been available since version 9 of the default O
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
    The input information to this op is typically the output information from a MaxPool op. The first
    input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
-   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
+   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corresponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
    The third (optional) input is a tensor that specifies the output size of the unpooling operation.
 
@@ -8559,7 +8559,7 @@ This version of the operator has been available since version 9 of the default O
    known/predictable size.
 
   In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
-   which define the exact unpooling op. The attributes typically have the same values as the corrsponding
+   which define the exact unpooling op. The attributes typically have the same values as the corresponding
    pooling op that the unpooling op is trying to invert.
 
 #### Version
@@ -8617,7 +8617,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to caculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
 </dl>
 
 #### Inputs
@@ -10969,7 +10969,7 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="DynamicQuantizeLinear-11"></a>**DynamicQuantizeLinear-11**</a>
 
-  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit conversion of FP32 Input data.
   Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
   Scale is calculated as:
   ```
@@ -11890,7 +11890,7 @@ This version of the operator has been available since version 11 of the default 
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
    The input information to this op is typically the output information from a MaxPool op. The first
    input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
-   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
+   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corresponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
    The third (optional) input is a tensor that specifies the output size of the unpooling operation.
 
@@ -11903,7 +11903,7 @@ This version of the operator has been available since version 11 of the default 
    known/predictable size.
 
   In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
-   which define the exact unpooling op. The attributes typically have the same values as the corrsponding
+   which define the exact unpooling op. The attributes typically have the same values as the corresponding
    pooling op that the unpooling op is trying to invert.
 
 #### Version
@@ -12744,7 +12744,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 
   Round takes one input Tensor and rounds the values, element-wise, meaning
   it finds the nearest integer for each value.
-  In case of halfs, the rule is to round them to the nearest even integer.
+  In case of halves, the rule is to round them to the nearest even integer.
   If input x is integral, +0, -0, NaN,  or infinite, x itself is returned.
   The output tensor has the same shape and type as the input.
 
@@ -13722,8 +13722,8 @@ This version of the operator has been available since version 11 of the default 
 
   This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
   The first output tensor 'Y' contains all unique values or subtensors of the input.
-  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'..
-  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
+  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
+  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
   The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
 
   Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
@@ -13841,7 +13841,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
 <dt><tt>indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurance in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
+<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurrence in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
 <dt><tt>inverse_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
 <dt><tt>counts</tt> (optional, non-differentiable) : tensor(int64)</dt>
@@ -14181,7 +14181,7 @@ This version of the operator has been available since version 12 of the default 
   An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
   ```
-  output[output-term] = reduce-sum( input1[term1] * input2[term] )
+  output[output-term] = reduce-sum( input1[term1] * input2[term2] )
   ```
 
   where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
@@ -14827,7 +14827,7 @@ This version of the operator has been available since version 12 of the default 
   shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
           with K >= 1 in case of K-dimensional loss.
 
-  The loss for one sample, l_i, can caculated as follows:
+  The loss for one sample, l_i, can calculated as follows:
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   or
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
@@ -16644,7 +16644,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to caculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
 </dl>
 
 #### Inputs
@@ -18121,9 +18121,9 @@ This version of the operator has been available since version 13 of the default 
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
   The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
-  `dims` are the dimensions of `input` and `steps[i] = `1.
+  `dims` are the dimensions of `input` and `steps[i] = 1`.
 
-  All negative elements of `axes` are made non-negatve by adding `r` to them, where
+  All negative elements of `axes` are made non-negative by adding `r` to them, where
   `r =rank(input)`.
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
@@ -18267,7 +18267,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
   * shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
     with K >= 1 in case of K-dimensional loss.
 
-  The loss for one sample, l_i, can caculated as follows:
+  The loss for one sample, l_i, can calculated as follows:
   ```
   l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   ```
@@ -20878,7 +20878,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
-<dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimentions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
+<dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimensions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
 <dd>The length of the signal.If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
 </dl>
