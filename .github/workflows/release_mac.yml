@@ -51,30 +51,26 @@ jobs:
         CC: "clang"
         CXX: "clang++"
         ONNX_ML: 1
+        CMAKE_OSX_ARCHITECTURES: ${{ matrix.target-architecture == 'x86_64' && 'x86_64' || 'arm64;x86_64' }}
+        # Currently GitHub Action agent is using macos-11, we rename the wheels
+        # to use the MACOSX_DEPLOYMENT_TARGET
+        # Rename e.g. onnx-1.15.0-cp38-cp38-macosx_11_0_x86_64.whl
+        # to onnx-1.15.0-cp38-cp38-macosx_10_12_universal2.whl
+        ONNX_WHEEL_PLATFORM_NAME: macosx_10_12_${{ matrix.target-architecture }}
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
       run: |
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
-        if [ '${{ matrix.target-architecture }}' == 'x86_64' ]; then
-          export CMAKE_OSX_ARCHITECTURES=x86_64
-        elif [ '${{ matrix.target-architecture }}' == 'universal2' ]; then
-          export CMAKE_OSX_ARCHITECTURES='arm64;x86_64'
-        fi
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-        export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
         if [ '${{ github.event_name }}' == 'schedule' ]; then
           sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           ONNX_PREVIEW_BUILD=1 python -m build --wheel
         else
           python -m build --wheel
         fi
-        # Currently GitHub Action agent is using macos-11, we rename the wheels
-        # to use the MACOSX_DEPLOYMENT_TARGET
-        # Rename e.g. onnx-1.15.0-cp38-cp38-macosx_11_0_x86_64.whl
-        # to onnx-1.15.0-cp38-cp38-macosx_10_12_universal2.whl
+
         for file in dist/*.whl; do
-        new_name=$(echo "$file" | sed 's/macosx_11_0_x86_64/macosx_10_12_${{ matrix.target-architecture }}/')
-        mv "$file" "$new_name"
-        python -m pip install --upgrade $new_name;
+          python -m pip install --upgrade $file;
         done
     - name: Test the installed wheel
       run: |
