@@ -564,12 +564,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
 
     /******** 19 -> 20 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMin", OpSetID(19), OpSetID(20)));
-
-    /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<GridSample_19_20>());
-    registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
 
     /******** 20 -> 19 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(20), OpSetID(19)));

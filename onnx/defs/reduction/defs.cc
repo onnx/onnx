@@ -16,8 +16,14 @@ std::function<void(OpSchema&)> ReduceDocGeneratorWithFunctionBody(const char* na
   return ReduceDocGenerator_opset13_20(name, false, true, func_body);
 }
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 20, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("max", true, true, nullptr, nullptr, true)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 20, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("min", true, true, nullptr, nullptr, true)));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMax,
+    20,
+    OpSchema().FillUsing(ReduceDocGenerator_opset13_20("max", true, true, nullptr, nullptr, true)));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMin,
+    20,
+    OpSchema().FillUsing(ReduceDocGenerator_opset13_20("min", true, true, nullptr, nullptr, true)));
 ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("sum", false, true)));
 
 const char* reduce_sum_square_func_body = R"ONNX(

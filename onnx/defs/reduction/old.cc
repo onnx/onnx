@@ -420,7 +420,6 @@ The type of the output tensor is integer.)DOC";
 } // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SET_SCHEMA(ArgMax, 11, OpSchema().FillUsing(ArgReduceDocGenerator_opset11("max")));
-
 ONNX_OPERATOR_SET_SCHEMA(ArgMin, 11, OpSchema().FillUsing(ArgReduceDocGenerator_opset11("min")));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("max", true)));
@@ -433,6 +432,6 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceLogSumExp, 13, OpSchema().FillUsing(ReduceDocGene
 ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("L1 norm")));
 ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("L2 norm")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("max", true, true, nullptr, nullptr, false)));
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("min", true, true, nullptr, nullptr, false)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("max", true, true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("min", true, true)));
 } // namespace ONNX_NAMESPACE
