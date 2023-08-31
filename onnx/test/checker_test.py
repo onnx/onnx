@@ -1030,7 +1030,7 @@ class TestChecker(unittest.TestCase):
         model = onnx.parser.parse_model("""
             <
                 ir_version: 7,
-                opset_import: [ "" : 19]
+                opset_import: [ "" : 17]
             >
             agraph (float[N] x) => (int64[M] y)
             {
