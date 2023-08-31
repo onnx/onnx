@@ -62,6 +62,7 @@ jobs:
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
         if [ '${{ github.event_name }}' == 'schedule' ]; then
+          sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           ONNX_PREVIEW_BUILD=1 python -m build --wheel
         else
           python -m build --wheel
@@ -128,6 +129,7 @@ jobs:
       run: |
         # Build and upload source distribution to PyPI
         git clean -xdf
+        sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
         ONNX_PREVIEW_BUILD=1 python -m build --sdist
         twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 

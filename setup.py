@@ -28,7 +28,6 @@ import setuptools.command.develop
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, "onnx")
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, ".setuptools-cmake-build")
-PACKAGE_NAME = "onnx"
 
 WINDOWS = os.name == "nt"
 
@@ -70,9 +69,9 @@ except (OSError, subprocess.CalledProcessError):
 with open(os.path.join(TOP_DIR, "VERSION_NUMBER")) as version_file:
     VERSION_NUMBER = version_file.read().strip()
     if os.getenv("ONNX_PREVIEW_BUILD") is not None:
+        # Create the dev build for weekly releases
         today_number = datetime.date.today().strftime("%Y%m%d")
         VERSION_NUMBER += ".dev" + today_number
-        PACKAGE_NAME = "onnx-weekly"
     VERSION_INFO = {"version": VERSION_NUMBER, "git_version": git_version}
 
 ################################################################################

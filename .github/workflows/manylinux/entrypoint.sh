@@ -42,6 +42,7 @@ $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python re
 
 # Build wheels
 if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
+    sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
     ONNX_PREVIEW_BUILD=1 $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
 else
     $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
