@@ -197,12 +197,22 @@ class Runner:
                         ref_outputs[i][j], outputs[i][j], rtol, atol
                     )
             else:
-                np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
+                np.testing.assert_equal(
+                    outputs[i].dtype,
+                    ref_outputs[i].dtype,
+                    err_msg=f"Issue with output {i}",
+                )
                 if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
-                    np.testing.assert_array_equal(outputs[i], ref_outputs[i])
+                    np.testing.assert_array_equal(
+                        outputs[i], ref_outputs[i], err_msg=f"Issue with output {i}"
+                    )
                 else:
                     np.testing.assert_allclose(
-                        outputs[i], ref_outputs[i], rtol=rtol, atol=atol
+                        outputs[i],
+                        ref_outputs[i],
+                        rtol=rtol,
+                        atol=atol,
+                        err_msg=f"Issue with output {i}",
                     )
 
     @classmethod
@@ -488,7 +498,12 @@ class Runner:
             elif model_type_proto.HasField("tensor_type"):
                 tensor = onnx.TensorProto()
                 tensor.ParseFromString(protobuf_content)
-                target_list.append(numpy_helper.to_array(tensor))
+                if tensor.data_type >= onnx.TensorProto.BFLOAT16:
+                    from onnx.reference.op_run import to_array_extended
+
+                    target_list.append(to_array_extended(tensor))
+                else:
+                    target_list.append(numpy_helper.to_array(tensor))
             elif model_type_proto.HasField("optional_type"):
                 optional = onnx.OptionalProto()
                 optional.ParseFromString(protobuf_content)
