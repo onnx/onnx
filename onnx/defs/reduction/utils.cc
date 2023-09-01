@@ -30,16 +30,23 @@ std::function<void(OpSchema&)> ReduceDocGenerator_opset13_20(
     ContextDependentFunctionBodyBuilder function_builder,
     bool supports_boolean_datatype /* = false */) {
   return [=](OpSchema& schema) {
-    std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    std::string doc = R"DOC(
 Computes the {name} of the input tensor's elements along the provided axes. The resulting
-tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
 the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-valid.
+valid.)DOC";
+    if (supports_boolean_datatype) {
+      doc += R"DOC(
 
-The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-False instead of True.)DOC";
-                        ReplaceAll(doc, "{name}", name););
+If the input data type is Boolean, the comparison should consider `False < True`.)DOC";
+    }
+    doc += R"DOC(
+
+The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+to `False` instead of `True`.)DOC";
+
+    ReplaceAll(doc, "{name}", name);
+    POPULATE_OP_DOC_STR(doc = doc;);
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "keepdims",
