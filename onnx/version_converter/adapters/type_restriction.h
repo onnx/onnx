@@ -52,7 +52,7 @@ class TypeRestriction : public Adapter {
         "DataType (%d) of Input or Output"
         " of operator '%s' is unallowed for Opset Version %d.",
         val->elemType(),
-        name(),
+        name().c_str(),
         target_version().version());
   }
 };
