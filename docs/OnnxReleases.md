@@ -88,13 +88,14 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 **NOTE: Once the packages are uploaded to PyPI, you cannot overwrite it on the same PyPI instance. Please make sure everything is good on TestPyPI before uploading to PyPI**
 
 **Wheels**
-* Windows/Linux/Mac
-  * Same as TestPyPI, use `twine upload --verbose *.whl --repository-url https://upload.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD` instead.
+* Windows/Linux_x86_64/Linux_aarch64/Mac
+  * Create a new API token of onnx scope for uploading onnx wheel in https://pypi.org/manage/account (section of API tokens). Remove the created token after the release.
+  * Similar to TestPyPI, use `twine upload --verbose *.whl --repository-url https://upload.pypi.org/legacy/ -u __token__ -p PYPI_API_TOKEN` instead.
 
 **Source Distribution**
 * Follow the same process in TestPyPI to produce the source distribution.
 * Use ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`` instead to upload to the official PyPI.
-* Test with ``pip install --use-deprecated=legacy-resolver --no-use-pep517 --no-binary onnx onnx``
+* Test with ``pip install --use-deprecated=legacy-resolver --no-binary onnx onnx``
 
 ## After PyPI Release
 
@@ -112,9 +113,9 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 **Merge into main branch**
 * After everything above is done, merge the release branch into the main branch to make it consistent. This step is needed only when there are urgent changes that are made directly into the release branch. The main branch does not have these needed changes. In all other circumstances, the merge PR shall show as empty so nothing needs to be merged.
 
-**Remove old onnx-weekly packages on TestPyPI**
-* Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://test.pypi.org/project/onnx-weekly/#history) on TestPyPI to save space.
-* Steps: Login and go [here](https://test.pypi.org/manage/project/onnx-weekly/releases/) -> Choose target package -> Options -> Delete.
+**Remove old onnx-weekly packages on PyPI**
+* Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://pypi.org/project/onnx-weekly/#history) on PyPI to save space.
+* Steps: Login and go [here](https://pypi.org/manage/project/onnx-weekly/releases/) -> Choose target package -> Options -> Delete.
 
 **Bump opset version for ai.onnx**
 * Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes. For example, this [demo PR](https://github.com/onnx/onnx/pull/4134/files).
