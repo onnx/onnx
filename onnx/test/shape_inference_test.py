@@ -2884,6 +2884,34 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[operatorsetid],
         )
 
+    def test_reduce_op_empty_set_opset13(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (24, 0, 11))],
+            [make_node("ReduceL1", "x", "y", axes=(1,), keepdims=1)],
+            [],
+            initializer=[],
+        )
+        operatorsetid = OperatorSetIdProto(domain="", version=13)
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 11))],
+            opset_imports=[operatorsetid],
+        )
+
+    def test_reduce_op_empty_set_opset18(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (24, 0, 11)), ("axes", TensorProto.INT64, (1,))],
+            [make_node("ReduceL1", ["x", "axes"], "y", keepdims=1)],
+            [],
+            initializer=[make_tensor("axes", TensorProto.INT64, (1,), (1,))],
+        )
+        operatorsetid = OperatorSetIdProto(domain="", version=18)
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, (24, 1, 11))],
+            opset_imports=[operatorsetid],
+        )
+
     def test_reduce_op_shape_keep_dims_opset13(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (24, 4, 11))],
