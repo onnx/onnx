@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <cmath>
 
-
 namespace ONNX_NAMESPACE {
 
 void ConstantOpInference(InferenceContext& ctx) {

@@ -8,7 +8,6 @@
 #include "onnx/defs/generator/utils.h"
 #include "onnx/defs/schema.h"
 
-
 namespace ONNX_NAMESPACE {
 static const char* Constant_ver13_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,

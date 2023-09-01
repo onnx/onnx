@@ -7,6 +7,7 @@ from typing import Sequence
 import numpy as np
 
 import onnx.defs
+import onnx.parser
 from onnx import (
     GraphProto,
     SparseTensorProto,
@@ -16,7 +17,6 @@ from onnx import (
     numpy_helper,
     shape_inference,
 )
-import onnx.parser
 
 
 class TestChecker(unittest.TestCase):
@@ -1027,7 +1027,8 @@ class TestChecker(unittest.TestCase):
         )
 
     def test_empty_list_attribute(self):
-        model = onnx.parser.parse_model("""
+        model = onnx.parser.parse_model(
+            """
             <
                 ir_version: 7,
                 opset_import: [ "" : 17]
@@ -1036,7 +1037,8 @@ class TestChecker(unittest.TestCase):
             {
                 y = Constant <value_ints: ints = []>()
             }
-        """)
+        """
+        )
         # Should not throw an error
         checker.check_model(model, full_check=True)
 
