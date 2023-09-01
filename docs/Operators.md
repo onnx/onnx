@@ -19665,11 +19665,11 @@ Other versions of this operator: <a href="Changelog.md#QLinearMatMul-10">10</a>
 <dt><tt>TS</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>Constrain scales.</dd>
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain input a and its zero point data type to 8-bit integer tensor.</dd>
+<dd>The type of input a and its zeropoint.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain input b and its zero point data type to 8-bit integer tensor.</dd>
+<dd>The type of input b and its zeropoint.</dd>
 <dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain output y and its zero point data type to 8-bit integer tensor.</dd>
+<dd>The type of the output and its zeropoint.</dd>
 </dl>
 
 
