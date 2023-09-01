@@ -20595,12 +20595,12 @@ expect(node, inputs=[x], outputs=[y], name="test_reciprocal")
 ### <a name="ReduceL1"></a><a name="reducel1">**ReduceL1**</a>
 
   Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -20823,12 +20823,12 @@ expect(
 ### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
 
   Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21069,12 +21069,12 @@ expect(
 ### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
 
   Computes the log sum of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21205,12 +21205,12 @@ expect(
 ### <a name="ReduceLogSumExp"></a><a name="reducelogsumexp">**ReduceLogSumExp**</a>
 
   Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21436,12 +21436,14 @@ expect(
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
   Computes the max of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  If the input data type is Boolean, the comparison should consider `False < True`.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21710,12 +21712,12 @@ expect(
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
 
   Computes the mean of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21947,12 +21949,14 @@ expect(
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
   Computes the min of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  If the input data type is Boolean, the comparison should consider `False < True`.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -22224,12 +22228,12 @@ expect(
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
 
   Computes the product of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -22450,12 +22454,12 @@ expect(
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
   Computes the sum of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -22716,12 +22720,12 @@ expect(
 ### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
 
   Computes the sum square of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
