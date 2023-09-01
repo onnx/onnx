@@ -570,8 +570,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<GridSample_19_20>());
 
     /******** 20 -> 19 ********/
-    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(20), OpSetID(19)));
-    registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMin", OpSetID(20), OpSetID(19)));
+    const std::vector<TensorProto_DataType> reduce_min_max_18_unallowed_types = {TensorProto_DataType_BOOL};
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ReduceMax", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ReduceMin", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
