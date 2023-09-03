@@ -45,12 +45,12 @@ def generate_checkerboard(width: int, height: int, square_size: int):
 def _generate_test_data(
     format_: str,
     pixel_format: str = "RGB",
-    h: int = 40,
-    w: int = 40,
+    height: int = 32,
+    width: int = 32,
     tile_sz: int = 5,
 ) -> tuple[np.ndarray, np.ndarray]:
     np.random.seed(12345)
-    image = generate_checkerboard(h, w, tile_sz)
+    image = generate_checkerboard(height, width, tile_sz)
     image_pil = PIL.Image.fromarray(image)
     with io.BytesIO() as f:
         image_pil.save(f, format=format_)
