@@ -1,3 +1,56 @@
+# SPDX-License-Identifier: Apache-2.0
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onnx"
+dynamic = ["version", "dependencies", "optional-dependencies"]
+description = "Open Neural Network Exchange"
+readme = "README.md"
+authors = [
+    {name = "ONNX Contributors", email = "onnx-technical-discuss@lists.lfaidata.foundation"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+license = {text = "Apache License v2.0"}
+requires-python = ">=3.8"
+
+[project.urls]
+Homepage = "https://onnx.ai/"
+Repository = "https://github.com/onnx/onnx"
+
+[project.scripts]
+backend-test-tools = "onnx.backend.test.cmd_tools:main"
+check-model = "onnx.bin.checker:check_model"
+check-node = "onnx.bin.checker:check_node"
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+
+[tool.setuptools.dynamic.optional-dependencies]
+reference = {file = "requirements-reference.txt"}
+
+[tool.setuptools.packages.find]
+include = ["onnx*"]
+
+[tool.setuptools.package-data]
+onnx = [
+    "py.typed",
+    "*.pyi",
+    "backend/test/data/**/*",
+]
+
+[tool.pytest.ini_options]
+
+addopts = "--nbval --nbval-current-env"
+testpaths = [
+    "onnx/test",
+    "onnx/examples",
+]
+
 [tool.mypy]
 follow_imports = "silent"
 strict_optional = true
