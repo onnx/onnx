@@ -114,9 +114,9 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#RandomUniform">RandomUniform</a>|<a href="Changelog.md#RandomUniform-1">1</a>|
 |<a href="#RandomUniformLike">RandomUniformLike</a>|<a href="Changelog.md#RandomUniformLike-1">1</a>|
 |<a href="#Reciprocal">Reciprocal</a>|<a href="Changelog.md#Reciprocal-13">13</a>, <a href="Changelog.md#Reciprocal-6">6</a>, <a href="Changelog.md#Reciprocal-1">1</a>|
-|<a href="#ReduceMax">ReduceMax</a>|<a href="Changelog.md#ReduceMax-18">18</a>, <a href="Changelog.md#ReduceMax-13">13</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-1">1</a>|
+|<a href="#ReduceMax">ReduceMax</a>|<a href="Changelog.md#ReduceMax-20">20</a>, <a href="Changelog.md#ReduceMax-18">18</a>, <a href="Changelog.md#ReduceMax-13">13</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-1">1</a>|
 |<a href="#ReduceMean">ReduceMean</a>|<a href="Changelog.md#ReduceMean-18">18</a>, <a href="Changelog.md#ReduceMean-13">13</a>, <a href="Changelog.md#ReduceMean-11">11</a>, <a href="Changelog.md#ReduceMean-1">1</a>|
-|<a href="#ReduceMin">ReduceMin</a>|<a href="Changelog.md#ReduceMin-18">18</a>, <a href="Changelog.md#ReduceMin-13">13</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-1">1</a>|
+|<a href="#ReduceMin">ReduceMin</a>|<a href="Changelog.md#ReduceMin-20">20</a>, <a href="Changelog.md#ReduceMin-18">18</a>, <a href="Changelog.md#ReduceMin-13">13</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-1">1</a>|
 |<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-18">18</a>, <a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
 |<a href="#ReduceSum">ReduceSum</a>|<a href="Changelog.md#ReduceSum-13">13</a>, <a href="Changelog.md#ReduceSum-11">11</a>, <a href="Changelog.md#ReduceSum-1">1</a>|
 |<a href="#RegexFullMatch">RegexFullMatch</a>|<a href="Changelog.md#RegexFullMatch-20">20</a>|
@@ -20633,12 +20633,12 @@ expect(node, inputs=[x], outputs=[y], name="test_reciprocal")
 ### <a name="ReduceL1"></a><a name="reducel1">**ReduceL1**</a>
 
   Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -20675,7 +20675,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -20861,12 +20861,12 @@ expect(
 ### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
 
   Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -20903,7 +20903,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -21107,12 +21107,12 @@ expect(
 ### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
 
   Computes the log sum of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21149,7 +21149,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -21243,12 +21243,12 @@ expect(
 ### <a name="ReduceLogSumExp"></a><a name="reducelogsumexp">**ReduceLogSumExp**</a>
 
   Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21285,7 +21285,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -21474,18 +21474,20 @@ expect(
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
   Computes the max of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  If the input data type is Boolean, the comparison should consider `False < True`.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-13">13</a>, <a href="Changelog.md#ReduceMax-18">18</a>
 
 #### Attributes
 
@@ -21515,12 +21517,47 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
-<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8), tensor(bool)</dt>
+<dd>Constrain input and output types to numeric and Boolean tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>bool_inputs</summary>
+
+```python
+axes = np.array([1], dtype=np.int64)
+keepdims = 1
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array(
+    [[True, True], [True, False], [False, True], [False, False]],
+)
+reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=bool(keepdims))
+# print(reduced)
+# [[True],
+#  [True],
+#  [True],
+#  [False]]
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_max_bool_inputs",
+)
+```
+
+</details>
+
 
 <details>
 <summary>default_axes_keepdims</summary>
@@ -21544,6 +21581,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_max_default_axes_keepdim_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -21555,6 +21593,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_max_default_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -21591,6 +21630,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -21602,6 +21642,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -21638,6 +21679,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -21649,6 +21691,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -21685,6 +21728,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_negative_axes_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -21696,6 +21740,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_negative_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -21705,12 +21750,12 @@ expect(
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
 
   Computes the mean of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21747,7 +21792,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -21942,18 +21987,20 @@ expect(
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
   Computes the min of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  If the input data type is Boolean, the comparison should consider `False < True`.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-13">13</a>, <a href="Changelog.md#ReduceMin-18">18</a>
 
 #### Attributes
 
@@ -21983,12 +22030,47 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
-<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8), tensor(bool)</dt>
+<dd>Constrain input and output types to numeric and Boolean tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>bool_inputs</summary>
+
+```python
+axes = np.array([1], dtype=np.int64)
+keepdims = 1
+
+node = onnx.helper.make_node(
+    "ReduceMin",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array(
+    [[True, True], [True, False], [False, True], [False, False]],
+)
+reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=bool(keepdims))
+# print(reduced)
+# [[ True],
+#  [False],
+#  [False],
+#  [False]]
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_min_bool_inputs",
+)
+```
+
+</details>
+
 
 <details>
 <summary>default_axes_keepdims</summary>
@@ -22015,6 +22097,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_min_default_axes_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -22026,6 +22109,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_min_default_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -22062,6 +22146,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_do_not_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -22073,6 +22158,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_do_not_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -22109,6 +22195,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -22120,6 +22207,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -22156,6 +22244,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_negative_axes_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -22167,6 +22256,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_negative_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -22176,12 +22266,12 @@ expect(
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
 
   Computes the product of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -22218,7 +22308,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a h
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -22402,12 +22492,12 @@ expect(
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
   Computes the sum of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -22444,7 +22534,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -22668,12 +22758,12 @@ expect(
 ### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
 
   Computes the sum square of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
   valid.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -22710,7 +22800,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 

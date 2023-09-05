@@ -1108,6 +1108,8 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ConstantOfShape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Gelu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, QLinearMatMul);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringConcat);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ReduceMax);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ReduceMin);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, RegexFullMatch);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringSplit);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ImageDecoder);
@@ -1122,6 +1124,8 @@ class OpSet_Onnx_ver20 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Gelu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, QLinearMatMul)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringConcat)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ReduceMax)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ReduceMin)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, RegexFullMatch)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringSplit)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ImageDecoder)>());

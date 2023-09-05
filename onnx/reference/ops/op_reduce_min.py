@@ -23,7 +23,7 @@ class ReduceMin_11(ReduceMin_1):
 
 
 class ReduceMin_18(OpRunReduceNumpy):
-    def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):  # type: ignore
+    def _run(self, data, axes=None, keepdims: int = 1, noop_with_empty_axes: int = 0):  # type: ignore
         if self.is_axes_empty(axes) and noop_with_empty_axes != 0:  # type: ignore
             return (data,)
 
