@@ -264,15 +264,12 @@ class CmakeBuild(setuptools.Command):
 class BuildPy(setuptools.command.build_py.build_py):
     def run(self):
         self.run_command("create_version")
+        return super().run()
 
-        generated_python_files = itertools.chain(
-            glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")),
-            glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi")),
-        )
 
-        for src in generated_python_files:
-            dst = os.path.join(TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
-            self.copy_file(src, dst)
+class Develop(setuptools.command.develop.develop):
+    def run(self):
+        self.run_command("create_version")
         return super().run()
 
 
@@ -306,12 +303,22 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             dst = os.path.join(dst_dir, filename)
             self.copy_file(src, dst)
 
+        # Copy over the generated python files
+        generated_python_files = itertools.chain(
+            glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")),
+            glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi")),
+        )
+        for src in generated_python_files:
+            dst = os.path.join(TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
+            self.copy_file(src, dst)
+
 
 CMD_CLASS = {
     "create_version": CreateVersion,
     "cmake_build": CmakeBuild,
     "build_py": BuildPy,
     "build_ext": BuildExt,
+    "develop": Develop,
     "editable_wheel": EditableWheel,
 }
 
