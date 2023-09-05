@@ -10,6 +10,7 @@ import unittest
 from typing import Any, List, Tuple
 
 import numpy as np
+import parameterized
 import pytest
 
 from onnx import (
@@ -217,6 +218,10 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.type, AttributeProto.STRINGS)
         self.assertEqual(len(attr.strings), 0)
         self.assertRaises(ValueError, helper.make_attribute, "empty", [])
+
+    def test_attr_mismatch(self) -> None:
+        with self.assertRaisesRegex(TypeError, "Inferred attribute type 'FLOAT'"):
+            helper.make_attribute("test", 6.4, attr_type=AttributeProto.STRING)
 
     def test_is_attr_legal(self) -> None:
         # no name, no field
@@ -784,6 +789,23 @@ class TestPrintableGraph(unittest.TestCase):
             graph_str,
         )
 
+    def test_unknown_dimensions(self) -> None:
+        graph = helper.make_graph(
+            [helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [None])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [None])],  # outputs
+            [
+                helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])
+            ],  # initializers
+            doc_string=None,
+        )
+        model = helper.make_model(graph)
+        checker.check_model(model)
+
+        graph_str = helper.printable_graph(graph)
+        self.assertIn("X[FLOAT, ?]", graph_str)
+
 
 @pytest.mark.parametrize(
     "tensor_dtype",
@@ -881,6 +903,34 @@ class TestHelperMappingFunctions(unittest.TestCase):
         self.assertEqual(
             helper.tensor_dtype_to_field(TensorProto.BFLOAT16), "int32_data"
         )
+
+
+class TestAttrTypeToStr(unittest.TestCase):
+    @parameterized.parameterized.expand(
+        [
+            (AttributeProto.AttributeType.FLOAT, "FLOAT"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.INT, "INT"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.STRING, "STRING"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TENSOR, "TENSOR"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.GRAPH, "GRAPH"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.SPARSE_TENSOR, "SPARSE_TENSOR"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TYPE_PROTO, "TYPE_PROTO"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.FLOATS, "FLOATS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.INTS, "INTS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.STRINGS, "STRINGS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TENSORS, "TENSORS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.GRAPHS, "GRAPHS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.SPARSE_TENSORS, "SPARSE_TENSORS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TYPE_PROTOS, "TYPE_PROTOS"),  # type: ignore[attr-defined]
+        ]
+    )
+    def test_attr_type_to_str(self, attr_type, expected_str):
+        result = helper._attr_type_to_str(attr_type)  # pylint: disable=protected-access
+        self.assertEqual(result, expected_str)
+
+    def test_attr_type_to_str_undefined(self):
+        result = helper._attr_type_to_str(9999)  # pylint: disable=protected-access
+        self.assertEqual(result, "UNDEFINED")
 
 
 if __name__ == "__main__":

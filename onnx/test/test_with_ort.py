@@ -35,7 +35,9 @@ class TestONNXRuntime(unittest.TestCase):
         converted_model = version_converter.convert_version(inferred_model, 10)
 
         # test ONNX Runtime functions
-        sess = InferenceSession(converted_model.SerializeToString())
+        sess = InferenceSession(
+            converted_model.SerializeToString(), providers=["CPUExecutionProvider"]
+        )
         input_name = sess.get_inputs()[0].name
         output_name = sess.get_outputs()[0].name
         x = random.random((3, 4, 5))

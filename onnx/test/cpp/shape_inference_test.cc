@@ -605,5 +605,20 @@ agraph (float[1, 196608] m) => (float[?, ?, ?] z)
   RunReshapeShapeInfTest(modelStr, expectedShape);
 }
 
+TEST(ShapeInferenceTest, CheckShapesAndTypesTest) {
+#ifndef ONNX_NO_EXCEPTIONS
+  // Tensor element types mis-match should cause an exception.
+  TypeProto tensor_infer;
+  auto* tensor_infer_type = tensor_infer.mutable_tensor_type();
+  tensor_infer_type->set_elem_type(TensorProto_DataType_FLOAT);
+
+  TypeProto tensor_exist;
+  auto* tensor_exist_type = tensor_exist.mutable_tensor_type();
+  tensor_exist_type->set_elem_type(TensorProto_DataType_UINT8);
+
+  EXPECT_THROW(checkShapesAndTypes(tensor_infer, tensor_exist), ONNX_NAMESPACE::InferenceError);
+#endif
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE

@@ -231,32 +231,42 @@ backend_test.exclude(
     ")"
 )
 
-# The following tests are new with opset 19 and 20.
+# The following tests are new with opset 19 and 20, or ai.onnx.ml 4
 if ort_version is not None and Version(ort_version) < Version("1.16"):
     # version should be 1.15 but there is no development version number.
     backend_test.exclude(
         "("
         "averagepool"
-        "|deform_conv"
-        "|optional_get_element_optional_sequence"
-        "|identity_opt"
-        "|half_pixel_symmetric"
         "|_pad_"
         "|_resize_"
         "|_size_"
-        "|equal_string"
-        "|equal_string_broadcast"
-        "|gridsample"
         "|cast"
         "|castlike"
+        "|equal_string_broadcast"
+        "|equal_string"
         "|equal"
+        "|half_pixel_symmetric"
         "|identity"
+        "|reduce_max_bool_inputs"
+        "|reduce_min_bool_inputs"
         "|reshape"
-        "|regex_full_match"
-        "|string_split"
-        "|string_concat"
+        ")"
+    )
+
+if ort_version is not None and Version(ort_version) < Version("1.17"):
+    # version should be 1.15 but there is no development version number.
+    backend_test.exclude(
+        "("
+        "deform_conv"
         "|gelu"
+        "|gridsample"
+        "|identity_opt"
+        "|label_encoder"
         "|image_decoder"
+        "|optional_get_element_optional_sequence"
+        "|regex_full_match"
+        "|string_concat"
+        "|string_split"
         ")"
     )
 
