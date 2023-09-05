@@ -2,6 +2,8 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import io
 
 import numpy as np
@@ -10,7 +12,7 @@ from onnx.reference.op_run import OpRun
 
 
 class ImageDecoder(OpRun):
-    def _run(self, encoded: np.ndarray, pixel_format="RGB"):  # type: ignore
+    def _run(self, encoded: np.ndarray, pixel_format="RGB") -> tuple[np.ndarray]:  # type: ignore
         try:
             import PIL.Image  # pylint: disable=import-outside-toplevel
         except ImportError as e:

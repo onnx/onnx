@@ -13,7 +13,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def generate_checkerboard(width: int, height: int, square_size: int):
+def generate_checkerboard(width: int, height: int, square_size: int) -> np.ndarray:
     # Create an empty RGB image
     image = np.zeros((height, width, 3), dtype=np.uint8)
 
