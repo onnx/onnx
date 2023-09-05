@@ -273,19 +273,19 @@ class BuildPy(setuptools.command.build_py.build_py):
         for src in generated_python_files:
             dst = os.path.join(TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
             self.copy_file(src, dst)
-        return setuptools.command.build_py.build_py.run(self)
+        return super().run()
 
 
 class EditableWheel(setuptools.command.editable_wheel.editable_wheel):
     def run(self):
         self.run_command("create_version")
-        setuptools.command.editable_wheel.editable_wheel.run(self)
+        return super().run()
 
 
 class BuildExt(setuptools.command.build_ext.build_ext):
     def run(self):
         self.run_command("cmake_build")
-        setuptools.command.build_ext.build_ext.run(self)
+        return super().run()
 
     def build_extensions(self):
         for ext in self.extensions:
