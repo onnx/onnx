@@ -228,7 +228,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
 class TestShapeInference(TestShapeInferenceHelper):
     def test_empty_graph(self) -> None:
         graph = self._make_graph(["y"], [], [])
-        self.assertRaises(onnx.shape_inference.ShapeInferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.TypeError, self._inferred, graph)
 
     def _identity_prop(self, op: str, **kwargs: Any) -> None:
         graph = self._make_graph(
@@ -300,7 +300,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
             [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5))],
         )
-        self.assertRaises(onnx.shape_inference.ShapeInferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.ShapeError, self._inferred, graph)
 
     @parameterized.expand(all_versions_for("Transpose"))
     def test_transpose_preexisting_incorrect_type(self, *_) -> None:
@@ -309,7 +309,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
             [make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 4))],
         )
-        self.assertRaises(onnx.shape_inference.ShapeInferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.ShapeError, self._inferred, graph)
 
     @parameterized.expand(all_versions_for("Transpose"))
     def test_transpose_incorrect_repeated_perm(self, *_) -> None:
@@ -318,7 +318,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 1])],
             [],
         )
-        self.assertRaises(onnx.shape_inference.ShapeInferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.TypeError, self._inferred, graph)
 
     def _make_matmul_test_all_dims_known(
         self, version, shape1: Sequence[int], shape2: Sequence[int]
@@ -568,7 +568,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Concat", ["x", "y", "z"], ["out"], axis=0)],
             [],
         )
-        self.assertRaises(onnx.shape_inference.ShapeInferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.TypeError, self._inferred, graph)
 
     @parameterized.expand(all_versions_for("Concat"))
     def test_concat_3d_axis_2(self, _, version) -> None:
@@ -3079,7 +3079,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(onnx.shape_inference.ShapeInferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.ShapeError, self._inferred, graph)
 
     def test_split_negative_axis(self) -> None:
         graph = self._make_graph(
@@ -3906,7 +3906,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self.assertRaises(
-            onnx.shape_inference.ShapeInferenceError,
+            onnx.shape_inference.ShapeError,
             onnx.shape_inference.infer_shapes,
             helper.make_model(graph),
             error_mode=InferenceErrorMode.FailAnyInferenceError,
@@ -6997,7 +6997,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Einsum", ["x", "y"], ["z"], equation="i,...j, k, l-> i")],
             [],
         )
-        self.assertRaises(onnx.shape_inference.ShapeInferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.ShapeError, self._inferred, graph)
 
     def test_negative_log_likehood_shape_is_NCdd(self) -> None:
         N, C = 3, 4
@@ -7170,7 +7170,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(onnx.shape_inference.ShapeInferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.ShapeError, self._inferred, graph)
 
     def test_negative_log_likehood_input_weight_shape_mismatch(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
@@ -7320,7 +7320,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         # Inferred shape and existing shape differ in dimension 0
         self.assertRaises(
-            onnx.shape_inference.ShapeInferenceError,
+            onnx.shape_inference.ShapeError,
             onnx.shape_inference.infer_shapes,
             original_model,
             error_mode=InferenceErrorMode.FailAnyInferenceError,
@@ -7352,7 +7352,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         # Inferred shape and existing shape differ in rank: (3) vs (2)
         self.assertRaises(
-            onnx.shape_inference.ShapeInferenceError,
+            onnx.shape_inference.ShapeError,
             onnx.shape_inference.infer_shapes,
             original_model,
             error_mode=InferenceErrorMode.FailAnyInferenceError,
@@ -7896,7 +7896,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         # Strict shape inference should catch this invalid type error (int32 is not supported)
         self.assertRaises(
-            onnx.shape_inference.ShapeInferenceError,
+            onnx.shape_inference.ShapeError,
             onnx.shape_inference.infer_shapes,
             model,
             error_mode=InferenceErrorMode.FailAnyInferenceError,
@@ -7925,7 +7925,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         model.graph.initializer[0].data_type = TensorProto.UNDEFINED
         # Strict shape inference should catch this undefined type error
         self.assertRaises(
-            onnx.shape_inference.ShapeInferenceError,
+            onnx.shape_inference.ShapeError,
             onnx.shape_inference.infer_shapes,
             model,
             error_mode=InferenceErrorMode.FailAnyInferenceError,

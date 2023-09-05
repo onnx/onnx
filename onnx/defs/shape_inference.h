@@ -18,7 +18,7 @@ namespace ONNX_NAMESPACE {
 
 using Dim = TensorShapeProto_Dimension;
 
-enum InferenceErrorMode : uint8_t {
+enum InferenceErrorMode : uint32_t {
   IgnoreInferenceError, // Ignore any inference errors
   FailAnyInferenceError,  // Fail on any inference error
   FailShapeInferenceError,  // Fail on any shape inference error, like merging existing shape with inferred etc.
@@ -78,24 +78,26 @@ class InferenceError : public std::runtime_error {
   std::string expanded_message_;
 };
 
-class ShapeInferenceError final : public InferenceError {
+class ShapeError final : public InferenceError {
  public:
-  ShapeInferenceError(const std::string& message)
-      : InferenceError(ONNX_NAMESPACE::MakeString("[ShapeInferenceError] ", message)) {}
+  ShapeError(const std::string& message)
+      : InferenceError(ONNX_NAMESPACE::MakeString("[ShapeError] ", message)) {}
 };
 
-class TypeInferenceError final : public InferenceError {
+class TypeError final : public InferenceError {
  public:
-  TypeInferenceError(const std::string& message)
-      : InferenceError(ONNX_NAMESPACE::MakeString("[TypeInferenceError] ", message)) {}
+  TypeError(const std::string& message)
+      : InferenceError(ONNX_NAMESPACE::MakeString("[TypeError] ", message)) {}
 };
 
 #define fail_type_inference(...) \
-  ONNX_THROW_EX(ONNX_NAMESPACE::TypeInferenceError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
+  ONNX_THROW_EX(ONNX_NAMESPACE::TypeError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
 
 #define fail_shape_inference(...) \
-  ONNX_THROW_EX(ONNX_NAMESPACE::ShapeInferenceError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
+  ONNX_THROW_EX(ONNX_NAMESPACE::ShapeError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
 
+#define fail_inference(...) \
+  ONNX_THROW_EX(ONNX_NAMESPACE::InferenceError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
 struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;

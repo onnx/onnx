@@ -458,12 +458,25 @@ class ShapeInferenceImplBase {
         return;
       }
     }
-    ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
+    ONNX_CATCH(const ONNX_NAMESPACE::TypeError& ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         // onnx does not support unsupported/experimental operators
         // so it won't consider it as an error
         if (!has_unsupported_op && !has_experimental_op) {
-          inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
+          auto error_info = GetErrorWithNodeInfo(n, ex);
+          inference_errors.push_back(std::make_exception_ptr(ex));
+        }
+      });
+      // Continue with inference for remaining nodes
+      return;
+    }
+    ONNX_CATCH(const ONNX_NAMESPACE::ShapeError& ex) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        // onnx does not support unsupported/experimental operators
+        // so it won't consider it as an error
+        if (!has_unsupported_op && !has_experimental_op) {
+          auto error_info = GetErrorWithNodeInfo(n, ex);
+          inference_errors.push_back(std::make_exception_ptr(ex));
         }
       });
       // Continue with inference for remaining nodes
@@ -673,23 +686,46 @@ class ShapeInferenceImplBase {
   }
 
   void finalizeShapeInference() {
-    auto& errors = getErrors();
+    //auto& errors = getErrors();
     // Throw shape inference error if any. Error mode right now only supports 0 and 1.
     // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
     // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
     // TODO: Add a more granular way for exception handling.
-    if (!errors.empty() && options.error_mode > 0) {
-      std::string full_errors = "Inference error(s): ";
-      for (const std::string& error : inference_errors) {
-        full_errors += error + "\n";
+    std::string shape_inference_errors, type_inference_errors, any_inference_errors, other_errors;
+
+    if (!inference_errors.empty() && options.error_mode != IgnoreInferenceError) {
+      for (const auto& exceptionPtr : inference_errors) {
+        try {
+          std::rethrow_exception(exceptionPtr);
+        } catch (const TypeError& type_error) {
+          type_inference_errors += type_error.what();
+          any_inference_errors += type_error.what();
+        } catch (const ShapeError& shape_error) {
+          shape_inference_errors += shape_error.what();
+          any_inference_errors += shape_error.what();
+        } catch (const InferenceError& inference_error) {
+          any_inference_errors += inference_error.what();
+        } catch (const std::exception& other_error) {
+          other_errors += other_error.what();
+        }
       }
-      fail_shape_inference(full_errors);
+      // depend on error_mode and collected errors, fail shape or type inference
+      // the order of error types being process implies the priority of error types
+      if (!type_inference_errors.empty()) {
+        fail_type_inference(type_inference_errors);
+      } else if (!shape_inference_errors.empty()) {
+        fail_shape_inference(shape_inference_errors);
+      } else if (!any_inference_errors.empty()) {
+        fail_inference(any_inference_errors);
+      } else if (!other_errors.empty()) {
+        throw std::runtime_error(other_errors);
+      }
     }
   }
 
-  const std::vector<std::string>& getErrors() const {
-    return inference_errors;
-  }
+  //const std::vector<std::string>& getErrors() const {
+  //  return inference_errors;
+  //}
 
  private:
   GraphProto& g;
@@ -712,7 +748,7 @@ class ShapeInferenceImplBase {
   bool has_experimental_op = false;
   bool has_unsupported_op = false;
 
-  std::vector<std::string> inference_errors;
+  std::vector<std::exception_ptr> inference_errors;
 
   std::list<TypeProto> initializer_type_list;
 

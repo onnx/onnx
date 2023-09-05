@@ -238,7 +238,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
         """
         model = onnx.parser.parse_model(model_script)
         onnx.shape_inference.infer_shapes(model, error_mode=InferenceErrorMode.IgnoreInferenceError)
-        with self.assertRaises(onnx.shape_inference.ShapeInferenceError):
+        with self.assertRaises(onnx.shape_inference.ShapeError):
             onnx.shape_inference.infer_shapes(model, error_mode=InferenceErrorMode.FailAnyInferenceError)
 
     def test_inference_with_attribute(self) -> None:

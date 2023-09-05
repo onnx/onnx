@@ -9,7 +9,7 @@ import numpy as np
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
-from onnx.shape_inference import InferenceError, InferenceErrorMode
+from onnx.shape_inference import InferenceErrorMode
 
 #####################################################################################
 # Every test creates a model containing a single operator from the lowest possible

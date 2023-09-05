@@ -13,7 +13,7 @@ import numpy
 import onnx.backend.base
 import onnx.backend.test
 import onnx.shape_inference
-from onnx.shape_inference import InferenceError, TypeInferenceError, ShapeInferenceError, InferenceErrorMode
+from onnx.shape_inference import InferenceError, TypeError, ShapeError, InferenceErrorMode
 import onnx.version_converter
 from onnx import ModelProto, NodeProto, TensorProto
 from onnx.backend.base import Device, DeviceType

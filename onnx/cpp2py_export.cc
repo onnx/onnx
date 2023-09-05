@@ -577,8 +577,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
   py::register_exception<InferenceError>(shape_inference, "InferenceError");
-  py::register_exception<TypeInferenceError>(shape_inference, "TypeInferenceError");
-  py::register_exception<ShapeInferenceError>(shape_inference, "ShapeInferenceError");
+  py::register_exception<TypeError>(shape_inference, "TypeError");
+  py::register_exception<ShapeError>(shape_inference, "ShapeError");
   
   py::enum_<InferenceErrorMode>(shape_inference, "InferenceErrorMode")
     .value("IgnoreInferenceError", IgnoreInferenceError)

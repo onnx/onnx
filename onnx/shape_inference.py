@@ -171,6 +171,6 @@ def infer_function_output_types(
 
 
 InferenceError = C.InferenceError
-TypeInferenceError = C.TypeInferenceError
-ShapeInferenceError = C.ShapeInferenceError
+TypeError = C.TypeError
+ShapeError = C.ShapeError
 InferenceErrorMode = C.InferenceErrorMode
