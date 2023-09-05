@@ -221,8 +221,9 @@ class ReduceMin(Base):
 
         data = np.array([], dtype=np.float32).reshape(shape)
         axes = np.array([1], dtype=np.int64)
+        one = np.array(np.ones(reduced_shape, dtype=np.float32))
         zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
-        reduced = np.log(zero)  # -inf
+        reduced = one / zero  # inf
 
         expect(
             node,
