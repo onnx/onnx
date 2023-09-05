@@ -62,7 +62,7 @@ jobs:
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
-      pip install -e ".[reference]" -v
+      pip install ".[reference]" -v
     displayName: 'Install dependencies and ONNX'
 
   - script: |
