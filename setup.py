@@ -303,7 +303,7 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             dst = os.path.join(dst_dir, filename)
             self.copy_file(src, dst)
 
-        # Copy over the generated python files
+        # Copy over the generated python files to source
         generated_python_files = itertools.chain(
             glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")),
             glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi")),
