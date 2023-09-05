@@ -55,6 +55,10 @@ USE_MSVC_STATIC_RUNTIME = bool(os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1")
 DEBUG = bool(os.getenv("DEBUG", "0") == "1")
 COVERAGE = bool(os.getenv("COVERAGE", "0") == "1")
 
+# Customize the wheel plat-name, usually needed for MacOS builds.
+# See usage in .github/workflows/release_mac.yml
+ONNX_WHEEL_PLATFORM_NAME = os.getenv("ONNX_WHEEL_PLATFORM_NAME")
+
 ################################################################################
 # Version
 ################################################################################
@@ -326,4 +330,7 @@ setuptools.setup(
     ext_modules=EXT_MODULES,
     cmdclass=CMD_CLASS,
     version=VERSION_INFO["version"],
+    options={"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
+    if ONNX_WHEEL_PLATFORM_NAME is not None
+    else {},
 )

@@ -162,8 +162,8 @@ def merge_graphs(  # pylint: disable=too-many-branches,too-many-statements
             ]
 
         if not outputs:
-            g1_outputs = [o.name for o in g1.input]
-            g2_outputs = [o.name for o in g2.input]
+            g1_outputs = [o.name for o in g1.output]
+            g2_outputs = [o.name for o in g2.output]
         else:
             output_set = set(outputs)
             g1_outputs = [

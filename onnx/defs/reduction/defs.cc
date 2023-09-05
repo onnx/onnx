@@ -13,14 +13,18 @@
 namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> ReduceDocGeneratorWithFunctionBody(const char* name, const char* func_body) {
-  return ReduceDocGenerator_opset13_18(name, false, true, func_body);
+  return ReduceDocGenerator_opset13_20(name, false, true, func_body);
 }
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("max", true, true)));
-
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("min", true, true)));
-
-ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("sum", false, true)));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMax,
+    20,
+    OpSchema().FillUsing(ReduceDocGenerator_opset13_20("max", true, true, nullptr, nullptr, true)));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMin,
+    20,
+    OpSchema().FillUsing(ReduceDocGenerator_opset13_20("min", true, true, nullptr, nullptr, true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("sum", false, true)));
 
 const char* reduce_sum_square_func_body = R"ONNX(
   {
@@ -34,9 +38,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema().FillUsing(ReduceDocGeneratorWithFunctionBody("sum square", reduce_sum_square_func_body)));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("mean", false, true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("mean", false, true)));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_18("product", false, true)));
+ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 18, OpSchema().FillUsing(ReduceDocGenerator_opset13_20("product", false, true)));
 
 const char* reduce_log_sum_func_body = R"ONNX(
   {
