@@ -218,8 +218,22 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertEqual(node.domain, "SomeDomain")
         self.assertEqual(node.op_type, "SomeOp")
 
-    def test_parse_negative_infinity_float(self):
-        model_text = """
+    @parameterized.expand(
+        [
+            (
+                "not_a_good_float"
+            ),  # Not a good float value, but shouldn't blow up the parser.
+            ("inf"),
+            ("-inf"),
+            ("infinity"),
+            ("-infinity"),
+            ("-NaN"),
+            ("nan"),
+        ]
+    )
+    def test_parse_various_float_values(self, test_literal):
+        model_text = (
+            """
         <
         ir_version: 8,
         opset_import: ["" : 18, "onnxscript.atenlib" : 1, "this" : 1],
@@ -228,24 +242,12 @@ class TestBasicFunctions(unittest.TestCase):
         >
         _func () => ()
         {
-        tmp_11 = Constant <value_float = -inf> ()
+        tmp_11 = Constant <value_float = """
+            + test_literal
+            + """> ()
         }
         """
-        onnx.parser.parse_model(model_text)
-
-    def test_parse_positive_infinity_float(self):
-        model_text = """
-        <
-        ir_version: 8,
-        opset_import: ["" : 18, "onnxscript.atenlib" : 1, "this" : 1],
-        producer_name: "pytorch",
-        producer_version: "2.1.0"
-        >
-        _func () => ()
-        {
-        tmp_11 = Constant <value_float = inf> ()
-        }
-        """
+        )
         onnx.parser.parse_model(model_text)
 
 
