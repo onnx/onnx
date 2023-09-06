@@ -53,7 +53,7 @@ def _generate_test_data(
         # pylint: disable=import-outside-toplevel
         import PIL.Image
     except ImportError:
-        # Since opencv-python is not installed to generate test data for the ImageDecoder operator
+        # Since pillow is not installed to generate test data for the ImageDecoder operator
         # directly use the frozen data from _image_decoder_data.py.
         return frozen_data.data, frozen_data.output
     np.random.seed(12345)

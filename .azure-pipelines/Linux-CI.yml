@@ -107,13 +107,13 @@ jobs:
         exit 1
       fi
 
-      pip uninstall -y opencv-python
+      pip uninstall -y pillow
       python onnx/backend/test/cmd_tools.py generate-data --clean
       git status
-      # Verify test generation without opencv-python for ImageDecoder, it should directly use frozen data
+      # Verify test generation without pillow for ImageDecoder, it should directly use frozen data
       git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
       if [ $? -ne 0 ]; then
-        echo "git diff for test generation without opencv-python returned failures. Please check updated node test files"
+        echo "git diff for test generation without pillow returned failures. Please check updated node test files"
         exit 1
       fi
 
