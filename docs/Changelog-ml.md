@@ -227,7 +227,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 ### <a name="ai.onnx.ml.FeatureVectorizer-1"></a>**ai.onnx.ml.FeatureVectorizer-1**</a>
 
   Concatenates input tensors into one continuous output.<br>
-      All input shapes are 2-D and are concatenated along the second dimention. 1-D tensors are treated as [1,C].
+      All input shapes are 2-D and are concatenated along the second dimension. 1-D tensors are treated as [1,C].
       Inputs are copied to the output maintaining the order of the input arguments.<br>
       All inputs must be integers or floats, while the output will be all floating point values.
 
@@ -740,7 +740,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>nodes_hitrates</tt> : list of floats</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.</dd>
+<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the default value is false (0) for all nodes.</dd>
 <dt><tt>nodes_modes</tt> : list of strings</dt>
 <dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
 <dt><tt>nodes_nodeids</tt> : list of ints</dt>
@@ -813,7 +813,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>nodes_hitrates</tt> : list of floats</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
+<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the default value is false (0) for all nodes.</dd>
 <dt><tt>nodes_modes</tt> : list of strings</dt>
 <dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
 <dt><tt>nodes_nodeids</tt> : list of ints</dt>
@@ -1018,7 +1018,7 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 <dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.</dd>
+<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the default value is false (0) for all nodes.</dd>
 <dt><tt>nodes_modes</tt> : list of strings</dt>
 <dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
 <dt><tt>nodes_nodeids</tt> : list of ints</dt>
@@ -1099,7 +1099,7 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 <dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
+<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the default value is false (0) for all nodes.</dd>
 <dt><tt>nodes_modes</tt> : list of strings</dt>
 <dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
 <dt><tt>nodes_nodeids</tt> : list of ints</dt>

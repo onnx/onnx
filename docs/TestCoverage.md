@@ -14375,7 +14375,40 @@ expect(
 
 
 ### ReduceMax
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
+<details>
+<summary>bool_inputs</summary>
+
+```python
+axes = np.array([1], dtype=np.int64)
+keepdims = 1
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array(
+    [[True, True], [True, False], [False, True], [False, False]],
+)
+reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=bool(keepdims))
+# print(reduced)
+# [[True],
+#  [True],
+#  [True],
+#  [False]]
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_max_bool_inputs",
+)
+```
+
+</details>
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -14398,6 +14431,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_max_default_axes_keepdim_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -14409,6 +14443,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_max_default_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -14443,6 +14478,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -14454,6 +14490,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -14488,6 +14525,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -14499,6 +14537,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -14533,6 +14572,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_negative_axes_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -14544,6 +14584,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_negative_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -14733,7 +14774,40 @@ expect(
 
 
 ### ReduceMin
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
+<details>
+<summary>bool_inputs</summary>
+
+```python
+axes = np.array([1], dtype=np.int64)
+keepdims = 1
+
+node = onnx.helper.make_node(
+    "ReduceMin",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array(
+    [[True, True], [True, False], [False, True], [False, False]],
+)
+reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=bool(keepdims))
+# print(reduced)
+# [[ True],
+#  [False],
+#  [False],
+#  [False]]
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_min_bool_inputs",
+)
+```
+
+</details>
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -14759,6 +14833,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_min_default_axes_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -14770,6 +14845,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_min_default_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -14804,6 +14880,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_do_not_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -14815,6 +14892,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_do_not_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -14849,6 +14927,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -14860,6 +14939,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -14894,6 +14974,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_negative_axes_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -14905,6 +14986,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_negative_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
