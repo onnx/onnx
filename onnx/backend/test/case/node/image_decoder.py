@@ -9,7 +9,7 @@ import numpy as np
 
 import onnx
 from onnx.backend.test.case.base import Base
-from onnx.backend.test.case.node import expect, _image_decoder_data
+from onnx.backend.test.case.node import _image_decoder_data, expect
 
 
 def generate_checkerboard(width: int, height: int, square_size: int) -> np.ndarray:
