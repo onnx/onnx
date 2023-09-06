@@ -8194,7 +8194,7 @@ node = onnx.helper.make_node(
     pixel_format="RGB",
 )
 
-data, output = generate_test_data(".bmp", "RGB")
+data, output = _generate_test_data("bmp", "RGB")
 expect(
     node,
     inputs=[data],
@@ -8215,7 +8215,7 @@ node = onnx.helper.make_node(
     pixel_format="RGB",
 )
 
-data, output = generate_test_data(".jp2", "RGB")
+data, output = _generate_test_data("jpeg2000", "RGB")
 expect(
     node,
     inputs=[data],
@@ -8236,7 +8236,7 @@ node = onnx.helper.make_node(
     pixel_format="BGR",
 )
 
-data, output = generate_test_data(".jpg", "BGR")
+data, output = _generate_test_data("jpeg", "BGR")
 expect(
     node,
     inputs=[data],
@@ -8257,7 +8257,7 @@ node = onnx.helper.make_node(
     pixel_format="Grayscale",
 )
 
-data, output = generate_test_data(".jpg", "Grayscale")
+data, output = _generate_test_data("jpeg", "Grayscale")
 expect(
     node,
     inputs=[data],
@@ -8278,7 +8278,7 @@ node = onnx.helper.make_node(
     pixel_format="RGB",
 )
 
-data, output = generate_test_data(".jpg", "RGB")
+data, output = _generate_test_data("jpeg", "RGB")
 expect(
     node,
     inputs=[data],
@@ -8299,7 +8299,7 @@ node = onnx.helper.make_node(
     pixel_format="RGB",
 )
 
-data, output = generate_test_data(".png", "RGB")
+data, output = _generate_test_data("png", "RGB")
 expect(
     node,
     inputs=[data],
@@ -8320,7 +8320,7 @@ node = onnx.helper.make_node(
     pixel_format="RGB",
 )
 
-data, output = generate_test_data(".pnm", "RGB")
+data, output = _generate_test_data("ppm", "RGB")
 expect(
     node,
     inputs=[data],
@@ -8341,7 +8341,7 @@ node = onnx.helper.make_node(
     pixel_format="RGB",
 )
 
-data, output = generate_test_data(".tiff", "RGB")
+data, output = _generate_test_data("tiff", "RGB")
 expect(
     node,
     inputs=[data],
@@ -8362,7 +8362,7 @@ node = onnx.helper.make_node(
     pixel_format="RGB",
 )
 
-data, output = generate_test_data(".webp", "RGB")
+data, output = _generate_test_data("webp", "RGB")
 expect(
     node,
     inputs=[data],
