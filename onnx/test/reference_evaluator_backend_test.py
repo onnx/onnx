@@ -77,17 +77,20 @@ if version(npver) < version("1.21.5"):
         "test_castlike_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16_expanded",
     }
-if version(npver) < version("1.21.5"):
-    SKIP_TESTS |= {
-        "test_cast_FLOAT_to_BFLOAT16",
-        "test_castlike_FLOAT_to_BFLOAT16",
-        "test_castlike_FLOAT_to_BFLOAT16_expanded",
-    }
 if sys.platform == "win32":
     SKIP_TESTS |= {
         "test_regex_full_match_basic",
         "test_regex_full_match_email_domain",
         "test_regex_full_match_empty",
+        "test_image_decoder_decode_jpeg_rgb",
+        "test_image_decoder_decode_jpeg_grayscale",
+        "test_image_decoder_decode_jpeg_bgr",
+        "test_image_decoder_decode_jpeg2k_rgb",
+        "test_image_decoder_decode_bmp_rgb",
+        "test_image_decoder_decode_png_rgb",
+        "test_image_decoder_decode_tiff_rgb",
+        "test_image_decoder_decode_webp_rgb",
+        "test_image_decoder_decode_pnm_rgb",
     }
 
 
@@ -576,19 +579,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         feeds = {input_names[i]: inputs[i] for i in range(len(inputs))}
         got = obj.run(None, feeds)
         return got
-
-    # def test_onnx_test_run_test_abs(self):
-    #     done = 0
-    #     for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
-    #         self.assertIn(te.name, repr(te))
-    #         self.assertGreater(len(te), 0)
-    #         te.run(
-    #             TestOnnxBackEndWithReferenceEvaluator.load_fct,
-    #             TestOnnxBackEndWithReferenceEvaluator.run_fct,
-    #             comment="[runtime=ReferenceEvaluator]",
-    #         )
-    #         done += 1
-    #     self.assertEqual(done, 1)
 
     def common_test_onnx_test_run(
         self,
