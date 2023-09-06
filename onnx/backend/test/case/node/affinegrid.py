@@ -89,7 +89,7 @@ def create_affine_matrix_3d(
     rotation_matrix = np.transpose(rotation_matrix, (0, 2, 1))
     affine_matrix = np.hstack((rotation_matrix, translation))
     affine_matrix = np.transpose(affine_matrix, (0, 2, 1))
-    return affine_matrix
+    return affine_matrix.astype(np.float32)
 
 
 def create_affine_matrix_2d(
@@ -109,7 +109,7 @@ def create_affine_matrix_2d(
     rotation_matrix = np.transpose(rotation_matrix, (0, 2, 1))
     affine_matrix = np.hstack((rotation_matrix, translation))
     affine_matrix = np.transpose(affine_matrix, (0, 2, 1))
-    return affine_matrix
+    return affine_matrix.astype(np.float32)
 
 
 def create_theta_2d():

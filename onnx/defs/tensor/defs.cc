@@ -2538,13 +2538,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(AffineGrid_ver20_doc)
         .FunctionBody(R"ONNX(
         {
-          # naming one: 1, one_f: 1.0, one_v: [1], one_fv: [1.0]
+          # naming one: 1, one_f: 1.0, one_1d: [1], one_f_1d: [1.0]
           one = Constant <value_int: int=1> ()
           two = Constant <value_int: int=2> ()
           zero = Constant <value_int: int=0> ()
           four = Constant <value_int: int=4> ()
-          one_v = Constant <value_ints: ints = [1]> ()
-          zero_v = Constant <value_ints: ints = [0]> ()
+          one_1d = Constant <value_ints: ints = [1]> ()
+          zero_1d = Constant <value_ints: ints = [0]> ()
 
           minus_one = Constant <value_int: int=-1> ()
           minus_one_f = CastLike (minus_one, theta)
@@ -2558,20 +2558,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           size_ndim = Size (size)
           condition_is_2d = Equal (size_ndim, four)
 
-          size_NCDHW = If (condition_is_2d) <
-              then_branch = g1 () => (size_NCDHW_then) { # => (int64[5] = [N, C, 1, H, W])
-                  # size_NCDHW_then = Identity (size)
-                  N, C, H, W = Split <num_outputs: int=4> (size)
-                  size_NCDHW_then = Concat <axis=0> (N, C, one_v, H, W)
+          N, C, D, H, W = If (condition_is_2d) <
+              then_branch = g1 () => (N_then, C_then, D_then, H_then, W_then) {
+                  N_then, C_then, H_then, W_then = Split <num_outputs: int=4> (size)
+                  D_then = Identity (one_1d)
               },
-              else_branch = g2 () => (size_NCDHW_else) { # => (int64[5] = [N, C, D, H, W])
-                  # size_NCDHW_else = Identity (size)
-                  int_five = Constant <value_int: int=5> ()
-                  N, C, D, H, W = Split <num_outputs: int=5> (size)
-                  size_NCDHW_else = Concat <axis=0> (N, C, D, H, W)
+              else_branch = g2 () => (N_else, C_else, D_else, H_else, W_else) {
+                  N_else, C_else, D_else, H_else, W_else = Split <num_outputs: int=5> (size)
               }
           >
-          N, C, D, H, W = Split <num_outputs: int=5> (size_NCDHW)
+          size_NCDHW = Concat <axis=0> (N, C, D, H, W)
 
           theta_3d = If (condition_is_2d) <
               then_branch = g3 () => (theta_then) { # theta: N by 2 by 3 => N by 3 by 4
@@ -2598,9 +2594,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   R2 = Concat <axis=1>(r21, r22, float_zero_1d, t2)
                   R3 = Concat <axis=1>(float_zero_1d, float_zero_1d, float_one_1d, float_zero_1d)
 
-                  R1_ = Unsqueeze (R1, one_v) # N by 1 by 4
-                  R2_ = Unsqueeze (R2, one_v)
-                  R3_ = Unsqueeze (R3, one_v)
+                  R1_ = Unsqueeze (R1, one_1d) # N by 1 by 4
+                  R2_ = Unsqueeze (R2, one_1d)
+                  R3_ = Unsqueeze (R3, one_1d)
                   theta_then = Concat <axis=1> (R1_, R2_, R3_) # N by 3 by 4
                   # theta_then = Identity (theta)
               },
@@ -2609,10 +2605,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
           >
 
-          int_two_1d = Constant <value_ints=[2]> ()
-          int_three_1d = Constant <value_ints=[3]> ()
-          int_five_1d = Constant <value_ints=[5]> ()
-          constant_D_H_W_shape = Slice (size_NCDHW, int_two_1d, int_five_1d) # [N, C, D, H, W] => [D, H, W]
+          two_1d = Constant <value_ints=[2]> ()
+          three_1d = Constant <value_ints=[3]> ()
+          five_1d = Constant <value_ints=[5]> ()
+          constant_D_H_W_shape = Slice (size_NCDHW, two_1d, five_1d) # [N, C, D, H, W] => [D, H, W]
           zeros_D_H_W_ = ConstantOfShape (constant_D_H_W_shape)
           zeros_D_H_W = CastLike (zeros_D_H_W_, theta)
           ones_D_H_W = Add (zeros_D_H_W, one_f)
@@ -2694,17 +2690,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           original_grid_4_DHW = CastLike (original_grid_4_DHW_, theta_3d)
           grid_N_3_DHW = MatMul (theta_3d, original_grid_4_DHW)
           grid_N_DHW_3 = Transpose <perm = [0, 2, 1]> (grid_N_3_DHW)
-          N_D_H_W_3 = Concat <axis=-1> (N, D, H, W, int_three_1d)
+          N_D_H_W_3 = Concat <axis=-1> (N, D, H, W, three_1d)
           grid_3d_else_ = Reshape (grid_N_DHW_3, N_D_H_W_3)
           grid_3d = CastLike (grid_3d_else_, theta_3d)
 
           # grid = Identity (grid_3d)
           grid = If (condition_is_2d) <
               then_branch = g1 () => (grid_then) { # [N, D=1, H, W, 3] => [N, H, W, 2]
-                  two_v  = Constant <value_ints: ints = [2]> ()
-                  three_v  = Constant <value_ints: ints = [3]> ()
-                  grid_squeezed = Squeeze (grid_3d, one_v)  # [N, H, W, 3]
-                  grid_then = Slice (grid_squeezed, zero_v, two_v, three_v) # [N, H, W, 2]
+                  grid_squeezed = Squeeze (grid_3d, one_1d)  # [N, H, W, 3]
+                  grid_then = Slice (grid_squeezed, zero_1d, two_1d, three_1d) # [N, H, W, 2]
               },
               else_branch = g2 () => (grid_else) {
                   grid_else = Identity (grid_3d)
