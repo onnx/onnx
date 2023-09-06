@@ -9,7 +9,7 @@ import numpy as np
 
 import onnx
 from onnx.backend.test.case.base import Base
-from onnx.backend.test.case.node import expect, image_decoder_data
+from onnx.backend.test.case.node import expect, _image_decoder_data
 
 
 def generate_checkerboard(width: int, height: int, square_size: int) -> np.ndarray:
@@ -43,7 +43,7 @@ def generate_checkerboard(width: int, height: int, square_size: int) -> np.ndarr
 
 def _generate_test_data(
     format_: str,
-    frozen_data: image_decoder_data.ImageDecoderData,
+    frozen_data: _image_decoder_data.ImageDecoderData,
     pixel_format: str = "RGB",
     height: int = 32,
     width: int = 32,
@@ -54,7 +54,7 @@ def _generate_test_data(
         import PIL.Image
     except ImportError:
         # Since opencv-python is not installed to generate test data for the ImageDecoder operator
-        # directly use the frozen data from image_decoder_data.py.
+        # directly use the frozen data from _image_decoder_data.py.
         return frozen_data.data, frozen_data.output
     np.random.seed(12345)
     image = generate_checkerboard(height, width, tile_sz)
@@ -88,7 +88,7 @@ class ImageDecoder(Base):
         )
 
         data, output = _generate_test_data(
-            "jpeg", image_decoder_data.image_decoder_decode_jpeg_rgb, "RGB"
+            "jpeg", _image_decoder_data.image_decoder_decode_jpeg_rgb, "RGB"
         )
         expect(
             node,
@@ -107,7 +107,7 @@ class ImageDecoder(Base):
         )
 
         data, output = _generate_test_data(
-            "jpeg", image_decoder_data.image_decoder_decode_jpeg_grayscale, "Grayscale"
+            "jpeg", _image_decoder_data.image_decoder_decode_jpeg_grayscale, "Grayscale"
         )
         expect(
             node,
@@ -126,7 +126,7 @@ class ImageDecoder(Base):
         )
 
         data, output = _generate_test_data(
-            ".jpeg", image_decoder_data.image_decoder_decode_jpeg_bgr, "BGR"
+            "jpeg", _image_decoder_data.image_decoder_decode_jpeg_bgr, "BGR"
         )
         expect(
             node,
@@ -145,7 +145,7 @@ class ImageDecoder(Base):
         )
 
         data, output = _generate_test_data(
-            "jpeg2000", image_decoder_data.image_decoder_decode_jpeg2k_rgb, "RGB"
+            "jpeg2000", _image_decoder_data.image_decoder_decode_jpeg2k_rgb, "RGB"
         )
         expect(
             node,
@@ -164,7 +164,7 @@ class ImageDecoder(Base):
         )
 
         data, output = _generate_test_data(
-            "bmp", image_decoder_data.image_decoder_decode_bmp_rgb, "RGB"
+            "bmp", _image_decoder_data.image_decoder_decode_bmp_rgb, "RGB"
         )
         expect(
             node,
@@ -183,7 +183,7 @@ class ImageDecoder(Base):
         )
 
         data, output = _generate_test_data(
-            "png", image_decoder_data.image_decoder_decode_png_rgb, "RGB"
+            "png", _image_decoder_data.image_decoder_decode_png_rgb, "RGB"
         )
         expect(
             node,
@@ -202,7 +202,7 @@ class ImageDecoder(Base):
         )
 
         data, output = _generate_test_data(
-            "tiff", image_decoder_data.image_decoder_decode_tiff_rgb, "RGB"
+            "tiff", _image_decoder_data.image_decoder_decode_tiff_rgb, "RGB"
         )
         expect(
             node,
@@ -221,7 +221,7 @@ class ImageDecoder(Base):
         )
 
         data, output = _generate_test_data(
-            "webp", image_decoder_data.image_decoder_decode_webp_rgb, "RGB"
+            "webp", _image_decoder_data.image_decoder_decode_webp_rgb, "RGB"
         )
         expect(
             node,
@@ -240,7 +240,7 @@ class ImageDecoder(Base):
         )
 
         data, output = _generate_test_data(
-            ".ppm", image_decoder_data.image_decoder_decode_pnm_rgb, "RGB"
+            "ppm", _image_decoder_data.image_decoder_decode_pnm_rgb, "RGB"
         )
         expect(
             node,
