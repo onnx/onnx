@@ -53,7 +53,32 @@ Status ParserBase::Parse(Literal& result) {
       }
     } else
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
-  } else if ((isdigit(nextch) || (nextch == '-'))) {
+  }
+
+  bool negative = false;
+  if (nextch == '-') {
+    negative = true;
+    ++next_;
+  }
+
+  // Has to be a float literal now: nan, inf, infinity.
+  if (isalpha(*next_)) {
+    auto float_try_start = next_;
+    while (next_ < end_ && isalpha(*next_)) {
+      ++next_;
+    }
+    try {
+      std::stof(std::string(from, next_ - from));
+      result.type = LiteralType::FLOAT_LITERAL;
+      result.value = std::string(from, next_ - from);
+    } catch (const std::invalid_argument& e) {
+      // TODO: How do we rewind?
+      next_ = from;
+    }
+    return Status::OK();
+  }
+
+  if (isdigit(nextch) || nextch == '-') {
     ++next_;
 
     while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
