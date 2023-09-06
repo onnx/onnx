@@ -119,7 +119,7 @@ jobs:
         set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
         python -m pip install -r requirements-release.txt
         pip uninstall -y onnx
-        python setup.py install
+        pip install .
 
         pytest
         IF NOT %ERRORLEVEL% EQU 0 (

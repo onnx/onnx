@@ -301,6 +301,7 @@ def save_model(
             If false, save each tensor to a file named with the tensor name.
         location: Effective only if save_as_external_data is true.
             Specify the external file that all tensors to save to.
+            Path is relative to the model path.
             If not specified, will use the model name.
         size_threshold: Effective only if save_as_external_data is True.
             Threshold for size of data. Only when tensor's data is >= the size_threshold it will be converted
