@@ -220,15 +220,13 @@ class TestBasicFunctions(unittest.TestCase):
 
     @parameterized.expand(
         [
-            (
-                "not_a_good_float"
-            ),  # Not a good float value, but shouldn't blow up the parser.
-            ("inf"),
-            ("-inf"),
-            ("infinity"),
-            ("-infinity"),
-            ("-NaN"),
-            ("nan"),
+            "not_a_good_float",  # Not a good float value, but shouldn't blow up the parser.
+            "inf",
+            "-inf",
+            "infinity",
+            "-infinity",
+            "-NaN",
+            "nan",
         ]
     )
     def test_parse_various_float_values(self, test_literal):
