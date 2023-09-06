@@ -97,8 +97,10 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
                 )
         if aggregate_function == "AVERAGE":
             res /= n_trees
+
+        # Convention is to add base_values after aggregate function
         if base_values is not None:
-            res[:, :] = np.array(base_values).reshape((1, -1))
+            res[:, :] += np.array(base_values).reshape((1, -1))
 
         if post_transform in (None, "NONE"):
             return (res,)
