@@ -55,29 +55,28 @@ Status ParserBase::Parse(Literal& result) {
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
   }
 
-  bool negative = false;
+  // Simplify the next if by consuming a possible negative sign.
   if (nextch == '-') {
-    negative = true;
     ++next_;
   }
 
-  // Has to be a float literal now: nan, inf, infinity.
+  // Check for float literals that start with alphabet characters.
   if (isalpha(*next_)) {
-    auto float_try_start = next_;
-    while (next_ < end_ && isalpha(*next_)) {
-      ++next_;
-    }
+    // Has to be a special float literal now: (-)*(nan|inf|infinity).
+    while(next_ < end_ && isalpha(*next_)) { ++next_; }
     try {
-      std::stof(std::string(from, next_ - from));
-      result.type = LiteralType::FLOAT_LITERAL;
-      result.value = std::string(from, next_ - from);
+        std::stof(std::string(from, next_ - from));
+        result.type = LiteralType::FLOAT_LITERAL;
+        result.value = std::string(from, next_ - from);
     } catch (const std::invalid_argument& e) {
-      // TODO: How do we rewind?
+      // Rewind the parser if this is not a valid float literal.
       next_ = from;
     }
+    // Either way we're done at this point.
     return Status::OK();
   }
 
+  // Checking for numeric ints or float literal.
   if (isdigit(nextch) || nextch == '-') {
     ++next_;
 
