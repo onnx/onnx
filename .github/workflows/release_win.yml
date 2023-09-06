@@ -50,8 +50,8 @@ jobs:
         python -m pip install -q --upgrade pip
         cd onnx
         if ('${{ matrix.architecture }}' -eq 'x86') {
-          sed -i '' '/google-re2/d' requirements-reference.txt
-          sed -i '' '/Pillow/d' requirements-reference.txt
+          echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
+          sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
         }
         python -m pip install -q -r requirements-release.txt
 
