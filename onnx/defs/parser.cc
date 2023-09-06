@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "onnx/common/common.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
@@ -64,13 +65,16 @@ Status ParserBase::Parse(Literal& result) {
   if (isalpha(*next_)) {
     // Has to be a special float literal now: (-)*(nan|inf|infinity).
     while(next_ < end_ && isalpha(*next_)) { ++next_; }
-    try {
+    ONNX_TRY {
         std::stof(std::string(from, next_ - from));
         result.type = LiteralType::FLOAT_LITERAL;
         result.value = std::string(from, next_ - from);
-    } catch (const std::invalid_argument& e) {
-      // Rewind the parser if this is not a valid float literal.
-      next_ = from;
+    } ONNX_CATCH(const std::invalid_argument& e) {
+        ONNX_HANDLE_EXCEPTION([&]() {
+          // Rewind the parser if this is not a valid float literal.
+          next_ = from;
+
+        });
     }
     // Either way we're done at this point.
     return Status::OK();
