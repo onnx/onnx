@@ -38,7 +38,7 @@ CMAKE = shutil.which("cmake3") or shutil.which("cmake")
 
 # Default value is set to TRUE\1 to keep the settings same as the current ones.
 # However going forward the recommended way to is to set this to False\0
-ONNX_ML = not (os.getenv("ONNX_ML") == "0")
+ONNX_ML = os.getenv("ONNX_ML") != "0"
 ONNX_VERIFY_PROTO3 = os.getenv("ONNX_VERIFY_PROTO3") == "1"
 ONNX_NAMESPACE = os.getenv("ONNX_NAMESPACE", "onnx")
 ONNX_BUILD_TESTS = os.getenv("ONNX_BUILD_TESTS") == "1"
