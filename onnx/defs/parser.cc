@@ -68,7 +68,7 @@ Status ParserBase::Parse(Literal& result) {
       ++next_;
     }
     ONNX_TRY {
-      std::stof(std::string(from, next_ - from));
+      static_cast<void>(std::stof(std::string(from, next_ - from)));
       result.type = LiteralType::FLOAT_LITERAL;
       result.value = std::string(from, next_ - from);
     }
