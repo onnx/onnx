@@ -64,17 +64,19 @@ Status ParserBase::Parse(Literal& result) {
   // Check for float literals that start with alphabet characters.
   if (isalpha(*next_)) {
     // Has to be a special float literal now: (-)*(nan|inf|infinity).
-    while(next_ < end_ && isalpha(*next_)) { ++next_; }
+    while (next_ < end_ && isalpha(*next_)) {
+      ++next_;
+    }
     ONNX_TRY {
-        std::stof(std::string(from, next_ - from));
-        result.type = LiteralType::FLOAT_LITERAL;
-        result.value = std::string(from, next_ - from);
-    } ONNX_CATCH(const std::invalid_argument& e) {
-        ONNX_HANDLE_EXCEPTION([&]() {
-          // Rewind the parser if this is not a valid float literal.
-          next_ = from;
-
-        });
+      std::stof(std::string(from, next_ - from));
+      result.type = LiteralType::FLOAT_LITERAL;
+      result.value = std::string(from, next_ - from);
+    }
+    ONNX_CATCH(...) {
+      ONNX_HANDLE_EXCEPTION([&]() {
+        // Rewind the parser if this is not a valid float literal.
+        next_ = from;
+      });
     }
     // Either way we're done at this point.
     return Status::OK();
