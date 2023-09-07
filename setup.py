@@ -267,8 +267,8 @@ class BuildExt(setuptools.command.build_ext.build_ext):
 
     def build_extensions(self):
         build_lib = os.path.realpath(self.build_lib)
-        dst_dir = os.path.join(build_lib, "onnx")
-        os.makedirs(dst_dir, exist_ok=True)
+        extension_dst_dir = os.path.join(build_lib, "onnx")
+        os.makedirs(extension_dst_dir, exist_ok=True)
         lib_dir = CMAKE_BUILD_DIR
 
         for ext in self.extensions:
@@ -283,7 +283,7 @@ class BuildExt(setuptools.command.build_ext.build_ext):
                 elif os.path.exists(release_lib_dir):
                     lib_dir = release_lib_dir
             src = os.path.join(lib_dir, filename)
-            dst = os.path.join(dst_dir, filename)
+            dst = os.path.join(extension_dst_dir, filename)
             self.copy_file(src, dst)
 
         # Copy over the generated python files to build/source dir depending on editable mode
