@@ -240,6 +240,7 @@ class BuildPy(setuptools.command.build_py.build_py):
         return super().run()
 
     def create_version(self):
+        # We do not make create_version into its own command because we need to use self.build_lib
         if self.editable_mode:
             dst_dir = TOP_DIR
         else:
