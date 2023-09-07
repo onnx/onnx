@@ -8,7 +8,6 @@
 import contextlib
 import datetime
 import glob
-import itertools
 import logging
 import multiprocessing
 import os
@@ -266,18 +265,23 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         return super().run()
 
     def build_extensions(self):
-        build_lib = os.path.realpath(self.build_lib)
+        # We override this method entirely because the actual building is done
+        # by cmake_build. Here we just copy the built extensions to the final
+        # destination.
+        build_lib = self.build_lib
         extension_dst_dir = os.path.join(build_lib, "onnx")
         os.makedirs(extension_dst_dir, exist_ok=True)
-        lib_dir = CMAKE_BUILD_DIR
 
         for ext in self.extensions:
             fullname = self.get_ext_fullname(ext.name)
             filename = os.path.basename(self.get_ext_filename(fullname))
 
-            if WINDOWS:
-                debug_lib_dir = os.path.join(lib_dir, "Debug")
-                release_lib_dir = os.path.join(lib_dir, "Release")
+            if not WINDOWS:
+                lib_dir = CMAKE_BUILD_DIR
+            else:
+                # Windows compiled extensions are stored in Release/Debug subfolders
+                debug_lib_dir = os.path.join(CMAKE_BUILD_DIR, "Debug")
+                release_lib_dir = os.path.join(CMAKE_BUILD_DIR, "Release")
                 if os.path.exists(debug_lib_dir):
                     lib_dir = debug_lib_dir
                 elif os.path.exists(release_lib_dir):
@@ -291,12 +295,13 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             dst_dir = TOP_DIR
         else:
             dst_dir = build_lib
-        generated_python_files = itertools.chain(
-            glob.glob(os.path.join(lib_dir, "onnx", "*.py")),
-            glob.glob(os.path.join(lib_dir, "onnx", "*.pyi")),
+        generated_python_files = (
+            *glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")),
+            *glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi")),
         )
+        assert generated_python_files, "Bug: No generated python files found"
         for src in generated_python_files:
-            dst = os.path.join(dst_dir, os.path.relpath(src, lib_dir))
+            dst = os.path.join(dst_dir, os.path.relpath(src, CMAKE_BUILD_DIR))
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             self.copy_file(src, dst)
 
