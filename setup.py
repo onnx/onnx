@@ -113,16 +113,6 @@ def get_ext_suffix():
 ################################################################################
 
 
-class ONNXCommand(setuptools.Command):
-    user_options: ClassVar[list] = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-
 class CmakeBuild(setuptools.Command):
     """Compiles everything when `python setup.py build` is run using cmake.
 
