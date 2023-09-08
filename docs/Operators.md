@@ -20597,10 +20597,7 @@ expect(node, inputs=[x], outputs=[y], name="test_reciprocal")
   Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields 0.
 
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
@@ -20859,10 +20856,7 @@ expect(
   Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields 0.
 
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
@@ -21139,10 +21133,7 @@ expect(
   Computes the log sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields minus infinity or undefined for types without infinities.
 
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
@@ -21310,10 +21301,7 @@ expect(
   Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields minus infinity or undefined for types without infinities.
 
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
@@ -21576,10 +21564,7 @@ expect(
   Computes the max of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields minimum value of the data type.
 
 
   If the input data type is Boolean, the comparison should consider `False < True`.
@@ -21856,10 +21841,7 @@ expect(
   Computes the mean of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields undefined.
 
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
@@ -22097,10 +22079,7 @@ expect(
   Computes the min of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields maximum value of the data type.
 
 
   If the input data type is Boolean, the comparison should consider `False < True`.
@@ -22412,10 +22391,7 @@ expect(
   Computes the product of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields 1.
 
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
@@ -22672,10 +22648,7 @@ expect(
   Computes the sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields 0.
 
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
@@ -22972,10 +22945,7 @@ expect(
   Computes the sum square of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values will return the mathematically appropriate
-  value if it exists (which is the identity element for a plain reduction-op, such
-  as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-  type contains a NaN) otherwise (eg., for ReduceMean).
+  valid. Reduction over an empty set of values yields 0.
 
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
