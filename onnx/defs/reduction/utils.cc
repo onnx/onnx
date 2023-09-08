@@ -9,6 +9,7 @@
 #include <vector>
 
 namespace ONNX_NAMESPACE {
+
 std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit, bool supports_bool) {
   auto data_types = OpSchema::numeric_types_for_math_reduction_ir4();
   if (supports8bit) {
@@ -22,8 +23,9 @@ std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit,
   return data_types;
 }
 
-std::function<void(OpSchema&)> ReduceDocGenerator_opset13_20(
+std::function<void(OpSchema&)> ReduceOpGenerator(
     const char* name,
+    const char* empty_value,
     bool supports_8bit_datatypes,
     bool axes_input,
     const char* func_body,
@@ -34,10 +36,7 @@ std::function<void(OpSchema&)> ReduceDocGenerator_opset13_20(
 Computes the {name} of the input tensor's elements along the provided axes. The resulting
 tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
 the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-valid. Reduction over an empty set of values will return the mathematically appropriate
-value if it exists (which is the identity element for a plain reduction-op, such
-as 0 for sum, and 1 for product, for example) and it is undefined (NaN, if the
-type contains a NaN) otherwise (eg., for ReduceMean).
+valid. Reduction over an empty set of values yields {empty_value}.
 )DOC";
     if (supports_boolean_datatype) {
       doc += R"DOC(
@@ -50,6 +49,7 @@ The above behavior is similar to numpy, with the exception that numpy defaults `
 to `False` instead of `True`.)DOC";
 
     ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{empty_value}", empty_value);
     POPULATE_OP_DOC_STR(doc = doc;);
     schema.SetDoc(doc.c_str());
     schema.Attr(
