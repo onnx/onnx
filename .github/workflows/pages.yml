@@ -42,7 +42,7 @@ jobs:
           git submodule update --init --recursive
           export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           export ONNX_ML=1
-          python setup.py install
+          pip install .
       - name: Build Docs
         run: |
           cd docs/docsgen
