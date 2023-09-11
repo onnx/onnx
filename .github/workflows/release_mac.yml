@@ -64,10 +64,9 @@ jobs:
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         if [ '${{ github.event_name }}' == 'schedule' ]; then
           sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-          ONNX_PREVIEW_BUILD=1 python -m build --wheel
-        else
-          python -m build --wheel
+          export ONNX_PREVIEW_BUILD=1
         fi
+        python -m build --wheel
 
         for file in dist/*.whl; do
           python -m pip install --upgrade $file;
