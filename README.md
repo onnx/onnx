@@ -7,8 +7,8 @@ Copyright (c) ONNX Project Contributors
 <p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/onnx-horizontal-color.png" /></p>
 
 [![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status%2FWindows-CI?branchName=refs%2Fpull%2F5568%2Fmerge&label=Windows)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=refs%2Fpull%2F5568%2Fmerge)
-[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status%2FLinux-CI?branchName=refs%2Fpull%2F5568%2Fmerge)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=refs%2Fpull%2F5568%2Fmerge)
-[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status%2FMacOS-CI?branchName=refs%2Fpull%2F5568%2Fmerge)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=refs%2Fpull%2F5568%2Fmerge)
+[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status%2FLinux-CI?branchName=refs%2Fpull%2F5568%2Fmerge&label=Linux)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=refs%2Fpull%2F5568%2Fmerge)
+[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status%2FMacOS-CI?branchName=refs%2Fpull%2F5568%2Fmerge&label=MacOS)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=refs%2Fpull%2F5568%2Fmerge)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/onnx/onnx/badge)](https://api.securityscorecards.dev/projects/github.com/onnx/onnx)
 [![REUSE compliant](https://api.reuse.software/badge/github.com/onnx/onnx)](https://api.reuse.software/info/github.com/onnx/onnx)
