@@ -28,9 +28,7 @@ class SVMAttributes:
 
 
 class SVMCommon:
-    """
-    Base class for SVM.
-    """
+    """Base class for SVM."""
 
     def __init__(self, **kwargs):  # type: ignore
         self.atts = SVMAttributes()

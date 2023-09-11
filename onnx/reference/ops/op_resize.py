@@ -11,8 +11,7 @@ from onnx.reference.op_run import OpRun
 
 
 def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.ndarray:
-    """
-    From https://stackoverflow.com/a/1235363
+    """From https://stackoverflow.com/a/1235363
     Generate a cartesian product of input arrays.
     Parameters
     ----------
@@ -127,8 +126,7 @@ def _linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
 
 
 def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
-    """
-    Return the n nearest indexes to x among `[0, limit)`,
+    """Return the n nearest indexes to x among `[0, limit)`,
     prefer the indexes smaller than x.
     As a result, the ratio must be in `(0, 1]`.
 
@@ -142,10 +140,13 @@ def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
         get_neighbor_idxes(4.4, 1, 10) == [4]
         get_neighbor_idxes(4.6, 1, 10) == [5]
 
-    :param x:
-    :param n: the number of the wanted indexes
-    :param limit: the maximum value of index
-    :return: An np.array containing n nearest indexes in ascending order
+    Args:
+        x
+        n: the number of the wanted indexes
+        limit: the maximum value of index
+
+    Returns:
+        An np.array containing n nearest indexes in ascending order
     """
     idxes = sorted(range(limit), key=lambda idx: (abs(x - idx), idx))[:n]
     idxes = sorted(idxes)
@@ -153,16 +154,19 @@ def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
 
 
 def _get_neighbor(x: float, n: int, data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Pad `data` in 'edge' mode, and get n nearest elements in the padded array
+    """Pad `data` in 'edge' mode, and get n nearest elements in the padded array
     and their indexes in the original array.
 
-    :param x: center index (in the unpadded coordinate system) of the found nearest elements.
-    :param n: the number of neighbors.
-    :param data: the array
-    :return: A tuple containing the indexes of neighbor elements
-        (the index can be smaller than 0 or higher than len(data))
-        and the value of these elements
+    Args:
+        x: center index (in the unpadded coordinate system) of the found
+            nearest elements.
+        n: the number of neighbors.
+        data: the array
+
+    Returns:
+        A tuple containing the indexes of neighbor elements (the index
+        can be smaller than 0 or higher than len(data)) and the value of
+        these elements
     """
     pad_width = np.ceil(n / 2).astype(int)
     padded = np.pad(data, pad_width, mode="edge")

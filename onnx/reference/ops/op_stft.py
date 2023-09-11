@@ -28,8 +28,7 @@ def _unsqueeze(a, axis):  # type: ignore
 
 
 def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type: ignore
-    """
-    Applies one dimensional FFT with window weights.
+    """Applies one dimensional FFT with window weights.
     torch defines the number of frames as:
     `n_frames = 1 + (len - n_fft) // hop_length`.
     """
@@ -75,9 +74,7 @@ def _stft(x, fft_length, hop_length, n_frames, window, onesided=False):  # type:
 
 
 def _istft(x, fft_length, hop_length, window, onesided=False):  # type: ignore
-    """
-    Reverses of `stft`.
-    """
+    """Reverses of `stft`."""
     zero = [0]
     one = [1]
     two = [2]

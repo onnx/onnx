@@ -14,9 +14,7 @@ from onnx import IR_VERSION, ModelProto, NodeProto
 
 
 class DeviceType:
-    """
-    Describes device type.
-    """
+    """Describes device type."""
 
     _Type = NewType("_Type", int)
     CPU: _Type = _Type(0)
@@ -24,8 +22,7 @@ class DeviceType:
 
 
 class Device:
-    """
-    Describes device type and device id
+    """Describes device type and device id
     syntax: device_type:device_id(optional)
     example: 'CPU', 'CUDA', 'CUDA:1'
     """
@@ -56,8 +53,7 @@ def namedtupledict(
 
 
 class BackendRep:
-    """
-    BackendRep is the handle that a Backend returns after preparing to execute
+    """BackendRep is the handle that a Backend returns after preparing to execute
     a model repeatedly. Users will then pass inputs to the run function of
     BackendRep to retrieve the corresponding results.
     """
@@ -68,8 +64,7 @@ class BackendRep:
 
 
 class Backend:
-    """
-    Backend is the entity that will take an ONNX model with inputs,
+    """Backend is the entity that will take an ONNX model with inputs,
     perform a computation, and then return the output.
 
     For one-off execution, users can use run_node and run_model to obtain results quickly.
@@ -131,8 +126,7 @@ class Backend:
 
     @classmethod
     def supports_device(cls, device: str) -> bool:
-        """
-        Checks whether the backend is compiled with particular device support.
+        """Checks whether the backend is compiled with particular device support.
         In particular it's used in the testing suite.
         """
         return True

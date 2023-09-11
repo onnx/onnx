@@ -362,17 +362,20 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
     uz: bool = False,
     saturate: bool = True,
 ) -> int:
-    """
-    Convert a float32 value to a float8, e4m3 (as int).
+    """Convert a float32 value to a float8, e4m3 (as int).
 
-    :param fval: float to convert
-    :param scale: scale, divide *fval* by *scale* before casting it
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :param saturate: if True, any value out of range included inf becomes the maximum value,
-        otherwise, it becomes NaN. The description of operator Cast fully describes the
-        differences.
-    :return: converted float
+    Args:
+        fval: float to convert
+        scale: scale, divide *fval* by *scale* before casting it
+        fn: no infinite values
+        uz: no negative zero
+        saturate: if True, any value out of range included inf becomes
+            the maximum value, otherwise, it becomes NaN. The
+            description of operator Cast fully describes the
+            differences.
+
+    Returns:
+        converted float
 
     See :ref:`onnx-detail-float8` for technical details.
     """
@@ -495,17 +498,20 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
     uz: bool = False,
     saturate: bool = True,
 ) -> int:
-    """
-    Convert a float32 value to a float8, e5m2 (as int).
+    """Convert a float32 value to a float8, e5m2 (as int).
 
-    :param fval: float to convert
-    :param scale: scale, divide *fval* by *scale* before casting it
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :param saturate: if True, any value out of range included inf becomes the maximum value,
-        otherwise, it becomes NaN. The description of operator Cast fully describes the
-        differences.
-    :return: converted float
+    Args:
+        fval: float to convert
+        scale: scale, divide *fval* by *scale* before casting it
+        fn: no infinite values
+        uz: no negative zero
+        saturate: if True, any value out of range included inf becomes
+            the maximum value, otherwise, it becomes NaN. The
+            description of operator Cast fully describes the
+            differences.
+
+    Returns:
+        converted float
     """
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
@@ -616,8 +622,7 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
 def make_tensor(
     name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
-    """
-    Make a TensorProto with specified arguments.  If raw is False, this
+    """Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
     values based on data_type. If raw is True, use "raw_data" proto
     field to store the values, and values should be of type bytes in
@@ -743,9 +748,7 @@ def make_sequence(
     elem_type: SequenceProto.DataType,
     values: Sequence[Any],
 ) -> SequenceProto:
-    """
-    Make a Sequence with specified value arguments.
-    """
+    """Make a Sequence with specified value arguments."""
     sequence = SequenceProto()
     sequence.name = name
     sequence.elem_type = elem_type
@@ -772,8 +775,7 @@ def make_sequence(
 def make_map(
     name: str, key_type: int, keys: List[Any], values: SequenceProto
 ) -> MapProto:
-    """
-    Make a Map with specified key-value pair arguments.
+    """Make a Map with specified key-value pair arguments.
 
     Criteria for conversion:
     - Keys and Values must have the same number of elements
@@ -806,9 +808,7 @@ def make_optional(
     elem_type: OptionalProto.DataType,
     value: Optional[Any],
 ) -> OptionalProto:
-    """
-    Make an Optional with specified value arguments.
-    """
+    """Make an Optional with specified value arguments."""
     optional = OptionalProto()
     optional.name = name
     optional.elem_type = elem_type
@@ -1354,8 +1354,7 @@ def printable_node(
 
 
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
-    """
-    Display a GraphProto as a string.
+    """Display a GraphProto as a string.
 
     Arguments:
         graph (GraphProto): the graph to display
@@ -1434,9 +1433,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
 
 
 def strip_doc_string(proto: google.protobuf.message.Message) -> None:
-    """
-    Empties `doc_string` field on any nested protobuf messages
-    """
+    """Empties `doc_string` field on any nested protobuf messages"""
     if not isinstance(proto, google.protobuf.message.Message):
         raise TypeError(
             f"proto must be an instance of {google.protobuf.message.Message}."
@@ -1478,41 +1475,49 @@ def make_training_info(
 
 # Following functions are used for mapping
 def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
-    """
-    Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
+    """Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: numpy's data_type
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        numpy's data_type
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
-    """
-    Convert a TensorProto's data_type to corresponding data_type for storage.
+    """Convert a TensorProto's data_type to corresponding data_type for storage.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: data_type for storage
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        data_type for storage
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
-    """
-    Get the name of given TensorProto's data_type.
+    """Get the name of given TensorProto's data_type.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: the name of data_type
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        the name of data_type
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
-    """
-    Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
+    """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: field name
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        field name
     """
     return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[  # pylint: disable=protected-access
         mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
@@ -1520,11 +1525,13 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
 
 
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
-    """
-    Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
+    """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 
-    :param np_dtype: numpy's data_type
-    :return: TensorsProto's data_type
+    Args:
+        np_dtype: numpy's data_type
+
+    Returns:
+        TensorsProto's data_type
     """
     return cast(
         int,
@@ -1533,10 +1540,10 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
 
 
 def get_all_tensor_dtypes() -> KeysView[int]:
-    """
-    Get all tensor types from TensorProto.
+    """Get all tensor types from TensorProto.
 
-    :return: all tensor types from TensorProto
+    Returns:
+        all tensor types from TensorProto
     """
     return mapping.TENSOR_TYPE_MAP.keys()
 

@@ -11,8 +11,7 @@ from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 
 class OpRunUnary(OpRun):  # pylint: disable=W0223
-    """
-    Ancestor to all unary operators in this subfolder.
+    """Ancestor to all unary operators in this subfolder.
     Checks that input and output types are the same.
     """
 
@@ -20,8 +19,7 @@ class OpRunUnary(OpRun):  # pylint: disable=W0223
         OpRun.__init__(self, onnx_node, run_params)
 
     def run(self, x):  # type: ignore # pylint: disable=W0221
-        """
-        Calls method ``_run``, catches exceptions,
+        """Calls method ``_run``, catches exceptions,
         displays a longer error message.
         Supports only unary operators.
         """
@@ -38,8 +36,7 @@ class OpRunUnary(OpRun):  # pylint: disable=W0223
 
 
 class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
-    """
-    Ancestor to all unary and numerical operators
+    """Ancestor to all unary and numerical operators
     in this subfolder. Checks that input and output types
     are the same.
     """
@@ -48,8 +45,7 @@ class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
         OpRunUnary.__init__(self, onnx_node, run_params)
 
     def run(self, x):  # type: ignore # pylint: disable=W0221
-        """
-        Calls method ``OpRunUnary.run``, catches exceptions,
+        """Calls method ``OpRunUnary.run``, catches exceptions,
         displays a longer error message.
         Checks that the result is not empty.
         """
@@ -65,8 +61,7 @@ class OpRunUnaryNum(OpRunUnary):  # pylint: disable=W0223
 
 
 class OpRunBinary(OpRun):  # pylint: disable=W0223
-    """
-    Ancestor to all binary operators in this subfolder.
+    """Ancestor to all binary operators in this subfolder.
     Checks that input and output types are the same.
     """
 
@@ -74,8 +69,7 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
         OpRun.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore # pylint: disable=W0221
-        """
-        Calls method ``_run``, catches exceptions,
+        """Calls method ``_run``, catches exceptions,
         displays a longer error message.
         Supports only binary operators.
         """
@@ -102,8 +96,7 @@ class OpRunBinary(OpRun):  # pylint: disable=W0223
 
 
 class OpRunBinaryComparison(OpRunBinary):  # pylint: disable=W0223
-    """
-    Ancestor to all binary operators in this subfolder
+    """Ancestor to all binary operators in this subfolder
     comparing tensors.
     """
 
@@ -112,8 +105,7 @@ class OpRunBinaryComparison(OpRunBinary):  # pylint: disable=W0223
 
 
 class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
-    """
-    Ancestor to all binary operators in this subfolder.
+    """Ancestor to all binary operators in this subfolder.
     Checks that input oud output types are the same.
     """
 
@@ -121,8 +113,7 @@ class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
         OpRunBinary.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore # pylint: disable=W0221
-        """
-        Calls method ``OpRunBinary.run``, catches exceptions,
+        """Calls method ``OpRunBinary.run``, catches exceptions,
         displays a longer error message.
         """
         res = OpRunBinary.run(self, x, y)
@@ -136,8 +127,7 @@ class OpRunBinaryNum(OpRunBinary):  # pylint: disable=W0223
 
 
 class OpRunBinaryNumpy(OpRunBinaryNum):
-    """
-    *numpy_fct* is a binary numpy function which
+    """*numpy_fct* is a binary numpy function which
     takes two matrices.
     """
 
@@ -152,8 +142,7 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
 
 
 class OpRunReduceNumpy(OpRun):  # type: ignore
-    """
-    Implements the reduce logic.
+    """Implements the reduce logic.
     It must have a parameter *axes*.
     """
 

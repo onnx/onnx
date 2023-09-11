@@ -20,8 +20,7 @@ class Loop(OpRun):
         self.K = len(self.body.output_names) - self.N - 1  # type: ignore
 
     def need_context(self) -> bool:
-        """
-        The operator Loop needs to know all results produced
+        """The operator Loop needs to know all results produced
         so far as the loop may silently access one of them.
         Some information are not always referred in the list of inputs
         (kind of static variables).

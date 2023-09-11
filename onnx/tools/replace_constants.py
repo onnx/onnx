@@ -32,8 +32,7 @@ from onnx.numpy_helper import from_array
 def _replace_constant(
     node: NodeProto, threshold: int, value_constant_of_shape: float
 ) -> List[NodeProto]:
-    """
-    Replaces a Constant node with a large tensor (with more than threshold elements)
+    """Replaces a Constant node with a large tensor (with more than threshold elements)
     by a sequence of nodes that produces a dummy constant of same shape as original tensor.
     """
     if node.op_type != "Constant":
@@ -75,8 +74,7 @@ def _replace_constant(
 def _replace_constant_of_shape_with_range(
     onx: Union[GraphProto, FunctionProto]
 ) -> Union[GraphProto, FunctionProto]:
-    """
-    Replaces all *ConstantOfShape* by node *Range* to avoid constant tensors.
+    """Replaces all *ConstantOfShape* by node *Range* to avoid constant tensors.
     The function is not recursive. The recursivity is done by
     *replace_initializer_by_constant_of_shape*.
     """
@@ -164,8 +162,7 @@ def _replace_constant_of_shape_with_range(
 def _replace_constant_of_shape_value(
     onx: Union[GraphProto, FunctionProto], value_constant_of_shape: float
 ) -> Union[GraphProto, FunctionProto]:
-    """
-    Replaces all fill value of all nodes *ConstantOfShape*.
+    """Replaces all fill value of all nodes *ConstantOfShape*.
     *replace_initializer_by_constant_of_shape*.
     """
 
@@ -227,20 +224,25 @@ def replace_initializer_by_constant_of_shape(
     use_range: bool = False,
     value_constant_of_shape: float = 0.5,
 ):
-    """
-    Replace initializers or constant node by nodes *ConstantOfShape* to reduce
+    """Replace initializers or constant node by nodes *ConstantOfShape* to reduce
     the size. This reduce the cost to write a unit test about
     a specific graph structure.
 
-    :param onx: ModelProto
-    :param threshold: every initializer under this threshold is not impacted
-    :param ir_version: initializer must be specified as input for `ir_version <= 3`,
-        this must be specified if onx is :class:`FunctionProto` or :class:`GraphProto`
-    :param use_range: if uses operator *Range* instead of *ConstantOfShape* to avoid
-        constant tensors
-    :param value_constant_of_shape: value to use as a value for all nodes *ConstantOfShape*,
-        a high value may produce nan or inf predictions
-    :return: onx, modified ModelProto
+    Args:
+        onx: ModelProto
+        threshold: every initializer under this threshold is not
+            impacted
+        ir_version: initializer must be specified as input for
+            `ir_version <= 3`, this must be specified if onx is
+            :class:`FunctionProto` or :class:`GraphProto`
+        use_range: if uses operator *Range* instead of *ConstantOfShape*
+            to avoid constant tensors
+        value_constant_of_shape: value to use as a value for all nodes
+            *ConstantOfShape*, a high value may produce nan or inf
+            predictions
+
+    Returns:
+        onx, modified ModelProto
 
     The function is designed so that the function can be reapplied on a modified model
     and either replace *ConstantOfShape* with *Range* operators, either replace the fill value

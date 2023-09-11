@@ -23,10 +23,15 @@ def bfloat16_to_float32(
 ) -> np.ndarray:
     """Converts ndarray of bf16 (as uint32) to f32 (as uint32).
 
-    :param data: a numpy array, empty dimensions are allowed if dims is None
-    :param dims: if specified, the function reshapes the results
-    :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified"""
+    Args:
+        data: a numpy array, empty dimensions are allowed if dims is
+            None
+        dims: if specified, the function reshapes the results
+
+    Returns:
+        a numpy array of float32 with the same dimension if dims is
+        None, or reshaped to dims if specified
+    """
     shift = lambda x: x << 16  # noqa: E731
     if dims is None:
         if len(data.shape) == 0:
@@ -578,8 +583,7 @@ def from_optional(
 
 
 def convert_endian(tensor: TensorProto) -> None:
-    """
-    Call to convert endianess of raw data in tensor.
+    """Call to convert endianess of raw data in tensor.
 
     Arguments:
         tensor (TensorProto): TensorProto to be converted.
@@ -594,8 +598,7 @@ def convert_endian(tensor: TensorProto) -> None:
 def create_random_int(
     input_shape: Tuple[int], dtype: np.dtype, seed: int = 1
 ) -> np.ndarray:
-    """
-    Create random integer array for backend/test/case/node.
+    """Create random integer array for backend/test/case/node.
 
     Args:
         input_shape: specify the shape for the returned integer array.

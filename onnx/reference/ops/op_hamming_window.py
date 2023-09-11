@@ -9,8 +9,7 @@ from onnx.reference.ops._op_common_window import _CommonWindow
 
 
 class HammingWindow(_CommonWindow):
-    """
-    Returns
+    """Returns
     :math:`\\omega_n = \\alpha - \\beta \\cos \\left( \\frac{\\pi n}{N-1} \\right)`
     where *N* is the window length.
     See `hamming_window

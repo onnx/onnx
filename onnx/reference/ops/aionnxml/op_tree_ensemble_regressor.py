@@ -10,9 +10,7 @@ from onnx.reference.ops.aionnxml.op_tree_ensemble_helper import TreeEnsemble
 
 
 class TreeEnsembleRegressor(OpRunAiOnnxMl):
-    """
-    `nodes_hitrates` and `nodes_hitrates_as_tensor` are not used.
-    """
+    """`nodes_hitrates` and `nodes_hitrates_as_tensor` are not used."""
 
     def _run(  # type: ignore
         self,

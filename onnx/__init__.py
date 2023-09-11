@@ -284,8 +284,7 @@ def save_model(
     size_threshold: int = 1024,
     convert_attribute: bool = False,
 ) -> None:
-    """
-    Saves the ModelProto to the specified path and optionally, serialize tensors with raw data as external data before saving.
+    """Saves the ModelProto to the specified path and optionally, serialize tensors with raw data as external data before saving.
 
     Args:
         proto: should be a in-memory ModelProto
@@ -332,8 +331,7 @@ def save_tensor(
     f: IO[bytes] | str | os.PathLike,
     format: _SupportedFormat | None = None,  # pylint: disable=redefined-builtin
 ) -> None:
-    """
-    Saves the TensorProto to the specified path.
+    """Saves the TensorProto to the specified path.
 
     Args:
         proto: should be a in-memory TensorProto

@@ -15,8 +15,7 @@ class If(OpRun):
             raise KeyError("run_params must contains key 'verbose'.")
 
     def need_context(self) -> bool:
-        """
-        Tells the runtime if this node needs the context
+        """Tells the runtime if this node needs the context
         (all the results produced so far) as it may silently access
         one of them (operator Loop).
         The default answer is `False`.

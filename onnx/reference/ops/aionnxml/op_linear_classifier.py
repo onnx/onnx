@@ -16,8 +16,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 class LinearClassifier(OpRunAiOnnxMl):
     @staticmethod
     def _post_process_predicted_label(label, scores, classlabels_ints_string):  # type: ignore
-        """
-        Replaces int64 predicted labels by the corresponding
+        """Replaces int64 predicted labels by the corresponding
         strings.
         """
         if classlabels_ints_string is not None:

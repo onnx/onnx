@@ -3,8 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0613,W0640,W0703
-"""
-These test evaluates the python runtime (class ReferenceEvaluator) against
+"""These test evaluates the python runtime (class ReferenceEvaluator) against
 all the backend tests (in onnx/backend/test/case/node) and checks
 the runtime produces the expected outputs.
 
@@ -95,12 +94,12 @@ if sys.platform == "win32":
 
 
 def assert_allclose_string(expected, value):
-    """
-    Compares two arrays knowing they contain strings.
+    """Compares two arrays knowing they contain strings.
     Raises an exception if the test fails.
 
-    :param expected: expected array
-    :param value: value
+    Args:
+        expected: expected array
+        value: value
     """
 
     def is_float(x):
@@ -120,15 +119,15 @@ def assert_allclose_string(expected, value):
 
 
 class OnnxBackendTest:
-    """
-    Definition of a backend test. It starts with a folder,
+    """Definition of a backend test. It starts with a folder,
     in this folder, one onnx file must be there, then a subfolder
     for each test to run with this model.
 
-    :param folder: test folder
-    :param onnx_path: onnx file
-    :param onnx_model: loaded onnx file
-    :param tests: list of test
+    Args:
+        folder: test folder
+        onnx_path: onnx file
+        onnx_model: loaded onnx file
+        tests: list of test
     """
 
     @staticmethod
@@ -244,18 +243,18 @@ class OnnxBackendTest:
     def _compare_results(
         self, index, i_output, desired, output, rtol=0, atol=0, comment="", inputs=None
     ):
-        """
-        Compares the expected output and the output produced
+        """Compares the expected output and the output produced
         by the runtime. Raises an exception if not equal.
 
-        :param index: test index
-        :param i_output: output index
-        :param desired: expected output
-        :param output: output
-        :param rtol: relative tolerance
-        :param atol: absolute tolerance
-        :param comment: addition text to give more insights to the user
-        :param inputs: inputs to the model
+        Args:
+            index: test index
+            i_output: output index
+            desired: expected output
+            output: output
+            rtol: relative tolerance
+            atol: absolute tolerance
+            comment: addition text to give more insights to the user
+            inputs: inputs to the model
         """
         if comment == "":
             raise RuntimeError("Argument comment should be filled.")
@@ -370,19 +369,19 @@ class OnnxBackendTest:
         comment="",
         print_io=False,
     ):
-        """
-        Executes a tests or all tests if index is None.
+        """Executes a tests or all tests if index is None.
         The function crashes if the tests fails.
 
-        :param load_fct: loading function, takes a loaded onnx graph,
-            and returns an object
-        :param run_fct: running function, takes the result of previous
-            function, the inputs, and returns the outputs
-        :param index: index of the test to run or all.
-        :param rtol: relative tolerance
-        :param atol: absolute tolerance
-        :param comment: additional information for the user
-        :param print_io: prints out the input and output
+        Args:
+            load_fct: loading function, takes a loaded onnx graph, and
+                returns an object
+            run_fct: running function, takes the result of previous
+                function, the inputs, and returns the outputs
+            index: index of the test to run or all.
+            rtol: relative tolerance
+            atol: absolute tolerance
+            comment: additional information for the user
+            print_io: prints out the input and output
         """
         if index is None:
             res = []
@@ -449,16 +448,18 @@ class OnnxBackendTest:
 
 
 def enumerate_onnx_tests(series, fct_filter=None):
-    """
-    Collects test from a sub folder of `onnx/backend/test`.
+    """Collects test from a sub folder of `onnx/backend/test`.
     Works as an enumerator to start processing them
     without waiting or storing too much of them.
 
-    :param series: which subfolder to load, possible values:
-        (`'node'`, ...)
-    :param fct_filter: function `lambda testname: boolean`
-        to load or skip the test, None for all
-    :return: list of @see cl OnnxBackendTest
+    Args:
+        series: which subfolder to load, possible values: (`'node'`,
+            ...)
+        fct_filter: function `lambda testname: boolean` to load or skip
+            the test, None for all
+
+    Returns:
+        list of @see cl OnnxBackendTest
     """
     root = os.path.dirname(backend_folder)
     sub = os.path.join(root, "data", series)

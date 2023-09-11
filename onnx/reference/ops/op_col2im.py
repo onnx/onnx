@@ -143,9 +143,7 @@ def _col2im_shape_check(X, output_shape, kernel_shape, dilations, pads, strides)
 
 
 def col2im_naive_implementation(data, image_shape, kernel_shape, dilations, pads, strides):  # type: ignore
-    """
-    Naive implementation for `col2im`.
-    """
+    """Naive implementation for `col2im`."""
     n_dims = len(pads) // 2
     new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
     _col2im_shape_check(data, image_shape, kernel_shape, dilations, new_pads, strides)

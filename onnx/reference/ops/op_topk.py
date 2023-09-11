@@ -9,8 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
-    """
-    See function `_kneighbors_reduce_func
+    """See function `_kneighbors_reduce_func
     <https://github.com/scikit-learn/scikit-learn/blob/main/
     sklearn/neighbors/_base.py#L304>`_.
     """
@@ -52,13 +51,12 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
 
 class _CommonTopK(OpRun):
     def _common_run(self, data, ink, axis, largest=1):  # type: ignore
-        """
-        Runtime for operator *TopK*.
+        """Runtime for operator *TopK*.
         The implementation is not the most efficient
         as it sorts everything then extracts the top *k*
         values.
 
-        .. warning::
+        Warning:
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
@@ -72,13 +70,12 @@ class _CommonTopK(OpRun):
 
 class TopK_1(_CommonTopK):
     def _run(self, data, k=None, axis=None):  # type: ignore
-        """
-        Runtime for operator *TopK*.
+        """Runtime for operator *TopK*.
         The implementation is not the most efficient
         as it sorts everything then extracts the top *k*
         values.
 
-        .. warning::
+        Warning:
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
@@ -89,13 +86,12 @@ class TopK_1(_CommonTopK):
 
 class TopK_10(_CommonTopK):
     def _run(self, data, ink, axis=None):  # type: ignore
-        """
-        Runtime for operator *TopK*.
+        """Runtime for operator *TopK*.
         The implementation is not the most efficient
         as it sorts everything then extracts the top *k*
         values.
 
-        .. warning::
+        Warning:
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
@@ -106,13 +102,12 @@ class TopK_10(_CommonTopK):
 
 class TopK_11(_CommonTopK):
     def _run(self, data, ink, axis=None, largest=None, sorted=None):  # type: ignore
-        """
-        Runtime for operator *TopK*.
+        """Runtime for operator *TopK*.
         The implementation is not the most efficient
         as it sorts everything then extracts the top *k*
         values.
 
-        .. warning::
+        Warning:
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc

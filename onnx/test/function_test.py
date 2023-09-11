@@ -25,8 +25,7 @@ class TestFunction(unittest.TestCase):
             )
 
     def test_extract_model_with_local_function(self) -> None:
-        r"""
-        #   1. build a model with graph below. extract models with output combinations
+        r"""#   1. build a model with graph below. extract models with output combinations
         #   2. validate extracted models' local functions
         #
         # model graph:

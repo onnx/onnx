@@ -680,7 +680,8 @@ class TestExternalDataToArray(unittest.TestCase):
 
 class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBase):
     """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
-    directory."""
+    directory.
+    """
 
     def create_external_data_tensor(
         self, value: list[Any], tensor_name: str, location: str = ""
@@ -719,7 +720,8 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
     TestNotAllowToLoadExternalDataOutsideModelDirectory
 ):
     """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
-    directory."""
+    directory.
+    """
 
     def test_check_model(self) -> None:
         """We only test the model validation as onnxruntime uses this to load the model."""

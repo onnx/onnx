@@ -65,8 +65,7 @@ def infer_shapes_path(
     strict_mode: bool = False,
     data_prop: bool = False,
 ) -> None:
-    """
-    Take model path for shape_inference same as infer_shape; it support >2GB models
+    """Take model path for shape_inference same as infer_shape; it support >2GB models
     Directly output the inferred model to the output_path; Default is the original model path
     """
     if isinstance(model_path, ModelProto):
@@ -149,8 +148,7 @@ def infer_function_output_types(
     input_types: Sequence[TypeProto],
     attributes: Sequence[AttributeProto],
 ) -> list[TypeProto]:
-    """
-    Apply type-and-shape-inference to given function body, with given input types
+    """Apply type-and-shape-inference to given function body, with given input types
     and given input attribute values.
     """
     result = C.infer_function_output_types(
