@@ -3193,7 +3193,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the L1 norm of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields 0.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3236,7 +3237,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the L2 norm of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields 0.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3279,7 +3281,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the log sum of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields minus infinity or undefined for types without infinities.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3322,7 +3325,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields minus infinity or undefined for types without infinities.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3365,7 +3369,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the max of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields minimum value of the data type.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3408,7 +3413,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the mean of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields undefined.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3451,7 +3457,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the min of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields maximum value of the data type.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3494,7 +3501,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the product of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields 1.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3537,7 +3545,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the sum of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields 0.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3580,7 +3589,8 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the sum square of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields 0.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -10293,6 +10303,7 @@ This version of the operator has been deprecated since version 10 of the default
   Computes the indices of the max elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
   If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
+  The input tensor must not be empty.
   The type of the output tensor is integer.
 
 #### Version
@@ -10334,6 +10345,7 @@ This version of the operator has been available since version 11 of the default 
   Computes the indices of the min elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
   If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
+  The input tensor must not be empty.
   The type of the output tensor is integer.
 
 #### Version
@@ -12408,7 +12420,8 @@ This version of the operator has been available since version 11 of the default 
 
   Computes the max of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields minimum value of the data type.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -12494,7 +12507,8 @@ This version of the operator has been available since version 11 of the default 
 
   Computes the min of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned.
+  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
+  valid. Reduction over an empty set of values yields maximum value of the data type.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
