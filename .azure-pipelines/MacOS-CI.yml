@@ -1,5 +1,6 @@
 trigger:
 - gh-readonly-queue/**
+- main
 
 jobs:
 - job: 'Test'
