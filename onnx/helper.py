@@ -104,7 +104,7 @@ def find_min_ir_version_for(
 ) -> int:
     """Given list of opset ids, determine minimum IR version required.
 
-    Arguments:
+    Args:
         opsetidlist (List[OperatorSetIdProto]): The list of OperatorSetIdProto
         ignore_unknown (bool): If True, ignore unknown domain and return default min version for that domain.
     Returns:
@@ -136,7 +136,7 @@ def make_node(
 ) -> NodeProto:
     """Construct a NodeProto.
 
-    Arguments:
+    Args:
         op_type (string): The name of the operator to construct
         inputs (list of string): list of input names
         outputs (list of string): list of output names
@@ -175,7 +175,7 @@ def make_operatorsetid(
 ) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
-    Arguments:
+    Args:
         domain (string): The domain of the operator set id
         version (integer): Version of operator set id
     Returns:
@@ -199,7 +199,7 @@ def make_graph(
 ) -> GraphProto:
     """Construct a GraphProto
 
-    Arguments:
+    Args:
         nodes: list of NodeProto
         name (string): graph name
         inputs: list of ValueInfoProto
@@ -233,7 +233,7 @@ def make_graph(
 def make_opsetid(domain: str, version: int) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
-    Arguments:
+    Args:
         domain (string): The domain of the operator set id
         version (integer): Version of operator set id
     Returns:
@@ -277,7 +277,7 @@ def make_function(
 def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     """Construct a ModelProto
 
-    Arguments:
+    Args:
         graph (GraphProto): *make_graph* returns
         **kwargs: any attribute to add to the returned instance
     Returns:
@@ -364,6 +364,8 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
 ) -> int:
     """Convert a float32 value to a float8, e4m3 (as int).
 
+    See :ref:`onnx-detail-float8` for technical details.
+
     Args:
         fval: float to convert
         scale: scale, divide *fval* by *scale* before casting it
@@ -376,8 +378,6 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
 
     Returns:
         converted float
-
-    See :ref:`onnx-detail-float8` for technical details.
     """
     if not fn:
         raise NotImplementedError(
@@ -628,7 +628,7 @@ def make_tensor(
     field to store the values, and values should be of type bytes in
     this case.
 
-    Arguments:
+    Args:
         name (string): tensor name
         data_type (int): a value such as onnx.TensorProto.FLOAT
         dims (List[int]): shape
@@ -728,7 +728,7 @@ def make_sparse_tensor(
 ) -> SparseTensorProto:
     """Construct a SparseTensorProto
 
-    Arguments:
+    Args:
         values (TensorProto): the values
         indices (TensorProto): the indices
         dims: the shape
@@ -1356,7 +1356,7 @@ def printable_node(
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     """Display a GraphProto as a string.
 
-    Arguments:
+    Args:
         graph (GraphProto): the graph to display
         prefix (string): prefix of every line
 

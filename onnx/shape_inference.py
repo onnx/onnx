@@ -65,8 +65,11 @@ def infer_shapes_path(
     strict_mode: bool = False,
     data_prop: bool = False,
 ) -> None:
-    """Take model path for shape_inference same as infer_shape; it support >2GB models
-    Directly output the inferred model to the output_path; Default is the original model path
+    """Take model path for shape_inference.
+
+    This function is the same as :func:`infer_shape` but supports >2GB models.
+    The function outputs the inferred model to the `output_path`. The original model path
+    is used if not specified.
     """
     if isinstance(model_path, ModelProto):
         raise TypeError(

@@ -32,9 +32,7 @@ from onnx.numpy_helper import from_array
 def _replace_constant(
     node: NodeProto, threshold: int, value_constant_of_shape: float
 ) -> List[NodeProto]:
-    """Replaces a Constant node with a large tensor (with more than threshold elements)
-    by a sequence of nodes that produces a dummy constant of same shape as original tensor.
-    """
+    """Replaces a Constant node with a large tensor (with more than threshold elements) by a sequence of nodes that produces a dummy constant of same shape as original tensor."""
     if node.op_type != "Constant":
         raise TypeError(f"Node type must be 'Constant' not {node.op_type!r}.")
     for att in node.attribute:
@@ -75,6 +73,7 @@ def _replace_constant_of_shape_with_range(
     onx: Union[GraphProto, FunctionProto]
 ) -> Union[GraphProto, FunctionProto]:
     """Replaces all *ConstantOfShape* by node *Range* to avoid constant tensors.
+
     The function is not recursive. The recursivity is done by
     *replace_initializer_by_constant_of_shape*.
     """
@@ -162,9 +161,7 @@ def _replace_constant_of_shape_with_range(
 def _replace_constant_of_shape_value(
     onx: Union[GraphProto, FunctionProto], value_constant_of_shape: float
 ) -> Union[GraphProto, FunctionProto]:
-    """Replaces all fill value of all nodes *ConstantOfShape*.
-    *replace_initializer_by_constant_of_shape*.
-    """
+    """Replaces all fill value of all nodes *ConstantOfShape*."""
 
     if isinstance(onx, GraphProto):
         nodes = list(onx.node)
@@ -224,9 +221,9 @@ def replace_initializer_by_constant_of_shape(
     use_range: bool = False,
     value_constant_of_shape: float = 0.5,
 ):
-    """Replace initializers or constant node by nodes *ConstantOfShape* to reduce
-    the size. This reduce the cost to write a unit test about
-    a specific graph structure.
+    """Replace initializers or constant node by nodes *ConstantOfShape* to reduce the size.
+
+    This reduce the cost to write a unit test about a specific graph structure.
 
     Args:
         onx: ModelProto
