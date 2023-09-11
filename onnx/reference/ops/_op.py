@@ -189,3 +189,6 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
         if 0 in axes.shape:
             return None
         return tuple(axes.ravel().tolist())
+
+    def output_shape(self, input, axes, keepdims):
+        return np.sum(input, axis=axes, keepdims=keepdims).shape

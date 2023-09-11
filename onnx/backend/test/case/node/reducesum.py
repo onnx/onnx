@@ -219,7 +219,7 @@ class ReduceSum(Base):
             outputs=[reduced],
             name="test_reduce_sum_empty_set",
         )
-    
+
     @staticmethod
     def export_non_reduced_axis_zero() -> None:
         """Test case with the non-reduced-axis of size zero."""

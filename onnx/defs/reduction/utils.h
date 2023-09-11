@@ -15,9 +15,11 @@ namespace ONNX_NAMESPACE {
 static const char* EMPTY_ZERO = "0";
 static const char* EMPTY_ONE = "1";
 static const char* EMPTY_UNDEFINED = "undefined";
-static const char* EMPTY_MIN = "minimum value of the data type";
-static const char* EMPTY_MAX = "maximum value of the data type";
-static const char* EMPTY_MINUS_INF = "minus infinity or undefined for types without infinities";
+static const char* EMPTY_MIN =
+    "minus infinity (if supported by the datatype) or the minimum value of the data type otherwise";
+static const char* EMPTY_MAX =
+    "plus infinity (if supported by the datatype) or the maximum value of the data type otherwise";
+static const char* EMPTY_MINUS_INF = "minus infinity (if supported by the datatype) or undefined otherwise";
 
 std::function<void(OpSchema&)> ReduceOpGenerator(
     const char* name,

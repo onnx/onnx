@@ -205,7 +205,7 @@ valid. Reduction over an empty set of values yields {empty_value}.
 
 The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
 False instead of True.)DOC";
-    ReplaceAll(doc, "{name}", name););
+                        ReplaceAll(doc, "{name}", name););
     ReplaceAll(doc, "{empty_value}", empty_value);
     schema.SetDoc(doc.c_str());
     schema.Attr(
@@ -281,7 +281,10 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 1, OpSchema().FillUsing(ReduceDocGenerator_
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("log sum", EMPTY_MINUS_INF)));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceLogSumExp, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("log sum exponent", EMPTY_MINUS_INF)));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSumExp,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator_opset1("log sum exponent", EMPTY_MINUS_INF)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("L1 norm", EMPTY_ZERO)));
 
