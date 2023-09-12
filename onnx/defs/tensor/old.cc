@@ -2780,6 +2780,55 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    IsNaN,
+    13,
+    OpSchema()
+        .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
+        .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input types to float tensors.")
+        .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    IsInf,
+    10,
+    OpSchema()
+        .SetDoc(R"DOC(Map infinity to true and other values to false.)DOC")
+        .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Attr(
+            "detect_positive",
+            "(Optional) Whether map positive infinity to true. Default to 1 "
+            "so that positive infinity induces true. Set this attribute to 0 "
+            "if positive infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "detect_negative",
+            "(Optional) Whether map negative infinity to true. Default to 1 "
+            "so that negative infinity induces true. Set this attribute to 0 "
+            "if negative infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float tensors.")
+        .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 const char* NonZero_ver9_doc = R"DOC(
     Returns the indices of the elements that are non-zero
     (in row-major order - by dimension).
