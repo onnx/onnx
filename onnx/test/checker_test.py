@@ -1041,6 +1041,20 @@ class TestChecker(unittest.TestCase):
         )
         # Should not throw an error
         checker.check_model(model, full_check=True)
+        model = onnx.parser.parse_model(
+            """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 17]
+            >
+            agraph (float[N] x) => (int64[M] y)
+            {
+                y = Constant <value_floats: floats = []>()
+            }
+        """
+        )
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
 
 
 if __name__ == "__main__":
