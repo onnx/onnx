@@ -73,8 +73,8 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#If">If</a>|<a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
 |<a href="#ImageDecoder">ImageDecoder</a>|<a href="Changelog.md#ImageDecoder-20">20</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
-|<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-10">10</a>|
-|<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
+|<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-20">20</a>, <a href="Changelog.md#IsInf-10">10</a>|
+|<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-20">20</a>, <a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
 |<a href="#LRN">LRN</a>|<a href="Changelog.md#LRN-13">13</a>, <a href="Changelog.md#LRN-1">1</a>|
 |<a href="#LSTM">LSTM</a>|<a href="Changelog.md#LSTM-14">14</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-1">1</a>|
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
@@ -12458,7 +12458,9 @@ expect(node, inputs=[x, s, bias], outputs=[y], name="test_instancenorm_epsilon")
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#IsInf-10">10</a>
 
 #### Attributes
 
@@ -12486,7 +12488,7 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output types to boolean tensors.</dd>
@@ -12551,9 +12553,9 @@ expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>
+Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>, <a href="Changelog.md#IsNaN-13">13</a>
 
 #### Inputs
 
@@ -12572,7 +12574,7 @@ Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output types to boolean tensors.</dd>
