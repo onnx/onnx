@@ -3004,7 +3004,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
         .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .TypeConstraint("T1", all_float_types_ir9(), "Constrain input types to float tensors.")
+        .TypeConstraint("T1", OpSchema::all_float_types_ir9(), "Constrain input types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
@@ -3034,7 +3034,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "if negative infinity should be mapped to false.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .TypeConstraint("T1", all_float_types_ir9(), "Constrain input types to float tensors.")
+        .TypeConstraint("T1", OpSchema::all_float_types_ir9(), "Constrain input types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
