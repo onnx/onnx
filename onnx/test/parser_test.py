@@ -230,22 +230,19 @@ class TestBasicFunctions(unittest.TestCase):
         ]
     )
     def test_parse_various_float_values(self, test_literal):
-        model_text = (
-            """
+        model_text = f"""
         <
         ir_version: 8,
-        opset_import: ["" : 18, "onnxscript.atenlib" : 1, "this" : 1],
-        producer_name: "pytorch",
-        producer_version: "2.1.0"
+        opset_import: ["" : 18, "this" : 1],
+        producer_name: "FunctionProtoTest",
+        producer_version: "1.0"
         >
         _func () => ()
-        {
-        tmp_11 = Constant <value_float = """
-            + test_literal
-            + """> ()
-        }
+        {{
+        tmp = Constant <value_float = {test_literal}>()
+        }}
         """
-        )
+
         onnx.parser.parse_model(model_text)
 
 
