@@ -12509,7 +12509,31 @@ node = onnx.helper.make_node(
 
 x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
 y = np.isinf(x)
-expect(node, inputs=[x], outputs=[y], name="test_isinf")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_isinf",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>infinity_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsInf",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+y = np.isinf(x)
+expect(node, inputs=[x], outputs=[y], name="test_isinf_float16")
 ```
 
 </details>
@@ -12525,7 +12549,13 @@ node = onnx.helper.make_node(
 
 x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf], dtype=np.float32)
 y = np.isneginf(x)
-expect(node, inputs=[x], outputs=[y], name="test_isinf_negative")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_isinf_negative",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 ```
 
 </details>
@@ -12541,7 +12571,13 @@ node = onnx.helper.make_node(
 
 x = np.array([-1.7, np.nan, np.inf, 3.6, np.NINF, np.inf], dtype=np.float32)
 y = np.isposinf(x)
-expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_isinf_positive",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 ```
 
 </details>
@@ -12584,6 +12620,24 @@ Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>, <a href="
 #### Examples
 
 <details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsNaN",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name="test_isnan_float16")
+```
+
+</details>
+
+
+<details>
 <summary>isnan</summary>
 
 ```python
@@ -12593,9 +12647,15 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
 y = np.isnan(x)
-expect(node, inputs=[x], outputs=[y], name="test_isnan")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_isnan",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 ```
 
 </details>
