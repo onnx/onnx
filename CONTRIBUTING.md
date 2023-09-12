@@ -78,7 +78,6 @@ from onnx root dir should work.
 
 Operator docs ([Operators.md](Operators.md), [Operators-ml.md](Operators-ml.md)) and Changelog docs ([Changelog.md](Changelog.md), [Changelog-ml.md](Changelog-ml.md)) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh all these docs, run the following commands from the repo root and commit the results by setting "ONNX_ML=1". By contrast, setting `ONNX_ML=0` will only update `Operators.md` and `Changelog.md`.
 
-
 ```pwsh
 # Windows
 set ONNX_ML=1
@@ -166,6 +165,7 @@ export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
 ```
 
 ### DCO
+
 ONNX has adopted the [DCO](https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin). All code repositories under ONNX require a DCO. (ONNX previously used a CLA, which is being replaced with the DCO.)
 
 DCO is provided by including a sign-off-by line in commit messages. Using the `-s` flag for `git commit` will automatically append this line. For example, running `git commit -s -m 'commit info.'` it will produce a commit that has the message `commit info. Signed-off-by: My Name <my_email@my_company.com>`. The DCO bot will ensure commits are signed with an email address that matches the commit author before they are eligible to be merged.
