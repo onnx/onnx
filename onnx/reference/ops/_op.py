@@ -190,5 +190,10 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
             return None
         return tuple(axes.ravel().tolist())
 
-    def output_shape(self, input, axes, keepdims):
-        return np.sum(input, axis=axes, keepdims=keepdims).shape
+    def output_shape(self, data, axes, keepdims):
+        return np.sum(data, axis=axes, keepdims=keepdims).shape
+
+    def reduce_constant(self, data, const_val, axes, keepdims):
+        """Special case reduction where the output value is a constant."""
+        output_shape = self.output_shape(data, axes, keepdims)
+        return np.full(output_shape, const_val, dtype=data.dtype)

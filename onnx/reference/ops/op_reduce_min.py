@@ -12,15 +12,14 @@ class ReduceMin_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):  # type: ignore
         axes = tuple(axes) if axes is not None else None
         if data.size == 0:
-            output_shape = self.output_shape(data, axes, keepdims).shape
             maxvalue = (
                 np.iinfo(data.dtype).max
                 if np.issubdtype(data.dtype, np.integer)
                 else np.inf
             )
-            res = np.full(output_shape, maxvalue, dtype=data.dtype)
-        else:
-            res = np.minimum.reduce(data, axis=axes, keepdims=keepdims == 1)
+            return self.reduce_constant(data, maxvalue, axes, keepdims)
+
+        res = np.minimum.reduce(data, axis=axes, keepdims=keepdims == 1)
         if keepdims == 0 and not isinstance(res, np.ndarray):
             # The runtime must return a numpy array of a single float.
             res = np.array(res)
@@ -38,6 +37,14 @@ class ReduceMin_18(OpRunReduceNumpy):
 
         axes = self.handle_axes(axes)
         keepdims = keepdims != 0  # type: ignore
+        if data.size == 0:
+            maxvalue = (
+                np.iinfo(data.dtype).max
+                if np.issubdtype(data.dtype, np.integer)
+                else np.inf
+            )
+            return self.reduce_constant(data, maxvalue, axes, keepdims)
+
         res = np.minimum.reduce(data, axis=axes, keepdims=keepdims)
         if keepdims == 0 and not isinstance(res, np.ndarray):
             # The runtime must return a numpy array of a single float.
