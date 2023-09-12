@@ -1047,7 +1047,7 @@ class TestChecker(unittest.TestCase):
                 ir_version: 7,
                 opset_import: [ "" : 17]
             >
-            agraph (float[N] x) => (int64[M] y)
+            agraph (float[N] x) => (float[M] y)
             {
                 y = Constant <value_floats: floats = []>()
             }
