@@ -6,37 +6,41 @@ SPDX-License-Identifier: Apache-2.0
 
 # Adding New Operator or Function to ONNX
 
+Or updating an existing operator to a new Opset version.
+
 ## Table of Contents
 
 - [Adding New Operator or Function to ONNX](#adding-new-operator-or-function-to-onnx)
   - [Table of Contents](#table-of-contents)
-  - [Proposing and submitting a new operator or function to ONNX ](#proposing-and-submitting-a-new-operator-or-function-to-onnx-)
-  - [4 steps to add an operator ](#4-steps-to-add-an-operator-)
-    - [Step 1: Proposing a new operator/function ](#step-1-proposing-a-new-operatorfunction-)
-    - [Step 2: Submit PR ](#step-2-submit-pr-)
+  - [Proposing and submitting a new operator or function to ONNX](#proposing-and-submitting-a-new-operator-or-function-to-onnx)
+  - [4 steps to add an operator](#4-steps-to-add-an-operator)
+    - [Step 1: Proposing a new operator/function](#step-1-proposing-a-new-operatorfunction)
+    - [Step 2: Submit PR](#step-2-submit-pr)
       - [Example to Follow](#example-to-follow)
-    - [Step 3: PR Review by Operators SIG ](#step-3-pr-review-by-operators-sig-)
+    - [Step 3: PR Review by Operators SIG](#step-3-pr-review-by-operators-sig)
       - [Sign-off](#sign-off)
-    - [Step 4: ONNX release ](#step-4-onnx-release-)
-  - [Removing operator or function ](#removing-operator-or-function-)
-    - [Removing operator ](#removing-operator-)
-    - [Removing function ](#removing-function-)
-    - [Document removing operator or function ](#document-removing-operator-or-function-)
+    - [Step 4: ONNX release](#step-4-onnx-release)
+  - [Updating an existing operator](#updating-an-existing-operator)
+    - [Checklist](#checklist)
+  - [Removing operator or function](#removing-operator-or-function)
+    - [Removing operator](#removing-operator)
+    - [Removing function](#removing-function)
+    - [Document removing operator or function](#document-removing-operator-or-function)
 
-## Proposing and submitting a new operator or function to ONNX <a name="new_operator_or_function"></a>
+## Proposing and submitting a new operator or function to ONNX
 
 Operators are the basic building blocks used to define ONNX models. With a rich set of operators, ONNX can describe most DNN and ML models from various frameworks. Functions enable expressing complex operators in terms of more primitive operators. The ONNX specification includes a core set of operators that enable many models. It is a non-goal to add all possible operators, however more operators are added as needed to cover evolving needs.
 
 In this document, we describe the process of accepting a new proposed operator and how to properly submit a new operator as part of ONNX standard. The goal is to improve on what we currently have based on our experience, learning and feedbacks we gathered from the community.
 
-## 4 steps to add an operator <a name="steps_to_add_an_operator"></a>
+## 4 steps to add an operator
 
 1. Decide what to propose
 2. Submit PR for new operator/function
 3. Review of PR by Operators SIG
 4. Merging of PR and inclusion in next ONNX release
 
-### Step 1: Proposing a new operator/function <a name="step1_new_operator_or_function"></a>
+### Step 1: Proposing a new operator/function
 
 In order to propose a new operator/function, the following is needed:
 
@@ -54,7 +58,7 @@ This requires carefully balancing generality and complexity. For example, genera
 N-D tensors is straight-forward (implementation-wise) for some operators, but complex for other operators.
 The choice in such cases will be made based on the complexity of such a generalization.
 
-### Step 2: Submit PR <a name="step2_new_operator_or_function"></a>
+### Step 2: Submit PR
 
 Once the criteria of proposing new operator/function has been satisfied, you will need to submit a PR for the new operator/function. Here the expectation of what the PR should include. The reviewer is expected to verify the completeness of the PR before signoff.
 
@@ -85,7 +89,7 @@ rank inference at the very least (adding right amount of dimensions to the outpu
 
 [PR 1959](https://github.com/onnx/onnx/pull/1959) is a good example to follow.
 
-### Step 3: PR Review by Operators SIG <a name="step3_new_operator_or_function"></a>
+### Step 3: PR Review by Operators SIG
 
 The [Operators SIG](https://github.com/onnx/sigs/tree/main/operators) is responsible for the operators/functions in the ONNX specification. The SIG regularly meets and reviews PRs.
 
@@ -93,13 +97,23 @@ The [Operators SIG](https://github.com/onnx/sigs/tree/main/operators) is respons
 
 At least two sign-off from the Operators SIG [contributors](https://github.com/onnx/onnx/tree/main/community#community-roles).
 
-### Step 4: ONNX release <a name="step4_new_operator_or_function"></a>
+### Step 4: ONNX release
+
 Once the PR is reviewed and signed off by the Operators SIG, it will be merged. Your new operator/function will be part of the main branch and available to anyone building from source. These are not official releases. ONNX periodically releases official new versions that are a snapshot of the main branch. Your new operator/function will be part of that release.
 
-## Removing operator or function <a name="removing_operator_or_function"></a>
+## Updating an existing operator
+
+The definition of an existing operator may need to be updated when e.g. there are new scenarios or input types to support. The process is largely similar to that for creating a new operator.
+
+### Checklist
+
+Use this checklist when updating an existing operator: https://github.com/onnx/onnx/wiki/Checklist-for-updating-an-existing-operator
+
+## Removing operator or function
+
 There are a lot of reasons for removing existing ONNX operator or function, such us being replaced with different operator or can be decomposed by a set of other operators. This document describes the criteria of removing an existing ONNX operator from the standard.
 
-### Removing operator <a name="removing_operator"></a>
+### Removing operator
 
 Any operator in ONNX was added because it was required by a model and/or framework. In order to deprecate such an operator we need to do the following.
 
@@ -111,11 +125,11 @@ Any operator in ONNX was added because it was required by a model and/or framewo
 - Add a version adapter which turns the operator into its replacement for the version converter. Example: [onnx/version_converter/adapters/upsample_9_10.h](/onnx/version_converter/adapters/upsample_9_10.h)
 - No grace period is needed for deprecated operators.
 
-### Removing function <a name="removing_function"></a>
+### Removing function
 
-Function, by definition, is composed of ONNX primitives; however, function could have been accelerated by framework or runtime that support ONNX. So, removing function is not recommended, with the exception of adding another single function which supersede its functionality.
+Function, by definition, is composed of ONNX primitives; however, function could have been accelerated by framework or runtime that support ONNX. So, removing function is not recommended, with the exception of adding another single function which supersedes its functionality.
 
-### Document removing operator or function <a name="document_removing_operator_or_function"></a>
+### Document removing operator or function
 
 To make sure everyone is aware of the deprecation, the following need to happen:
 
