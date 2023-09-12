@@ -20,7 +20,13 @@ class IsInf(Base):
 
         x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
         y = np.isinf(x)
-        expect(node, inputs=[x], outputs=[y], name="test_isinf")
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            name="test_isinf",
+            opset_imports=[onnx.helper.make_opsetid("", 19)],
+        )
 
     @staticmethod
     def export_positive_infinity_only() -> None:
@@ -30,7 +36,13 @@ class IsInf(Base):
 
         x = np.array([-1.7, np.nan, np.inf, 3.6, np.NINF, np.inf], dtype=np.float32)
         y = np.isposinf(x)
-        expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            name="test_isinf_positive",
+            opset_imports=[onnx.helper.make_opsetid("", 19)],
+        )
 
     @staticmethod
     def export_negative_infinity_only() -> None:
@@ -40,4 +52,22 @@ class IsInf(Base):
 
         x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf], dtype=np.float32)
         y = np.isneginf(x)
-        expect(node, inputs=[x], outputs=[y], name="test_isinf_negative")
+        expect(
+            node,
+            inputs=[x],
+            outputs=[y],
+            name="test_isinf_negative",
+            opset_imports=[onnx.helper.make_opsetid("", 19)],
+        )
+
+    @staticmethod
+    def export_infinity_float16() -> None:
+        node = onnx.helper.make_node(
+            "IsInf",
+            inputs=["x"],
+            outputs=["y"],
+        )
+
+        x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+        y = np.isinf(x)
+        expect(node, inputs=[x], outputs=[y], name="test_isinf_float16")

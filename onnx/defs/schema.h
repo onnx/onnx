@@ -744,8 +744,14 @@ class OpSchema final {
 
   static const std::vector<std::string>& all_float_types_ir9() {
     static const std::vector<std::string> all_float_types_ir9 = {
-        "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)",
-        "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)"};
+        "tensor(bfloat16)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(float8e4m3fn)",
+        "tensor(float8e4m3fnuz)",
+        "tensor(float8e5m2)",
+        "tensor(float8e5m2fnuz)"};
     return all_float_types_ir9;
   }
 
