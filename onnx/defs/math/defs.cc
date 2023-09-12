@@ -2929,10 +2929,10 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(DFT_ver20_doc)
         .Attr(
-            // TODO(justinchuby): Double check how conjugate symmetry is specified
+            // TODO(justinchuby): What is the m here?
             "onesided",
             "If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because "
-            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, w] = X[m,n_fft-w]*. "
+            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. "
             "Note if the input or window tensors are complex, then onesided output is not possible. "
             "Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). "
             "When invoked with real or complex valued input, the default value is 0. "
@@ -2988,7 +2988,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1")
         .TypeConstraint(
             "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            OpSchema::all_float_types_ir4(),
             "Constrain input and output types to float tensors.")
         .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "Constrain scalar length types to integers.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
