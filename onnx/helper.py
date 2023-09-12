@@ -72,6 +72,8 @@ VERSION_TABLE: VersionTableType = [
     ("1.13.0", 8, 18, 3, 1),
     ("1.13.1", 8, 18, 3, 1),
     ("1.14.0", 9, 19, 3, 1),
+    ("1.14.1", 9, 19, 3, 1),
+    ("1.15.0", 9, 20, 4, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -708,6 +710,8 @@ def make_tensor(
             )
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)
+        elif data_type == TensorProto.STRING:
+            vals = np.array(vals).astype(bytes)
         field = tensor_dtype_to_field(data_type)
         getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)
@@ -922,7 +926,7 @@ def make_attribute(  # pylint: disable=too-many-statements
 
     if attr_type is not None and attr.type != attr_type:
         raise TypeError(
-            f"Inferred attribute type {attr.type} mismatched with specified type {attr_type}"
+            f"Inferred attribute type '{_attr_type_to_str(attr.type)}'({attr.type}) mismatched with specified type '{_attr_type_to_str(attr_type)}'({attr_type})"
         )
     return attr
 
@@ -970,6 +974,8 @@ def get_attribute_value(attr: AttributeProto) -> Any:
         return list(attr.graphs)
     if attr.type == AttributeProto.TYPE_PROTOS:
         return list(attr.type_protos)
+    if attr.type == AttributeProto.UNDEFINED:
+        return None
     raise ValueError(f"Unsupported ONNX attribute: {attr}")
 
 
@@ -1275,7 +1281,7 @@ def printable_attribute(
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
     which = dim.WhichOneof("value")
     if which is None:
-        raise TypeError(f"which cannot be {None}.")
+        return "?"
     return str(getattr(dim, which))
 
 
@@ -1533,3 +1539,18 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     :return: all tensor types from TensorProto
     """
     return mapping.TENSOR_TYPE_MAP.keys()
+
+
+_ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
+
+
+def _attr_type_to_str(attr_type: int) -> str:
+    """
+    Convert AttributeProto type to string.
+
+    :param attr_type: AttributeProto type.
+    :return: String representing the supplied attr_type.
+    """
+    if attr_type in AttributeProto.AttributeType.values():
+        return _ATTRIBUTE_TYPE_TO_STR[attr_type]
+    return AttributeProto.AttributeType.keys()[0]

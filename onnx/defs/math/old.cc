@@ -1354,7 +1354,7 @@ shape(scores): (N, C) where C is the number of classes, or (N, C, D1, D2,..., Dk
 shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
         with K >= 1 in case of K-dimensional loss.
 
-The loss for one sample, l_i, can caculated as follows:
+The loss for one sample, l_i, can calculated as follows:
     l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
 or
     l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
@@ -2760,7 +2760,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Infer output shape if:
           // (1) 'K' is available
           // (2) axis_dim has dim value
-          // Othewise cannot reliably compute output shape as axis dim value is
+          // Otherwise cannot reliably compute output shape as axis dim value is
           // unknown and hence cannot determine if axis dim value >= k (which
           // should be enforced)
           if (nullptr != k && axis_dim.has_dim_value()) {

@@ -79,8 +79,11 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
   shape_inference::GraphInferenceContext graphInferenceContext(
       valueTypes.second, opsetImports, nullptr, {}, OpSchemaRegistry::Instance(), nullptr, irVersion);
   // Construct inference context and get results - may throw InferenceError
+  // TODO: if it is desirable for infer_node_outputs to provide check_type, strict_mode, data_prop,
+  // we can add them to the Python API. For now we just assume the default options.
+  ShapeInferenceOptions options{false, 0, false};
   shape_inference::InferenceContextImpl ctx(
-      node, valueTypes.second, inputData.second, inputSparseData.second, nullptr, &graphInferenceContext);
+      node, valueTypes.second, inputData.second, inputSparseData.second, options, nullptr, &graphInferenceContext);
   schema->GetTypeAndShapeInferenceFunction()(ctx);
   // Verify the inference succeeded - may also throw ValidationError
   // Note that input types were not validated until now (except that their count was correct)
@@ -569,6 +572,21 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     model.SerializeToString(&out);
     return py::bytes(out);
   });
+
+  // inline_selected_functions: Inlines all functions specified in function_ids, unless
+  // exclude is true, in which case it inlines all functions except those specified in
+  // function_ids.
+  inliner.def(
+      "inline_selected_functions",
+      [](const py::bytes& bytes, std::vector<std::pair<std::string, std::string>> function_ids, bool exclude) {
+        ModelProto model{};
+        ParseProtoFromPyBytes(&model, bytes);
+        auto function_id_set = inliner::FunctionIdSet::Create(std::move(function_ids), exclude);
+        inliner::InlineSelectedFunctions(model, *function_id_set);
+        std::string out;
+        model.SerializeToString(&out);
+        return py::bytes(out);
+      });
 
   // Submodule `shape_inference`
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");

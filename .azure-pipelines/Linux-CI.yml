@@ -66,7 +66,7 @@ jobs:
         export ONNX_ML=1
       fi
       export CMAKE_ARGS="-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-      # enable more sanitizer
+      # Enable more sanitizers
       export CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
       pip install -e ".[reference]" -v
     displayName: 'Install ONNX and dependencies'
@@ -104,6 +104,16 @@ jobs:
       git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
       if [ $? -ne 0 ]; then
         echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
+        exit 1
+      fi
+
+      pip uninstall -y pillow
+      python onnx/backend/test/cmd_tools.py generate-data --clean
+      git status
+      # Verify test generation without pillow for ImageDecoder, it should directly use frozen data
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+      if [ $? -ne 0 ]; then
+        echo "git diff for test generation without pillow returned failures. Please check updated node test files"
         exit 1
       fi
 

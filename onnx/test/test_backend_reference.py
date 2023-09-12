@@ -173,11 +173,12 @@ backend_test.exclude("(test_eyelike_without_dtype)")
 # The following tests fail due to discrepancies (small but still higher than 1e-7).
 backend_test.exclude("test_adam_multiple")  # 1e-2
 
-# Currently google-re2 is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
+# Currently google-re2/Pillow is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
 if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_basic_cpu")
     backend_test.exclude("test_regex_full_match_email_domain_cpu")
     backend_test.exclude("test_regex_full_match_empty_cpu")
+    backend_test.exclude("test_image_decoder_decode_")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
