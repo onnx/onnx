@@ -247,6 +247,7 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|equal"
         "|half_pixel_symmetric"
         "|identity"
+        "|isinf_float16"
         "|reduce_max_bool_inputs"
         "|reduce_min_bool_inputs"
         "|reshape"
