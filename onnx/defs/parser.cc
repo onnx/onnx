@@ -55,7 +55,7 @@ Status ParserBase::Parse(Literal& result) {
       }
     } else
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
-      return Status::OK();
+    return Status::OK();
   }
 
   // Simplify the next ifs by consuming a possible negative sign.
@@ -119,27 +119,25 @@ Status ParserBase::Parse(Literal& result) {
 }
 
 bool OnnxParser::NextIsValidFloatString() {
-    auto nextch = NextChar();
-    auto from = next_;
+  auto nextch = NextChar();
+  auto from = next_;
 
-    if (isalpha(nextch)) {
-        while(next_ < end_ && isalpha(*next_)) {
-            ++next_;
-        }
-        std::string candidate = std::string(from, next_ - from);
-
-        // Reset parser location before continuing.
-        next_ = from;
-
-        std::transform(candidate.begin(), candidate.end(), candidate.begin(),
-            [](unsigned char c){ return std::tolower(c); });
-        if (candidate == std::string("inf") ||
-           candidate == std::string("infinity") ||
-           candidate == std::string("nan")) {
-            return true;
-        }
+  if (isalpha(nextch)) {
+    while (next_ < end_ && isalpha(*next_)) {
+      ++next_;
     }
-    return false;
+    std::string candidate = std::string(from, next_ - from);
+
+    // Reset parser location before continuing.
+    next_ = from;
+
+    std::transform(
+        candidate.begin(), candidate.end(), candidate.begin(), [](unsigned char c) { return std::tolower(c); });
+    if (candidate == std::string("inf") || candidate == std::string("infinity") || candidate == std::string("nan")) {
+      return true;
+    }
+  }
+  return false;
 }
 
 Status OnnxParser::Parse(IdList& idlist) {
@@ -496,8 +494,8 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
         attr.set_type(AttributeProto_AttributeType_FLOAT);
         attr.set_f(static_cast<float>(std::stof(literal.value)));
       } else {
-          attr.set_type(AttributeProto_AttributeType_GRAPH);
-          Parse(*attr.mutable_g());
+        attr.set_type(AttributeProto_AttributeType_GRAPH);
+        Parse(*attr.mutable_g());
       }
     }
   } else if (Matches('@')) {
