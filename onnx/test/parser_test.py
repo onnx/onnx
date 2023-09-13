@@ -220,16 +220,19 @@ class TestBasicFunctions(unittest.TestCase):
 
     @parameterized.expand(
         [
-            "not_a_good_float",  # Not a good float value, but shouldn't blow up the parser.
-            "inf",
-            "-inf",
-            "infinity",
-            "-infinity",
-            "nan",
-            "-NaN",
+            (
+                "not_a_good_float",
+                onnx.AttributeProto.GRAPH,
+            ),  # Not a good float value, but shouldn't blow up the parser.
+            ("inf", onnx.AttributeProto.FLOAT),
+            ("-inf", onnx.AttributeProto.FLOAT),
+            ("infinity", onnx.AttributeProto.FLOAT),
+            ("-infinity", onnx.AttributeProto.FLOAT),
+            ("nan", onnx.AttributeProto.FLOAT),
+            ("-NaN", onnx.AttributeProto.FLOAT),
         ]
     )
-    def test_parse_various_float_values(self, test_literal):
+    def test_parse_various_float_values(self, test_literal, expected_attribute_type):
         model_text = f"""
         <
         ir_version: 8,
@@ -249,12 +252,11 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertEqual(len(model.graph.node), 1)
         self.assertEqual(len(model.graph.node[0].attribute), 1)
         self.assertEqual(model.graph.node[0].attribute[0].name, "value_float")
-        self.assertEqual(
-            model.graph.node[0].attribute[0].type, onnx.AttributeProto.FLOAT
-        )
-        self.assertEqual(
-            str(model.graph.node[0].attribute[0].f), str(float(test_literal))
-        )
+        self.assertEqual(model.graph.node[0].attribute[0].type, expected_attribute_type)
+        if expected_attribute_type == onnx.AttributeProto.FLOAT:
+            self.assertEqual(
+                str(model.graph.node[0].attribute[0].f), str(float(test_literal))
+            )
 
 
 if __name__ == "__main__":
