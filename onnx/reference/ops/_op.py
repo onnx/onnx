@@ -196,4 +196,4 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
     def reduce_constant(self, data, const_val, axes, keepdims):
         """Special case reduction where the output value is a constant."""
         output_shape = self.output_shape(data, axes, keepdims)
-        return np.full(output_shape, const_val, dtype=data.dtype)
+        return (np.full(output_shape, const_val, dtype=data.dtype),)
