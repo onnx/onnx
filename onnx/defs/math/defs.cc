@@ -2958,7 +2958,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "axis",
-            "The axis on which to perform the DFT. By default this value is set to `-1`.",
+            "The axis on which to perform the DFT. By default this value is set to `-1` (last axis). "
+            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input). "
+            "The value should be a scalar.",
             "tensor(int64)",
             OpSchema::Optional,
             true,
