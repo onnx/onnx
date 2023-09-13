@@ -123,6 +123,9 @@ select = [
     "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
     "NPY", # modern numpy
+    "PLC", # pylint
+    "PLE", # pylint
+    "PLW", # pylint
     "RUF", # Ruff-specific rules
     "SIM", # flake8-simplify
     "TID252", # Relative imports
