@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0911,R0912,R0913,R0914,W0221
+
 
 import numpy as np
 
@@ -245,7 +245,7 @@ class SVMClassifier(OpRunAiOnnxMl):
             vectors_per_class=vectors_per_class,
         )
         # unused unless for debugging purposes
-        self._svm = svm  # pylint: disable=W0201
+        self._svm = svm
 
         vector_count_ = 0
         class_count_ = max(len(classlabels_ints or classlabels_strings or []), 1)

@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable=C3001,isinstance-second-argument-not-valid-type
+
 
 import sys
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
@@ -72,7 +72,7 @@ def _float8e4m3_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
         res |= mant << 20
         expo += 0x7F - exponent_bias
         res |= expo << 23
-    f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
+    f = np.uint32(res).view(np.float32)
     return f
 
 
@@ -143,7 +143,7 @@ def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
         res |= mant << 21
         expo += 0x7F - exponent_bias
         res |= expo << 23
-    f = np.uint32(res).view(np.float32)  # pylint: disable=E1121
+    f = np.uint32(res).view(np.float32)
     return f
 
 
@@ -172,7 +172,7 @@ def float8e5m2_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
-def to_array(  # pylint: disable=too-many-branches
+def to_array(
     tensor: TensorProto, base_dir: str = ""
 ) -> np.ndarray:
     """Converts a tensor def object to a numpy array.
@@ -271,7 +271,7 @@ def to_array(  # pylint: disable=too-many-branches
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
-def from_array(  # pylint: disable=too-many-branches
+def from_array(
     arr: np.ndarray, name: Optional[str] = None
 ) -> TensorProto:
     """Converts a numpy array to a tensor def.
@@ -359,9 +359,9 @@ def to_list(sequence: SequenceProto) -> List[Any]:
     raise TypeError("The element type in the input sequence is not supported.")
 
 
-def from_list(  # pylint: disable=too-many-branches
+def from_list(
     lst: List[Any], name: Optional[str] = None, dtype: Optional[int] = None
-) -> SequenceProto:  # pylint: disable=too-many-branches
+) -> SequenceProto:
     """Converts a list into a sequence def.
 
     Args:

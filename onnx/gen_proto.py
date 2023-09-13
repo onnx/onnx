@@ -42,7 +42,7 @@ def process_ifs(lines: Iterable[str], onnx_ml: bool) -> Iterable[str]:
             assert in_if == 1
             in_if = 2
         elif ENDIF_ONNX_ML_REGEX.match(line):
-            assert in_if == 1 or in_if == 2  # pylint: disable=consider-using-in
+            assert in_if == 1 or in_if == 2
             in_if = 0
         else:
             if in_if == 0:
@@ -127,7 +127,7 @@ def qualify(f: str, pardir: Optional[str] = None) -> str:
     return os.path.join(pardir, f)
 
 
-def convert(  # pylint: disable=too-many-branches,too-many-statements
+def convert(
     stem: str,
     package_name: str,
     output: str,

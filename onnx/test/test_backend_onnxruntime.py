@@ -21,9 +21,8 @@ from onnx import ModelProto
 from onnx.backend.base import Device, DeviceType
 
 try:
-    from onnxruntime import InferenceSession
+    from onnxruntime import InferenceSession, get_available_providers
     from onnxruntime import __version__ as ort_version
-    from onnxruntime import get_available_providers
     from onnxruntime.capi.onnxruntime_pybind11_state import InvalidArgument
 except ImportError:
     # onnxruntime is not installed, all tests are skipped.
@@ -70,7 +69,7 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
     providers: ClassVar[set[str]] = set(get_available_providers())
 
     @classmethod
-    def is_opset_supported(cls, model):  # pylint: disable=unused-argument
+    def is_opset_supported(cls, model):
         return True, ""
 
     @classmethod

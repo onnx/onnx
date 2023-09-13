@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
+
 
 from typing import Optional, Tuple
 
@@ -47,7 +47,7 @@ class _CommonQuantizeLinear(OpRun):
             return TensorProto.FLOAT8E5M2FNUZ
         return np_dtype_to_tensor_dtype(zero_point.dtype)
 
-    def common_run(  # pylint: disable=too-many-branches
+    def common_run(
         self,
         x: np.ndarray,
         y_scale: np.ndarray,

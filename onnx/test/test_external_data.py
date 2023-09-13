@@ -35,7 +35,7 @@ class TestLoadExternalDataBase(unittest.TestCase):
 
     def setUp(self) -> None:
         self._temp_dir_obj = (
-            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+            tempfile.TemporaryDirectory()
         )
         self.temp_dir: str = self._temp_dir_obj.name
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
@@ -218,7 +218,7 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
 
     def setUp(self) -> None:
         self._temp_dir_obj = (
-            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+            tempfile.TemporaryDirectory()
         )
         self.temp_dir: str = self._temp_dir_obj.name
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
@@ -522,7 +522,7 @@ class TestExternalDataToArray(unittest.TestCase):
 
     def setUp(self) -> None:
         self._temp_dir_obj = (
-            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
+            tempfile.TemporaryDirectory()
         )
         self.temp_dir: str = self._temp_dir_obj.name
         self._model_file_path: str = os.path.join(self.temp_dir, "model.onnx")

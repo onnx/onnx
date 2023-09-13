@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0613,W0640,W0703
+
 """
 These test evaluates the python runtime (class ReferenceEvaluator) against
 all the backend tests (in onnx/backend/test/case/node) and checks
@@ -28,7 +28,7 @@ import unittest
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import (  # noqa: N813 # pylint: disable=deprecated-module
+    from distutils.version import (  # noqa: N813
         StrictVersion as version,
     )
 
@@ -536,7 +536,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         return ReferenceEvaluator(obj, verbose=verbose)
 
     @staticmethod
-    def run_fct(obj, *inputs, verbose=0):  # pylint: disable=W0613
+    def run_fct(obj, *inputs, verbose=0):
         if hasattr(obj, "input_names"):
             input_names = obj.input_names
         elif hasattr(obj, "get_inputs"):
@@ -550,7 +550,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                 f"Got {len(inputs)} inputs but expecting {len(obj.input_names)}."
             )
         rewrite = False
-        for i in range(len(inputs)):  # pylint: disable=C0200
+        for i in range(len(inputs)):
             if (
                 isinstance(inputs[i], np.ndarray)
                 and inputs[i].dtype == np.uint16
@@ -560,7 +560,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         if rewrite:
             # bfloat16 does not exist for numpy.
             inputs = list(inputs)
-            for i in range(len(inputs)):  # pylint: disable=C0200
+            for i in range(len(inputs)):
                 if (
                     isinstance(inputs[i], np.ndarray)
                     and inputs[i].dtype == np.uint16

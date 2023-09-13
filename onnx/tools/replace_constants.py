@@ -1,7 +1,6 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=too-many-statements,too-many-branches
 from typing import List, Optional, Union
 
 import numpy as np
@@ -311,9 +310,9 @@ def replace_initializer_by_constant_of_shape(
             values = {p.key: p.value for p in onx.metadata_props}
             set_model_props(model, values)
 
-        del model.opset_import[:]  # pylint: disable=E1101
+        del model.opset_import[:]
         for oimp in onx.opset_import:
-            op_set = model.opset_import.add()  # pylint: disable=E1101
+            op_set = model.opset_import.add()
             if oimp.domain == "" and oimp.version < 11 and use_range:
                 raise RuntimeError(
                     f"Range was introduced in opset 11 but opset is {oimp.version}."

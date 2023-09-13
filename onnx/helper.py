@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0302,R0912
+
 import collections.abc
 import numbers
 import struct
@@ -355,7 +355,7 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + rounded) >> 16
 
 
-def float32_to_float8e4m3(  # pylint: disable=too-many-statements
+def float32_to_float8e4m3(
     fval: float,
     scale: float = 1.0,
     fn: bool = True,
@@ -405,7 +405,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (20 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -457,7 +457,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (20 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -488,7 +488,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
         return int(ret)
 
 
-def float32_to_float8e5m2(  # pylint: disable=too-many-statements
+def float32_to_float8e5m2(
     fval: float,
     scale: float = 1.0,
     fn: bool = False,
@@ -534,7 +534,7 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (21 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -584,7 +584,7 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (21 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
@@ -661,7 +661,7 @@ def make_tensor(
             expected_size = np_dtype.itemsize
 
     if (
-        type(vals) is np.ndarray  # pylint: disable=unidiomatic-typecheck
+        type(vals) is np.ndarray
         and len(vals.shape) > 1
     ):
         vals = vals.flatten()
@@ -837,7 +837,7 @@ def _to_bytes(value: Union[str, bytes]) -> bytes:
     return value if isinstance(value, bytes) else value.encode("utf-8")
 
 
-def make_attribute(  # pylint: disable=too-many-statements
+def make_attribute(
     key: str,
     value: Any,
     doc_string: Optional[str] = None,
@@ -1514,7 +1514,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     :param tensor_dtype: TensorProto's data_type
     :return: field name
     """
-    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[  # pylint: disable=protected-access
+    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
         mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
     ]
 
@@ -1528,7 +1528,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     """
     return cast(
         int,
-        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],  # pylint: disable=protected-access
+        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
     )
 
 
