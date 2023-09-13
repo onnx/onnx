@@ -136,7 +136,7 @@ def gen_node_test_coverage(
                     f.write(f"<summary>{summary}</summary>\n\n")
                     f.write(f"```python\n{code}\n```\n\n")
                     f.write("</details>\n")
-            else:
+            else:  # noqa: PLR5501
                 if s in generators:
                     f.write(" (random generator operator)\n")
                 else:

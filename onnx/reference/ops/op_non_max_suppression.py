@@ -42,7 +42,7 @@ def max_min(lhs: float, rhs: float) -> Tuple[float, float]:
     return lhs, rhs
 
 
-def suppress_by_iou(
+def suppress_by_iou(  # noqa: PLR0911
     boxes_data: np.ndarray,
     box_index1: int,
     box_index2: int,

@@ -155,7 +155,7 @@ def display_schema(
                     if isinstance(value, float):
                         formatted = str(np.round(value, 5))
                         # use default formatting, unless too long.
-                        if len(formatted) > 10:
+                        if len(formatted) > 10:  # noqa: PLR2004
                             formatted = str(f"({value:e})")
                         return formatted
                     if isinstance(value, (bytes, bytearray)):

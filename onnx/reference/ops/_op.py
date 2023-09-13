@@ -173,7 +173,7 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
     def is_axes_empty(self, axes):
         return axes is None
 
-    def handle_axes(self, axes):
+    def handle_axes(self, axes):  # noqa: PLR0911
         if isinstance(axes, tuple):
             if len(axes) == 0:
                 return None

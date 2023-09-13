@@ -32,10 +32,8 @@ def im2col_fast(X, kernel_shape, pads, strides):
     for i in range(len(shape_out)):
         kind = _make_ind(i, kernel_shape)
         iind = _make_ind(i, shape_out) * strides[i]
-        i = np.tile(kind.ravel(), n_C).reshape(-1, 1) + iind.reshape(
-            1, -1
-        )  # noqa: PLW2901
-        indices.append(i)
+        index = np.tile(kind.ravel(), n_C).reshape(-1, 1) + iind.reshape(1, -1)
+        indices.append(index)
 
     d = np.repeat(np.arange(n_C), kernel_size).reshape(-1, 1)
 
@@ -179,7 +177,7 @@ class Conv(OpRun):
         pads=None,
         strides=None,
     ):
-        if len(X.shape) < 3:
+        if len(X.shape) < 3:  # noqa: PLR2004
             raise ValueError(
                 f"X must have at least 3 dimensions but its shape is {X.shape}."
             )

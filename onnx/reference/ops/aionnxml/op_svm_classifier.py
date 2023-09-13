@@ -61,7 +61,7 @@ def sigmoid_probability(score, proba, probb):
     return 1 - compute_logistic(val)
 
 
-def write_scores(n_classes, scores, post_transform, add_second_class):
+def write_scores(n_classes, scores, post_transform, add_second_class):  # noqa: PLR0911
     if n_classes >= 2:
         if post_transform == "PROBIT":
             res = [compute_probit(score) for score in scores]

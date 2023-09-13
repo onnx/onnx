@@ -114,7 +114,7 @@ def assert_allclose_string(expected, value):
         expected_float = expected.astype(np.float32)
         value_float = value.astype(np.float32)
         assert_allclose(expected_float, value_float)
-    else:
+    else:  # noqa: PLR5501
         if expected.tolist() != value.tolist():
             raise AssertionError(f"Mismatches {expected} != {value}.")
 
