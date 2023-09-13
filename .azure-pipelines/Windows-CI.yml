@@ -1,6 +1,12 @@
+schedules:
+- cron: '0 0 * * *'
+  displayName: Nightly Windows CI in main branch
+  branches:
+    include:
+    - main
+
 trigger:
 - gh-readonly-queue/**
-- main
 
 jobs:
 
