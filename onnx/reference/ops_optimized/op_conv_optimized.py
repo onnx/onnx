@@ -32,7 +32,9 @@ def im2col_fast(X, kernel_shape, pads, strides):
     for i in range(len(shape_out)):
         kind = _make_ind(i, kernel_shape)
         iind = _make_ind(i, shape_out) * strides[i]
-        i = np.tile(kind.ravel(), n_C).reshape(-1, 1) + iind.reshape(1, -1)
+        i = np.tile(kind.ravel(), n_C).reshape(-1, 1) + iind.reshape(
+            1, -1
+        )  # noqa: PLW2901
         indices.append(i)
 
     d = np.repeat(np.arange(n_C), kernel_size).reshape(-1, 1)

@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-
 import sys
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
@@ -172,9 +171,7 @@ def float8e5m2_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
-def to_array(
-    tensor: TensorProto, base_dir: str = ""
-) -> np.ndarray:
+def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     """Converts a tensor def object to a numpy array.
 
     Args:
@@ -271,9 +268,7 @@ def to_array(
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
-def from_array(
-    arr: np.ndarray, name: Optional[str] = None
-) -> TensorProto:
+def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
     Args:

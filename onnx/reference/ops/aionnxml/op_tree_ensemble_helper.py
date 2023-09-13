@@ -29,7 +29,7 @@ class TreeEnsembleAttributes:
         rows = ["Attributes"]
         for name in self._names:
             if name.endswith("_as_tensor"):
-                name = name.replace("_as_tensor", "")
+                name = name.replace("_as_tensor", "")  # noqa: PLW2901
             rows.append(f"  {name}={getattr(self, name)}")
         return "\n".join(rows)
 

@@ -50,7 +50,6 @@ def _generate_test_data(
     tile_sz: int = 5,
 ) -> tuple[np.ndarray, np.ndarray]:
     try:
-
         import PIL.Image
     except ImportError:
         # Since pillow is not installed to generate test data for the ImageDecoder operator

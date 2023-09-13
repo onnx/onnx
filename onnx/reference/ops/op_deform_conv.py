@@ -51,7 +51,6 @@ def _deform_conv_implementation(  # type: ignore
         mask = np.ones((n, offset_group * np.prod(kernel_shape), *output_shape))
     mask = mask.reshape((n, offset_group, *kernel_shape, *output_shape))
 
-
     from onnx.reference.ops._op_list import GridSample
 
     if len(X.shape) == 4:

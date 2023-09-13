@@ -397,7 +397,7 @@ def replace_initializer_by_constant_of_shape(
                 )
                 if id(g) != id(att.g):
                     modified = True
-                    att = make_attribute(att.name, g)
+                    att = make_attribute(att.name, g)  # noqa: PLW2901
             atts.append(att)
         if modified:
             new_node = make_node(node.op_type, node.input, node.output)

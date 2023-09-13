@@ -130,9 +130,7 @@ def get_output_shape_auto_pad(
     """
     strides_spatial = strides_spatial or [1] * len(input_spatial_shape)
     out_shape = [0] * len(input_spatial_shape)
-    for i in range(
-        len(input_spatial_shape)
-    ):
+    for i in range(len(input_spatial_shape)):
         if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
             out_shape[i] = (
                 math.floor((input_spatial_shape[i] - 1) / strides_spatial[i]) + 1

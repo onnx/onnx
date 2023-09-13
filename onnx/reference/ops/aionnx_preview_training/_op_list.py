@@ -4,8 +4,9 @@
 
 
 import textwrap
-from typing import Any, Dict, Union
+from typing import Any, Dict
 from typing import Optional as TOptional
+from typing import Union
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
@@ -31,7 +32,7 @@ def load_op(
     :param custom: custom implementation (like a function)
     :return: class
     """
-    global _registered_operators
+    global _registered_operators  # noqa: PLW0603
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]
     if custom is not None:

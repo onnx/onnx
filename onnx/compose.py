@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-
 from typing import Dict, List, MutableMapping, Optional, Set, Tuple
 
 from onnx import GraphProto, ModelProto, TensorProto, checker, helper, utils

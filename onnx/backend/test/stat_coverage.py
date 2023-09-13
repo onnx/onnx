@@ -36,8 +36,8 @@ experimental_covered: Sequence[str] = []
 def gen_node_test_coverage(
     schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool
 ) -> None:
-    global common_covered
-    global experimental_covered
+    global common_covered  # noqa: PLW0603
+    global experimental_covered  # noqa: PLW0603
     generators = set(
         {
             "Multinomial",

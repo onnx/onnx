@@ -13,7 +13,6 @@ _acceptable_str_dtypes = ("U", "O")
 class RegexFullMatch(OpRun):
     def _run(self, x, pattern=None):
         try:
-
             import re2
         except ImportError as e:
             raise ImportError(

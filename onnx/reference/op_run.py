@@ -614,9 +614,7 @@ class OpRunExpand(OpRun):
     Class any operator to avoid must inherit from.
     """
 
-    def __init__(
-        self, onnx_node: NodeProto, log_function: Any, impl: Any = None
-    ):
+    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -710,8 +708,6 @@ class OpFunctionContextDependant(OpFunction):
                 else:
                     raise e
             types.append(make_tensor_type_proto(ttype, t.shape))
-        cl = self.parent._load_impl(
-            self.onnx_node, types
-        )
+        cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)

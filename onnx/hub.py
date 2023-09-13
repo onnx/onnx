@@ -73,7 +73,7 @@ def set_dir(new_dir: str) -> None:
 
     :param new_dir: location of new model hub cache
     """
-    global _ONNX_HUB_DIR
+    global _ONNX_HUB_DIR  # noqa: PLW0603
     _ONNX_HUB_DIR = new_dir
 
 

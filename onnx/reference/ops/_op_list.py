@@ -12,8 +12,9 @@ The operator may have been updated to support more types but that
 did not change the implementation.
 """
 import textwrap
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 from typing import Optional as TOptional
+from typing import Union
 
 from onnx import FunctionProto, NodeProto, TypeProto
 from onnx.defs import get_schema, onnx_opset_version
@@ -261,7 +262,7 @@ def load_op(
         of its reference implementation
     :return: class
     """
-    global _registered_operators
+    global _registered_operators  # noqa: PLW0603
     schema = None
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]

@@ -660,10 +660,7 @@ def make_tensor(
         else:
             expected_size = np_dtype.itemsize
 
-    if (
-        type(vals) is np.ndarray
-        and len(vals.shape) > 1
-    ):
+    if type(vals) is np.ndarray and len(vals.shape) > 1:
         vals = vals.flatten()
     for d in dims:
         expected_size *= d
