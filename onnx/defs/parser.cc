@@ -7,6 +7,7 @@
 
 #include "onnx/defs/parser.h"
 
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -54,15 +55,17 @@ Status ParserBase::Parse(Literal& result) {
       }
     } else
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
+      return Status::OK();
   }
 
-  // Simplify the next if by consuming a possible negative sign.
+  // Simplify the next ifs by consuming a possible negative sign.
   if (nextch == '-') {
     ++next_;
+    nextch = NextChar();
   }
 
   // Check for float literals that start with alphabet characters.
-  if (isalpha(*next_)) {
+  if (isalpha(nextch)) {
     // Has to be a special float literal now: (-)*(nan|inf|infinity).
     while (next_ < end_ && isalpha(*next_)) {
       ++next_;
@@ -76,6 +79,7 @@ Status ParserBase::Parse(Literal& result) {
       ONNX_HANDLE_EXCEPTION([&]() {
         // Rewind the parser if this is not a valid float literal.
         next_ = from;
+        return ParseError("Encountered invalid float literal!");
       });
     }
     // Either way we're done at this point.
@@ -83,7 +87,7 @@ Status ParserBase::Parse(Literal& result) {
   }
 
   // Checking for numeric ints or float literal.
-  if (isdigit(nextch) || nextch == '-') {
+  if (isdigit(nextch)) {
     ++next_;
 
     while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
@@ -112,6 +116,30 @@ Status ParserBase::Parse(Literal& result) {
     result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
   }
   return Status::OK();
+}
+
+bool OnnxParser::NextIsValidFloatString() {
+    auto nextch = NextChar();
+    auto from = next_;
+
+    if (isalpha(nextch)) {
+        while(next_ < end_ && isalpha(*next_)) {
+            ++next_;
+        }
+        std::string candidate = std::string(from, next_ - from);
+
+        // Reset parser location before continuing.
+        next_ = from;
+
+        std::transform(candidate.begin(), candidate.end(), candidate.begin(),
+            [](unsigned char c){ return std::tolower(c); });
+        if (candidate == std::string("inf") ||
+           candidate == std::string("infinity") ||
+           candidate == std::string("nan")) {
+            return true;
+        }
+    }
+    return false;
 }
 
 Status OnnxParser::Parse(IdList& idlist) {
@@ -462,8 +490,15 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
         attr.mutable_tp()->CopyFrom(typeProto);
       }
     } else {
-      attr.set_type(AttributeProto_AttributeType_GRAPH);
-      Parse(*attr.mutable_g());
+      if (NextIsValidFloatString()) {
+        Literal literal;
+        PARSE_TOKEN(literal);
+        attr.set_type(AttributeProto_AttributeType_FLOAT);
+        attr.set_f(static_cast<float>(std::stof(literal.value)));
+      } else {
+          attr.set_type(AttributeProto_AttributeType_GRAPH);
+          Parse(*attr.mutable_g());
+      }
     }
   } else if (Matches('@')) {
     std::string name;

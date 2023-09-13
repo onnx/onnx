@@ -225,8 +225,8 @@ class TestBasicFunctions(unittest.TestCase):
             "-inf",
             "infinity",
             "-infinity",
-            "-NaN",
             "nan",
+            "-NaN",
         ]
     )
     def test_parse_various_float_values(self, test_literal):
@@ -242,8 +242,19 @@ class TestBasicFunctions(unittest.TestCase):
         tmp = Constant <value_float = {test_literal}>()
         }}
         """
-
-        onnx.parser.parse_model(model_text)
+        model = onnx.parser.parse_model(model_text)
+        self.assertEqual(model.ir_version, 8)
+        self.assertEqual(model.producer_name, "FunctionProtoTest")
+        self.assertEqual(model.producer_version, "1.0")
+        self.assertEqual(len(model.graph.node), 1)
+        self.assertEqual(len(model.graph.node[0].attribute), 1)
+        self.assertEqual(model.graph.node[0].attribute[0].name, "value_float")
+        self.assertEqual(
+            model.graph.node[0].attribute[0].type, onnx.AttributeProto.FLOAT
+        )
+        self.assertEqual(
+            str(model.graph.node[0].attribute[0].f), str(float(test_literal))
+        )
 
 
 if __name__ == "__main__":

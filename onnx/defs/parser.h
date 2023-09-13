@@ -438,6 +438,8 @@ class OnnxParser : public ParserBase {
   bool NextIsType();
 
   bool NextIsIdentifier();
+
+  bool NextIsValidFloatString();
 };
 
 } // namespace ONNX_NAMESPACE
