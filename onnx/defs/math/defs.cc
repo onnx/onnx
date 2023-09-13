@@ -3020,7 +3020,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Skip if axis is not known
             return;
           }
-          if (axis_tensor->dims_size() != 1) {
+          // TODO(justinchuby): Create invariance checking functions to ensure shapes and sizes
+          if (axis_tensor->dims_size() != 0) {
             fail_shape_inference("axis input must be a scalar.");
           }
           const int64_t axis = ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(axis_tensor);
