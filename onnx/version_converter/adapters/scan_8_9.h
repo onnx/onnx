@@ -36,9 +36,7 @@ struct Scan_8_9 final : public Adapter {
 
     node->removeAllInputs();
 
-    if (inputs[0]->uniqueName() != "") {
-      ONNX_ASSERTM(false, "Unsupported conversion to opset 9");
-    }
+    ONNX_ASSERTM(inputs[0]->uniqueName() == "", "Unsupported conversion to opset 9");
 
     for (Value* input : inputs) {
       if (!input->sizes().empty()) {
