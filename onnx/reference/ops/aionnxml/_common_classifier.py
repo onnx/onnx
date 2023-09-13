@@ -18,7 +18,7 @@ def compute_softmax_zero(values: np.ndarray) -> np.ndarray:
     v_max = values.max()
     exp_neg_v_max = np.exp(-v_max)
     s = 0
-    for i in range(len(values)):  # pylint: disable=C0200
+    for i in range(len(values)):
         v = values[i]
         if v > 0.0000001 or v < -0.0000001:
             values[i] = np.exp(v - v_max)

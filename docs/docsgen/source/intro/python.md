@@ -843,7 +843,7 @@ neighbors.
     set_model_props(onnx_model, {})
 
     # opsets
-    del onnx_model.opset_import[:]  # pylint: disable=E1101
+    del onnx_model.opset_import[:]
     for dom, value in opsets.items():
         op_set = onnx_model.opset_import.add()
         op_set.domain = dom

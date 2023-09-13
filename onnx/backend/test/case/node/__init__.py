@@ -370,7 +370,7 @@ def expect(
 def collect_testcases(op_type: str) -> List[TestCase]:
     """Collect node test cases"""
     # only keep those tests related to this operator
-    global _TargetOpType
+    global _TargetOpType  # noqa: PLW0603
     _TargetOpType = op_type
 
     import_recursive(sys.modules[__name__])
