@@ -28,7 +28,7 @@ class AxisAttributeToInput : public Adapter {
     return node;
   }
 
-private:
+ private:
   void AttrToInput(std::shared_ptr<Graph> graph, Node* node, int64_t axis) const {
     Tensor t;
     t.elem_type() = TensorProto_DataType_INT64;
