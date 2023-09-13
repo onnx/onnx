@@ -86,7 +86,7 @@ jobs:
           if ! lintrunner --force-color --all-files --tee-json=lint.json -v; then
               echo ""
               echo -e "\e[1m\e[36mYou can reproduce these results locally by using \`lintrunner\`.\e[0m"
-              echo -e "\e[1m\e[36mSee https://github.com/onnx/onnx/blob/main/docs/CONTRIBUTING.md#code-style for setup instructions.\e[0m"
+              echo -e "\e[1m\e[36mSee https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md#coding-style for setup instructions.\e[0m"
               exit 1
           fi
       - name: Produce SARIF
@@ -107,7 +107,7 @@ jobs:
       - name: Check auto-gen files are up-to-date
         run: |
           echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
-          
+
           ONNX_ML=1 python onnx/defs/gen_doc.py
           python onnx/gen_proto.py -l
           python onnx/gen_proto.py -l --ml
