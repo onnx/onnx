@@ -159,7 +159,6 @@ corresponding type with numpy.
 
     np_dtype = tensor_dtype_to_np_dtype(TensorProto.FLOAT)
     print(f"The converted numpy dtype for {tensor_dtype_to_string(TensorProto.FLOAT)} is {np_dtype}.")
-    # print "The converted numpy dtype for TensorProto.FLOAT is float32."
 ```
 
 ## Serialization
