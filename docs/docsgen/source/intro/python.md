@@ -148,16 +148,18 @@ of each object of the graph.
             node.name, node.op_type, node.input, node.output))
 ```
 
-The tensor type is an integer (= 1). The following array gives the
-equivalent type with numpy.
+The tensor type is an integer (= 1). The following helper function (tensor_dtype_to_np_dtype) gives the
+corresponding type with numpy.
 
 ```{eval-rst}
 .. exec_code::
 
-    import pprint
-    from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
+    from onnx import TensorProto
+    from onnx.helper import tensor_dtype_to_np_dtype, tensor_dtype_to_string
 
-    pprint.pprint(TENSOR_TYPE_TO_NP_TYPE)
+    np_dtype = tensor_dtype_to_np_dtype(TensorProto.FLOAT)
+    print(f"The converted numpy dtype for {tensor_dtype_to_string(TensorProto.FLOAT)} is {np_dtype}.")
+    # print "The converted numpy dtype for TensorProto.FLOAT is float32."
 ```
 
 ## Serialization
