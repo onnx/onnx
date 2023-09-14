@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0415,R0912,W0611,W0603
+
 
 import textwrap
 from typing import Any, Dict
@@ -32,7 +32,7 @@ def load_op(
     :param custom: custom implementation (like a function)
     :return: class
     """
-    global _registered_operators
+    global _registered_operators  # noqa: PLW0603
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]
     if custom is not None:
