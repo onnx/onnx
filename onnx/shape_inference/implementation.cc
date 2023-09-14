@@ -360,12 +360,12 @@ class ShapeInferenceImplBase {
   }
 
   template <typename T>
-  void addTemporaryConstant(const std::string& name, const T& vector) {
+  void AddTemporaryConstant(const std::string& name, const T& vector) {
     input_data_by_name_holder[name] = ToTensor(vector);
     input_data_by_name[name] = &input_data_by_name_holder[name];
   }
 
-  void preprocess(const NodeProto& n) {
+  void ProcessConstant(const NodeProto& n) {
     if (checker::check_is_experimental_op(n)) {
       has_experimental_op = true;
     } else if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
@@ -388,22 +388,22 @@ class ShapeInferenceImplBase {
           switch (attr.type()) {
             case AttributeProto::INTS: {
               std::vector<int64_t> ints{attr.ints().begin(), attr.ints().end()};
-              addTemporaryConstant(output_name, ints);
+              AddTemporaryConstant(output_name, ints);
               break;
             }
             case AttributeProto::INT: {
               std::vector<int64_t> ints({attr.i()});
-              addTemporaryConstant(output_name, ints);
+              AddTemporaryConstant(output_name, ints);
               break;
             }
             case AttributeProto::FLOATS: {
               std::vector<float> floats{attr.floats().begin(), attr.floats().end()};
-              addTemporaryConstant(output_name, floats);
+              AddTemporaryConstant(output_name, floats);
               break;
             }
             case AttributeProto::FLOAT: {
               std::vector<float> floats({attr.f()});
-              addTemporaryConstant(output_name, floats);
+              AddTemporaryConstant(output_name, floats);
               break;
             }
             default:
@@ -414,7 +414,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void processCall(const NodeProto& caller, const FunctionProto& callee, InferenceContext& ctx) {
+  void ProcessCall(const NodeProto& caller, const FunctionProto& callee, InferenceContext& ctx) {
     DataValueMap callee_value_map;
     if (generated_shape_data_by_name != nullptr) {
       BindValuesOnCall(*generated_shape_data_by_name, caller, callee_value_map, callee);
@@ -426,7 +426,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void process(NodeProto& n) {
+  void Process(NodeProto& n) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
@@ -460,7 +460,7 @@ class ShapeInferenceImplBase {
         if (schema->has_type_and_shape_inference_function()) {
           schema->GetTypeAndShapeInferenceFunction()(ctx);
         } else if (schema->HasFunction()) {
-          processCall(n, *(schema->GetFunction()), ctx);
+          ProcessCall(n, *(schema->GetFunction()), ctx);
         } else {
           // Continue with inference for remaining nodes
           return;
@@ -468,7 +468,7 @@ class ShapeInferenceImplBase {
       } else if (model_local_functions_map.size() > 0) {
         auto iter = model_local_functions_map.find(GetModelLocalFunctionsMapIdentifier(n.domain(), n.op_type()));
         if (iter != model_local_functions_map.end()) {
-          processCall(n, *(iter->second), ctx);
+          ProcessCall(n, *(iter->second), ctx);
         } else {
           has_unsupported_op = true;
           return;
@@ -502,7 +502,7 @@ class ShapeInferenceImplBase {
           UpdateType(n.output(i), ctx.getOutputType(i));
       }
 
-      preprocess(n);
+      ProcessConstant(n);
 
       // If data propagation is enabled, propagate shape data if it exists.
       if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
@@ -522,7 +522,7 @@ class ShapeInferenceImplBase {
 
   // TypeProto_Tensor or TypeProto_SparseTensor
   template <typename T>
-  void processInitializer(
+  void ProcessInitializer(
       const std::string& name,
       const T& tensorValue,
       TypeProto& initializer_type,
@@ -544,7 +544,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void process(GraphProto& graph) {
+  void Process(GraphProto& graph) {
     if (symbol_table) {
       TraverseGraphsToAddExistingSymbols(graph, *symbol_table);
     }
@@ -566,7 +566,7 @@ class ShapeInferenceImplBase {
       for (int i = 0; i < tp.dims_size(); ++i) {
         shape->add_dim()->set_dim_value(tp.dims(i));
       }
-      processInitializer(tp.name(), tp, initializer_type, input_data_by_name);
+      ProcessInitializer(tp.name(), tp, initializer_type, input_data_by_name);
     }
     for (const auto& tp : graph.sparse_initializer()) {
       TypeProto initializer_type;
@@ -577,20 +577,20 @@ class ShapeInferenceImplBase {
       for (int i = 0; i < tp.dims_size(); ++i) {
         shape->add_dim()->set_dim_value(tp.dims(i));
       }
-      processInitializer(tp.values().name(), tp, initializer_type, input_sparse_data_by_name);
+      ProcessInitializer(tp.values().name(), tp, initializer_type, input_sparse_data_by_name);
     }
     for (auto& n : *graph.mutable_node()) {
-      process(n);
+      Process(n);
     }
   }
 
-  void process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
+  void Process(const NodeProto& n, internal::AttributeBinder& attribute_binder) {
     NodeProto copy_n(n);
     attribute_binder.VisitNode(&copy_n);
-    process(copy_n);
+    Process(copy_n);
   }
 
-  void process(const FunctionProto& func_proto, InferenceContext& ctx) {
+  void Process(const FunctionProto& func_proto, InferenceContext& ctx) {
     // Ensure Constant node tensor-attributes are copied
     bool old_reuse_constant_tensors = reuse_constant_tensors;
     reuse_constant_tensors = false;
@@ -639,7 +639,7 @@ class ShapeInferenceImplBase {
 
     internal::AttributeBinder attribute_binder(attr_map);
     for (auto& n : func_proto.node()) {
-      process(n, attribute_binder);
+      Process(n, attribute_binder);
     }
 
     for (int i = 0; i < func_proto.output_size(); ++i) {
@@ -692,7 +692,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void finalizeShapeInference() {
+  void FinalizeShapeInference() {
     auto& errors = getErrors();
     // Throw shape inference error if any. Error mode right now only supports 0 and 1.
     // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
@@ -766,8 +766,8 @@ static void InferShapesImpl(
       schema_registry,
       generated_shape_data_by_name,
       ir_version);
-  base.process(*g);
-  base.finalizeShapeInference();
+  base.Process(*g);
+  base.FinalizeShapeInference();
 }
 
 // Either ModelProto or FunctionProto
@@ -865,8 +865,8 @@ void InferShapeForFunctionNode(
       model_local_functions_map,
       schema_registry,
       generated_shape_data_by_name);
-  base.process(func_proto, ctx);
-  base.finalizeShapeInference();
+  base.Process(func_proto, ctx);
+  base.FinalizeShapeInference();
 }
 
 void InferShapeForFunctionNode(
@@ -985,8 +985,8 @@ std::vector<TypeProto> InferFunctionOutputTypes(
       /*model_local_functions_map*/ {},
       /*schema_registry*/ OpSchemaRegistry::Instance(),
       /*generated_shape_data_by_name*/ nullptr);
-  base.process(function_proto, ctx);
-  base.finalizeShapeInference();
+  base.Process(function_proto, ctx);
+  base.FinalizeShapeInference();
   return ctx.popOutputTypes();
 }
 
