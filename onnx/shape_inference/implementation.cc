@@ -254,9 +254,40 @@ std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const
   return domain + ":" + func_name;
 }
 
+// InferredTypes: abstracts the differences between FunctionProto and GraphProto
+// for inference. For GraphProto, inferred types are stored in the GraphProto
+// but FunctionProto does not have a place to store inferred types. So, we
+// use a temporary vector (for the duration of inference) to store these.
+class InferredTypes {
+public:
+  InferredTypes(GraphProto* graph = nullptr) : graph_ptr(graph) {}
+
+  TypeProto* Add(const std::string& var_name, const TypeProto& type) {
+    if (graph_ptr != nullptr) {
+      auto* p = graph_ptr->add_value_info();
+      p->set_name(var_name);
+      *p->mutable_type() = type;
+      return p->mutable_type();
+    } else {
+      auto* p = new TypeProto(type);
+      types.push_back(p);
+      return p;
+    }
+  }
+
+  ~InferredTypes() {
+    for (auto* p : types) {
+      delete p;
+    }
+  }
+private:
+  std::vector<TypeProto*> types;
+  GraphProto* graph_ptr;
+};
+
 class ShapeInferenceImplBase {
  public:
-  void updateType(const std::string& name, TypeProto* inferred_type) {
+  void UpdateType(const std::string& name, TypeProto* inferred_type) {
     if (inferred_type->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
       return;
     }
@@ -269,14 +300,10 @@ class ShapeInferenceImplBase {
     // then check for compatibility with the inferred
     // information. Otherwise, initialize it in an empty state.
     auto iter = value_types_by_name.find(name);
-    TypeProto* existing_type = nullptr;
     if (iter != value_types_by_name.end()) {
-      existing_type = iter->second;
+      mergeShapesAndTypes(*inferred_type, iter->second);
     } else {
-      // Create a new value_info if defined type does not exist
-      auto vi = g.add_value_info(); // TODO: clean this up
-      vi->set_name(name);
-      existing_type = vi->mutable_type();
+      value_types_by_name[name] = inferred_types.Add(name, *inferred_type); 
       // For undefined output type, update both value_info and output for now
       // Update existing output with undefined type: assign inferred type to it
       iter = undefined_value_types_by_name.find(name);
@@ -284,16 +311,9 @@ class ShapeInferenceImplBase {
         *iter->second = *inferred_type;
       }
     }
-
-    // TODO: cleanup this by merging with previous if-else
-    // Now we can merge pre-existing and inferred info
-    mergeShapesAndTypes(*inferred_type, existing_type);
-
-    // Make merged info available to further inference.
-    value_types_by_name[name] = existing_type;
   }
 
-  void updateType(ValueInfoProto& valueInfo) {
+  void UpdateType(ValueInfoProto& valueInfo) {
     if (valueInfo.has_type()) {
       value_types_by_name[valueInfo.name()] = valueInfo.mutable_type();
     } else {
@@ -479,7 +499,7 @@ class ShapeInferenceImplBase {
       for (int i = 0; i < n.output_size(); ++i) {
         // skip type and shape propagation for missing optional outputs.
         if (!n.output(i).empty())
-          updateType(n.output(i), ctx.getOutputType(i));
+          UpdateType(n.output(i), ctx.getOutputType(i));
       }
 
       preprocess(n);
@@ -529,13 +549,13 @@ class ShapeInferenceImplBase {
       TraverseGraphsToAddExistingSymbols(graph, *symbol_table);
     }
     for (auto& vi : *graph.mutable_value_info()) {
-      updateType(vi);
+      UpdateType(vi);
     }
     for (auto& vi : *graph.mutable_input()) {
-      updateType(vi);
+      UpdateType(vi);
     }
     for (auto& vi : *graph.mutable_output()) {
-      updateType(vi);
+      UpdateType(vi);
     }
     for (const auto& tp : graph.initializer()) {
       TypeProto initializer_type;
@@ -639,7 +659,7 @@ class ShapeInferenceImplBase {
 
  public:
   ShapeInferenceImplBase(
-      GraphProto* g_in,
+      GraphProto* graph, // nullptr for FunctionProto inference
       const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int>& opset_imports_in,
       const ShapeInferenceOptions& options_in,
@@ -649,7 +669,7 @@ class ShapeInferenceImplBase {
       DataValueMap* generated_shape_data_by_name_in = nullptr,
       const int ir_version_in = IR_VERSION // default the latest one
       )
-      : g(*g_in),
+      : inferred_types(graph),
         value_types_by_name(outer_scope_value_types_by_name_in),
         opset_imports(opset_imports_in),
         options(options_in),
@@ -692,7 +712,7 @@ class ShapeInferenceImplBase {
   }
 
  private:
-  GraphProto& g;
+  InferredTypes inferred_types;
   std::unordered_map<std::string, TypeProto*> value_types_by_name;
   const std::unordered_map<std::string, int>& opset_imports;
 
@@ -823,6 +843,8 @@ void InferShapes(
   }
 }
 
+
+
 // Infer shape for functions
 void InferShapeForFunctionNode(
     const FunctionProto& func_proto,
@@ -833,9 +855,9 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
     SymbolTable* symbol_table,
     DataValueMap* generated_shape_data_by_name) {
-  GraphProto g;
+
   ShapeInferenceImplBase base(
-      &g,
+      nullptr, // no graph
       {}, // outer_scope_value_types_by_name
       func_opset_imports,
       options,
@@ -954,9 +976,8 @@ std::vector<TypeProto> InferFunctionOutputTypes(
   ShapeInferenceOptions options{true, 1, false};
   FunctionInferenceContext ctx(function_proto, input_types, attributes, options);
   auto opset_imports = GetOpsetImportsFromProto(function_proto);
-  GraphProto g;
   ShapeInferenceImplBase base(
-      &g,
+      nullptr, // no graph
       {}, // outer_scope_value_types_by_name
       opset_imports,
       options,
