@@ -285,6 +285,44 @@ private:
   GraphProto* graph_ptr;
 };
 
+// Initialize a DataValueMap for a called function from the DataValueMap of the caller
+void BindValuesOnCall(
+    const DataValueMap& caller_map,
+    const NodeProto& caller,
+    DataValueMap& callee_map,
+    const FunctionProto& callee) {
+  auto num_inputs = (std::min)(caller.input_size(), callee.input_size());
+  for (int i = 0; i < num_inputs; ++i) {
+    const std::string& actual = caller.input(i);
+    const std::string& formal = callee.input(i);
+    if (!actual.empty()) {
+      auto it = caller_map.find(actual);
+      if (it != caller_map.end()) {
+        callee_map[formal] = it->second;
+      }
+    }
+  }
+}
+
+// Update a DataValueMap for a calling function from the DataValueMap of the callee
+void BindValuesOnReturn(
+    const DataValueMap& callee_map,
+    const FunctionProto& callee,
+    DataValueMap& caller_map,
+    const NodeProto& caller) {
+  auto num_outputs = (std::min)(caller.output_size(), callee.output_size());
+  for (int i = 0; i < num_outputs; ++i) {
+    const std::string& actual = caller.output(i);
+    const std::string& formal = callee.output(i);
+    if (!actual.empty()) {
+      auto it = callee_map.find(formal);
+      if (it != callee_map.end()) {
+        caller_map[actual] = it->second;
+      }
+    }
+  }
+}
+
 class ShapeInferenceImplBase {
  public:
   void UpdateType(const std::string& name, TypeProto* inferred_type) {
@@ -376,53 +414,15 @@ class ShapeInferenceImplBase {
     }
   }
 
-  // Initialize a DataValueMap for a called function from the DataValueMap of the caller
-  void bindValuesOnCall(
-      const DataValueMap& caller_map,
-      const NodeProto& caller,
-      DataValueMap& callee_map,
-      const FunctionProto& callee) {
-    auto num_inputs = (std::min)(caller.input_size(), callee.input_size());
-    for (int i = 0; i < num_inputs; ++i) {
-      const std::string& actual = caller.input(i);
-      const std::string& formal = callee.input(i);
-      if (!actual.empty()) {
-        auto it = caller_map.find(actual);
-        if (it != caller_map.end()) {
-          callee_map[formal] = it->second;
-        }
-      }
-    }
-  }
-
-  // Update a DataValueMap for a calling function from the DataValueMap of the callee
-  void bindValuesOnReturn(
-      const DataValueMap& callee_map,
-      const FunctionProto& callee,
-      DataValueMap& caller_map,
-      const NodeProto& caller) {
-    auto num_outputs = (std::min)(caller.output_size(), callee.output_size());
-    for (int i = 0; i < num_outputs; ++i) {
-      const std::string& actual = caller.output(i);
-      const std::string& formal = callee.output(i);
-      if (!actual.empty()) {
-        auto it = callee_map.find(formal);
-        if (it != callee_map.end()) {
-          caller_map[actual] = it->second;
-        }
-      }
-    }
-  }
-
   void processCall(const NodeProto& caller, const FunctionProto& callee, InferenceContext& ctx) {
     DataValueMap callee_value_map;
     if (generated_shape_data_by_name != nullptr) {
-      bindValuesOnCall(*generated_shape_data_by_name, caller, callee_value_map, callee);
+      BindValuesOnCall(*generated_shape_data_by_name, caller, callee_value_map, callee);
     }
     InferShapeForFunctionNode(
         callee, schema_registry, ctx, options, model_local_functions_map, symbol_table, &callee_value_map);
     if (generated_shape_data_by_name != nullptr) {
-      bindValuesOnReturn(callee_value_map, callee, *generated_shape_data_by_name, caller);
+      BindValuesOnReturn(callee_value_map, callee, *generated_shape_data_by_name, caller);
     }
   }
 
