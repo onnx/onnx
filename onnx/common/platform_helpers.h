@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace ONNX_NAMESPACE {
 
 // Determine if the processor is little endian or not
