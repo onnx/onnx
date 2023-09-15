@@ -10,6 +10,7 @@ from os import getenv
 
 import numpy as np  # type: ignore
 from numpy.testing import assert_allclose  # type: ignore
+from parameterized import parameterized
 
 from onnx import ONNX_ML, TensorProto, TypeProto, ValueInfoProto
 from onnx.checker import check_model
@@ -757,7 +758,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
     @staticmethod
     def _get_test_tree_ensemble_regressor(
-        aggregate_function, rule="BRANCH_LEQ", unique_targets=False
+        aggregate_function, rule="BRANCH_LEQ", unique_targets=False, base_values=None
     ):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -786,6 +787,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             domain="ai.onnx.ml",
             n_targets=1,
             aggregate_function=aggregate_function,
+            base_values=base_values,
             nodes_falsenodeids=[4, 3, 0, 0, 0, 2, 0, 4, 0, 0],
             nodes_featureids=[0, 2, 0, 0, 0, 0, 0, 2, 0, 0],
             nodes_hitrates=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
@@ -829,7 +831,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         return onx
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_tree_ensemble_regressor(self):
+    @parameterized.expand(
+        [
+            (f"{agg}_{base_values}", base_values, agg)
+            for base_values in (None, [1.0])
+            for agg in ("SUM", "AVERAGE", "MIN", "MAX")
+        ]
+    )
+    def test_tree_ensemble_regressor(self, name, base_values, agg):
+        del name  # variable only used to print test name
         x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
         expected_agg = {
             "SUM": np.array([[0.576923], [0.576923], [0.576923]], dtype=np.float32),
@@ -837,14 +847,16 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "MIN": np.array([[0.076923], [0.076923], [0.076923]], dtype=np.float32),
             "MAX": np.array([[0.5], [0.5], [0.5]], dtype=np.float32),
         }
-        for agg in ("SUM", "AVERAGE", "MIN", "MAX"):
-            expected = expected_agg[agg]
-            with self.subTest(aggregate_function=agg):
-                onx = self._get_test_tree_ensemble_regressor(agg)
-                self._check_ort(onx, {"X": x}, equal=True)
-                sess = ReferenceEvaluator(onx)
-                got = sess.run(None, {"X": x})
-                assert_allclose(expected, got[0], atol=1e-6)
+
+        expected = expected_agg[agg]
+        if base_values is not None:
+            expected += base_values[0]
+        with self.subTest(aggregate_function=agg):
+            onx = self._get_test_tree_ensemble_regressor(agg, base_values=base_values)
+            self._check_ort(onx, {"X": x}, equal=True)
+            sess = ReferenceEvaluator(onx)
+            got = sess.run(None, {"X": x})
+            assert_allclose(expected, got[0], atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_rule(self):
