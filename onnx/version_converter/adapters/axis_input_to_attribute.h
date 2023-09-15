@@ -38,7 +38,8 @@ class AxisInputToAttribute : public Adapter {
             raw_data.size() != 0 && raw_data.size() % 8 == 0,
             "Raw Data must be non-empty and size must be a multiple of 8");
         int64_t* raw = (int64_t*)const_cast<char*>(raw_data.c_str());
-        node->i_(kaxis, static_cast<int64_t>(raw);
+        // FIXME(justinchuby): Make sure this logic is correct
+        node->i_(kaxis, static_cast<int64_t>(raw[0]));
       } else {
         node->i_(kaxis, static_cast<int64_t>(int64s.at(0)));
       }
@@ -51,7 +52,7 @@ class AxisInputToAttribute : public Adapter {
       // Get Value name, find Initializer with same name
       for (const auto& initializer : graph->initializers()) {
         if (initializer.name() == inputs[1]->uniqueName()) {
-          node->i_(kaxis, static_cast<int64_t>(initializer.int64s().at(0))));
+          node->i_(kaxis, static_cast<int64_t>(initializer.int64s().at(0)));
           node->removeInput(1);
           // Remove initializer
           if (const_val->uses().size() < 1)

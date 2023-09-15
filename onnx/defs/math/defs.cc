@@ -1069,11 +1069,74 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyClip)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+std::function<void(OpSchema&)>
+SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {
+  return [=](OpSchema& schema) {
+    std::string doc;
+    POPULATE_OP_DOC_STR(doc = R"DOC(
+The operator computes the {description} values for the given input:
+
+ {equation}
+
+The "axis" attribute indicates the dimension along which {name}
+will be performed. The output tensor has the same shape
+and contains the {name} values of the corresponding input.
+)DOC";
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{description}", description);
+                        ReplaceAll(doc, "{equation}", equation););
+    std::string axis_attr;
+    POPULATE_OP_DOC_STR(axis_attr = R"DOC(
+Describes the dimension {name} will be performed on.
+Negative value means counting dimensions
+from the back. Accepted range is [-r, r-1] where r = rank(input).
+)DOC";
+                        ReplaceAll(axis_attr, "{name}", name););
+    schema.SetDoc(doc);
+    schema.Attr("axis", axis_attr, AttributeProto::INT, static_cast<int64_t>(-1));
+    schema.Input(
+        0, "input", "The input tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
+    schema.Output(
+        0,
+        "output",
+        "The output values with the same shape as the input tensor.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::Differentiable);
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+        "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // Type inference
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+      // Shape inference starts
+      if (!hasNInputShapes(ctx, 1)) {
+        return;
+      }
+
+      // Validate the value of 'axis'
+      const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      int r = input_shape.dim_size();
+      int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+      if (axis < -r || axis >= r) {
+        fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis);
+      }
+
+      // Shape inference
+      propagateShapeFromInputToOutput(ctx, 0, 0);
+    });
+  };
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Softmax,
     13,
     OpSchema()
-        .FillUsing(ONNX_NAMESPACE::defs::math::utils::SoftmaxFamilyDocGenerator(
+        .FillUsing(SoftmaxFamilyDocGenerator(
             "Softmax",
             "normalized exponential",
             "Softmax(input, axis) = Exp(input) / ReduceSum(Exp(input), axis=axis, keepdims=1) "))
@@ -1119,7 +1182,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     LogSoftmax,
     13,
     OpSchema()
-        .FillUsing(ONNX_NAMESPACE::defs::math::utils::SoftmaxFamilyDocGenerator(
+        .FillUsing(SoftmaxFamilyDocGenerator(
             "LogSoftmax",
             "log of softmax",
             "LogSoftmax(input, axis) = Log(Softmax(input, axis=axis))"))
@@ -1163,7 +1226,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     Hardmax,
     13,
-    OpSchema().FillUsing(ONNX_NAMESPACE::defs::math::utils::SoftmaxFamilyDocGenerator(
+    OpSchema().FillUsing(SoftmaxFamilyDocGenerator(
         "Hardmax",
         "hardmax",
         "Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise")));
@@ -2922,7 +2985,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* DFT_ver20_doc =
-  R"DOC(Computes the discrete Fourier Transform (DFT) of the input.
+    R"DOC(Computes the discrete Fourier Transform (DFT) of the input.
 
 Assuming the input has shape `[M, N]`, where `N` is the dimension over which the
 DFT is computed and `M` denotes the conceptual "all other dimensions",
@@ -3039,7 +3102,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis_tensor->dims_size() != 0) {
             fail_shape_inference("axis input must be a scalar.");
           }
-          const int64_t axis = ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(axis_tensor);
+          const int64_t axis = GetScalarValueFromTensor<int64_t>(axis_tensor);
           const int64_t rank = input_shape.dim_size();
 
           if (!(-rank <= axis && axis < rank)) {
@@ -3061,7 +3124,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (dft_length->dims_size() != 0) {
               fail_shape_inference("dft_length input must be a scalar.");
             }
-            auto dft_length_value = ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
+            auto dft_length_value = GetScalarValueFromTensor<int64_t>(dft_length);
             result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);
           }
 
@@ -3145,7 +3208,7 @@ Generates a {name} window as described in the paper https://ieeexplore.ieee.org/
         fail_shape_inference("size input must be a scalar.");
       }
 
-      auto size_value = ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(size);
+      auto size_value = GetScalarValueFromTensor<int64_t>(size);
       if (size_value <= 0) {
         fail_shape_inference("size input must be greater than 0.");
       }
@@ -3375,12 +3438,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (num_mel_bins->dims_size() != 0) {
             fail_shape_inference("num_mel_bins input must be scalar.");
           }
-          num_mel_bins_value = ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(num_mel_bins);
+          num_mel_bins_value = GetScalarValueFromTensor<int64_t>(num_mel_bins);
 
           if (dft_length->dims_size() != 0) {
             fail_shape_inference("dft_length input must be scalar.");
           }
-          dft_length_value = ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
+          dft_length_value = GetScalarValueFromTensor<int64_t>(dft_length);
 
           if (num_mel_bins_value > 0 && dft_length_value > 0) {
             ONNX_NAMESPACE::TensorShapeProto result_shape;
@@ -3492,7 +3555,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr == frame_step) {
             return;
           }
-          auto frame_step_value = ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
+          auto frame_step_value = GetScalarValueFromTensor<int64_t>(frame_step);
 
           // Determine the size of the DFT based on the 2 optional inputs window and frame_length.
           // One must be set.
@@ -3522,8 +3585,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (frame_length->dims_size() != 0) {
               fail_shape_inference("frame_length input must be scalar.");
             }
-            auto frame_length_value =
-                ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
+            auto frame_length_value = GetScalarValueFromTensor<int64_t>(frame_length);
 
             // Ensure that the window length and the dft_length match.
             if (window_shape->dim_size() != 1) {
@@ -3554,7 +3616,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (frame_length->dims_size() != 0) {
               fail_shape_inference("frame_length input must be scalar.");
             }
-            dft_size = ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
+            dft_size = GetScalarValueFromTensor<int64_t>(frame_length);
           }
 
           bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));

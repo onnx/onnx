@@ -3069,7 +3069,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (dft_length->dims_size() != 0) {
               fail_shape_inference("dft_length input must be a scalar.");
             }
-            auto dft_length_value = ONNX_NAMESPACE::defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
+            auto dft_length_value = GetScalarValueFromTensor<int64_t>(dft_length);
             result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);
           }
           // When DFT is onesided, the output shape is half the size of the input shape
