@@ -8,5 +8,5 @@
 
 namespace ONNX_NAMESPACE {
 template <typename T>
-T GetScalarValueFromTensor(const TensorProto* t);
+T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t);
 } // namespace ONNX_NAMESPACE

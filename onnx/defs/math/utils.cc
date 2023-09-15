@@ -11,20 +11,20 @@
 
 namespace ONNX_NAMESPACE {
 template <typename T>
-T GetScalarValueFromTensor(const TensorProto* t) {
+T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
   if (t == nullptr) {
     return T{};
   }
 
   auto data_type = t->data_type();
   switch (data_type) {
-    case TensorProto::FLOAT:
+    case ONNX_NAMESPACE::TensorProto::FLOAT:
       return static_cast<T>(ONNX_NAMESPACE::ParseData<float>(t).at(0));
-    case TensorProto::DOUBLE:
+    case ONNX_NAMESPACE::TensorProto::DOUBLE:
       return static_cast<T>(ONNX_NAMESPACE::ParseData<double>(t).at(0));
-    case TensorProto::INT32:
+    case ONNX_NAMESPACE::TensorProto::INT32:
       return static_cast<T>(ONNX_NAMESPACE::ParseData<int32_t>(t).at(0));
-    case TensorProto::INT64:
+    case ONNX_NAMESPACE::TensorProto::INT64:
       return static_cast<T>(ONNX_NAMESPACE::ParseData<int64_t>(t).at(0));
     default:
       fail_shape_inference("Unsupported input data type of ", data_type);
