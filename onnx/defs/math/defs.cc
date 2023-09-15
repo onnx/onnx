@@ -2921,7 +2921,25 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* DFT_ver20_doc = R"DOC(Computes the discrete Fourier transform of the input.)DOC";
+static const char* DFT_ver20_doc =
+  R"DOC(Computes the discrete Fourier Transform (DFT) of the input.
+
+Assuming the input has shape `[M, N]`, where `N` is the dimension over which the
+DFT is computed and `M` denotes the conceptual "all other dimensions",
+the DFT `y[m, k]` of of shape `[M, N]` is defined as
+
+$$y[k] = \sum_{n=0}^{N-1} e^{-2 \pi j \frac{k n}{N} } x[n] \, ,$$
+
+and the inverse transform is defined as
+
+$$x[n] = \frac{1}{N} \sum_{k=0}^{N-1} e^{2 \pi j \frac{k n}{N} } y[k] \, ,$$
+
+where $j$ is the imaginary unit.
+
+The actual shape of the output is specified in the "output" section.
+
+Reference: https://docs.scipy.org/doc/scipy/tutorial/fft.html
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     DFT,
@@ -2930,18 +2948,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(DFT_ver20_doc)
         .Attr(
             "onesided",
-            "If `onesided` is `1`, only values for `w` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are returned because "
-            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, w] = X[m, n_fft-w]*`, "
+            "If `onesided` is `1` and input is real, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are returned because "
+            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, "
             "where `m` denotes \"all other dimensions\" DFT was not applied on. "
-            "Note if the input or window tensors are complex, then onesided output is not possible. "
-            "Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). "
-            "When invoked with real or complex valued input, the default value is `0`. "
-            "Value can be `0` or `1`.",
+            "If the input tensor is complex, onesided output is not possible. "
+            "Value can be `0` or `1`. Default is `0`.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
             "inverse",
-            "Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to `false`.",
+            "Whether to perform the inverse discrete Fourier Transform. Default is 0, which corresponds to `false`.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
@@ -2958,7 +2974,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "axis",
-            "The axis as a scalar on which to perform the DFT. By default this value is set to `-1` (last axis). "
+            "The axis as a scalar on which to perform the DFT. Default is `-1` (last axis). "
             "Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. ",
             "tensor(int64)",
             OpSchema::Optional,
@@ -2970,8 +2986,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "dft_length",
             "The length of the signal as a scalar. "
             "If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. "
-            "If less than the axis dimension, only the first `dft_length` values will be used as the signal. "
-            "It's an optional value. ",
+            "If less than the axis dimension, only the first `dft_length` values will be used as the signal. ",
             "T2",
             OpSchema::Optional,
             true,
