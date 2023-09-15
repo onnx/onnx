@@ -259,7 +259,7 @@ std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const
 // but FunctionProto does not have a place to store inferred types. So, we
 // use a temporary vector (for the duration of inference) to store these.
 class InferredTypes {
-public:
+ public:
   InferredTypes(GraphProto* graph = nullptr) : graph_ptr(graph) {}
 
   TypeProto* Add(const std::string& var_name, const TypeProto& type) {
@@ -280,7 +280,8 @@ public:
       delete p;
     }
   }
-private:
+
+ private:
   std::vector<TypeProto*> types;
   GraphProto* graph_ptr;
 };
@@ -341,7 +342,7 @@ class ShapeInferenceImplBase {
     if (iter != value_types_by_name.end()) {
       mergeShapesAndTypes(*inferred_type, iter->second);
     } else {
-      value_types_by_name[name] = inferred_types.Add(name, *inferred_type); 
+      value_types_by_name[name] = inferred_types.Add(name, *inferred_type);
       // For undefined output type, update both value_info and output for now
       // Update existing output with undefined type: assign inferred type to it
       iter = undefined_value_types_by_name.find(name);
@@ -470,19 +471,17 @@ class ShapeInferenceImplBase {
         if (iter != model_local_functions_map.end()) {
           ProcessCall(n, *(iter->second), ctx);
         } else {
-          has_unsupported_op = true;
-          return;
+          fail_type_inference("Unknown operator/function: '", n.op_type(), "' in domain: '", n.domain(), "'.");
         }
       } else {
-        has_unsupported_op = true;
-        return;
+        fail_type_inference("Unknown operator/function: '", n.op_type(), "' in domain: '", n.domain(), "'.");
       }
     }
     ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         // onnx does not support unsupported/experimental operators
         // so it won't consider it as an error
-        if (!has_unsupported_op && !has_experimental_op) {
+        if (!has_experimental_op) {
           inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
         }
       });
@@ -730,7 +729,6 @@ class ShapeInferenceImplBase {
   std::unordered_map<std::string, const SparseTensorProto*> input_sparse_data_by_name;
 
   bool has_experimental_op = false;
-  bool has_unsupported_op = false;
 
   std::vector<std::string> inference_errors;
 
@@ -843,8 +841,6 @@ void InferShapes(
   }
 }
 
-
-
 // Infer shape for functions
 void InferShapeForFunctionNode(
     const FunctionProto& func_proto,
@@ -855,7 +851,6 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
     SymbolTable* symbol_table,
     DataValueMap* generated_shape_data_by_name) {
-
   ShapeInferenceImplBase base(
       nullptr, // no graph
       {}, // outer_scope_value_types_by_name
