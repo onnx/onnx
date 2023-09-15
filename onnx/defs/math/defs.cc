@@ -2988,14 +2988,14 @@ static const char* DFT_ver20_doc =
     R"DOC(Computes the discrete Fourier Transform (DFT) of the input.
 
 Assuming the input has shape `[M, N]`, where `N` is the dimension over which the
-DFT is computed and `M` denotes the conceptual "all other dimensions",
+DFT is computed and `M` denotes the conceptual "all other dimensions,"
 the DFT `y[m, k]` of of shape `[M, N]` is defined as
 
-$$y[k] = \sum_{n=0}^{N-1} e^{-2 \pi j \frac{k n}{N} } x[n] \, ,$$
+$$y[k] = \sum_{n=0}^{N-1} e^{-2 \pi j \frac{k n}{N} } x[n] ,$$
 
 and the inverse transform is defined as
 
-$$x[n] = \frac{1}{N} \sum_{k=0}^{N-1} e^{2 \pi j \frac{k n}{N} } y[k] \, ,$$
+$$x[n] = \frac{1}{N} \sum_{k=0}^{N-1} e^{2 \pi j \frac{k n}{N} } y[k] ,$$
 
 where $j$ is the imaginary unit.
 
