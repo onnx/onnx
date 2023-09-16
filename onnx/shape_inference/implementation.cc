@@ -367,9 +367,7 @@ class ShapeInferenceImplBase {
   }
 
   void ProcessConstant(const NodeProto& n) {
-    if (checker::check_is_experimental_op(n)) {
-      has_experimental_op = true;
-    } else if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
+    if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
       const std::string& output_name = n.output(0);
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {
@@ -464,6 +462,7 @@ class ShapeInferenceImplBase {
           ProcessCall(n, *(schema->GetFunction()), ctx);
         } else {
           // Continue with inference for remaining nodes
+          // TODO: fix this
           return;
         }
       } else if (model_local_functions_map.size() > 0) {
@@ -471,19 +470,17 @@ class ShapeInferenceImplBase {
         if (iter != model_local_functions_map.end()) {
           ProcessCall(n, *(iter->second), ctx);
         } else {
-          fail_type_inference("Unknown operator/function: '", n.op_type(), "' in domain: '", n.domain(), "'.");
+          if (! checker::check_is_experimental_op(n))
+            fail_type_inference("Unknown operator/function: '", n.op_type(), "' in domain: '", n.domain(), "'.");
         }
       } else {
-        fail_type_inference("Unknown operator/function: '", n.op_type(), "' in domain: '", n.domain(), "'.");
+        if (! checker::check_is_experimental_op(n))
+          fail_type_inference("Unknown operator/function: '", n.op_type(), "' in domain: '", n.domain(), "'.");
       }
     }
     ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
-        // onnx does not support unsupported/experimental operators
-        // so it won't consider it as an error
-        if (!has_experimental_op) {
-          inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
-        }
+        inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
       });
       // Continue with inference for remaining nodes
       return;
