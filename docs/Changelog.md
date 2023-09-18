@@ -23995,13 +23995,13 @@ This version of the operator has been available since version 20 of the default 
 
   Assuming the input has shape `[M, N]`, where `N` is the dimension over which the
   DFT is computed and `M` denotes the conceptual "all other dimensions,"
-  the DFT `y[m, k]` of of shape `[M, N]` is defined as
+  the DFT `y[m, k]` of shape `[M, N]` is defined as
 
-  $$y[k] = \sum_{n=0}^{N-1} e^{-2 \pi j \frac{k n}{N} } x[n] ,$$
+  $$y[m, k] = \sum_{n=0}^{N-1} e^{-2 \pi j \frac{k n}{N} } x[m, n] ,$$
 
   and the inverse transform is defined as
 
-  $$x[n] = \frac{1}{N} \sum_{k=0}^{N-1} e^{2 \pi j \frac{k n}{N} } y[k] ,$$
+  $$x[m, n] = \frac{1}{N} \sum_{k=0}^{N-1} e^{2 \pi j \frac{k n}{N} } y[m, k] ,$$
 
   where $j$ is the imaginary unit.
 
