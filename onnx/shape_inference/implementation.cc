@@ -55,6 +55,14 @@ std::string GetElemTypeString(const TypeProto_Tensor& type) {
   }
 #endif
   return ONNX_NAMESPACE::to_string(type.elem_type());
+
+  void UnknownOpError(const NodeProto& nodeProto) {
+    if (checker::check_is_experimental_op(nodeProto)) {
+      fail_type_inference("Experimental operator '", nodeProto.op_type(), "' no longer upported.");
+    }
+    fail_type_inference(
+        "Unknown operator/function: '", nodeProto.op_type(), "' in domain: '", nodeProto.domain(), "'.");
+  }
 }
 
 std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
@@ -470,18 +478,14 @@ class ShapeInferenceImplBase {
         if (iter != model_local_functions_map.end()) {
           ProcessCall(n, *(iter->second), ctx);
         } else {
-          if (! checker::check_is_experimental_op(n))
-            fail_type_inference("Unknown operator/function: '", n.op_type(), "' in domain: '", n.domain(), "'.");
+          UnknownOpError(n);
         }
       } else {
-        if (! checker::check_is_experimental_op(n))
-          fail_type_inference("Unknown operator/function: '", n.op_type(), "' in domain: '", n.domain(), "'.");
+        UnknownOpError(n);
       }
     }
     ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
-      ONNX_HANDLE_EXCEPTION([&]() {
-        inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
-      });
+      ONNX_HANDLE_EXCEPTION([&]() { inference_errors.push_back(GetErrorWithNodeInfo(n, ex)); });
       // Continue with inference for remaining nodes
       return;
     }
