@@ -55,14 +55,6 @@ std::string GetElemTypeString(const TypeProto_Tensor& type) {
   }
 #endif
   return ONNX_NAMESPACE::to_string(type.elem_type());
-
-  void UnknownOpError(const NodeProto& nodeProto) {
-    if (checker::check_is_experimental_op(nodeProto)) {
-      fail_type_inference("Experimental operator '", nodeProto.op_type(), "' no longer upported.");
-    }
-    fail_type_inference(
-        "Unknown operator/function: '", nodeProto.op_type(), "' in domain: '", nodeProto.domain(), "'.");
-  }
 }
 
 std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
@@ -77,6 +69,13 @@ std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
 
 inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
   return (IsOnnxDomain(node.domain()) && (node.op_type() == op_type));
+}
+
+void UnknownOpError(const NodeProto& nodeProto) {
+  if (checker::check_is_experimental_op(nodeProto)) {
+    fail_type_inference("Experimental operator '", nodeProto.op_type(), "' no longer upported.");
+  }
+  fail_type_inference("Unknown operator/function: '", nodeProto.op_type(), "' in domain: '", nodeProto.domain(), "'.");
 }
 } // namespace
 
@@ -473,6 +472,10 @@ class ShapeInferenceImplBase {
           // TODO: fix this
           return;
         }
+        // check type-constraints specified via type variables
+        if (options.check_type) {
+          schema->CheckInputOutputType(ctx);
+        }
       } else if (model_local_functions_map.size() > 0) {
         auto iter = model_local_functions_map.find(GetModelLocalFunctionsMapIdentifier(n.domain(), n.op_type()));
         if (iter != model_local_functions_map.end()) {
@@ -483,28 +486,15 @@ class ShapeInferenceImplBase {
       } else {
         UnknownOpError(n);
       }
-    }
-    ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
-      ONNX_HANDLE_EXCEPTION([&]() { inference_errors.push_back(GetErrorWithNodeInfo(n, ex)); });
-      // Continue with inference for remaining nodes
-      return;
-    }
-
-    ONNX_TRY {
-      // check the type-equality for input and output
-      if (options.check_type && schema) {
-        schema->CheckInputOutputType(ctx);
-      }
-
       for (int i = 0; i < n.output_size(); ++i) {
         // skip type and shape propagation for missing optional outputs.
         if (!n.output(i).empty())
           UpdateType(n.output(i), ctx.getOutputType(i));
       }
-
+      // Constant values are tracked to improve inference/checking for subsequent nodes.
       ProcessConstant(n);
-
-      // If data propagation is enabled, propagate shape data if it exists.
+      // If data-propagation is enabled, partial-evaluation (aka data-propagation) is performed
+      // to improve inference/checking for subsequent nodes.
       if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
         if (generated_shape_data_by_name == nullptr) {
           fail_shape_inference(
@@ -515,7 +505,11 @@ class ShapeInferenceImplBase {
         schema->GetDataPropagationFunction()(data_propagation_ctx);
       }
     }
+    ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
+      ONNX_HANDLE_EXCEPTION([&]() { inference_errors.push_back(GetErrorWithNodeInfo(n, ex)); });
+    }
     ONNX_CATCH(const std::runtime_error& err) {
+      // TODO: Fix this. Unclear if this should be remapped to a shape inference error.
       ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)); });
     }
   }
