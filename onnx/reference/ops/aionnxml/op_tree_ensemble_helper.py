@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0911,R0913,R0914,W0221
+
 
 import numpy as np
 
@@ -29,7 +29,7 @@ class TreeEnsembleAttributes:
         rows = ["Attributes"]
         for name in self._names:
             if name.endswith("_as_tensor"):
-                name = name.replace("_as_tensor", "")
+                name = name.replace("_as_tensor", "")  # noqa: PLW2901
             rows.append(f"  {name}={getattr(self, name)}")
         return "\n".join(rows)
 

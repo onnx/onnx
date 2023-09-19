@@ -13,6 +13,8 @@ import config
 import onnx
 from onnx import hub, version_converter
 
+MIN_SHAPE_INFERENCE_OPSET = 4
+
 
 def skip_model(error_message: str, skip_list: List[str], model_name: str):
     print(error_message)
@@ -45,7 +47,7 @@ def main():
         try:
             model = hub.load(model_name)
             # 1) Test onnx checker and shape inference
-            if model.opset_import[0].version < 4:
+            if model.opset_import[0].version < MIN_SHAPE_INFERENCE_OPSET:
                 # Ancient opset version does not have defined shape inference function
                 onnx.checker.check_model(model)
                 print(f"[PASS]: {model_name} is checked by onnx checker. ")
