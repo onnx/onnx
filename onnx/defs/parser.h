@@ -376,6 +376,8 @@ class ParserBase {
   const char* next_;
   const char* end_;
   const char* saved_pos_;
+
+  bool NextIsValidFloatString();
 };
 
 class OnnxParser : public ParserBase {
@@ -438,8 +440,6 @@ class OnnxParser : public ParserBase {
   bool NextIsType();
 
   bool NextIsIdentifier();
-
-  bool NextIsValidFloatString();
 };
 
 } // namespace ONNX_NAMESPACE

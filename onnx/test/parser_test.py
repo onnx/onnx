@@ -220,19 +220,21 @@ class TestBasicFunctions(unittest.TestCase):
 
     @parameterized.expand(
         [
-            (
-                "not_a_good_float",
-                onnx.AttributeProto.GRAPH,
-            ),  # Not a good float value, but shouldn't blow up the parser.
-            ("inf", onnx.AttributeProto.FLOAT),
-            ("-inf", onnx.AttributeProto.FLOAT),
-            ("infinity", onnx.AttributeProto.FLOAT),
-            ("-infinity", onnx.AttributeProto.FLOAT),
-            ("nan", onnx.AttributeProto.FLOAT),
-            ("-NaN", onnx.AttributeProto.FLOAT),
+            ("not_a_good_float", True),
+            ("inf1", True),
+            ("-inf1", True),
+            ("nan0", True),
+            ("-nan0", True),
+            ("naninf", True),
+            ("inf", False),
+            ("-inf", False),
+            ("infinity", False),
+            ("-infinity", False),
+            ("nan", False),
+            ("-NaN", False),
         ]
     )
-    def test_parse_various_float_values(self, test_literal, expected_attribute_type):
+    def test_parse_various_float_values(self, test_literal, expect_exception):
         model_text = f"""
         <
         ir_version: 8,
@@ -245,15 +247,21 @@ class TestBasicFunctions(unittest.TestCase):
         tmp = Constant <value_float = {test_literal}>()
         }}
         """
-        model = onnx.parser.parse_model(model_text)
-        self.assertEqual(model.ir_version, 8)
-        self.assertEqual(model.producer_name, "FunctionProtoTest")
-        self.assertEqual(model.producer_version, "1.0")
-        self.assertEqual(len(model.graph.node), 1)
-        self.assertEqual(len(model.graph.node[0].attribute), 1)
-        self.assertEqual(model.graph.node[0].attribute[0].name, "value_float")
-        self.assertEqual(model.graph.node[0].attribute[0].type, expected_attribute_type)
-        if expected_attribute_type == onnx.AttributeProto.FLOAT:
+        if expect_exception:
+            self.assertRaises(
+                onnx.parser.ParseError, lambda: onnx.parser.parse_model(model_text)
+            )
+        else:
+            model = onnx.parser.parse_model(model_text)
+            self.assertEqual(model.ir_version, 8)
+            self.assertEqual(model.producer_name, "FunctionProtoTest")
+            self.assertEqual(model.producer_version, "1.0")
+            self.assertEqual(len(model.graph.node), 1)
+            self.assertEqual(len(model.graph.node[0].attribute), 1)
+            self.assertEqual(model.graph.node[0].attribute[0].name, "value_float")
+            self.assertEqual(
+                model.graph.node[0].attribute[0].type, onnx.AttributeProto.FLOAT
+            )
             self.assertEqual(
                 str(model.graph.node[0].attribute[0].f), str(float(test_literal))
             )
