@@ -40,7 +40,7 @@ class SymbolTableImpl : public SymbolTable {
   }
   // Creates a new unique symbol with the given prefix and adds it to the SymbolTable
   // Returns the newly created symbol
-  std::string createNewImpl(const std::string& symbol_prefix) override {
+  std::string createNew(const std::string& symbol_prefix) override {
     std::string newSymbol;
     do {
       newSymbol = symbol_prefix + std::to_string(index_++);
