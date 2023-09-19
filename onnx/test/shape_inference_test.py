@@ -8523,6 +8523,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                     ("reals_axis_1_onesided", (3, 5, 10, 1), 1, 1, 0, (3, 3, 10, 2)),
                     ("reals_axis_2_onesided", (3, 5, 10, 1), 2, 1, 0, (3, 5, 6, 2)),
                     ("reals_axis_neg_onesided", (3, 5, 10, 1), -1, 1, 0, (3, 5, 6, 2)),
+                    ("complex_default_axis", (2, 5, 2), None, None, None, (2, 5, 2)),
+                    ("complex_onesided", (2, 5, 2), 1, 1, None, (2, 3, 2)),
+                    ("real_inverse", (2, 5, 1), 1, None, 1, (2, 5, 2)),
+                    ("complex_inverse", (2, 5, 2), 1, None, 1, (2, 5, 2)),
                 ),
             )
         ]
@@ -8565,7 +8569,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 value_infos = [make_tensor_value_info("axis", TensorProto.INT64, ())]
             else:
                 nodes = [
-                    make_node("DFT", ["input", "", "axis"], ["output"], **attributes),
+                    make_node("DFT", ["input", "", ""], ["output"], **attributes),
                 ]
                 value_infos = []
 
@@ -8581,7 +8585,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                         "input",
                         TensorProto.FLOAT,
                         input_shape,
-                        np.random.rand(*input_shape).flatten(),
+                        np.ones(input_shape, dtype=np.float32).flatten(),
                     ),
                 ),
                 *nodes,
@@ -8598,22 +8602,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    @parameterized.expand(all_versions_for("DFT"))
-    def test_dft_complex(self, _: str, version: int) -> None:
-        if version < 20:
-            nodes = [make_node("DFT", ["input", ""], ["output"])]
-            value_infos = []
-        else:
-            nodes = [
-                make_node(
-                    "Constant",
-                    [],
-                    ["axis"],
-                    value=make_tensor("axis", TensorProto.INT64, (), (1,)),
-                ),
-                make_node("DFT", ["input", "", "axis"], ["output"]),
-            ]
-            value_infos = [make_tensor_value_info("axis", TensorProto.INT64, ())]
+    def test_dft_real_onesided_default_axis_opset17(self) -> None:
+        # Opset 17 sets default axis to be 1.
         graph = self._make_graph(
             [],
             [
@@ -8624,40 +8614,25 @@ class TestShapeInference(TestShapeInferenceHelper):
                     value=make_tensor(
                         "input",
                         TensorProto.FLOAT,
-                        (2, 5, 2),
-                        (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1),
+                        (2, 5, 5, 2),
+                        np.ones((2, 5, 5, 2), dtype=np.float32).flatten(),
                     ),
                 ),
-                *nodes,
+                make_node("DFT", ["input", ""], ["output"], onesided=1),
             ],
             [],
         )
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 2)),
-                *value_infos,
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 5, 2)),
+                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 5, 2)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
             ],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)],
         )
 
-    @parameterized.expand(all_versions_for("DFT"))
-    def test_dft_reals_onesided(self, _: str, version: int) -> None:
-        if version < 20:
-            nodes = [make_node("DFT", ["input", ""], ["output"], onesided=1)]
-            value_infos = []
-        else:
-            nodes = [
-                make_node(
-                    "Constant",
-                    [],
-                    ["axis"],
-                    value=make_tensor("axis", TensorProto.INT64, (), (1,)),
-                ),
-                make_node("DFT", ["input", "", "axis"], ["output"], onesided=1),
-            ]
-            value_infos = [make_tensor_value_info("axis", TensorProto.INT64, ())]
+    def test_dft_real_onesided_default_axis_opset20(self) -> None:
+        # Opset 20 sets default axis to be -1.
         graph = self._make_graph(
             [],
             [
@@ -8668,132 +8643,21 @@ class TestShapeInference(TestShapeInferenceHelper):
                     value=make_tensor(
                         "input",
                         TensorProto.FLOAT,
-                        (2, 5, 1),
-                        (0, 0, 0, 0, 0, 1, 1, 1, 1, 1),
+                        (2, 5, 5, 2),
+                        np.ones((2, 5, 5, 2), dtype=np.float32).flatten(),
                     ),
                 ),
-                *nodes,
+                make_node("DFT", ["input", "", ""], ["output"], onesided=1),
             ],
             [],
         )
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 1)),
-                *value_infos,
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 2)),
+                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 5, 2)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 5, 3, 2)),
             ],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
-
-    @parameterized.expand(all_versions_for("DFT"))
-    def test_dft_complex_onesided(self, _: str, version: int) -> None:
-        if version < 20:
-            nodes = [make_node("DFT", ["input", ""], ["output"], onesided=1)]
-            value_infos = []
-        else:
-            nodes = [
-                make_node(
-                    "Constant",
-                    [],
-                    ["axis"],
-                    value=make_tensor("axis", TensorProto.INT64, (), (1,)),
-                ),
-                make_node("DFT", ["input", "", "axis"], ["output"], onesided=1),
-            ]
-            value_infos = [make_tensor_value_info("axis", TensorProto.INT64, ())]
-        graph = self._make_graph(
-            [],
-            [
-                make_node(
-                    "Constant",
-                    [],
-                    ["input"],
-                    value=make_tensor(
-                        "input",
-                        TensorProto.FLOAT,
-                        (2, 5, 2),
-                        (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1),
-                    ),
-                ),
-                *nodes,
-            ],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [
-                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 2)),
-                *value_infos,
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 2)),
-            ],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
-
-    @parameterized.expand(all_versions_for("DFT"))
-    def test_dft_reals_inverse(self, _: str, version: int) -> None:
-        if version < 20:
-            nodes = [make_node("DFT", ["input", ""], ["output"], inverse=1)]
-        else:
-            nodes = [make_node("DFT", ["input", "", ""], ["output"], inverse=1)]
-        graph = self._make_graph(
-            [],
-            [
-                make_node(
-                    "Constant",
-                    [],
-                    ["input"],
-                    value=make_tensor(
-                        "input",
-                        TensorProto.FLOAT,
-                        (2, 5, 1),
-                        (0, 0, 0, 0, 0, 1, 1, 1, 1, 1),
-                    ),
-                ),
-                *nodes,
-            ],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [
-                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 1)),
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 5, 2)),
-            ],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
-
-    @parameterized.expand(all_versions_for("DFT"))
-    def test_dft_complex_inverse(self, _: str, version: int) -> None:
-        if version < 20:
-            nodes = [make_node("DFT", ["input", ""], ["output"], inverse=1)]
-        else:
-            nodes = [make_node("DFT", ["input", "", ""], ["output"], inverse=1)]
-        graph = self._make_graph(
-            [],
-            [
-                make_node(
-                    "Constant",
-                    [],
-                    ["input"],
-                    value=make_tensor(
-                        "input",
-                        TensorProto.FLOAT,
-                        (2, 5, 2),
-                        (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1),
-                    ),
-                ),
-                *nodes,
-            ],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [
-                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 2)),
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 5, 2)),
-            ],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 20)],
         )
 
     def test_stft_reals(self):
