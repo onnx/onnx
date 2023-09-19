@@ -33,7 +33,10 @@ class TestModelInference(unittest.TestCase):
             onnx.shape_inference.infer_shapes(model, True, True)
 
     def test_unknown_op(self):
-        """Test that model inference raises an error for an unknown op."""
+        """Test that model inference handles unknown ops.
+        This special treatment is to support custom ops.
+        See comments in shape inference code for details.
+        """
         model = """
             <ir_version: 7, opset_import: [ "" : 17]>
             agraph (float[N] x) => (y)
@@ -41,7 +44,9 @@ class TestModelInference(unittest.TestCase):
                 y = SomeUnknownOp (x)
             }
         """
-        self._check_inference_error(model)
+        # No output types are inferred for unknown ops.
+        # But ensure that the inference does not fail.
+        self._check(model)
 
     def test_mi_basic(self):
         """Test that model inference infers model output type."""

@@ -71,12 +71,6 @@ inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
   return (IsOnnxDomain(node.domain()) && (node.op_type() == op_type));
 }
 
-void UnknownOpError(const NodeProto& nodeProto) {
-  if (checker::check_is_experimental_op(nodeProto)) {
-    fail_type_inference("Experimental operator '", nodeProto.op_type(), "' no longer upported.");
-  }
-  fail_type_inference("Unknown operator/function: '", nodeProto.op_type(), "' in domain: '", nodeProto.domain(), "'.");
-}
 } // namespace
 
 template <class T>
@@ -481,32 +475,46 @@ class ShapeInferenceImplBase {
         if (iter != model_local_functions_map.end()) {
           ProcessCall(n, *(iter->second), ctx);
         } else {
-          UnknownOpError(n);
+          has_unsupported_op = true;
         }
       } else {
-        UnknownOpError(n);
+        has_unsupported_op = true;
       }
-      for (int i = 0; i < n.output_size(); ++i) {
-        // skip type and shape propagation for missing optional outputs.
-        if (!n.output(i).empty())
-          UpdateType(n.output(i), ctx.getOutputType(i));
-      }
-      // Constant values are tracked to improve inference/checking for subsequent nodes.
-      ProcessConstant(n);
-      // If data-propagation is enabled, partial-evaluation (aka data-propagation) is performed
-      // to improve inference/checking for subsequent nodes.
-      if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
-        if (generated_shape_data_by_name == nullptr) {
-          fail_shape_inference(
-              "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
+      if (!has_unsupported_op) {
+        for (int i = 0; i < n.output_size(); ++i) {
+          // skip type and shape propagation for missing optional outputs.
+          if (!n.output(i).empty())
+            UpdateType(n.output(i), ctx.getOutputType(i));
         }
-        DataPropagationContextImpl data_propagation_ctx(
-            n, value_types_by_name, input_data_by_name, *generated_shape_data_by_name);
-        schema->GetDataPropagationFunction()(data_propagation_ctx);
+        // Constant values are tracked to improve inference/checking for subsequent nodes.
+        ProcessConstant(n);
+        // If data-propagation is enabled, partial-evaluation (aka data-propagation) is performed
+        // to improve inference/checking for subsequent nodes.
+        if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
+          if (generated_shape_data_by_name == nullptr) {
+            fail_shape_inference(
+                "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
+          }
+          DataPropagationContextImpl data_propagation_ctx(
+              n, value_types_by_name, input_data_by_name, *generated_shape_data_by_name);
+          schema->GetDataPropagationFunction()(data_propagation_ctx);
+        }
       }
     }
     ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
-      ONNX_HANDLE_EXCEPTION([&]() { inference_errors.push_back(GetErrorWithNodeInfo(n, ex)); });
+      ONNX_HANDLE_EXCEPTION([&]() {
+        // Note: The following special handling is to accommodate custom-ops. Ideally, custom-ops
+        // should be registered with a schema in the schema registry, allowing inference to handle
+        // them. As things stand, this special handling is somewhat fragile and is not fully
+        // general either. Eg., a custom-op suppresses error-messages for subsequent nodes, but
+        // this does not work across graphs. If special handling is required, a user-option may
+        // be a better way to do it. The fragility comes from the fact that the types of the
+        // returned-values of the custom-op are unknown, and subsequent node-level inference
+        // may fail because of this.
+        if (!has_unsupported_op) {
+          inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
+        }
+      });
     }
     ONNX_CATCH(const std::runtime_error& err) {
       // TODO: Fix this. Unclear if this should be remapped to a shape inference error.
@@ -723,7 +731,7 @@ class ShapeInferenceImplBase {
   std::unordered_map<std::string, TensorProto> input_data_by_name_holder;
   std::unordered_map<std::string, const SparseTensorProto*> input_sparse_data_by_name;
 
-  bool has_experimental_op = false;
+  bool has_unsupported_op = false;
 
   std::vector<std::string> inference_errors;
 
