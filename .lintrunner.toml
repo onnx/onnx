@@ -183,42 +183,6 @@ init_command = [
 is_formatter = true
 
 [[linter]]
-code = 'PYLINT'
-include_patterns = [
-    'onnx/**/*.py',
-    'tools/**/*.py',
-]
-exclude_patterns = [
-    'onnx/backend/test/**',
-    'onnx/backend/sample/ops/abs.py', # redefined-builtin
-    'onnx/checker.py',
-    'tools/protoc-gen-mypy.py',
-    'onnx/test/basic_test.py',
-    'onnx/test/parser_test.py',
-    'onnx/test/version_converter_test.py',
-]
-command = [
-    'python',
-    '-m',
-    'lintrunner_adapters',
-    'run',
-    'pylint_linter',
-    '--rcfile=pyproject_pylint.toml',
-    '--show-disable',
-    '--',
-    '@{{PATHSFILE}}'
-]
-init_command = [
-    'python',
-    '-m',
-    'lintrunner_adapters',
-    'run',
-    'pip_init',
-    '--dry-run={{DRYRUN}}',
-    '--requirement=requirements-lintrunner.txt',
-]
-
-[[linter]]
 code = 'EDITORCONFIG-CHECKER'
 include_patterns=[
     '**/*.py',
