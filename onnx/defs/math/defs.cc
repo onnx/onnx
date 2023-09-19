@@ -3038,7 +3038,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "axis",
             "The axis as a scalar on which to perform the DFT. Default is `-1` (last axis). "
-            "Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. ",
+            "Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)-1`. "
+            "The last dimension is for representing complex numbers and is thus not indexed.",
             "tensor(int64)",
             OpSchema::Optional,
             true,
@@ -3105,8 +3106,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             axis = defs::math::utils::GetScalarValueFromTensor<int64_t>(axis_tensor);
           }
-          const int64_t rank = input_shape.dim_size();
-
+          // The last dimension is the real and imaginary parts of the value.
+          const int64_t rank = input_shape.dim_size() - 1;
+          if (rank < 1) {
+            fail_shape_inference("input tensor must have rank >= 1, excluding the complex dimension.");
+          }
           if (!(-rank <= axis && axis < rank)) {
             fail_shape_inference("axis attribute value ", axis, " is invalid for a tensor of rank ", rank);
           }

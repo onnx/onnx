@@ -3044,8 +3044,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Get the axis where the DFT will be performed.
           auto axis = static_cast<int>(getAttribute(ctx, "axis", 1));
-          auto rank = input_shape.dim_size();
-
+          // The last dimension is the real and imaginary parts of the value.
+          const int64_t rank = input_shape.dim_size() - 1;
+          if (rank < 1) {
+            fail_shape_inference("input tensor must have rank >= 1, excluding the complex dimension.");
+          }
           if (!(-rank <= axis && axis < rank)) {
             fail_shape_inference("axis attribute value ", axis, " is invalid for a tensor of rank ", rank);
           }

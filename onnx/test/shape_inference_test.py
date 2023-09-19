@@ -8492,12 +8492,84 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )  # type: ignore
 
-    @parameterized.expand(all_versions_for("DFT"))
-    def test_dft_reals(self, _: str, version: int) -> None:
+    @parameterized.expand(
+        [
+            (
+                name,
+                version,
+                test_aspect,
+                input_shape,
+                axis,
+                onesided,
+                inverse,
+                expected_shape,
+            )
+            for (name, version), (
+                test_aspect,
+                input_shape,
+                axis,
+                onesided,
+                inverse,
+                expected_shape,
+            ) in itertools.product(
+                all_versions_for("DFT"),
+                (
+                    ("reals_default_axis", (2, 5, 1), None, None, None, (2, 5, 2)),
+                    ("reals_axis_0", (3, 5, 10, 1), 0, 0, 0, (3, 5, 10, 2)),
+                    ("reals_axis_1", (3, 5, 10, 1), 1, 0, 0, (3, 5, 10, 2)),
+                    ("reals_axis_2", (3, 5, 10, 1), 2, 0, 0, (3, 5, 10, 2)),
+                    ("reals_axis_neg", (3, 5, 10, 1), -1, 0, 0, (3, 5, 10, 2)),
+                    ("reals_axis_0_onesided", (3, 5, 10, 1), 0, 1, 0, (2, 5, 10, 2)),
+                    ("reals_axis_1_onesided", (3, 5, 10, 1), 1, 1, 0, (3, 3, 10, 2)),
+                    ("reals_axis_2_onesided", (3, 5, 10, 1), 2, 1, 0, (3, 5, 6, 2)),
+                    ("reals_axis_neg_onesided", (3, 5, 10, 1), -1, 1, 0, (3, 5, 6, 2)),
+                ),
+            )
+        ]
+    )
+    def test_dft_reals(
+        self,
+        _: str,
+        version: int,
+        _test_aspect: str,
+        input_shape: tuple[int],
+        axis: int | None,
+        onesided: int | None,
+        inverse: int | None,
+        expected_shape: tuple[int],
+    ) -> None:
+        # Build the attributes for different opset versions
+        attributes = {}
+        if onesided is not None:
+            attributes["onesided"] = onesided
+        if inverse is not None:
+            attributes["inverse"] = inverse
+
         if version < 20:
-            nodes = [make_node("DFT", ["input", ""], ["output"])]
+            if axis is not None:
+                attributes["axis"] = axis
+            nodes = [make_node("DFT", ["input", ""], ["output"], **attributes)]
+            value_infos = []
         else:
-            nodes = [make_node("DFT", ["input", "", ""], ["output"])]
+            assert version >= 20
+            if axis is not None:
+                nodes = [
+                    make_node(
+                        "Constant",
+                        [],
+                        ["axis"],
+                        value=make_tensor("axis", TensorProto.INT64, (), (axis,)),
+                    ),
+                    make_node("DFT", ["input", "", "axis"], ["output"], **attributes),
+                ]
+                value_infos = [make_tensor_value_info("axis", TensorProto.INT64, ())]
+            else:
+                nodes = [
+                    make_node("DFT", ["input", "", "axis"], ["output"], **attributes),
+                ]
+                value_infos = []
+
+        # Construct the graph
         graph = self._make_graph(
             [],
             [
@@ -8508,8 +8580,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                     value=make_tensor(
                         "input",
                         TensorProto.FLOAT,
-                        (2, 5, 1),
-                        (0, 0, 0, 0, 0, 1, 1, 1, 1, 1),
+                        input_shape,
+                        np.random.rand(*input_shape).flatten(),
                     ),
                 ),
                 *nodes,
@@ -8519,35 +8591,17 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 1)),
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 5, 2)),
+                make_tensor_value_info("input", TensorProto.FLOAT, input_shape),
+                *value_infos,
+                make_tensor_value_info("output", TensorProto.FLOAT, expected_shape),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    @parameterized.expand(
-        [
-            (name, version, axis, onesided, expected_shape)
-            for (name, version), (axis, onesided, expected_shape) in itertools.product(
-                all_versions_for("DFT"),
-                (
-                    (1, 1, (1, 3, 10, 2)),
-                    (2, 1, (1, 5, 6, 2)),
-                    (1, 0, (1, 5, 10, 2)),
-                    (2, 0, (1, 5, 10, 2)),
-                ),
-            )
-        ]
-    )
-    def test_dft_reals2(
-        self, _: str, version: int, axis: int, onesided: int, expected_shape: tuple[int]
-    ) -> None:
+    @parameterized.expand(all_versions_for("DFT"))
+    def test_dft_complex(self, _: str, version: int) -> None:
         if version < 20:
-            nodes = [
-                make_node(
-                    "DFT", ["input", ""], ["output"], axis=axis, onesided=onesided
-                )
-            ]
+            nodes = [make_node("DFT", ["input", ""], ["output"])]
             value_infos = []
         else:
             nodes = [
@@ -8555,9 +8609,9 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "Constant",
                     [],
                     ["axis"],
-                    value=make_tensor("axis", TensorProto.INT64, (), (axis,)),
+                    value=make_tensor("axis", TensorProto.INT64, (), (1,)),
                 ),
-                make_node("DFT", ["input", "", "axis"], ["output"], onesided=onesided),
+                make_node("DFT", ["input", "", "axis"], ["output"]),
             ]
             value_infos = [make_tensor_value_info("axis", TensorProto.INT64, ())]
         graph = self._make_graph(
@@ -8570,40 +8624,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                     value=make_tensor(
                         "input",
                         TensorProto.FLOAT,
-                        (1, 5, 10, 1),
-                        [0, 1, 2, 3, 4] * 10,
-                    ),
-                ),
-                *nodes,
-            ],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [
-                make_tensor_value_info("input", TensorProto.FLOAT, (1, 5, 10, 1)),
-                *value_infos,
-                make_tensor_value_info("output", TensorProto.FLOAT, expected_shape),
-            ],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
-
-    @parameterized.expand(all_versions_for("DFT"))
-    def test_dft_complex(self, _: str, version: int) -> None:
-        if version < 20:
-            nodes = [make_node("DFT", ["input", ""], ["output"])]
-        else:
-            nodes = [make_node("DFT", ["input", "", ""], ["output"])]
-        graph = self._make_graph(
-            [],
-            [
-                make_node(
-                    "Constant",
-                    [],
-                    ["input"],
-                    value=make_tensor(
-                        "input",
-                        TensorProto.FLOAT,
                         (2, 5, 2),
                         (0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1),
                     ),
@@ -8616,6 +8636,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 2)),
+                *value_infos,
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 5, 2)),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
@@ -8625,8 +8646,18 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_dft_reals_onesided(self, _: str, version: int) -> None:
         if version < 20:
             nodes = [make_node("DFT", ["input", ""], ["output"], onesided=1)]
+            value_infos = []
         else:
-            nodes = [make_node("DFT", ["input", "", ""], ["output"], onesided=1)]
+            nodes = [
+                make_node(
+                    "Constant",
+                    [],
+                    ["axis"],
+                    value=make_tensor("axis", TensorProto.INT64, (), (1,)),
+                ),
+                make_node("DFT", ["input", "", "axis"], ["output"], onesided=1),
+            ]
+            value_infos = [make_tensor_value_info("axis", TensorProto.INT64, ())]
         graph = self._make_graph(
             [],
             [
@@ -8649,6 +8680,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 1)),
+                *value_infos,
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 2)),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
@@ -8658,8 +8690,18 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_dft_complex_onesided(self, _: str, version: int) -> None:
         if version < 20:
             nodes = [make_node("DFT", ["input", ""], ["output"], onesided=1)]
+            value_infos = []
         else:
-            nodes = [make_node("DFT", ["input", "", ""], ["output"], onesided=1)]
+            nodes = [
+                make_node(
+                    "Constant",
+                    [],
+                    ["axis"],
+                    value=make_tensor("axis", TensorProto.INT64, (), (1,)),
+                ),
+                make_node("DFT", ["input", "", "axis"], ["output"], onesided=1),
+            ]
+            value_infos = [make_tensor_value_info("axis", TensorProto.INT64, ())]
         graph = self._make_graph(
             [],
             [
@@ -8682,6 +8724,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 2)),
+                *value_infos,
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 2)),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
