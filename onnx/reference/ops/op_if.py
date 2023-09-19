@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0913,R0914,W0221,W0613
+
 
 from onnx.reference.op_run import OpRun
 
@@ -57,7 +57,7 @@ class If(OpRun):
             final = tuple(outputs)
             branch = "else"
 
-        if len(final) == 0:
+        if not final:
             raise RuntimeError(  # pragma: no cover
                 f"Operator If ({self.onnx_node.name!r}) does not have any output."
             )

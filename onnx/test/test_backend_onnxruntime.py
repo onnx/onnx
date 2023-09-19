@@ -2,11 +2,13 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import os
 import platform
 import sys
 import unittest
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy
 from packaging.version import Version
@@ -65,10 +67,10 @@ class InferenceSessionBackendRep(onnx.backend.base.BackendRep):
 
 
 class InferenceSessionBackend(onnx.backend.base.Backend):
-    providers = set(get_available_providers())
+    providers: ClassVar[set[str]] = set(get_available_providers())
 
     @classmethod
-    def is_opset_supported(cls, model):  # pylint: disable=unused-argument
+    def is_opset_supported(cls, model):
         return True, ""
 
     @classmethod
@@ -187,6 +189,7 @@ backend_test.exclude(
     "|test_dequantizelinear"  # No corresponding Numpy type for Tensor Type.
     "|test_quantizelinear_axis"  # y_scale must be a scalar or 1D tensor of size 1.
     "|test_quantizelinear"  # No corresponding Numpy type for Tensor Type.
+    "|test_affine_grid_"  # new IR version 9 and opset version 20 not supported yet.
     ")"
 )
 
@@ -228,22 +231,42 @@ backend_test.exclude(
     ")"
 )
 
-# The following tests are new with opset 19 and 20.
+# The following tests are new with opset 19 and 20, or ai.onnx.ml 4
 if ort_version is not None and Version(ort_version) < Version("1.16"):
     # version should be 1.15 but there is no development version number.
     backend_test.exclude(
         "("
         "averagepool"
-        "|deform_conv"
-        "|optional_get_element_optional_sequence"
-        "|identity_opt"
-        "|half_pixel_symmetric"
         "|_pad_"
         "|_resize_"
         "|_size_"
-        "|equal_string"
+        "|cast"
+        "|castlike"
         "|equal_string_broadcast"
+        "|equal_string"
+        "|equal"
+        "|half_pixel_symmetric"
+        "|identity"
+        "|reduce_max_bool_inputs"
+        "|reduce_min_bool_inputs"
+        "|reshape"
+        ")"
+    )
+
+if ort_version is not None and Version(ort_version) < Version("1.17"):
+    # version should be 1.15 but there is no development version number.
+    backend_test.exclude(
+        "("
+        "deform_conv"
+        "|gelu"
         "|gridsample"
+        "|identity_opt"
+        "|label_encoder"
+        "|image_decoder"
+        "|optional_get_element_optional_sequence"
+        "|regex_full_match"
+        "|string_concat"
+        "|string_split"
         ")"
     )
 

@@ -9,6 +9,7 @@ import keyword
 import os
 import pathlib
 import re
+import shutil
 import sys
 import textwrap
 from typing import Any
@@ -20,6 +21,18 @@ from sphinx.util import logging
 import onnx
 from onnx.backend.test.case.base import _Exporter
 from onnx.defs import OpSchema
+
+REPO_DOCS_EXCLUDE = {
+    "Changelog-ml.md",
+    "Changelog.md",
+    "CIPipelines.md",
+    "CONTRIBUTING.md",
+    "Operators-ml.md",
+    "Operators.md",
+    "Relicensing.md",
+    "TestCoverage-ml.md",
+    "TestCoverage.md",
+}
 
 
 def _get_diff_template():
@@ -248,7 +261,7 @@ def _populate_all_schemas_with_history():
 
 
 def _get_all_schemas_with_history():
-    global _all_schemas_with_history  # pylint: disable=global-statement
+    global _all_schemas_with_history
     if _all_schemas_with_history is None:
         _all_schemas_with_history = _populate_all_schemas_with_history()
     return _all_schemas_with_history
@@ -664,7 +677,7 @@ def get_onnx_example(op_name, domain):
             found = textwrap.dedent(found)
             lines = found.split("\n")
             first = 0
-            for i in range(len(lines)):  # pylint: disable=C0200
+            for i in range(len(lines)):
                 if lines[i].startswith("def "):
                     first = i + 1
             found = textwrap.dedent("\n".join(lines[first:]))
@@ -748,7 +761,7 @@ def onnx_documentation_folder(
                 table_dom.append(f"      - {col2}")
             table_dom.append("")
             if indent != "":
-                for i in range(len(table_dom)):  # pylint: disable=C0200
+                for i in range(len(table_dom)):
                     table_dom[i] = indent + table_dom[i]
             res = "\n".join(table_dom)
             return res
@@ -845,6 +858,23 @@ def _generate_op_doc(app):
     onnx_documentation_folder(folder, flog=logger.info, max_opsets=max_opsets)
 
 
+def _copy_repo_docs(app):
+    logger = logging.getLogger(__name__)
+    dest_name = app.config.onnx_md_folder
+
+    docs_dir = pathlib.Path(__file__).parent.parent.parent  # docs
+    dest_folder = docs_dir / "docsgen" / "source" / dest_name
+    dest_folder.mkdir(parents=True, exist_ok=True)
+    # Copy all the markdown files from the folder except for the blocklisted ones
+
+    logger.info("Copying Markdown files from '%s' to '%s'", docs_dir, dest_folder)
+    for file in docs_dir.glob("*.md"):
+        if file.name in REPO_DOCS_EXCLUDE:
+            continue
+        shutil.copy(file, dest_folder)
+        logger.info("Copying '%s'", file.name)
+
+
 def setup(app):
     """
     Sphinx extension `onnx_sphinx` displays documentation
@@ -853,8 +883,11 @@ def setup(app):
     import sphinx
 
     app.add_config_value("onnx_doc_folder", "operators", "env")
+    # Folder for storing the Markdown documentation from the repository
+    app.add_config_value("onnx_md_folder", "repo-docs", "env")
     app.add_config_value("max_opsets", {}, "env")
     app.connect("builder-inited", _generate_op_doc)
+    app.connect("builder-inited", _copy_repo_docs)
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
 
 

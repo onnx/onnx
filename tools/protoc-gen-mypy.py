@@ -36,7 +36,7 @@ except ImportError as e:
 d: Any = d_typed
 
 # Split the string so phabricator doesn't think this file is generated
-GENERATED = "@ge" + "nerated"  # noqa: ISC003
+GENERATED = "@ge" + "nerated"
 HEADER = (
     f"# {GENERATED} by protoc-gen-mypy.py.  Do not edit!\n"
     "# mypy: disable-error-code=override\n"
@@ -377,7 +377,7 @@ class PkgWriter:
 
 def is_scalar(fd: d.FileDescriptorProto) -> bool:
     return not (
-        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE
+        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE  # noqa: PLR1714
         or fd.type == d.FieldDescriptorProto.TYPE_GROUP
     )
 

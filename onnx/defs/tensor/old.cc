@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
@@ -1048,6 +1049,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            // we can infer the output rank - it never changes
+            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 
@@ -3772,6 +3778,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            // we can infer the output rank - it never changes
+            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 
@@ -4278,7 +4289,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar
           // and 1 element vector for now. In future when version update for
-          // this op is done we should only allow scalar or chage the spec to
+          // this op is done we should only allow scalar or change the spec to
           // allow both.
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
@@ -5032,20 +5043,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          // Shape Inference if 2nd input data (the target shape) is available
-          // or the target shape is generated via partial data propagation
-          const TensorProto* targetShapeInitializer = ctx.getInputData(1);
-          const auto* shapeInput = ctx.getSymbolicInput(1);
-          // The targetShapeProto represents the specified shape for output.
-          TensorShapeProto targetShapeProto;
-          if (targetShapeInitializer) {
-            auto targetShape = ParseData<int64_t>(targetShapeInitializer);
-            for (auto val : targetShape) {
-              targetShapeProto.add_dim()->set_dim_value(val);
-            }
-          } else if (shapeInput) {
-            targetShapeProto.CopyFrom(*shapeInput);
-          } else {
+          bool found;
+          TensorShapeProto targetShapeProto = getShapeInput(ctx, 1, found);
+          if (!found) {
             return;
           }
 
@@ -5072,7 +5072,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto* new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
               // There is a tricky edge case here. It is possible that the value of
-              // symbolic dim can be -1 or 0 at runtime. In that case simply propgating this
+              // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
               // symbol can be erroneous. This should be a very rare scenario and in such a
               // case an option is to turn off data propagation during shape inference.
               new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());

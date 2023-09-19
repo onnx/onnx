@@ -8,14 +8,14 @@
 #pragma once
 
 #include <ctype.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 
-#include "onnx/onnx_pb.h"
-
 #include "onnx/common/status.h"
+#include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -421,7 +421,7 @@ class OnnxParser : public ParserBase {
 
   Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
 
-  Status ParseSingleAttributeValue(AttributeProto& attr);
+  Status ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected);
 
   Status Parse(ValueInfoProto& valueinfo);
 

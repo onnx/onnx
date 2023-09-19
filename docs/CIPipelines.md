@@ -4,7 +4,7 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-## ONNX CI Pipelines
+# ONNX CI Pipelines
 
 * CI pipelines matrix:
 
@@ -20,9 +20,9 @@ SPDX-License-Identifier: Apache-2.0
   [LinuxRelease_aarch64](/.github/workflows/release_linux_aarch64.yml) | <ul><li>Main branch</li><li>Release branch</li><li>Weekly</li></ul>  | <ul><li>Latest manylinux2014_aarch64</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li><li>ONNX_USE_LITE_PROTO=ON</li></ul>| <ul><li> Release Linux aarch64 wheel</li><li>Release onnx-weekly package</li><li>Verify with different dependency versions - latest numpy version, latest and min supported protobuf version</li><li>Verify ONNX with the latest ONNX Runtime PyPI package</li></ul> |
   [LinuxRelease_x86_64](/.github/workflows/release_linux_x86_64.yml) | <ul><li>Main branch</li><li>Release branch</li><li>Weekly</li></ul> | <ul><li>Latest LinuxRelease_x86_64</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li><li>ONNX_USE_LITE_PROTO=ON</li></ul>| <ul><li> Release Linux x86_64 wheel</li><li>Release onnx-weekly package</li><li>Test TEST_HUB=1(4)</li><li>Verify with different dependency versions - latest numpy version, latest and min supported protobuf version</li><li>Verify ONNX with the latest ONNX Runtime PyPI package.</li></ul> |
   [MacRelease](/.github/workflows/release_win.yml) | <ul><li>Main branch</li><li>Release branch</li><li>Weekly</li></ul> | <ul><li>macos-11</li><li> MACOSX_DEPLOYMENT_TARGET=10.12(5) </li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li><li>ONNX_USE_LITE_PROTO=ON</li></ul>| <ul><li>Release Mac wheel</li><li>Release onnx-weekly package</li><li>Verify with different dependency versions - latest numpy version, latest and min supported protobuf version</li><li>Verify ONNX with the latest ONNX Runtime PyPI package.</li><li>Test source distribution generation</li><li>Test build with source distribution</li><li>Release onnx-weekly source distribution</li></ul> |
-  [Weekly CI with latest onnx.checker](/.github/workflows/weekly_mac_ci.yml) | weekly(6) |<ul><li>macos-latest</li><li>MACOSX_DEPLOYMENT_TARGET=10.12</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li></ul>| <ul><li>Test latest ONNX checker</li><li>Test latest ONNX shape inference</li><li>With all models from [onnx/models](https://github.com/onnx/models)(7)</li></ul> | 
+  [Weekly CI with latest onnx.checker](/.github/workflows/weekly_mac_ci.yml) | weekly(6) |<ul><li>macos-latest</li><li>MACOSX_DEPLOYMENT_TARGET=10.12</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li></ul>| <ul><li>Test latest ONNX checker</li><li>Test latest ONNX shape inference</li><li>With all models from [onnx/models](https://github.com/onnx/models)(7)</li></ul> |
   [Reuse](/.github/workflows/reuse.yml) | Every PR | | <ul><li>Checks for Copyright and License header</li><li>More information could be found at: https://reuse.software/</li><li>If no license is to be added, or the checker does not recognize it, it must be configured under .reuse/dep5.</li></ul> |
-  [Dependabot](/.github/dependabot.yml) | <ul><li>Main branch</li><li>weekly</li></ul> | | <ul><li>Create PRs for new dependency versions (will occur more often because p.ex. GitHub actions are pinned to commit hashes due to security best practices and not just to a version number).</li></ul> | 
+  [Dependabot](/.github/dependabot.yml) | <ul><li>Main branch</li><li>weekly</li></ul> | | <ul><li>Create PRs for new dependency versions (will occur more often because p.ex. GitHub actions are pinned to commit hashes due to security best practices and not just to a version number).</li></ul> |
 
 Every PR
 
@@ -38,5 +38,5 @@ Every PR
 
   * (6):
     * The ONNX Model Zoo test will run weekly (Sunday midnight)
-    * To manually trigger it, add a PR label "test ONNX Model Zoo" (only maintainers have permission). Please note that it will need a lot of download bandwidth from [onnx/models](https://github.com/onnx/models) so use it with caution.
+    * To manually trigger it, add a PR label "test ONNX Model Zoo" (only maintainers have permission). Please note that it will need a lot of bandwidth to download models through git-lfs API when loading models via [onnx.hub](/docs/Hub.md) so use it with caution.
   * (7) Some old deprecated models (opset-1) are [skipped](/workflow_scripts/config.py).

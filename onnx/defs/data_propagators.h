@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <utility>
+
 #include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {

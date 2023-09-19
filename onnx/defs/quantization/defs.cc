@@ -126,7 +126,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
-            "'y_scale' determines the output type.")
+            "'x_scale' determines the output type.")
         .SetDoc(DequantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto y_type = ctx.getOutputType(0);
@@ -141,7 +141,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
-A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+A Function to fuse calculation for Scale, Zero Point and FP32->8Bit conversion of FP32 Input data.
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
 Scale is calculated as:
 ```

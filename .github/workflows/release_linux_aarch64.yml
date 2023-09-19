@@ -26,7 +26,7 @@ jobs:
       img: quay.io/pypa/manylinux2014_aarch64
 
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
     - name: Checkout submodules
       shell: bash
       run: |
@@ -35,7 +35,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
       # setting up qemu for enabling aarch64 binary execution on x86 machine
-    - uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # v2.1.0
+    - uses: docker/setup-qemu-action@2b82ce82d56a2a04d2637cd93a637ae1b359c0a7 # v2.2.0
 
       # Creating a virtual environment on machine with the help of docker container \
       # and installing the dependencies inside that \
@@ -80,7 +80,7 @@ jobs:
         name: wheels
         path: dist
 
-    - name: Upload wheel to TestPyPI/PyPI weekly
+    - name: Upload wheel to PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         python -m pip install -q twine
@@ -135,7 +135,6 @@ jobs:
           deactivate'
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != 'cp311-cp311'
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
@@ -143,8 +142,8 @@ jobs:
           source .env/bin/activate && \
           python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt && \
           python -m pip install -q onnxruntime && \
-          export ORT_MAX_IR_SUPPORTED_VERSION=8 \
+          export ORT_MAX_IR_SUPPORTED_VERSION=9 \
           export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3 \
-          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18 \
+          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19 \
           pytest && \
           deactivate'

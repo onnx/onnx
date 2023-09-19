@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0613,W0640,W0703
+
 """
 These test evaluates the python runtime (class ReferenceEvaluator) against
 all the backend tests (in onnx/backend/test/case/node) and checks
@@ -22,12 +22,13 @@ adding an item in method `setUpClass` and attributes
 
 import os
 import pprint
+import sys
 import unittest
 
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import (  # noqa: N813 # pylint: disable=deprecated-module
+    from distutils.version import (  # noqa: N813
         StrictVersion as version,
     )
 
@@ -68,8 +69,6 @@ SKIP_TESTS = {
     # not implemented
     "test__simple_gradient_of_add",  # gradient not implemented
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
-    "test_lppool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
-    "test_averagepool_2d_dilations",  # CommonPool._run returns incorrect output shape when dilations is set
 }
 
 if version(npver) < version("1.21.5"):
@@ -78,11 +77,20 @@ if version(npver) < version("1.21.5"):
         "test_castlike_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16_expanded",
     }
-if version(npver) < version("1.21.5"):
+if sys.platform == "win32":
     SKIP_TESTS |= {
-        "test_cast_FLOAT_to_BFLOAT16",
-        "test_castlike_FLOAT_to_BFLOAT16",
-        "test_castlike_FLOAT_to_BFLOAT16_expanded",
+        "test_regex_full_match_basic",
+        "test_regex_full_match_email_domain",
+        "test_regex_full_match_empty",
+        "test_image_decoder_decode_jpeg_rgb",
+        "test_image_decoder_decode_jpeg_grayscale",
+        "test_image_decoder_decode_jpeg_bgr",
+        "test_image_decoder_decode_jpeg2k_rgb",
+        "test_image_decoder_decode_bmp_rgb",
+        "test_image_decoder_decode_png_rgb",
+        "test_image_decoder_decode_tiff_rgb",
+        "test_image_decoder_decode_webp_rgb",
+        "test_image_decoder_decode_pnm_rgb",
     }
 
 
@@ -106,7 +114,7 @@ def assert_allclose_string(expected, value):
         expected_float = expected.astype(np.float32)
         value_float = value.astype(np.float32)
         assert_allclose(expected_float, value_float)
-    else:
+    else:  # noqa: PLR5501
         if expected.tolist() != value.tolist():
             raise AssertionError(f"Mismatches {expected} != {value}.")
 
@@ -528,7 +536,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         return ReferenceEvaluator(obj, verbose=verbose)
 
     @staticmethod
-    def run_fct(obj, *inputs, verbose=0):  # pylint: disable=W0613
+    def run_fct(obj, *inputs, verbose=0):
         if hasattr(obj, "input_names"):
             input_names = obj.input_names
         elif hasattr(obj, "get_inputs"):
@@ -542,7 +550,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                 f"Got {len(inputs)} inputs but expecting {len(obj.input_names)}."
             )
         rewrite = False
-        for i in range(len(inputs)):  # pylint: disable=C0200
+        for i in range(len(inputs)):
             if (
                 isinstance(inputs[i], np.ndarray)
                 and inputs[i].dtype == np.uint16
@@ -552,7 +560,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         if rewrite:
             # bfloat16 does not exist for numpy.
             inputs = list(inputs)
-            for i in range(len(inputs)):  # pylint: disable=C0200
+            for i in range(len(inputs)):
                 if (
                     isinstance(inputs[i], np.ndarray)
                     and inputs[i].dtype == np.uint16
@@ -571,19 +579,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         feeds = {input_names[i]: inputs[i] for i in range(len(inputs))}
         got = obj.run(None, feeds)
         return got
-
-    # def test_onnx_test_run_test_abs(self):
-    #     done = 0
-    #     for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
-    #         self.assertIn(te.name, repr(te))
-    #         self.assertGreater(len(te), 0)
-    #         te.run(
-    #             TestOnnxBackEndWithReferenceEvaluator.load_fct,
-    #             TestOnnxBackEndWithReferenceEvaluator.run_fct,
-    #             comment="[runtime=ReferenceEvaluator]",
-    #         )
-    #         done += 1
-    #     self.assertEqual(done, 1)
 
     def common_test_onnx_test_run(
         self,
@@ -687,7 +682,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             with open(f"issue_{te.name}.onnx", "wb") as f:
                 f.write(te.onnx_model.SerializeToString())
             raise AssertionError(
-                f"Unable to run test {te.name!r} due to {e}\n{str(te.onnx_model)}"
+                f"Unable to run test {te.name!r} due to {e}\n{te.onnx_model}"
             ) from e
         successes.append((te, atol.get(te.fname, None), rtol.get(te.fname, None)))
         if verbose > 7:
@@ -825,6 +820,14 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_operator_symbolic_override": 1e-4,
             "test__pytorch_converted_Conv3d_dilated_strided": 1e-4,
             "test__pytorch_converted_Conv3d_groups": 1e-4,
+            "test_affine_grid_2d": 1e-4,
+            "test_affine_grid_2d_expanded": 1e-4,
+            "test_affine_grid_2d_align_corners": 1e-4,
+            "test_affine_grid_2d_align_corners_expanded": 1e-4,
+            "test_affine_grid_3d": 1e-4,
+            "test_affine_grid_3d_expanded": 1e-4,
+            "test_affine_grid_3d_align_corners": 1e-4,
+            "test_affine_grid_3d_align_corners_expanded": 1e-4,
         }
 
         if version(npver) < version("1.21.5"):
