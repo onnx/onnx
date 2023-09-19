@@ -56,7 +56,7 @@ Status ParserBase::Parse(Literal& result) {
       }
     } else
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
-      return Status::OK();
+    return Status::OK();
   }
 
   // Simplify the next ifs by consuming a possible negative sign.
@@ -69,21 +69,19 @@ Status ParserBase::Parse(Literal& result) {
   if (isalpha(nextch)) {
     // Has to be a special float literal now: (-)*(nan|inf|infinity).
     if (NextIsValidFloatString()) {
-        while (next_ < end_ && isalpha(*next_)) {
-          ++next_;
-        }
-        ONNX_TRY {
-          static_cast<void>(std::stof(std::string(from, next_ - from)));
-          result.type = LiteralType::FLOAT_LITERAL;
-          result.value = std::string(from, next_ - from);
-        }
-        ONNX_CATCH(...) {
-          ONNX_HANDLE_EXCEPTION([&]() {
-            return ParseError("Encountered invalid float literal!");
-          });
-        }
+      while (next_ < end_ && isalpha(*next_)) {
+        ++next_;
+      }
+      ONNX_TRY {
+        static_cast<void>(std::stof(std::string(from, next_ - from)));
+        result.type = LiteralType::FLOAT_LITERAL;
+        result.value = std::string(from, next_ - from);
+      }
+      ONNX_CATCH(...) {
+        ONNX_HANDLE_EXCEPTION([&]() { return ParseError("Encountered invalid float literal!"); });
+      }
     } else {
-        return ParseError("Encountered invalid float literal!");
+      return ParseError("Encountered invalid float literal!");
     }
     return Status::OK();
   }
@@ -121,34 +119,32 @@ Status ParserBase::Parse(Literal& result) {
 }
 
 bool ParserBase::NextIsValidFloatString() {
-    auto nextch = NextChar();
-    auto from = next_;
-    constexpr int INFINITY_LENGTH = 8;
+  auto nextch = NextChar();
+  auto from = next_;
+  constexpr int INFINITY_LENGTH = 8;
 
-    if (isalpha(nextch)) {
-        while(next_ < end_ && isalpha(*next_) && (next_ - from) <= INFINITY_LENGTH) {
-            ++next_;
-        }
-
-        if (isdigit(*next_)) { // No trailing digits
-            next_ = from;
-            return false;
-        }
-
-        std::string candidate = std::string(from, next_ - from);
-
-        // Reset parser location before continuing.
-        next_ = from;
-
-        std::transform(candidate.begin(), candidate.end(), candidate.begin(),
-            [](unsigned char c){ return std::tolower(c); });
-        if (candidate == std::string("inf") ||
-           candidate == std::string("infinity") ||
-           candidate == std::string("nan")) {
-            return true;
-        }
+  if (isalpha(nextch)) {
+    while (next_ < end_ && isalpha(*next_) && (next_ - from) <= INFINITY_LENGTH) {
+      ++next_;
     }
-    return false;
+
+    if (isdigit(*next_)) { // No trailing digits
+      next_ = from;
+      return false;
+    }
+
+    std::string candidate = std::string(from, next_ - from);
+
+    // Reset parser location before continuing.
+    next_ = from;
+
+    std::transform(
+        candidate.begin(), candidate.end(), candidate.begin(), [](unsigned char c) { return std::tolower(c); });
+    if (candidate == std::string("inf") || candidate == std::string("infinity") || candidate == std::string("nan")) {
+      return true;
+    }
+  }
+  return false;
 }
 
 Status OnnxParser::Parse(IdList& idlist) {
@@ -505,8 +501,8 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
         attr.set_type(AttributeProto_AttributeType_FLOAT);
         attr.set_f(static_cast<float>(std::stof(literal.value)));
       } else {
-          attr.set_type(AttributeProto_AttributeType_GRAPH);
-          PARSE(*attr.mutable_g());
+        attr.set_type(AttributeProto_AttributeType_GRAPH);
+        PARSE(*attr.mutable_g());
       }
     }
   } else if (Matches('@')) {
