@@ -70,7 +70,7 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
     providers: ClassVar[set[str]] = set(get_available_providers())
 
     @classmethod
-    def is_opset_supported(cls, model):  # pylint: disable=unused-argument
+    def is_opset_supported(cls, model):
         return True, ""
 
     @classmethod

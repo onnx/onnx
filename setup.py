@@ -193,7 +193,7 @@ class CmakeBuild(setuptools.Command):
                         cmake_args.extend(["-A", "ARM64"])
                     else:
                         cmake_args.extend(["-A", "x64", "-T", "host=x64"])
-                else:
+                else:  # noqa: PLR5501
                     if "arm" in platform.machine().lower():
                         cmake_args.extend(["-A", "ARM"])
                     else:

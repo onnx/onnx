@@ -332,13 +332,11 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   tensorProto.set_data_type(elem_type);
   if (!tensorTypeProto.tensor_type().has_shape())
     return ParseError("Error parsing TensorProto (expected a tensor shape).");
-  uint64_t n = 1;
   for (auto& dim : tensorTypeProto.tensor_type().shape().dim()) {
     if (!dim.has_dim_value())
       return ParseError("Error parsing TensorProto shape (expected numeric dimension).");
     auto dimval = dim.dim_value();
     tensorProto.add_dims(dimval);
-    n *= dimval;
   }
 
   // tensorProto.mutable_int64_data()->Reserve(n);
@@ -457,8 +455,6 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
         attr.set_type(AttributeProto_AttributeType_STRING);
         attr.set_s(literal.value);
         break;
-      default:
-        return ParseError("Unexpected literal type.");
     }
   }
   if ((expected != AttributeProto_AttributeType_UNDEFINED) && (expected != attr.type())) {
