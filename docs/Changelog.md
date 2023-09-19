@@ -24027,10 +24027,10 @@ This version of the operator has been available since version 20 of the default 
 <dl>
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
 <dd>For real input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]`. For complex input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. The final dimension represents the real and imaginary parts of the value in that order.</dd>
-<dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>The axis as a scalar on which to perform the DFT. Default is `-1` (last axis). Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. </dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
 <dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
+<dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>The axis as a scalar on which to perform the DFT. Default is `-1` (last axis). Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input) - 1`. The last dimension is for representing complex numbers and is thus not indexed.</dd>
 </dl>
 
 #### Outputs
