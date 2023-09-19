@@ -38,7 +38,10 @@ class SymbolTable {
   // Adds existing symbols from a main graph or subgraph
   virtual void addFromGraph(const GraphProto& g) = 0;
   // Creates a new symbol which is not duplicate as any existing one
-  virtual std::string createNew(const std::string& symbol_prefix) = 0;
+  std::string createNew(const std::string& symbol_prefix = "unk__") {
+    return createNewImpl(symbol_prefix);
+  }
+  virtual std::string createNewImpl(const std::string& symbol_prefix) = 0;
   virtual ~SymbolTable() = default;
 };
 
