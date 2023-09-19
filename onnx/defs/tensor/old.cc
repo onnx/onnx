@@ -2086,13 +2086,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             return axis < 0 ? axis + input_ndim : axis;
           });
 
-          for (int i = 0, j = 0; i < input_ndim; ++i) {
+          for (int i = 0; i < input_ndim; ++i) {
             if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
               if (input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
                     "Dimension of input ", i, " must be 1 instead of ", input_shape.dim(i).dim_value());
               }
-              ++j;
             } else {
               *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = input_shape.dim(i);
             }

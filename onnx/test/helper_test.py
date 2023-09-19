@@ -2,7 +2,6 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable=unnecessary-lambda
 
 import random
 import struct
@@ -925,11 +924,11 @@ class TestAttrTypeToStr(unittest.TestCase):
         ]
     )
     def test_attr_type_to_str(self, attr_type, expected_str):
-        result = helper._attr_type_to_str(attr_type)  # pylint: disable=protected-access
+        result = helper._attr_type_to_str(attr_type)
         self.assertEqual(result, expected_str)
 
     def test_attr_type_to_str_undefined(self):
-        result = helper._attr_type_to_str(9999)  # pylint: disable=protected-access
+        result = helper._attr_type_to_str(9999)
         self.assertEqual(result, "UNDEFINED")
 
 
