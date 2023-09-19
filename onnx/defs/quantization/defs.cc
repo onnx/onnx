@@ -145,10 +145,10 @@ A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion o
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
 Scale is calculated as:
 ```
-y_scale = (max(x) - min(x))/(qmax - qmin)
+y_scale = (maximum(0, max(x)) - minimum(0, min(x))) / (qmax - qmin)
 ```
 
-* where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+* where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
 * data range is adjusted to include 0.
 
 Zero point is calculated as:
