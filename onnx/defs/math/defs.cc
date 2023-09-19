@@ -3093,16 +3093,18 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Get the axis where the DFT will be performed.
           const TensorProto* axis_tensor = ctx.getInputData(axis_arg_index);
+          int64_t axis;
           if (axis_tensor == nullptr) {
-            // Skip if axis is not known
-            return;
+            // axis is -1 by default
+            axis = -1;
+          } else {
+            // TODO(justinchuby): Create invariance checking functions to ensure shapes and sizes
+            // to abstrct the following logic out.
+            if (axis_tensor->dims_size() != 0) {
+              fail_shape_inference("axis input must be a scalar.");
+            }
+            axis = defs::math::utils::GetScalarValueFromTensor<int64_t>(axis_tensor);
           }
-          // TODO(justinchuby): Create invariance checking functions to ensure shapes and sizes
-          // to abstrct the following logic out.
-          if (axis_tensor->dims_size() != 0) {
-            fail_shape_inference("axis input must be a scalar.");
-          }
-          const int64_t axis = defs::math::utils::GetScalarValueFromTensor<int64_t>(axis_tensor);
           const int64_t rank = input_shape.dim_size();
 
           if (!(-rank <= axis && axis < rank)) {
@@ -3138,6 +3140,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (axis_dimension.has_dim_value()) {
               auto original_signal_size = axis_dimension.dim_value();
               auto half_signal_size = (original_signal_size >> 1) + 1;
+              printf("original_signal_size: %lld, half_signal_size: %lld\n", original_signal_size, half_signal_size);
               result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
             } else {
               // Clear the value and param (which would otherwie be inherited from the input).
