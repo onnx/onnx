@@ -2,8 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import subprocess
 import sys
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -21,8 +23,6 @@ from onnx.onnx_pb import (
     TypeProto,
 )
 
-from pathlib import Path
-import subprocess
 
 _NodeTestCases = []
 _TargetOpType = None
