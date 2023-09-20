@@ -1,14 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-import string
 import unittest
-from typing import Any, Dict, List, Optional, Sequence, Union, cast
-
 import numpy as np
 from automatic_conversion_test_base import TestAutomaticConversion
 
-import onnx
 from onnx import TensorProto, helper
 
 #####################################################################################
