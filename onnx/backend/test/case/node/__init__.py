@@ -386,20 +386,20 @@ def collect_testcases(op_type: str) -> List[TestCase]:
 def collect_diff_testcases() -> List[TestCase]:
     """Collect node test cases which are different from the main branch"""
     global _DiffOpTypes  # noqa: PLW0603
-    _DiffOpTypes = get_changed_op_types()
+    _DiffOpTypes = get_diff_op_types()
 
     import_recursive(sys.modules[__name__])
     return _NodeTestCases
 
 
-def get_changed_op_types():
+def get_diff_op_types():
     cwd_path = Path.cwd()
     # git fetch first for git diff on GitHub Action
     subprocess.run(
         ["git", "fetch", "origin", "main:main"],
         cwd=cwd_path,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
+        check=True,
     )
     # obtain list of added or modified files in this PR
     obtain_diff = subprocess.Popen(
