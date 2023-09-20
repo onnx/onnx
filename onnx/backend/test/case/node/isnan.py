@@ -20,13 +20,7 @@ class IsNaN(Base):
 
         x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
         y = np.isnan(x)
-        expect(
-            node,
-            inputs=[x],
-            outputs=[y],
-            name="test_isnan",
-            opset_imports=[onnx.helper.make_opsetid("", 19)],
-        )
+        expect(node, inputs=[x], outputs=[y], name="test_isnan")
 
     @staticmethod
     def export_float16() -> None:
