@@ -28,11 +28,11 @@ class TestAutomaticConversion(unittest.TestCase):
         optional_outputs: Sequence[int] = (),
         is_upgrade: bool = True,
     ) -> None:
-        '''
-            When is_upgrade is True (default), run version converter from from_opset to the most recent opset version.
-            When is_upgrade is False, run version converter from the most recent opset version to from_opset.
-            In both cases, runs checker and shape inference on the final model.
-        '''
+        """
+        When is_upgrade is True (default), run version converter from from_opset to the most recent opset version.
+        When is_upgrade is False, run version converter from the most recent opset version to from_opset.
+        In both cases, runs checker and shape inference on the final model.
+        """
         if attrs is None:
             attrs = {}
 

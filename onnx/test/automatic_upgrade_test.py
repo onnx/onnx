@@ -2,11 +2,12 @@
 
 # SPDX-License-Identifier: Apache-2.0
 import unittest
+
 import numpy as np
+from automatic_conversion_test_base import TestAutomaticConversion
 
 import onnx
 from onnx import TensorProto, helper
-from automatic_conversion_test_base import TestAutomaticConversion
 
 #####################################################################################
 # Every test calls _test_op_conversion to upgrade a model from an initial opset version
@@ -20,7 +21,7 @@ class TestAutomaticUpgrade(TestAutomaticConversion):
     def _test_op_upgrade(self, op, *args, **kwargs):
         tested_ops.append(op)
         self._test_op_conversion(op, *args, **kwargs, is_upgrade=True)
-        
+
     def test_Abs(self) -> None:
         self._test_op_upgrade("Abs", 1, attrs={"consumed_inputs": [0]})
 
