@@ -70,7 +70,7 @@ class DFT(Base):
         y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
         expect(node, inputs=[x, axis], outputs=[y], name="test_dft")
 
-        node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"])
+        node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
         x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
         axis = np.array(2, dtype=np.int64)
         y = np.fft.fft(x, axis=1)
@@ -79,7 +79,9 @@ class DFT(Base):
         y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
         expect(node, inputs=[x, axis], outputs=[y], name="test_dft_axis")
 
-        node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], inverse=1)
+        node = onnx.helper.make_node(
+            "DFT", inputs=["x", "", "axis"], outputs=["y"], inverse=1
+        )
         x = np.arange(0, 100, dtype=np.complex64).reshape(10, 10)
         axis = np.array(1, dtype=np.int64)
         y = np.fft.ifft(x, axis=0)

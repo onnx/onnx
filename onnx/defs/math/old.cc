@@ -3052,7 +3052,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
           }
           if (!(-rank <= axis && axis != -1 && axis < rank)) {
-            fail_shape_inference("axis attribute value ", axis, " is invalid for a tensor of rank ", rank, ". Valid values are '-rank <= axis && axis != -1 && axis < rank - 1'");
+            fail_shape_inference(
+                "axis attribute value ",
+                axis,
+                " is invalid for a tensor of rank ",
+                rank,
+                ". Valid values are '-rank <= axis && axis != -1 && axis < rank - 1'");
           }
 
           auto axis_idx = (axis >= 0 ? axis : axis + rank);
