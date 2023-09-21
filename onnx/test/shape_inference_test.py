@@ -8632,7 +8632,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_dft_real_onesided_default_axis_opset20(self) -> None:
-        # Opset 20 sets default axis to be -1.
+        # Opset 20 sets default axis to be -2.
         graph = self._make_graph(
             [],
             [
