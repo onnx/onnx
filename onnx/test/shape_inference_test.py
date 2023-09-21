@@ -8552,7 +8552,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         if version < 20:
             if axis is not None:
                 attributes["axis"] = axis
-            nodes = [make_node("DFT", ["input", ""], ["output"], **attributes)]
+            nodes = [make_node("DFT", ["input", ""], ["output"], **attributes)]  # type: ignore[arg-type]
             value_infos = []
         else:
             assert version >= 20
@@ -8564,12 +8564,12 @@ class TestShapeInference(TestShapeInferenceHelper):
                         ["axis"],
                         value=make_tensor("axis", TensorProto.INT64, (), (axis,)),
                     ),
-                    make_node("DFT", ["input", "", "axis"], ["output"], **attributes),
+                    make_node("DFT", ["input", "", "axis"], ["output"], **attributes),  # type: ignore[arg-type]
                 ]
                 value_infos = [make_tensor_value_info("axis", TensorProto.INT64, ())]
             else:
                 nodes = [
-                    make_node("DFT", ["input", "", ""], ["output"], **attributes),
+                    make_node("DFT", ["input", "", ""], ["output"], **attributes),  # type: ignore[arg-type]
                 ]
                 value_infos = []
 

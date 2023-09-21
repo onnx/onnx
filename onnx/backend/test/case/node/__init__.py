@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
+from typing_extensions import Literal
 
 import onnx
 from onnx.backend.test.case.test_case import TestCase
@@ -236,7 +237,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # the latest opset vesion that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
-    inputs: Sequence[Union[np.ndarray, TensorProto]],
+    inputs: Sequence[Union[np.ndarray, TensorProto, Literal[""]]],
     outputs: Sequence[Union[np.ndarray, TensorProto]],
     name: str,
     **kwargs: Any,
