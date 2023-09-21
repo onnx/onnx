@@ -8498,7 +8498,7 @@ expect(node, inputs=[x, s, bias], outputs=[y], name="test_instancenorm_epsilon")
 
 
 ### IsInf
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>infinity</summary>
 
@@ -8512,6 +8512,22 @@ node = onnx.helper.make_node(
 x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
 y = np.isinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf")
+```
+
+</details>
+<details>
+<summary>infinity_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsInf",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+y = np.isinf(x)
+expect(node, inputs=[x], outputs=[y], name="test_isinf_float16")
 ```
 
 </details>
@@ -8546,7 +8562,23 @@ expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
 
 
 ### IsNaN
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsNaN",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name="test_isnan_float16")
+```
+
+</details>
 <details>
 <summary>isnan</summary>
 
@@ -8557,7 +8589,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
 y = np.isnan(x)
 expect(node, inputs=[x], outputs=[y], name="test_isnan")
 ```
