@@ -92,7 +92,7 @@ class DFT_17(OpRun):
 
 
 class DFT_20(OpRun):
-    def _run(self, x: np.ndarray, axis: int = -1, dft_length: int | None = None, inverse: bool = False, onesided: bool = False) -> tuple[np.ndarray]:  # type: ignore
+    def _run(self, x: np.ndarray, dft_length: int | None = None, axis: int = -1, inverse: bool = False, onesided: bool = False) -> tuple[np.ndarray]:  # type: ignore
         if dft_length is None:
             dft_length = x.shape[axis]
         if inverse:  # type: ignore
