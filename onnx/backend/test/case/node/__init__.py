@@ -6,7 +6,7 @@ import subprocess
 import sys
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -236,7 +236,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # the latest opset vesion that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
-    inputs: Sequence[Union[np.ndarray, TensorProto, Literal[""]]],
+    inputs: Sequence[Union[np.ndarray, TensorProto]],
     outputs: Sequence[Union[np.ndarray, TensorProto]],
     name: str,
     **kwargs: Any,
