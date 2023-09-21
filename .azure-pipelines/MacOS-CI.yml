@@ -79,6 +79,16 @@ jobs:
         exit 1
       fi
 
+      python -m pip install onnxruntime
+      export ORT_MAX_IR_SUPPORTED_VERSION=8
+      export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
+      export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+      pytest
+      if [ $? -ne 0 ]; then
+        echo "pytest failed when testing onnx with onnxruntime"
+        exit 1
+      fi
+
       # onnx c++ API tests
       export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
       ./.setuptools-cmake-build/onnx_gtests

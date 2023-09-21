@@ -7,11 +7,14 @@
 
 #include "onnx/defs/parser.h"
 
+#include <iostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
+#include "onnx/common/common.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
@@ -53,7 +56,38 @@ Status ParserBase::Parse(Literal& result) {
       }
     } else
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
-  } else if ((isdigit(nextch) || (nextch == '-'))) {
+    return Status::OK();
+  }
+
+  // Simplify the next ifs by consuming a possible negative sign.
+  if (nextch == '-') {
+    ++next_;
+    nextch = NextChar();
+  }
+
+  // Check for float literals that start with alphabet characters.
+  if (isalpha(nextch)) {
+    // Has to be a special float literal now: (-)*(nan|inf|infinity).
+    if (NextIsValidFloatString()) {
+      while (next_ < end_ && isalpha(*next_)) {
+        ++next_;
+      }
+      ONNX_TRY {
+        static_cast<void>(std::stof(std::string(from, next_ - from)));
+        result.type = LiteralType::FLOAT_LITERAL;
+        result.value = std::string(from, next_ - from);
+      }
+      ONNX_CATCH(...) {
+        ONNX_HANDLE_EXCEPTION([&]() { return ParseError("Encountered invalid float literal!"); });
+      }
+    } else {
+      return ParseError("Encountered invalid float literal!");
+    }
+    return Status::OK();
+  }
+
+  // Checking for numeric ints or float literal.
+  if (isdigit(nextch)) {
     ++next_;
 
     while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
@@ -82,6 +116,35 @@ Status ParserBase::Parse(Literal& result) {
     result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
   }
   return Status::OK();
+}
+
+bool ParserBase::NextIsValidFloatString() {
+  auto nextch = NextChar();
+  auto from = next_;
+  constexpr int INFINITY_LENGTH = 8;
+
+  if (isalpha(nextch)) {
+    while (next_ < end_ && isalpha(*next_) && (next_ - from) <= INFINITY_LENGTH) {
+      ++next_;
+    }
+
+    if (isdigit(*next_)) { // No trailing digits
+      next_ = from;
+      return false;
+    }
+
+    std::string candidate = std::string(from, next_ - from);
+
+    // Reset parser location before continuing.
+    next_ = from;
+
+    std::transform(
+        candidate.begin(), candidate.end(), candidate.begin(), [](unsigned char c) { return std::tolower(c); });
+    if (candidate == std::string("inf") || candidate == std::string("infinity") || candidate == std::string("nan")) {
+      return true;
+    }
+  }
+  return false;
 }
 
 Status OnnxParser::Parse(IdList& idlist) {
@@ -332,13 +395,11 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   tensorProto.set_data_type(elem_type);
   if (!tensorTypeProto.tensor_type().has_shape())
     return ParseError("Error parsing TensorProto (expected a tensor shape).");
-  uint64_t n = 1;
   for (auto& dim : tensorTypeProto.tensor_type().shape().dim()) {
     if (!dim.has_dim_value())
       return ParseError("Error parsing TensorProto shape (expected numeric dimension).");
     auto dimval = dim.dim_value();
     tensorProto.add_dims(dimval);
-    n *= dimval;
   }
 
   // tensorProto.mutable_int64_data()->Reserve(n);
@@ -434,8 +495,15 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
         attr.mutable_tp()->CopyFrom(typeProto);
       }
     } else {
-      attr.set_type(AttributeProto_AttributeType_GRAPH);
-      Parse(*attr.mutable_g());
+      if (NextIsValidFloatString()) {
+        Literal literal;
+        PARSE_TOKEN(literal);
+        attr.set_type(AttributeProto_AttributeType_FLOAT);
+        attr.set_f(static_cast<float>(std::stof(literal.value)));
+      } else {
+        attr.set_type(AttributeProto_AttributeType_GRAPH);
+        PARSE(*attr.mutable_g());
+      }
     }
   } else if (Matches('@')) {
     std::string name;
@@ -457,8 +525,6 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
         attr.set_type(AttributeProto_AttributeType_STRING);
         attr.set_s(literal.value);
         break;
-      default:
-        return ParseError("Unexpected literal type.");
     }
   }
   if ((expected != AttributeProto_AttributeType_UNDEFINED) && (expected != attr.type())) {

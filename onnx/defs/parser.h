@@ -376,6 +376,8 @@ class ParserBase {
   const char* next_;
   const char* end_;
   const char* saved_pos_;
+
+  bool NextIsValidFloatString();
 };
 
 class OnnxParser : public ParserBase {
