@@ -6759,7 +6759,7 @@ Other versions of this operator: <a href="Changelog.md#DFT-17">17</a>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
 <dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
 <dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-1]$ where `r = rank(input)`. The last dimension is for representing complex numbers and is thus an invalid axis.</dd>
+<dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-2]$ where `r = rank(input)`. The last dimension is for representing complex numbers and thus is an invalid axis.</dd>
 </dl>
 
 #### Outputs
