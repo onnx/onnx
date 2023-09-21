@@ -6,7 +6,8 @@ import unittest
 import numpy as np
 from automatic_conversion_test_base import TestAutomaticConversion
 
-from onnx import TensorProto, helper
+import onnx
+from onnx import helper
 
 #####################################################################################
 # Every test calls _test_op_conversion to downgrade a model from the most recent opset version
@@ -18,9 +19,9 @@ class TestAutomaticDowngrade(TestAutomaticConversion):
     def _test_op_downgrade(self, op, *args, **kwargs):
         self._test_op_conversion(op, *args, **kwargs, is_upgrade=False)
 
-    def test_ReduceOps(self) -> None:
+    def test_reduce_ops(self) -> None:
         axes = helper.make_tensor(
-            "b", TensorProto.INT64, dims=[3], vals=np.array([0, 1, 2])
+            "b", onnx.TensorProto.INT64, dims=[3], vals=np.array([0, 1, 2])
         )
         reduce_ops = [
             "ReduceL1",
@@ -40,7 +41,7 @@ class TestAutomaticDowngrade(TestAutomaticConversion):
                 13,
                 [[3, 4, 5], [3]],
                 [[1, 1, 1]],
-                [TensorProto.FLOAT, TensorProto.INT64],
+                [onnx.TensorProto.FLOAT, onnx.TensorProto.INT64],
                 initializer=[axes],
             )
 
