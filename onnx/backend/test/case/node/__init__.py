@@ -23,7 +23,6 @@ from onnx.onnx_pb import (
     TypeProto,
 )
 
-
 _NodeTestCases = []
 _TargetOpType = None
 _DiffOpTypes = None
