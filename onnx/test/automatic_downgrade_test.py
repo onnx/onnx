@@ -2,6 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 import unittest
+
 import numpy as np
 from automatic_conversion_test_base import TestAutomaticConversion
 
