@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 
+import automatic_conversion_test_base
 import numpy as np
-from automatic_conversion_test_base import TestAutomaticConversion
 
 import onnx
 from onnx import helper
@@ -15,7 +15,7 @@ from onnx import helper
 ####################################################################################
 
 
-class TestAutomaticDowngrade(TestAutomaticConversion):
+class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConversion):
     def _test_op_downgrade(self, op, *args, **kwargs):
         self._test_op_conversion(op, *args, **kwargs, is_upgrade=False)
 
