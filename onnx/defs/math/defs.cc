@@ -3049,8 +3049,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             2,
             "axis",
             "The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). "
-            "Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \\cup [0, r-1]$ where `r = rank(input)`. "
-            "The last dimension is for representing complex numbers and is thus an invalid axis.",
+            "Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \\cup [0, r-2]$ where `r = rank(input)`. "
+            "The last dimension is for representing complex numbers and thus is an invalid axis.",
             "tensor(int64)",
             OpSchema::Optional,
             true,

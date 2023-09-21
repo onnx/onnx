@@ -2966,7 +2966,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "onesided",
             "If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because "
-            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] =X[m, n_fft-w]*. "
+            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. "
             "Note if the input or window tensors are complex, then onesided output is not possible. "
             "Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). "
             "When invoked with real or complex valued input, the default value is 0. "
@@ -2975,9 +2975,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "axis",
-            "The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index."
-            "Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \\cup [0, r-1]$ where `r = rank(input)`. "
-            "The last dimension is for representing complex numbers and is thus an invalid axis.",
+            "The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index. "
+            "Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \\cup [0, r-2]$ where `r = rank(input)`. "
+            "The last dimension is for representing complex numbers and thus is an invalid axis.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .Attr(
