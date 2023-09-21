@@ -6,10 +6,9 @@ import subprocess
 import sys
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
-from typing_extensions import Literal
 
 import onnx
 from onnx.backend.test.case.test_case import TestCase
