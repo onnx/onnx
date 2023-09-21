@@ -4749,9 +4749,44 @@ expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_negative_axis")
 
 
 ### DFT
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>dft</summary>
+
+```python
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.fft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft")
+
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(2, dtype=np.int64)
+y = np.fft.fft(x, axis=1)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_axis")
+
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], inverse=1
+)
+x = np.arange(0, 100, dtype=np.complex64).reshape(10, 10)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.ifft(x, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_inverse")
+```
+
+</details>
+<details>
+<summary>opset19</summary>
 
 ```python
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=1)
@@ -4760,7 +4795,13 @@ y = np.fft.fft(x, axis=0)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=2)
 x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
@@ -4768,7 +4809,13 @@ y = np.fft.fft(x, axis=1)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_axis")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_axis_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node(
     "DFT", inputs=["x"], outputs=["y"], inverse=1, axis=1
@@ -4781,7 +4828,13 @@ y = np.fft.ifft(x, axis=0)
 
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_inverse_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 ```
 
 </details>

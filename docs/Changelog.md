@@ -20867,11 +20867,11 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index.</dd>
+<dd>The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index.Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-1]$ where `r = rank(input)`. The last dimension is for representing complex numbers and is thus an invalid axis.</dd>
 <dt><tt>inverse</tt> : int (default is 0)</dt>
 <dd>Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to false.</dd>
 <dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] =X[m, n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24030,7 +24030,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
 <dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
 <dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>The axis as a scalar on which to perform the DFT. Default is `-1` (last axis). Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input) - 1`. The last dimension is for representing complex numbers and is thus not indexed.</dd>
+<dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-1]$ where `r = rank(input)`. The last dimension is for representing complex numbers and is thus an invalid axis.</dd>
 </dl>
 
 #### Outputs

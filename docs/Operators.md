@@ -6759,7 +6759,7 @@ Other versions of this operator: <a href="Changelog.md#DFT-17">17</a>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
 <dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
 <dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>The axis as a scalar on which to perform the DFT. Default is `-1` (last axis). Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input) - 1`. The last dimension is for representing complex numbers and is thus not indexed.</dd>
+<dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-1]$ where `r = rank(input)`. The last dimension is for representing complex numbers and is thus an invalid axis.</dd>
 </dl>
 
 #### Outputs
@@ -6785,13 +6785,56 @@ Other versions of this operator: <a href="Changelog.md#DFT-17">17</a>
 <summary>dft</summary>
 
 ```python
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.fft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft")
+
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(2, dtype=np.int64)
+y = np.fft.fft(x, axis=1)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_axis")
+
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], inverse=1
+)
+x = np.arange(0, 100, dtype=np.complex64).reshape(10, 10)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.ifft(x, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_inverse")
+```
+
+</details>
+
+
+<details>
+<summary>opset19</summary>
+
+```python
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=1)
 x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
 y = np.fft.fft(x, axis=0)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=2)
 x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
@@ -6799,7 +6842,13 @@ y = np.fft.fft(x, axis=1)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_axis")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_axis_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node(
     "DFT", inputs=["x"], outputs=["y"], inverse=1, axis=1
@@ -6812,7 +6861,13 @@ y = np.fft.ifft(x, axis=0)
 
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_inverse_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 ```
 
 </details>
