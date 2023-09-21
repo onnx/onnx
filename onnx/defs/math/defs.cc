@@ -3048,9 +3048,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "axis",
-            "The axis as a scalar on which to perform the DFT. Default is `-1` (last axis). "
-            "Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input) - 1`. "
-            "The last dimension is for representing complex numbers and is thus not indexed.",
+            "The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). "
+            "Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \\cup [0, r-1]$ where `r = rank(input)`. "
+            "The last dimension is for representing complex numbers and is thus an invalid axis.",
             "tensor(int64)",
             OpSchema::Optional,
             true,
@@ -3096,8 +3096,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           const TensorProto* axis_tensor = ctx.getInputData(axis_arg_index);
           int64_t axis;
           if (axis_tensor == nullptr) {
-            // axis is -1 by default
-            axis = -1;
+            // axis is -2 by default
+            axis = -2;
           } else {
             // TODO(justinchuby): Create invariance checking functions to ensure shapes and sizes
             // to abstrct the following logic out.
@@ -3107,12 +3107,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis = defs::math::utils::GetScalarValueFromTensor<int64_t>(axis_tensor);
           }
           // The last dimension is the real and imaginary parts of the value.
-          const int64_t rank = input_shape.dim_size() - 1;
-          if (rank < 1) {
-            fail_shape_inference("input tensor must have rank >= 1, excluding the complex dimension.");
+          const int64_t rank = input_shape.dim_size();
+          if (rank < 2) {
+            fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
           }
-          if (!(-rank <= axis && axis < rank)) {
-            fail_shape_inference("axis attribute value ", axis, " is invalid for a tensor of rank ", rank);
+          if (!(-rank <= axis && axis != -1 && axis < rank - 1)) {
+            fail_shape_inference("axis attribute value ", axis, " is invalid for a tensor of rank ", rank, ". Valid values are '-rank <= axis && axis != -1 && axis < rank - 1'");
           }
 
           auto axis_idx = (axis >= 0 ? axis : axis + rank);

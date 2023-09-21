@@ -2975,7 +2975,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "axis",
-            "The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index.",
+            "The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index."
+            "Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \\cup [0, r-1]$ where `r = rank(input)`. "
+            "The last dimension is for representing complex numbers and is thus an invalid axis.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .Attr(
@@ -3045,12 +3047,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Get the axis where the DFT will be performed.
           auto axis = static_cast<int>(getAttribute(ctx, "axis", 1));
           // The last dimension is the real and imaginary parts of the value.
-          const int64_t rank = input_shape.dim_size() - 1;
-          if (rank < 1) {
-            fail_shape_inference("input tensor must have rank >= 1, excluding the complex dimension.");
+          const int64_t rank = input_shape.dim_size();
+          if (rank < 2) {
+            fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
           }
-          if (!(-rank <= axis && axis < rank)) {
-            fail_shape_inference("axis attribute value ", axis, " is invalid for a tensor of rank ", rank);
+          if (!(-rank <= axis && axis != -1 && axis < rank)) {
+            fail_shape_inference("axis attribute value ", axis, " is invalid for a tensor of rank ", rank, ". Valid values are '-rank <= axis && axis != -1 && axis < rank - 1'");
           }
 
           auto axis_idx = (axis >= 0 ? axis : axis + rank);

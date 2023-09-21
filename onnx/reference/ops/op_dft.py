@@ -65,7 +65,7 @@ def _ifft(x: np.ndarray, fft_length: int, axis: int, onesided: bool) -> np.ndarr
 
 
 def _cifft(
-    x: np.ndarray, fft_length: int, axis: int = -1, onesided: bool = False
+    x: np.ndarray, fft_length: int, axis: int, onesided: bool = False
 ) -> np.ndarray:
     if x.shape[-1] == 1:
         frequencies = x
@@ -82,6 +82,8 @@ def _cifft(
 
 class DFT_17(OpRun):
     def _run(self, x: np.ndarray, dft_length: int | None = None, axis: int = 1, inverse: bool = False, onesided: bool = False) -> tuple[np.ndarray]:  # type: ignore
+        # Convert to positive axis
+        axis = axis % len(x.shape)
         if dft_length is None:
             dft_length = x.shape[axis]
         if inverse:  # type: ignore
@@ -92,7 +94,9 @@ class DFT_17(OpRun):
 
 
 class DFT_20(OpRun):
-    def _run(self, x: np.ndarray, dft_length: int | None = None, axis: int = -1, inverse: bool = False, onesided: bool = False) -> tuple[np.ndarray]:  # type: ignore
+    def _run(self, x: np.ndarray, dft_length: int | None = None, axis: int = -2, inverse: bool = False, onesided: bool = False) -> tuple[np.ndarray]:  # type: ignore
+        # Convert to positive axis
+        axis = axis % len(x.shape)
         if dft_length is None:
             dft_length = x.shape[axis]
         if inverse:  # type: ignore
