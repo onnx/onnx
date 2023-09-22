@@ -23,14 +23,14 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         axes = helper.make_tensor(
             "b", onnx.TensorProto.INT64, dims=[3], vals=np.array([0, 1, 2])
         )
-            self._test_op_downgrade(
-                reduce_op,
-                13,
-                [[3, 4, 5], [3]],
-                [[1, 1, 1]],
-                [onnx.TensorProto.FLOAT, onnx.TensorProto.INT64],
-                initializer=[axes],
-            )
+        self._test_op_downgrade(
+            reduce_op,
+            13,
+            [[3, 4, 5], [3]],
+            [[1, 1, 1]],
+            [onnx.TensorProto.FLOAT, onnx.TensorProto.INT64],
+            initializer=[axes],
+        )
 
 
 if __name__ == "__main__":
