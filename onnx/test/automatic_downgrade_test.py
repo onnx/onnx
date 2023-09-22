@@ -19,7 +19,21 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
     def _test_op_downgrade(self, op: str, *args, **kwargs):
         self._test_op_conversion(op, *args, **kwargs, is_upgrade=False)
 
-    def test_reduce_ops(self) -> None:
+    parameterized.parameterized.expand(
+        [
+            "ReduceL1",
+            "ReduceL2",
+            "ReduceLogSum",
+            "ReduceLogSumExp",
+            "ReduceMean",
+            "ReduceMax",
+            "ReduceMin",
+            "ReduceProd",
+            "ReduceSum",
+            "ReduceSumSquare",
+        ]
+    )
+    def test_reduce_ops(self, op: str) -> None:
         axes = helper.make_tensor(
             "b", onnx.TensorProto.INT64, dims=[3], vals=np.array([0, 1, 2])
         )
