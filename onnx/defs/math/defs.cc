@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <functional>
 
+#include "onnx/common/assertions.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
@@ -3087,18 +3088,48 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
+          auto& input_shape = getInputShape(ctx, input_arg_index);
+
+          // The last dimension is the real and imaginary parts of the value.
+          const int64_t rank = input_shape.dim_size();
+          if (rank < 2) {
+            fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
+          }
+
           // In general the output shape will match the input shape exactly
           // So initialize the output shape with the input shape
-          auto& input_shape = getInputShape(ctx, input_arg_index);
-          ONNX_NAMESPACE::TensorShapeProto result_shape_proto = input_shape;
+          TensorShapeProto result_shape_proto = input_shape;
 
-          // Get the axis where the DFT will be performed.
-          const TensorProto* axis_tensor = ctx.getInputData(axis_arg_index);
+          // Handle when axis is an input but is not statically known
+          if (ctx.hasInput(axis_arg_index) && ctx.getInputData(axis_arg_index) == nullptr) {
+            // Axis is an input but is not statically known
+            if (is_onesided || ctx.hasInput(dft_length_arg_index)) {
+              // We don't know which axis is the signal dimension, so we cannot infer shape
+              // when onesided is enabled or when dft_length_arg_index is provided
+              result_shape_proto.clear_dim();
+
+              // Coerce the last dimension to 2.
+              int dim_size = result_shape_proto.dim_size();
+              result_shape_proto.mutable_dim(dim_size - 1)->set_dim_value(2);
+              updateOutputShape(ctx, output_index, result_shape_proto);
+              return;
+            } else {
+              // Coerce the last dimension to 2.
+              int dim_size = result_shape_proto.dim_size();
+              result_shape_proto.mutable_dim(dim_size - 1)->set_dim_value(2);
+              updateOutputShape(ctx, output_index, result_shape_proto);
+              return;
+            }
+          }
+
+          // Get the axis where the DFT will be performed
           int64_t axis;
-          if (axis_tensor == nullptr) {
-            // axis is -2 by default
+          if (!ctx.hasInput(axis_arg_index)) {
+            // axis is not an input. We use -2 by default
             axis = -2;
           } else {
+            const TensorProto* axis_tensor = ctx.getInputData(axis_arg_index);
+            ONNX_ASSERTM(axis_tensor != nullptr, "axis should not be nullptr at this point");
             // TODO(justinchuby): Create invariance checking functions to ensure shapes and sizes
             // to abstrct the following logic out.
             if (axis_tensor->dims_size() != 0) {
@@ -3106,11 +3137,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             axis = defs::math::utils::GetScalarValueFromTensor<int64_t>(axis_tensor);
           }
-          // The last dimension is the real and imaginary parts of the value.
-          const int64_t rank = input_shape.dim_size();
-          if (rank < 2) {
-            fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
-          }
+
           if (!(-rank <= axis && axis != -1 && axis < rank - 1)) {
             fail_shape_inference(
                 "axis attribute value ",

@@ -8531,7 +8531,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             )
         ]
     )
-    def test_dft_reals(
+    def test_dft(
         self,
         _: str,
         version: int,
@@ -8602,7 +8602,88 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
-    def test_dft_real_onesided_default_axis_opset17(self) -> None:
+    @parameterized.expand(
+        [
+            ("last", 3),
+            ("last_negative", -1),
+            ("out_of_range", 4),
+            ("out_of_range_negative", -5),
+        ]
+    )
+    def test_dft_invalid_axis_opset17(self, _: str, axis: int) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["input"],
+                    value=make_tensor(
+                        "input",
+                        TensorProto.FLOAT,
+                        (2, 5, 5, 2),
+                        np.ones((2, 5, 5, 2), dtype=np.float32).flatten(),
+                    ),
+                ),
+                make_node("DFT", ["input", ""], ["output"], onesided=1, axis=axis),
+            ],
+            [],
+        )
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            self._assert_inferred(
+                graph,
+                [
+                    make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 5, 2)),
+                    make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
+                ],
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)],
+            )
+
+    @parameterized.expand(
+        [
+            ("last", 3),
+            ("last_negative", -1),
+            ("out_of_range", 4),
+            ("out_of_range_negative", -5),
+        ]
+    )
+    def test_dft_invalid_axis_opset20(self, _: str, axis: int) -> None:
+        graph = self._make_graph(
+            [],
+            [
+                make_node(
+                    "Constant",
+                    [],
+                    ["input"],
+                    value=make_tensor(
+                        "input",
+                        TensorProto.FLOAT,
+                        (2, 5, 5, 2),
+                        np.ones((2, 5, 5, 2), dtype=np.float32).flatten(),
+                    ),
+                ),
+                make_node(
+                    "Constant",
+                    [],
+                    ["axis"],
+                    value=make_tensor("axis", TensorProto.INT64, (), (axis,)),
+                ),
+                make_node("DFT", ["input", "", "axis"], ["output"]),
+            ],
+            [],
+        )
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            self._assert_inferred(
+                graph,
+                [
+                    make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 5, 2)),
+                    make_tensor_value_info("axis", TensorProto.INT64, ()),
+                    make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
+                ],
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 20)],
+            )
+
+    def test_dft_onesided_default_axis_opset17(self) -> None:
         # Opset 17 sets default axis to be 1.
         graph = self._make_graph(
             [],
@@ -8631,7 +8712,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)],
         )
 
-    def test_dft_real_onesided_default_axis_opset20(self) -> None:
+    def test_dft_onesided_default_axis_opset20(self) -> None:
         # Opset 20 sets default axis to be -2.
         graph = self._make_graph(
             [],
