@@ -1,5 +1,12 @@
+schedules:
+- cron: '0 0 * * *'
+  displayName: Nightly MacOS CI in main branch
+  branches:
+    include:
+    - main
+
 trigger:
-- main
+- gh-readonly-queue/**
 
 jobs:
 - job: 'Test'
@@ -7,37 +14,31 @@ jobs:
     vmImage: 'macOS-11'
   strategy:
     matrix:
-      py311:
+      py311-external-protobuf:
         python.version: '3.11'
         onnx_ml: 0
         build_type: 'Release'
         protobuf_type: 'External'
         onnx_lite: 0
-      py310-InternalProtobuf:
+      py310-lite-internal-protobuf:
         python.version: '3.10'
         onnx_ml: 0
         build_type: 'Release'
         protobuf_type: 'Internal'
         onnx_lite: 1
-      py39-ml:
+      py39-ml-lite-external-protobuf:
         python.version: '3.9'
         onnx_ml: 1
         build_type: 'Release'
         protobuf_type: 'External'
         onnx_lite: 1
-      py39-ml-debug-InternalProtobuf:
-        python.version: '3.9'
-        onnx_ml: 1
-        build_type: 'Debug'
-        protobuf_type: 'Internal'
-        onnx_lite: 0
-      py38-ml-debug:
+      py38-ml-debug-external-protobuf:
         python.version: '3.8'
         onnx_ml: 1
         build_type: 'Debug'
         protobuf_type: 'External'
         onnx_lite: 0
-    maxParallel: 6
+    maxParallel: 4
 
   steps:
   - task: UsePythonVersion@0
@@ -68,13 +69,23 @@ jobs:
       if [ '$(onnx_lite)' == '1' ]; then
         export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
       fi
-      pip install -e . -v
+      pip install -e ".[reference]" -v
     displayName: 'Install dependencies and ONNX'
 
   - script: |
       pytest
       if [ $? -ne 0 ]; then
         echo "pytest failed"
+        exit 1
+      fi
+
+      python -m pip install onnxruntime
+      export ORT_MAX_IR_SUPPORTED_VERSION=8
+      export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
+      export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+      pytest
+      if [ $? -ne 0 ]; then
+        echo "pytest failed when testing onnx with onnxruntime"
         exit 1
       fi
 
@@ -96,6 +107,15 @@ jobs:
       git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
       if [ $? -ne 0 ]; then
         echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
+        exit 1
+      fi
+
+      pip uninstall -y pillow
+      python onnx/backend/test/cmd_tools.py generate-data --clean
+      git status
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+      if [ $? -ne 0 ]; then
+        echo "git diff for test generation without pillow returned failures. Please check updated node test files"
         exit 1
       fi
 

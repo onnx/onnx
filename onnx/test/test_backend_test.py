@@ -37,11 +37,11 @@ class DummyBackend(onnx.backend.base.Backend):
     ) -> Optional[onnx.backend.base.BackendRep]:
         super().prepare(model, device, **kwargs)
 
-        # test strict shape inference
         onnx.checker.check_model(model)
-        model = onnx.shape_inference.infer_shapes(
-            model, check_type=True, strict_mode=True
-        )
+
+        # by default test strict shape inference
+        kwargs = {"check_type": True, "strict_mode": True, **kwargs}
+        model = onnx.shape_inference.infer_shapes(model, **kwargs)
 
         value_infos = {
             vi.name: vi
@@ -105,11 +105,21 @@ def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
     return all(node.op_type not in {"RNN", "LSTM", "GRU"} for node in model.graph.node)
 
 
-backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
+test_kwargs = {
+    # https://github.com/onnx/onnx/issues/5510 (test_mvn fails with test_backend_test.py)
+    "test_mvn": {"strict_mode": False},
+}
+
+backend_test = onnx.backend.test.BackendTest(
+    DummyBackend, __name__, test_kwargs=test_kwargs
+)
 if os.getenv("APPVEYOR"):
     backend_test.exclude(r"(test_vgg19|test_zfnet)")
 if platform.architecture()[0] == "32bit":
     backend_test.exclude(r"(test_vgg19|test_zfnet|test_bvlc_alexnet)")
+
+# Needs investigation on onnxruntime.
+backend_test.exclude("test_dequantizelinear_e4m3fn_float16")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

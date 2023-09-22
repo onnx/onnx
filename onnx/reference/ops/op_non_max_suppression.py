@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0902,R0911,R0912,R0913,R0914,W0221
+
 
 import dataclasses
 from typing import Optional, Tuple
@@ -26,7 +26,7 @@ class PrepareContext:
 
 
 class SelectedIndex:
-    __slots__ = ["batch_index_", "class_index_", "box_index_"]
+    __slots__ = ("batch_index_", "class_index_", "box_index_")
 
     def __init__(
         self, batch_index: int = 0, class_index: int = 0, box_index: int = 0
@@ -42,7 +42,7 @@ def max_min(lhs: float, rhs: float) -> Tuple[float, float]:
     return lhs, rhs
 
 
-def suppress_by_iou(
+def suppress_by_iou(  # noqa: PLR0911
     boxes_data: np.ndarray,
     box_index1: int,
     box_index2: int,

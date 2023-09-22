@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0611,W0603
+
 """
 Every class imported in this module defines an implementation of
 an operator of the main domain. Any class name uses `_` to specify a
@@ -31,6 +31,7 @@ from onnx.reference.ops.op_abs import Abs
 from onnx.reference.ops.op_acos import Acos
 from onnx.reference.ops.op_acosh import Acosh
 from onnx.reference.ops.op_add import Add
+from onnx.reference.ops.op_affine_grid import AffineGrid
 from onnx.reference.ops.op_and import And
 from onnx.reference.ops.op_argmax import ArgMax_1, ArgMax_12
 from onnx.reference.ops.op_argmin import ArgMin_1, ArgMin_12
@@ -113,6 +114,7 @@ from onnx.reference.ops.op_hard_sigmoid import HardSigmoid
 from onnx.reference.ops.op_hardmax import Hardmax
 from onnx.reference.ops.op_identity import Identity
 from onnx.reference.ops.op_if import If
+from onnx.reference.ops.op_image_decoder import ImageDecoder
 from onnx.reference.ops.op_instance_normalization import InstanceNormalization
 from onnx.reference.ops.op_isinf import IsInf
 from onnx.reference.ops.op_isnan import IsNaN
@@ -175,6 +177,7 @@ from onnx.reference.ops.op_reduce_sum_square import (
     ReduceSumSquare_1,
     ReduceSumSquare_18,
 )
+from onnx.reference.ops.op_regex_full_match import RegexFullMatch
 from onnx.reference.ops.op_relu import Relu
 from onnx.reference.ops.op_reshape import Reshape_5, Reshape_14
 from onnx.reference.ops.op_resize import Resize
@@ -211,7 +214,9 @@ from onnx.reference.ops.op_split_to_sequence import SplitToSequence
 from onnx.reference.ops.op_sqrt import Sqrt
 from onnx.reference.ops.op_squeeze import Squeeze_1, Squeeze_11, Squeeze_13
 from onnx.reference.ops.op_stft import STFT
+from onnx.reference.ops.op_string_concat import StringConcat
 from onnx.reference.ops.op_string_normalizer import StringNormalizer
+from onnx.reference.ops.op_string_split import StringSplit
 from onnx.reference.ops.op_sub import Sub
 from onnx.reference.ops.op_sum import Sum
 from onnx.reference.ops.op_tan import Tan
@@ -257,7 +262,7 @@ def load_op(
         of its reference implementation
     :return: class
     """
-    global _registered_operators
+    global _registered_operators  # noqa: PLW0603
     schema = None
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]
@@ -274,7 +279,7 @@ def load_op(
         try:
             schema = get_schema(op_type, version, domain)  # type: ignore
         except SchemaError:
-            raise NotImplementedError(  # pylint: disable=W0707
+            raise NotImplementedError(
                 f"No registered schema for operator {op_type!r} "
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             ) from None

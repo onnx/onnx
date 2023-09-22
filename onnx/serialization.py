@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 __all__ = [
     "registry",
 ]
@@ -11,6 +13,7 @@ __all__ = [
 import typing
 from typing import Any, Collection, Optional, Protocol, TypeVar
 
+import google.protobuf.json_format
 import google.protobuf.message
 import google.protobuf.text_format
 
@@ -24,7 +27,11 @@ _ENCODING = "utf-8"
 class ProtoSerializer(Protocol):
     """A serializer-deserializer to and from in-memory Protocol Buffers representations."""
 
-    supported_formats: Collection[str]
+    # Format supported by the serializer. E.g. "protobuf"
+    supported_format: str
+    # File extensions supported by the serializer. E.g. frozenset({".onnx", ".pb"})
+    # Be careful to include the dot in the file extension.
+    file_extensions: Collection[str]
 
     # NOTE: The methods defined are serialize_proto and deserialize_proto and not the
     # more generic serialize and deserialize to leave space for future protocols
@@ -41,16 +48,20 @@ class ProtoSerializer(Protocol):
 class _Registry:
     def __init__(self) -> None:
         self._serializers: dict[str, ProtoSerializer] = {}
+        # A mapping from file extension to format
+        self._extension_to_format: dict[str, str] = {}
 
     def register(self, serializer: ProtoSerializer) -> None:
-        for fmt in serializer.supported_formats:
-            self._serializers[fmt] = serializer
+        self._serializers[serializer.supported_format] = serializer
+        self._extension_to_format.update(
+            {ext: serializer.supported_format for ext in serializer.file_extensions}
+        )
 
     def get(self, fmt: str) -> ProtoSerializer:
         """Get a serializer for a format.
 
         Args:
-            fmt (str): The format to get a serializer for.
+            fmt: The format to get a serializer for.
 
         Returns:
             ProtoSerializer: The serializer for the format.
@@ -65,11 +76,23 @@ class _Registry:
                 f"Unsupported format: '{fmt}'. Supported formats are: {self._serializers.keys()}"
             ) from None
 
+    def get_format_from_file_extension(self, file_extension: str) -> str | None:
+        """Get the corresponding format from a file extension.
+
+        Args:
+            file_extension: The file extension to get a format for.
+
+        Returns:
+            The format for the file extension, or None if not found.
+        """
+        return self._extension_to_format.get(file_extension)
+
 
 class _ProtobufSerializer(ProtoSerializer):
     """Serialize and deserialize protobuf message."""
 
-    supported_formats = ("protobuf",)
+    supported_format = "protobuf"
+    file_extensions = frozenset({".onnx", ".pb"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         if hasattr(proto, "SerializeToString") and callable(proto.SerializeToString):
@@ -103,7 +126,8 @@ class _ProtobufSerializer(ProtoSerializer):
 class _TextProtoSerializer(ProtoSerializer):
     """Serialize and deserialize text proto."""
 
-    supported_formats = ("textproto",)
+    supported_format = "textproto"
+    file_extensions = frozenset({".textproto", ".prototxt", ".pbtxt"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         textproto = google.protobuf.text_format.MessageToString(proto)
@@ -120,7 +144,66 @@ class _TextProtoSerializer(ProtoSerializer):
         return google.protobuf.text_format.Parse(serialized, proto)
 
 
+class _JsonSerializer(ProtoSerializer):
+    """Serialize and deserialize JSON."""
+
+    supported_format = "json"
+    file_extensions = frozenset({".json", ".onnxjson"})
+
+    def serialize_proto(self, proto: _Proto) -> bytes:
+        json_message = google.protobuf.json_format.MessageToJson(
+            proto, preserving_proto_field_name=True
+        )
+        return json_message.encode(_ENCODING)
+
+    def deserialize_proto(self, serialized: bytes | str, proto: _Proto) -> _Proto:
+        if not isinstance(serialized, (bytes, str)):
+            raise TypeError(
+                f"Parameter 'serialized' must be bytes or str, but got type: {type(serialized)}"
+            )
+        if isinstance(serialized, bytes):
+            serialized = serialized.decode(_ENCODING)
+        assert isinstance(serialized, str)
+        return google.protobuf.json_format.Parse(serialized, proto)
+
+
+class _TextualSerializer(ProtoSerializer):
+    """Serialize and deserialize the ONNX textual representation."""
+
+    supported_format = "onnxtxt"
+    file_extensions = frozenset({".onnxtxt"})
+
+    def serialize_proto(self, proto: _Proto) -> bytes:
+        text = onnx.printer.to_text(proto)  # type: ignore[arg-type]
+        return text.encode(_ENCODING)
+
+    def deserialize_proto(self, serialized: bytes | str, proto: _Proto) -> _Proto:
+        warnings.warn(
+            "The onnxtxt format is experimental. Please report any errors to the ONNX GitHub repository.",
+            stacklevel=2,
+        )
+        if not isinstance(serialized, (bytes, str)):
+            raise TypeError(
+                f"Parameter 'serialized' must be bytes or str, but got type: {type(serialized)}"
+            )
+        if isinstance(serialized, bytes):
+            text = serialized.decode(_ENCODING)
+        else:
+            text = serialized
+        if isinstance(proto, onnx.ModelProto):
+            return onnx.parser.parse_model(text)  # type: ignore[return-value]
+        if isinstance(proto, onnx.GraphProto):
+            return onnx.parser.parse_graph(text)  # type: ignore[return-value]
+        if isinstance(proto, onnx.FunctionProto):
+            return onnx.parser.parse_function(text)  # type: ignore[return-value]
+        if isinstance(proto, onnx.NodeProto):
+            return onnx.parser.parse_node(text)  # type: ignore[return-value]
+        raise ValueError(f"Unsupported proto type: {type(proto)}")
+
+
 # Register default serializers
 registry = _Registry()
 registry.register(_ProtobufSerializer())
 registry.register(_TextProtoSerializer())
+registry.register(_JsonSerializer())
+registry.register(_TextualSerializer())

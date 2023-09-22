@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C3001,C0415,R0902,R0912,R0913,R0914,R0915
+
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -85,7 +85,7 @@ class ReferenceEvaluator:
     Adding an implementation requires two changes. The first one is
     the implementation itself. Any existing node can be used as a template.
     The second is one line in file `_op_list.py
-    <https://github.com/onnx/onnx/tree/main/onnx/reference/ops/_op_file.py>`_
+    <https://github.com/onnx/onnx/tree/main/onnx/reference/ops/_op_list.py>`_
     to import the file and let the reference evaluator know it exists.
 
     This class can also be used to test an implementation of
@@ -149,7 +149,7 @@ class ReferenceEvaluator:
     The class name must be the same. The domain does not have
     to be specified for the default domain. However, by default,
     class `OpRun` will load the most recent for this operator.
-    It can be explicirely specified by adding static attribute
+    It can be explicitly specified by adding static attribute
     `op_schema` of type :class:`OpSchema
     <onnx.onnx_cpp2py_export.defs.OpSchema>`.
 
@@ -298,10 +298,10 @@ class ReferenceEvaluator:
         if isinstance(a, (str, int, float)):
             return a
         if isinstance(a, np.ndarray):
-            if self.verbose < 4:
+            if self.verbose < 4:  # noqa: PLR2004
                 return f"{a.dtype}:{a.shape} in [{a.min()}, {a.max()}]"
             elements = a.ravel().tolist()
-            if len(elements) > 5:
+            if len(elements) > 5:  # noqa: PLR2004
                 elements = elements[:5]
                 return f"{a.dtype}:{a.shape}:{','.join(map(str, elements))}..."
             return f"{a.dtype}:{a.shape}:{elements}"
@@ -416,7 +416,7 @@ class ReferenceEvaluator:
                 ) from e
             self.rt_nodes_.append(inst)
 
-    def _load_impl(
+    def _load_impl(  # noqa: PLR0911
         self, node: NodeProto, input_types: Optional[TypeProto] = None
     ) -> Any:
         """
@@ -489,7 +489,7 @@ class ReferenceEvaluator:
             f"is unknown, known functions: {sorted(self.functions_)}."
         )
 
-    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Dict[str, Any] = None):  # type: ignore
+    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Optional[Dict[str, Any]] = None):  # type: ignore
         """
         Executes the onnx model.
 

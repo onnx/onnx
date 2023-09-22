@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
@@ -37,6 +38,9 @@ class SymbolTable {
   // Adds existing symbols from a main graph or subgraph
   virtual void addFromGraph(const GraphProto& g) = 0;
   // Creates a new symbol which is not duplicate as any existing one
+  std::string createNew() {
+    return createNew("unk__");
+  }
   virtual std::string createNew(const std::string& symbol_prefix) = 0;
   virtual ~SymbolTable() = default;
 };
@@ -179,6 +183,13 @@ inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, T
   }
   return result;
 }
+
+template <typename Container>
+std::string stringify(const Container& elements);
+
+std::pair<int, int> getAttributeElementTypeAndLength(
+    const InferenceContext& ctx,
+    const std::initializer_list<std::string>& attribute_names);
 
 inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
@@ -377,7 +388,8 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
   const auto from_type_case = from_type->value_case();
   const auto to_type_case = to_type->value_case();
   if (from_type_case != to_type_case) {
-    fail_shape_inference("Mismatch between source and target type. Source=", from_type_case, " Target=", to_type_case);
+    fail_shape_inference(
+        "Mismatch between inferred and declared type. Inferred=", from_type_case, " Declared=", to_type_case);
   }
 
   if (TypeProto::kTensorType == from_type_case || TypeProto::kSparseTensorType == from_type_case) {
@@ -648,9 +660,9 @@ inline void mergeInDimensionInfo(
       if (target_value != source_value) {
         fail_shape_inference(
             "Can't merge shape info. "
-            "Both source and target dimension have values but they differ. Source=",
+            "Both inferred and declared dimension have values but they differ. Inferred=",
             source_value,
-            " Target=",
+            " Declared=",
             target_value,
             " Dimension=",
             dim_index);
@@ -720,7 +732,7 @@ inline TypeProto RemoveDimensionsFromShape(const TypeProto& proto, int num_dimen
 }
 
 // copied from GSL:
-// https://github.com/Microsoft/GSL/blob/main/include/gsl/gsl_util
+// https://github.com/microsoft/GSL/blob/main/include/gsl/util
 template <class T, class U>
 static constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));

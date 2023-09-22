@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
@@ -1173,6 +1174,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            // we can infer the output rank - it never changes
+            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 
@@ -2205,13 +2211,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             return axis < 0 ? axis + input_ndim : axis;
           });
 
-          for (int i = 0, j = 0; i < input_ndim; ++i) {
+          for (int i = 0; i < input_ndim; ++i) {
             if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
               if (input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
                 fail_shape_inference(
                     "Dimension of input ", i, " must be 1 instead of ", input_shape.dim(i).dim_value());
               }
-              ++j;
             } else {
               *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() = input_shape.dim(i);
             }
@@ -2891,6 +2896,55 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input types to float tensors.")
+        .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    IsNaN,
+    13,
+    OpSchema()
+        .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
+        .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input types to float tensors.")
+        .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          if (hasInputShape(ctx, 0)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    IsInf,
+    10,
+    OpSchema()
+        .SetDoc(R"DOC(Map infinity to true and other values to false.)DOC")
+        .Input(0, "X", "input", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "output", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Attr(
+            "detect_positive",
+            "(Optional) Whether map positive infinity to true. Default to 1 "
+            "so that positive infinity induces true. Set this attribute to 0 "
+            "if positive infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "detect_negative",
+            "(Optional) Whether map negative infinity to true. Default to 1 "
+            "so that negative infinity induces true. Set this attribute to 0 "
+            "if negative infinity should be mapped to false.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output types to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
@@ -3897,6 +3951,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (!startsInitializer || !endsInitializer || (hasInputShape(ctx, 3) && !ctx.getInputData(3)) ||
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
+            const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+            // we can infer the output rank - it never changes
+            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+              ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            }
             return;
           }
 
@@ -4403,7 +4462,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar
           // and 1 element vector for now. In future when version update for
-          // this op is done we should only allow scalar or chage the spec to
+          // this op is done we should only allow scalar or change the spec to
           // allow both.
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
@@ -5186,7 +5245,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto* new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
               // There is a tricky edge case here. It is possible that the value of
-              // symbolic dim can be -1 or 0 at runtime. In that case simply propgating this
+              // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
               // symbol can be erroneous. This should be a very rare scenario and in such a
               // case an option is to turn off data propagation during shape inference.
               new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());

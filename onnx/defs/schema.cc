@@ -3,9 +3,11 @@
  */
 
 #include "onnx/defs/schema.h"
+
 #include <stdexcept>
 #include <unordered_set>
 #include <utility>
+
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/operator_sets_preview.h"
@@ -16,7 +18,6 @@
 #endif
 
 #include "onnx/common/assertions.h"
-#include "onnx/common/stl_backports.h"
 #include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {
@@ -393,14 +394,14 @@ OpSchema& OpSchema::Deprecate() {
 }
 
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  num_inputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n) -> bool {
+  num_inputs_allowed_ = [allowed_input_nums = std::move(allowed_input_nums)](int n) -> bool {
     return allowed_input_nums.count(n);
   };
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  num_outputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
+  num_outputs_allowed_ = [allowed_output_nums = std::move(allowed_output_nums)](int n) -> bool {
     return allowed_output_nums.count(n) > 0;
   };
   return *this;
@@ -460,6 +461,21 @@ OpSchema& OpSchema::Attr(Attribute attr) {
 OpSchema& OpSchema::Attr(std::string name, std::string description, AttributeProto::AttributeType type, bool required) {
   Attr(Attribute{std::move(name), std::move(description), type, required});
   return *this;
+}
+
+OpSchema& OpSchema::Attr(
+    std::string name,
+    std::string description,
+    std::string conditionExplanation,
+    AttributeProto::AttributeType attr_type) {
+  AttributeProto a;
+  a.set_name(name);
+  a.set_type(attr_type);
+  if (attr_type == AttributeProto_AttributeType_UNDEFINED) {
+    a.mutable_t()->set_data_type(TensorProto_DataType_UNDEFINED);
+  }
+  a.mutable_doc_string()->assign(std::move(conditionExplanation));
+  return Attr(Attribute{std::move(name), std::move(description), std::move(a)});
 }
 
 OpSchema& OpSchema::Attr(const char* name, const char* description, AttributeProto::AttributeType type, bool required) {

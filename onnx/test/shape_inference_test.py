@@ -49,21 +49,24 @@ def get_available_versions(schema: OpSchema) -> set[int]:
     versions: set[int] = set()
     for version in range(schema.since_version, 0, -1):
         try:
-            versions.add(defs.get_schema(schema.name, version).since_version)
+            versions.add(
+                defs.get_schema(schema.name, version, schema.domain).since_version
+            )
         except SchemaError:
             break
     return versions
 
 
-ALL_OP_VERSIONS: dict[str, frozenset[int]] = {
-    schema.name: frozenset(get_available_versions(schema))
+ALL_OP_VERSIONS: dict[str, tuple[str, frozenset[int]]] = {
+    schema.name: (schema.domain, frozenset(get_available_versions(schema)))
     for schema in defs.get_all_schemas()
 }
 
 
 def all_versions_for(op_name: str) -> list[tuple[str, int]]:
-    versions_set = ALL_OP_VERSIONS[op_name]
-    assert versions_set
+    domain, versions_set = ALL_OP_VERSIONS[op_name]
+    if not versions_set:
+        raise ValueError(f"No versions available for operator {op_name}")
     versions = sorted(versions_set)
     return [
         (
@@ -73,7 +76,7 @@ def all_versions_for(op_name: str) -> list[tuple[str, int]]:
         for version in versions
         # FIXME(#5289): Reshape errors in self._make_graph when version <= 5.
         # Issue reference: https://github.com/onnx/onnx/issues/5289.
-        if version > 5
+        if version > 5 or domain != ONNX_DOMAIN
     ]
 
 
@@ -318,8 +321,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self, version, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
-            np.arange(np.product(shape1)).reshape(shape1),
-            np.arange(np.product(shape2)).reshape(shape2),
+            np.arange(np.prod(shape1)).reshape(shape1),
+            np.arange(np.prod(shape2)).reshape(shape2),
         ).shape
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, shape1), ("y", TensorProto.FLOAT, shape2)],
@@ -1590,6 +1593,64 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    @parameterized.expand(all_versions_for("StringConcat"))
+    def test_stringconcat(self, _, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2, 3, 4)),
+                ("y", TensorProto.STRING, (2, 3, 4)),
+            ],
+            [make_node("StringConcat", ["x", "y"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("z", TensorProto.STRING, (2, 3, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringConcat"))
+    def test_stringconcat_broadcasting(self, _, version) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2, 3, 4)),
+                ("y", TensorProto.STRING, (1, 3, 1)),
+            ],
+            [make_node("StringConcat", ["x", "y"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("z", TensorProto.STRING, (2, 3, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("RegexFullMatch"))
+    def test_regex_full_match(self, _, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, (2, 4, 3, 9))],
+            [make_node("RegexFullMatch", ["x"], ["y"], pattern=r"^[A-Z][a-z]*$")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.BOOL, (2, 4, 3, 9))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("RegexFullMatch"))
+    def test_regex_full_match_empty_shape(self, _, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ())],
+            [make_node("RegexFullMatch", ["x"], ["y"], pattern=r"^[A-Z][a-z]*$")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.BOOL, ())],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_unsqueeze_regular(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axes", TensorProto.INT64, (4,))],
@@ -1637,7 +1698,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_slice_without_input_shape(self) -> None:
         graph = self._make_graph(
             [
-                ("x", TensorProto.FLOAT, (3, 2)),
+                ("x", TensorProto.FLOAT, (3, 2, "a")),
                 ("starts", TensorProto.INT64, (1,)),
                 ("ends", TensorProto.INT64, (1,)),
             ],
@@ -1645,7 +1706,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, None)]
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (None, None, None))]
         )
 
     def test_slice_with_input_shape(self) -> None:
@@ -5113,8 +5174,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
-            np.arange(np.product(shape1)).reshape(shape1),
-            np.arange(np.product(shape2)).reshape(shape2),
+            np.arange(np.prod(shape1)).reshape(shape1),
+            np.arange(np.prod(shape2)).reshape(shape2),
         ).shape
         graph = self._make_graph(
             [
@@ -5211,8 +5272,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self, shape1: Sequence[int], shape2: Sequence[int]
     ) -> None:
         expected_out_shape = np.matmul(
-            np.arange(np.product(shape1)).reshape(shape1),
-            np.arange(np.product(shape2)).reshape(shape2),
+            np.arange(np.prod(shape1)).reshape(shape1),
+            np.arange(np.prod(shape2)).reshape(shape2),
         ).shape
         graph = self._make_graph(
             [
@@ -5516,10 +5577,15 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (15, "C", 1, 1))])  # type: ignore
 
-    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
-    def test_label_encoder_string_int64(self) -> None:
+    @parameterized.expand(
+        all_versions_for("LabelEncoder") if ONNX_ML else [], skip_on_empty=True
+    )
+    def test_label_encoder_string_int64(self, _, version) -> None:
+        self.skipIf(
+            version < 2, "keys_* attributes were introduced in ai.onnx.ml opset 2"
+        )
         string_list = ["A", "m", "y"]
-        float_list = [94.17, 36.00]
+        float_list = [94.17, 36.00, -99.0]
         int64_list = [12, 28, 86]
         graph = self._make_graph(
             [("x", TensorProto.STRING, (6, 1))],
@@ -5539,7 +5605,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.INT64, (6, 1))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5562,7 +5628,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.STRING, (2, 3))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5585,7 +5651,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.INT64, (2,))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5608,7 +5674,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (8,))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5631,7 +5697,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.STRING, ())],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
         )
@@ -5654,9 +5720,119 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, (1, 2))],
             opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 2),
+                make_opsetid(ONNX_ML_DOMAIN, version),
                 make_opsetid(ONNX_DOMAIN, 11),
             ],
+        )
+
+    @parameterized.expand(
+        all_versions_for("LabelEncoder") if ONNX_ML else [], skip_on_empty=True
+    )
+    def test_label_encoder_tensor_attributes(self, _, version) -> None:
+        self.skipIf(
+            version < 4, "tensor attributes were introduced in ai.onnx.ml opset 4"
+        )
+        key_tensor = make_tensor(
+            "keys_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+        )
+        values_tensor = make_tensor(
+            "values_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+        )
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ("M", None, 3, 12))],
+            [
+                make_node(
+                    "LabelEncoder",
+                    ["x"],
+                    ["y"],
+                    domain=ONNX_ML_DOMAIN,
+                    keys_tensor=key_tensor,
+                    values_tensor=values_tensor,
+                    default_tensor=make_tensor(
+                        "default_tensor", TensorProto.INT64, [1], [0]
+                    ),
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, ("M", None, 3, 12))],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, version),
+                make_opsetid(ONNX_DOMAIN, 11),
+            ],
+        )
+
+    @parameterized.expand(
+        all_versions_for("LabelEncoder") if ONNX_ML else [], skip_on_empty=True
+    )
+    def test_label_encoder_tensor_attributes_invalid_configurations(
+        self, _, version
+    ) -> None:
+        self.skipIf(version < 4, "tensor attributes introduced in ai.onnx.ml opset 4")
+        key_tensor = make_tensor(
+            "keys_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+        )
+        values_tensor = make_tensor(
+            "values_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+        )
+
+        opset_imports = [
+            make_opsetid(ONNX_ML_DOMAIN, version),
+            make_opsetid(ONNX_DOMAIN, 11),
+        ]
+
+        # default_tensor should be INT64, same type as values_tensor
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ("M", None, 3, 12))],
+            [
+                make_node(
+                    "LabelEncoder",
+                    ["x"],
+                    ["y"],
+                    domain=ONNX_ML_DOMAIN,
+                    keys_tensor=key_tensor,
+                    values_tensor=values_tensor,
+                    default_tensor=make_tensor(
+                        "default_tensor", TensorProto.STRING, [1], [0]
+                    ),
+                )
+            ],
+            [],
+        )
+
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=opset_imports,
+        )
+
+        # default_tensor should be a singleton of shape (1,)
+        graph = self._make_graph(
+            [("x", TensorProto.STRING, ("M", None, 3, 12))],
+            [
+                make_node(
+                    "LabelEncoder",
+                    ["x"],
+                    ["y"],
+                    domain=ONNX_ML_DOMAIN,
+                    keys_tensor=key_tensor,
+                    values_strings=["a", "b", "cc", "ddd"],
+                    default_tensor=make_tensor(
+                        "default_tensor", TensorProto.STRING, [1, 2], [0, 0]
+                    ),
+                )
+            ],
+            [],
+        )
+
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=opset_imports,
         )
 
     def make_sparse(
@@ -7622,6 +7798,105 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(graph, [output_tensor_val_info])  # type: ignore
 
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_basic(self, _, version) -> None:
+        substrings = make_tensor_value_info(
+            "substrings",
+            TensorProto.STRING,
+            (2, None),
+        )
+        length = make_tensor_value_info("length", TensorProto.INT64, (2,))
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2,)),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"])],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_symbolic(self, _, version) -> None:
+        substrings = make_tensor_value_info(
+            "substrings",
+            TensorProto.STRING,
+            ("A", None),
+        )
+        length = make_tensor_value_info("length", TensorProto.INT64, ("A",))
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, ("A",)),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"])],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_nested(self, _, version) -> None:
+        substrings = make_tensor_value_info(
+            "substrings", TensorProto.STRING, (2, 4, 3, None)
+        )
+        length = make_tensor_value_info("length", TensorProto.INT64, (2, 4, 3))
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, (2, 4, 3)),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"], maxsplit=2)],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_zero_dimensional_input(self, _, version) -> None:
+        substrings = make_tensor_value_info("substrings", TensorProto.STRING, (None,))
+        length = make_tensor_value_info("length", TensorProto.INT64, ())
+
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, ()),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"], maxsplit=2)],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("StringSplit"))
+    def test_string_split_empty_input(self, _, version) -> None:
+        substrings = make_tensor_value_info(
+            "substrings", TensorProto.STRING, ("M", 3, 0, None)
+        )
+        length = make_tensor_value_info("length", TensorProto.INT64, ("M", 3, 0))
+
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.STRING, ("M", 3, 0)),
+            ],
+            [make_node("StringSplit", ["x"], ["substrings", "length"], maxsplit=2)],
+            [substrings, length],
+        )
+        self._assert_inferred(
+            graph,
+            [substrings, length],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_optional_tensor_get_element(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(
             elem_type=TensorProto.DOUBLE, shape=[2, 1, 4]
@@ -7737,6 +8012,59 @@ class TestShapeInference(TestShapeInferenceHelper):
         self.assertFalse(
             inferred_model.graph.output[0].type.tensor_type.HasField("shape")
         )
+
+        graph = self._make_graph(
+            [("x", TensorProto.UINT8, (1, 0, 0)), ("shape", TensorProto.INT64, (3,))],
+            [make_node("Reshape", ["x", "shape"], ["y"], allowzero=1)],
+            [],
+            initializer=[make_tensor("shape", TensorProto.INT64, (3,), (0, 1, 1))],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.UINT8, (0, 1, 1))]
+        )
+
+    def test_affinegrid_2d(self) -> None:
+        N, C, H, W = 2, 3, 4, 5
+        graph = self._make_graph(
+            [
+                ("theta", TensorProto.FLOAT, (N, 2, 3)),
+                ("size", TensorProto.INT64, (4,)),
+            ],
+            [
+                make_node(
+                    "AffineGrid",
+                    ["theta", "size"],
+                    ["grid"],
+                    align_corners=1,
+                )
+            ],
+            [],
+            initializer=[make_tensor("size", TensorProto.INT64, (4,), (N, C, H, W))],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, (N, H, W, 2))]
+        )  # type: ignore
+
+    def test_affinegrid_3d(self) -> None:
+        N, C, D, H, W = 2, 3, 4, 5, 6
+        graph = self._make_graph(
+            [
+                ("theta", TensorProto.FLOAT, (N, 3, 4)),
+                ("size", TensorProto.INT64, (5,)),
+            ],
+            [
+                make_node(
+                    "AffineGrid",
+                    ["theta", "size"],
+                    ["grid"],
+                )
+            ],
+            [],
+            initializer=[make_tensor("size", TensorProto.INT64, (5,), (N, C, D, H, W))],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("grid", TensorProto.FLOAT, (N, D, H, W, 3))]
+        )  # type: ignore
 
     def test_gridsample_2d(self) -> None:
         graph = self._make_graph(

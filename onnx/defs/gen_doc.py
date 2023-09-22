@@ -97,7 +97,7 @@ def generate_formal_parameter_tags(formal_parameter: OpSchema.FormalParameter) -
     return "" if len(tags) == 0 else " (" + ", ".join(tags) + ")"
 
 
-def display_schema(  # pylint: disable=too-many-branches,too-many-statements
+def display_schema(
     schema: OpSchema, versions: Sequence[OpSchema], changelog: str
 ) -> str:
     s = ""
@@ -123,7 +123,7 @@ def display_schema(  # pylint: disable=too-many-branches,too-many-statements
         s += f" of {display_domain(schema.domain)}.\n"
         if len(versions) > 1:
             # TODO: link to the Changelog.md
-            s += "\nOther versions of this operator: {}\n".format(  # pylint: disable=consider-using-f-string
+            s += "\nOther versions of this operator: {}\n".format(
                 ", ".join(
                     display_version_link(
                         format_name_with_domain(v.domain, v.name),
@@ -149,12 +149,13 @@ def display_schema(  # pylint: disable=too-many-branches,too-many-statements
                 opt = "required"
             elif attr.default_value.name:
                 default_value = helper.get_attribute_value(attr.default_value)
+                doc_string = attr.default_value.doc_string
 
                 def format_value(value: Any) -> str:
                     if isinstance(value, float):
                         formatted = str(np.round(value, 5))
                         # use default formatting, unless too long.
-                        if len(formatted) > 10:
+                        if len(formatted) > 10:  # noqa: PLR2004
                             formatted = str(f"({value:e})")
                         return formatted
                     if isinstance(value, (bytes, bytearray)):
@@ -165,7 +166,7 @@ def display_schema(  # pylint: disable=too-many-branches,too-many-statements
                     default_value = [format_value(val) for val in default_value]
                 else:
                     default_value = format_value(default_value)
-                opt = f"default is {default_value}"
+                opt = f"default is {default_value}{doc_string}"
 
             s += f"<dt><tt>{attr.name}</tt> : {display_attr_type(attr.type)}{f' ({opt})' if opt else ''}</dt>\n"
             s += f"<dd>{attr.description}</dd>\n"
@@ -233,7 +234,7 @@ class Args(NamedTuple):
     changelog: str
 
 
-def main(args: Args) -> None:  # pylint: disable=too-many-branches,too-many-statements
+def main(args: Args) -> None:
     base_dir = os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
     )
@@ -345,7 +346,7 @@ def main(args: Args) -> None:  # pylint: disable=too-many-branches,too-many-stat
                         function_versions = schema.all_function_opset_versions  # type: ignore
                         function_ops.append((n, schema, versions, function_versions))
                         continue
-                    s = '|{}<a href="#{}">{}</a>{}|{}|\n'.format(  # pylint: disable=consider-using-f-string
+                    s = '|{}<a href="#{}">{}</a>{}|{}|\n'.format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),
@@ -356,7 +357,7 @@ def main(args: Args) -> None:  # pylint: disable=too-many-branches,too-many-stat
             if function_ops:
                 fout.write("|**Function**|**Since version**|**Function version**|\n")
                 for n, schema, versions, function_versions in function_ops:
-                    s = '|{}<a href="#{}">{}</a>|{}|{}|\n'.format(  # pylint: disable=consider-using-f-string
+                    s = '|{}<a href="#{}">{}</a>|{}|{}|\n'.format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),

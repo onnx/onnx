@@ -469,6 +469,12 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
 
+  OpSchema& Attr(
+      std::string name,
+      std::string description,
+      std::string conditionExplanation,
+      AttributeProto::AttributeType attr_type);
+
   // Register "required" attribute without default value.
   OpSchema& Attr(std::string name, std::string description, AttributeProto::AttributeType type, bool required = true);
 
@@ -607,11 +613,6 @@ class OpSchema final {
     return numeric_types_for_math_reduction_ir4;
   }
 
-  // Deprecated function, use numeric_types_for_math_reduction_ir4 instead. It will be removed in onnx==1.15.0.
-  static const std::vector<std::string>& numeric_types_for_math_reduction_with_bfloat() {
-    return numeric_types_for_math_reduction_ir4();
-  }
-
   static const std::vector<std::string>& numeric_types_for_math_reduction() {
     static const std::vector<std::string> numeric_types_for_math_reduction = {
         "tensor(uint32)",
@@ -660,11 +661,6 @@ class OpSchema final {
         "tensor(double)",
         "tensor(bfloat16)"};
     return all_numeric_types_ir4;
-  }
-
-  // Deprecated function, use all_numeric_types_ir4 instead. It will be removed in onnx==1.15.0.
-  static const std::vector<std::string>& all_numeric_types_with_bfloat() {
-    return all_numeric_types_ir4();
   }
 
   static const std::vector<std::string>& all_numeric_types() {
@@ -740,9 +736,23 @@ class OpSchema final {
     return all_tensor_types_ir4;
   }
 
-  // Deprecated function, use all_tensor_types_ir4 instead. It will be removed in onnx==1.15.0.
-  static const std::vector<std::string>& all_tensor_types_with_bfloat() {
-    return all_tensor_types_ir4();
+  static const std::vector<std::string>& all_float_types_ir4() {
+    static const std::vector<std::string> all_float_types_ir4 = {
+        "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"};
+    return all_float_types_ir4;
+  }
+
+  static const std::vector<std::string>& all_float_types_ir9() {
+    static const std::vector<std::string> all_float_types_ir9 = {
+        "tensor(bfloat16)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(float8e4m3fn)",
+        "tensor(float8e4m3fnuz)",
+        "tensor(float8e5m2)",
+        "tensor(float8e5m2fnuz)"};
+    return all_float_types_ir9;
   }
 
   static const std::vector<std::string>& all_tensor_types_ir9() {
@@ -796,11 +806,6 @@ class OpSchema final {
     return all_tensor_sequence_types_ir4;
   }
 
-  // Deprecated function, use all_tensor_sequence_types_ir4 instead. It will be removed in onnx==1.15.0.
-  static const std::vector<std::string>& all_tensor_sequence_types_with_bfloat() {
-    return all_tensor_sequence_types_ir4();
-  }
-
   static const std::vector<std::string>& all_tensor_sequence_types_ir9() {
     static const std::vector<std::string> all_tensor_sequence_types_ir4 = {
         "seq(tensor(uint8))",      "seq(tensor(uint16))",        "seq(tensor(uint32))",
@@ -844,10 +849,6 @@ class OpSchema final {
     return all_optional_types;
   }
 
-  // Deprecated function, use all_optional_types_ir4 instead. It will be removed in onnx==1.15.0.
-  static const std::vector<std::string>& all_optional_types_with_bfloat() {
-    return all_optional_types_ir4();
-  }
   static const std::vector<std::string>& all_optional_types_ir9() {
     static const std::vector<std::string> all_optional_types = {
         "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
@@ -1078,7 +1079,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
       map_[ONNX_DOMAIN] = std::make_pair(1, 20);
-      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 3);
+      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 4);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
       // versining is not meaningful and that domain should have only one
