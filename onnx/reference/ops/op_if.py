@@ -2,6 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
+import numpy as np
 
 from onnx.reference.op_run import OpRun
 
@@ -23,28 +24,13 @@ class If(OpRun):
         """
         return True
 
-    def _run(self, cond, context=None, else_branch=None, then_branch=None, attributes=None):  # type: ignore
-        if len(cond.shape) > 0:
-            try:
-                evaluated_condition = all(cond)
-            except ValueError as e:
-                raise ValueError(
-                    f"Unable to evaluate the condition with {type(cond)}, "
-                    f"shape={cond.shape}, dtype={cond.dtype}."
-                ) from e
-            if evaluated_condition:
-                self._log("  -- then> {%r}", context)
-                outputs = self._run_then_branch(context, attributes=attributes)  # type: ignore
-                self._log("  -- then<")
-                final = tuple(outputs)
-                branch = "then"
-            else:
-                self._log("  -- else> {%r}", context)
-                outputs = self._run_else_branch(context, attributes=attributes)  # type: ignore
-                self._log("  -- else<")
-                final = tuple(outputs)
-                branch = "else"
-        elif cond:
+    def _run(self, cond: np.ndarray, context=None, else_branch=None, then_branch=None, attributes=None):  # type: ignore
+        cond = cond.flatten()
+        if len(cond) != 1:
+            raise RuntimeError(
+                f"Operator If ({self.onnx_node.name!r}) expects a single element condition, but size of 'cond' is {len(cond)}."
+            )
+        if cond:
             self._log("  -- then> {%r}", context)
             outputs = self._run_then_branch(context, attributes=attributes)  # type: ignore
             self._log("  -- then<")
@@ -58,7 +44,7 @@ class If(OpRun):
             branch = "else"
 
         if not final:
-            raise RuntimeError(  # pragma: no cover
+            raise RuntimeError(
                 f"Operator If ({self.onnx_node.name!r}) does not have any output."
             )
         for i, f in enumerate(final):
@@ -66,7 +52,7 @@ class If(OpRun):
                 br = self.then_branch if branch == "then" else self.else_branch  # type: ignore
                 names = br.output_names
                 inits = [i.name for i in br.obj.graph.initializer]
-                raise RuntimeError(  # pragma: no cover
+                raise RuntimeError(
                     f"Output {i!r} (branch={branch!r}, name={names[i]!r}) is None, "
                     f"available inputs={sorted(context)}, initializers={inits}."
                 )
