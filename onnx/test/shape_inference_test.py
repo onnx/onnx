@@ -8719,12 +8719,14 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(
         [
-            ("real", (2, 5, 5, 1)),
-            ("complex", (2, 5, 5, 2)),
+            ("real", (2, 5, 5, 1), None),
+            ("complex", (2, 5, 5, 2), None),
+            ("real", (2, 5, 5, 1), 42),
+            ("complex", (2, 5, 5, 2), 42),
         ]
     )
     def test_dft_dynamic_axis_onesided_opset20(
-        self, _: str, shape: tuple[int, ...]
+        self, _: str, shape: tuple[int, ...], dft_length: int | None
     ) -> None:
         graph = self._make_graph(
             [("axis", TensorProto.INT64, ())],
@@ -8740,7 +8742,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                         np.ones(shape, dtype=np.float32).flatten(),
                     ),
                 ),
-                make_node("DFT", ["input", "", "axis"], ["output"], onesided=1),
+                make_node("DFT", ["input", "", "axis"], ["output"], onesided=1, dft_length=dft_length),
             ],
             [],
         )
