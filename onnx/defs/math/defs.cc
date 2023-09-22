@@ -3106,12 +3106,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (is_onesided || ctx.hasInput(dft_length_arg_index)) {
               // We don't know which axis is the signal dimension, so we cannot infer shape
               // when onesided is enabled or when dft_length_arg_index is provided
-              result_shape_proto.clear_dim();
-
+              TensorShapeProto new_shape_proto{};
+              for (int i = 0; i < rank; ++i) {
+                new_shape_proto.add_dim();
+              }
               // Coerce the last dimension to 2.
-              int dim_size = result_shape_proto.dim_size();
-              result_shape_proto.mutable_dim(dim_size - 1)->set_dim_value(2);
-              updateOutputShape(ctx, output_index, result_shape_proto);
+              ONNX_ASSERTM(
+                  rank == static_cast<int64_t>(new_shape_proto.dim_size()),
+                  "rank should be equal to new_shape_proto.dim_size()");
+              new_shape_proto.mutable_dim(rank - 1)->set_dim_value(2);
+              updateOutputShape(ctx, output_index, new_shape_proto);
               return;
             } else {
               // Coerce the last dimension to 2.
@@ -3156,14 +3160,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             // dft_length is provided
             const TensorProto* dft_length = ctx.getInputData(dft_length_arg_index);
             if (dft_length == nullptr) {
-              // If we cannot read the dft_length, we cannot infer shape
-              return;
+              // If we cannot read the dft_length, we cannot infer shape on the signal axis
+              result_shape_proto.mutable_dim(axis_idx)->clear_dim_value();
+            } else {
+              if (dft_length->dims_size() != 0) {
+                fail_shape_inference("dft_length input must be a scalar.");
+              }
+              auto dft_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
+              result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);
             }
-            if (dft_length->dims_size() != 0) {
-              fail_shape_inference("dft_length input must be a scalar.");
-            }
-            auto dft_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
-            result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);
           }
 
           // When DFT is onesided, the output shape is half the size of the input shape
@@ -3185,8 +3190,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Coerce the last dimension to 2.
-          auto dim_size = static_cast<int64_t>(result_shape_proto.dim_size());
-          result_shape_proto.mutable_dim(static_cast<int>(dim_size - 1))->set_dim_value(2);
+          result_shape_proto.mutable_dim(static_cast<int>(rank - 1))->set_dim_value(2);
 
           updateOutputShape(ctx, output_index, result_shape_proto);
         }));
