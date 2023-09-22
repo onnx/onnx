@@ -82,7 +82,7 @@ jobs:
       python -m pip install onnxruntime
       export ORT_MAX_IR_SUPPORTED_VERSION=8
       export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-      export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
+      export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
       pytest
       if [ $? -ne 0 ]; then
         echo "pytest failed when testing onnx with onnxruntime"
@@ -119,4 +119,9 @@ jobs:
         exit 1
       fi
 
+      git ls-files --others --error-unmatch --exclude-standard
+      if [ $? -ne 0 ]; then
+        echo "git diff for test generation, because there might be some untrack files. Please upload them as well"
+        exit 1
+      fi
     displayName: 'Run ONNX Tests'
