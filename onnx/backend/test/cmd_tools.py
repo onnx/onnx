@@ -36,7 +36,10 @@ def generate_data(args: argparse.Namespace) -> None:
     cases = model_test.collect_testcases()
     # If op_type is specified, only include those testcases including the given operator
     # Otherwise, include all of the testcases
-    cases += node_test.collect_testcases(args.op_type)
+    if args.diff:
+        cases += node_test.collect_diff_testcases()
+    else:
+        cases += node_test.collect_testcases(args.op_type)
     node_number = 0
 
     for case in cases:
@@ -164,6 +167,13 @@ def parse_args() -> argparse.Namespace:
         "--op_type",
         default=None,
         help="op_type for test case generation. (generates test data for the specified op_type only.)",
+    )
+    subparser.add_argument(
+        "-d",
+        "--diff",
+        default=False,
+        action="store_true",
+        help="only generates test data for those changed files (compared to the main branch).",
     )
     subparser.set_defaults(func=generate_data)
 
