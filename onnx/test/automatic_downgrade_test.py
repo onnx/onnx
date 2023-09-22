@@ -23,19 +23,6 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         axes = helper.make_tensor(
             "b", onnx.TensorProto.INT64, dims=[3], vals=np.array([0, 1, 2])
         )
-        reduce_ops = [
-            "ReduceL1",
-            "ReduceL2",
-            "ReduceLogSum",
-            "ReduceLogSumExp",
-            "ReduceMean",
-            "ReduceMax",
-            "ReduceMin",
-            "ReduceProd",
-            "ReduceSum",
-            "ReduceSumSquare",
-        ]
-        for reduce_op in reduce_ops:
             self._test_op_downgrade(
                 reduce_op,
                 13,
