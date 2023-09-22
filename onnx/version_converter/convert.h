@@ -570,7 +570,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMin", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<GridSample_19_20>());
-    registerAdapter("Split", 19, 20, SetAttribute(kminimize_diff, "legacy"));
+    registerAdapter("Split", 19, 20, SetAttribute(kminimize_diff, false));
 
     /******** 20 -> 19 ********/
     const std::vector<TensorProto_DataType> is_nan_13_unallowed_types = {

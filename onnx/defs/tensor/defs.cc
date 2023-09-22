@@ -713,12 +713,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "num_outputs",
-            "Number of outputs to split parts of the tensor into. ",
+            "Number of outputs to split parts of the tensor into.",
             AttributeProto::INT,
             false)
         .Attr(
             "minimize_diff",
-            "Uneven split mode. ",
+            "Uneven split mode.",
             AttributeProto::INT,
             true)
         .SetDoc(Split_ver20_doc)
@@ -778,7 +778,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           } else { // no value available for 'split'
             if (num_outputs_attr) {
-              const unsigned long int num_outputs = num_outputs_attr->i();
+              const int num_outputs = num_outputs_attr->i();
               if (num_outputs < 1) {
                 fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
               }

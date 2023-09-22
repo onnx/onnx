@@ -1102,11 +1102,7 @@ class OpSet_Onnx_ver19 {
 };
 
 // Forward declarations for ai.onnx version 20
-<<<<<<< HEAD
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Split);
-=======
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, AffineGrid);
->>>>>>> upstream/main
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, GridSample);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Gelu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ConstantOfShape);
@@ -1118,6 +1114,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringSplit);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ImageDecoder);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, IsInf);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, IsNaN);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Split);
 
 // Iterate over schema from ai.onnx version 20
 class OpSet_Onnx_ver20 {
