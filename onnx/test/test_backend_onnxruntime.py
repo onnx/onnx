@@ -258,6 +258,7 @@ if ort_version is not None and Version(ort_version) < Version("1.17"):
     backend_test.exclude(
         "("
         "deform_conv"
+        "|dft"
         "|gelu"
         "|gridsample"
         "|identity_opt"
