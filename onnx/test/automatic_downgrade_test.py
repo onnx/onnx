@@ -16,7 +16,7 @@ from onnx import helper
 
 
 class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConversion):
-    def _test_op_downgrade(self, op, *args, **kwargs):
+    def _test_op_downgrade(self, op: str, *args, **kwargs):
         self._test_op_conversion(op, *args, **kwargs, is_upgrade=False)
 
     def test_reduce_ops(self) -> None:
