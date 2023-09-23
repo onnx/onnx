@@ -2,8 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import subprocess
 import sys
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -23,6 +25,7 @@ from onnx.onnx_pb import (
 
 _NodeTestCases = []
 _TargetOpType = None
+_DiffOpTypes = None
 
 
 def _rename_edges_helper(
@@ -241,6 +244,8 @@ def expect(
     # skip if the node_op's op_type is not same as the given one
     if _TargetOpType and node_op.op_type != _TargetOpType:
         return
+    if _DiffOpTypes is not None and node_op.op_type.lower() not in _DiffOpTypes:
+        return
 
     # in case node_op is modified
     node = deepcopy(node_op)
@@ -375,3 +380,40 @@ def collect_testcases(op_type: str) -> List[TestCase]:
 
     import_recursive(sys.modules[__name__])
     return _NodeTestCases
+
+
+def collect_diff_testcases() -> List[TestCase]:
+    """Collect node test cases which are different from the main branch"""
+    global _DiffOpTypes  # noqa: PLW0603
+    _DiffOpTypes = get_diff_op_types()
+
+    import_recursive(sys.modules[__name__])
+    return _NodeTestCases
+
+
+def get_diff_op_types():
+    cwd_path = Path.cwd()
+    # git fetch first for git diff on GitHub Action
+    subprocess.run(
+        ["git", "fetch", "origin", "main:main"],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    # obtain list of added or modified files in this PR
+    obtain_diff = subprocess.Popen(
+        ["git", "diff", "--name-only", "--diff-filter=AM", "origin/main", "HEAD"],
+        cwd=cwd_path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdoutput, _ = obtain_diff.communicate()
+    diff_list = stdoutput.split()
+    changed_op_types = []
+    for file in diff_list:
+        file_name = file.decode("utf-8")
+        if file_name.startswith("onnx/backend/test/case/node/") and file_name.endswith(
+            ".py"
+        ):
+            changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
+    return changed_op_types
