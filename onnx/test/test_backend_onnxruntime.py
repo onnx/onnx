@@ -263,8 +263,6 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|equal"
         "|half_pixel_symmetric"
         "|identity"
-        "|reduce_max_bool_inputs"
-        "|reduce_min_bool_inputs"
         "|reshape"
         ")"
     )
@@ -282,6 +280,8 @@ if ort_version is not None and Version(ort_version) < Version("1.17"):
         "|isinf_float16"
         "|label_encoder"
         "|optional_get_element_optional_sequence"
+        "|reduce_max_bool_inputs"
+        "|reduce_min_bool_inputs"
         "|regex_full_match"
         "|string_concat"
         "|string_split"
