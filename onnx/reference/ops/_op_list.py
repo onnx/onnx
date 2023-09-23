@@ -85,7 +85,7 @@ from onnx.reference.ops.op_deform_conv import DeformConv
 from onnx.reference.ops.op_depth_to_space import DepthToSpace
 from onnx.reference.ops.op_dequantize_linear import DequantizeLinear
 from onnx.reference.ops.op_det import Det
-from onnx.reference.ops.op_dft import DFT
+from onnx.reference.ops.op_dft import DFT_17, DFT_20
 from onnx.reference.ops.op_div import Div
 from onnx.reference.ops.op_dropout import Dropout_7, Dropout_12
 from onnx.reference.ops.op_dynamic_quantize_linear import DynamicQuantizeLinear
