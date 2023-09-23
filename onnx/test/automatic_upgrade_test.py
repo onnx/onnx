@@ -6,7 +6,6 @@ import unittest
 from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
 import numpy as np
-import pytest
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
