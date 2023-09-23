@@ -24,13 +24,20 @@ class If(OpRun):
         """
         return True
 
-    def _run(self, cond: np.ndarray, context=None, else_branch=None, then_branch=None, attributes=None):  # type: ignore
-        cond = cond.flatten()
-        if len(cond) != 1:
+    def _run(
+        self,
+        cond: np.ndarray | np.bool_,
+        context=None,
+        else_branch=None,
+        then_branch=None,
+        attributes=None,
+    ):
+        if cond.size != 1:
             raise RuntimeError(
                 f"Operator If ({self.onnx_node.name!r}) expects a single element condition, but size of 'cond' is {len(cond)}."
             )
-        if cond:
+        cond_ = cond.item(0)
+        if cond_:
             self._log("  -- then> {%r}", context)
             outputs = self._run_then_branch(context, attributes=attributes)  # type: ignore
             self._log("  -- then<")
