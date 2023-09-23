@@ -35,7 +35,7 @@ class If(OpRun):
         attributes=None,
     ):
         if cond.size != 1:
-            raise RuntimeError(
+            raise ValueError(
                 f"Operator If ({self.onnx_node.name!r}) expects a single element condition, but size of 'cond' is {len(cond)}."
             )
         cond_ = cond.item(0)
