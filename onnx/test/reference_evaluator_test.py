@@ -24,8 +24,8 @@ from typing import Sequence, Tuple
 
 import numpy as np
 import parameterized
-from numpy.testing import assert_allclose
 from numpy import __version__ as npver
+from numpy.testing import assert_allclose
 
 try:
     from packaging.version import parse as version
@@ -119,6 +119,7 @@ def skip_if_no_torchvision(fn):
 
     return wrapper
 
+
 def skip_if_old_numpy_ver(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -129,6 +130,7 @@ def skip_if_old_numpy_ver(fn):
         fn(*args, **kwargs)
 
     return wrapper
+
 
 def make_sequence_value_info(name, elem_type, shape):
     if isinstance(elem_type, int):

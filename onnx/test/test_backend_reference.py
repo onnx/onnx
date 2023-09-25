@@ -15,7 +15,7 @@ try:
     from packaging.version import parse as version
 except ImportError:
     from distutils.version import (  # type: ignore[assignment]
-        StrictVersion as version,
+        StrictVersion as version,  # noqa: N813
     )
 
 import onnx.backend.base
