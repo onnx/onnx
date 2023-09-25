@@ -1579,7 +1579,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if</dd>
+<dd>Condition for the if. The tensor must contain a single element.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -11525,7 +11525,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if</dd>
+<dd>Condition for the if. The tensor must contain a single element.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -16162,7 +16162,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if</dd>
+<dd>Condition for the if. The tensor must contain a single element.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -20057,7 +20057,7 @@ This version of the operator has been available since version 16 of the default 
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if</dd>
+<dd>Condition for the if. The tensor must contain a single element.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -23069,7 +23069,7 @@ This version of the operator has been available since version 19 of the default 
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if</dd>
+<dd>Condition for the if. The tensor must contain a single element.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)

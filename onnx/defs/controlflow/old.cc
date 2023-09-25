@@ -25,7 +25,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     16,
     OpSchema()
         .SetDoc("If conditional")
-        .Input(0, "cond", "Condition for the if", "B")
+        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
         .Output(
             0,
             "outputs",
@@ -1747,7 +1747,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc("If conditional")
-        .Input(0, "cond", "Condition for the if", "B")
+        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
         .Output(
             0,
             "outputs",
@@ -1841,7 +1841,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema()
         .SetDoc("If conditional")
-        .Input(0, "cond", "Condition for the if", "B")
+        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
         .Output(
             0,
             "outputs",
@@ -1933,7 +1933,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc("If conditional")
-        .Input(0, "cond", "Condition for the if", "B")
+        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
         .Output(
             0,
             "outputs",
