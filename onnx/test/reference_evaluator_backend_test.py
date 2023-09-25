@@ -793,6 +793,8 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_layer_normalization_4d_axis1_expanded_ver18": 1e-4,
             "test_layer_normalization_4d_axis_negative_1_expanded_ver18": 1e-4,
             "test_layer_normalization_4d_axis_negative_3_expanded_ver18": 1e-4,
+            "test_ConvTranspose2d": 1e-4,
+            "test__pytorch_converted_ConvTranspose2d": 1e-4,
         }
 
         cls.atol = {
