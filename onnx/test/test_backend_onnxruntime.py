@@ -70,7 +70,7 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
     providers: ClassVar[set[str]] = set(get_available_providers())
 
     @classmethod
-    def is_opset_supported(cls, model):  # pylint: disable=unused-argument
+    def is_opset_supported(cls, model):
         return True, ""
 
     @classmethod
@@ -205,6 +205,22 @@ backend_test.exclude(
     ")"
 )
 
+# The followiing tests fail due to a bug in onnxruntime in handling reduction
+# ops that perform reduction over an empty set of values.
+backend_test.exclude(
+    "("
+    "test_reduce_sum_empty_set"
+    "|test_reduce_prod_empty_set"
+    "|test_reduce_min_empty_set"
+    "|test_reduce_max_empty_set"
+    "|test_reduce_sum_square_empty_set"
+    "|test_reduce_log_sum_empty_set"
+    "|test_reduce_log_sum_exp_empty_set"
+    "|test_reduce_l1_empty_set"
+    "|test_reduce_l2_empty_set"
+    ")"
+)
+
 # The following tests fail for no obvious reason.
 backend_test.exclude(
     "("
@@ -247,8 +263,6 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|equal"
         "|half_pixel_symmetric"
         "|identity"
-        "|reduce_max_bool_inputs"
-        "|reduce_min_bool_inputs"
         "|reshape"
         ")"
     )
@@ -258,12 +272,16 @@ if ort_version is not None and Version(ort_version) < Version("1.17"):
     backend_test.exclude(
         "("
         "deform_conv"
+        "|dft"
         "|gelu"
         "|gridsample"
         "|identity_opt"
-        "|label_encoder"
         "|image_decoder"
+        "|isinf_float16"
+        "|label_encoder"
         "|optional_get_element_optional_sequence"
+        "|reduce_max_bool_inputs"
+        "|reduce_min_bool_inputs"
         "|regex_full_match"
         "|string_concat"
         "|string_split"

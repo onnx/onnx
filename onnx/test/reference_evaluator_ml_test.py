@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
+
 
 import unittest
 from functools import wraps
@@ -42,7 +42,7 @@ OPSETS = [make_opsetid("", TARGET_OPSET), make_opsetid("ai.onnx.ml", TARGET_OPSE
 
 def has_onnxruntime():
     try:
-        import onnxruntime  # pylint: disable=W0611
+        import onnxruntime
 
         del onnxruntime
 

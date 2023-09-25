@@ -45,7 +45,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 
 ONNX is a community project and the open governance model is described [here](community/readme.md). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [Special Interest Groups](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
 
-Check out our [contribution guide](docs/CONTRIBUTING.md) to get started.
+Check out our [contribution guide](/CONTRIBUTING.md) to get started.
 
 If you think some operator should be added to ONNX specification, please read
 [this document](docs/AddNewOp.md).
@@ -321,7 +321,7 @@ pytest
 
 # Development
 
-Check out the [contributor guide](docs/CONTRIBUTING.md) for instructions.
+Check out the [contributor guide](/CONTRIBUTING.md) for instructions.
 
 # License
 

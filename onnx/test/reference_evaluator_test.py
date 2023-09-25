@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
+
 """
 You can run a specific test by using the following syntax.
 
@@ -74,7 +74,7 @@ def skip_if_no_onnxruntime(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import onnxruntime  # pylint: disable=W0611
+            import onnxruntime
 
             del onnxruntime
         except ImportError:
@@ -88,7 +88,7 @@ def skip_if_no_torch(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import torch  # pylint: disable=W0611
+            import torch
 
             del torch
         except ImportError:
@@ -102,7 +102,7 @@ def skip_if_no_torchvision(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import torchvision  # pylint: disable=W0611
+            import torchvision
 
             del torchvision
         except ImportError:
@@ -2944,7 +2944,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             for n in sess.rt_nodes_[0].body.rt_nodes_
             if n.__class__.__name__.startswith(reduce_op)
         ]
-        schema = cl[0]._schema  # pylint: disable=protected-access
+        schema = cl[0]._schema
         new_cl = type(reduce_op, (cl[0].__class__,), {"op_schema": schema})
         sess = ReferenceEvaluator(model, new_ops=[new_cl])
         got = sess.run(None, {"input": X})
