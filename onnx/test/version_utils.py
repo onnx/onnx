@@ -2,10 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-try:
-    from packaging.version import parse as version
-except ImportError:
-    from distutils.version import StrictVersion as version  # noqa: N813
+from packaging.version import parse as version
 
 
 def numpy_older_than(ver: str) -> bool:
