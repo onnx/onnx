@@ -111,6 +111,15 @@ def skip_if_no_torchvision(fn):
 
     return wrapper
 
+def skip_if_old_numpy_ver(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        from numpy import __version__ as npver
+        if version(npver) < version("1.21.5"):
+            raise unittest.SkipTest("op_dft and op_stft requires numpy >= 1.21.5") from None
+        fn(*args, **kwargs)
+
+    return wrapper
 
 def make_sequence_value_info(name, elem_type, shape):
     if isinstance(elem_type, int):
@@ -2307,6 +2316,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
 
+    @skip_if_old_numpy_ver
     def test_stft(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
@@ -2356,6 +2366,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
 
+    @skip_if_old_numpy_ver
     def test_stft_with_window(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
