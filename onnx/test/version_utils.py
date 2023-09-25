@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+
+# SPDX-License-Identifier: Apache-2.0
+
 try:
     from packaging.version import parse as version
 except ImportError:
