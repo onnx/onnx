@@ -93,6 +93,20 @@ if sys.platform == "win32":
         "test_image_decoder_decode_pnm_rgb",
     }
 
+if version(npver) < version("1.21.5"):
+    # op_dft requires numpy >= 1.21.5
+    # op_stft depends on op_dft
+    SKIP_TESTS |= {
+        "test_stft",
+        "test_stft_with_window",
+        "test_stft_cpu",
+        "test_dft",
+        "test_dft_axis",
+        "test_dft_inverse",
+        "test_dft_opset19",
+        "test_dft_axis_opset19",
+        "test_dft_inverse_opset19",
+    }
 
 def assert_allclose_string(expected, value):
     """
@@ -829,18 +843,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_affine_grid_3d_align_corners": 1e-4,
             "test_affine_grid_3d_align_corners_expanded": 1e-4,
         }
-
-        if version(npver) < version("1.21.5"):
-            cls.atol.update(
-                {
-                    "test_dft": 1e-11,
-                    "test_dft_axis": 1e-11,
-                    "test_dft_inverse": 1e-11,
-                    "test_dft_opset19": 1e-11,
-                    "test_dft_axis_opset19": 1e-11,
-                    "test_dft_inverse_opset19": 1e-11,
-                }
-            )
 
         cls.skip_test = SKIP_TESTS
         if all_tests:
