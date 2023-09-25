@@ -5,9 +5,7 @@
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import (  # noqa: N813
-         StrictVersion as version,
-    )
+    from distutils.version import StrictVersion as version  # noqa: N813
 
 
 def numpy_older_than(ver: str) -> bool:
