@@ -11905,7 +11905,7 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if</dd>
+<dd>Condition for the if. The tensor must contain a single element.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)

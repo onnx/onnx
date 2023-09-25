@@ -803,11 +803,11 @@ class TestReferenceEvaluator(unittest.TestCase):
         sess = ReferenceEvaluator(model_def)
         self.assertEqual(str(sess), "ReferenceEvaluator(X) -> Z")
 
-        x = np.array([1, 2], dtype=np.float32)
+        x = np.array([1], dtype=np.float32)
         got = sess.run(None, {"X": x})[0]
         assert_allclose(np.array([1], dtype=np.float32), got)
 
-        x = np.array([-1, -2], dtype=np.float32)
+        x = np.array([-1], dtype=np.float32)
         got = sess.run(None, {"X": x})[0]
         assert_allclose(np.array([0], dtype=np.float32), got)
 
