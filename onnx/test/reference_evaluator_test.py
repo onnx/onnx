@@ -26,6 +26,7 @@ import numpy as np
 import parameterized
 from numpy.testing import assert_allclose
 from numpy import __version__ as npver
+
 try:
     from packaging.version import parse as version
 except ImportError:
@@ -122,7 +123,9 @@ def skip_if_old_numpy_ver(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         if version(npver) < version("1.21.5"):
-            raise unittest.SkipTest("op_dft and op_stft requires numpy >= 1.21.5") from None
+            raise unittest.SkipTest(
+                "op_dft and op_stft requires numpy >= 1.21.5"
+            ) from None
         fn(*args, **kwargs)
 
     return wrapper

@@ -108,6 +108,7 @@ if version(npver) < version("1.21.5"):
         "test_dft_inverse_opset19",
     }
 
+
 def assert_allclose_string(expected, value):
     """
     Compares two arrays knowing they contain strings.

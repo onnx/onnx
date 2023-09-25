@@ -10,10 +10,11 @@ from typing import Any
 
 import numpy
 from numpy import __version__ as npver
+
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import (  # noqa: N813
+    from distutils.version import (  # type: ignore[assignment]
         StrictVersion as version,
     )
 
