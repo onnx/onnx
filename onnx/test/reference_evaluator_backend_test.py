@@ -836,6 +836,9 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                     "test_dft": 1e-11,
                     "test_dft_axis": 1e-11,
                     "test_dft_inverse": 1e-11,
+                    "test_dft_opset19": 1e-11,
+                    "test_dft_axis_opset19": 1e-11,
+                    "test_dft_inverse_opset19": 1e-11,
                 }
             )
 
