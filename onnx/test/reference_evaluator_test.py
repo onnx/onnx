@@ -24,15 +24,8 @@ from typing import Sequence, Tuple
 
 import numpy as np
 import parameterized
-from numpy import __version__ as npver
+import version_utils
 from numpy.testing import assert_allclose
-
-try:
-    from packaging.version import parse as version
-except ImportError:
-    from distutils.version import (  # noqa: N813
-        StrictVersion as version,
-    )
 
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
 from onnx.backend.test.case.node.roialign import get_roi_align_input_values
@@ -115,18 +108,6 @@ def skip_if_no_torchvision(fn):
             del torchvision
         except ImportError:
             raise unittest.SkipTest("torchvision not installed") from None
-        fn(*args, **kwargs)
-
-    return wrapper
-
-
-def skip_if_old_numpy_ver(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if version(npver) < version("1.21.5"):
-            raise unittest.SkipTest(
-                "op_dft and op_stft requires numpy >= 1.21.5"
-            ) from None
         fn(*args, **kwargs)
 
     return wrapper
@@ -2327,7 +2308,10 @@ class TestReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
 
-    @skip_if_old_numpy_ver
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.21.5"),
+        "op_dft and op_stft requires numpy >= 1.21.5",
+    )
     def test_stft(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
@@ -2377,7 +2361,10 @@ class TestReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
 
-    @skip_if_old_numpy_ver
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.21.5"),
+        "op_dft and op_stft requires numpy >= 1.21.5",
+    )
     def test_stft_with_window(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])

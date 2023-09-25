@@ -9,14 +9,7 @@ import unittest
 from typing import Any
 
 import numpy
-from numpy import __version__ as npver
-
-try:
-    from packaging.version import parse as version
-except ImportError:
-    from distutils.version import (  # type: ignore[assignment]
-        StrictVersion as version,  # noqa: N813
-    )
+import version_utils
 
 import onnx.backend.base
 import onnx.backend.test
@@ -189,7 +182,7 @@ if sys.platform == "win32":
     backend_test.exclude("test_image_decoder_decode_")
 
 # op_dft and op_stft requires numpy >= 1.21.5
-if version(npver) < version("1.21.5"):
+if version_utils.numpy_older_than("1.21.5"):
     backend_test.exclude("test_stft")
     backend_test.exclude("test_stft_with_window")
     backend_test.exclude("test_stft_cpu")
