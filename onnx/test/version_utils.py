@@ -5,7 +5,7 @@
 try:
     from packaging.version import parse as version
 except ImportError:
-    from distutils.version import (  # type: ignore[assignment]; noqa: N813
+    from distutils.version import (  # noqa: N813
          StrictVersion as version,
     )
 
