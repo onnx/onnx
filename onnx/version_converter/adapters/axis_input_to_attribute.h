@@ -40,8 +40,12 @@ class AxisInputToAttribute : public Adapter {
       return EnsureAndReturnNode(node);
     }
 
-    HandleInitializerNode(graph, node, inputs, axis_val);
-    return EnsureAndReturnNode(node);
+    if (graph->is_constant_initializer(axis_val)) {
+      HandleInitializerNode(graph, node, inputs, axis_val);
+      return EnsureAndReturnNode(node);
+    }
+
+    ONNX_ASSERTM(false, "Axis input must be a constant or initializer for promotion to attribute.");
   }
 
  private:
@@ -73,13 +77,14 @@ class AxisInputToAttribute : public Adapter {
 
   void HandleInitializerNode(std::shared_ptr<Graph> graph, Node* node, const ArrayRef<Value*>& inputs, Value* axis_val)
       const {
+    const std::string initializer_name = axis_val->uniqueName();
     for (const auto& initializer : graph->initializers()) {
-      if (initializer.name() == inputs[this->axis_index]->uniqueName()) {
+      if (initializer.name() == initializer_name) {
         node->i_(kaxis, initializer.int64s().at(0));
         node->removeInput(this->axis_index);
         // Remove initializer
         if (axis_val->uses().size() < 1)
-          graph->eraseInitializerAndInput(axis_val);
+          graph->eraseInitializer(initializer_name);
         break;
       }
     }
