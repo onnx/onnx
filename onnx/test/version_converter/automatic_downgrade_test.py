@@ -49,10 +49,7 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             initializer=[axes],
         )
 
-    def test_dft20_initializer(self) -> None:
-        axis = helper.make_tensor(
-            "axis", onnx.TensorProto.INT64, dims=[], vals=[1]
-        )
+    def test_dft20_no_axis(self) -> None:
         self._test_op_downgrade(
             "DFT",
             from_opset=19,  # this is really to_opset for downgrade
@@ -60,9 +57,24 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             output_shapes=[[2, 16, 2]],
             input_types=[onnx.TensorProto.FLOAT],
             output_types=[onnx.TensorProto.FLOAT],
-            initializer=[axis],
         )
 
+    def test_dft20_initializer(self) -> None:
+        dft_length = helper.make_tensor(
+            "b", onnx.TensorProto.INT64, dims=[], vals=[20]
+        )
+        axis = helper.make_tensor(
+            "c", onnx.TensorProto.INT64, dims=[], vals=[1]
+        )
+        self._test_op_downgrade(
+            "DFT",
+            from_opset=19,  # this is really to_opset for downgrade
+            input_shapes=[[2, 16, 1], [], []],
+            output_shapes=[[2, 20, 2]],
+            input_types=[onnx.TensorProto.FLOAT],
+            output_types=[onnx.TensorProto.FLOAT],
+            initializer=[dft_length, axis],
+        )
 
 if __name__ == "__main__":
     unittest.main()
