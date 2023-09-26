@@ -41,7 +41,7 @@ class AxisInputToAttribute : public Adapter {
     }
 
     if (graph->is_constant_initializer(axis_val)) {
-      HandleInitializerNode(graph, node, inputs, axis_val);
+      HandleInitializerNode(graph, node, axis_val);
       return EnsureAndReturnNode(node);
     }
 
@@ -75,7 +75,7 @@ class AxisInputToAttribute : public Adapter {
     }
   }
 
-  void HandleInitializerNode(std::shared_ptr<Graph> graph, Node* node, const ArrayRef<Value*>& inputs, Value* axis_val)
+  void HandleInitializerNode(std::shared_ptr<Graph> graph, Node* node, Value* axis_val)
       const {
     const std::string initializer_name = axis_val->uniqueName();
     for (const auto& initializer : graph->initializers()) {
