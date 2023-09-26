@@ -24,6 +24,7 @@ from typing import Sequence, Tuple
 
 import numpy as np
 import parameterized
+import version_utils
 from numpy.testing import assert_allclose
 
 from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
@@ -2307,6 +2308,10 @@ class TestReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
 
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.21.5"),
+        "op_dft and op_stft requires numpy >= 1.21.5",
+    )
     def test_stft(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
@@ -2356,6 +2361,10 @@ class TestReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
 
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.21.5"),
+        "op_dft and op_stft requires numpy >= 1.21.5",
+    )
     def test_stft_with_window(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])

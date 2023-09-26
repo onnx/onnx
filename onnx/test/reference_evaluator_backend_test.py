@@ -24,18 +24,10 @@ import os
 import pprint
 import sys
 import unittest
-
-try:
-    from packaging.version import parse as version
-except ImportError:
-    from distutils.version import (  # noqa: N813
-        StrictVersion as version,
-    )
-
 from os import getenv
 
 import numpy as np
-from numpy import __version__ as npver
+import version_utils
 from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
@@ -71,7 +63,7 @@ SKIP_TESTS = {
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
 }
 
-if version(npver) < version("1.21.5"):
+if version_utils.numpy_older_than("1.21.5"):
     SKIP_TESTS |= {
         "test_cast_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16",
@@ -91,6 +83,21 @@ if sys.platform == "win32":
         "test_image_decoder_decode_tiff_rgb",
         "test_image_decoder_decode_webp_rgb",
         "test_image_decoder_decode_pnm_rgb",
+    }
+
+if version_utils.numpy_older_than("1.21.5"):
+    # op_dft requires numpy >= 1.21.5
+    # op_stft depends on op_dft
+    SKIP_TESTS |= {
+        "test_stft",
+        "test_stft_with_window",
+        "test_stft_cpu",
+        "test_dft",
+        "test_dft_axis",
+        "test_dft_inverse",
+        "test_dft_opset19",
+        "test_dft_axis_opset19",
+        "test_dft_inverse_opset19",
     }
 
 
@@ -778,6 +785,8 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_layer_normalization_4d_axis1_expanded_ver18": 1e-4,
             "test_layer_normalization_4d_axis_negative_1_expanded_ver18": 1e-4,
             "test_layer_normalization_4d_axis_negative_3_expanded_ver18": 1e-4,
+            "test_ConvTranspose2d": 1e-4,
+            "test__pytorch_converted_ConvTranspose2d": 1e-4,
         }
 
         cls.atol = {
@@ -829,15 +838,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_affine_grid_3d_align_corners": 1e-4,
             "test_affine_grid_3d_align_corners_expanded": 1e-4,
         }
-
-        if version(npver) < version("1.21.5"):
-            cls.atol.update(
-                {
-                    "test_dft": 1e-11,
-                    "test_dft_axis": 1e-11,
-                    "test_dft_inverse": 1e-11,
-                }
-            )
 
         cls.skip_test = SKIP_TESTS
         if all_tests:
