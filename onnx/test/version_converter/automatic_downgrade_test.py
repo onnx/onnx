@@ -35,15 +35,17 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         ]
     )
     def test_reduce_ops(self, op) -> None:
+        # TODO: need to add test cases for missing axes input which depends on this pr:
+        # https://github.com/onnx/onnx/pull/5613
         axes = helper.make_tensor(
             "b", onnx.TensorProto.INT64, dims=[3], vals=np.array([0, 1, 2])
         )
         self._test_op_downgrade(
             op,
-            13,
-            [[3, 4, 5], [3]],
-            [[1, 1, 1]],
-            [onnx.TensorProto.FLOAT, onnx.TensorProto.INT64],
+            from_opset=13,
+            input_shapes=[[3, 4, 5], [3]],
+            output_shapes=[[1, 1, 1]],
+            input_types=[onnx.TensorProto.FLOAT, onnx.TensorProto.INT64],
             initializer=[axes],
         )
 
