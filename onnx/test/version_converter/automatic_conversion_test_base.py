@@ -1,9 +1,11 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 import string
 import unittest
-from typing import Any, Dict, List, Optional, Sequence, Union, cast
+from typing import Any, List, Sequence, cast
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
@@ -12,16 +14,39 @@ LATEST_OPSET = onnx.defs.onnx_opset_version()
 
 
 class TestAutomaticConversion(unittest.TestCase):
+    def _test_model_conversion(
+        self, to_opset: int, model: str | onnx.ModelProto
+    ) -> None:
+        if isinstance(model, str):
+            model = onnx.parser.parse_model(model)
+        onnx.checker.check_model(model)
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+        converted = version_converter.convert_version(model, to_opset)
+        onnx.checker.check_model(converted)
+        shape_inference.infer_shapes(converted, strict_mode=True)
+
+    def _test_model_conversion_fails(
+        self, to_opset: int, model: str | onnx.ModelProto
+    ) -> None:
+        if isinstance(model, str):
+            model = onnx.parser.parse_model(model)
+        onnx.checker.check_model(model)
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+        with self.assertRaises(RuntimeError):
+            version_converter.convert_version(model, to_opset)
+
     def _test_op_conversion(
         self,
         op: str,
         from_opset: int,
-        input_shapes: Sequence[Union[Sequence[Optional[int]], str]] = ((3, 4, 5),),
-        output_shapes: Sequence[Sequence[Optional[int]]] = ((3, 4, 5),),
-        input_types: Optional[Sequence[Any]] = None,
-        output_types: Optional[Sequence[Any]] = None,
+        input_shapes: Sequence[Sequence[int | None] | str] = ((3, 4, 5),),
+        output_shapes: Sequence[Sequence[int | None]] = ((3, 4, 5),),
+        input_types: Sequence[Any] | None = None,
+        output_types: Sequence[Any] | None = None,
         initializer: Sequence[Any] = (),
-        attrs: Optional[Dict[str, Any]] = None,
+        attrs: dict[str, Any] | None = None,
         seq_inputs: Sequence[int] = (),
         seq_outputs: Sequence[int] = (),
         optional_inputs: Sequence[int] = (),
@@ -67,7 +92,7 @@ class TestAutomaticConversion(unittest.TestCase):
             List[List[int]],
             [[0] if isinstance(shape, str) else shape for shape in input_shapes],
         )
-        inputs: List[ValueInfoProto] = []
+        inputs: list[ValueInfoProto] = []
         for name, ttype, shape, is_seq, is_opt in zip(
             input_names, input_types, input_shapes_cast, is_sequence, is_optional
         ):
@@ -95,7 +120,7 @@ class TestAutomaticConversion(unittest.TestCase):
             List[List[int]],
             [[0] if isinstance(shape, str) else shape for shape in output_shapes],
         )
-        outputs: List[ValueInfoProto] = []
+        outputs: list[ValueInfoProto] = []
         for name, ttype, shape, is_seq, is_opt in zip(
             output_names, output_types, output_shapes_cast, is_sequence, is_optional
         ):
@@ -117,9 +142,4 @@ class TestAutomaticConversion(unittest.TestCase):
             producer_name="test",
             opset_imports=[helper.make_opsetid("", start_opset)],
         )
-        onnx.checker.check_model(original)
-        shape_inference.infer_shapes(original, strict_mode=True)
-
-        converted = version_converter.convert_version(original, end_opset)
-        onnx.checker.check_model(converted)
-        shape_inference.infer_shapes(converted, strict_mode=True)
+        self._test_model_conversion(end_opset, original)
