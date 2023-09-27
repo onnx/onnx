@@ -72,7 +72,7 @@ jobs:
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
-          set ONNX_PREVIEW_BUILD=1
+          $Env:ONNX_PREVIEW_BUILD=1
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
