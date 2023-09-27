@@ -50,31 +50,55 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         )
 
     def test_dft20_no_axis(self) -> None:
-        self._test_op_downgrade(
-            "DFT",
-            from_opset=19,  # this is really to_opset for downgrade
-            input_shapes=[[2, 16, 1]],
-            output_shapes=[[2, 16, 2]],
-            input_types=[onnx.TensorProto.FLOAT],
-            output_types=[onnx.TensorProto.FLOAT],
+        self._test_model_conversion(
+            to_opset=19,
+            model="""
+            <ir_version: 9, opset_import: [ "" : 20]>
+            dft_no_axis (float[N, M, 1] x) => (float[N, M, 2] y)
+            {
+                y = DFT (x)
+            }
+        """,
         )
 
-    def test_dft20_initializer(self) -> None:
-        dft_length = helper.make_tensor(
-            "b", onnx.TensorProto.INT64, dims=[], vals=[20]
+    def test_dft20_initializer_axis(self) -> None:
+        self._test_model_conversion(
+            to_opset=19,
+            model="""
+            <ir_version: 9, opset_import: [ "" : 20]>
+            dft_no_axis (float[N, M, 1] x, int64 dft_length) => (float[N, K, 2] y)
+            <int64 axis = {1}>
+            {
+                y = DFT (x, dft_length, axis)
+            }
+        """,
         )
-        axis = helper.make_tensor(
-            "c", onnx.TensorProto.INT64, dims=[], vals=[1]
+
+    def test_dft20_constant_axis(self) -> None:
+        self._test_model_conversion(
+            to_opset=19,
+            model="""
+            <ir_version: 9, opset_import: [ "" : 20]>
+            dft_no_axis (float[N, M, 1] x, int64 dft_length) => (float[N, K, 2] y)
+            {
+                axis = Constant <value = int64{1}>()
+                y = DFT (x, dft_length, axis)
+            }
+        """,
         )
-        self._test_op_downgrade(
-            "DFT",
-            from_opset=19,  # this is really to_opset for downgrade
-            input_shapes=[[2, 16, 1], [], []],
-            output_shapes=[[2, 20, 2]],
-            input_types=[onnx.TensorProto.FLOAT],
-            output_types=[onnx.TensorProto.FLOAT],
-            initializer=[dft_length, axis],
+
+    def test_dft20_unknown_axis(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=19,
+            model="""
+            <ir_version: 9, opset_import: [ "" : 20]>
+            dft_no_axis (float[N, M, 1] x, int64 dft_length, int64 axis) => (float[P, K, 2] y)
+            {
+                y = DFT (x, dft_length, axis)
+            }
+        """,
         )
+
 
 if __name__ == "__main__":
     unittest.main()

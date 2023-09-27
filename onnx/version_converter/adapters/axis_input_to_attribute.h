@@ -71,12 +71,11 @@ class AxisInputToAttribute : public Adapter {
     }
     node->removeInput(this->axis_index);
     if (axis_val->uses().size() < 1) {
-      node->destroy();
+      axis_node->destroy();
     }
   }
 
-  void HandleInitializerNode(std::shared_ptr<Graph> graph, Node* node, Value* axis_val)
-      const {
+  void HandleInitializerNode(std::shared_ptr<Graph> graph, Node* node, Value* axis_val) const {
     const std::string initializer_name = axis_val->uniqueName();
     for (const auto& initializer : graph->initializers()) {
       if (initializer.name() == initializer_name) {

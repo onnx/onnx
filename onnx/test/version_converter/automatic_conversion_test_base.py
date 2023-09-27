@@ -1,6 +1,8 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 import string
 import unittest
 from typing import Any, Dict, List, Optional, Sequence, Union, cast
@@ -12,6 +14,29 @@ LATEST_OPSET = onnx.defs.onnx_opset_version()
 
 
 class TestAutomaticConversion(unittest.TestCase):
+    def _test_model_conversion(
+        self, to_opset: int, model: str | onnx.ModelProto
+    ) -> None:
+        if isinstance(model, str):
+            model = onnx.parser.parse_model(model)
+        onnx.checker.check_model(model)
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+        converted = version_converter.convert_version(model, to_opset)
+        onnx.checker.check_model(converted)
+        shape_inference.infer_shapes(converted, strict_mode=True)
+
+    def _test_model_conversion_fails(
+        self, to_opset: int, model: str | onnx.ModelProto
+    ) -> None:
+        if isinstance(model, str):
+            model = onnx.parser.parse_model(model)
+        onnx.checker.check_model(model)
+        shape_inference.infer_shapes(model, strict_mode=True)
+
+        with self.assertRaises(RuntimeError):
+            version_converter.convert_version(model, to_opset)
+
     def _test_op_conversion(
         self,
         op: str,
@@ -117,9 +142,4 @@ class TestAutomaticConversion(unittest.TestCase):
             producer_name="test",
             opset_imports=[helper.make_opsetid("", start_opset)],
         )
-        onnx.checker.check_model(original)
-        shape_inference.infer_shapes(original, strict_mode=True)
-
-        converted = version_converter.convert_version(original, end_opset)
-        onnx.checker.check_model(converted)
-        shape_inference.infer_shapes(converted, strict_mode=True)
+        self._test_model_conversion(end_opset, original)
