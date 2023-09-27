@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import string
 import unittest
-from typing import Any, Dict, List, Optional, Sequence, Union, cast
+from typing import Any, List, Sequence, cast
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
@@ -41,12 +41,12 @@ class TestAutomaticConversion(unittest.TestCase):
         self,
         op: str,
         from_opset: int,
-        input_shapes: Sequence[Union[Sequence[Optional[int]], str]] = ((3, 4, 5),),
-        output_shapes: Sequence[Sequence[Optional[int]]] = ((3, 4, 5),),
-        input_types: Optional[Sequence[Any]] = None,
-        output_types: Optional[Sequence[Any]] = None,
+        input_shapes: Sequence[Sequence[int | None] | str] = ((3, 4, 5),),
+        output_shapes: Sequence[Sequence[int | None]] = ((3, 4, 5),),
+        input_types: Sequence[Any] | None = None,
+        output_types: Sequence[Any] | None = None,
         initializer: Sequence[Any] = (),
-        attrs: Optional[Dict[str, Any]] = None,
+        attrs: dict[str, Any] | None = None,
         seq_inputs: Sequence[int] = (),
         seq_outputs: Sequence[int] = (),
         optional_inputs: Sequence[int] = (),
@@ -92,7 +92,7 @@ class TestAutomaticConversion(unittest.TestCase):
             List[List[int]],
             [[0] if isinstance(shape, str) else shape for shape in input_shapes],
         )
-        inputs: List[ValueInfoProto] = []
+        inputs: list[ValueInfoProto] = []
         for name, ttype, shape, is_seq, is_opt in zip(
             input_names, input_types, input_shapes_cast, is_sequence, is_optional
         ):
@@ -120,7 +120,7 @@ class TestAutomaticConversion(unittest.TestCase):
             List[List[int]],
             [[0] if isinstance(shape, str) else shape for shape in output_shapes],
         )
-        outputs: List[ValueInfoProto] = []
+        outputs: list[ValueInfoProto] = []
         for name, ttype, shape, is_seq, is_opt in zip(
             output_names, output_types, output_shapes_cast, is_sequence, is_optional
         ):
