@@ -42,9 +42,8 @@ std::string GetValueCaseString(const TypeProto& type) {
       return "sparse_tensor_type";
     case TypeProto::ValueCase::VALUE_NOT_SET:
       return "NOT_SET";
-    default:
-      return ONNX_NAMESPACE::to_string(type.value_case());
   }
+  return ONNX_NAMESPACE::to_string(type.value_case());
 }
 
 std::string GetElemTypeString(const TypeProto_Tensor& type) {
