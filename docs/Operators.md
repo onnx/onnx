@@ -43,7 +43,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Cos">Cos</a>|<a href="Changelog.md#Cos-7">7</a>|
 |<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-9">9</a>|
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
-|<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-17">17</a>|
+|<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-19">19</a>|
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
@@ -73,8 +73,8 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#If">If</a>|<a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
 |<a href="#ImageDecoder">ImageDecoder</a>|<a href="Changelog.md#ImageDecoder-20">20</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
-|<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-10">10</a>|
-|<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
+|<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-20">20</a>, <a href="Changelog.md#IsInf-10">10</a>|
+|<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-20">20</a>, <a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
 |<a href="#LRN">LRN</a>|<a href="Changelog.md#LRN-13">13</a>, <a href="Changelog.md#LRN-1">1</a>|
 |<a href="#LSTM">LSTM</a>|<a href="Changelog.md#LSTM-14">14</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-1">1</a>|
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
@@ -6718,46 +6718,64 @@ expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_negative_axis")
 
 ### <a name="DFT"></a><a name="dft">**DFT**</a>
 
-  Computes the discrete Fourier transform of input.
+  Computes the discrete Fourier Transform (DFT) of the input.
+
+  Assuming the input has shape `[M, N]`, where `N` is the dimension over which the
+  DFT is computed and `M` denotes the conceptual "all other dimensions,"
+  the DFT `y[m, k]` of shape `[M, N]` is defined as
+
+  $$y[m, k] = \sum_{n=0}^{N-1} e^{-2 \pi j \frac{k n}{N} } x[m, n] ,$$
+
+  and the inverse transform is defined as
+
+  $$x[m, n] = \frac{1}{N} \sum_{k=0}^{N-1} e^{2 \pi j \frac{k n}{N} } y[m, k] ,$$
+
+  where $j$ is the imaginary unit.
+
+  The actual shape of the output is specified in the "output" section.
+
+  Reference: https://docs.scipy.org/doc/scipy/tutorial/fft.html
 
 #### Version
 
-This version of the operator has been available since version 17 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#DFT-17">17</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index.</dd>
 <dt><tt>inverse</tt> : int (default is 0)</dt>
-<dd>Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to false.</dd>
+<dd>Whether to perform the inverse discrete Fourier Transform. Default is 0, which corresponds to `false`.</dd>
 <dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
+<dd>If `onesided` is `1` and input is real, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, where `m` denotes "all other dimensions" DFT was not applied on. If the input tensor is complex, onesided output is not possible. Value can be `0` or `1`. Default is `0`.</dd>
 </dl>
 
-#### Inputs (1 - 2)
+#### Inputs (1 - 3)
 
 <dl>
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
-<dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimensions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
+<dd>For real input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]`. For complex input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. The final dimension represents the real and imaginary parts of the value in that order.</dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>The length of the signal.If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
+<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
+<dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-2]$ where `r = rank(input)`. The last dimension is for representing complex numbers and thus is an invalid axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector.If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=2 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
+<dd>The Fourier Transform of the input vector. If `onesided` is `0`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=0` and `onesided` is `1`, the following shape is expected: `[floor(signal_dim0/2)+1][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=1` and `onesided` is `1`, the following shape is expected: `[signal_dim0][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]`. If `axis=N` and `onesided` is `1`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]`. The `signal_dim` at the specified `axis` is equal to the `dft_length`.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain scalar length types to int64_t.</dd>
+<dd>Constrain scalar length types to integers.</dd>
 </dl>
 
 
@@ -6767,13 +6785,56 @@ This version of the operator has been available since version 17 of the default 
 <summary>dft</summary>
 
 ```python
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.fft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft")
+
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(2, dtype=np.int64)
+y = np.fft.fft(x, axis=1)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_axis")
+
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], inverse=1
+)
+x = np.arange(0, 100, dtype=np.complex64).reshape(10, 10)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.ifft(x, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_inverse")
+```
+
+</details>
+
+
+<details>
+<summary>opset19</summary>
+
+```python
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=1)
 x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
 y = np.fft.fft(x, axis=0)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=2)
 x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
@@ -6781,7 +6842,13 @@ y = np.fft.fft(x, axis=1)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_axis")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_axis_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node(
     "DFT", inputs=["x"], outputs=["y"], inverse=1, axis=1
@@ -6794,7 +6861,13 @@ y = np.fft.ifft(x, axis=0)
 
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_inverse_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 ```
 
 </details>
@@ -7904,10 +7977,10 @@ expect(
   Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
   Scale is calculated as:
   ```
-  y_scale = (max(x) - min(x))/(qmax - qmin)
+  y_scale = (maximum(0, max(x)) - minimum(0, min(x))) / (qmax - qmin)
   ```
 
-  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
   * data range is adjusted to include 0.
 
   Zero point is calculated as:
@@ -11832,7 +11905,7 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if</dd>
+<dd>Condition for the if. The tensor must contain a single element.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -12458,7 +12531,9 @@ expect(node, inputs=[x, s, bias], outputs=[y], name="test_instancenorm_epsilon")
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#IsInf-10">10</a>
 
 #### Attributes
 
@@ -12486,7 +12561,7 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output types to boolean tensors.</dd>
@@ -12508,6 +12583,24 @@ node = onnx.helper.make_node(
 x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
 y = np.isinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf")
+```
+
+</details>
+
+
+<details>
+<summary>infinity_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsInf",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+y = np.isinf(x)
+expect(node, inputs=[x], outputs=[y], name="test_isinf_float16")
 ```
 
 </details>
@@ -12551,9 +12644,9 @@ expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>
+Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>, <a href="Changelog.md#IsNaN-13">13</a>
 
 #### Inputs
 
@@ -12572,7 +12665,7 @@ Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output types to boolean tensors.</dd>
@@ -12580,6 +12673,24 @@ Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>
 
 
 #### Examples
+
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsNaN",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name="test_isnan_float16")
+```
+
+</details>
+
 
 <details>
 <summary>isnan</summary>
@@ -12591,7 +12702,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
 y = np.isnan(x)
 expect(node, inputs=[x], outputs=[y], name="test_isnan")
 ```
@@ -20615,7 +20726,8 @@ expect(node, inputs=[x], outputs=[y], name="test_reciprocal")
   Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 0.
+
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
   to `False` instead of `True`.
@@ -20749,6 +20861,36 @@ expect(
 
 
 <details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceL1",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_l1_empty_set",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -20843,7 +20985,8 @@ expect(
   Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 0.
+
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
   to `False` instead of `True`.
@@ -20983,6 +21126,36 @@ expect(
 
 
 <details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceL2",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_l2_empty_set",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -21089,7 +21262,8 @@ expect(
   Computes the log sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
+
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
   to `False` instead of `True`.
@@ -21134,6 +21308,37 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 
 
 #### Examples
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceLogSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = np.log(zero)  # -inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_empty_set",
+)
+```
+
+</details>
+
 
 <details>
 <summary>keepdims</summary>
@@ -21225,7 +21430,8 @@ expect(
   Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
+
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
   to `False` instead of `True`.
@@ -21360,6 +21566,37 @@ expect(
 
 
 <details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = np.log(zero)  # -inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_exp_empty_set",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -21456,7 +21693,8 @@ expect(
   Computes the max of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or the minimum value of the data type otherwise.
+
 
   If the input data type is Boolean, the comparison should consider `False < True`.
 
@@ -21732,7 +21970,8 @@ expect(
   Computes the mean of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields undefined.
+
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
   to `False` instead of `True`.
@@ -21969,7 +22208,8 @@ expect(
   Computes the min of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields plus infinity (if supported by the datatype) or the maximum value of the data type otherwise.
+
 
   If the input data type is Boolean, the comparison should consider `False < True`.
 
@@ -22146,6 +22386,38 @@ expect(
 
 
 <details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMin",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+one = np.array(np.ones(reduced_shape, dtype=np.float32))
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = one / zero  # inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_min_empty_set",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -22248,7 +22520,8 @@ expect(
   Computes the product of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 1.
+
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
   to `False` instead of `True`.
@@ -22380,6 +22653,36 @@ expect(
 
 
 <details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceProd",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.ones(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_prod_empty_set",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -22474,7 +22777,8 @@ expect(
   Computes the sum of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 0.
+
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
   to `False` instead of `True`.
@@ -22650,6 +22954,37 @@ expect(
 
 
 <details>
+<summary>empty_set</summary>
+
+```python
+"""Test case with the reduced-axis of size zero."""
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_sum_empty_set",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -22735,12 +23070,44 @@ expect(
 </details>
 
 
+<details>
+<summary>non_reduced_axis_zero</summary>
+
+```python
+"""Test case with the non-reduced-axis of size zero."""
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 0, 1]
+
+node = onnx.helper.make_node(
+    "ReduceSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([2], dtype=np.int64)
+reduced = np.array([], dtype=np.float32).reshape(reduced_shape)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_sum_empty_set",
+)
+```
+
+</details>
+
+
 ### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
 
   Computes the sum square of the input tensor's elements along the provided axes. The resulting
   tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 0.
+
 
   The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
   to `False` instead of `True`.
@@ -22870,6 +23237,36 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_do_not_keepdims_random",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceSumSquare",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_sum_square_empty_set",
 )
 ```
 

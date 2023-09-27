@@ -224,7 +224,7 @@ void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_t
     // set a symbol if it doesn't have dim_value and dim_param
     auto* dim = inferred_type->mutable_shape()->mutable_dim(i);
     if (!dim->has_dim_value() && !dim->has_dim_param()) {
-      dim->set_dim_param(symbol_table.createNew("unk__"));
+      dim->set_dim_param(symbol_table.createNew());
     }
   }
 }
