@@ -261,7 +261,7 @@ std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const
 // use a temporary vector (for the duration of inference) to store these.
 class InferredTypes {
  public:
-  InferredTypes(GraphProto* graph = nullptr) : graph_ptr(graph) {}
+  explicit InferredTypes(GraphProto* graph = nullptr) : graph_ptr(graph) {}
 
   TypeProto* Add(const std::string& var_name, const TypeProto& type) {
     if (graph_ptr != nullptr) {
@@ -461,11 +461,7 @@ class ShapeInferenceImplBase {
           schema->GetTypeAndShapeInferenceFunction()(ctx);
         } else if (schema->HasFunction()) {
           ProcessCall(n, *(schema->GetFunction()), ctx);
-        } else {
-          // Continue with inference for remaining nodes
-          // TODO: fix this
-          return;
-        }
+        } // else: rely on schema->CheckInputOutputType() down below.
         // check type-constraints specified via type variables
         if (options.check_type) {
           schema->CheckInputOutputType(ctx);
