@@ -5,7 +5,6 @@ import unittest
 
 import automatic_conversion_test_base
 import numpy as np
-import pytest
 
 import onnx
 from onnx import TensorProto, helper
@@ -1442,7 +1441,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_HammingWindow(self) -> None:
         self._test_window_function("HammingWindow")
 
-    @pytest.mark.xfail(reason="FIXME(#5613): Implement version converters for DFT")
     def test_DFT(self) -> None:
         self._test_op_upgrade("DFT", 17, [[2, 16, 1], []], [[2, 16, 2]])
         self._test_op_upgrade("DFT", 17, [[2, 16, 2], []], [[2, 16, 2]])
@@ -1457,6 +1455,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         )
         self._test_op_upgrade(
             "DFT", 17, [[2, 16, 2], []], [[2, 16, 2]], attrs={"inverse": 1}
+        )
+        self._test_op_upgrade(
+            "DFT", 17, [[2, 16, 2], []], [[2, 16, 2]], attrs={"inverse": 1, "axis": 0}
         )
 
     def _test_short_time_fourier_transform(self, operator_name: str) -> None:

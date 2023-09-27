@@ -49,6 +49,56 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             initializer=[axes],
         )
 
+    def test_dft20_no_axis(self) -> None:
+        self._test_model_conversion(
+            to_opset=19,
+            model="""
+            <ir_version: 9, opset_import: [ "" : 20]>
+            dft_no_axis (float[N, M, 1] x) => (float[N, M, 2] y)
+            {
+                y = DFT (x)
+            }
+        """,
+        )
+
+    def test_dft20_initializer_axis(self) -> None:
+        self._test_model_conversion(
+            to_opset=19,
+            model="""
+            <ir_version: 9, opset_import: [ "" : 20]>
+            dft_no_axis (float[N, M, 1] x, int64 dft_length) => (float[N, K, 2] y)
+            <int64 axis = {1}>
+            {
+                y = DFT (x, dft_length, axis)
+            }
+        """,
+        )
+
+    def test_dft20_constant_axis(self) -> None:
+        self._test_model_conversion(
+            to_opset=19,
+            model="""
+            <ir_version: 9, opset_import: [ "" : 20]>
+            dft_no_axis (float[N, M, 1] x, int64 dft_length) => (float[N, K, 2] y)
+            {
+                axis = Constant <value = int64{1}>()
+                y = DFT (x, dft_length, axis)
+            }
+        """,
+        )
+
+    def test_dft20_unknown_axis(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=19,
+            model="""
+            <ir_version: 9, opset_import: [ "" : 20]>
+            dft_no_axis (float[N, M, 1] x, int64 dft_length, int64 axis) => (float[P, K, 2] y)
+            {
+                y = DFT (x, dft_length, axis)
+            }
+        """,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
