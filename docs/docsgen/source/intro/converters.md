@@ -225,25 +225,23 @@ conda install -n py3.9 -y -c conda-forge numpy libprotobuf=3.16.0
 
 Then build the package:
 
-```
+```sh
 git submodule update --init --recursive
 set ONNX_BUILD_TESTS=1
 set ONNX_ML=$(onnx_ml)
 set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
 
-python setup.py -q install
-python setup.py bdist_wheel
+python -m build --wheel
 ```
 
 The package can now be installed.
 
 **Linux**
 
-After cloning the repository, the two following instructions can be run:
+After cloning the repository, the following instructions can be run:
 
-```
-python setup.py build
-python setup.py build_ext --inplace
+```sh
+python -m build --wheel
 ```
 
 ### Build the markdown documentation
@@ -257,7 +255,7 @@ set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONN
 
 python onnx\gen_proto.py -l
 python onnx\gen_proto.py -l --ml
-python setup.py develop
+pip install -e .
 python onnx\backend\test\cmd_tools.py generate-data
 python onnx\backend\test\stat_coverage.py
 python onnx\defs\gen_doc.py

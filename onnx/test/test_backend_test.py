@@ -106,11 +106,6 @@ def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
 
 
 test_kwargs = {
-    # affine_grid tests will be fixed by https://github.com/onnx/onnx/pull/5501
-    "test_affine_grid_2d_align_corners_expanded": {"strict_mode": False},
-    "test_affine_grid_2d_expanded": {"strict_mode": False},
-    "test_affine_grid_3d_align_corners_expanded": {"strict_mode": False},
-    "test_affine_grid_3d_expanded": {"strict_mode": False},
     # https://github.com/onnx/onnx/issues/5510 (test_mvn fails with test_backend_test.py)
     "test_mvn": {"strict_mode": False},
 }

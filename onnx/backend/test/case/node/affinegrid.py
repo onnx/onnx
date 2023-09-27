@@ -89,7 +89,7 @@ def create_affine_matrix_3d(
     rotation_matrix = np.transpose(rotation_matrix, (0, 2, 1))
     affine_matrix = np.hstack((rotation_matrix, translation))
     affine_matrix = np.transpose(affine_matrix, (0, 2, 1))
-    return affine_matrix
+    return affine_matrix.astype(np.float32)
 
 
 def create_affine_matrix_2d(
@@ -109,7 +109,7 @@ def create_affine_matrix_2d(
     rotation_matrix = np.transpose(rotation_matrix, (0, 2, 1))
     affine_matrix = np.hstack((rotation_matrix, translation))
     affine_matrix = np.transpose(affine_matrix, (0, 2, 1))
-    return affine_matrix
+    return affine_matrix.astype(np.float32)
 
 
 def create_theta_2d():
@@ -159,8 +159,8 @@ class AffineGrid(Base):
     @staticmethod
     def export_2d_no_reference_evaluator() -> None:
         theta_2d = create_theta_2d()
-        N, C, W, H = len(theta_2d), 3, 5, 6
-        data_size = (W, H)
+        N, C, H, W = len(theta_2d), 3, 5, 6
+        data_size = (H, W)
         for align_corners in (0, 1):
             node = onnx.helper.make_node(
                 "AffineGrid",
@@ -177,7 +177,7 @@ class AffineGrid(Base):
                 test_name += "_align_corners"
             expect(
                 node,
-                inputs=[theta_2d, np.array([N, C, W, H], dtype=np.int64)],
+                inputs=[theta_2d, np.array([N, C, H, W], dtype=np.int64)],
                 outputs=[grid],
                 name=test_name,
             )
@@ -185,8 +185,8 @@ class AffineGrid(Base):
     @staticmethod
     def export_3d_no_reference_evaluator() -> None:
         theta_3d = create_theta_3d()
-        N, C, D, W, H = len(theta_3d), 3, 4, 5, 6
-        data_size = (D, W, H)
+        N, C, D, H, W = len(theta_3d), 3, 4, 5, 6
+        data_size = (D, H, W)
         for align_corners in (0, 1):
             node = onnx.helper.make_node(
                 "AffineGrid",
@@ -203,7 +203,7 @@ class AffineGrid(Base):
                 test_name += "_align_corners"
             expect(
                 node,
-                inputs=[theta_3d, np.array([N, C, D, W, H], dtype=np.int64)],
+                inputs=[theta_3d, np.array([N, C, D, H, W], dtype=np.int64)],
                 outputs=[grid],
                 name=test_name,
             )

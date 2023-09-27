@@ -42,9 +42,8 @@ std::string GetValueCaseString(const TypeProto& type) {
       return "sparse_tensor_type";
     case TypeProto::ValueCase::VALUE_NOT_SET:
       return "NOT_SET";
-    default:
-      return ONNX_NAMESPACE::to_string(type.value_case());
   }
+  return ONNX_NAMESPACE::to_string(type.value_case());
 }
 
 std::string GetElemTypeString(const TypeProto_Tensor& type) {
@@ -224,7 +223,7 @@ void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_t
     // set a symbol if it doesn't have dim_value and dim_param
     auto* dim = inferred_type->mutable_shape()->mutable_dim(i);
     if (!dim->has_dim_value() && !dim->has_dim_param()) {
-      dim->set_dim_param(symbol_table.createNew("unk__"));
+      dim->set_dim_param(symbol_table.createNew());
     }
   }
 }

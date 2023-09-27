@@ -2,7 +2,6 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable=unnecessary-lambda
 
 import random
 import struct
@@ -403,10 +402,12 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 17)], 8)
         test([("", 18)], 8)
         test([("", 19)], 9)
+        test([("", 20)], 9)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
         test([("ai.onnx.ml", 3)], 8)
+        test([("ai.onnx.ml", 4)], 9)
         test([("ai.onnx.training", 1)], 7)
         # helper should pick *max* IR version required from all opsets specified.
         test([("", 10), ("ai.onnx.ml", 2)], 6)
@@ -789,6 +790,23 @@ class TestPrintableGraph(unittest.TestCase):
             graph_str,
         )
 
+    def test_unknown_dimensions(self) -> None:
+        graph = helper.make_graph(
+            [helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [None])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [None])],  # outputs
+            [
+                helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])
+            ],  # initializers
+            doc_string=None,
+        )
+        model = helper.make_model(graph)
+        checker.check_model(model)
+
+        graph_str = helper.printable_graph(graph)
+        self.assertIn("X[FLOAT, ?]", graph_str)
+
 
 @pytest.mark.parametrize(
     "tensor_dtype",
@@ -908,11 +926,11 @@ class TestAttrTypeToStr(unittest.TestCase):
         ]
     )
     def test_attr_type_to_str(self, attr_type, expected_str):
-        result = helper._attr_type_to_str(attr_type)  # pylint: disable=protected-access
+        result = helper._attr_type_to_str(attr_type)
         self.assertEqual(result, expected_str)
 
     def test_attr_type_to_str_undefined(self):
-        result = helper._attr_type_to_str(9999)  # pylint: disable=protected-access
+        result = helper._attr_type_to_str(9999)
         self.assertEqual(result, "UNDEFINED")
 
 

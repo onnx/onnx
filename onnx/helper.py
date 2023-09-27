@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0302,R0912
+
 import collections.abc
 import numbers
 import struct
@@ -72,6 +72,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.13.0", 8, 18, 3, 1),
     ("1.13.1", 8, 18, 3, 1),
     ("1.14.0", 9, 19, 3, 1),
+    ("1.14.1", 9, 19, 3, 1),
     ("1.15.0", 9, 20, 4, 1),
 ]
 
@@ -354,7 +355,7 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + rounded) >> 16
 
 
-def float32_to_float8e4m3(  # pylint: disable=too-many-statements
+def float32_to_float8e4m3(  # noqa: PLR0911
     fval: float,
     scale: float = 1.0,
     fn: bool = True,
@@ -383,7 +384,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
     ret = (b & 0x80000000) >> 24  # sign
     if uz:
-        if (b & 0x7FC00000) == 0x7FC00000:
+        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
             return 0x80
         if np.isinf(x):
             if saturate:
@@ -393,25 +394,25 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
         m = b & 0x007FFFFF  # mantissa
 
         if e != 0:
-            if e < 116:
+            if e < 116:  # noqa: PLR2004
                 pass
-            elif e < 120:
+            elif e < 120:  # noqa: PLR2004
                 # denormalized number
                 ex = e - 119
-                if ex >= -2:
+                if ex >= -2:  # noqa: PLR2004
                     ret |= 1 << (2 + ex)
                     ret |= m >> (21 - ex)
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (20 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
                 ):
                     # rounding
                     ret += 1
-            elif e < 135:
+            elif e < 135:  # noqa: PLR2004
                 # normalized number
                 ex = e - 119  # 127 - 8
                 if ex == 0:
@@ -421,7 +422,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                     ret |= ex << 3
                     ret |= m >> 20
                 if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
-                    if (ret & 0x7F) < 0x7F:
+                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
                         # rounding
                         ret += 1
                     elif not saturate:
@@ -435,7 +436,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
             ret = 0
         return int(ret)
     else:
-        if (b & 0x7FC00000) == 0x7FC00000:
+        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
             return 0x7F | ret
         if np.isinf(x):
             if saturate:
@@ -445,25 +446,25 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
         m = b & 0x007FFFFF  # mantissa
 
         if e != 0:
-            if e < 117:
+            if e < 117:  # noqa: PLR2004
                 pass
-            elif e < 121:
+            elif e < 121:  # noqa: PLR2004
                 # denormalized number
                 ex = e - 120
-                if ex >= -2:
+                if ex >= -2:  # noqa: PLR2004
                     ret |= 1 << (2 + ex)
                     ret |= m >> (21 - ex)
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (20 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
                 ):
                     # rounding
                     ret += 1
-            elif e < 136:
+            elif e < 136:  # noqa: PLR2004
                 # normalized number
                 ex = e - 120
                 if ex == 0:
@@ -472,10 +473,10 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
                 else:
                     ret |= ex << 3
                     ret |= m >> 20
-                    if (ret & 0x7F) == 0x7F:
+                    if (ret & 0x7F) == 0x7F:  # noqa: PLR2004
                         ret &= 0xFE
                 if (m & 0x80000) and ((m & 0x100000) or (m & 0x7FFFF)):
-                    if (ret & 0x7F) < 0x7E:
+                    if (ret & 0x7F) < 0x7E:  # noqa: PLR2004
                         # rounding
                         ret += 1
                     elif not saturate:
@@ -487,7 +488,7 @@ def float32_to_float8e4m3(  # pylint: disable=too-many-statements
         return int(ret)
 
 
-def float32_to_float8e5m2(  # pylint: disable=too-many-statements
+def float32_to_float8e5m2(  # noqa: PLR0911
     fval: float,
     scale: float = 1.0,
     fn: bool = False,
@@ -511,9 +512,9 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
     ret = (b & 0x80000000) >> 24  # sign
 
     if fn and uz:
-        if (b & 0x7FC00000) == 0x7FC00000:
+        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
             return 0x80
-        if (b & 0x7FFFFFFF) == 0x7F800000:
+        if (b & 0x7FFFFFFF) == 0x7F800000:  # noqa: PLR2004
             # inf
             if saturate:
                 return ret | 0x7F
@@ -522,9 +523,9 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
         m = b & 0x007FFFFF  # mantissa
 
         if e != 0:
-            if e < 109:
+            if e < 109:  # noqa: PLR2004
                 pass
-            elif e < 112:
+            elif e < 112:  # noqa: PLR2004
                 # denormalized number
                 ex = e - 111
                 if ex >= -1:
@@ -533,25 +534,25 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (21 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
                 ):
                     # rounding
                     ret += 1
-            elif e < 143:
+            elif e < 143:  # noqa: PLR2004
                 # normalized number
                 ex = e - 111
                 ret |= ex << 2
                 ret |= m >> 21
                 if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                    if (ret & 0x7F) < 0x7F:
+                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
                         # rounding
                         ret += 1
                     elif not saturate:
                         ret = 0x80
-            elif e == 255 and m == 0:  # inf
+            elif e == 255 and m == 0:  # inf  # noqa: PLR2004
                 ret = 0x80
             elif saturate:
                 ret |= 0x7F  # last possible number
@@ -562,7 +563,7 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
             ret = 0
         return int(ret)
     elif not fn and not uz:
-        if (b & 0x7FC00000) == 0x7FC00000:
+        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
             return 0x7F | ret
         if np.isinf(x):
             if saturate:
@@ -572,9 +573,9 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
         m = b & 0x007FFFFF  # mantissa
 
         if e != 0:
-            if e < 110:
+            if e < 110:  # noqa: PLR2004
                 pass
-            elif e < 113:
+            elif e < 113:  # noqa: PLR2004
                 # denormalized number
                 ex = e - 112
                 if ex >= -1:
@@ -583,20 +584,20 @@ def float32_to_float8e5m2(  # pylint: disable=too-many-statements
                 elif m > 0:
                     ret |= 1
                 mask = 1 << (21 - ex)
-                if m & mask and (  # pylint: disable=too-many-boolean-expressions
+                if m & mask and (
                     ret & 1
                     or m & (mask - 1) > 0
                     or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
                 ):
                     # rounding
                     ret += 1
-            elif e < 143:
+            elif e < 143:  # noqa: PLR2004
                 # normalized number
                 ex = e - 112
                 ret |= ex << 2
                 ret |= m >> 21
                 if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                    if (ret & 0x7F) < 0x7B:
+                    if (ret & 0x7F) < 0x7B:  # noqa: PLR2004
                         # rounding
                         ret += 1
                     elif saturate:
@@ -659,10 +660,7 @@ def make_tensor(
         else:
             expected_size = np_dtype.itemsize
 
-    if (
-        type(vals) is np.ndarray  # pylint: disable=unidiomatic-typecheck
-        and len(vals.shape) > 1
-    ):
+    if type(vals) is np.ndarray and len(vals.shape) > 1:
         vals = vals.flatten()
     for d in dims:
         expected_size *= d
@@ -836,7 +834,7 @@ def _to_bytes(value: Union[str, bytes]) -> bytes:
     return value if isinstance(value, bytes) else value.encode("utf-8")
 
 
-def make_attribute(  # pylint: disable=too-many-statements
+def make_attribute(
     key: str,
     value: Any,
     doc_string: Optional[str] = None,
@@ -942,7 +940,7 @@ def make_attribute_ref(
     return attr
 
 
-def get_attribute_value(attr: AttributeProto) -> Any:
+def get_attribute_value(attr: AttributeProto) -> Any:  # noqa: PLR0911
     if attr.ref_attr_name:
         raise ValueError(f"Cannot get value of reference attribute: {attr}")
     if attr.type == AttributeProto.FLOAT:
@@ -1176,7 +1174,7 @@ def _sanitize_str(s: Union[str, bytes]) -> str:
         sanitized = s.decode("utf-8", errors="ignore")
     else:
         sanitized = str(s)
-    if len(sanitized) < 64:
+    if len(sanitized) < 64:  # noqa: PLR2004
         return sanitized
     return sanitized[:64] + f"...<+len={(len(sanitized) - 64)}>"
 
@@ -1280,7 +1278,7 @@ def printable_attribute(
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
     which = dim.WhichOneof("value")
     if which is None:
-        raise TypeError(f"which cannot be {None}.")
+        return "?"
     return str(getattr(dim, which))
 
 
@@ -1513,7 +1511,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     :param tensor_dtype: TensorProto's data_type
     :return: field name
     """
-    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[  # pylint: disable=protected-access
+    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
         mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
     ]
 
@@ -1527,7 +1525,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     """
     return cast(
         int,
-        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],  # pylint: disable=protected-access
+        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
     )
 
 

@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0613,W0640,W0703
+
 """
 These test evaluates the python runtime (class ReferenceEvaluator) against
 all the backend tests (in onnx/backend/test/case/node) and checks
@@ -24,18 +24,10 @@ import os
 import pprint
 import sys
 import unittest
-
-try:
-    from packaging.version import parse as version
-except ImportError:
-    from distutils.version import (  # noqa: N813 # pylint: disable=deprecated-module
-        StrictVersion as version,
-    )
-
 from os import getenv
 
 import numpy as np
-from numpy import __version__ as npver
+import version_utils
 from numpy import object_ as dtype_object
 from numpy.testing import assert_allclose  # type: ignore
 
@@ -71,13 +63,7 @@ SKIP_TESTS = {
     "test__simple_gradient_of_add_and_mul",  # gradient not implemented
 }
 
-if version(npver) < version("1.21.5"):
-    SKIP_TESTS |= {
-        "test_cast_FLOAT_to_BFLOAT16",
-        "test_castlike_FLOAT_to_BFLOAT16",
-        "test_castlike_FLOAT_to_BFLOAT16_expanded",
-    }
-if version(npver) < version("1.21.5"):
+if version_utils.numpy_older_than("1.21.5"):
     SKIP_TESTS |= {
         "test_cast_FLOAT_to_BFLOAT16",
         "test_castlike_FLOAT_to_BFLOAT16",
@@ -88,6 +74,30 @@ if sys.platform == "win32":
         "test_regex_full_match_basic",
         "test_regex_full_match_email_domain",
         "test_regex_full_match_empty",
+        "test_image_decoder_decode_jpeg_rgb",
+        "test_image_decoder_decode_jpeg_grayscale",
+        "test_image_decoder_decode_jpeg_bgr",
+        "test_image_decoder_decode_jpeg2k_rgb",
+        "test_image_decoder_decode_bmp_rgb",
+        "test_image_decoder_decode_png_rgb",
+        "test_image_decoder_decode_tiff_rgb",
+        "test_image_decoder_decode_webp_rgb",
+        "test_image_decoder_decode_pnm_rgb",
+    }
+
+if version_utils.numpy_older_than("1.21.5"):
+    # op_dft requires numpy >= 1.21.5
+    # op_stft depends on op_dft
+    SKIP_TESTS |= {
+        "test_stft",
+        "test_stft_with_window",
+        "test_stft_cpu",
+        "test_dft",
+        "test_dft_axis",
+        "test_dft_inverse",
+        "test_dft_opset19",
+        "test_dft_axis_opset19",
+        "test_dft_inverse_opset19",
     }
 
 
@@ -111,7 +121,7 @@ def assert_allclose_string(expected, value):
         expected_float = expected.astype(np.float32)
         value_float = value.astype(np.float32)
         assert_allclose(expected_float, value_float)
-    else:
+    else:  # noqa: PLR5501
         if expected.tolist() != value.tolist():
             raise AssertionError(f"Mismatches {expected} != {value}.")
 
@@ -533,7 +543,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         return ReferenceEvaluator(obj, verbose=verbose)
 
     @staticmethod
-    def run_fct(obj, *inputs, verbose=0):  # pylint: disable=W0613
+    def run_fct(obj, *inputs, verbose=0):
         if hasattr(obj, "input_names"):
             input_names = obj.input_names
         elif hasattr(obj, "get_inputs"):
@@ -547,7 +557,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                 f"Got {len(inputs)} inputs but expecting {len(obj.input_names)}."
             )
         rewrite = False
-        for i in range(len(inputs)):  # pylint: disable=C0200
+        for i in range(len(inputs)):
             if (
                 isinstance(inputs[i], np.ndarray)
                 and inputs[i].dtype == np.uint16
@@ -557,7 +567,7 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         if rewrite:
             # bfloat16 does not exist for numpy.
             inputs = list(inputs)
-            for i in range(len(inputs)):  # pylint: disable=C0200
+            for i in range(len(inputs)):
                 if (
                     isinstance(inputs[i], np.ndarray)
                     and inputs[i].dtype == np.uint16
@@ -576,19 +586,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         feeds = {input_names[i]: inputs[i] for i in range(len(inputs))}
         got = obj.run(None, feeds)
         return got
-
-    # def test_onnx_test_run_test_abs(self):
-    #     done = 0
-    #     for te in enumerate_onnx_tests("node", lambda folder: folder == "test_abs"):
-    #         self.assertIn(te.name, repr(te))
-    #         self.assertGreater(len(te), 0)
-    #         te.run(
-    #             TestOnnxBackEndWithReferenceEvaluator.load_fct,
-    #             TestOnnxBackEndWithReferenceEvaluator.run_fct,
-    #             comment="[runtime=ReferenceEvaluator]",
-    #         )
-    #         done += 1
-    #     self.assertEqual(done, 1)
 
     def common_test_onnx_test_run(
         self,
@@ -788,6 +785,8 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_layer_normalization_4d_axis1_expanded_ver18": 1e-4,
             "test_layer_normalization_4d_axis_negative_1_expanded_ver18": 1e-4,
             "test_layer_normalization_4d_axis_negative_3_expanded_ver18": 1e-4,
+            "test_ConvTranspose2d": 1e-4,
+            "test__pytorch_converted_ConvTranspose2d": 1e-4,
         }
 
         cls.atol = {
@@ -839,15 +838,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
             "test_affine_grid_3d_align_corners": 1e-4,
             "test_affine_grid_3d_align_corners_expanded": 1e-4,
         }
-
-        if version(npver) < version("1.21.5"):
-            cls.atol.update(
-                {
-                    "test_dft": 1e-11,
-                    "test_dft_axis": 1e-11,
-                    "test_dft_inverse": 1e-11,
-                }
-            )
 
         cls.skip_test = SKIP_TESTS
         if all_tests:
