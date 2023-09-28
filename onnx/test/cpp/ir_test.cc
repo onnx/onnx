@@ -41,7 +41,6 @@ TEST(IR, ValidIdentifierTest) {
     node1->addInput(x);
     g->appendNode(node1);
     Value* temp1 = node1->outputs()[0];
-    // temp1->setElemType(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED);
     Node* node2 = g->create(kNeg, 1);
     node2->addInput(temp1); 
     g->appendNode(node2);
