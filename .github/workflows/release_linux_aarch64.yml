@@ -35,7 +35,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
       # setting up qemu for enabling aarch64 binary execution on x86 machine
-    - uses: docker/setup-qemu-action@2b82ce82d56a2a04d2637cd93a637ae1b359c0a7 # v2.2.0
+    - uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
 
       # Creating a virtual environment on machine with the help of docker container \
       # and installing the dependencies inside that \
