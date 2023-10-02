@@ -35,7 +35,7 @@ jobs:
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@50e5e1e2284575f23a1e409d9c0804cdfc4f6e31 # v1.18.1
+        uses: reviewdog/action-shellcheck@96fa305c16b0f9cc9b093af22dcd09de1c8f1c2d # v1.19.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
