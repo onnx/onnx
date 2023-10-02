@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
       - name: misspell # Check spellings as well
-        uses: reviewdog/action-misspell@9257f108197b44e37995c98bea6ee4a5b9ffc3b0 # v1.13.1
+        uses: reviewdog/action-misspell@cc799b020b057600b66eedf2b6e97ca26137de21 # v1.14.0
         with:
           github_token: ${{ secrets.github_token }}
           locale: "US"
