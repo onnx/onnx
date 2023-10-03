@@ -793,7 +793,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   for (int i=0; i<num_outputs-reduced_dims; i++) {
                     split.push_back(chunk_size+1);
                   }
-                  while (split.size() <= num_outputs) {
+                  while (static_cast<int>(split.size()) <= num_outputs) {
                     split.push_back(chunk_size);
                   }
                 } else {
