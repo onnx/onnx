@@ -27,7 +27,7 @@ class AttributeType(enum.IntEnum):
     # We can code gen with https://github.com/recap-build/proto-schema-parser/tree/main
 
     # NOTE: We can assume the build tool chain has python, just not protoc, right?
-
+    # NOTE: We should alias OpSchema::AttrType as well
     UNDEFINED = 0
     FLOAT = 1
     INT = 2
