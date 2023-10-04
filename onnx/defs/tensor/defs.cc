@@ -2527,7 +2527,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "grid",
-            "output tensor of shape (N, C, H, W, 2) of 2D sample coordinates or (N, C, D, H, W, 3) of 3D sample coordinates.",
+            "output tensor of shape (N, H, W, 2) of 2D sample coordinates or (N, D, H, W, 3) of 3D sample coordinates.",
             "T1",
             OpSchema::Single,
             true,
