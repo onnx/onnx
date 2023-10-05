@@ -24474,7 +24474,7 @@ This version of the operator has been available since version 20 of the default 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] where r = rank(input).</dd>
-<dt><tt>minimize_diff</tt> : int (required)</dt>
+<dt><tt>minimize_diff</tt> : int</dt>
 <dd>Uneven split mode.</dd>
 <dt><tt>num_outputs</tt> : int</dt>
 <dd>Number of outputs to split parts of the tensor into.</dd>
