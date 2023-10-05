@@ -720,7 +720,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "minimize_diff",
             "Uneven split mode.",
             AttributeProto::INT,
-            true)
+            false)
         .SetDoc(Split_ver20_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
