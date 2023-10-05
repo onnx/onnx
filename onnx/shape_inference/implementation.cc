@@ -514,6 +514,8 @@ class ShapeInferenceImplBase {
     }
     ONNX_CATCH(const std::runtime_error& err) {
       // TODO: Fix this. Unclear if this should be remapped to a shape inference error.
+      // Need to rationalize the different types of exceptions that can be thrown.
+      // See: https://github.com/onnx/onnx/pull/5519
       ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)); });
     }
   }
