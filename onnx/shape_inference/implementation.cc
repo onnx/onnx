@@ -284,6 +284,7 @@ class InferredTypes {
  private:
   std::vector<TypeProto*> types;
   GraphProto* graph_ptr;
+  ONNX_DISALLOW_COPY_ASSIGNMENT_AND_MOVE(InferredTypes);
 };
 
 // Initialize a DataValueMap for a called function from the DataValueMap of the caller
