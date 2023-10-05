@@ -360,7 +360,7 @@ class TfIdfVectorizer(OpRun):
             # TfidfVectorizer returns a zero tensor of shape
             # {b_dim, output_size} when b_dim is the number of received observations
             # and output_size the is the maximum value in ngram_indexes attribute plus 1.
-            return self.output_result(B, frequencies)  # type: ignore[arg-type]
+            return (self.output_result(B, frequencies),)  # type: ignore[arg-type]
 
         def fn(row_num):
             self.compute_impl(
