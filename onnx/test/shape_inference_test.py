@@ -3212,7 +3212,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("a", TensorProto.FLOAT, (2, 2, 3)),
             ],
         )
-    
+
     def test_split_uneven_split_3d_maximize_diff(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 7, 3))],
@@ -3227,7 +3227,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("a", TensorProto.FLOAT, (2, 1, 3)),
             ],
         )
-    
+
     def test_split_uneven_split_3d_2(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 7, 10))],
