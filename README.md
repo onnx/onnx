@@ -28,18 +28,18 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 
 # Learn about the ONNX spec
 
-* [Overview](docs/Overview.md)
-* [ONNX intermediate representation spec](docs/IR.md)
-* [Versioning principles of the spec](docs/Versioning.md)
-* [Operators documentation](docs/Operators.md) (development version)
+* [Overview](https://github.com/onnx/onnx/blob/main/docs/Overview.md)
+* [ONNX intermediate representation spec](https://github.com/onnx/onnx/blob/main/docs/IR.md)
+* [Versioning principles of the spec](https://github.com/onnx/onnx/blob/main/docs/Versioning.md)
+* [Operators documentation](https://github.com/onnx/onnx/blob/main/docs/Operators.md)
 * [Operators documentation](https://onnx.ai/onnx/operators/index.html) (latest release)
-* [Python API Overview](docs/PythonAPIOverview.md)
+* [Python API Overview](https://github.com/onnx/onnx/blob/main/docs/PythonAPIOverview.md)
 
 # Programming utilities for working with ONNX Graphs
 
-* [Shape and Type Inference](docs/ShapeInference.md)
+* [Shape and Type Inference](https://github.com/onnx/onnx/blob/main/docs/ShapeInference.md)
 * [Graph Optimization](https://github.com/onnx/optimizer)
-* [Opset Version Conversion](docs/VersionConverter.md)
+* [Opset Version Conversion](https://github.com/onnx/onnx/blob/main/docs/docsgen/source/api/version_converter.md)
 
 # Contribute
 
