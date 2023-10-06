@@ -116,6 +116,8 @@ enum Version {
 // An AttributeProto MUST contain the name field, and *only one* of the
 // following content fields, effectively enforcing a C/C++ union equivalent.
 message AttributeProto {
+  reserved 12, 16 to 19;
+  reserved "v";
 
   // Note: this enum is structurally identical to the OpSchema::AttrType
   // enum defined in schema.h.  If you rev one, you likely need to rev the other.
@@ -515,8 +517,8 @@ message TensorProto {
     // Operators supported FP8 are Cast, CastLike, QuantizeLinear, DequantizeLinear.
     // The computation usually happens inside a block quantize / dequantize
     // fused by the runtime.
-    FLOAT8E4M3FN = 17;    // float 8, mostly used for coefficients, supports nan, not inf 
-    FLOAT8E4M3FNUZ = 18;  // float 8, mostly used for coefficients, supports nan, not inf, no negative zero 
+    FLOAT8E4M3FN = 17;    // float 8, mostly used for coefficients, supports nan, not inf
+    FLOAT8E4M3FNUZ = 18;  // float 8, mostly used for coefficients, supports nan, not inf, no negative zero
     FLOAT8E5M2 = 19;      // follows IEEE 754, supports nan, inf, mostly used for gradients
     FLOAT8E5M2FNUZ = 20;  // follows IEEE 754, supports nan, inf, mostly used for gradients, no negative zero
 
@@ -828,7 +830,6 @@ message FunctionProto {
   // the FunctionProto.
   string domain = 10;
 }
-
 
 // For using protobuf-lite
 option optimize_for = LITE_RUNTIME;
