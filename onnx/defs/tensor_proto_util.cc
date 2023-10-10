@@ -46,14 +46,16 @@ namespace ONNX_NAMESPACE {
           ". Expected:",                                                                                           \
           Utils::DataTypeUtils::ToDataTypeString(tensorproto_datatype),                                            \
           " Actual:",                                                                                              \
-          Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));                                      \
+          Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type())                                        \
+      );                                                                                                           \
     }                                                                                                              \
     std::vector<type> res;                                                                                         \
     if (tensor_proto->has_data_location() && tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) { \
       fail_shape_inference(                                                                                        \
           "Cannot parse data from external tensors. Please ",                                                      \
           "load external data into raw data for tensor: ",                                                         \
-          tensor_proto->name());                                                                                   \
+          tensor_proto->name()                                                                                     \
+      );                                                                                                           \
     } else if (!tensor_proto->has_raw_data()) {                                                                    \
       const auto& data = tensor_proto->typed_data_fetch();                                                         \
       int expected_size = 1;                                                                                       \
@@ -67,7 +69,8 @@ namespace ONNX_NAMESPACE {
             " expected size ",                                                                                     \
             expected_size,                                                                                         \
             " does not match the actual size",                                                                     \
-            data.size());                                                                                          \
+            data.size()                                                                                            \
+        );                                                                                                         \
       }                                                                                                            \
       res.insert(res.end(), data.begin(), data.end());                                                             \
       return res;                                                                                                  \
@@ -77,7 +80,8 @@ namespace ONNX_NAMESPACE {
           tensor_proto->name(),                                                                                    \
           " data type is string. string",                                                                          \
           " content is required to be stored in repeated bytes string_data field.",                                \
-          " raw_data type cannot be string.");                                                                     \
+          " raw_data type cannot be string."                                                                       \
+      );                                                                                                           \
     }                                                                                                              \
     /* The given tensor does have raw_data itself so parse it by given type */                                     \
     /* make copy as we may have to reverse bytes */                                                                \
@@ -136,4 +140,4 @@ DEFINE_PARSE_DATA(int64_t, int64_data, TensorProto_DataType_INT64)
 DEFINE_PARSE_DATA(float, float_data, TensorProto_DataType_FLOAT)
 DEFINE_PARSE_DATA(double, double_data, TensorProto_DataType_DOUBLE)
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

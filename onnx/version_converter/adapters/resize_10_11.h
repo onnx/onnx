@@ -46,5 +46,5 @@ class Resize_10_11 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

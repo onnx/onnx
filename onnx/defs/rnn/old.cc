@@ -12,7 +12,8 @@ std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "Specify if the RNN is forward, reverse, or bidirectional. "
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
-        std::string("foward"));
+        std::string("foward")
+    );
     schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
@@ -20,32 +21,37 @@ std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "are consumed in the order of activation functions, for example (f, g, h) "
         "in LSTM.",
         AttributeProto::FLOATS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "activation_beta",
         "Optional scaling values used by some activation functions. The values "
         "are consumed in the order of activation functions, for example (f, g, h) "
         "in LSTM.",
         AttributeProto::FLOATS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "output_sequence",
         "The sequence output for the hidden is optional if 0. Default 0.",
         AttributeProto::INT,
-        static_cast<int64_t>(0));
+        static_cast<int64_t>(0)
+    );
     schema.Attr(
         "clip",
         "Cell clip threshold. Clipping bounds the elements of a tensor "
         "in the range of [-threshold, +threshold] and is applied to the input "
         "of activations. No clip if not specified.",
         AttributeProto::FLOAT,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Input(
         0,
         "X",
         "The input sequences packed (and potentially padded) into one 3-D "
         "tensor with the shape of `[seq_length, batch_size, input_size]`.",
-        "T");
+        "T"
+    );
     schema.Input(
         4,
         "sequence_lens",
@@ -53,14 +59,16 @@ std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "If not specified - assumed all sequences in the batch to have "
         "length `seq_length`. It has shape `[batch_size]`.",
         "T1",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.Input(
         5,
         "initial_h",
         "Optional initial value of the hidden. If not specified - assumed "
         "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.Output(
         0,
         "Y",
@@ -68,17 +76,20 @@ std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
         "It is optional if `output_sequence` is 0.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.Output(
         1,
         "Y_h",
         "The last output value of the hidden. It has shape "
         "`[num_directions, batch_size, hidden_size]`.",
-        "T");
+        "T"
+    );
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."
+    );
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
   };
 }
@@ -170,21 +181,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             "of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Input(
             1,
             "W",
             "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, input_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, hidden_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             3,
             "B",
@@ -193,8 +207,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
             "- assumed to be 0",
             "T",
-            OpSchema::Optional)
-        .FillUsing(RNNDocGeneratorOld("GRU")));
+            OpSchema::Optional
+        )
+        .FillUsing(RNNDocGeneratorOld("GRU"))
+);
 
 // Versions 1 to 6 of RNN/LSTM and versions 3 to 6 of GRU:
 
@@ -224,7 +240,7 @@ void RNNShapeInference1(InferenceContext& ctx) {
   auto num_outputs = ctx.getNumOutputs();
 
   if (num_outputs == 0)
-    return; // Unlikely, but seems legal.
+    return;  // Unlikely, but seems legal.
 
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (num_outputs > 1)
@@ -234,11 +250,11 @@ void RNNShapeInference1(InferenceContext& ctx) {
 
   if (output_sequence) {
     // No ambiguity in spec
-    updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size}); // Y
+    updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size});  // Y
     if (num_outputs > 1)
-      updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_h
+      updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});  // Y_h
     if (num_outputs > 2)
-      updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size}); // Y_c
+      updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});  // Y_c
   } else {
     // Documentation suggests that the output Y is absent in this case
     // Different tests seem to disagree on whether Y_h and Y_c, if present,
@@ -256,7 +272,8 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         "Specify if the RNN is forward, reverse, or bidirectional. "
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
-        std::string("forward"));
+        std::string("forward")
+    );
     schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
@@ -265,32 +282,37 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         "in LSTM. Default values are the same as of corresponding ONNX operators."
         "For example with LeakyRelu, the default alpha is 0.01.",
         AttributeProto::FLOATS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "activation_beta",
         "Optional scaling values used by some activation functions. The values "
         "are consumed in the order of activation functions, for example (f, g, h) "
         "in LSTM. Default values are the same as of corresponding ONNX operators.",
         AttributeProto::FLOATS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "output_sequence",
         "The sequence output for the hidden is optional if 0. Default 0.",
         AttributeProto::INT,
-        static_cast<int64_t>(0));
+        static_cast<int64_t>(0)
+    );
     schema.Attr(
         "clip",
         "Cell clip threshold. Clipping bounds the elements of a tensor "
         "in the range of [-threshold, +threshold] and is applied to the input "
         "of activations. No clip if not specified.",
         AttributeProto::FLOAT,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Input(
         0,
         "X",
         "The input sequences packed (and potentially padded) into one 3-D "
         "tensor with the shape of `[seq_length, batch_size, input_size]`.",
-        "T");
+        "T"
+    );
     schema.Input(
         4,
         "sequence_lens",
@@ -298,14 +320,16 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         "If not specified - assumed all sequences in the batch to have "
         "length `seq_length`. It has shape `[batch_size]`.",
         "T1",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.Input(
         5,
         "initial_h",
         "Optional initial value of the hidden. If not specified - assumed "
         "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.Output(
         0,
         "Y",
@@ -313,18 +337,21 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
         "It is optional if `output_sequence` is 0.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.Output(
         1,
         "Y_h",
         "The last output value of the hidden. It has shape "
         "`[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."
+    );
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference1);
   };
@@ -404,21 +431,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input gate. The activation function must be one of the activation "
             "functions specified above. Optional: Default `Tanh` if not specified.",
             AttributeProto::STRINGS,
-            std::vector<std::string>{"Tanh", "Tanh"})
+            std::vector<std::string>{"Tanh", "Tanh"}
+        )
         .Input(
             1,
             "W",
             "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
             "(if bidirectional). The tensor has shape "
             "`[num_directions, hidden_size, input_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
             "(if bidirectional). The tensor has shape "
             "`[num_directions, hidden_size, hidden_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             3,
             "B",
@@ -427,8 +457,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
             "to be 0.",
             "T",
-            OpSchema::Optional)
-        .FillUsing(RNNDocGenerator1("RNN")));
+            OpSchema::Optional
+        )
+        .FillUsing(RNNDocGenerator1("RNN"))
+);
 
 static const char* GRU_ver3_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
@@ -517,28 +549,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             "of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "linear_before_reset",
             "When computing the output of the hidden gate, "
             "apply the linear transformation before multiplying by the output of the "
             "reset gate.",
             AttributeProto::INT,
-            static_cast<int64_t>(0))
+            static_cast<int64_t>(0)
+        )
         .Input(
             1,
             "W",
             "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, input_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, hidden_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             3,
             "B",
@@ -547,8 +583,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
             "- assumed to be 0",
             "T",
-            OpSchema::Optional)
-        .FillUsing(RNNDocGenerator1("GRU")));
+            OpSchema::Optional
+        )
+        .FillUsing(RNNDocGenerator1("GRU"))
+);
 
 static const char* LSTM_ver1_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
@@ -645,26 +683,30 @@ ONNX_OPERATOR_SET_SCHEMA(
             "be one of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "input_forget",
             "Couple the input and forget gates if 1, default 0.",
             AttributeProto::INT,
-            static_cast<int64_t>(0))
+            static_cast<int64_t>(0)
+        )
         .Input(
             1,
             "W",
             "The weight tensor for the gates. Concatenation of `W[iofc]` and "
             "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
             "`[num_directions, 4*hidden_size, input_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[iofc]` and "
             "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 4*hidden_size, hidden_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             3,
             "B",
@@ -673,14 +715,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
             "specified - assumed to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
             6,
             "initial_c",
             "Optional initial value of the cell. If not specified - assumed "
             "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
             7,
             "P",
@@ -689,7 +733,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
             "assumed to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .FillUsing(RNNDocGenerator1("LSTM"))
         .Output(
             2,
@@ -697,9 +742,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The last output value of the cell. It has shape "
             "`[num_directions, batch_size, hidden_size]`.",
             "T",
-            OpSchema::Optional));
+            OpSchema::Optional
+        )
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
 
 // Versions 7 to 13 of RNN/LSTM/GRU
 
@@ -755,7 +802,8 @@ std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
         "Specify if the RNN is forward, reverse, or bidirectional. "
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
-        std::string("forward"));
+        std::string("forward")
+    );
     schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
@@ -764,27 +812,31 @@ std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
         "in LSTM. Default values are the same as of corresponding ONNX operators."
         "For example with LeakyRelu, the default alpha is 0.01.",
         AttributeProto::FLOATS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "activation_beta",
         "Optional scaling values used by some activation functions. The values "
         "are consumed in the order of activation functions, for example (f, g, h) "
         "in LSTM. Default values are the same as of corresponding ONNX operators.",
         AttributeProto::FLOATS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "clip",
         "Cell clip threshold. Clipping bounds the elements of a tensor "
         "in the range of [-threshold, +threshold] and is applied to the input "
         "of activations. No clip if not specified.",
         AttributeProto::FLOAT,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Input(
         0,
         "X",
         "The input sequences packed (and potentially padded) into one 3-D "
         "tensor with the shape of `[seq_length, batch_size, input_size]`.",
-        "T");
+        "T"
+    );
     schema.Input(
         4,
         "sequence_lens",
@@ -792,32 +844,37 @@ std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
         "If not specified - assumed all sequences in the batch to have "
         "length `seq_length`. It has shape `[batch_size]`.",
         "T1",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.Input(
         5,
         "initial_h",
         "Optional initial value of the hidden. If not specified - assumed "
         "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.Output(
         0,
         "Y",
         "A tensor that concats all the intermediate output values of the hidden. "
         "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.Output(
         1,
         "Y_h",
         "The last output value of the hidden. It has shape "
         "`[num_directions, batch_size, hidden_size]`.",
         "T",
-        OpSchema::Optional);
+        OpSchema::Optional
+    );
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."
+    );
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference2);
   };
@@ -897,21 +954,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input gate. The activation function must be one of the activation "
             "functions specified above. Optional: Default `Tanh` if not specified.",
             AttributeProto::STRINGS,
-            std::vector<std::string>{"Tanh", "Tanh"})
+            std::vector<std::string>{"Tanh", "Tanh"}
+        )
         .Input(
             1,
             "W",
             "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
             "(if bidirectional). The tensor has shape "
             "`[num_directions, hidden_size, input_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
             "(if bidirectional). The tensor has shape "
             "`[num_directions, hidden_size, hidden_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             3,
             "B",
@@ -920,8 +980,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
             "to be 0.",
             "T",
-            OpSchema::Optional)
-        .FillUsing(RNNDocGenerator2("RNN")));
+            OpSchema::Optional
+        )
+        .FillUsing(RNNDocGenerator2("RNN"))
+);
 
 static const char* GRU_ver7_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
@@ -1010,28 +1072,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             "of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "linear_before_reset",
             "When computing the output of the hidden gate, "
             "apply the linear transformation before multiplying by the output of the "
             "reset gate.",
             AttributeProto::INT,
-            static_cast<int64_t>(0))
+            static_cast<int64_t>(0)
+        )
         .Input(
             1,
             "W",
             "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, input_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
             "(if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 3*hidden_size, hidden_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             3,
             "B",
@@ -1040,8 +1106,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
             "- assumed to be 0",
             "T",
-            OpSchema::Optional)
-        .FillUsing(RNNDocGenerator2("GRU")));
+            OpSchema::Optional
+        )
+        .FillUsing(RNNDocGenerator2("GRU"))
+);
 
 static const char* LSTM_ver7_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
@@ -1138,7 +1206,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "be one of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr("input_forget", "Couple the input and forget gates if 1.", AttributeProto::INT, static_cast<int64_t>(0))
         .Input(
             1,
@@ -1146,14 +1215,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The weight tensor for the gates. Concatenation of `W[iofc]` and "
             "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
             "`[num_directions, 4*hidden_size, input_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             2,
             "R",
             "The recurrence weight tensor. Concatenation of `R[iofc]` and "
             "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
             "`[num_directions, 4*hidden_size, hidden_size]`.",
-            "T")
+            "T"
+        )
         .Input(
             3,
             "B",
@@ -1162,14 +1233,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
             "specified - assumed to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
             6,
             "initial_c",
             "Optional initial value of the cell. If not specified - assumed "
             "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
             7,
             "P",
@@ -1178,7 +1251,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
             "assumed to be 0.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .FillUsing(RNNDocGenerator2("LSTM"))
         .Output(
             2,
@@ -1186,5 +1260,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The last output value of the cell. It has shape "
             "`[num_directions, batch_size, hidden_size]`.",
             "T",
-            OpSchema::Optional));
-} // namespace ONNX_NAMESPACE
+            OpSchema::Optional
+        )
+);
+}  // namespace ONNX_NAMESPACE

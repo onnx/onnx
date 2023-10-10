@@ -213,7 +213,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         printSet(" {", ",", "}", ParseData<double>(&tensor));
         break;
       default:
-        output_ << "..."; // ParseData not instantiated for other types.
+        output_ << "...";  // ParseData not instantiated for other types.
         break;
     }
   } else {
@@ -463,4 +463,4 @@ DEF_OP(FunctionProto)
 
 DEF_OP(ModelProto)
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

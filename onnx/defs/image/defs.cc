@@ -45,7 +45,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "pixel_format",
             "Pixel format. Can be one of \"RGB\", \"BGR\", or \"Grayscale\".",
             AttributeProto::STRING,
-            std::string("RGB"))
+            std::string("RGB")
+        )
         .Input(0, "encoded_stream", "Encoded stream", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "image", "Decoded image", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint("T1", {"tensor(uint8)"}, "Constrain input types to 8-bit unsigned integer tensor.")
@@ -64,6 +65,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           sh->add_dim();
           sh->add_dim();
           sh->add_dim();
-        }));
+        })
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

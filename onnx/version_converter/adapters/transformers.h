@@ -80,5 +80,5 @@ inline NodeTransformerFunction SetAttributeIfAbsent(Symbol attr, int64_t value) 
   };
 }
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

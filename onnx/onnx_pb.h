@@ -53,4 +53,4 @@
 #include "onnx/onnx.pb.h"
 #endif
 
-#endif // ! ONNX_ONNX_PB_H
+#endif  // ! ONNX_ONNX_PB_H

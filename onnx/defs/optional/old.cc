@@ -23,11 +23,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "output",
             "A scalar boolean tensor. If true, it indicates that optional-type input contains an element. Otherwise, it is empty.",
-            "B")
+            "B"
+        )
         .TypeConstraint(
-            "O",
-            OpSchema::all_optional_types(),
-            "Constrain input type to optional tensor and optional sequence types.")
+            "O", OpSchema::all_optional_types(), "Constrain input type to optional tensor and optional sequence types."
+        )
         .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
@@ -41,7 +41,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_tensor_type->set_elem_type(TensorProto::BOOL);
           output_tensor_type->mutable_shape()->Clear();
-        }));
+        })
+);
 
 static const char* OptionalGetElement_ver1_doc = R"DOC(
 Outputs the element in the optional-type input. It is an error if the input value does not have an element
@@ -56,9 +57,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "The optional input.", "O")
         .Output(0, "output", "Output element in the optional input.", "V")
         .TypeConstraint(
-            "O",
-            OpSchema::all_optional_types(),
-            "Constrain input type to optional tensor and optional sequence types.")
+            "O", OpSchema::all_optional_types(), "Constrain input type to optional tensor and optional sequence types."
+        )
         .TypeConstraint(
             "V",
             []() {
@@ -67,7 +67,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               t.insert(t.end(), s.begin(), s.end());
               return t;
             }(),
-            "Constrain output type to all tensor or sequence types.")
+            "Constrain output type to all tensor or sequence types."
+        )
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
           if (numInputs != 1) {
@@ -81,6 +82,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("Input must be an optional-type value containing an element with type information.");
           }
           ctx.getOutputType(0)->CopyFrom(input_type->optional_type().elem_type());
-        }));
+        })
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

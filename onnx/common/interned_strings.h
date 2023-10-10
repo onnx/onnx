@@ -191,7 +191,7 @@ enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,
   FORALL_BUILTIN_SYMBOLS(DEFINE_SYMBOL)
 #undef DEFINE_SYMBOL
-      kLastSymbol, // where we start counting for new symbols
+  kLastSymbol,  // where we start counting for new symbols
 };
 
 struct Symbol {
@@ -224,7 +224,7 @@ inline Symbol operator"" _sym(const char* s, size_t) {
   return Symbol(s);
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
 
 // make symbol behave like an integer in hash tables
 namespace std {
@@ -235,4 +235,4 @@ struct hash<ONNX_NAMESPACE::Symbol> {
   }
 };
 
-} // namespace std
+}  // namespace std

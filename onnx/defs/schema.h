@@ -190,7 +190,8 @@ class OpSchema final {
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
         int min_arity = 1,
-        DifferentiationCategory differentiation_category = Unknown)
+        DifferentiationCategory differentiation_category = Unknown
+    )
         : name_(std::move(name)),
           type_set_(std::move(allowed_type_set)),
           type_str_(std::move(type_str)),
@@ -213,7 +214,8 @@ class OpSchema final {
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
         int min_arity = 1,
-        DifferentiationCategory differentiation_category = Unknown)
+        DifferentiationCategory differentiation_category = Unknown
+    )
         : name_(std::move(name)),
           type_str_(std::move(type_str)),
 #ifndef __ONNX_NO_DOC_STRINGS
@@ -289,9 +291,9 @@ class OpSchema final {
   };
 
   enum class SupportType : uint8_t {
-    COMMON, // Supported by all frameworks that support this IR.
-    EXPERIMENTAL, // This OP is experimental and can be changed or removed in
-                  // the future.
+    COMMON,  // Supported by all frameworks that support this IR.
+    EXPERIMENTAL,  // This OP is experimental and can be changed or removed in
+                   // the future.
   };
 
   OpSchema() : OpSchema("unknown", "unknown", 0) {}
@@ -351,7 +353,7 @@ class OpSchema final {
    * SinceVersion(3), and another, updated op schema entry for Foo
    * with SinceVersion(6).
    */
-  OpSchema& SinceVersion(OperatorSetVersion n); // aka int
+  OpSchema& SinceVersion(OperatorSetVersion n);  // aka int
 
   /**
    * Marks this op as deprecated as of it's since_version. This will cause the
@@ -450,17 +452,20 @@ class OpSchema final {
   OpSchema& Attr(Attribute attr);
 
 // Register "optional" attribute with default value.
-#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName)                                                                    \
-  OpSchema& Attr(                                                                                                   \
-      std::string name, std::string description, AttributeProto::AttributeType type, const TypeName& defaultValue); \
-  /* non-STL wrapper to reduce binary size */                                                                       \
-  OpSchema& Attr(                                                                                                   \
-      const char* name, const char* description, AttributeProto::AttributeType type, const TypeName& defaultValue); \
-  OpSchema& Attr(                                                                                                   \
-      std::string name,                                                                                             \
-      std::string description,                                                                                      \
-      AttributeProto::AttributeType type,                                                                           \
-      const std::vector<TypeName>& defaultValue);
+#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName)                                                                  \
+  OpSchema& Attr(                                                                                                 \
+      std::string name, std::string description, AttributeProto::AttributeType type, const TypeName& defaultValue \
+  );                                                                                                              \
+  /* non-STL wrapper to reduce binary size */                                                                     \
+  OpSchema& Attr(                                                                                                 \
+      const char* name, const char* description, AttributeProto::AttributeType type, const TypeName& defaultValue \
+  );                                                                                                              \
+  OpSchema& Attr(                                                                                                 \
+      std::string name,                                                                                           \
+      std::string description,                                                                                    \
+      AttributeProto::AttributeType type,                                                                         \
+      const std::vector<TypeName>& defaultValue                                                                   \
+  );
 
   ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
   ATTR_SETTER_WITH_DEFAULT_VALUE(float)
@@ -473,7 +478,8 @@ class OpSchema final {
       std::string name,
       std::string description,
       std::string conditionExplanation,
-      AttributeProto::AttributeType attr_type);
+      AttributeProto::AttributeType attr_type
+  );
 
   // Register "required" attribute without default value.
   OpSchema& Attr(std::string name, std::string description, AttributeProto::AttributeType type, bool required = true);
@@ -486,9 +492,8 @@ class OpSchema final {
   // Type constraint.
   struct TypeConstraintParam final {
     TypeConstraintParam(
-        std::string type_param_str_,
-        std::vector<std::string> allowed_type_strs_,
-        std::string description_)
+        std::string type_param_str_, std::vector<std::string> allowed_type_strs_, std::string description_
+    )
         : type_param_str(std::move(type_param_str_)),
           allowed_type_strs(std::move(allowed_type_strs_)),
           description(std::move(description_)) {}
@@ -538,7 +543,8 @@ class OpSchema final {
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
-      DifferentiationCategory differentiation_category = Unknown);
+      DifferentiationCategory differentiation_category = Unknown
+  );
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Input(
@@ -549,7 +555,8 @@ class OpSchema final {
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
-      DifferentiationCategory differentiation_category = Unknown);
+      DifferentiationCategory differentiation_category = Unknown
+  );
 
   OpSchema& Output(int n, FormalParameter formal_parameter);
 
@@ -561,7 +568,8 @@ class OpSchema final {
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
-      DifferentiationCategory differentiation_category = Unknown);
+      DifferentiationCategory differentiation_category = Unknown
+  );
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Output(
@@ -572,13 +580,15 @@ class OpSchema final {
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
-      DifferentiationCategory differentiation_category = Unknown);
+      DifferentiationCategory differentiation_category = Unknown
+  );
 
   OpSchema& TypeConstraint(std::string type_str, std::vector<std::string> constraints, std::string description);
 
   // Non-STL wrapper to reduce binary size
-  OpSchema&
-  TypeConstraint(const char* type_str, std::initializer_list<const char*> constraints, const char* description);
+  OpSchema& TypeConstraint(
+      const char* type_str, std::initializer_list<const char*> constraints, const char* description
+  );
 
   // Convenience members for types
 
@@ -596,7 +606,8 @@ class OpSchema final {
         "tensor(float8e4m3fn)",
         "tensor(float8e4m3fnuz)",
         "tensor(float8e5m2)",
-        "tensor(float8e5m2fnuz)"};
+        "tensor(float8e5m2fnuz)"
+    };
     return numeric_types_for_math_reduction_ir9;
   }
 
@@ -609,7 +620,8 @@ class OpSchema final {
         "tensor(float16)",
         "tensor(float)",
         "tensor(double)",
-        "tensor(bfloat16)"};
+        "tensor(bfloat16)"
+    };
     return numeric_types_for_math_reduction_ir4;
   }
 
@@ -621,7 +633,8 @@ class OpSchema final {
         "tensor(int64)",
         "tensor(float16)",
         "tensor(float)",
-        "tensor(double)"};
+        "tensor(double)"
+    };
     return numeric_types_for_math_reduction;
   }
 
@@ -642,7 +655,8 @@ class OpSchema final {
         "tensor(float8e4m3fn)",
         "tensor(float8e4m3fnuz)",
         "tensor(float8e5m2)",
-        "tensor(float8e5m2fnuz)"};
+        "tensor(float8e5m2fnuz)"
+    };
     return all_numeric_types_ir9;
   }
 
@@ -659,7 +673,8 @@ class OpSchema final {
         "tensor(float16)",
         "tensor(float)",
         "tensor(double)",
-        "tensor(bfloat16)"};
+        "tensor(bfloat16)"
+    };
     return all_numeric_types_ir4;
   }
 
@@ -675,7 +690,8 @@ class OpSchema final {
         "tensor(int64)",
         "tensor(float16)",
         "tensor(float)",
-        "tensor(double)"};
+        "tensor(double)"
+    };
     return all_numeric_types;
   }
 
@@ -691,7 +707,8 @@ class OpSchema final {
         "seq(tensor(int64))",
         "seq(tensor(float16))",
         "seq(tensor(float))",
-        "seq(tensor(double))"};
+        "seq(tensor(double))"
+    };
     return all_numeric_sequence_types;
   }
 
@@ -711,7 +728,8 @@ class OpSchema final {
         "tensor(string)",
         "tensor(bool)",
         "tensor(complex64)",
-        "tensor(complex128)"};
+        "tensor(complex128)"
+    };
     return all_tensor_types;
   }
 
@@ -732,13 +750,15 @@ class OpSchema final {
         "tensor(string)",
         "tensor(bool)",
         "tensor(complex64)",
-        "tensor(complex128)"};
+        "tensor(complex128)"
+    };
     return all_tensor_types_ir4;
   }
 
   static const std::vector<std::string>& all_float_types_ir4() {
     static const std::vector<std::string> all_float_types_ir4 = {
-        "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"};
+        "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"
+    };
     return all_float_types_ir4;
   }
 
@@ -751,7 +771,8 @@ class OpSchema final {
         "tensor(float8e4m3fn)",
         "tensor(float8e4m3fnuz)",
         "tensor(float8e5m2)",
-        "tensor(float8e5m2fnuz)"};
+        "tensor(float8e5m2fnuz)"
+    };
     return all_float_types_ir9;
   }
 
@@ -761,7 +782,8 @@ class OpSchema final {
         "tensor(int8)",         "tensor(int16)",          "tensor(int32)",      "tensor(int64)",
         "tensor(bfloat16)",     "tensor(float16)",        "tensor(float)",      "tensor(double)",
         "tensor(string)",       "tensor(bool)",           "tensor(complex64)",  "tensor(complex128)",
-        "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)"};
+        "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)"
+    };
     return all_tensor_types_ir9;
   }
 
@@ -781,7 +803,8 @@ class OpSchema final {
         "seq(tensor(string))",
         "seq(tensor(bool))",
         "seq(tensor(complex64))",
-        "seq(tensor(complex128))"};
+        "seq(tensor(complex128))"
+    };
     return all_tensor_sequence_types;
   }
 
@@ -802,7 +825,8 @@ class OpSchema final {
         "seq(tensor(string))",
         "seq(tensor(bool))",
         "seq(tensor(complex64))",
-        "seq(tensor(complex128))"};
+        "seq(tensor(complex128))"
+    };
     return all_tensor_sequence_types_ir4;
   }
 
@@ -814,7 +838,8 @@ class OpSchema final {
         "seq(tensor(float16))",    "seq(tensor(float))",         "seq(tensor(double))",
         "seq(tensor(string))",     "seq(tensor(bool))",          "seq(tensor(complex64))",
         "seq(tensor(complex128))", "seq(tensor(float8e4m3fn))",  "seq(tensor(float8e4m3fnuz))",
-        "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))"};
+        "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))"
+    };
     return all_tensor_sequence_types_ir4;
   }
 
@@ -829,7 +854,8 @@ class OpSchema final {
         "optional(tensor(uint64))",      "optional(tensor(int8))",           "optional(tensor(int16))",
         "optional(tensor(int32))",       "optional(tensor(int64))",          "optional(tensor(float16))",
         "optional(tensor(float))",       "optional(tensor(double))",         "optional(tensor(string))",
-        "optional(tensor(bool))",        "optional(tensor(complex64))",      "optional(tensor(complex128))"};
+        "optional(tensor(bool))",        "optional(tensor(complex64))",      "optional(tensor(complex128))"
+    };
     return all_optional_types;
   }
 
@@ -845,7 +871,8 @@ class OpSchema final {
         "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
         "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
         "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
-        "optional(tensor(complex64))",       "optional(tensor(complex128))"};
+        "optional(tensor(complex64))",       "optional(tensor(complex128))"
+    };
     return all_optional_types;
   }
 
@@ -862,7 +889,8 @@ class OpSchema final {
         "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
         "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
         "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
-        "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))"};
+        "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))"
+    };
     return all_optional_types;
   }
 
@@ -953,7 +981,8 @@ class OpSchema final {
   OpSchema& FunctionBody(
       const std::vector<NodeProto>& func_nodes,
       const std::vector<OperatorSetIdProto>& opsets,
-      int opset_version = kUninitializedSinceVersion);
+      int opset_version = kUninitializedSinceVersion
+  );
 
   OpSchema& FunctionBody(const char* func_body, int opset_version = kUninitializedSinceVersion);
 
@@ -975,8 +1004,8 @@ class OpSchema final {
   // Inside GetFunction we ensure that ops being used to construct a function body do not endure such
   // issue.
   const FunctionProto* GetFunction(
-      int requested_opset_version = OpSchema::kUninitializedSinceVersion,
-      bool validate = false) const;
+      int requested_opset_version = OpSchema::kUninitializedSinceVersion, bool validate = false
+  ) const;
 
   std::vector<int> context_dependent_function_opset_versions() const {
     std::vector<int> opset_versions;
@@ -996,13 +1025,14 @@ class OpSchema final {
   }
 
   OpSchema& SetContextDependentFunctionBodyBuilder(
-      ContextDependentFunctionBodyBuilder,
-      int opset_version = kUninitializedSinceVersion);
+      ContextDependentFunctionBodyBuilder, int opset_version = kUninitializedSinceVersion
+  );
 
   bool BuildContextDependentFunction(
       const FunctionBodyBuildContext& ctx,
       FunctionProto& function_proto,
-      int requested_opset_version = OpSchema::kUninitializedSinceVersion) const;
+      int requested_opset_version = OpSchema::kUninitializedSinceVersion
+  ) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -1015,12 +1045,14 @@ class OpSchema final {
 
  private:
   void ParseAndSetTypes(
-      /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
+      /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters
+  );
   bool ValidateReferencedOpsInFuncton(
       const FunctionProto* function,
       int requested_opset_version,
       int function_since_version,
-      std::set<std::string>* updated_ops = nullptr) const;
+      std::set<std::string>* updated_ops = nullptr
+  ) const;
   void UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const;
 
   std::string name_;
@@ -1061,8 +1093,9 @@ class ISchemaRegistry {
  public:
   virtual ~ISchemaRegistry() = default;
 
-  virtual const OpSchema*
-  GetSchema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
+  virtual const OpSchema* GetSchema(
+      const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN
+  ) const = 0;
 };
 
 /**
@@ -1109,8 +1142,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     // standard ONNX domains as above). Custom-domains are free to interpret
     // this as appropriate (that is, as relative to releases of custom-domain
     // as opposed to ONNX releases).
-    void
-    AddDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version = -1) {
+    void AddDomainToVersion(
+        const std::string& domain, int min_version, int max_version, int last_release_version = -1
+    ) {
       std::lock_guard<std::mutex> lock(mutex_);
       assert(map_.end() == map_.find(domain));
       map_[domain] = std::make_pair(min_version, max_version);
@@ -1201,9 +1235,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     }
 
     static void CheckDomainAndVersionToRegister(
-        const OpSchema& op_schema,
-        const std::string& op_name,
-        const std::string& op_domain) {
+        const OpSchema& op_schema, const std::string& op_name, const std::string& op_domain
+    ) {
       auto ver_range_map = DomainToVersionRange::Instance().Map();
       auto ver_range_it = ver_range_map.find(op_domain);
       auto ver = op_schema.SinceVersion();
@@ -1265,8 +1298,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // Return the schema with biggest version, which is not greater than specified
   // <maxInclusiveVersion> in specified domain. Domain with default value
   // ONNX_DOMAIN means ONNX.
-  static const OpSchema*
-  Schema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) {
+  static const OpSchema* Schema(
+      const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN
+  ) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       const auto& schema_ver_map = m[key][domain];
@@ -1292,9 +1326,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   static OpSchemaRegistry* Instance();
 
   const OpSchema* GetSchema(
-      const std::string& key,
-      const int maxInclusiveVersion,
-      const std::string& domain = ONNX_DOMAIN) const override {
+      const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN
+  ) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
   static void SetLoadedSchemaVersion(int target_version) {
@@ -1506,4 +1539,4 @@ support).
 #define POPULATE_OP_DOC_STR(DocPopulatorCode)
 #endif
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

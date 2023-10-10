@@ -18,11 +18,8 @@ namespace version_conversion {
 class AxisAttributeToInput : public Adapter {
  public:
   AxisAttributeToInput(
-      const std::string& op_name,
-      const OpSetID& initial,
-      const OpSetID& target,
-      size_t axis_index,
-      int64_t default_axis)
+      const std::string& op_name, const OpSetID& initial, const OpSetID& target, size_t axis_index, int64_t default_axis
+  )
       : Adapter(op_name, initial, target), axis_index(axis_index), default_axis(default_axis) {}
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
@@ -70,5 +67,5 @@ class AxisAttributeToInput : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

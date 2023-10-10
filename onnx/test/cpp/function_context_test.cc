@@ -61,23 +61,24 @@ void BuildNodes(FunctionProto& functionProto, const std::vector<FunctionBodyHelp
 }
 
 bool BuildFunctionProto(
-    FunctionProto& functionProto,
-    const OpSchema& schema,
-    const std::vector<FunctionBodyHelper::NodeDef>& node_defs) {
+    FunctionProto& functionProto, const OpSchema& schema, const std::vector<FunctionBodyHelper::NodeDef>& node_defs
+) {
   BuildNodes(functionProto, node_defs);
   schema.BuildFunction(functionProto);
   return true;
 }
 
 // A monomorphic context-dependent function test-case.
-static bool
-BuildFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+static bool BuildFloatFunctionBody(
+    const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto
+) {
   // Create a scalar-tensor constant 2.0 of float type:
   auto two_as_tensor = ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT);
 
   std::vector<FunctionBodyHelper::NodeDef> body{// nodes: {outputs, op, inputs, attributes}
                                                 {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-                                                {{"Y"}, "Mul", {"X", "Two"}}};
+                                                {{"Y"}, "Mul", {"X", "Two"}}
+  };
 
   return BuildFunctionProto(functionProto, schema, body);
 }
@@ -125,8 +126,9 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
 
 // A polymorphic context-dependent function test-case.
 
-static bool
-BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+static bool BuildFunctionBody(
+    const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto
+) {
   // Create a scalar-tensor constant 2.0 of input-type:
   auto* tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
@@ -136,7 +138,8 @@ BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, F
 
   std::vector<FunctionBodyHelper::NodeDef> body{// nodes: {outputs, op, inputs, attributes}
                                                 {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-                                                {{"Y"}, "Mul", {"X", "Two"}}};
+                                                {{"Y"}, "Mul", {"X", "Two"}}
+  };
 
   return BuildFunctionProto(functionProto, schema, body);
 }
@@ -186,7 +189,8 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
           Z = Sub (X, Y)
         }
         )ONNX",
-          2);
+          2
+      );
 
   ONNX_NAMESPACE::OpSchema schema_ver9;
   schema_ver9.SetName("MySub")
@@ -203,14 +207,16 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
           Z = Sub (X, Y)
         }
         )ONNX",
-          9)
+          9
+      )
       .FunctionBody(
           R"ONNX(
         {
           Z = Sub (X, Y)
         }
         )ONNX",
-          16);
+          16
+      );
 
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused2(schema_ver2);
   (void)unused2;
@@ -223,7 +229,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
     try {
       bool validate = true;
       const FunctionProto* function = schema2->GetFunction(model_opset_import, validate);
-      if (model_opset_import >= 6) { // function body should be updated at opset 6 where Sub is updated
+      if (model_opset_import >= 6) {  // function body should be updated at opset 6 where Sub is updated
         ASSERT_TRUE(function == nullptr);
       } else {
         ASSERT_TRUE(function);
@@ -274,6 +280,6 @@ TEST(FunctionAPITest, TypeContextTest) {
   check_function(fnProto, checkerCtx, lexicalScope);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE
 #pragma warning(pop)

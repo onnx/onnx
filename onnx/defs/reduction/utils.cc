@@ -30,7 +30,8 @@ std::function<void(OpSchema&)> ReduceOpGenerator(
     bool axes_input,
     const char* func_body,
     ContextDependentFunctionBodyBuilder function_builder,
-    bool supports_boolean_datatype /* = false */) {
+    bool supports_boolean_datatype /* = false */
+) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Computes the {name} of the input tensor's elements along the provided axes. The resulting
@@ -56,7 +57,8 @@ to `False` instead of `True`.)DOC";
         "keepdims",
         "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1)
+    );
     schema.Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     if (axes_input) {
       schema.Attr(
@@ -65,7 +67,8 @@ to `False` instead of `True`.)DOC";
           "When axes is empty and this attribute is set to true, input tensor will not be reduced,"
           "and the output tensor would be equivalent to input tensor.",
           AttributeProto::INT,
-          static_cast<int64_t>(0));
+          static_cast<int64_t>(0)
+      );
       schema.Input(
           1,
           "axes",
@@ -77,21 +80,24 @@ to `False` instead of `True`.)DOC";
           OpSchema::Optional,
           true,
           1,
-          OpSchema::NonDifferentiable);
+          OpSchema::NonDifferentiable
+      );
     } else {
       schema.Attr(
           "axes",
           "A list of integers, along which to reduce. The default is to reduce over "
           "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
           AttributeProto::INTS,
-          OPTIONAL_VALUE);
+          OPTIONAL_VALUE
+      );
     }
     schema.Output(0, "reduced", "Reduced output tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForReductionOps(supports_8bit_datatypes, supports_boolean_datatype),
         supports_boolean_datatype ? "Constrain input and output types to numeric and Boolean tensors."
-                                  : "Constrain input and output types to numeric tensors.");
+                                  : "Constrain input and output types to numeric tensors."
+    );
     if (func_body) {
       schema.FunctionBody(func_body);
     } else if (function_builder) {
@@ -113,7 +119,7 @@ to `False` instead of `True`.)DOC";
         noop_with_empty_axes = noop_attr_proto->i();
       }
       std::vector<int64_t> axes;
-      if (ctx.hasInput(1)) { // axes is input
+      if (ctx.hasInput(1)) {  // axes is input
         if (ctx.getAttribute("axes")) {
           fail_shape_inference("axes as an input and attribute cannot be specified at the same time.");
         }
@@ -125,7 +131,7 @@ to `False` instead of `True`.)DOC";
         }
         std::vector<int64_t> axes_values = ParseData<int64_t>(axesInitializer);
         axes.assign(axes_values.begin(), axes_values.end());
-      } else { // axes is attribute
+      } else {  // axes is attribute
         auto axes_proto = ctx.getAttribute("axes");
         if (axes_proto)
           axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
@@ -160,4 +166,4 @@ to `False` instead of `True`.)DOC";
     });
   };
 }
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

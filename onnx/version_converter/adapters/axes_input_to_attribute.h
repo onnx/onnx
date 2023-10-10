@@ -38,7 +38,8 @@ class AxesInputToAttribute : public Adapter {
         std::string raw_data = node_ptr->t(kvalue).raw();
         ONNX_ASSERTM(
             raw_data.size() != 0 && raw_data.size() % 8 == 0,
-            "Raw Data must be non-empty and size must be a multiple of 8");
+            "Raw Data must be non-empty and size must be a multiple of 8"
+        );
         int64_t* raw = (int64_t*)const_cast<char*>(raw_data.c_str());
         node->is_(kaxes, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
       } else {
@@ -67,5 +68,5 @@ class AxesInputToAttribute : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

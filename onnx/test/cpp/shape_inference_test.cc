@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "onnx/defs/shape_inference.h"
+
 #include <iostream>
 
 #include "gtest/gtest.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
-#include "onnx/defs/shape_inference.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/shape_inference/implementation.h"
 
@@ -399,7 +400,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   }
 
   std::unordered_map<std::string, int> opset_imports;
-  opset_imports[ONNX_DOMAIN] = 8; // Scan is v8
+  opset_imports[ONNX_DOMAIN] = 8;  // Scan is v8
 
   const std::unordered_map<std::string, TypeProto*> outer_scope_value_types;
   SymbolTableImpl symbolTable;
@@ -458,7 +459,7 @@ static void doInferencingTest(bool use_scan_opset8) {
     scan.set_doc_string("Scan node");
     scan.set_op_type("Scan");
     if (use_scan_opset8)
-      scan.add_input(""); // optional sequence lens
+      scan.add_input("");  // optional sequence lens
     scan.add_input("loop_state_start");
     scan.add_input("scan_op_in");
     scan.add_output("loop_state_final");
@@ -468,19 +469,19 @@ static void doInferencingTest(bool use_scan_opset8) {
   TypeProto loop_state_in_tensor = simple_tensor_no_shape;
   auto* shape = loop_state_in_tensor.mutable_tensor_type()->mutable_shape();
   if (use_scan_opset8)
-    shape->add_dim()->set_dim_value(1); // batch size
-  shape->add_dim()->set_dim_value(2); // input size. must match subgraph
+    shape->add_dim()->set_dim_value(1);  // batch size
+  shape->add_dim()->set_dim_value(2);  // input size. must match subgraph
 
-  TypeProto loop_state_out_tensor = loop_state_in_tensor; // should be unchanged
+  TypeProto loop_state_out_tensor = loop_state_in_tensor;  // should be unchanged
 
   TypeProto scan_in_tensor = simple_tensor_no_shape;
   shape = scan_in_tensor.mutable_tensor_type()->mutable_shape();
   if (use_scan_opset8)
-    shape->add_dim()->set_dim_value(1); // batch size
-  shape->add_dim()->set_dim_value(1); // sequence length
-  shape->add_dim()->set_dim_value(2); // input size. must match subgraph
+    shape->add_dim()->set_dim_value(1);  // batch size
+  shape->add_dim()->set_dim_value(1);  // sequence length
+  shape->add_dim()->set_dim_value(2);  // input size. must match subgraph
 
-  TypeProto scan_out_tensor = scan_in_tensor; // should be unchanged
+  TypeProto scan_out_tensor = scan_in_tensor;  // should be unchanged
 
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   valueTypesByName["loop_state_start"] = &loop_state_in_tensor;
@@ -523,11 +524,13 @@ void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShap
   for (int i = 0; i < inferredShape.dim_size(); i++) {
     EXPECT_TRUE(
         (inferredShape.dim(i).has_dim_value() && expectedShape.dim(i).has_dim_value()) ||
-        (inferredShape.dim(i).has_dim_param() && expectedShape.dim(i).has_dim_param()));
+        (inferredShape.dim(i).has_dim_param() && expectedShape.dim(i).has_dim_param())
+    );
 
     EXPECT_TRUE(
         inferredShape.dim(i).has_dim_value() ? inferredShape.dim(i).dim_value() == expectedShape.dim(i).dim_value()
-                                             : inferredShape.dim(i).dim_param() == expectedShape.dim(i).dim_param());
+                                             : inferredShape.dim(i).dim_param() == expectedShape.dim(i).dim_param()
+    );
   }
 }
 TEST(ShapeInferenceTest, ReshapeTestWithShapeAsSymInput) {
@@ -620,5 +623,5 @@ TEST(ShapeInferenceTest, CheckShapesAndTypesTest) {
 #endif
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE

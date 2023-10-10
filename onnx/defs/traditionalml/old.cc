@@ -29,22 +29,26 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(string)", "tensor(int64)"},
-            "The input type must be a tensor of integers or strings, of any shape.")
+            "The input type must be a tensor of integers or strings, of any shape."
+        )
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, and will have the same shape as the input.")
+            "The output type will be a tensor of strings or integers, and will have the same shape as the input."
+        )
         .Attr("classes_strings", "A list of labels.", AttributeProto::STRINGS, OPTIONAL_VALUE)
         .Attr(
             "default_int64",
             "An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.",
             AttributeProto::INT,
-            static_cast<int64_t>(-1))
+            static_cast<int64_t>(-1)
+        )
         .Attr(
             "default_string",
             "A string to use when an input integer value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.",
             AttributeProto::STRING,
-            std::string("_Unused"))
+            std::string("_Unused")
+        )
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
@@ -53,7 +57,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           } else if (TensorProto::INT64 == input_elem_type) {
             output_elem_type->set_elem_type(TensorProto::STRING);
           }
-        }));
+        })
+);
 
 static const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
     Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
@@ -78,40 +83,44 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-            "The input type must be a tensor of a numeric type.")
+            "The input type must be a tensor of a numeric type."
+        )
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used.")
+            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used."
+        )
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_nodeids",
             "Node id for each node. Ids may restart at zero for each tree, but it not required to.",
             AttributeProto::INTS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr("nodes_featureids", "Feature id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
-            "nodes_values",
-            "Thresholds to do the splitting on for each node.",
-            AttributeProto::FLOATS,
-            OPTIONAL_VALUE)
+            "nodes_values", "Thresholds to do the splitting on for each node.", AttributeProto::FLOATS, OPTIONAL_VALUE
+        )
         .Attr(
             "nodes_hitrates",
             "Popularity of each node, used for performance and may be omitted.",
             AttributeProto::FLOATS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "nodes_modes",
             "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr("nodes_truenodeids", "Child node if expression is true.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("nodes_falsenodeids", "Child node if expression is false.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_missing_value_tracks_true",
             "For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the default value is false (0) for all nodes.",
             AttributeProto::INTS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr("class_treeids", "The id of the tree that this node is in.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("class_nodeids", "node id that this weight is for.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("class_ids", "The index of the class list that each weight is for.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -120,22 +129,26 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "classlabels_strings",
             "Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be defined.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "classlabels_int64s",
             "Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be defined.",
             AttributeProto::INTS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "post_transform",
             "Indicates the transform to apply to the score. <br> One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'",
             AttributeProto::STRING,
-            std::string("NONE"))
+            std::string("NONE")
+        )
         .Attr(
             "base_values",
             "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
             AttributeProto::FLOATS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           std::vector<std::string> label_strs;
           auto result = getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
@@ -146,7 +159,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           } else {
             output_elem_type->set_elem_type(TensorProto::INT64);
           }
-        }));
+        })
+);
 
 static const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
@@ -171,36 +185,39 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-            "The input type must be a tensor of a numeric type.")
+            "The input type must be a tensor of a numeric type."
+        )
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_nodeids",
             "Node id for each node. Node ids must restart at zero for each tree and increase sequentially.",
             AttributeProto::INTS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr("nodes_featureids", "Feature id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
-            "nodes_values",
-            "Thresholds to do the splitting on for each node.",
-            AttributeProto::FLOATS,
-            OPTIONAL_VALUE)
+            "nodes_values", "Thresholds to do the splitting on for each node.", AttributeProto::FLOATS, OPTIONAL_VALUE
+        )
         .Attr(
             "nodes_hitrates",
             "Popularity of each node, used for performance and may be omitted.",
             AttributeProto::FLOATS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "nodes_modes",
             "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr("nodes_truenodeids", "Child node if expression is true", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("nodes_falsenodeids", "Child node if expression is false", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_missing_value_tracks_true",
             "For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the default value is false (0) for all nodes.",
             AttributeProto::INTS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr("target_treeids", "The id of the tree that each node is in.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("target_nodeids", "The node id of each weight", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("target_ids", "The index of the target that each weight is for", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -210,17 +227,21 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "post_transform",
             "Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'",
             AttributeProto::STRING,
-            std::string("NONE"))
+            std::string("NONE")
+        )
         .Attr(
             "aggregate_function",
             "Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE,' 'SUM,' 'MIN,' 'MAX.'",
             AttributeProto::STRING,
-            std::string("SUM"))
+            std::string("SUM")
+        )
         .Attr(
             "base_values",
             "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
             AttributeProto::FLOATS,
-            OPTIONAL_VALUE));
+            OPTIONAL_VALUE
+        )
+);
 
 static const char* LabelEncoder_ver2_doc = R"DOC(
     Maps each element in the input tensor to another value.<br>
@@ -250,25 +271,27 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Input(0, "X", "Input data. It can be either tensor or scalar.", "T1")
         .Output(0, "Y", "Output data.", "T2")
         .TypeConstraint(
-            "T1",
-            {"tensor(string)", "tensor(int64)", "tensor(float)"},
-            "The input type is a tensor of any shape.")
+            "T1", {"tensor(string)", "tensor(int64)", "tensor(float)"}, "The input type is a tensor of any shape."
+        )
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)", "tensor(float)"},
-            "Output type is determined by the specified 'values_*' attribute.")
+            "Output type is determined by the specified 'values_*' attribute."
+        )
         .Attr(
             "keys_strings",
             "A list of strings. One and only one of 'keys_*'s should be set.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr("keys_int64s", "A list of ints.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("keys_floats", "A list of floats.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr(
             "values_strings",
             "A list of strings. One and only one of 'value_*'s should be set.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr("values_int64s", "A list of ints.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("values_floats", "A list of floats.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr("default_string", "A string.", AttributeProto::STRING, std::string("_Unused"))
@@ -336,7 +359,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
           // Input and output shapes are the same.
           propagateShapeFromInputToOutput(ctx, 0, 0);
-        }));
+        })
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
 #endif

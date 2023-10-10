@@ -271,5 +271,5 @@ TEST(SchemaRegistrationTest, RegisterAllThenSpecificVersion) {
 #endif
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE

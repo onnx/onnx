@@ -20,4 +20,4 @@ bool ParseProtoFromPyBytes(Proto* proto, const py::bytes& bytes) {
 
   return ParseProtoFromBytes(proto, buffer, length);
 }
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

@@ -55,6 +55,6 @@ TEST(PathTest, CleanRelativePathTest) {
   EXPECT_EQ(clean_relative_path("abc//./../def"), "def");
   EXPECT_EQ(clean_relative_path("abc/../../././../def"), "../../def");
 }
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE
 #endif

@@ -196,4 +196,4 @@ class ArrayRef {
   /// @}
 };
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

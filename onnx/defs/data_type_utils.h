@@ -67,7 +67,7 @@ class DataTypeUtils final {
   // Returns lock used for concurrent updates to TypeStrToProtoMap.
   static std::mutex& GetTypeStrLock();
 };
-} // namespace Utils
-} // namespace ONNX_NAMESPACE
+}  // namespace Utils
+}  // namespace ONNX_NAMESPACE
 
-#endif // ! ONNX_DATA_TYPE_UTILS_H
+#endif  // ! ONNX_DATA_TYPE_UTILS_H

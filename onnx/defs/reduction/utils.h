@@ -28,15 +28,17 @@ std::function<void(OpSchema&)> ReduceOpGenerator(
     bool axes_input = false,
     const char* func_body = nullptr,
     ContextDependentFunctionBodyBuilder function_builder = nullptr,
-    bool supports_boolean_datatype = false);
+    bool supports_boolean_datatype = false
+);
 
 inline std::function<void(OpSchema&)> ReduceOpDynamicAxes(const char* name, const char* empty_value) {
   return ReduceOpGenerator(name, empty_value, false, true, nullptr, nullptr, false);
 }
 
-inline std::function<void(OpSchema&)>
-ReduceFunctionOp(const char* name, const char* empty_value, const char* func_body) {
+inline std::function<void(OpSchema&)> ReduceFunctionOp(
+    const char* name, const char* empty_value, const char* func_body
+) {
   return ReduceOpGenerator(name, empty_value, false, true, func_body);
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

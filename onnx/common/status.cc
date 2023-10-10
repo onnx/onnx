@@ -85,5 +85,5 @@ const std::string& Status::EmptyString() {
   return empty_str;
 }
 
-} // namespace Common
-} // namespace ONNX_NAMESPACE
+}  // namespace Common
+}  // namespace ONNX_NAMESPACE

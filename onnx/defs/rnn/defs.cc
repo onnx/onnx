@@ -79,7 +79,8 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "Specify if the RNN is forward, reverse, or bidirectional. "
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
-        std::string("forward"));
+        std::string("forward")
+    );
     schema.Attr(
         "layout",
         "The shape format of inputs X, initial_h and outputs Y, Y_h. "
@@ -92,7 +93,8 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "Y.shape = [batch_size, seq_length, num_directions, hidden_size], "
         "initial_h.shape = Y_h.shape = [batch_size, num_directions, hidden_size].",
         AttributeProto::INT,
-        static_cast<int64_t>(0));
+        static_cast<int64_t>(0)
+    );
     schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
@@ -101,21 +103,24 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "in LSTM. Default values are the same as of corresponding ONNX operators."
         "For example with LeakyRelu, the default alpha is 0.01.",
         AttributeProto::FLOATS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "activation_beta",
         "Optional scaling values used by some activation functions. The values "
         "are consumed in the order of activation functions, for example (f, g, h) "
         "in LSTM. Default values are the same as of corresponding ONNX operators.",
         AttributeProto::FLOATS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "clip",
         "Cell clip threshold. Clipping bounds the elements of a tensor "
         "in the range of [-threshold, +threshold] and is applied to the input "
         "of activations. No clip if not specified.",
         AttributeProto::FLOAT,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Input(
         0,
         "X",
@@ -125,7 +130,8 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::Differentiable
+    );
     schema.Input(
         4,
         "sequence_lens",
@@ -136,7 +142,8 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Optional,
         true,
         1,
-        OpSchema::NonDifferentiable);
+        OpSchema::NonDifferentiable
+    );
     schema.Input(
         5,
         "initial_h",
@@ -146,7 +153,8 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Optional,
         true,
         1,
-        OpSchema::NonDifferentiable);
+        OpSchema::NonDifferentiable
+    );
     schema.Output(
         0,
         "Y",
@@ -156,7 +164,8 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Optional,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::Differentiable
+    );
     schema.Output(
         1,
         "Y_h",
@@ -166,11 +175,13 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Optional,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::Differentiable
+    );
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."
+    );
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference);
   };
@@ -229,7 +240,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "input gate. The activation function must be one of the activation "
             "functions specified above. Optional: Default `Tanh` if not specified.",
             AttributeProto::STRINGS,
-            std::vector<std::string>{"Tanh", "Tanh"})
+            std::vector<std::string>{"Tanh", "Tanh"}
+        )
         .Input(
             1,
             "W",
@@ -240,7 +252,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::Differentiable
+        )
         .Input(
             2,
             "R",
@@ -251,7 +264,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::Differentiable
+        )
         .Input(
             3,
             "B",
@@ -263,8 +277,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
-        .FillUsing(RNNDocGenerator("RNN")));
+            OpSchema::Differentiable
+        )
+        .FillUsing(RNNDocGenerator("RNN"))
+);
 
 static const char* GRU_ver14_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
@@ -327,14 +343,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "linear_before_reset",
             "When computing the output of the hidden gate, "
             "apply the linear transformation before multiplying by the output of the "
             "reset gate.",
             AttributeProto::INT,
-            static_cast<int64_t>(0))
+            static_cast<int64_t>(0)
+        )
         .Input(
             1,
             "W",
@@ -345,7 +363,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::Differentiable
+        )
         .Input(
             2,
             "R",
@@ -356,7 +375,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::Differentiable
+        )
         .Input(
             3,
             "B",
@@ -368,8 +388,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
-        .FillUsing(RNNDocGenerator("GRU")));
+            OpSchema::Differentiable
+        )
+        .FillUsing(RNNDocGenerator("GRU"))
+);
 
 static const char* LSTM_ver14_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
@@ -435,7 +457,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "be one of the activation functions specified above. Optional: See the equations "
             "for default if not specified.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "layout",
             "The shape format of inputs X, initial_h, initial_c and outputs Y, Y_h, Y_c. "
@@ -450,7 +473,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "initial_h.shape = Y_h.shape = initial_c.shape = Y_c.shape = "
             "[batch_size, num_directions, hidden_size].",
             AttributeProto::INT,
-            static_cast<int64_t>(0))
+            static_cast<int64_t>(0)
+        )
         .Attr("input_forget", "Couple the input and forget gates if 1.", AttributeProto::INT, static_cast<int64_t>(0))
         .Input(
             1,
@@ -462,7 +486,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::Differentiable
+        )
         .Input(
             2,
             "R",
@@ -473,7 +498,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::Differentiable
+        )
         .Input(
             3,
             "B",
@@ -485,7 +511,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::Differentiable
+        )
         .Input(
             6,
             "initial_c",
@@ -495,7 +522,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::NonDifferentiable
+        )
         .Input(
             7,
             "P",
@@ -507,7 +535,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::Differentiable
+        )
         .FillUsing(RNNDocGenerator("LSTM"))
         .Output(
             2,
@@ -518,5 +547,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable));
-} // namespace ONNX_NAMESPACE
+            OpSchema::Differentiable
+        )
+);
+}  // namespace ONNX_NAMESPACE

@@ -42,7 +42,8 @@ class Gemm_6_7 final : public Adapter {
     ONNX_ASSERTM(
         check_numpy_unibroadcastable_and_require_broadcast(MN, C_shape) != -1,
         "Gemm being converted from 6 to 7 does not have "
-        "broadcastable inputs.");
+        "broadcastable inputs."
+    );
     if (node->hasAttribute(kbroadcast))
       node->removeAttribute(kbroadcast);
   }
@@ -53,5 +54,5 @@ class Gemm_6_7 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

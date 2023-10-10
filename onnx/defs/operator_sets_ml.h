@@ -90,6 +90,6 @@ inline void RegisterOnnxMLOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_OnnxML_ver3>();
   RegisterOpSetSchema<OpSet_OnnxML_ver4>();
 }
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
 
 #endif

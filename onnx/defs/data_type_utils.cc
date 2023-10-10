@@ -204,7 +204,7 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
         if (cm > 0) {
           opaque_type->mutable_domain()->assign(s.Data(), cm);
         }
-        s.LStrip(cm + 1); // skip comma
+        s.LStrip(cm + 1);  // skip comma
       }
       if (!s.Empty()) {
         opaque_type->mutable_name()->assign(s.Data(), s.Size());
@@ -231,7 +231,7 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     // Call mutable_shape() to initialize a shape with no dimension.
     t->mutable_shape();
   }
-} // namespace Utils
+}  // namespace Utils
 
 bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
@@ -242,7 +242,8 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
 void DataTypeUtils::FromDataTypeString(const std::string& type_str, int32_t& tensor_data_type) {
   if (!IsValidDataTypeString(type_str)) {
     ONNX_THROW_EX(std::invalid_argument(
-        "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
+        "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."
+    ));
   }
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
@@ -446,5 +447,5 @@ TypesWrapper::TypesWrapper() {
     allowed_data_types_.insert(str_type_pair.first);
   }
 }
-} // namespace Utils
-} // namespace ONNX_NAMESPACE
+}  // namespace Utils
+}  // namespace ONNX_NAMESPACE

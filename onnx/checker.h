@@ -150,18 +150,18 @@ void check_opset_compatibility(
     const NodeProto& node,
     const CheckerContext& ctx,
     const std::unordered_map<std::string, int>& func_opset_imports,
-    const std::unordered_map<std::string, int>& model_opset_imports);
+    const std::unordered_map<std::string, int>& model_opset_imports
+);
 
 // Checks all model local functions present in ModelProto
 void check_model_local_functions(
-    const ModelProto& model,
-    const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex);
+    const ModelProto& model, const CheckerContext& ctx, const LexicalScopeContext& parent_lex
+);
 
 void check_model(const ModelProto& model, bool full_check = false, bool skip_opset_compatibility_check = false);
 void check_model(const std::string& model_path, bool full_check = false, bool skip_opset_compatibility_check = false);
 
 bool check_is_experimental_op(const NodeProto& node);
 
-} // namespace checker
-} // namespace ONNX_NAMESPACE
+}  // namespace checker
+}  // namespace ONNX_NAMESPACE

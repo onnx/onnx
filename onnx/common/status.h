@@ -92,5 +92,5 @@ inline std::ostream& operator<<(std::ostream& out, const Status& status) {
   return out << status.ToString();
 }
 
-} // namespace Common
-} // namespace ONNX_NAMESPACE
+}  // namespace Common
+}  // namespace ONNX_NAMESPACE

@@ -16,10 +16,8 @@ std::string InteralTensorNameGenerator(const std::string& node_name, const std::
 }
 
 void FunctionExpandHelper(
-    const NodeProto& node,
-    const FunctionProto& func,
-    GraphProto& g,
-    const std::string& node_prefix) {
+    const NodeProto& node, const FunctionProto& func, GraphProto& g, const std::string& node_prefix
+) {
   // Create a temporary unique node prefix for tensor names
   std::string uniq_prefix = node_prefix;
   if (uniq_prefix.empty()) {
@@ -161,7 +159,8 @@ bool FunctionBodyHelper::BuildFunctionProto(
     FunctionProto& functionProto,
     const OpSchema& schema,
     const std::vector<NodeDef>& node_defs,
-    const std::vector<OperatorSetIdProto>& relied_opsets) {
+    const std::vector<OperatorSetIdProto>& relied_opsets
+) {
   BuildNodes(functionProto, node_defs);
 
   for (auto& relied_opset : relied_opsets) {
@@ -172,4 +171,4 @@ bool FunctionBodyHelper::BuildFunctionProto(
   return true;
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

@@ -13,4 +13,4 @@ namespace ONNX_NAMESPACE {
 template <typename T>
 const std::vector<T> ParseData(const Tensor* tensor);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

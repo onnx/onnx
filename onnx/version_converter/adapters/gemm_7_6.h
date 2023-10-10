@@ -47,7 +47,8 @@ class Gemm_7_6 final : public Adapter {
         "not have broadcastable inputs.",
         name().c_str(),
         initial_version().version(),
-        target_version().version());
+        target_version().version()
+    );
     if (req_broadcast == 1) {
       node->i_(kbroadcast, 1);
     }
@@ -59,5 +60,5 @@ class Gemm_7_6 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

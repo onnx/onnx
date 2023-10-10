@@ -79,4 +79,4 @@ std::string clean_relative_path(const std::string& path) {
 }
 #endif
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

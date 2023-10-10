@@ -14,9 +14,9 @@
 
 #ifdef ONNX_USE_LITE_PROTO
 #include <google/protobuf/message_lite.h>
-#else // ONNX_USE_LITE_PROTO
+#else  // ONNX_USE_LITE_PROTO
 #include <google/protobuf/message.h>
-#endif // !ONNX_USE_LITE_PROTO
+#endif  // !ONNX_USE_LITE_PROTO
 
 namespace ONNX_NAMESPACE {
 
@@ -68,4 +68,4 @@ inline std::vector<float> RetrieveValues(const AttributeProto& attr) {
   return {attr.floats().begin(), attr.floats().end()};
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

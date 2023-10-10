@@ -48,25 +48,30 @@ ONNX_OPERATOR_SET_SCHEMA(
             "[3] are not compatible.",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "then_branch",
             "Graph to run if condition is true. Has N outputs: values you wish to "
             "be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .Attr(
             "else_branch",
             "Graph to run if condition is false. Has N outputs: values you wish to"
             " be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint(
             "V",
             control_flow_types_ir9(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9.")
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9."
+        )
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction));
+        .TypeAndShapeInferenceFunction(IfInferenceFunction)
+);
 
 static const char* Loop_ver19_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
@@ -217,13 +222,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "A maximum trip-count for the loop specified at runtime. Optional."
             " Pass empty string to skip.",
             "I",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
+            1, "cond", "A boolean termination condition. Optional. Pass empty string to skip.", "B", OpSchema::Optional
+        )
         .Input(
             2,
             "v_initial",
@@ -232,7 +235,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "V",
             OpSchema::Variadic,
             false,
-            0)
+            0
+        )
         .Output(
             0,
             "v_final_and_scan_outputs",
@@ -240,7 +244,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Scan outputs must be Tensors.",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has 2+N inputs: (iteration_num, "
@@ -250,14 +255,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "output value at the end of each iteration of the loop. It is an error"
             " if the dimensions or data type of these scan_outputs change across loop"
             " iterations.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint(
             "V",
             control_flow_types_ir9(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9.")
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9."
+        )
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction));
+        .TypeAndShapeInferenceFunction(LoopInferenceFunction)
+);
 
 static const char* scan_19_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
@@ -394,14 +402,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "
@@ -411,7 +421,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scan_output_elt value at the end of each iteration of the loop. It is an error"
             " if the dimensions of these values change across loop iterations.",
             AttributeProto::GRAPH,
-            true)
+            true
+        )
         .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
         .Attr(
             "scan_input_directions",
@@ -420,7 +431,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "indicates reverse direction. "
             "If omitted, all scan_input tensors will be scanned in the forward direction.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_output_directions",
             "An optional list of K flags, one for each scan_output. The i-th element of the list "
@@ -430,7 +442,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If omitted, all scan_output tensors will be produced by appending a value "
             "in each iteration.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_input_axes",
             "An optional list of M flags. The i-th element of the list specifies the axis "
@@ -438,7 +451,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "be used as the scan axis for every scan_input. Negative value for an axis means "
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_output_axes",
             "An optional list of K flags. The i-th element of the list specifies the axis "
@@ -447,8 +461,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Negative value for an axis means counting dimensions from the back. Accepted "
             "range is [-r, r-1].",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .TypeConstraint("V", OpSchema::all_tensor_types_ir9(), "All Tensor types up to IRv9.")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction)
+);  // Shares same shape inference as opset 11
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

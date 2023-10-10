@@ -37,4 +37,4 @@ void throw_tensor_error(std::string& msg) {
   ONNX_THROW_EX(tensor_error(msg));
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

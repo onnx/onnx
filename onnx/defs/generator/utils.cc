@@ -27,11 +27,13 @@ void ConstantOpInference(InferenceContext& ctx) {
       (nullptr != value_float),
       (nullptr != value_floats),
       (nullptr != value_string),
-      (nullptr != value_strings)};
+      (nullptr != value_strings)
+  };
 
   if (std::count(non_null_attr.begin(), non_null_attr.end(), true) != 1) {
     fail_shape_inference(
-        "One and only one of the attributes 'value', 'value_*' or 'sparse_value' must be specified for a Constant node.");
+        "One and only one of the attributes 'value', 'value_*' or 'sparse_value' must be specified for a Constant node."
+    );
   }
 
   if (nullptr != value) {
@@ -105,7 +107,8 @@ void ConstantOpInference(InferenceContext& ctx) {
 
   fail_shape_inference(
       "TypeAndShapeInferenceFunction implementation incomplete: "
-      "this line should never be reached.");
+      "this line should never be reached."
+  );
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

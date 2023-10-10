@@ -230,7 +230,8 @@ inline std::string* Tensor::data<std::string>() {
   ONNX_ASSERTM(
       !is_raw_data(),
       "data type is string. string content is required to be stored in repeated bytes string_data field."
-      "raw_data type cannot be string.");
+      "raw_data type cannot be string."
+  );
   return string_data_.data();
 }
 template <>
@@ -238,7 +239,8 @@ inline const std::string* Tensor::data<std::string>() const {
   ONNX_ASSERTM(
       !is_raw_data(),
       "data type is string. string content is required to be stored in repeated bytes string_data field."
-      "raw_data type cannot be string.");
+      "raw_data type cannot be string."
+  );
   return string_data_.data();
 }
 
@@ -268,4 +270,4 @@ define_data(int64_t, int64_data_);
 define_data(uint64_t, uint64_data_);
 #undef define_data
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

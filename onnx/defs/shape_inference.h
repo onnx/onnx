@@ -50,8 +50,8 @@ class GraphInferencer {
   // Perform inferencing on the graph contained in GraphInferencer.
   // Returns the graph output types post-inferencing.
   virtual std::vector<const TypeProto*> doInferencing(
-      const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData) = 0;
+      const std::vector<const TypeProto*>& inputTypes, const std::vector<const TensorProto*>& inputData
+  ) = 0;
   virtual ~GraphInferencer() = default;
 };
 
@@ -164,8 +164,9 @@ inline int64_t getAttribute(DataPropagationContext& ctx, const std::string& attr
   return defaultValue;
 }
 
-inline std::string
-getAttribute(InferenceContext& ctx, const std::string& attributeName, const std::string& defaultValue) {
+inline std::string getAttribute(
+    InferenceContext& ctx, const std::string& attributeName, const std::string& defaultValue
+) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_s())
     return attr_proto->s();
@@ -188,8 +189,8 @@ template <typename Container>
 std::string stringify(const Container& elements);
 
 std::pair<int, int> getAttributeElementTypeAndLength(
-    const InferenceContext& ctx,
-    const std::initializer_list<std::string>& attribute_names);
+    const InferenceContext& ctx, const std::initializer_list<std::string>& attribute_names
+);
 
 inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
@@ -249,10 +250,8 @@ void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex
 void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
 
 inline void propagateElemTypeFromDtypeToOutput(
-    InferenceContext& ctx,
-    const int data_type,
-    size_t outputIndex,
-    TypeProto::ValueCase expected_value_case) {
+    InferenceContext& ctx, const int data_type, size_t outputIndex, TypeProto::ValueCase expected_value_case
+) {
   const auto attribute_tensor_datatype = data_type;
   auto output_type = ctx.getOutputType(outputIndex);
   const auto output_value_case = output_type->value_case();
@@ -261,7 +260,8 @@ inline void propagateElemTypeFromDtypeToOutput(
   } else {
     // This is not expected to happen
     fail_type_inference(
-        "Output ", outputIndex, " expected to have: ", expected_value_case, " or UNDEFINED. Got: ", output_value_case);
+        "Output ", outputIndex, " expected to have: ", expected_value_case, " or UNDEFINED. Got: ", output_value_case
+    );
   }
 }
 
@@ -353,10 +353,8 @@ inline const TensorShapeProto* getOptionalInputShape(InferenceContext& ctx, size
 
 // Caller must make sure fromDimIndex is strictly less than shape.dim_size()
 inline void appendSingleDimCopiedFromInputTypeToOutputType(
-    InferenceContext& ctx,
-    size_t inputIndex,
-    size_t outputIndex,
-    size_t fromDimIndex) {
+    InferenceContext& ctx, size_t inputIndex, size_t outputIndex, size_t fromDimIndex
+) {
   auto output_type = ctx.getOutputType(outputIndex);
   const auto output_value_case = output_type->value_case();
   auto input_type = ctx.getInputType(inputIndex);
@@ -370,7 +368,8 @@ inline void appendSingleDimCopiedFromInputTypeToOutputType(
         " does not match type of output: ",
         outputIndex,
         "type: ",
-        output_value_case);
+        output_value_case
+    );
   }
   if (TypeProto::kTensorType == input_value_case) {
     auto* dim = output_type->mutable_tensor_type()->mutable_shape()->add_dim();
@@ -380,7 +379,8 @@ inline void appendSingleDimCopiedFromInputTypeToOutputType(
     *dim = input_type->sparse_tensor_type().shape().dim(static_cast<int>(fromDimIndex));
   } else {
     fail_type_inference(
-        "Input ", inputIndex, " and Output ", outputIndex, " expected to have tensor or sparse tensor type");
+        "Input ", inputIndex, " and Output ", outputIndex, " expected to have tensor or sparse tensor type"
+    );
   }
 }
 
@@ -389,7 +389,8 @@ inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
   const auto to_type_case = to_type->value_case();
   if (from_type_case != to_type_case) {
     fail_shape_inference(
-        "Mismatch between inferred and declared type. Inferred=", from_type_case, " Declared=", to_type_case);
+        "Mismatch between inferred and declared type. Inferred=", from_type_case, " Declared=", to_type_case
+    );
   }
 
   if (TypeProto::kTensorType == from_type_case || TypeProto::kSparseTensorType == from_type_case) {
@@ -428,8 +429,9 @@ inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
   propagateShapeFromInputToOutput(ctx, 0, 0);
 }
 
-inline void
-updateOutputElemType(InferenceContext& ctx, size_t outputIndex, int32_t elemType, TypeProto::ValueCase expected_type) {
+inline void updateOutputElemType(
+    InferenceContext& ctx, size_t outputIndex, int32_t elemType, TypeProto::ValueCase expected_type
+) {
   auto output_type = ctx.getOutputType(outputIndex);
   if (output_type == nullptr) {
     fail_type_inference("Output ", outputIndex, " is null");
@@ -453,9 +455,10 @@ inline void propagateElemTypeFromAttributeToOutput(
     const std::string& attributeName,
     size_t outputIndex,
     TypeProto::ValueCase expected_type,
-    TensorProto_DataType default_value = TensorProto::UNDEFINED) {
+    TensorProto_DataType default_value = TensorProto::UNDEFINED
+) {
   auto attr_proto = ctx.getAttribute(attributeName);
-  if (nullptr == attr_proto) { // attribute not present
+  if (nullptr == attr_proto) {  // attribute not present
     if (default_value != TensorProto::UNDEFINED) {
       updateOutputElemType(ctx, outputIndex, default_value, expected_type);
       return;
@@ -478,7 +481,8 @@ inline void propagateElemTypeFromAttributeToOutput(
     InferenceContext& ctx,
     const std::string& attributeName,
     size_t outputIndex,
-    TensorProto_DataType default_value = TensorProto::UNDEFINED) {
+    TensorProto_DataType default_value = TensorProto::UNDEFINED
+) {
   propagateElemTypeFromAttributeToOutput(ctx, attributeName, outputIndex, TypeProto::kTensorType, default_value);
 }
 
@@ -491,8 +495,9 @@ inline TensorShapeProto* getTensorMutableShape(TypeProto::ValueCase value_case, 
   return nullptr;
 }
 
-inline TensorShapeProto*
-getOutputShape(InferenceContext& ctx, size_t n, TypeProto::ValueCase default_type = TypeProto::kTensorType) {
+inline TensorShapeProto* getOutputShape(
+    InferenceContext& ctx, size_t n, TypeProto::ValueCase default_type = TypeProto::kTensorType
+) {
   auto output_type = ctx.getOutputType(n);
   if (output_type == nullptr) {
     fail_type_inference("Output ", n, " expected to have tensor or sparse type");
@@ -515,7 +520,8 @@ inline void updateOutputShape(
     InferenceContext& ctx,
     size_t outputIndex,
     const TensorShapeProto& shape,
-    TypeProto::ValueCase default_type = TypeProto::kTensorType) {
+    TypeProto::ValueCase default_type = TypeProto::kTensorType
+) {
   auto* output_shape = getOutputShape(ctx, outputIndex, default_type);
   *output_shape = shape;
 }
@@ -524,7 +530,8 @@ inline void updateOutputShape(
     InferenceContext& ctx,
     size_t outputIndex,
     const TensorProto& tensorProto,
-    TypeProto::ValueCase default_type = TypeProto::kTensorType) {
+    TypeProto::ValueCase default_type = TypeProto::kTensorType
+) {
   auto* output_shape = getOutputShape(ctx, outputIndex, default_type);
   for (auto d : tensorProto.dims()) {
     auto* dim = output_shape->add_dim();
@@ -536,7 +543,8 @@ inline void updateOutputShape(
     InferenceContext& ctx,
     size_t outputIndex,
     std::initializer_list<TensorShapeProto::Dimension> dims,
-    TypeProto::ValueCase default_type = TypeProto::kTensorType) {
+    TypeProto::ValueCase default_type = TypeProto::kTensorType
+) {
   auto* output_shape = getOutputShape(ctx, outputIndex, default_type);
   for (auto& d : dims) {
     auto* dim = output_shape->add_dim();
@@ -556,7 +564,8 @@ inline void propagateShapeFromAttributeToOutput(
     InferenceContext& ctx,
     const std::string& attributeName,
     size_t outputIndex,
-    TypeProto::ValueCase default_type = TypeProto::kTensorType) {
+    TypeProto::ValueCase default_type = TypeProto::kTensorType
+) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr == attr_proto) || (!attr_proto->has_type()) ||
       (attr_proto->type() != AttributeProto_AttributeType_INTS)) {
@@ -575,8 +584,8 @@ inline void propagateShapeFromAttributeToOutput(
 }
 
 inline void multidirectionalBroadcastShapeInference(
-    const std::vector<const TensorShapeProto*>& shapes,
-    TensorShapeProto& resultShape) {
+    const std::vector<const TensorShapeProto*>& shapes, TensorShapeProto& resultShape
+) {
   int result_shape_size = 0;
   // Get the result shape size.
   for (size_t i = 0; i < shapes.size(); ++i) {
@@ -625,9 +634,8 @@ inline void multidirectionalBroadcastShapeInference(
 }
 
 inline void bidirectionalBroadcastShapeInference(
-    const TensorShapeProto& shapeL,
-    const TensorShapeProto& shapeR,
-    TensorShapeProto& resultShape) {
+    const TensorShapeProto& shapeL, const TensorShapeProto& shapeR, TensorShapeProto& resultShape
+) {
   std::vector<const TensorShapeProto*> shapes;
   shapes.push_back(&shapeL);
   shapes.push_back(&shapeR);
@@ -647,9 +655,8 @@ Currently, there is no way to refine/update dimension information for the
 source from information available in the target.
 */
 inline void mergeInDimensionInfo(
-    const TensorShapeProto_Dimension& source_dim,
-    TensorShapeProto_Dimension& target_dim,
-    int dim_index) {
+    const TensorShapeProto_Dimension& source_dim, TensorShapeProto_Dimension& target_dim, int dim_index
+) {
   // if source has value, merge into target
   // else if target has value, preserve it
   // else merge params
@@ -665,7 +672,8 @@ inline void mergeInDimensionInfo(
             " Declared=",
             target_value,
             " Dimension=",
-            dim_index);
+            dim_index
+        );
       }
     } else {
       target_dim.set_dim_value(source_value);
@@ -796,7 +804,8 @@ inline void unifyInputDim(InferenceContext& ctx, size_t input_index, int dim_ind
     // This shape is expected to have rank > dim_index:
     if (input_shape.dim_size() <= dim_index) {
       fail_shape_inference(
-          "Input ", input_index, " expected to have rank >", dim_index, " but has rank ", input_shape.dim_size());
+          "Input ", input_index, " expected to have rank >", dim_index, " but has rank ", input_shape.dim_size()
+      );
     }
     const Dim& input_dim = input_shape.dim(dim_index);
     // Now, unify dim and input_dim:
@@ -841,8 +850,9 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type);
 // adjustNegativeAxes: Negative axes values are translated to the right axis in the positive range
 template <typename Axes>
 void adjustNegativeAxes(Axes& axes, int rank) {
-  std::transform(
-      axes.begin(), axes.end(), axes.begin(), [&](int64_t axis) -> int64_t { return axis < 0 ? axis + rank : axis; });
+  std::transform(axes.begin(), axes.end(), axes.begin(), [&](int64_t axis) -> int64_t {
+    return axis < 0 ? axis + rank : axis;
+  });
 }
 
 // checkAxesRange: Checks that values are within the range [-rank, rank)
@@ -866,4 +876,4 @@ void checkDuplicateAxes(Axes& axes, int rank) {
   }
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

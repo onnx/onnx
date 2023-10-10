@@ -47,25 +47,30 @@ ONNX_OPERATOR_SET_SCHEMA(
             "[3] are not compatible.",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "then_branch",
             "Graph to run if condition is true. Has N outputs: values you wish to "
             "be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .Attr(
             "else_branch",
             "Graph to run if condition is false. Has N outputs: values you wish to"
             " be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint(
             "V",
             control_flow_types_ir4(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv4.")
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv4."
+        )
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction));
+        .TypeAndShapeInferenceFunction(IfInferenceFunction)
+);
 
 static const char* Loop_ver16_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
@@ -216,13 +221,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "A maximum trip-count for the loop specified at runtime. Optional."
             " Pass empty string to skip.",
             "I",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
+            1, "cond", "A boolean termination condition. Optional. Pass empty string to skip.", "B", OpSchema::Optional
+        )
         .Input(
             2,
             "v_initial",
@@ -231,7 +234,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "V",
             OpSchema::Variadic,
             false,
-            0)
+            0
+        )
         .Output(
             0,
             "v_final_and_scan_outputs",
@@ -239,7 +243,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Scan outputs must be Tensors.",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has 2+N inputs: (iteration_num, "
@@ -249,14 +254,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "output value at the end of each iteration of the loop. It is an error"
             " if the dimensions or data type of these scan_outputs change across loop"
             " iterations.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint(
             "V",
             control_flow_types_ir4(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv4.")
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv4."
+        )
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction));
+        .TypeAndShapeInferenceFunction(LoopInferenceFunction)
+);
 
 static const char* scan_16_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
@@ -393,14 +401,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "
@@ -410,7 +420,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scan_output_elt value at the end of each iteration of the loop. It is an error"
             " if the dimensions of these values change across loop iterations.",
             AttributeProto::GRAPH,
-            true)
+            true
+        )
         .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
         .Attr(
             "scan_input_directions",
@@ -419,7 +430,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "indicates reverse direction. "
             "If omitted, all scan_input tensors will be scanned in the forward direction.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_output_directions",
             "An optional list of K flags, one for each scan_output. The i-th element of the list "
@@ -429,7 +441,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If omitted, all scan_output tensors will be produced by appending a value "
             "in each iteration.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_input_axes",
             "An optional list of M flags. The i-th element of the list specifies the axis "
@@ -437,7 +450,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "be used as the scan axis for every scan_input. Negative value for an axis means "
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_output_axes",
             "An optional list of K flags. The i-th element of the list specifies the axis "
@@ -446,9 +460,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Negative value for an axis means counting dimensions from the back. Accepted "
             "range is [-r, r-1].",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .TypeConstraint("V", OpSchema::all_tensor_types_ir4(), "All Tensor types up to IRv4.")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction)
+);  // Shares same shape inference as opset 11
 
 void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
   // NOTE:
@@ -537,7 +553,8 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           output_types.size(),
           " outputs. Expected ",
-          num_outputs);
+          num_outputs
+      );
     }
 
     // propagate type/shape information for loop state variables and outputs
@@ -605,7 +622,8 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
           axes.size(),
           ") is not equal to number of scan inputs (",
           num_scan_inputs,
-          ").");
+          ")."
+      );
     }
   } else {
     axes.insert(axes.end(), num_scan_inputs, 0);
@@ -618,7 +636,8 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
           output_axes.size(),
           ") is not equal to number of scan outputs (",
           num_scan_outputs,
-          ").");
+          ")."
+      );
     }
   } else {
     output_axes.insert(output_axes.end(), num_scan_outputs, 0);
@@ -699,7 +718,8 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           output_types.size(),
           " outputs. Expected ",
-          num_outputs);
+          num_outputs
+      );
     }
 
     // propagate type/shape information for loop state variables and outputs
@@ -887,21 +907,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             "the maximum sequence length (the dimension of the sequence axis of "
             "the scan_input tensors).",
             "I",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
             1,
             "initial_state_and_scan_inputs",
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "
@@ -911,7 +934,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scan_output_elt value at the end of each iteration of the loop. It is an error"
             " if the dimensions of these values change across loop iterations.",
             AttributeProto::GRAPH,
-            true)
+            true
+        )
         .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
         .Attr(
             "directions",
@@ -920,14 +944,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "indicates reverse direction. "
             "If omitted, all scan_input tensors will be scanned in the forward direction.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset8));
+        .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset8)
+);
 
 void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
-  auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
+  auto num_loop_state_vars = num_inputs - 2;  // skip 'M' and 'cond'
 
   std::vector<const TypeProto*> subgraph_input_types;
 
@@ -964,7 +990,7 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    input_data.push_back(nullptr); // iteration number
+    input_data.push_back(nullptr);  // iteration number
     for (size_t i = 1; i < num_inputs; ++i) {
       input_data.push_back(ctx.getInputData(i));
     }
@@ -983,12 +1009,13 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           subgraph_output_types.size(),
           " outputs. Expected ",
-          num_outputs + 1);
+          num_outputs + 1
+      );
     }
 
     // check loop state values match. we should already have type/shape info
     for (size_t i = 0; i < num_outputs; ++i) {
-      auto* subgraph_output_type = subgraph_output_types[i + 1]; // skip 'cond'
+      auto* subgraph_output_type = subgraph_output_types[i + 1];  // skip 'cond'
       auto* loop_output_type = ctx.getOutputType(i);
 
       const bool is_loop_state_var = i < num_loop_state_vars;
@@ -998,7 +1025,8 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
             "Loop 'body' subgraph outputs should all be tensors but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case()
+        );
       }
 
       // if there's an existing type check it matches. otherwise propagate
@@ -1159,13 +1187,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "A maximum trip-count for the loop specified at runtime. Optional."
             " Pass empty string to skip.",
             "I",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
+            1, "cond", "A boolean termination condition. Optional. Pass empty string to skip.", "B", OpSchema::Optional
+        )
         .Input(
             2,
             "v_initial",
@@ -1173,14 +1199,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "change across loop iterations)",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "v_final_and_scan_outputs",
             "Final N loop carried dependency values then K scan_outputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has 2+N inputs: (iteration_num, "
@@ -1190,15 +1218,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "output value at the end of each iteration of the loop. It is an error"
             " if the dimensions or data type of these scan_outputs change across loop"
             " iterations.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset8));
+        .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset8)
+);
 
 void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
-  auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
+  auto num_loop_state_vars = num_inputs - 2;  // skip 'M' and 'cond'
 
   std::vector<const TypeProto*> subgraph_input_types;
 
@@ -1235,7 +1265,7 @@ void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    input_data.push_back(nullptr); // iteration number
+    input_data.push_back(nullptr);  // iteration number
     for (size_t i = 1; i < num_inputs; ++i) {
       input_data.push_back(ctx.getInputData(i));
     }
@@ -1254,12 +1284,13 @@ void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           subgraph_output_types.size(),
           " outputs. Expected ",
-          num_outputs + 1);
+          num_outputs + 1
+      );
     }
 
     // check loop state values match. we should already have type/shape info
     for (size_t i = 0; i < num_outputs; ++i) {
-      auto* subgraph_output_type = subgraph_output_types[i + 1]; // skip 'cond'
+      auto* subgraph_output_type = subgraph_output_types[i + 1];  // skip 'cond'
       auto* loop_output_type = ctx.getOutputType(i);
 
       const bool is_loop_state_var = i < num_loop_state_vars;
@@ -1269,7 +1300,8 @@ void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
             "Loop 'body' subgraph outputs should all be tensors but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case()
+        );
       }
 
       // if there's an existing type check it matches. otherwise propagate
@@ -1450,13 +1482,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "A maximum trip-count for the loop specified at runtime. Optional."
             " Pass empty string to skip.",
             "I",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
+            1, "cond", "A boolean termination condition. Optional. Pass empty string to skip.", "B", OpSchema::Optional
+        )
         .Input(
             2,
             "v_initial",
@@ -1465,14 +1495,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "V",
             OpSchema::Variadic,
             false,
-            0)
+            0
+        )
         .Output(
             0,
             "v_final_and_scan_outputs",
             "Final N loop carried dependency values then K scan_outputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has 2+N inputs: (iteration_num, "
@@ -1482,11 +1514,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "output value at the end of each iteration of the loop. It is an error"
             " if the dimensions or data type of these scan_outputs change across loop"
             " iterations.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset11));
+        .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset11)
+);
 
 static const char* scan_9_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
@@ -1623,14 +1657,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "
@@ -1640,7 +1676,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scan_output_elt value at the end of each iteration of the loop. It is an error"
             " if the dimensions of these values change across loop iterations.",
             AttributeProto::GRAPH,
-            true)
+            true
+        )
         .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
         .Attr(
             "scan_input_directions",
@@ -1649,7 +1686,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "indicates reverse direction. "
             "If omitted, all scan_input tensors will be scanned in the forward direction.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_output_directions",
             "An optional list of K flags, one for each scan_output. The i-th element of the list "
@@ -1659,29 +1697,33 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If omitted, all scan_output tensors will be produced by appending a value "
             "in each iteration.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_input_axes",
             "An optional list of M flags. The i-th element of the list specifies the axis "
             "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
             "be used as the scan axis for every scan_input.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_output_axes",
             "An optional list of K flags. The i-th element of the list specifies the axis "
             "for the i-th scan_output. The scan outputs are accumulated along the specified "
             "axis. If omitted, 0 will be used as the scan axis for every scan_output.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset9));
+        .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset9)
+);
 
 void IfInferenceFunction1(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
-  std::vector<const TypeProto*> subgraph_input_types; // none
-  std::vector<const TensorProto*> input_data; // none
+  std::vector<const TypeProto*> subgraph_input_types;  // none
+  std::vector<const TensorProto*> input_data;  // none
 
   std::vector<const TypeProto*> then_output_types;
   std::vector<const TypeProto*> else_output_types;
@@ -1704,10 +1746,8 @@ void IfInferenceFunction1(InferenceContext& ctx) {
   // the output types for then and else should be the same
   if (num_then_outputs != num_else_outputs) {
     fail_type_inference(
-        "then_branch and else_branch produce different number of outputs. ",
-        num_then_outputs,
-        " != ",
-        num_else_outputs);
+        "then_branch and else_branch produce different number of outputs. ", num_then_outputs, " != ", num_else_outputs
+    );
   }
 
   if (num_then_outputs != num_outputs) {
@@ -1720,7 +1760,8 @@ void IfInferenceFunction1(InferenceContext& ctx) {
 
     if (then_output->value_case() != else_output->value_case()) {
       fail_type_inference(
-          "Mismatched type for output ", i, " then=", then_output->value_case(), " else=", else_output->value_case());
+          "Mismatched type for output ", i, " then=", then_output->value_case(), " else=", else_output->value_case()
+      );
     }
 
     auto* if_output = ctx.getOutputType(i);
@@ -1732,7 +1773,8 @@ void IfInferenceFunction1(InferenceContext& ctx) {
 
       if (then_elem_type != else_elem_type) {
         fail_type_inference(
-            "Mismatched tensor element type for output ", i, " then=", then_elem_type, " else=", else_elem_type);
+            "Mismatched tensor element type for output ", i, " then=", then_elem_type, " else=", else_elem_type
+        );
       }
 
       // merge the 'else' shape information to check it's consistent and
@@ -1756,28 +1798,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data type.",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "then_branch",
             "Graph to run if condition is true. Has N outputs: values you wish to "
             "be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .Attr(
             "else_branch",
             "Graph to run if condition is false. Has N outputs: values you wish to"
             " be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction1));
+        .TypeAndShapeInferenceFunction(IfInferenceFunction1)
+);
 
 void IfInferenceFunction_11(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
-  std::vector<const TypeProto*> subgraph_input_types; // none
-  std::vector<const TensorProto*> input_data; // none
+  std::vector<const TypeProto*> subgraph_input_types;  // none
+  std::vector<const TensorProto*> input_data;  // none
 
   std::vector<const TypeProto*> then_output_types;
   std::vector<const TypeProto*> else_output_types;
@@ -1800,10 +1846,8 @@ void IfInferenceFunction_11(InferenceContext& ctx) {
   // the output types for then and else should be the same
   if (num_then_outputs != num_else_outputs) {
     fail_type_inference(
-        "then_branch and else_branch produce different number of outputs. ",
-        num_then_outputs,
-        " != ",
-        num_else_outputs);
+        "then_branch and else_branch produce different number of outputs. ", num_then_outputs, " != ", num_else_outputs
+    );
   }
 
   if (num_then_outputs != num_outputs) {
@@ -1816,7 +1860,8 @@ void IfInferenceFunction_11(InferenceContext& ctx) {
 
     if (then_output->value_case() != else_output->value_case()) {
       fail_type_inference(
-          "Mismatched type for output ", i, " then=", then_output->value_case(), " else=", else_output->value_case());
+          "Mismatched type for output ", i, " then=", then_output->value_case(), " else=", else_output->value_case()
+      );
     }
 
     auto* if_output = ctx.getOutputType(i);
@@ -1828,7 +1873,8 @@ void IfInferenceFunction_11(InferenceContext& ctx) {
 
       if (then_elem_type != else_elem_type) {
         fail_type_inference(
-            "Mismatched tensor element type for output ", i, " then=", then_elem_type, " else=", else_elem_type);
+            "Mismatched tensor element type for output ", i, " then=", then_elem_type, " else=", else_elem_type
+        );
       }
 
       UnionShapeInfo(else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
@@ -1863,28 +1909,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             "[3] are not compatible.",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "then_branch",
             "Graph to run if condition is true. Has N outputs: values you wish to "
             "be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .Attr(
             "else_branch",
             "Graph to run if condition is false. Has N outputs: values you wish to"
             " be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction_11));
+        .TypeAndShapeInferenceFunction(IfInferenceFunction_11)
+);
 
 void IfInferenceFunction_13(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
-  std::vector<const TypeProto*> subgraph_input_types; // none
-  std::vector<const TensorProto*> input_data; // none
+  std::vector<const TypeProto*> subgraph_input_types;  // none
+  std::vector<const TensorProto*> input_data;  // none
 
   std::vector<const TypeProto*> then_output_types;
   std::vector<const TypeProto*> else_output_types;
@@ -1907,10 +1957,8 @@ void IfInferenceFunction_13(InferenceContext& ctx) {
   // the output types for then and else should be the same
   if (num_then_outputs != num_else_outputs) {
     fail_type_inference(
-        "then_branch and else_branch produce different number of outputs. ",
-        num_then_outputs,
-        " != ",
-        num_else_outputs);
+        "then_branch and else_branch produce different number of outputs. ", num_then_outputs, " != ", num_else_outputs
+    );
   }
 
   if (num_then_outputs != num_outputs) {
@@ -1955,19 +2003,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             "[3] are not compatible.",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "then_branch",
             "Graph to run if condition is true. Has N outputs: values you wish to "
             "be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .Attr(
             "else_branch",
             "Graph to run if condition is false. Has N outputs: values you wish to"
             " be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint(
             "V",
             []() {
@@ -1976,14 +2027,16 @@ ONNX_OPERATOR_SET_SCHEMA(
               t.insert(t.end(), s.begin(), s.end());
               return t;
             }(),
-            "All Tensor and Sequence types")
+            "All Tensor and Sequence types"
+        )
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction_13));
+        .TypeAndShapeInferenceFunction(IfInferenceFunction_13)
+);
 
 void LoopInferenceFunction_13(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   assert(num_inputs >= 2);
-  auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
+  auto num_loop_state_vars = num_inputs - 2;  // skip 'M' and 'cond'
 
   std::vector<const TypeProto*> subgraph_input_types;
   subgraph_input_types.reserve(num_inputs);
@@ -2029,7 +2082,7 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    input_data.push_back(nullptr); // iteration number
+    input_data.push_back(nullptr);  // iteration number
     for (size_t i = 1; i < num_inputs; ++i) {
       input_data.push_back(ctx.getInputData(i));
     }
@@ -2048,12 +2101,13 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           subgraph_output_types.size(),
           " outputs. Expected ",
-          num_outputs + 1);
+          num_outputs + 1
+      );
     }
 
     // check loop state values match. we should already have type/shape info
     for (size_t i = 0; i < num_outputs; ++i) {
-      auto* subgraph_output_type = subgraph_output_types[i + 1]; // skip 'cond'
+      auto* subgraph_output_type = subgraph_output_types[i + 1];  // skip 'cond'
       auto* loop_output_type = ctx.getOutputType(i);
 
       const bool is_loop_state_var = i < num_loop_state_vars;
@@ -2063,7 +2117,8 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
             "Loop 'body' subgraph outputs should all be tensors or sequences but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case()
+        );
       }
 
       if (!is_loop_state_var && !subgraph_output_type->has_tensor_type()) {
@@ -2071,7 +2126,8 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
             "Loop 'body' subgraph scan outputs should all be tensors but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case()
+        );
       }
 
       // if there's an existing type check it matches. otherwise propagate
@@ -2254,13 +2310,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "A maximum trip-count for the loop specified at runtime. Optional."
             " Pass empty string to skip.",
             "I",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
+            1, "cond", "A boolean termination condition. Optional. Pass empty string to skip.", "B", OpSchema::Optional
+        )
         .Input(
             2,
             "v_initial",
@@ -2269,7 +2323,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "V",
             OpSchema::Variadic,
             false,
-            0)
+            0
+        )
         .Output(
             0,
             "v_final_and_scan_outputs",
@@ -2277,7 +2332,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Scan outputs must be Tensors.",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has 2+N inputs: (iteration_num, "
@@ -2287,7 +2343,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "output value at the end of each iteration of the loop. It is an error"
             " if the dimensions or data type of these scan_outputs change across loop"
             " iterations.",
-            AttributeProto::GRAPH)
+            AttributeProto::GRAPH
+        )
         .TypeConstraint(
             "V",
             []() {
@@ -2296,10 +2353,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               t.insert(t.end(), s.begin(), s.end());
               return t;
             }(),
-            "All Tensor and Sequence types")
+            "All Tensor and Sequence types"
+        )
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction_13));
+        .TypeAndShapeInferenceFunction(LoopInferenceFunction_13)
+);
 
 static const char* scan_11_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
@@ -2438,14 +2497,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "
@@ -2455,7 +2516,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scan_output_elt value at the end of each iteration of the loop. It is an error"
             " if the dimensions of these values change across loop iterations.",
             AttributeProto::GRAPH,
-            true)
+            true
+        )
         .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
         .Attr(
             "scan_input_directions",
@@ -2464,7 +2526,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "indicates reverse direction. "
             "If omitted, all scan_input tensors will be scanned in the forward direction.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_output_directions",
             "An optional list of K flags, one for each scan_output. The i-th element of the list "
@@ -2474,7 +2537,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If omitted, all scan_output tensors will be produced by appending a value "
             "in each iteration.",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_input_axes",
             "An optional list of M flags. The i-th element of the list specifies the axis "
@@ -2482,7 +2546,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "be used as the scan axis for every scan_input. Negative value for an axis means "
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .Attr(
             "scan_output_axes",
             "An optional list of K flags. The i-th element of the list specifies the axis "
@@ -2491,8 +2556,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Negative value for an axis means counting dimensions from the back. Accepted "
             "range is [-r, r-1].",
             AttributeProto::INTS,
-            false)
+            false
+        )
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction)
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

@@ -10,4 +10,4 @@ namespace ONNX_NAMESPACE {
 
 void ConstantOpInference(InferenceContext& ctx);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

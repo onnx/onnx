@@ -25,25 +25,27 @@ ONNX_OPERATOR_SET_SCHEMA(
             "y_scale",
             "Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, "
             "or a 1-D Tensor for per-axis quantization.",
-            "tensor(float)")
+            "tensor(float)"
+        )
         .Input(
             2,
             "y_zero_point",
             "Zero point for doing quantization to get 'y'. Shape must match y_scale. "
             "Default is uint8 with zero point of 0 if it's not specified.",
             "T2",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Output(0, "y", "N-D quantized output tensor. It has same shape as input 'x'.", "T2")
         .Attr(
             "axis",
             "(Optional) The axis of the quantization dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
-            static_cast<int64_t>(1))
+            static_cast<int64_t>(1)
+        )
         .TypeConstraint("T1", {"tensor(float)", "tensor(int32)"}, "Constrain 'x' to float or int32 tensor.")
         .TypeConstraint(
-            "T2",
-            {"tensor(int8)", "tensor(uint8)"},
-            "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
+            "T2", {"tensor(int8)", "tensor(uint8)"}, "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor."
+        )
         .SetDoc(QuantizeLinear_ver13_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.hasInput(2)) {
@@ -57,7 +59,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           auto& input_shape = getInputShape(ctx, 0);
           updateOutputShape(ctx, 0, input_shape);
-        }));
+        })
+);
 
 static const char* DequantizeLinear_ver13_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
@@ -77,24 +80,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             "x_scale",
             "Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, "
             "or a 1-D tensor for per-axis dequantization.",
-            "tensor(float)")
+            "tensor(float)"
+        )
         .Input(
             2,
             "x_zero_point",
             "Zero point for input 'x'. Shape must match x_scale. "
             "It's optional. Zero point is 0 when it's not specified.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Output(0, "y", "N-D full precision output tensor. It has same shape as input 'x'.", "tensor(float)")
         .Attr(
             "axis",
             "(Optional) The axis of the dequantizing dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
-            static_cast<int64_t>(1))
+            static_cast<int64_t>(1)
+        )
         .TypeConstraint(
             "T",
             {"tensor(int8)", "tensor(uint8)", "tensor(int32)"},
-            "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
+            "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor."
+        )
         .SetDoc(DequantizeLinear_ver13_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto y_type = ctx.getOutputType(0);
@@ -106,7 +113,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           auto& input_shape = getInputShape(ctx, 0);
           updateOutputShape(ctx, 0, input_shape);
-        }));
+        })
+);
 
 static const char* QuantizeLinear_ver10_doc = R"DOC(
 The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
@@ -123,20 +131,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "y_scale",
             "Scale for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)")
+            "tensor(float)"
+        )
         .Input(
             2,
             "y_zero_point",
             "Zero point for doing quantization to get 'y'. It's a scalar, which means a per-tensor/layer quantization. "
             "Default value is uint8 typed 0 if it's not specified.",
             "T2",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Output(0, "y", "N-D quantized output tensor. It has same shape as input 'x'.", "T2")
         .TypeConstraint("T1", {"tensor(float)", "tensor(int32)"}, "Constrain 'x' to float or int32 tensor.")
         .TypeConstraint(
-            "T2",
-            {"tensor(int8)", "tensor(uint8)"},
-            "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
+            "T2", {"tensor(int8)", "tensor(uint8)"}, "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor."
+        )
         .SetDoc(QuantizeLinear_ver10_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.hasInput(2)) {
@@ -150,7 +159,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           auto& input_shape = getInputShape(ctx, 0);
           updateOutputShape(ctx, 0, input_shape);
-        }));
+        })
+);
 
 static const char* DequantizeLinear_ver10_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
@@ -168,19 +178,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "x_scale",
             "Scale for input 'x'. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)")
+            "tensor(float)"
+        )
         .Input(
             2,
             "x_zero_point",
             "Zero point for input 'x'. It's a scalar, which means a per-tensor/layer quantization. "
             "It's optional. 0 is the default value when it's not specified.",
             "T",
-            OpSchema::Optional)
+            OpSchema::Optional
+        )
         .Output(0, "y", "N-D full precision output tensor. It has same shape as input 'x'.", "tensor(float)")
         .TypeConstraint(
             "T",
             {"tensor(int8)", "tensor(uint8)", "tensor(int32)"},
-            "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
+            "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor."
+        )
         .SetDoc(DequantizeLinear_ver10_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto y_type = ctx.getOutputType(0);
@@ -192,6 +205,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           auto& input_shape = getInputShape(ctx, 0);
           updateOutputShape(ctx, 0, input_shape);
-        }));
+        })
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

@@ -97,7 +97,7 @@ struct generic_graph_node_list_iterator final {
     return d == kNextDirection ? kPrevDirection : kNextDirection;
   }
   T* cur;
-  size_t d; // direction 0 is forward 1 is reverse, see next_in_graph
+  size_t d;  // direction 0 is forward 1 is reverse, see next_in_graph
 };
 
 template <typename T>
@@ -151,7 +151,7 @@ static inline bool operator!=(generic_graph_node_list_iterator<T> a, generic_gra
   return *a != *b;
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
 
 namespace std {
 
@@ -164,4 +164,4 @@ struct iterator_traits<ONNX_NAMESPACE::generic_graph_node_list_iterator<T>> {
   using iterator_category = bidirectional_iterator_tag;
 };
 
-} // namespace std
+}  // namespace std

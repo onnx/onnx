@@ -64,5 +64,5 @@ class GenericAdapter final : public Adapter {
   NodeTransformerFunction transformer_;
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

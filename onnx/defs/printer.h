@@ -47,4 +47,4 @@ std::string ProtoToString(const ProtoType& proto) {
   return ss.str();
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

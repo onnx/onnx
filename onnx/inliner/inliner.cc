@@ -24,7 +24,7 @@
 namespace ONNX_NAMESPACE {
 namespace inliner {
 
-namespace { // internal/private API
+namespace {  // internal/private API
 
 using namespace internal;
 
@@ -217,13 +217,15 @@ class InliningRenamer : private MutableVisitor {
   template <bool isOutput>
   void Bind(
       google::protobuf::RepeatedPtrField<std::string>& formals,
-      const google::protobuf::RepeatedPtrField<std::string>& actuals) {
+      const google::protobuf::RepeatedPtrField<std::string>& actuals
+  ) {
     // Every formal parameter name FP should be replace by the corresponding actual parameter name AP.
     // However, if AP is empty, it is a missing optional parameter. This does not make any difference
     // for inputs. However, for outputs we use a unique dummy name to handle the case that it
     // is used in an output-context where it is not optional.
     ONNX_ASSERTM(
-        actuals.size() <= formals.size(), "Number of actual parameters cannot exceed number of formal parameters");
+        actuals.size() <= formals.size(), "Number of actual parameters cannot exceed number of formal parameters"
+    );
     auto& current_scope = rename_scopes.back();
     int i = 0;
     for (; i < actuals.size(); ++i) {
@@ -256,7 +258,7 @@ class InliningRenamer : private MutableVisitor {
     for (auto& y : *node->mutable_output()) {
       LookupOrRename(y, true);
     }
-    return true; // Process attribute subgraphs in traversal
+    return true;  // Process attribute subgraphs in traversal
   }
 
   // Process a sub-graph, contained as an attribute in a control-flow op node.
@@ -279,8 +281,9 @@ class InliningRenamer : private MutableVisitor {
   // Renames variables in a FunctionProto for inlining a particular call-site. This does the following:
   // (i)  Rename all intermediate variables in the function to ensure that they are unique (wrt the main graph).
   // (ii) Rename inputs and outputs using names of actual parameters.
-  static void
-  Rename(const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator) {
+  static void Rename(
+      const NodeProto& callnode, FunctionProto& callee, std::string unique_suffix, NameGenerator& generator
+  ) {
     InliningRenamer renamer(std::move(unique_suffix), generator);
 
     renamer.Bind<false>(*callee.mutable_input(), callnode.input());
@@ -341,7 +344,7 @@ class ComputeInputs : private Visitor {
         }
       }
     }
-    return true; // process sub-graphs
+    return true;  // process sub-graphs
   }
 
  public:
@@ -469,7 +472,8 @@ void InlineFunctions(NodeList& nodes, const FunctionMap& map, NameGenerator& nam
             "Internal Error: Inlining function %s::%s requires version conversion, "
             "but version conversion is supported only for models, not functions.",
             callee.domain().c_str(),
-            callee.name().c_str());
+            callee.name().c_str()
+        );
         ConvertVersion(*model, node, callee, target_version);
       }
       // Append nodes of called function
@@ -515,13 +519,13 @@ class VectorSet : public FunctionIdSet {
   bool invert_;
 };
 
-} // namespace
+}  // namespace
 
 // Public API implementation:
 
 std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::Create(
-    FunctionIdVector&& function_ids,
-    bool invert) {
+    FunctionIdVector&& function_ids, bool invert
+) {
   auto* p = new VectorSet(std::move(function_ids), invert);
   return std::unique_ptr<FunctionIdSet>(p);
 }
@@ -598,5 +602,5 @@ void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) 
   }
 }
 
-} // namespace inliner
-} // namespace ONNX_NAMESPACE
+}  // namespace inliner
+}  // namespace ONNX_NAMESPACE

@@ -17,7 +17,8 @@ Common::Status BuildNode(
     const std::string& op_type,
     std::vector<std::string> const& inputs,
     std::vector<std::string> const& outputs,
-    NodeProto* node) {
+    NodeProto* node
+) {
   if (node == NULL) {
     return Common::Status(Common::CHECKER, Common::INVALID_ARGUMENT, "node_proto should not be nullptr.");
   }
@@ -34,4 +35,4 @@ Common::Status BuildNode(
 
   return Common::Status::OK();
 }
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

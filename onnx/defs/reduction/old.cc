@@ -39,19 +39,22 @@ False instead of True.)DOC";
         "A list of integers, along which to reduce. The default is to reduce over "
         "all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).",
         AttributeProto::INTS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "keepdims",
         "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1)
+    );
     schema.Input(0, "data", "An input tensor.", "T");
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForReductionOps_opset12(supports_8bit_datatypes),
         supports_8bit_datatypes ? "Constrain input and output types to high-precision and 8 bit numeric tensors."
-                                : "Constrain input and output types to high-precision numeric tensors.");
+                                : "Constrain input and output types to high-precision numeric tensors."
+    );
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -132,21 +135,25 @@ The type of the output tensor is integer.)DOC";
         "axis",
         "The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).",
         AttributeProto::INT,
-        static_cast<int64_t>(0));
+        static_cast<int64_t>(0)
+    );
     schema.Attr(
         "keepdims",
         "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1)
+    );
     schema.Attr(
         "select_last_index",
         "Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
         AttributeProto::INT,
-        static_cast<int64_t>(0));
+        static_cast<int64_t>(0)
+    );
     schema.Input(0, "data", "An input tensor.", "T");
     schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "tensor(int64)");
     schema.TypeConstraint(
-        "T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.");
+        "T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors."
+    );
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
       updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
@@ -158,7 +165,7 @@ The type of the output tensor is integer.)DOC";
       auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
       auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
-      int64_t axis = 0; // default to 0
+      int64_t axis = 0;  // default to 0
       auto axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
@@ -188,7 +195,7 @@ The type of the output tensor is integer.)DOC";
       }
     });
   };
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SET_SCHEMA(ArgMax, 12, OpSchema().FillUsing(ArgReduceDocGenerator_opset12("max")));
 
@@ -215,18 +222,21 @@ False instead of True.)DOC";
                     : "A list of integers, along which to reduce. The default is to reduce over "
                       "all the dimensions of the input tensor.",
         AttributeProto::INTS,
-        OPTIONAL_VALUE);
+        OPTIONAL_VALUE
+    );
     schema.Attr(
         "keepdims",
         "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1)
+    );
     schema.Input(0, "data", "An input tensor.", "T");
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
         "T",
         OpSchema::numeric_types_for_math_reduction(),
-        "Constrain input and output types to high-precision numeric tensors.");
+        "Constrain input and output types to high-precision numeric tensors."
+    );
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -282,9 +292,8 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 1, OpSchema().FillUsing(ReduceDocGenerator_
 ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("log sum", EMPTY_MINUS_INF)));
 
 ONNX_OPERATOR_SET_SCHEMA(
-    ReduceLogSumExp,
-    1,
-    OpSchema().FillUsing(ReduceDocGenerator_opset1("log sum exponent", EMPTY_MINUS_INF)));
+    ReduceLogSumExp, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("log sum exponent", EMPTY_MINUS_INF))
+);
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 1, OpSchema().FillUsing(ReduceDocGenerator_opset1("L1 norm", EMPTY_ZERO)));
 
@@ -309,11 +318,13 @@ The type of the output tensor is integer.)DOC";
         "keepdims",
         "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1)
+    );
     schema.Input(0, "data", "An input tensor.", "T");
     schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "tensor(int64)");
     schema.TypeConstraint(
-        "T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.");
+        "T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors."
+    );
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
       updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
@@ -325,7 +336,7 @@ The type of the output tensor is integer.)DOC";
       auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
       auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
-      int64_t axis = 0; // default to 0
+      int64_t axis = 0;  // default to 0
       auto axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
@@ -352,7 +363,7 @@ The type of the output tensor is integer.)DOC";
       }
     });
   };
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SET_SCHEMA(ArgMax, 1, OpSchema().FillUsing(ArgReduceDocGenerator_opset1("max")));
 
@@ -372,16 +383,19 @@ The type of the output tensor is integer.)DOC";
         "axis",
         "The axis in which to compute the arg indices. Accepted range is [-r, r-1] where r = rank(data).",
         AttributeProto::INT,
-        static_cast<int64_t>(0));
+        static_cast<int64_t>(0)
+    );
     schema.Attr(
         "keepdims",
         "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1)
+    );
     schema.Input(0, "data", "An input tensor.", "T");
     schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "tensor(int64)");
     schema.TypeConstraint(
-        "T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.");
+        "T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors."
+    );
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
       updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
@@ -393,7 +407,7 @@ The type of the output tensor is integer.)DOC";
       auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
       auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
-      int64_t axis = 0; // default to 0
+      int64_t axis = 0;  // default to 0
       auto axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
@@ -423,7 +437,7 @@ The type of the output tensor is integer.)DOC";
       }
     });
   };
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SET_SCHEMA(ArgMax, 11, OpSchema().FillUsing(ArgReduceDocGenerator_opset11("max")));
 ONNX_OPERATOR_SET_SCHEMA(ArgMin, 11, OpSchema().FillUsing(ArgReduceDocGenerator_opset11("min")));
@@ -435,12 +449,11 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 13, OpSchema().FillUsing(ReduceOpGenerator(
 ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 13, OpSchema().FillUsing(ReduceOpGenerator("product", EMPTY_ONE)));
 ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 13, OpSchema().FillUsing(ReduceOpGenerator("log sum", EMPTY_MINUS_INF)));
 ONNX_OPERATOR_SET_SCHEMA(
-    ReduceLogSumExp,
-    13,
-    OpSchema().FillUsing(ReduceOpGenerator("log sum exponent", EMPTY_MINUS_INF)));
+    ReduceLogSumExp, 13, OpSchema().FillUsing(ReduceOpGenerator("log sum exponent", EMPTY_MINUS_INF))
+);
 ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 13, OpSchema().FillUsing(ReduceOpGenerator("L1 norm", EMPTY_ZERO)));
 ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 13, OpSchema().FillUsing(ReduceOpGenerator("L2 norm", EMPTY_ZERO)));
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 18, OpSchema().FillUsing(ReduceOpGenerator("max", EMPTY_MIN, true, true)));
 ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 18, OpSchema().FillUsing(ReduceOpGenerator("min", EMPTY_MAX, true, true)));
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

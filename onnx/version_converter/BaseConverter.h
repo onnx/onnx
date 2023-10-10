@@ -78,8 +78,9 @@ class BaseVersionConverter {
     }
   }
 
-  virtual ModelProto
-  convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version) const = 0;
+  virtual ModelProto convert_version(
+      const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version
+  ) const = 0;
 
   void registerAdapter(std::unique_ptr<Adapter> a_ptr) {
     const OpSetID& iv = a_ptr->initial_version();
@@ -92,5 +93,5 @@ class BaseVersionConverter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

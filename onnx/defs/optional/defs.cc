@@ -39,11 +39,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               t.insert(t.end(), s.begin(), s.end());
               return t;
             }(),
-            "Constrain input type to all tensor and sequence types.")
+            "Constrain input type to all tensor and sequence types."
+        )
         .TypeConstraint(
             "O",
             OpSchema::all_optional_types(),
-            "Constrain output type to all optional tensor or optional sequence types.")
+            "Constrain output type to all optional tensor or optional sequence types."
+        )
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numOutputs = ctx.getNumOutputs();
           if (numOutputs != 1) {
@@ -68,7 +70,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             fail_type_inference("Optional is expected to have either an input or the type attribute set.");
           }
-        }));
+        })
+);
 
 static const char* OptionalHasElement_ver18_doc = R"DOC(
 Returns true if (1) the input is an optional-type and contains an element,
@@ -86,11 +89,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "output",
             "A scalar boolean tensor. If true, it indicates that optional-type input contains an element. Otherwise, it is empty.",
-            "B")
+            "B"
+        )
         .TypeConstraint(
-            "O",
-            optional_and_tensor_types(),
-            "Constrain input type to optional tensor and optional sequence types.")
+            "O", optional_and_tensor_types(), "Constrain input type to optional tensor and optional sequence types."
+        )
         .TypeConstraint("B", {"tensor(bool)"}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
@@ -104,7 +107,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_tensor_type->set_elem_type(TensorProto::BOOL);
           output_tensor_type->mutable_shape()->Clear();
-        }));
+        })
+);
 
 static const char* OptionalGetElement_ver18_doc = R"DOC(
 If the input is a tensor or sequence type, it returns the input.
@@ -120,9 +124,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "The optional input.", "O")
         .Output(0, "output", "Output element in the optional input.", "V")
         .TypeConstraint(
-            "O",
-            optional_and_tensor_types(),
-            "Constrain input type to optional tensor and optional sequence types.")
+            "O", optional_and_tensor_types(), "Constrain input type to optional tensor and optional sequence types."
+        )
         .TypeConstraint(
             "V",
             []() {
@@ -131,7 +134,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               t.insert(t.end(), s.begin(), s.end());
               return t;
             }(),
-            "Constrain output type to all tensor or sequence types.")
+            "Constrain output type to all tensor or sequence types."
+        )
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
           if (numInputs != 1) {
@@ -149,6 +153,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             propagateShapeAndTypeFromFirstInput(ctx);
           }
-        }));
+        })
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

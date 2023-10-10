@@ -78,4 +78,4 @@ const char* Symbol::toString() const {
 
 Symbol::Symbol(const std::string& s) : value(globalStrings().symbol(s)) {}
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

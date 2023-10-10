@@ -45,5 +45,5 @@ class Reshape_4_5 final : public RemoveConsumedInputs {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

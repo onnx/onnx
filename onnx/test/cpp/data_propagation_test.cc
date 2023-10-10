@@ -21,23 +21,22 @@ namespace ONNX_NAMESPACE {
 namespace Test {
 
 inline bool CompareShape(
-    const TensorShapeProto& inferredShape,
-    const TensorShapeProto& expectedShape,
-    bool checkSameParam = false) {
+    const TensorShapeProto& inferredShape, const TensorShapeProto& expectedShape, bool checkSameParam = false
+) {
   EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size())
       << "Dim size for inferred and expected shape is different.";
 
   for (int i = 0; i < inferredShape.dim_size(); i++) {
     EXPECT_TRUE(
         (inferredShape.dim(i).has_dim_value() == expectedShape.dim(i).has_dim_value()) &&
-        (inferredShape.dim(i).has_dim_param() == expectedShape.dim(i).has_dim_param()))
-        << "Inferred and expected dim values are different.";
+        (inferredShape.dim(i).has_dim_param() == expectedShape.dim(i).has_dim_param())
+    ) << "Inferred and expected dim values are different.";
 
     EXPECT_TRUE(
         inferredShape.dim(i).has_dim_value() ? inferredShape.dim(i).dim_value() == expectedShape.dim(i).dim_value()
             : checkSameParam                 ? inferredShape.dim(i).dim_param() == expectedShape.dim(i).dim_param()
-                                             : true)
-        << "Inferred and expected dims are different.";
+                                             : true
+    ) << "Inferred and expected dims are different.";
   }
 
   return true;
@@ -397,5 +396,5 @@ agraph (int32[1,2,3,4,5,6,7,8] x) => (int32[3] w)
   EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE

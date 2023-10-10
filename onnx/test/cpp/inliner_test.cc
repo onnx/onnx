@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "onnx/inliner/inliner.h"
+
 #include <iostream>
 
 #include "gtest/gtest.h"
@@ -12,7 +14,6 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
-#include "onnx/inliner/inliner.h"
 #include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE {
@@ -297,5 +298,5 @@ bar (x) => (y) {
   ASSERT_EQ(node2.attribute_size(), 0);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE

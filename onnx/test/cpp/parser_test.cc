@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "onnx/defs/parser.h"
+
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
-#include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 
 using namespace ONNX_NAMESPACE;
@@ -378,8 +379,8 @@ agraph (float y = {1.0}, float[N] z) => (float[N] w)
 
   EXPECT_EQ(graph.input_size(), 2);
   EXPECT_EQ(graph.output_size(), 1);
-  EXPECT_EQ(graph.initializer_size(), 3); // y, w1, w2
-  EXPECT_EQ(graph.value_info_size(), 1); // x
+  EXPECT_EQ(graph.initializer_size(), 3);  // y, w1, w2
+  EXPECT_EQ(graph.value_info_size(), 1);  // x
 }
 
 TEST(ParserTest, IfNodeTest) {
@@ -557,5 +558,5 @@ TEST(ParserTest, TypesModelTest2) {
   CheckModel(code);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE

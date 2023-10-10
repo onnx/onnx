@@ -46,7 +46,7 @@ class BroadcastForwardCompatibility final : public Adapter {
             axes.emplace_back(B_sizes.size() + i);
             new_sizes.emplace_back(Dimension(1));
           }
-          if (target_version().version() >= 13) { // Unsqueeze takes 'axes' input
+          if (target_version().version() >= 13) {  // Unsqueeze takes 'axes' input
             Tensor t;
             t.elem_type() = TensorProto_DataType_INT64;
             t.sizes() = std::vector<int64_t>{static_cast<int64_t>(axes.size())};
@@ -58,7 +58,7 @@ class BroadcastForwardCompatibility final : public Adapter {
             constant->insertBefore(node);
             constant->t_(kvalue, t);
             node->addInput(constant->output());
-          } else { // Unsqueeze takes 'axes' attribute
+          } else {  // Unsqueeze takes 'axes' attribute
             n->is_(kaxes, std::forward<const std::vector<int64_t>>(axes));
           }
           // Move n before node
@@ -83,5 +83,5 @@ class BroadcastForwardCompatibility final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

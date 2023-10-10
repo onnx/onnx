@@ -28,7 +28,7 @@ inline int stoi(const std::string& str) {
 #else
 using std::stoi;
 using std::to_string;
-#endif // defined(__ANDROID__)
+#endif  // defined(__ANDROID__)
 
 inline void MakeStringInternal(std::stringstream& /*ss*/) {}
 
@@ -58,4 +58,4 @@ inline std::string MakeString(const std::string& str) {
 inline std::string MakeString(const char* c_str) {
   return std::string(c_str);
 }
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

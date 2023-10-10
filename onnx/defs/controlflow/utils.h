@@ -20,4 +20,4 @@ void LoopInferenceFunction(InferenceContext& ctx);
 
 void ScanInferenceFunction(InferenceContext& ctx);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

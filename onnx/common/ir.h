@@ -39,7 +39,7 @@
 
 namespace ONNX_NAMESPACE {
 
-namespace { // internal/private API
+namespace {  // internal/private API
 
 std::string toVarName(size_t i) {
   std::ostringstream oss;
@@ -47,7 +47,7 @@ std::string toVarName(size_t i) {
   return oss.str();
 }
 
-} // namespace
+}  // namespace
 
 // Graph represents one "function" of computation.
 // It uses a simple ownership model where the graph owns all the nodes inside it.
@@ -85,8 +85,8 @@ class ResourceGuard final {
 
 struct Dimension final {
   Dimension() : is_unknown(true), is_int(false), dim(-1) {}
-  Dimension(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {} // NOLINT
-  Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {} // NOLINT
+  Dimension(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {}  // NOLINT
+  Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {}  // NOLINT
 
   bool is_unknown;
   bool is_int;
@@ -277,7 +277,8 @@ struct Attributes {
         __FILE__,
         __LINE__,
         __func__,
-        name.toString());
+        name.toString()
+    );
     return it;
   }
 };
@@ -314,8 +315,8 @@ struct Value final {
   friend struct Graph;
   Node* node_;
   size_t offset_;
-  size_t unique_ = 0; // unique id
-  size_t stage_ = 0; // 0-forward, 1-backward, 2-double-backward,...
+  size_t unique_ = 0;  // unique id
+  size_t stage_ = 0;  // 0-forward, 1-backward, 2-double-backward,...
   use_list uses_in_current_graph_;
   bool has_unique_name_;
   std::string unique_name_;
@@ -446,7 +447,7 @@ struct Node : public Attributes<Node> {
   std::string doc_string_;
 
  protected:
-  Node(Graph* graph_, NodeKind kind_); // defined after graph
+  Node(Graph* graph_, NodeKind kind_);  // defined after graph
 
  public:
   bool has_name() const {
@@ -987,10 +988,13 @@ struct Graph final {
         std::remove_if(
             initializers_.begin(),
             initializers_.end(),
-            [&name](Tensor& initializer) { return initializer.name() == name; }),
-        initializers_.end());
+            [&name](Tensor& initializer) { return initializer.name() == name; }
+        ),
+        initializers_.end()
+    );
     initializer_names_.erase(
-        std::remove(initializer_names_.begin(), initializer_names_.end(), name), initializer_names_.end());
+        std::remove(initializer_names_.begin(), initializer_names_.end(), name), initializer_names_.end()
+    );
     for (size_t i = 0; i < initializer_node_->outputs().size(); i++) {
       if (initializer_node_->outputs()[i]->uniqueName() == name) {
         initializer_node_->eraseOutput(i);
@@ -1433,4 +1437,4 @@ inline const use_list Value::uses() const {
   return all_uses;
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

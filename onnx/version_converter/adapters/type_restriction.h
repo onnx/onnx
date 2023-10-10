@@ -23,7 +23,8 @@ class TypeRestriction : public Adapter {
       const std::string& op_name,
       const OpSetID& initial,
       const OpSetID& target,
-      const std::vector<TensorProto_DataType>& unallowed_types)
+      const std::vector<TensorProto_DataType>& unallowed_types
+  )
       : Adapter(op_name, initial, target), unallowed_types_(unallowed_types) {}
 
   void adapt_type_restriction(std::shared_ptr<Graph>, Node* node) const {
@@ -53,9 +54,10 @@ class TypeRestriction : public Adapter {
         " of operator '%s' is unallowed for Opset Version %d.",
         val->elemType(),
         name().c_str(),
-        target_version().version());
+        target_version().version()
+    );
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

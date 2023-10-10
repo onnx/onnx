@@ -216,9 +216,8 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
 }
 
 void createDummyValue(
-    std::unique_ptr<Graph>& g,
-    const std::string& name,
-    std::unordered_map<std::string, Value*>& value_by_name_of) {
+    std::unique_ptr<Graph>& g, const std::string& name, std::unordered_map<std::string, Value*>& value_by_name_of
+) {
   auto* undef = g->create(kCaptured, 1);
   g->appendNode(undef);
   undef->outputs()[0]->setUniqueName(name);
@@ -395,8 +394,9 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false, mp.ir_version()));
   for (int i = 0; i < mp.opset_import_size(); i++) {
     OpSetID new_opset_version(mp.opset_import(i).domain(), mp.opset_import(i).version());
-    g->forSelfAndEachSubGraph(
-        [&new_opset_version](Graph* graph) { graph->opset_versions_mutable().emplace_back(new_opset_version); });
+    g->forSelfAndEachSubGraph([&new_opset_version](Graph* graph) {
+      graph->opset_versions_mutable().emplace_back(new_opset_version);
+    });
   }
   return g;
 }
@@ -709,7 +709,8 @@ void assertNonNull(const std::shared_ptr<Graph>& g) {
   ONNX_ASSERTM(
       g.get() != nullptr,
       "Warning: onnx version converter is unable to parse input model. "
-      "(The IR version of the ONNX model may be too old.)");
+      "(The IR version of the ONNX model may be too old.)"
+  );
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

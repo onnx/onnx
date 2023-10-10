@@ -36,8 +36,7 @@ AttributeProto MakeRefAttribute(const std::string& attr_name, AttributeProto_Att
 // node.
 // <type> specifies the attribute type.
 AttributeProto MakeRefAttribute(
-    const std::string& attr_name,
-    const std::string& referred_attr_name,
-    AttributeProto_AttributeType type);
+    const std::string& attr_name, const std::string& referred_attr_name, AttributeProto_AttributeType type
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

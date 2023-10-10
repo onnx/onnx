@@ -67,7 +67,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
   bool searchOpDomainMap(
       const std::unordered_map<std::string, std::map<int64_t, const OpSchema*>>& op_domain_map,
       int64_t curr_version,
-      int64_t step) const {
+      int64_t step
+  ) const {
     bool up = step == 1;
     const auto version_it = op_domain_map.find("");
     return version_it != op_domain_map.end() &&
@@ -85,14 +86,16 @@ class DefaultVersionConverter : public BaseVersionConverter {
         version >= version_range.first && version <= version_range.second,
         "Warning: invalid version (must be between %d and %d)",
         version_range.first,
-        version_range.second);
+        version_range.second
+    );
   }
 
   void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
     ONNX_ASSERTM(
         (initial_domain == "" || initial_domain == "ai.onnx") && (target_domain == "" || target_domain == "ai.onnx"),
         "Warning: default onnx version converter can only convert "
-        " between default domain opset versions ('' or 'ai.onnx')\n");
+        " between default domain opset versions ('' or 'ai.onnx')\n"
+    );
     ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains");
   }
 
@@ -121,8 +124,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
           }
         }
         if (min_version > 1) {
-          registerAdapter(std::make_unique<NoPreviousVersionAdapter>(
-              op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
+          registerAdapter(
+              std::make_unique<NoPreviousVersionAdapter>(op_pair.first, OpSetID(min_version), OpSetID(min_version - 1))
+          );
         }
       }
     }
@@ -147,7 +151,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_INT8,
         TensorProto_DataType_INT16,
         TensorProto_DataType_STRING,
-        TensorProto_DataType_BOOL};
+        TensorProto_DataType_BOOL
+    };
     registerAdapter(std::make_unique<TypeRestriction>("Concat", OpSetID(4), OpSetID(3), concat_unallowed_types));
 
     /******** 4 -> 5 ********/
@@ -191,10 +196,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 6 -> 5 ********/
     std::vector<TensorProto_DataType> broadcast_unallowed_types = {
-        TensorProto_DataType_INT32,
-        TensorProto_DataType_INT64,
-        TensorProto_DataType_UINT32,
-        TensorProto_DataType_UINT64};
+        TensorProto_DataType_INT32, TensorProto_DataType_INT64, TensorProto_DataType_UINT32, TensorProto_DataType_UINT64
+    };
     std::vector<TensorProto_DataType> int_unallowed_types = {
         TensorProto_DataType_UINT8,
         TensorProto_DataType_UINT16,
@@ -203,9 +206,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_INT8,
         TensorProto_DataType_INT16,
         TensorProto_DataType_INT32,
-        TensorProto_DataType_INT64};
+        TensorProto_DataType_INT64
+    };
     std::vector<TensorProto_DataType> neg_unallowed_types = {
-        TensorProto_DataType_INT32, TensorProto_DataType_INT8, TensorProto_DataType_UINT16, TensorProto_DataType_INT64};
+        TensorProto_DataType_INT32, TensorProto_DataType_INT8, TensorProto_DataType_UINT16, TensorProto_DataType_INT64
+    };
     registerAdapter(std::make_unique<TypeRestriction>("Add", OpSetID(6), OpSetID(5), broadcast_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Mul", OpSetID(6), OpSetID(5), broadcast_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Sub", OpSetID(6), OpSetID(5), broadcast_unallowed_types));
@@ -350,7 +355,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_INT16,
         TensorProto_DataType_FLOAT16,
         TensorProto_DataType_FLOAT,
-        TensorProto_DataType_DOUBLE};
+        TensorProto_DataType_DOUBLE
+    };
     registerAdapter(std::make_unique<CompatibleAdapter>("ArgMax", OpSetID(11), OpSetID(10)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ArgMin", OpSetID(11), OpSetID(10)));
     registerAdapter(std::make_unique<CompatibleAdapter>("AveragePool", OpSetID(11), OpSetID(10)));
@@ -590,7 +596,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_FLOAT8E4M3FN,
         TensorProto_DataType_FLOAT8E4M3FNUZ,
         TensorProto_DataType_FLOAT8E5M2,
-        TensorProto_DataType_FLOAT8E5M2FNUZ};
+        TensorProto_DataType_FLOAT8E5M2FNUZ
+    };
     registerAdapter(std::make_unique<TypeRestriction>("IsNaN", OpSetID(19), OpSetID(20), is_nan_13_unallowed_types));
     const std::vector<TensorProto_DataType> is_inf_10_unallowed_types = {
         TensorProto_DataType_FLOAT16,
@@ -598,14 +605,17 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_FLOAT8E4M3FN,
         TensorProto_DataType_FLOAT8E4M3FNUZ,
         TensorProto_DataType_FLOAT8E5M2,
-        TensorProto_DataType_FLOAT8E5M2FNUZ};
+        TensorProto_DataType_FLOAT8E5M2FNUZ
+    };
     registerAdapter(std::make_unique<TypeRestriction>("IsInf", OpSetID(19), OpSetID(20), is_inf_10_unallowed_types));
     registerAdapter(std::make_unique<AxisInputToAttribute>("DFT", OpSetID(20), OpSetID(19), 2, -2));
     const std::vector<TensorProto_DataType> reduce_min_max_18_unallowed_types = {TensorProto_DataType_BOOL};
     registerAdapter(
-        std::make_unique<TypeRestriction>("ReduceMax", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types));
+        std::make_unique<TypeRestriction>("ReduceMax", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types)
+    );
     registerAdapter(
-        std::make_unique<TypeRestriction>("ReduceMin", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types));
+        std::make_unique<TypeRestriction>("ReduceMin", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types)
+    );
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
@@ -613,5 +623,5 @@ class DefaultVersionConverter : public BaseVersionConverter {
 };
 
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

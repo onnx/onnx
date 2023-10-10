@@ -20,10 +20,8 @@
 namespace ONNX_NAMESPACE {
 // Helper function to expand a function node given the function proto
 void FunctionExpandHelper(
-    const NodeProto& node,
-    const FunctionProto& func,
-    GraphProto& g,
-    const std::string& node_prefix = "");
+    const NodeProto& node, const FunctionProto& func, GraphProto& g, const std::string& node_prefix = ""
+);
 
 class FunctionBodyHelper {
  public:
@@ -48,7 +46,8 @@ class FunctionBodyHelper {
         std::string op_type,
         std::vector<std::string> inputs,
         std::vector<AttributeProtoWrapper> attributes = {},
-        std::string domain = "")
+        std::string domain = ""
+    )
         : outputs(std::move(outputs)),
           op_type(std::move(op_type)),
           inputs(std::move(inputs)),
@@ -95,7 +94,8 @@ class FunctionBodyHelper {
       FunctionProto& functionProto,
       const OpSchema& schema,
       const std::vector<NodeDef>& node_defs,
-      const std::vector<OperatorSetIdProto>& relied_opsets);
+      const std::vector<OperatorSetIdProto>& relied_opsets
+  );
 
   template <typename T>
   static NodeDef Const(const std::string& name, const T& value) {
@@ -177,7 +177,7 @@ class FunctionBuilder {
     std::string constant_op(name);
     constant_op += " = Constant()";
     auto tensor = ToTensor(values);
-    tensor.add_dims(values.size()); // Treat as 1D tensor.
+    tensor.add_dims(values.size());  // Treat as 1D tensor.
 
     return Add(constant_op.c_str(), MakeAttribute("value", tensor));
   }
@@ -193,4 +193,4 @@ class FunctionBuilder {
   FunctionProto& funProto;
 };
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

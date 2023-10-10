@@ -25,7 +25,7 @@
 
 #include <filesystem>
 
-#else // POSIX
+#else  // POSIX
 #include <sys/stat.h>
 #endif
 
@@ -128,7 +128,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
           "Data of TensorProto ( tensor name: ",
           tensor.name(),
           ") is stored externally and should not have data field.",
-          value_field);
+          value_field
+      );
     }
 
     bool has_location = false;
@@ -142,7 +143,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "Location of external TensorProto ( tensor name: ",
               tensor.name(),
               ") should be a relative path, but it is an absolute path: ",
-              entry.value());
+              entry.value()
+          );
         }
         auto relative_path = file_path.lexically_normal().make_preferred().wstring();
         // Check that normalized relative path contains ".." on Windows.
@@ -154,7 +156,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               ctx.get_model_dir(),
               ", but the '",
               entry.value(),
-              "' points outside the directory");
+              "' points outside the directory"
+          );
         }
         std::wstring data_path = path_join(utf8str_to_wstring(ctx.get_model_dir()), relative_path);
         struct _stat64 buff;
@@ -164,9 +167,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               tensor.name(),
               ") should be stored in ",
               entry.value(),
-              ", but it doesn't exist or is not accessible.");
+              ", but it doesn't exist or is not accessible."
+          );
         }
-#else // POSIX
+#else  // POSIX
         if (entry.value().empty()) {
           fail_check("Location of external TensorProto ( tensor name: ", tensor.name(), ") should not be empty.");
         } else if (entry.value()[0] == '/') {
@@ -174,7 +178,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "Location of external TensorProto ( tensor name: ",
               tensor.name(),
               ") should be a relative path, but it is an absolute path: ",
-              entry.value());
+              entry.value()
+          );
         }
         std::string relative_path = clean_relative_path(entry.value());
         // Check that normalized relative path contains ".." on POSIX
@@ -186,15 +191,16 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               ctx.get_model_dir(),
               ", but the '",
               entry.value(),
-              "' points outside the directory");
+              "' points outside the directory"
+          );
         }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
         // use stat64 to check whether the file exists
 #if defined(__APPLE__) || defined(__wasm__)
-        struct stat buffer; // APPLE does not have stat64
+        struct stat buffer;  // APPLE does not have stat64
         if (stat((data_path).c_str(), &buffer) != 0) {
 #else
-        struct stat64 buffer; // All POSIX except APPLE have stat64
+        struct stat64 buffer;  // All POSIX except APPLE have stat64
         if (stat64((data_path).c_str(), &buffer) != 0) {
 #endif
           fail_check(
@@ -202,7 +208,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               tensor.name(),
               ") should be stored in ",
               data_path,
-              ", but it doesn't exist or is not accessible.");
+              ", but it doesn't exist or is not accessible."
+          );
         }
         // Do not allow symlinks or directories.
         if (!S_ISREG(buffer.st_mode)) {
@@ -211,7 +218,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               tensor.name(),
               ") should be stored in ",
               data_path,
-              ", but it is not regular file.");
+              ", but it is not regular file."
+          );
         }
 #endif
       }
@@ -246,7 +254,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         #field,                          \
         "' instead of '",                \
         value_field,                     \
-        "'");                            \
+        "'"                              \
+    );                                   \
   }
 
     switch (tensor.data_type()) {
@@ -320,7 +329,8 @@ void check_sequence(const SequenceProto& sequence, const CheckerContext& ctx) {
         sequence.name(),
         ", elem_type: ",
         sequence.elem_type(),
-        ") is not have a valid element type.");
+        ") is not have a valid element type."
+    );
   }
 }
 
@@ -346,7 +356,8 @@ void check_optional(const OptionalProto& optional, const CheckerContext& ctx) {
         optional.name(),
         ", elem_type: ",
         optional.elem_type(),
-        ") is not have a valid element type.");
+        ") is not have a valid element type."
+    );
   }
 }
 
@@ -365,7 +376,8 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
         map.name(),
         ") to invalid TensorProto key_type ",
         map.key_type(),
-        " is not allowed");
+        " is not allowed"
+    );
   }
 
   // MapProto will use either keys or string_keys, so only one should be > 0.
@@ -398,9 +410,8 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
 // indices: a 1-dimensional tensor; indices[i] represents the
 // linearized index value for the i-th nonzero value.
 void check_sparse_tensor_indices_1(
-    const TensorProto& indices,
-    const SparseTensorProto& sparse_tensor_proto,
-    size_t nnz) {
+    const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz
+) {
   int dense_rank = sparse_tensor_proto.dims_size();
   int64_t dense_size = 1;
   for (int i = 0; i < dense_rank; ++i)
@@ -416,7 +427,7 @@ void check_sparse_tensor_indices_1(
 
   int64_t prev_index = -1;
   for (size_t i = 0; i < nnz; ++i) {
-    int64_t curr_index = index_data[i]; // linearized index of i-th value
+    int64_t curr_index = index_data[i];  // linearized index of i-th value
     if (curr_index < 0 || curr_index >= dense_size) {
       fail_check(
           "Sparse tensor (",
@@ -425,7 +436,8 @@ void check_sparse_tensor_indices_1(
           i,
           "] out of range [0, ",
           dense_size - 1,
-          "]");
+          "]"
+      );
     }
     if (curr_index <= prev_index) {
       fail_check("Sparse tensor (", indices.name(), ") index value at position [", i, "] not in sorted order.");
@@ -438,9 +450,8 @@ void check_sparse_tensor_indices_1(
 // indices: a 2-dimensional tensor; indices[i,j] represents the j-th
 // index value for the i-th nonzero value.
 void check_sparse_tensor_indices_2(
-    const TensorProto& indices,
-    const SparseTensorProto& sparse_tensor_proto,
-    size_t nnz) {
+    const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz
+) {
   int dense_rank = sparse_tensor_proto.dims_size();
   if (static_cast<size_t>(indices.dims(0)) != nnz) {
     fail_check("Sparse tensor indices (", indices.name(), ") first dimension size does not equal NNZ.");
@@ -454,7 +465,7 @@ void check_sparse_tensor_indices_2(
   const std::vector<int64_t> index_data = ParseData<int64_t>(&indices);
   int64_t prev_index = -1;
   for (size_t i = 0; i < nnz; ++i) {
-    int64_t curr_index = 0; // linearized index of i-th value
+    int64_t curr_index = 0;  // linearized index of i-th value
     for (int j = 0; j < dense_rank; ++j) {
       auto index_ij = index_data[i * dense_rank + j];
       if ((index_ij < 0) || (index_ij >= sparse_tensor_proto.dims(j))) {
@@ -464,7 +475,8 @@ void check_sparse_tensor_indices_2(
     }
     if (curr_index <= prev_index) {
       fail_check(
-          "Sparse tensor (", indices.name(), ") index value at position [", i, "] not in lexicographic sorted order.");
+          "Sparse tensor (", indices.name(), ") index value at position [", i, "] not in lexicographic sorted order."
+      );
     }
     prev_index = curr_index;
   }
@@ -660,7 +672,8 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
       // fail the checker if op in built-in domains has no schema
       fail_check(
           "No Op registered for " + node.op_type() + " with domain_version of " +
-          ONNX_NAMESPACE::to_string(domain_version));
+          ONNX_NAMESPACE::to_string(domain_version)
+      );
     } else {
       // TODO: expose the registration of the op schemas appropriately in
       // python, so we can load and register operators in other domains
@@ -671,7 +684,8 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   } else if (schema->Deprecated()) {
     fail_check(
         "Op registered for " + node.op_type() + " is deprecated in domain_version of " +
-        ONNX_NAMESPACE::to_string(domain_version));
+        ONNX_NAMESPACE::to_string(domain_version)
+    );
   } else {
     schema->Verify(node);
   }
@@ -699,7 +713,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       fail_check(
           "Graph must be in single static assignment (SSA) form, however '",
           value_info.name(),
-          "' has been used as graph input names multiple times.");
+          "' has been used as graph input names multiple times."
+      );
     }
     lex_ctx.add(value_info.name());
   }
@@ -762,7 +777,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
             node.name(),
             " OpType: ",
             node.op_type(),
-            "\n is not output of any previous nodes.");
+            "\n is not output of any previous nodes."
+        );
       }
     }
 
@@ -794,7 +810,8 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
         fail_check(
             "Graph must be in single static assignment (SSA) form, however '",
             output,
-            "' has been used as output names multiple times.");
+            "' has been used as output names multiple times."
+        );
       }
       lex_ctx.add(output);
     }
@@ -817,7 +834,8 @@ void check_opset_compatibility(
     const NodeProto& node,
     const CheckerContext& ctx,
     const std::unordered_map<std::string, int>& func_opset_imports,
-    const std::unordered_map<std::string, int>& model_opset_imports) {
+    const std::unordered_map<std::string, int>& model_opset_imports
+) {
   auto func_opset_version = get_version_for_domain(node.domain(), func_opset_imports);
   auto model_opset_version = get_version_for_domain(node.domain(), model_opset_imports);
 
@@ -854,14 +872,14 @@ void check_opset_compatibility(
         "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
         "is not compatible with the version imported by model. FunctionOp imports version " +
         ONNX_NAMESPACE::to_string(func_opset_version) + " whereas model imports version " +
-        ONNX_NAMESPACE::to_string(model_opset_version));
+        ONNX_NAMESPACE::to_string(model_opset_version)
+    );
   }
 }
 
 void check_model_local_functions(
-    const ModelProto& model,
-    const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex) {
+    const ModelProto& model, const CheckerContext& ctx, const LexicalScopeContext& parent_lex
+) {
   // make a copy of model opset imports to maintain a main copy of opset imports across the model and
   // all model local functions to verify opset compatibility
   std::unordered_map<std::string, int> model_opset_imports(ctx.get_opset_imports());
@@ -910,7 +928,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
     // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(input)) {
       fail_check(
-          "Graph must be in single static assignment (SSA) form, however '", input, "' has been used multiple times.");
+          "Graph must be in single static assignment (SSA) form, however '", input, "' has been used multiple times."
+      );
     }
     lex_ctx.add(input);
   }
@@ -947,7 +966,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
             node.name(),
             " OpType: ",
             node.op_type(),
-            "\n is neither output of any previous nodes nor input of the function.");
+            "\n is neither output of any previous nodes nor input of the function."
+        );
       }
     }
 
@@ -970,7 +990,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
         fail_check(
             "Function must be in single static assignment (SSA) form, however '",
             output,
-            "' has been used as output names multiple times.");
+            "' has been used as output names multiple times."
+        );
       }
       lex_ctx.add(output);
     }
@@ -1065,7 +1086,8 @@ std::set<std::string> experimental_ops = {
     "ImageScaler",
     "ParametricSoftplus",
     "Scale",
-    "ScaledTanh"};
+    "ScaledTanh"
+};
 
 bool check_is_experimental_op(const NodeProto& node) {
   return (node.domain() == ONNX_DOMAIN || node.domain() == "ai.onnx") && experimental_ops.count(node.op_type());
@@ -1076,5 +1098,5 @@ bool check_is_experimental_op(const NodeProto& node) {
 #undef enforce_has_repeated_field
 #undef enforce_non_empty_field
 
-} // namespace checker
-} // namespace ONNX_NAMESPACE
+}  // namespace checker
+}  // namespace ONNX_NAMESPACE

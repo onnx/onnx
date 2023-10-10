@@ -1204,4 +1204,4 @@ inline bool IsOnnxStaticRegistrationDisabled() {
 #endif
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

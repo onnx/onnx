@@ -24,5 +24,5 @@ TEST(OpRegistrationTest, GemmOp) {
   EXPECT_NE(opSchema->attributes().count("beta"), 0);
   EXPECT_EQ(opSchema->attributes().at("beta").type, AttributeProto_AttributeType_FLOAT);
 }
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE

@@ -22,5 +22,6 @@ Common::Status BuildNode(
     const std::string& op_type,
     std::vector<std::string> const& inputs,
     std::vector<std::string> const& outputs,
-    /*OUT*/ NodeProto* node);
-} // namespace ONNX_NAMESPACE
+    /*OUT*/ NodeProto* node
+);
+}  // namespace ONNX_NAMESPACE

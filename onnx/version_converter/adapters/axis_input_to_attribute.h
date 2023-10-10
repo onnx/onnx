@@ -18,11 +18,8 @@ namespace version_conversion {
 class AxisInputToAttribute : public Adapter {
  public:
   explicit AxisInputToAttribute(
-      const std::string& op_name,
-      const OpSetID& initial,
-      const OpSetID& target,
-      size_t axis_index,
-      int64_t default_axis)
+      const std::string& op_name, const OpSetID& initial, const OpSetID& target, size_t axis_index, int64_t default_axis
+  )
       : Adapter(op_name, initial, target), axis_index(axis_index), default_axis(default_axis) {}
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
@@ -63,7 +60,8 @@ class AxisInputToAttribute : public Adapter {
       std::string raw_data = axis_node->t(kvalue).raw();
       ONNX_ASSERTM(
           raw_data.size() != 0 && raw_data.size() % 8 == 0,
-          "Raw Data must be non-empty and size must be a multiple of 8");
+          "Raw Data must be non-empty and size must be a multiple of 8"
+      );
       const int64_t* raw = reinterpret_cast<const int64_t*>(raw_data.c_str());
       node->i_(kaxis, raw[0]);
     } else {
@@ -95,5 +93,5 @@ class AxisInputToAttribute : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

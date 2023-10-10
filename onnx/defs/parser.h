@@ -227,7 +227,9 @@ class ParserBase {
         NONE,
         FAIL,
         ONNX_NAMESPACE::MakeString(
-            "[ParseError at position ", GetCurrentPos(), "]\n", "Error context: ", GetErrorContext(), "\n", args...));
+            "[ParseError at position ", GetCurrentPos(), "]\n", "Error context: ", GetErrorContext(), "\n", args...
+        )
+    );
   }
 
   void SkipWhiteSpace() {
@@ -269,7 +271,11 @@ class ParserBase {
     return (next_ >= end_);
   }
 
-  enum class LiteralType { INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
+  enum class LiteralType {
+    INT_LITERAL,
+    FLOAT_LITERAL,
+    STRING_LITERAL
+  };
 
   struct Literal {
     LiteralType type;
@@ -442,4 +448,4 @@ class OnnxParser : public ParserBase {
   bool NextIsIdentifier();
 };
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

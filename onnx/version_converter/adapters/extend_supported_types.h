@@ -28,7 +28,8 @@ struct ExtendSupportedTypes final : public Adapter {
       ArrayRef<Value*> inputs,
       const int to_type,
       const std::vector<Dimension>& output_shape,
-      const std::string& name) const {
+      const std::string& name
+  ) const {
     Node* node = graph->create(kCast, inputs);
     node->i_(kto, to_type);
     node->output()->setUniqueName(name);
@@ -58,9 +59,11 @@ struct ExtendSupportedTypes final : public Adapter {
     };
 
     ONNX_ASSERTM(
-        unsupported_version9_types.find(input_type) == unsupported_version9_types.end(), "Unsupported Input Type");
+        unsupported_version9_types.find(input_type) == unsupported_version9_types.end(), "Unsupported Input Type"
+    );
     ONNX_ASSERTM(
-        unsupported_version9_types.find(output_type) == unsupported_version9_types.end(), "Unsupported Output Type");
+        unsupported_version9_types.find(output_type) == unsupported_version9_types.end(), "Unsupported Output Type"
+    );
 
     bool castInput = (node->kind() != kConstant);
     bool castOutput = (node->kind() != kGreater && node->kind() != kLess);
@@ -71,7 +74,8 @@ struct ExtendSupportedTypes final : public Adapter {
             inputs[i],
             TensorProto_DataType::TensorProto_DataType_FLOAT,
             inputs[i]->sizes(),
-            "pre_cast_" + ONNX_NAMESPACE::to_string(i));
+            "pre_cast_" + ONNX_NAMESPACE::to_string(i)
+        );
         pre_cast->insertBefore(node);
         node->replaceInput(i, pre_cast->output());
       }
@@ -102,5 +106,5 @@ struct ExtendSupportedTypes final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

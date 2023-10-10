@@ -58,9 +58,8 @@ AttributeProto MakeRefAttribute(const std::string& attr_name, AttributeProto_Att
 }
 
 AttributeProto MakeRefAttribute(
-    const std::string& attr_name,
-    const std::string& referred_attr_name,
-    AttributeProto_AttributeType type) {
+    const std::string& attr_name, const std::string& referred_attr_name, AttributeProto_AttributeType type
+) {
   AttributeProto a;
   a.set_name(attr_name);
   a.set_ref_attr_name(referred_attr_name);
@@ -68,4 +67,4 @@ AttributeProto MakeRefAttribute(
   return a;
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

@@ -28,8 +28,8 @@ void ClearShape(TypeProto& input_type) {
 void IfInferenceFunction(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
-  std::vector<const TypeProto*> subgraph_input_types; // none
-  std::vector<const TensorProto*> input_data; // none
+  std::vector<const TypeProto*> subgraph_input_types;  // none
+  std::vector<const TensorProto*> input_data;  // none
 
   std::vector<const TypeProto*> then_output_types;
   std::vector<const TypeProto*> else_output_types;
@@ -52,10 +52,8 @@ void IfInferenceFunction(InferenceContext& ctx) {
   // the output types for then and else should be the same
   if (num_then_outputs != num_else_outputs) {
     fail_type_inference(
-        "then_branch and else_branch produce different number of outputs. ",
-        num_then_outputs,
-        " != ",
-        num_else_outputs);
+        "then_branch and else_branch produce different number of outputs. ", num_then_outputs, " != ", num_else_outputs
+    );
   }
 
   if (num_then_outputs != num_outputs) {
@@ -76,7 +74,7 @@ void IfInferenceFunction(InferenceContext& ctx) {
 void LoopInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   assert(num_inputs >= 2);
-  auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
+  auto num_loop_state_vars = num_inputs - 2;  // skip 'M' and 'cond'
 
   std::vector<const TypeProto*> subgraph_input_types;
   subgraph_input_types.reserve(num_inputs);
@@ -114,7 +112,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    input_data.push_back(nullptr); // iteration number
+    input_data.push_back(nullptr);  // iteration number
     for (size_t i = 1; i < num_inputs; ++i) {
       input_data.push_back(ctx.getInputData(i));
     }
@@ -133,12 +131,13 @@ void LoopInferenceFunction(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           subgraph_output_types.size(),
           " outputs. Expected ",
-          num_outputs + 1);
+          num_outputs + 1
+      );
     }
 
     // check loop state values match. we should already have type/shape info
     for (size_t i = 0; i < num_outputs; ++i) {
-      auto* subgraph_output_type = subgraph_output_types[i + 1]; // skip 'cond'
+      auto* subgraph_output_type = subgraph_output_types[i + 1];  // skip 'cond'
       auto* loop_output_type = ctx.getOutputType(i);
 
       const bool is_loop_state_var = i < num_loop_state_vars;
@@ -149,7 +148,8 @@ void LoopInferenceFunction(InferenceContext& ctx) {
             "Loop 'body' subgraph outputs should all be tensors or sequences or optionals, but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case()
+        );
       }
 
       if (!is_loop_state_var && !subgraph_output_type->has_tensor_type()) {
@@ -157,7 +157,8 @@ void LoopInferenceFunction(InferenceContext& ctx) {
             "Loop 'body' subgraph scan outputs should all be tensors but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case()
+        );
       }
 
       // if there's an existing type check it matches. otherwise propagate
@@ -213,7 +214,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
           axes.size(),
           ") is not equal to number of scan inputs (",
           num_scan_inputs,
-          ").");
+          ")."
+      );
     }
   } else {
     axes.insert(axes.end(), num_scan_inputs, 0);
@@ -226,7 +228,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
           output_axes.size(),
           ") is not equal to number of scan outputs (",
           num_scan_outputs,
-          ").");
+          ")."
+      );
     }
   } else {
     output_axes.insert(output_axes.end(), num_scan_outputs, 0);
@@ -309,7 +312,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           output_types.size(),
           " outputs. Expected ",
-          num_outputs);
+          num_outputs
+      );
     }
 
     // propagate type/shape information for loop state variables and outputs
@@ -356,4 +360,4 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   }
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

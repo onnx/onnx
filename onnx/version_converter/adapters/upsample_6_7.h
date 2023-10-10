@@ -25,7 +25,8 @@ struct Upsample_6_7 final : public Adapter {
     Symbol height_scale_symbol = Symbol("height_scale");
     ONNX_ASSERTM(
         node->hasAttribute(width_scale_symbol) && node->hasAttribute(height_scale_symbol),
-        "Upsample in opset 1 needs to have width_scale and height_scale attributes");
+        "Upsample in opset 1 needs to have width_scale and height_scale attributes"
+    );
 
     auto width_scale = node->f(width_scale_symbol);
     auto height_scale = node->f(height_scale_symbol);
@@ -45,5 +46,5 @@ struct Upsample_6_7 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

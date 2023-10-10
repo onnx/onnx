@@ -32,7 +32,7 @@ T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
       fail_shape_inference("Unsupported input data type of ", data_type);
   }
 }
-} // namespace utils
-} // namespace math
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+}  // namespace utils
+}  // namespace math
+}  // namespace defs
+}  // namespace ONNX_NAMESPACE

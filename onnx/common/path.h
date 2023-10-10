@@ -19,7 +19,7 @@ namespace ONNX_NAMESPACE {
 
 #ifdef _WIN32
 constexpr const char k_preferred_path_separator = '\\';
-#else // POSIX
+#else  // POSIX
 constexpr const char k_preferred_path_separator = '/';
 #endif
 
@@ -45,4 +45,4 @@ std::string path_join(const std::string& origin, const std::string& append);
 std::string clean_relative_path(const std::string& path);
 #endif
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

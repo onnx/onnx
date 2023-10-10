@@ -24,40 +24,45 @@ ONNX_OPERATOR_SET_SCHEMA(
             "sparse_value",
             "The value for the elements of the output tensor in sparse format.",
             AttributeProto::SPARSE_TENSOR,
-            false)
+            false
+        )
         .Attr(
             "value_int",
             "The value for the sole element for the scalar, int64, output tensor.",
             AttributeProto::INT,
-            false)
+            false
+        )
         .Attr(
-            "value_ints",
-            "The values for the elements for the 1D, int64, output tensor.",
-            AttributeProto::INTS,
-            false)
+            "value_ints", "The values for the elements for the 1D, int64, output tensor.", AttributeProto::INTS, false
+        )
         .Attr(
             "value_float",
             "The value for the sole element for the scalar, float32, output tensor.",
             AttributeProto::FLOAT,
-            false)
+            false
+        )
         .Attr(
             "value_floats",
             "The values for the elements for the 1D, float32, output tensor.",
             AttributeProto::FLOATS,
-            false)
+            false
+        )
         .Attr(
             "value_string",
             "The value for the sole element for the scalar, UTF-8 string, output tensor.",
             AttributeProto::STRING,
-            false)
+            false
+        )
         .Attr(
             "value_strings",
             "The values for the elements for the 1D, UTF-8 string, output tensor.",
             AttributeProto::STRINGS,
-            false)
+            false
+        )
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
-        .TypeAndShapeInferenceFunction(ConstantOpInference));
+        .TypeAndShapeInferenceFunction(ConstantOpInference)
+);
 
 static const char* Constant_ver12_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
@@ -74,40 +79,45 @@ ONNX_OPERATOR_SET_SCHEMA(
             "sparse_value",
             "The value for the elements of the output tensor in sparse format.",
             AttributeProto::SPARSE_TENSOR,
-            false)
+            false
+        )
         .Attr(
             "value_int",
             "The value for the sole element for the scalar, int64, output tensor.",
             AttributeProto::INT,
-            false)
+            false
+        )
         .Attr(
-            "value_ints",
-            "The values for the elements for the 1D, int64, output tensor.",
-            AttributeProto::INTS,
-            false)
+            "value_ints", "The values for the elements for the 1D, int64, output tensor.", AttributeProto::INTS, false
+        )
         .Attr(
             "value_float",
             "The value for the sole element for the scalar, float32, output tensor.",
             AttributeProto::FLOAT,
-            false)
+            false
+        )
         .Attr(
             "value_floats",
             "The values for the elements for the 1D, float32, output tensor.",
             AttributeProto::FLOATS,
-            false)
+            false
+        )
         .Attr(
             "value_string",
             "The value for the sole element for the scalar, UTF-8 string, output tensor.",
             AttributeProto::STRING,
-            false)
+            false
+        )
         .Attr(
             "value_strings",
             "The values for the elements for the 1D, UTF-8 string, output tensor.",
             AttributeProto::STRINGS,
-            false)
+            false
+        )
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
-        .TypeAndShapeInferenceFunction(ConstantOpInference));
+        .TypeAndShapeInferenceFunction(ConstantOpInference)
+);
 
 static const char* Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
 
@@ -121,17 +131,19 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            "Constrain input and output types to float tensors."
+        )
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto attr_proto = ctx.getAttribute("value");
           if (nullptr == attr_proto)
-            return; // attribute not present
+            return;  // attribute not present
           if (!attr_proto->has_t())
-            return; // attribute has no tensor value
+            return;  // attribute has no tensor value
           const TensorProto& tensor_proto = attr_proto->t();
           updateOutputElemType(ctx, 0, tensor_proto.data_type());
           updateOutputShape(ctx, 0, tensor_proto);
-        }));
+        })
+);
 
 static const char* Constant_ver9_doc = R"DOC(A constant tensor.)DOC";
 
@@ -150,7 +162,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           const TensorProto& tensor_proto = attr_proto->t();
           updateOutputElemType(ctx, 0, tensor_proto.data_type());
           updateOutputShape(ctx, 0, tensor_proto);
-        }));
+        })
+);
 
 static const char* Constant_ver11_doc = R"DOC(
 A constant tensor. Exactly one of the two attributes, either value or sparse_value,
@@ -167,7 +180,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "sparse_value",
             "The value for the elements of the output tensor in sparse format.",
             AttributeProto::SPARSE_TENSOR,
-            false)
+            false
+        )
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -176,7 +190,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if ((nullptr != value) && (nullptr != sparse_value))
             fail_shape_inference(
-                "Only one of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
+                "Only one of the attributes 'value' or 'sparse_value' must be specified for a Constant node."
+            );
 
           if (nullptr != value) {
             // OpSchema::Verify check ensures that the attribute value has_t():
@@ -198,9 +213,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               appendDim(output_shape, sparse.dims(i));
             return;
           }
-          fail_shape_inference(
-              "One of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
-        }));
+          fail_shape_inference("One of the attributes 'value' or 'sparse_value' must be specified for a Constant node."
+          );
+        })
+);
 
 static const char* ConstantOfShape_ver9_doc = R"DOC(
 Generate a tensor with given value and shape.
@@ -216,13 +232,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) The value of the output elements."
             "Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32",
             AttributeProto::TENSOR,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Input(
             0,
             "input",
             "1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar."
             " All values must be >= 0.",
-            "T1")
+            "T1"
+        )
         .Output(
             0,
             "output",
@@ -230,7 +248,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'."
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
-            "T2")
+            "T2"
+        )
         .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
         .TypeConstraint(
             "T2",
@@ -246,7 +265,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)"},
-            "Constrain output types to be numerics.")
+            "Constrain output types to be numerics."
+        )
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
             propagateElemTypeFromDtypeToOutput(ctx, ctx.getAttribute("value"), 0);
@@ -259,6 +279,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (found) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = output_shape;
           }
-        }));
+        })
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

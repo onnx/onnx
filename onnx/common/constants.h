@@ -42,4 +42,4 @@ constexpr const char* IMAGE = "IMAGE";
 constexpr const char* AUDIO = "AUDIO";
 constexpr const char* TEXT = "TEXT";
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

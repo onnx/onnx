@@ -125,5 +125,5 @@ struct MutableVisitor {
   virtual ~MutableVisitor() {}
 };
 
-} // namespace internal
-} // namespace ONNX_NAMESPACE
+}  // namespace internal
+}  // namespace ONNX_NAMESPACE

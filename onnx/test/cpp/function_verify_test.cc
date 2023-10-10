@@ -23,9 +23,8 @@ using namespace checker;
 using TENSOR_TYPES_MAP = std::unordered_map<std::string, std::vector<std::string>>;
 
 void GetFunctionProtoOpsetImport(
-    const OpSchema& op,
-    const FunctionProto* function_proto,
-    std::unordered_map<std::string, int>& op_set) {
+    const OpSchema& op, const FunctionProto* function_proto, std::unordered_map<std::string, int>& op_set
+) {
   if (function_proto->opset_import_size() > 0) {
     for (const auto& opset_import : function_proto->opset_import()) {
       op_set.insert({opset_import.domain(), opset_import.version()});
@@ -65,7 +64,8 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
     if (it == op_set.end()) {
       fail_check(
           "Op " + op_type + " of domain " + node.domain() + " used in " + function_op.Name() +
-          " function body does not has a opset import.");
+          " function body does not has a opset import."
+      );
     }
 
     int opset_version = it->second;
@@ -92,7 +92,8 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
           if (allowed_types.find(actual_type) == allowed_types.end()) {
             fail_check(
                 "Input type " + actual_type + " of parameter " + actual_param_name + " of function " +
-                function_op.Name() + " is not allowed by operator " + op_type);
+                function_op.Name() + " is not allowed by operator " + op_type
+            );
           }
         }
       }
@@ -139,7 +140,7 @@ struct FunctionOpAttributeMap {
     addTestCase("LeakyRelu", 16, {"alpha = 0.1"});
     addTestCase("HardSigmoid", 6, {"alpha = 0.2", "beta=0.5"});
     addTestCase("Selu", 6, {"alpha = 1.6", "gamma=1.05"});
-    addTestCase("ReduceL1", 18, {}); // Use default-value for attributes
+    addTestCase("ReduceL1", 18, {});  // Use default-value for attributes
     addTestCase("ReduceL1", 18, {"keepdims = 0"});
     addTestCase("ReduceL1", 18, {"noop_with_empty_axes = 1"});
     addTestCase("ReduceL2", 18, {});
@@ -375,7 +376,8 @@ void RegisterFunctionSchema() {
       .Input(0, "x", "Input tensor", "T1")
       .Output(0, "y", "Quantized output tensor", "T2")
       .Output(
-          1, "y_scale", "Output scale. It's a scalar, which means a per-tensor/layer quantization.", "tensor(float)")
+          1, "y_scale", "Output scale. It's a scalar, which means a per-tensor/layer quantization.", "tensor(float)"
+      )
       .Output(2, "y_zero_point", "Output zero point. It's a scalar, which means a per-tensor/layer quantization.", "T2")
       .TypeConstraint("T1", {"tensor(float)"}, "Constrain 'x' to float tensor.")
       .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
@@ -397,7 +399,9 @@ void RegisterFunctionSchema() {
                {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
                {{"y_scale"}, "Identity", {"Scale"}},
                {{"y_zero_point"}, "Identity", {"Zeropoint"}},
-               {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}}),
+               {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}
+              }
+          ),
           []() {
             std::vector<OperatorSetIdProto> operator_sets(2);
             auto& onnx_opset = operator_sets[0];
@@ -409,7 +413,8 @@ void RegisterFunctionSchema() {
             test_opset.set_version(2);
 
             return operator_sets;
-          }());
+          }()
+      );
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(function_schema);
   (void)unused;
 }
@@ -554,5 +559,5 @@ foo (x) => (y) {
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE

@@ -34,4 +34,4 @@ inline void RegisterOnnxPreviewOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_OnnxPreview_ver1>();
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

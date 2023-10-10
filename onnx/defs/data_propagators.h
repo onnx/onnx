@@ -82,4 +82,4 @@ inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
   }
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

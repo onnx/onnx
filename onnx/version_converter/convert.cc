@@ -27,9 +27,8 @@ ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
 }
 
 void DefaultVersionConverter::convert_graph(
-    std::shared_ptr<Graph> g,
-    const OpSetID& initial_version,
-    const OpSetID& target_version) const {
+    std::shared_ptr<Graph> g, const OpSetID& initial_version, const OpSetID& target_version
+) const {
   assertNonNull(g);
 
   // TODO: Move to Inter-Domain Converter
@@ -65,7 +64,8 @@ void DefaultVersionConverter::convert_graph(
   while (curr_version != target_version.version()) {
     debug(
         "curr_version: " + ONNX_NAMESPACE::to_string(curr_version) +
-        ", next_version: " + ONNX_NAMESPACE::to_string(curr_version + step));
+        ", next_version: " + ONNX_NAMESPACE::to_string(curr_version + step)
+    );
     Node* cur_op;
     graph_node_list_iterator it = g->begin();
     // Iterate through and call adapter returned by adapter_lookup for ops from
@@ -119,9 +119,8 @@ void DefaultVersionConverter::convert_graph(
 }
 
 ModelProto DefaultVersionConverter::convert_version(
-    const ModelProto& mp_in,
-    const OpSetID& initial_version,
-    const OpSetID& target_version) const {
+    const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version
+) const {
   const std::string& initial_domain = initial_version.domain();
   const std::string& target_domain = target_version.domain();
   assertDefaultDomain(initial_domain, target_domain);
@@ -129,7 +128,8 @@ ModelProto DefaultVersionConverter::convert_version(
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
     if (it->domain() == initial_version.domain()) {
       ONNX_ASSERTM(
-          initial_version.version() == it->version(), "initial_version does not reflect current state of model");
+          initial_version.version() == it->version(), "initial_version does not reflect current state of model"
+      );
     }
   }
 
@@ -144,5 +144,5 @@ ModelProto DefaultVersionConverter::convert_version(
   return mp_out;
 }
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+}  // namespace version_conversion
+}  // namespace ONNX_NAMESPACE

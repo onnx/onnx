@@ -45,5 +45,5 @@ TEST(FunctionAPITest, GetMeanVarianceNormalizationFunctionWithVersion) {
   }
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+}  // namespace Test
+}  // namespace ONNX_NAMESPACE

@@ -45,5 +45,5 @@ void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline);
 // functions that use opset versions that are compatible with the model.
 void InlineLocalFunctions(ModelProto& model, bool convert_version = false);
 
-} // namespace inliner
-} // namespace ONNX_NAMESPACE
+}  // namespace inliner
+}  // namespace ONNX_NAMESPACE

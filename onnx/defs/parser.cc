@@ -47,7 +47,7 @@ Status ParserBase::Parse(Literal& result) {
     if (has_escape) {
       std::string& target = result.value;
       target.clear();
-      target.reserve(next_ - from - 2); // upper bound
+      target.reserve(next_ - from - 2);  // upper bound
       // *from is the starting quote. *(next_-1) is the ending quote.
       // Copy what is in-between, except for the escape character
       while (++from < next_ - 1) {
@@ -55,7 +55,7 @@ Status ParserBase::Parse(Literal& result) {
         target.push_back(*from != '\\' ? (*from) : *(++from));
       }
     } else
-      result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
+      result.value = std::string(from + 1, next_ - from - 2);  // skip enclosing quotes
     return Status::OK();
   }
 
@@ -93,7 +93,7 @@ Status ParserBase::Parse(Literal& result) {
     while ((next_ < end_) && (isdigit(*next_) || (*next_ == '.'))) {
       if (*next_ == '.') {
         if (decimal_point)
-          break; // Only one decimal point allowed in numeric literal
+          break;  // Only one decimal point allowed in numeric literal
         decimal_point = true;
       }
       ++next_;
@@ -104,7 +104,7 @@ Status ParserBase::Parse(Literal& result) {
 
     // Optional exponent syntax: (e|E)(+|-)?[0-9]+
     if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
-      decimal_point = true; // treat as float-literal
+      decimal_point = true;  // treat as float-literal
       ++next_;
       if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
         ++next_;
@@ -128,7 +128,7 @@ bool ParserBase::NextIsValidFloatString() {
       ++next_;
     }
 
-    if (isdigit(*next_)) { // No trailing digits
+    if (isdigit(*next_)) {  // No trailing digits
       next_ = from;
       return false;
     }
@@ -138,8 +138,9 @@ bool ParserBase::NextIsValidFloatString() {
     // Reset parser location before continuing.
     next_ = from;
 
-    std::transform(
-        candidate.begin(), candidate.end(), candidate.begin(), [](unsigned char c) { return std::tolower(c); });
+    std::transform(candidate.begin(), candidate.end(), candidate.begin(), [](unsigned char c) {
+      return std::tolower(c);
+    });
     if (candidate == std::string("inf") || candidate == std::string("infinity") || candidate == std::string("nan")) {
       return true;
     }
@@ -152,7 +153,7 @@ Status OnnxParser::Parse(IdList& idlist) {
   std::string id;
   ParseOptionalIdentifier(id);
   if (id.empty())
-    return Status::OK(); // Treat as empty list of identifiers
+    return Status::OK();  // Treat as empty list of identifiers
   *idlist.Add() = id;
   while (Matches(',')) {
     ParseOptionalIdentifier(id);
@@ -383,7 +384,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
   TypeProto typeProto;
   PARSE(typeProto);
   ParseOptionalIdentifier(*tensorProto.mutable_name());
-  (void)Matches('='); // Optional, to unify handling of initializers as well as tensor-protos in other contexts
+  (void)Matches('=');  // Optional, to unify handling of initializers as well as tensor-protos in other contexts
   return Parse(tensorProto, typeProto);
 }
 
@@ -488,7 +489,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
         ParseOptionalIdentifier(*tensorProto.mutable_name());
-        (void)Matches('='); // Optional, to unify handling of initializers
+        (void)Matches('=');  // Optional, to unify handling of initializers
         Parse(tensorProto, typeProto);
       } else {
         attr.set_type(AttributeProto_AttributeType_TYPE_PROTO);
@@ -538,7 +539,8 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
           "Mismatch between expected type ",
           AttributeProto_AttributeType_Name(expected),
           " and specified value's type",
-          AttributeProto_AttributeType_Name(attr.type()));
+          AttributeProto_AttributeType_Name(attr.type())
+      );
     }
   }
   return Status::OK();
@@ -825,4 +827,4 @@ Status OnnxParser::Parse(ModelProto& model) {
   return Status::OK();
 }
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE

@@ -152,7 +152,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "input is substituted for all the occurrences of \"C\".",
             "T1",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "Outputs",
@@ -162,7 +163,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "respect to the i-th tensor specified in the attribute \"xs\".",
             "T2",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "xs",
             "Input tensor names of the differentiated sub-graph. It "
@@ -170,7 +172,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "inputs of a (sub-)graph. Variables (usually called "
             "intermediate variables) that can be generated from inputs "
             "cannot be included in this attribute.",
-            AttributeProto::STRINGS)
+            AttributeProto::STRINGS
+        )
         .Attr(
             "zs",
             "Input tensor names of the differentiated sub-graph. It "
@@ -179,19 +182,23 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "intermediate variables) that can be generated from inputs "
             "cannot be included in this attribute.",
             AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
+            OPTIONAL_VALUE
+        )
         .Attr(
             "y",
             "The targeted tensor. It can be viewed as the output of the "
             "differentiated function. The attribute \"xs\" and attribute "
             "\"zs\" are the minimal independent variable set that determines "
             "the value of \"y\".",
-            AttributeProto::STRING)
+            AttributeProto::STRING
+        )
         .TypeConstraint("T1", OpSchema::all_tensor_types(), "Allow outputs to be any kind of tensor.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Allow inputs to be any kind of floating-point tensor."));
+            "Allow inputs to be any kind of floating-point tensor."
+        )
+);
 
 static const char* Adagrad_ver1_doc = R"DOC(
     Compute one iteration of ADAGRAD, a stochastic gradient based optimization
@@ -268,7 +275,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "accumulated squared gradient of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "outputs",
@@ -279,7 +287,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "new accumulated squared gradient of \"X_1\", new accumulated squared gradient of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr("epsilon", "Small scalar to avoid dividing by zero.", AttributeProto::FLOAT, 1e-6f)
         .Attr(
             "decay_factor",
@@ -287,13 +296,15 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "The effective learning rate is computed by r = R / (1 + T * decay_factor). "
             "Default to 0 so that increasing update counts doesn't reduce the learning rate.",
             AttributeProto::FLOAT,
-            0.0f)
+            0.0f
+        )
         .Attr(
             "norm_coefficient",
             "Regularization coefficient in 0.5 * norm_coefficient * ||X||_2^2. Default to 0, "
             "which means no regularization.",
             AttributeProto::FLOAT,
-            0.0f)
+            0.0f
+        )
         .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float scalars.")
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain input types to 64-bit integer scalars.")
         .TypeConstraint("T3", {"tensor(float)", "tensor(double)"}, "Constrain input and output types to float tensors.")
@@ -317,7 +328,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
           }
-        }));
+        })
+);
 
 static const char* Momentum_ver1_doc = R"DOC(
     Compute one iteration of stochastic gradient update with momentum.
@@ -398,7 +410,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "[\"X_1\", \"X_2\", gradient of \"X_1\", gradient of \"X_2\", momentum of \"X_1\", momentum of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "outputs",
@@ -408,19 +421,22 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "new momentum of \"X_1\", new momentum of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr("alpha", "The decay factor of momentum. It should be a scalar.", AttributeProto::FLOAT)
         .Attr(
             "beta",
             "The coefficient of gradient in computing new momentum. It should be a scalar.",
-            AttributeProto::FLOAT)
+            AttributeProto::FLOAT
+        )
         .Attr("norm_coefficient", "Coefficient of 0.5 * norm_coefficient * ||X||^2.", AttributeProto::FLOAT)
         .Attr(
             "mode",
             "Its value should be either \"nesterov\" or \"standard\". The value \"nesterov\" leads "
             "to the use of Nesterov's momentum while \"standard\" invokes stochastic gradient method "
             "using standard momentum",
-            AttributeProto::STRING)
+            AttributeProto::STRING
+        )
         .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float scalars.")
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain input types to 64-bit integer scalars.")
         .TypeConstraint("T3", {"tensor(float)", "tensor(double)"}, "Constrain input types to float tensors.")
@@ -436,7 +452,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
           if (num_adjustable_tensors % 3 != 0) {
             fail_shape_inference(
                 "The sum of optimized tensor count and momentum tensor count ",
-                "should be a multiple of 2 in the input list of Momentum operator");
+                "should be a multiple of 2 in the input list of Momentum operator"
+            );
           }
 
           // The count of "X1" and "X2".
@@ -453,7 +470,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
           }
-        }));
+        })
+);
 
 static const char* Adam_ver1_doc = R"DOC(
     Compute one iteration of Adam, a stochastic gradient based optimization
@@ -539,7 +557,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "accumulated squared gradient of \"X_1\", accumulated squared gradient of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Output(
             0,
             "outputs",
@@ -555,29 +574,34 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "new accumulated squared gradient of \"X_2\"].",
             "T3",
             OpSchema::Variadic,
-            false)
+            false
+        )
         .Attr(
             "alpha",
             "Coefficient of previously accumulated gradient in running average. Default to 0.9.",
             AttributeProto::FLOAT,
-            0.9f)
+            0.9f
+        )
         .Attr(
             "beta",
             "Coefficient of previously accumulated squared-gradient in running average. Default to 0.999.",
             AttributeProto::FLOAT,
-            0.999f)
+            0.999f
+        )
         .Attr(
             "norm_coefficient",
             "Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, "
             "which means no regularization.",
             AttributeProto::FLOAT,
-            0.0f)
+            0.0f
+        )
         .Attr(
             "norm_coefficient_post",
             "Regularization coefficient of 0.5 * norm_coefficient * ||X||_2^2. Default to 0, "
             "which means no regularization.",
             AttributeProto::FLOAT,
-            0.0f)
+            0.0f
+        )
         .Attr("epsilon", "Small scalar to avoid dividing by zero.", AttributeProto::FLOAT, 1e-6f)
         .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float scalars.")
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain input types to 64-bit integer scalars.")
@@ -595,7 +619,8 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             fail_shape_inference(
                 "The sum of optimized tensor count, gradient tensor count, momentum tensor count, ",
                 "accumulated squared-gradient tensor count should be a multiple of 4 in the ",
-                "\"inputs\" of Adam operator.");
+                "\"inputs\" of Adam operator."
+            );
           }
 
           // The count of "X1" and "X2".
@@ -619,6 +644,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             propagateElemTypeFromInputToOutput(ctx, i_in, i_out);
             propagateShapeFromInputToOutput(ctx, i_in, i_out);
           }
-        }));
+        })
+);
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
