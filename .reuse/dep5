@@ -13,7 +13,7 @@ Files: .azure-pipelines/*.yml
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-Files: '*.yml'
+Files: codecov.yml
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
