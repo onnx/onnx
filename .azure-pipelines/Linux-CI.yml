@@ -81,7 +81,7 @@ jobs:
   - script: |
       source venv/bin/activate
 
-      pytest -sv
+      pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml
       if [ $? -ne 0 ]; then
         echo "pytest failed"
         exit 1
@@ -96,6 +96,14 @@ jobs:
       fi
 
     displayName: 'Run ONNX tests'
+
+  - script: |
+      curl -Os https://uploader.codecov.io/latest/linux/codecov
+      chmod +x codecov
+      ./codecov
+
+    continueOnError: true
+    displayName: 'Upload to codecov'
 
   - script: |
       source venv/bin/activate
