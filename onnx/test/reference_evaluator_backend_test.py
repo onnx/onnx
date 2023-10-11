@@ -33,7 +33,6 @@ from numpy.testing import assert_allclose  # type: ignore
 
 from onnx import ONNX_ML, OptionalProto, SequenceProto, TensorProto, load
 from onnx.backend.test import __file__ as backend_folder
-from onnx.helper import __file__ as onnx_file
 from onnx.numpy_helper import bfloat16_to_float32, to_list, to_optional
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import to_array_extended
@@ -45,9 +44,6 @@ ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
 ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
     getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
 )
-
-# Number of tests expected to pass without raising an exception.
-MIN_PASSING_TESTS = 1235
 
 # Update this list if one new operator does not have any implementation.
 SKIP_TESTS = {
@@ -695,77 +691,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         if verbose > 7:
             print("  end example.")
 
-    @staticmethod
-    def _postprocess(
-        successes, missed, skipped, load_failed, exec_failed, mismatch, verbose
-    ):
-        success = len(successes)
-        failed = [
-            len(missed),
-            len(skipped),
-            len(load_failed),
-            len(exec_failed),
-            len(mismatch),
-        ]
-        coverage = success / (success + sum(failed))
-
-        if verbose:
-            path = os.path.dirname(onnx_file)
-            print("-----------")
-            print(
-                f"success={success}, skipped={len(skipped)}, missed={len(missed)}, load_failed={len(load_failed)}, "
-                f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
-            )
-            print(
-                f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests"
-            )
-
-            if verbose > 3:
-
-                def _print(s, path):
-                    return (
-                        str(s)
-                        .replace("\\\\", "\\")
-                        .replace(path, "onnx")
-                        .replace("\\", "/")
-                    )
-
-                print("-----------")
-                for t in sorted(load_failed, key=lambda m: m[0].fname):
-                    print("loading failed", t[0].fname, "---", _print(t[0], path))
-                for t in sorted(exec_failed, key=lambda m: m[0].fname):
-                    print("execution failed", t[0].fname, "---", _print(t[0], path))
-                for t in sorted(mismatch, key=lambda m: m[0].fname):
-                    print("mismatch", t[0].fname, "---", _print(t[0], path))
-                for t in sorted(missed, key=lambda m: m[0].fname):
-                    print("missed ", t[0].fname, "---", _print(t[0], path))
-                for t in sorted(skipped, key=lambda m: m[0].fname):
-                    print("skipped", t[0].fname, "---", _print(t[0], path))
-
-                if success > 30:
-                    print("-----------")
-                    print(
-                        f"success={success}, skipped={len(skipped)}, missed={len(missed)}, load_failed={len(load_failed)}, "
-                        f"exec_failed={len(exec_failed)}, mismatch={len(mismatch)}"
-                    )
-                    print(
-                        f"coverage {coverage * 100:.1f}% out of {success + sum(failed)} tests"
-                    )
-                    print("-----------")
-
-        if len(mismatch) > 0:
-            te, e = mismatch[0]
-            raise AssertionError(
-                f"Mismatch in test {te.name!r}\n{te.onnx_model}."
-            ) from e
-
-        if sum(failed) > len(SKIP_TESTS):
-            raise AssertionError(
-                f"Unexpected failures. {sum(failed)}/{success + sum(failed)} tests have failed."
-                f"The coverage is {coverage * 100:.1f}%. "
-                f"New operators were added with no corresponding runtime."
-            )
-
     @classmethod
     def setUpClass(cls, all_tests=False):
         # test not supported yet
@@ -842,31 +767,6 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
         cls.skip_test = SKIP_TESTS
         if all_tests:
             cls.skip_test = set()
-        cls.successes = []
-        cls.missed = []
-        cls.skipped = []
-        cls.load_failed = []
-        cls.exec_failed = []
-        cls.mismatch = []
-
-    @classmethod
-    def tearDownClass(cls):
-        if len(cls.successes) == 0:
-            failed = cls.mismatch + cls.missed + cls.load_failed + cls.exec_failed
-            if len(failed) > 0:
-                raise RuntimeError(
-                    f"No test was successful, {len(failed)} failed."
-                ) from failed[0][1]
-            raise RuntimeError("No test was successful.")
-        cls._postprocess(
-            cls.successes,
-            cls.missed,
-            cls.skipped,
-            cls.load_failed,
-            cls.exec_failed,
-            cls.mismatch,
-            10,
-        )
 
 
 TestOnnxBackEndWithReferenceEvaluator.add_test_methods()

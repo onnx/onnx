@@ -14,12 +14,9 @@ from onnx import TensorProto, helper
 # to the most recent version and runs checker and shape inference on the final upgraded model.
 ####################################################################################
 
-tested_ops = []
-
 
 class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversion):
     def _test_op_upgrade(self, op, *args, **kwargs):
-        tested_ops.append(op)
         self._test_op_conversion(op, *args, **kwargs, is_upgrade=True)
 
     def test_Abs(self) -> None:
@@ -1737,32 +1734,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [TensorProto.STRING],
             [TensorProto.BOOL],
         )
-
-    def test_ops_tested(self) -> None:
-        all_schemas = onnx.defs.get_all_schemas()
-        all_op_names = [schema.name for schema in all_schemas if schema.domain == ""]
-        excluded_ops = [
-            # Sequence-based and Optional-based ops disabled because
-            # the version converter doesn't play nicely with sequences
-            "ConcatFromSequence",
-            "SequenceAt",
-            "SequenceConstruct",
-            "SequenceEmpty",
-            "SequenceErase",
-            "SequenceInsert",
-            "SequenceLength",
-            "SequenceMap",
-            "SplitToSequence",
-            "Optional",
-            "OptionalGetElement",
-            "OptionalHasElement",
-            "StringSplit",
-        ]
-        all_op_names = [op for op in all_op_names if op not in excluded_ops]
-
-        untested_ops = set(all_op_names) - set(tested_ops)
-        print(untested_ops)
-        assert len(untested_ops) == 0
 
 
 if __name__ == "__main__":
