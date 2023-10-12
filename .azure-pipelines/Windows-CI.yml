@@ -72,7 +72,7 @@ jobs:
       )
 
       pip install -e ".[reference]" -v
-      pytest -n auto
+      pytest -n auto --dist loadscope
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "pytest failed"
         EXIT 1
@@ -118,7 +118,7 @@ jobs:
         pip uninstall -y onnx
         pip install .
 
-        pytest -n auto
+        pytest -n auto --dist loadscope
         IF NOT %ERRORLEVEL% EQU 0 (
           @echo "pytest failed when testing onnx with libprotobuf=3.20"
           EXIT 1
