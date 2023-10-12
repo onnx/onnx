@@ -81,7 +81,7 @@ jobs:
   - script: |
       source venv/bin/activate
 
-      pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml
+      pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto
       if [ $? -ne 0 ]; then
         echo "pytest failed"
         exit 1

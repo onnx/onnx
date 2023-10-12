@@ -73,7 +73,7 @@ jobs:
     displayName: 'Install dependencies and ONNX'
 
   - script: |
-      pytest
+      pytest -n auto
       if [ $? -ne 0 ]; then
         echo "pytest failed"
         exit 1
@@ -83,7 +83,7 @@ jobs:
       export ORT_MAX_IR_SUPPORTED_VERSION=8
       export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
       export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
-      pytest
+      pytest -n auto
       if [ $? -ne 0 ]; then
         echo "pytest failed when testing onnx with onnxruntime"
         exit 1
