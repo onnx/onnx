@@ -496,9 +496,8 @@ class TestOnnxBackEndWithReferenceEvaluator(unittest.TestCase):
                 def _test_(
                     self, te=te, check_other_runtime=None, verbose=0, print_io=False
                 ):
-                    if te.fname in getattr(cls, "skip_test", set()):
-                        cls.skipped.append((te, None))
-                        return
+                    if te.fname in cls.skip_test:
+                        self.skipTest(f"'{te.fname}' is in the skip list.")
                     rtol = getattr(cls, "rtol", {})
                     atol = getattr(cls, "atol", {})
                     if len(rtol) == 0 or len(atol) == 0:
