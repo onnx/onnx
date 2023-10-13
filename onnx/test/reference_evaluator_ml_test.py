@@ -839,6 +839,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         ]
     )
     def test_tree_ensemble_regressor(self, name, base_values, agg):
+        self.assertTrue(ONNX_ML)
         del name  # variable only used to print test name
         x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
         expected_agg = {
