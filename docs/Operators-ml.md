@@ -1038,9 +1038,9 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembl
 <dt><tt>aggregate_function</tt> : string (default is SUM)</dt>
 <dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE,' 'SUM,' 'MIN,' 'MAX.'</dd>
 <dt><tt>base_values</tt> : list of floats</dt>
-<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dd>Base values for regression, added to final prediction after applying aggregate_function; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
 <dt><tt>base_values_as_tensor</tt> : tensor</dt>
-<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dd>Base values for regression, added to final prediction after applying aggregate_function; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
 <dt><tt>n_targets</tt> : int</dt>
 <dd>The total number of targets.</dd>
 <dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
