@@ -830,7 +830,6 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         check_model(onx)
         return onx
 
-    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     @parameterized.expand(
         [
             (f"{agg}_{base_values}", base_values, agg)
@@ -838,6 +837,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             for agg in ("SUM", "AVERAGE", "MIN", "MAX")
         ]
     )
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor(self, name, base_values, agg):
         self.assertTrue(ONNX_ML)
         del name  # variable only used to print test name
