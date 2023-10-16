@@ -402,8 +402,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                   value_type,
                   " must be the same in the LabelEncoder.");
             }
-            if (1 != default_tensor.dims_size()) {
-              fail_shape_inference("The default tensor must be a 1D tensor.");
+            if (1 != default_tensor.dims_size() || 1 != default_tensor.dims(0)) {
+              fail_shape_inference("The default tensor must be a singleton 1D tensor.");
             }
           }
           // Propagate shape from input type and assign output type based on value type
