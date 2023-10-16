@@ -242,5 +242,5 @@ class ReduceSum(Base):
             node,
             inputs=[data, axes],
             outputs=[reduced],
-            name="test_reduce_sum_empty_set",
+            name="test_reduce_sum_empty_set_non_reduced_axis_zero",
         )
