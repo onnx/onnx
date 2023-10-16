@@ -382,28 +382,6 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             fail_shape_inference(
                 "At least one of values_tensor, values_strings, values_int64s, values_floats must be set.");
           }
-
-          int default_length, default_type;
-          std::tie(default_type, default_length) = getAttributeElementTypeAndLength(
-              ctx, {"default_tensor", "default_string", "default_int64", "default_float"});
-          if (default_type != TensorProto::UNDEFINED) {
-            if (value_type != default_type) {
-              fail_shape_inference(
-                  "The value type ",
-                  value_type,
-                  " and the default type ",
-                  default_type,
-                  " are different, which is not permitted for LabelEncoders.");
-            }
-
-            // Ensure default_tensor is a singleton if set
-            const AttributeProto* default_tensor = ctx.getAttribute("default_tensor");
-            if (default_tensor != nullptr &&
-                (default_tensor->t().dims_size() != 1 || default_tensor->t().dims(0) != 1)) {
-              fail_shape_inference("default_tensor must be a singleton if set.");
-            }
-          }
-
           if (value_length != key_length) {
             fail_shape_inference(
                 "The number of keys ",
