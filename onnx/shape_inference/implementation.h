@@ -29,6 +29,39 @@ using ModelLocalFunctionsMap = std::unordered_map<std::string, const FunctionPro
 // A DataValueMap is used to store the statically known (partial) values of variables.
 using DataValueMap = std::unordered_map<std::string, TensorShapeProto>;
 
+// InferredTypes: abstracts the differences between FunctionProto and GraphProto
+// for inference. For GraphProto, inferred types are stored in the GraphProto
+// but FunctionProto does not have a place to store inferred types. So, we
+// use a temporary vector (for the duration of inference) to store these.
+class InferredTypes {
+ public:
+  explicit InferredTypes(GraphProto* graph = nullptr) : graph_ptr(graph) {}
+
+  TypeProto* Add(const std::string& var_name, const TypeProto& type) {
+    if (graph_ptr != nullptr) {
+      auto* p = graph_ptr->add_value_info();
+      p->set_name(var_name);
+      *p->mutable_type() = type;
+      return p->mutable_type();
+    } else {
+      auto* p = new TypeProto(type);
+      types.push_back(p);
+      return p;
+    }
+  }
+
+  ~InferredTypes() {
+    for (auto* p : types) {
+      delete p;
+    }
+  }
+
+ private:
+  std::vector<TypeProto*> types;
+  GraphProto* graph_ptr;
+  ONNX_DISALLOW_COPY_ASSIGNMENT_AND_MOVE(InferredTypes);
+};
+
 class SymbolTableImpl : public SymbolTable {
  public:
   SymbolTableImpl() : index_(0) {}
