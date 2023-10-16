@@ -392,7 +392,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
 
           auto default_attr = ctx.getAttribute("default_tensor");
-          if (nullptr != default_attr) {
+          if (nullptr != default_attr && default_attr->has_t() && default_attr->t().has_data_type() &&
+              default_attr->t().data_type() != TensorProto_DataType_UNDEFINED) {
             auto default_tensor = default_attr->t();
             if (default_tensor.data_type() != value_type) {
               fail_shape_inference(
