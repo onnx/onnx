@@ -391,6 +391,21 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                 " must be the same in the LabelEncoder.");
           }
 
+          auto default_attr = ctx.getAttribute("default_tensor");
+          if (nullptr != default_attr) {
+            auto default_tensor = default_attr->t();
+            if (default_tensor.data_type() != value_type) {
+              fail_shape_inference(
+                  "The default tensor type ",
+                  default_tensor.data_type(),
+                  " and the value type ",
+                  value_type,
+                  " must be the same in the LabelEncoder.");
+            }
+            if (1 != default_tensor.dims_size()) {
+              fail_shape_inference("The default tensor must be a 1D tensor.");
+            }
+          }
           // Propagate shape from input type and assign output type based on value type
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(value_type);
           propagateShapeFromInputToOutput(ctx, 0, 0);
