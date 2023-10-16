@@ -260,7 +260,7 @@ std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const
 // use a temporary vector (for the duration of inference) to store these.
 class InferredTypes {
  public:
-  explicit InferredTypes(GraphProto* graph = nullptr) : graph_ptr(graph) {}
+  InferredTypes(GraphProto* graph = nullptr) : graph_ptr(graph) {}
 
   TypeProto* Add(const std::string& var_name, const TypeProto& type) {
     if (graph_ptr != nullptr) {
