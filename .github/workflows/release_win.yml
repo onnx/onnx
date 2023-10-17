@@ -61,7 +61,10 @@ jobs:
         if ('${{ matrix.architecture }}' -eq 'x86') {
           $arch = 'Win32'
         }
-
+        echo "Before Install Protobuf"
+        protoc
+        protoc --version
+        pip show protobuf
         . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
 
@@ -71,7 +74,7 @@ jobs:
         $Env:PATH="$Env:PATH;D:\\a\\onnx\\onnx\\protobuf-3.21.12\\protobuf_install\\bin;D:\\a\\onnx\\onnx\\protobuf-3.21.12\\protobuf_install\\lib;D:\\a\\onnx\\onnx\\protobuf-3.21.12\\protobuf_install\\include"
         echo "$GITHUB_CONTEXT"
         echo "$PATH"
-        echo "end"
+        echo "Install ONNX end"
 
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly PyPI package"
