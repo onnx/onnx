@@ -68,15 +68,17 @@ jobs:
         echo "Install ONNX"
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+        $Env:PATH="$Env:PATH;D:\\a\\onnx\\onnx\\protobuf-3.21.12\\protobuf_install\\bin;D:\\a\\onnx\\onnx\\protobuf-3.21.12\\protobuf_install\\lib;D:\\a\\onnx\\onnx\\protobuf-3.21.12\\protobuf_install\\include"
         echo "$GITHUB_CONTEXT"
         echo "$PATH"
+        echo "end"
 
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
         }
-        python setup.py bdist_wheel
+        python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
 
     - name: Test the installed wheel
