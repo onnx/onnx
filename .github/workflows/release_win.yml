@@ -67,11 +67,9 @@ jobs:
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          $Env:CMAKE_ARGS="-DCMAKE_GENERATOR_PLATFORM=Win32 -DONNX_USE_LITE_PROTO=ON"
-        } else {
-          $Env:CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
-        }
+        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+        echo "$GITHUB_CONTEXT"
+        set
 
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly PyPI package"
