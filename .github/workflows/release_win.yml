@@ -55,6 +55,7 @@ jobs:
         if ('${{ matrix.architecture }}' -eq 'x86') {
           $arch = 'Win32'
         }
+        pip show protobuf
         echo "Before Install Protobuf"
         . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
