@@ -16,7 +16,7 @@ permissions:  # set top-level default permissions as security best practice
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    runs-on: windows-2022
+    runs-on: windows-latest
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
@@ -67,7 +67,11 @@ jobs:
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          $Env:CMAKE_ARGS="-DCMAKE_GENERATOR_PLATFORM=Win32 -DONNX_USE_LITE_PROTO=ON"
+        } else {
+          $Env:CMAKE_ARGS="-DCMAKE_GENERATOR_PLATFORM=x64 -DONNX_USE_LITE_PROTO=ON"
+        }
 
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly PyPI package"
