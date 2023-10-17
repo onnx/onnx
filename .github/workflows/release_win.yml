@@ -63,13 +63,15 @@ jobs:
         }
 
         . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        
+        $Env:PATH="$ENV:PATH;D:\a\onnx\onnx\protobuf-3.21.12\protobuf_install\bin;D:\a\onnx\onnx\protobuf-3.21.12\protobuf_install\lib;D:\a\onnx\onnx\protobuf-3.21.12\protobuf_install\include"
         cd onnx
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
         echo "$GITHUB_CONTEXT"
-        set
+        
 
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly PyPI package"
