@@ -16,7 +16,12 @@ from onnx import TensorProto, helper
 
 
 class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversion):
+    @classmethod
+    def setUpClass(cls):
+        self.tested_ops = []
+
     def _test_op_upgrade(self, op, *args, **kwargs):
+        self.tested_ops.append(op)
         self._test_op_conversion(op, *args, **kwargs, is_upgrade=True)
 
     def test_Abs(self) -> None:
@@ -1734,6 +1739,32 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [TensorProto.STRING],
             [TensorProto.BOOL],
         )
+
+    def test_ops_tested(self) -> None:
+        # NOTE: This test is order dependent and needs to run last in this class
+        all_schemas = onnx.defs.get_all_schemas()
+        all_op_names = {schema.name for schema in all_schemas if schema.domain == ""}
+        excluded_ops = {
+            # Sequence-based and Optional-based ops disabled because
+            # the version converter doesn't play nicely with sequences
+            "ConcatFromSequence",
+            "SequenceAt",
+            "SequenceConstruct",
+            "SequenceEmpty",
+            "SequenceErase",
+            "SequenceInsert",
+            "SequenceLength",
+            "SequenceMap",
+            "SplitToSequence",
+            "Optional",
+            "OptionalGetElement",
+            "OptionalHasElement",
+            "StringSplit",
+        }
+        expected_tested_ops = all_op_names - excluded_ops
+
+        untested_ops = expected_tested_ops - set(tested_ops)
+        self.assertEqual(untested_ops, {})
 
 
 if __name__ == "__main__":
