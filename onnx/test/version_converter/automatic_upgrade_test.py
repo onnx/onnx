@@ -18,7 +18,7 @@ from onnx import TensorProto, helper
 class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversion):
     @classmethod
     def setUpClass(cls):
-        self.tested_ops = []
+        cls.tested_ops = []
 
     def _test_op_upgrade(self, op, *args, **kwargs):
         self.tested_ops.append(op)
