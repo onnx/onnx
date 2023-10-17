@@ -542,8 +542,8 @@ if(BUILD_ONNX_PYTHON)
 
   add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
-  set_target_properties(onnx_cpp2py_export
-                        PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  # set_target_properties(onnx_cpp2py_export
+  #                       PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
