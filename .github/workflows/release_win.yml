@@ -16,8 +16,7 @@ permissions:  # set top-level default permissions as security best practice
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    runs-on: windows-2019
-      
+    runs-on: windows-2022
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
