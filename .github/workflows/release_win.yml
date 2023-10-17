@@ -62,9 +62,6 @@ jobs:
           $arch = 'Win32'
         }
         echo "Before Install Protobuf"
-        protoc
-        protoc --version
-        pip show protobuf
         . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
 
