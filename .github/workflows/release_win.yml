@@ -69,14 +69,14 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
         echo "$GITHUB_CONTEXT"
-        echo "$Env:PATH"
+        echo "$PATH"
 
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
         }
-        python -m build --wheel
+        python setup.py bdist_wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
 
     - name: Test the installed wheel
