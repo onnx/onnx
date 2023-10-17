@@ -1764,7 +1764,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         expected_tested_ops = all_op_names - excluded_ops
 
         untested_ops = expected_tested_ops - set(self.tested_ops)
-        self.assertEqual(untested_ops, {})
+        self.assertEqual(untested_ops, set())
 
 
 if __name__ == "__main__":
