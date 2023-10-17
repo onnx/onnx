@@ -48,12 +48,6 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        cd onnx
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
-          sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
-        }
-        python -m pip install -q -r requirements-release.txt
 
     - name: Build ONNX wheel
       run: |
@@ -64,6 +58,12 @@ jobs:
         echo "Before Install Protobuf"
         . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
+
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
+          sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
+        }
+        python -m pip install -q -r requirements-release.txt
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
