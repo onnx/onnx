@@ -16,6 +16,7 @@
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
+#include "onnx/large_onnx/large_onnx.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
@@ -671,6 +672,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   printer.def("model_to_text", ProtoBytesToText<ModelProto>);
   printer.def("function_to_text", ProtoBytesToText<FunctionProto>);
   printer.def("graph_to_text", ProtoBytesToText<GraphProto>);
+
+  // Submodule `large_onnx`
+  auto large_onnx_sub = onnx_cpp2py_export.def_submodule("large_onnx");
+  defs.doc() = "API to create large onnx models";
+
+  py::class_<LargeModelProto> large_model(large_onnx_sub, "LargeModelProto", "Large Model Proto");
+  large_model.def(
+      "set_model_proto", &LargeModelProto::SetModelProto, py::arg("model_proto"), "Initilize the model proto.");
 }
 
 } // namespace ONNX_NAMESPACE
