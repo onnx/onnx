@@ -55,6 +55,41 @@ jobs:
         }
         python -m pip install -q -r requirements-release.txt
 
+    - name: Build and test ONNX binaries
+      run: |
+        $arch = 'x64'
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          $arch = 'Win32'
+        }
+
+        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+
+        cd onnx
+        echo "Build ONNX"
+        cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_DISABLE_EXCEPTIONS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -S . -B .setuptools-cmake-build\
+        cd .setuptools-cmake-build\
+        msbuild onnx.sln /m /p:Configuration=Release
+
+        echo "Run gtests"
+        Release\onnx_gtests.exe
+        if($lastexitcode -ne 0) {
+          EXIT 1
+        }
+
+        cd ..
+        git clean -xdf
+        echo "Build ONNX with non-static registration for testing selective ONNX schema loading"
+        cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -DONNX_DISABLE_STATIC_REGISTRATION=ON -S . -B .setuptools-cmake-build\
+
+        cd .setuptools-cmake-build\
+        msbuild onnx.sln /m /p:Configuration=Release
+
+        echo "Only test selective ONNX schema loading"
+        Release\onnx_gtests.exe --gtest_filter="SchemaRegistrationTest*"
+        if($lastexitcode -ne 0) {
+          EXIT 1
+        }
+
     - name: Build ONNX wheel
       run: |
         $arch = 'x64'
