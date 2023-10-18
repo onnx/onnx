@@ -48,6 +48,12 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
+        cd onnx
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
+          sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
+        }
+        python -m pip install -q -r requirements-release.txt
 
     - name: Build ONNX wheel
       run: |
@@ -55,24 +61,13 @@ jobs:
         if ('${{ matrix.architecture }}' -eq 'x86') {
           $arch = 'Win32'
         }
-        pip show protobuf
-        echo "Before Install Protobuf"
+        pacman -S --needed git base-devel mingw-w64-x86_64-toolchain
         . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
-
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
-          sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
-        }
-        python -m pip install -q -r requirements-release.txt
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
-        $Env:PATH="$Env:PATH;D:\\a\\onnx\\onnx\\protobuf-3.21.12\\protobuf_install\\bin;D:\\a\\onnx\\onnx\\protobuf-3.21.12\\protobuf_install\\lib;D:\\a\\onnx\\onnx\\protobuf-3.21.12\\protobuf_install\\include"
-        echo "$GITHUB_CONTEXT"
-        echo "$PATH"
-        echo "Install ONNX end"
 
         if ('${{ github.event_name }}' -eq 'schedule') {
           echo "Build weekly PyPI package"
