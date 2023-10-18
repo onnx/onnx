@@ -43,12 +43,12 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 
 # Contribute
 
-ONNX is a community project and the open governance model is described [here](community/readme.md). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [Special Interest Groups](community/sigs.md) and [Working Groups](community/working-groups.md) to shape the future of ONNX.
+ONNX is a community project and the open governance model is described [here](https://github.com/onnx/onnx/blob/main/community/readme.md). We encourage you to join the effort and contribute feedback, ideas, and code. You can participate in the [Special Interest Groups](https://github.com/onnx/onnx/blob/main/community/sigs.md) and [Working Groups](https://github.com/onnx/onnx/blob/main/community/working-groups.md) to shape the future of ONNX.
 
-Check out our [contribution guide](/CONTRIBUTING.md) to get started.
+Check out our [contribution guide](https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md) to get started.
 
 If you think some operator should be added to ONNX specification, please read
-[this document](docs/AddNewOp.md).
+[this document](https://github.com/onnx/onnx/blob/main/docs/AddNewOp.md).
 
 # Community meetings
 
@@ -280,7 +280,7 @@ For full list refer to CMakeLists.txt
 * `USE_MSVC_STATIC_RUNTIME` should be 1 or 0, not ON or OFF. When set to 1 onnx links statically to runtime library.
 **Default**: `USE_MSVC_STATIC_RUNTIME=0`
 
-* `DEBUG` should be 0 or 1. When set to 1 onnx is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file](CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
+* `DEBUG` should be 0 or 1. When set to 1 onnx is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/main/CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 **Default**: `Debug=0`
 
 ### CMake variables
@@ -321,7 +321,7 @@ pytest
 
 # Development
 
-Check out the [contributor guide](/CONTRIBUTING.md) for instructions.
+Check out the [contributor guide](https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md) for instructions.
 
 # License
 
