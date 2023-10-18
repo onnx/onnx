@@ -190,11 +190,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
         // use stat64 to check whether the file exists
-#if defined(__APPLE__) || defined(__wasm__)
-        struct stat buffer; // APPLE does not have stat64
+#if defined(__APPLE__) || defined(__wasm__) || !defined(__GLIBC__)
+        struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
         if (stat((data_path).c_str(), &buffer) != 0) {
 #else
-        struct stat64 buffer; // All POSIX except APPLE have stat64
+        struct stat64 buffer; // All POSIX under glibc except APPLE and wasm have stat64
         if (stat64((data_path).c_str(), &buffer) != 0) {
 #endif
           fail_check(

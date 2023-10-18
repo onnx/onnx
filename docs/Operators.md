@@ -545,7 +545,7 @@ This version of the operator has been available since version 20 of the default 
 
 <dl>
 <dt><tt>grid</tt> (differentiable) : T1</dt>
-<dd>output tensor of shape (N, C, H, W, 2) of 2D sample coordinates or (N, C, D, H, W, 3) of 3D sample coordinates.</dd>
+<dd>output tensor of shape (N, H, W, 2) of 2D sample coordinates or (N, D, H, W, 3) of 3D sample coordinates.</dd>
 </dl>
 
 #### Type Constraints
@@ -23094,7 +23094,7 @@ expect(
     node,
     inputs=[data, axes],
     outputs=[reduced],
-    name="test_reduce_sum_empty_set",
+    name="test_reduce_sum_empty_set_non_reduced_axis_zero",
 )
 ```
 
