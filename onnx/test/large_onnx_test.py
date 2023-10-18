@@ -13,7 +13,9 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.numpy_helper import from_array
-from onnx.large_onnx import make_large_model, LargeModelProto
+from onnx.large_proto import LargeModelProto
+from onnx.large_helper import make_large_proto
+
 
 
 class TestLargeOnnx(unittest.TestCase):

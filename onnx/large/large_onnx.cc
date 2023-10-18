@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/large_onnx/large_onnx.h"
+#include "onnx/large/large_onnx.h"
 
 #include <functional>
 #include <string>

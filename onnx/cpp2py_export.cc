@@ -674,7 +674,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   printer.def("graph_to_text", ProtoBytesToText<GraphProto>);
 
   // Submodule `large_onnx`
-  auto large_onnx_sub = onnx_cpp2py_export.def_submodule("large_onnx");
+  auto large_onnx_sub = onnx_cpp2py_export.def_submodule("large_proto");
   defs.doc() = "API to create large onnx models";
 
   py::class_<LargeModelProto> large_model(large_onnx_sub, "LargeModelProto", "Large Model Proto");

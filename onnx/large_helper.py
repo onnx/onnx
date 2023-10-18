@@ -5,7 +5,7 @@
 from typing import Any, List, Optional, Sequence, Tuple
 
 from onnx import IR_VERSION, FunctionProto, GraphProto, ModelProto, OperatorSetIdProto
-from onnx.large_onnx import LargeModelProto
+from onnx.large_proto import LargeModelProto
 from onnx.helper import make_model
 
 
