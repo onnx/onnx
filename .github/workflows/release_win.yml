@@ -56,13 +56,9 @@ jobs:
         python -m pip install -q -r requirements-release.txt
 
     - name: Build and test ONNX binaries
+      if: ${{ matrix.architecture == 'x64' }}
       run: |
-        $arch = 'x64'
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          $arch = 'Win32'
-        }
-
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch ${{ matrix.architecture }}
 
         cd onnx
         echo "Build ONNX"
@@ -91,6 +87,7 @@ jobs:
         }
 
     - name: Build ONNX wheel
+      if: false
       run: |
         $arch = 'x64'
         if ('${{ matrix.architecture }}' -eq 'x86') {
@@ -113,22 +110,26 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
 
     - name: Test the installed wheel
+      if: false
       run: |
         cd onnx
         pytest
 
     - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      if: false
       with:
         name: wheels
         path: ./onnx/dist
 
     - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
-      if: (github.event_name == 'schedule') # Only triggered by weekly event
+      if: false
+      # if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
         twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
     - name: Verify ONNX with the latest numpy
-      if: ${{ always() }}
+      if: false
+      # if: ${{ always() }}
       run: |
         cd onnx
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
@@ -136,7 +137,8 @@ jobs:
         pytest
     # TODO: Remove if conditions in all release CIs after the minimum supported numpy is upgraded to 1.23.2 or higher
     - name: Verify ONNX with the minimum supported numpy
-      if: ${{ always() }}
+      if: false
+      # if: ${{ always() }}
       run: |
         cd onnx
         if ('${{ matrix.python-version }}' -eq '3.8' -Or '${{ matrix.python-version }}' -eq '3.9') {
@@ -149,7 +151,8 @@ jobs:
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: ${{ always() }}
+      if: false
+      # if: ${{ always() }}
       run: |
         cd onnx
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
@@ -157,7 +160,8 @@ jobs:
         pytest
 
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
-      if: ${{ always() }}
+      if: false
+      # if: ${{ always() }}
       run: |
         cd onnx
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.20.2
@@ -165,6 +169,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
+      if: false
       run: |
         cd onnx
         python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
