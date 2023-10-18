@@ -54,6 +54,8 @@ defs
 external_data_helper
 helper
 hub
+large_helper
+large_proto
 mapping
 numpy_helper
 parser
