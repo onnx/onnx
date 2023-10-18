@@ -87,14 +87,14 @@ jobs:
         }
 
     - name: Build ONNX wheel
-      if: false
+      if: ${{ matrix.architecture == 'x64' }}
       run: |
-        $arch = 'x64'
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          $arch = 'Win32'
-        }
+        # $arch = 'x64'
+        # if ('${{ matrix.architecture }}' -eq 'x86') {
+        #   $arch = 'Win32'
+        # }
 
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        # . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
 
         echo "Install ONNX"
