@@ -1,13 +1,6 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-# initialization
-#
-# defines dlpack_SOURCE_DIR dlpack_BINARY_DIR
-
-#
-# dlpack
-#
 
 set(dlpack_TAG "v0.8")
 
@@ -31,6 +24,6 @@ message(STATUS "dlpack_VERSION=${dlpack_VERSION}")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  LocalDLPack
+  dlpack
   VERSION_VAR dlpack_VERSION
   REQUIRED_VARS dlpack_SOURCE_DIR dlpack_BINARY_DIR dlpack_INCLUDE_DIR)

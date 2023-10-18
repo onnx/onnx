@@ -1,8 +1,8 @@
 # onnx.large_proto
 
-## LargeModelProto
+## CLargeModelProto
 
 ```{eval-rst}
-.. autoclass:: onnx.large_proto.LargeModelProto
+.. autoclass:: onnx.large_proto.CLargeModelProto
     :members:
 ```

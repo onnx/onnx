@@ -128,6 +128,7 @@ if(ONNX_BUILD_TESTS)
   include(googletest)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/external")
 find_package(dlpack REQUIRED)
 if(dlpack_FOUND)
   message(STATUS "Found DLPack ${dlpack_VERSION} at ${dlpack_SOURCE_DIR}")
@@ -531,6 +532,7 @@ else()
   add_library(onnx ${ONNX_SRCS})
 endif()
 
+target_include_directories(onnx PRIVATE "${dlpack_INCLUDE_DIR}")
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>

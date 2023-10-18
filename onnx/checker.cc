@@ -158,7 +158,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         }
         std::wstring data_path = path_join(utf8str_to_wstring(ctx.get_model_dir()), relative_path);
         struct _stat64 buff;
-        if (_wstat64(data_path.c_str(), &buff) != 0) {
+        if (data_path.empty() || (data_path[0] != '#' && _wstat64(data_path.c_str(), &buff) != 0)) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -192,10 +192,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         // use stat64 to check whether the file exists
 #if defined(__APPLE__) || defined(__wasm__) || !defined(__GLIBC__)
         struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
-        if (stat((data_path).c_str(), &buffer) != 0) {
+        if (data_path.empty() || (data_path[0] != '#' && stat((data_path).c_str(), &buffer) != 0)) {
 #else
         struct stat64 buffer; // All POSIX under glibc except APPLE and wasm have stat64
-        if (stat64((data_path).c_str(), &buffer) != 0) {
+        if (data_path.empty() || (data_path[0] != '#' && stat64((data_path).c_str(), &buffer) != 0)) {
 #endif
           fail_check(
               "Data of TensorProto ( tensor name: ",
@@ -205,7 +205,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               ", but it doesn't exist or is not accessible.");
         }
         // Do not allow symlinks or directories.
-        if (!S_ISREG(buffer.st_mode)) {
+        if (data_path.empty() || (data_path[0] != '#' && !S_ISREG(buffer.st_mode))) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),

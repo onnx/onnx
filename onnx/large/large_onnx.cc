@@ -25,22 +25,29 @@ namespace ONNX_NAMESPACE {
 namespace large_onnx {
 
 LargeModelProto::LargeModelProto() {}
-LargeModelProto::~LargeTensorProto() {
+LargeModelProto::~LargeModelProto() {
   // Calls the dlpack destructor of every external tensor.
 }
 
-void SetModelProto(ModelProto&& proto) {
+void LargeModelProto::SetModelProto(ModelProto& proto) {
   model_proto_ = proto;
 }
 
-void LargeModelProto::Append(TensorProto& large_tensor, DLManagedTensor* dlpack) {
-  throw std::runtime_runtime("Not implemented yet.");
+void LargeModelProto::Append(TensorProto&&, DLManagedTensor*) {
+  throw std::runtime_error("Not implemented yet.");
 }
 
-void LargeModelProto::SerializeToString(std::string& out) throw std::runtime_runtime("Not implemented yet.");
+void LargeModelProto::SerializeToString(std::string&) {
+  throw std::runtime_error("Not implemented yet.");
 }
-void LargeModelProto::Load(const std::string& path, bool load_large_tensors = false) {}
-void LargeModelProto::Save(const std::string& path, bool save_large_tensor = true) {}
+
+void LargeModelProto::Load(const std::string&, bool) {
+  throw std::runtime_error("Not implemented yet.");
+}
+
+void LargeModelProto::Save(const std::string&, bool) {
+  throw std::runtime_error("Not implemented yet.");
+}
 
 } // namespace large_onnx
 } // namespace  ONNX_NAMESPACE
