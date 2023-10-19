@@ -167,9 +167,12 @@ class CmakeBuild(setuptools.Command):
                 f"-DPYTHON_EXECUTABLE={sys.executable}",
                 "-DBUILD_ONNX_PYTHON=ON",
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF",
+                "-DONNX_USE_LITE_PROTO=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
                 f"-DPY_EXT_SUFFIX={get_ext_suffix() or ''}",
             ]
+
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
             if COVERAGE or DEBUG:
