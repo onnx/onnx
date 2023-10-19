@@ -49,15 +49,6 @@ class TestLargeOnnx(unittest.TestCase):
         checker.check_model(onnx_model)
         return onnx_model
 
-    @unittest.skip("not fully implemented yet")
-    def test_c_large_onnx_no_large_initializer(self):
-        from onnx.large_proto import CLargeModelProto
-
-        model_proto = self._linear_regression()
-        assert isinstance(large_proto, ModelProto)
-        large_model = make_c_large_model(model_proto.graph)
-        assert isinstance(large_model, CLargeModelProto)
-
     def test_large_onnx_no_large_initializer(self):
         model_proto = self._linear_regression()
         assert isinstance(model_proto, ModelProto)

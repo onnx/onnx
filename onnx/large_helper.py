@@ -2,15 +2,15 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import enum
 import os
 import struct
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 
 from onnx import GraphProto, ModelProto, TensorProto, checker
-from onnx.external_data_helper import set_external_data
-from onnx.helper import make_model, np_dtype_to_tensor_dtype, tensor_dtype_to_np_dtype
+from onnx.helper import make_model, tensor_dtype_to_np_dtype
 
 
 def make_large_tensor_proto(
@@ -46,6 +46,18 @@ def make_large_tensor_proto(
     tensor.data_type = tensor_type
     tensor.dims.extend(shape)
     return tensor
+
+
+class LargeOnnxFileFormat(enum.IntEnum):
+    # One single file with extension `.lonnx`.
+    # This format has no constraint on the initializer size.
+    # However, the main graph still need to be under 2Gb as it
+    # relies on protobuf.
+    LARGE_ONNX = 1
+
+    # Multiple files, one file with extension `.onnx` for the
+    # main graph and one file `.weight` for every large initializer.
+    ONNX_AND_WEIGHTS = 2
 
 
 class LargeModelProto:
@@ -130,9 +142,11 @@ class LargeModelProto:
                 )
         self.large_initializers = large_initializers
 
-    def save(self, file_path: str):
+    def _save_lonnx(self, file_path: str):
         """
         Save the large model into a single file.
+
+        :param file_path: model file
         """
         ext = os.path.splitext(file_path)[-1]
         if ext != ".lonnx":
@@ -173,7 +187,25 @@ class LargeModelProto:
                 f.write(struct.pack("I", tensor_index))
                 f.write(buffer)
 
-    def load(
+    def save(
+        self,
+        file_path: str,
+        file_format: LargeOnnxFileFormat = LargeOnnxFileFormat.LARGE_ONNX,
+    ):
+        """
+        Save the large model into a single file.
+
+        :param file_path: model file
+        :param file_format: format to use
+        """
+        if file_format == LargeOnnxFileFormat.LARGE_ONNX:
+            self._save_lonnx(file_path)
+            return
+        raise ValueError(
+            f"Unsupported format {file_format}. It is not implemented yet."
+        )
+
+    def _load_lonnx(
         self, file_path: str, load_large_initializers: bool = True
     ) -> "LargeModelProto":
         ext = os.path.splitext(file_path)[-1]
@@ -201,6 +233,27 @@ class LargeModelProto:
                     ).reshape(tuple(init.dims))
                     location = self.get_tensor_location(init)
                     self.large_initializers[location] = np_tensor
+
+    def load(
+        self, file_path: str, load_large_initializers: bool = True
+    ) -> "LargeModelProto":
+        """
+        Load the large model from a single file.
+        The format is guessed based on the file extension.
+        `.lonnx` means the large onnx file format.
+
+        :param file_path: model file
+        :param load_large_initializers: loads the large initializers,
+            if not done, the model is incomplete but it can be used to
+            look into the model without executing it
+        """
+        ext = os.path.splitext(file_path)[-1]
+        if ext == ".lonnx":
+            self._load_lonnx(file_path, load_large_initializers=load_large_initializers)
+            return
+        raise ValueError(
+            f"Unsupported format {file_format}. It is not implemented yet."
+        )
 
 
 def make_large_model(
