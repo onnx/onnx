@@ -423,46 +423,53 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   float floatval = 0.0;
   double dblval = 0.0;
   std::string strval;
-  MATCH('{');
-  if (!Matches('}')) {
-    do {
-      switch (static_cast<TensorProto::DataType>(elem_type)) {
-        case TensorProto::DataType::TensorProto_DataType_INT8:
-        case TensorProto::DataType::TensorProto_DataType_INT16:
-        case TensorProto::DataType::TensorProto_DataType_INT32:
-        case TensorProto::DataType::TensorProto_DataType_UINT8:
-        case TensorProto::DataType::TensorProto_DataType_UINT16:
-        case TensorProto::DataType::TensorProto_DataType_BOOL:
-          PARSE_TOKEN(intval);
-          // TODO: check values are in the correct range.
-          tensorProto.add_int32_data(intval);
-          break;
-        case TensorProto::DataType::TensorProto_DataType_INT64:
-          PARSE_TOKEN(intval);
-          tensorProto.add_int64_data(intval);
-          break;
-        case TensorProto::DataType::TensorProto_DataType_UINT32:
-        case TensorProto::DataType::TensorProto_DataType_UINT64:
-          PARSE_TOKEN(uintval);
-          tensorProto.add_uint64_data(uintval);
-          break;
-        case TensorProto::DataType::TensorProto_DataType_FLOAT:
-          PARSE_TOKEN(floatval);
-          tensorProto.add_float_data(floatval);
-          break;
-        case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-          PARSE_TOKEN(dblval);
-          tensorProto.add_double_data(dblval);
-          break;
-        case TensorProto::DataType::TensorProto_DataType_STRING:
-          PARSE_TOKEN(strval);
-          tensorProto.add_string_data(strval);
-          break;
-        default:
-          return ParseError("Unhandled type: %d", elem_type);
-      }
-    } while (Matches(','));
-    MATCH('}');
+  if (Matches('{')) {
+    if (!Matches('}')) {
+      do {
+        switch (static_cast<TensorProto::DataType>(elem_type)) {
+          case TensorProto::DataType::TensorProto_DataType_INT8:
+          case TensorProto::DataType::TensorProto_DataType_INT16:
+          case TensorProto::DataType::TensorProto_DataType_INT32:
+          case TensorProto::DataType::TensorProto_DataType_UINT8:
+          case TensorProto::DataType::TensorProto_DataType_UINT16:
+          case TensorProto::DataType::TensorProto_DataType_BOOL:
+            PARSE_TOKEN(intval);
+            // TODO: check values are in the correct range.
+            tensorProto.add_int32_data(intval);
+            break;
+          case TensorProto::DataType::TensorProto_DataType_INT64:
+            PARSE_TOKEN(intval);
+            tensorProto.add_int64_data(intval);
+            break;
+          case TensorProto::DataType::TensorProto_DataType_UINT32:
+          case TensorProto::DataType::TensorProto_DataType_UINT64:
+            PARSE_TOKEN(uintval);
+            tensorProto.add_uint64_data(uintval);
+            break;
+          case TensorProto::DataType::TensorProto_DataType_FLOAT:
+            PARSE_TOKEN(floatval);
+            tensorProto.add_float_data(floatval);
+            break;
+          case TensorProto::DataType::TensorProto_DataType_DOUBLE:
+            PARSE_TOKEN(dblval);
+            tensorProto.add_double_data(dblval);
+            break;
+          case TensorProto::DataType::TensorProto_DataType_STRING:
+            PARSE_TOKEN(strval);
+            tensorProto.add_string_data(strval);
+            break;
+          default:
+            return ParseError("Unhandled type: %d", elem_type);
+        }
+      } while (Matches(','));
+      MATCH('}');
+    }
+  }
+  else if (Matches('[')) {
+    tensorProto.set_data_location(TensorProto::DataLocation::TensorProto_DataLocation_EXTERNAL);
+    auto &externalData = *tensorProto.mutable_external_data();
+    Parse(externalData);
+    MATCH(']');
   }
   return Status::OK();
 }
