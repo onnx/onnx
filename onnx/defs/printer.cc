@@ -196,7 +196,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
   if (is_initializer) {
     output_ << " = ";
   }
-  // TODO: does not yet handle all types or externally stored data.
+  // TODO: does not yet handle all types
   if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
       case TensorProto::DataType::TensorProto_DataType_INT32:
