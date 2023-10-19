@@ -10,7 +10,6 @@ param(
     [String]$build_type = "Release"
 )
 
-Install-Module -Name AWSPowerShell -RequiredVersion 4.1.420
 echo "Build protobuf from source on Windows."
 Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz -OutFile protobuf.tar.gz -Verbose
 tar -xvf protobuf.tar.gz
