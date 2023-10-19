@@ -6,6 +6,7 @@ parameterized
 protobuf==4.21.12
 pytest
 pytest-cov
+pytest-xdist
 setuptools
 twine
 wheel
