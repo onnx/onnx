@@ -377,6 +377,19 @@ Status OnnxParser::ParseValueInfo(ValueInfoList& value_infos, TensorList& initia
   return Status::OK();
 }
 
+Status OnnxParser::Parse(StringStringList& stringStringList) {
+  std::string strval;
+  do {
+    auto* metadata = stringStringList.Add();
+    PARSE_TOKEN(strval);
+    metadata->set_key(strval);
+    MATCH(':');
+    PARSE_TOKEN(strval);
+    metadata->set_value(strval);
+  } while (Matches(','));
+  return Status::OK();
+}
+
 Status OnnxParser::Parse(TensorProto& tensorProto) {
   tensorProto = TensorProto();
   // Parse the concrete tensor-type with numeric dimensions:
@@ -798,14 +811,7 @@ Status OnnxParser::Parse(ModelProto& model) {
           auto& metadata_props = *model.mutable_metadata_props();
           MATCH('[');
           if (!Matches(']')) {
-            do {
-              auto* metadata = metadata_props.Add();
-              PARSE_TOKEN(strval);
-              metadata->set_key(strval);
-              MATCH(':');
-              PARSE_TOKEN(strval);
-              metadata->set_value(strval);
-            } while (Matches(','));
+            Parse(metadata_props);
             MATCH(']');
           }
           break;
