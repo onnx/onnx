@@ -168,7 +168,7 @@ class CmakeBuild(setuptools.Command):
                 "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF",
                 "-DONNX_USE_LITE_PROTO=ON",
                 "-DONNX_WERROR=ON",
-                "-DONNX_DISABLE_EXCEPTIONS=OFF",
+                "-DONNX_DISABLE_EXCEPTIONS=OFF", 
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                 "-DCMAKE_BUILD_TYPE=Release",
                 "-DONNX_USE_MSVC_STATIC_RUNTIME=OFF",
@@ -188,12 +188,13 @@ class CmakeBuild(setuptools.Command):
 
             # os.chdir('setuptools-cmake-build')
             os.chdir(CMAKE_BUILD_DIR)
-            if False:
+            if True:
                 build_args = [
                     "msbuild", "onnx.sln", "/m", "/p:Configuration=Release"
                     ]
                 logging.info("Using cmake build args: %s", build_args)
-                subprocess.check_call(build_args)            
+                subprocess.check_call(build_args)
+                logging.info("subprocess.check_call(build_args) completed")
             else:
                 build_args = [CMAKE, "--build", os.curdir]
                 if WINDOWS:
