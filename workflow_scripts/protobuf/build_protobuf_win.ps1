@@ -17,7 +17,7 @@ cd protobuf-3.21.12
 $protobuf_root_dir = Get-Location
 mkdir protobuf_install
 cd cmake
-cmake -G "Visual Studio 17 2022" -A $arch -DCMAKE_INSTALL_PREFIX="../protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -DBUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF .
+cmake -G "Visual Studio 17 2022" -A $arch -DCMAKE_INSTALL_PREFIX="../protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=$build_type
 msbuild INSTALL.vcxproj /p:Configuration=$build_type
 echo "Protobuf installation complete."
