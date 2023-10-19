@@ -90,8 +90,8 @@ endif()
 
 if(MSVC)
   if(NOT ONNX_DISABLE_EXCEPTIONS)
-    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812 /Ob3")
-    string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812 /Ob3")
+    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812 /Ob0")
+    string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812 /Ob0")
   endif()
 endif()
 
