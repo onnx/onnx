@@ -1579,7 +1579,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if. The tensor must contain a single element.</dd>
+<dd>Condition for the if</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -3193,8 +3193,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the L1 norm of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3237,8 +3236,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the L2 norm of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3281,8 +3279,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the log sum of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3325,8 +3322,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3369,8 +3365,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the max of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or the minimum value of the data type otherwise.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3413,8 +3408,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the mean of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields undefined.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3457,8 +3451,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the min of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields plus infinity (if supported by the datatype) or the maximum value of the data type otherwise.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3501,8 +3494,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the product of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 1.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3545,8 +3537,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the sum of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -3589,8 +3580,7 @@ This version of the operator has been available since version 1 of the default O
 
   Computes the sum square of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -7160,7 +7150,7 @@ This version of the operator has been available since version 7 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -8556,7 +8546,7 @@ This version of the operator has been available since version 9 of the default O
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
    The input information to this op is typically the output information from a MaxPool op. The first
    input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
-   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corresponding
+   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
    The third (optional) input is a tensor that specifies the output size of the unpooling operation.
 
@@ -8569,7 +8559,7 @@ This version of the operator has been available since version 9 of the default O
    known/predictable size.
 
   In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
-   which define the exact unpooling op. The attributes typically have the same values as the corresponding
+   which define the exact unpooling op. The attributes typically have the same values as the corrsponding
    pooling op that the unpooling op is trying to invert.
 
 #### Version
@@ -8627,7 +8617,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dd>A list of integers, along which to reduce. The default is to caculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
 </dl>
 
 #### Inputs
@@ -8716,7 +8706,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>indices</tt> : T1</dt>
 <dd>Input tensor containing indices. The values must be non-negative integers. Any entries in the 'indices' input tensor with values outside the range [0, depth) will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
 <dt><tt>depth</tt> : T2</dt>
-<dd>Scalar or rank 1 tensor containing exactly one element, specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [0, depth). In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [0, depth). In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
 <dt><tt>values</tt> : T3</dt>
 <dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
@@ -8756,7 +8746,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> (differentiable) : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -10303,7 +10293,6 @@ This version of the operator has been deprecated since version 10 of the default
   Computes the indices of the max elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
   If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
-  The input tensor must not be empty.
   The type of the output tensor is integer.
 
 #### Version
@@ -10345,7 +10334,6 @@ This version of the operator has been available since version 11 of the default 
   Computes the indices of the min elements of the input tensor's element along the
   provided axis. The resulting tensor has the same rank as the input if keepdims equals 1.
   If keepdims equal 0, then the resulting tensor has the reduced dimension pruned.
-  The input tensor must not be empty.
   The type of the output tensor is integer.
 
 #### Version
@@ -10402,17 +10390,11 @@ This version of the operator has been available since version 11 of the default 
    * pad_shape[i] is sum of pads along axis i
    ```
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
-  or when ceil_mode is disabled:
-   ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) - input_spatial_shape[i]
@@ -10789,7 +10771,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>output_padding</tt> : list of ints</dt>
 <dd>Additional elements added to the side with higher coordinate indices in the output. Each padding value in "output_padding" must be less than the corresponding stride/dilation dimension. By default, this attribute is a zero vector. Note that this attribute doesn't directly affect the computed output values. It only controls the selection of the computed values, so changing this attribute only adds or removes output elements. If "output_shape" is explicitly provided, "output_padding" does not contribute additional size to "output_shape" but participates in the computation of the needed padding amount. This is also called adjs or adjustment in some frameworks.</dd>
 <dt><tt>output_shape</tt> : list of ints</dt>
-<dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads. Note that the output_shape attribute value should not include dimensions for batch size and channels, which are automatically inferred.</dd>
+<dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
@@ -10981,14 +10963,14 @@ This version of the operator has been available since version 11 of the default 
 
 ### <a name="DynamicQuantizeLinear-11"></a>**DynamicQuantizeLinear-11**</a>
 
-  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit conversion of FP32 Input data.
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
   Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
   Scale is calculated as:
   ```
-  y_scale = (maximum(0, max(x)) - minimum(0, min(x))) / (qmax - qmin)
+  y_scale = (max(x) - min(x))/(qmax - qmin)
   ```
 
-  * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
+  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
   * data range is adjusted to include 0.
 
   Zero point is calculated as:
@@ -11525,7 +11507,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if. The tensor must contain a single element.</dd>
+<dd>Condition for the if</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -11902,7 +11884,7 @@ This version of the operator has been available since version 11 of the default 
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
    The input information to this op is typically the output information from a MaxPool op. The first
    input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
-   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corresponding
+   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
    The third (optional) input is a tensor that specifies the output size of the unpooling operation.
 
@@ -11915,7 +11897,7 @@ This version of the operator has been available since version 11 of the default 
    known/predictable size.
 
   In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
-   which define the exact unpooling op. The attributes typically have the same values as the corresponding
+   which define the exact unpooling op. The attributes typically have the same values as the corrsponding
    pooling op that the unpooling op is trying to invert.
 
 #### Version
@@ -12045,7 +12027,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>indices</tt> (non-differentiable) : T1</dt>
 <dd>Input tensor containing indices. Any entries in the 'indices' input tensor with values outside the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
 <dt><tt>depth</tt> (non-differentiable) : T2</dt>
-<dd>Scalar or Rank 1 tensor containing exactly one element, specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor. The values in the 'indices' input tensor are expected to be in the range [-depth, depth-1]. In case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
 <dt><tt>values</tt> (non-differentiable) : T3</dt>
 <dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
@@ -12420,8 +12402,7 @@ This version of the operator has been available since version 11 of the default 
 
   Computes the max of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or the minimum value of the data type otherwise.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -12507,8 +12488,7 @@ This version of the operator has been available since version 11 of the default 
 
   Computes the min of the input tensor's element along the provided axes. The resulting
   tensor has the same rank as the input if keepdims equals 1. If keepdims equal 0, then
-  the resulted tensor have the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields plus infinity (if supported by the datatype) or the maximum value of the data type otherwise.
+  the resulted tensor have the reduced dimension pruned.
 
   The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
   False instead of True.
@@ -12758,7 +12738,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 
   Round takes one input Tensor and rounds the values, element-wise, meaning
   it finds the nearest integer for each value.
-  In case of halves, the rule is to round them to the nearest even integer.
+  In case of halfs, the rule is to round them to the nearest even integer.
   If input x is integral, +0, -0, NaN,  or infinite, x itself is returned.
   The output tensor has the same shape and type as the input.
 
@@ -13736,8 +13716,8 @@ This version of the operator has been available since version 11 of the default 
 
   This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
   The first output tensor 'Y' contains all unique values or subtensors of the input.
-  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
-  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
+  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'..
+  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
   The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
 
   Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
@@ -13855,7 +13835,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
 <dt><tt>indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurrence in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
+<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurance in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
 <dt><tt>inverse_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
 <dt><tt>counts</tt> (optional, non-differentiable) : tensor(int64)</dt>
@@ -14195,7 +14175,7 @@ This version of the operator has been available since version 12 of the default 
   An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
   ```
-  output[output-term] = reduce-sum( input1[term1] * input2[term2] )
+  output[output-term] = reduce-sum( input1[term1] * input2[term] )
   ```
 
   where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
@@ -14487,27 +14467,20 @@ This version of the operator has been available since version 12 of the default 
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape is calculated differently
-   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
-   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
+   data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
-   ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -14841,7 +14814,7 @@ This version of the operator has been available since version 12 of the default 
   shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
           with K >= 1 in case of K-dimensional loss.
 
-  The loss for one sample, l_i, can calculated as follows:
+  The loss for one sample, l_i, can caculated as follows:
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   or
       l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk] * weights[c], if 'weights' is provided.
@@ -14906,7 +14879,7 @@ This version of the operator has been available since version 12 of the default 
 ### <a name="Abs-13"></a>**Abs-13**</a>
 
   Absolute takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where absolute value, y = abs(x), is applied to
+  (Tensor<T>) where the absolute is, y = abs(x), is applied to
   the tensor elementwise.
 
 #### Version
@@ -15894,50 +15867,57 @@ This version of the operator has been available since version 13 of the default 
 
   This operator is the inverse of `ScatterND`.
 
-  **Example 1**
+  `Example 1`
 
-  ```
-  batch_dims = 0
-  data    = [[0,1],[2,3]]   # data_shape    = [2, 2]
-  indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
-  output  = [0,3]           # output_shape  = [2]
-  ```
+    batch_dims = 0
 
-  **Example 2**
+    data    = [[0,1],[2,3]]   # data_shape = [2, 2]
 
-  ```
-  batch_dims = 0
-  data    = [[0,1],[2,3]]  # data_shape    = [2, 2]
-  indices = [[1],[0]]      # indices_shape = [2, 1]
-  output  = [[2,3],[0,1]]  # output_shape  = [2, 2]
-  ```
+    indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
 
-  **Example 3**
+    output  = [0,3]           # output_shape = [2]
 
-  ```
-  batch_dims = 0
-  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
-  indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
-  ```
+  `Example 2`
 
-  **Example 4**
+    batch_dims = 0
 
-  ```
-  batch_dims = 0
-  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
-  indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-  output  = [[[2,3]],[[4,5]]]             # output_shape  = [2, 1, 2]
-  ```
+    data    = [[0,1],[2,3]]  # data_shape = [2, 2]
 
-  **Example 5**
+    indices = [[1],[0]]      # indices_shape = [2, 1]
 
-  ```
-  batch_dims = 1
-  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
-  indices = [[1],[0]]                     # indices_shape = [2, 1]
-  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
-  ```
+    output  = [[2,3],[0,1]]  # output_shape = [2, 2]
+
+  `Example 3`
+
+    batch_dims = 0
+
+    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+
+    indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+
+    output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
+
+  `Example 4`
+
+    batch_dims = 0
+
+    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+
+    indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+
+    output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
+
+  `Example 5`
+
+    batch_dims = 1
+
+    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
+
+    indices = [[1],[0]]             # indices_shape = [2, 1]
+
+    output  = [[2,3],[4,5]]             # output_shape = [2, 2]
+
+
 
 #### Version
 
@@ -16162,7 +16142,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if. The tensor must contain a single element.</dd>
+<dd>Condition for the if</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -16658,7 +16638,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dd>A list of integers, along which to reduce. The default is to caculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
 </dl>
 
 #### Inputs
@@ -17234,13 +17214,12 @@ This version of the operator has been available since version 13 of the default 
 ### <a name="ReduceL1-13"></a>**ReduceL1-13**</a>
 
   Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17273,19 +17252,18 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceL2-13"></a>**ReduceL2-13**</a>
 
   Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17318,19 +17296,18 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSum-13"></a>**ReduceLogSum-13**</a>
 
   Computes the log sum of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17363,19 +17340,18 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSumExp-13"></a>**ReduceLogSumExp-13**</a>
 
   Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17408,19 +17384,18 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMax-13"></a>**ReduceMax-13**</a>
 
   Computes the max of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or the minimum value of the data type otherwise.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17453,19 +17428,18 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMean-13"></a>**ReduceMean-13**</a>
 
   Computes the mean of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields undefined.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17498,19 +17472,18 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMin-13"></a>**ReduceMin-13**</a>
 
   Computes the min of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields plus infinity (if supported by the datatype) or the maximum value of the data type otherwise.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17543,19 +17516,18 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceProd-13"></a>**ReduceProd-13**</a>
 
   Computes the product of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 1.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17588,19 +17560,18 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceSum-13"></a>**ReduceSum-13**</a>
 
   Computes the sum of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17635,19 +17606,18 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceSumSquare-13"></a>**ReduceSumSquare-13**</a>
 
   Computes the sum square of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -17680,7 +17650,7 @@ This version of the operator has been available since version 13 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Relu-13"></a>**Relu-13**</a>
@@ -18138,16 +18108,16 @@ This version of the operator has been available since version 13 of the default 
   Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
   of its input `data` tensor.
 
-  An effective `starts[i]`, `ends[i]`, and `steps[i]` must be computed for each `i`
+  An effective `start[i]`, `end[i]`, and `step[i]` must be computed for each `i`
   in `[0, ... r-1]` where `r = rank(input)` as follows:
 
   If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-  The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
-  `dims` are the dimensions of `input` and `steps[i] = 1`.
+  The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
+  `dims` are the dimensions of `input` and `step[i] = `1.
 
-  All negative elements of `axes` are made non-negative by adding `r` to them, where
+  All negative elements of `axes` are made non-negatve by adding `r` to them, where
   `r =rank(input)`.
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
@@ -18157,10 +18127,10 @@ This version of the operator has been available since version 13 of the default 
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
-  `ends[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
+  `end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
   is clamped to `[-1, dims[axes[i]]-1]`.
 
-  Finally, `steps[axes[i]] = steps[i]`.
+  Finally, `step[axes[i]] = steps[i]`.
 
   For slicing to the end of a dimension with unknown size, it is recommended to pass
   in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
@@ -18291,7 +18261,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
   * shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
     with K >= 1 in case of K-dimensional loss.
 
-  The loss for one sample, l_i, can calculated as follows:
+  The loss for one sample, l_i, can caculated as follows:
   ```
   l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   ```
@@ -20057,7 +20027,7 @@ This version of the operator has been available since version 16 of the default 
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if. The tensor must contain a single element.</dd>
+<dd>Condition for the if</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -20345,7 +20315,7 @@ This version of the operator has been available since version 16 of the default 
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> (differentiable) : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -20891,27 +20861,27 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index. Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-2]$ where `r = rank(input)`. The last dimension is for representing complex numbers and thus is an invalid axis.</dd>
+<dd>The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index.</dd>
 <dt><tt>inverse</tt> : int (default is 0)</dt>
 <dd>Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to false.</dd>
 <dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
+<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
 </dl>
 
 #### Inputs (1 - 2)
 
 <dl>
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
-<dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimensions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
+<dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimentions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
+<dd>The length of the signal.If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector. If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=2 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
+<dd>The Fourier Transform of the input vector.If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=2 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
 </dl>
 
 #### Type Constraints
@@ -21053,7 +21023,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). Negative value means counting dimensions from the back.</dd>
+<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r]. Negative value means counting dimensions from the back.</dd>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>stash_type</tt> : int (default is 1)</dt>
@@ -21823,13 +21793,12 @@ This version of the operator has been available since version 18 of the default 
 ### <a name="ReduceL1-18"></a>**ReduceL1-18**</a>
 
   Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -21864,19 +21833,18 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceL2-18"></a>**ReduceL2-18**</a>
 
   Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -21911,19 +21879,18 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSum-18"></a>**ReduceLogSum-18**</a>
 
   Computes the log sum of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -21958,19 +21925,18 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSumExp-18"></a>**ReduceLogSumExp-18**</a>
 
   Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -22005,19 +21971,18 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMax-18"></a>**ReduceMax-18**</a>
 
   Computes the max of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or the minimum value of the data type otherwise.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -22052,19 +22017,18 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMean-18"></a>**ReduceMean-18**</a>
 
   Computes the mean of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields undefined.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -22099,19 +22063,18 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMin-18"></a>**ReduceMin-18**</a>
 
   Computes the min of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields plus infinity (if supported by the datatype) or the maximum value of the data type otherwise.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -22146,19 +22109,18 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceProd-18"></a>**ReduceProd-18**</a>
 
   Computes the product of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 1.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -22193,19 +22155,18 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceSumSquare-18"></a>**ReduceSumSquare-18**</a>
 
   Computes the sum square of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
+  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields 0.
+  valid.
 
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
+  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
+  False instead of True.
 
 #### Version
 
@@ -22240,7 +22201,7 @@ This version of the operator has been available since version 18 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Resize-18"></a>**Resize-18**</a>
@@ -22371,8 +22332,8 @@ Note: `round_int` stands for computing the nearest integer value, rounding halfw
   ```
   When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
   ```
-  output[indices[i][j]][j] = f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] = f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
+  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
   ```
   where the `f` is `+`, `*`, `max` or `min` as specified.
 
@@ -22615,27 +22576,20 @@ This version of the operator has been available since version 18 of the default 
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape is calculated differently
-   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
-   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
+   data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
-   ```
-   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
-   ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -22980,7 +22934,7 @@ This version of the operator has been available since version 19 of the default 
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'x_scale' determines the output type.</dd>
+<dd>'y_scale' determines the output type.</dd>
 </dl>
 
 ### <a name="Equal-19"></a>**Equal-19**</a>
@@ -23069,7 +23023,7 @@ This version of the operator has been available since version 19 of the default 
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if. The tensor must contain a single element.</dd>
+<dd>Condition for the if</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -23915,620 +23869,6 @@ This version of the operator has been available since version 19 of the default 
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
-</dl>
-
-## Version 20 of the default ONNX operator set
-### <a name="AffineGrid-20"></a>**AffineGrid-20**</a>
-
-  Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
-  (https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
-  An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
-  ```
-  [r00, r01, r02, t0]   [x]   [x']
-  [r10, r11, r12, t1] * [y] = [y']
-  [r20, r21, r22, t2]   [z]   [z']
-  [0,   0,   0,   1 ]   [1]   [1 ]
-  ```
-  where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
-  The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
-
-  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
-  The output `grid` contains positions in the output space.
-
-  When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
-  ```
-  v            v            v            v
-  |-------------------|------------------|
-  -1                  0                  1
-  ```
-  When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
-  ```
-      v        v         v         v
-  |------------------|-------------------|
-  -1                 0                   1
-  ```
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>align_corners</tt> : int (default is 0)</dt>
-<dd>if align_corners=1, consider -1 and 1 to refer to the centers of the corner pixels. if align_corners=0, consider -1 and 1 to refer to the outer edge the corner pixels.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>theta</tt> (non-differentiable) : T1</dt>
-<dd>input batch of affine matrices with shape (N, 2, 3) for 2D or (N, 3, 4) for 3D</dd>
-<dt><tt>size</tt> (non-differentiable) : T2</dt>
-<dd>the target output image size (N, C, H, W) for 2D or (N, C, D, H, W) for 3D</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>grid</tt> (differentiable) : T1</dt>
-<dd>output tensor of shape (N, H, W, 2) of 2D sample coordinates or (N, D, H, W, 3) of 3D sample coordinates.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain grid types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain size's type to int64 tensors.</dd>
-</dl>
-
-### <a name="ConstantOfShape-20"></a>**ConstantOfShape-20**</a>
-
-  Generate a tensor with given value and shape.
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>value</tt> : tensor</dt>
-<dd>(Optional) The value of the output elements.Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T1</dt>
-<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar. All values must be >= 0.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T2</dt>
-<dd>Output tensor of shape specified by 'input'.If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'.If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype defaults to float32.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrain input types.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain output types to be numerics.</dd>
-</dl>
-
-### <a name="DFT-20"></a>**DFT-20**</a>
-
-  Computes the discrete Fourier Transform (DFT) of the input.
-
-  Assuming the input has shape `[M, N]`, where `N` is the dimension over which the
-  DFT is computed and `M` denotes the conceptual "all other dimensions,"
-  the DFT `y[m, k]` of shape `[M, N]` is defined as
-
-  $$y[m, k] = \sum_{n=0}^{N-1} e^{-2 \pi j \frac{k n}{N} } x[m, n] ,$$
-
-  and the inverse transform is defined as
-
-  $$x[m, n] = \frac{1}{N} \sum_{k=0}^{N-1} e^{2 \pi j \frac{k n}{N} } y[m, k] ,$$
-
-  where $j$ is the imaginary unit.
-
-  The actual shape of the output is specified in the "output" section.
-
-  Reference: https://docs.scipy.org/doc/scipy/tutorial/fft.html
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>inverse</tt> : int (default is 0)</dt>
-<dd>Whether to perform the inverse discrete Fourier Transform. Default is 0, which corresponds to `false`.</dd>
-<dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If `onesided` is `1` and input is real, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, where `m` denotes "all other dimensions" DFT was not applied on. If the input tensor is complex, onesided output is not possible. Value can be `0` or `1`. Default is `0`.</dd>
-</dl>
-
-#### Inputs (1 - 3)
-
-<dl>
-<dt><tt>input</tt> (non-differentiable) : T1</dt>
-<dd>For real input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]`. For complex input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. The final dimension represents the real and imaginary parts of the value in that order.</dd>
-<dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
-<dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-2]$ where `r = rank(input)`. The last dimension is for representing complex numbers and thus is an invalid axis.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector. If `onesided` is `0`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=0` and `onesided` is `1`, the following shape is expected: `[floor(signal_dim0/2)+1][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=1` and `onesided` is `1`, the following shape is expected: `[signal_dim0][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]`. If `axis=N` and `onesided` is `1`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]`. The `signal_dim` at the specified `axis` is equal to the `dft_length`.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain scalar length types to integers.</dd>
-</dl>
-
-### <a name="Gelu-20"></a>**Gelu-20**</a>
-
-  Gelu takes one input data (Tensor<T>) and produces one
-  output data (Tensor<T>) where the gaussian error linear units function,
-  $y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise.
-  If the attribute "approximate" is set to "tanh", the function estimation,
-  $y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied
-  to the tensor elementwise.
-
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>approximate</tt> : string (default is none)</dt>
-<dd>Gelu approximation algorithm: `"tanh"`, `"none"`(default).`"none"`: do not use approximation.`"tanh"`: use tanh approximation.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="GridSample-20"></a>**GridSample-20**</a>
-
-  Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.
-  For spatial input `X` with shape (N, C, H, W), the `grid` will have shape (N, H_out, W_out, 2),
-  the output `Y` will have shape (N, C, H_out, W_out). For volumetric input `X` with shape (N, C, D, H, W),
-  the `grid` will have shape (N, D_out, H_out, W_out, 3), the output `Y` will have shape (N, C, D_out, H_out, W_out).
-  More generally, for an input `X` of rank r+2 with shape (N, C, d1, d2, ..., dr),
-  the `grid` will have shape (N, D1_out, D2_out, ..., Dr_out, r), the output `Y` will have shape (N, C, D1_out, D2_out, ..., Dr_out).
-
-  The tensor `X` contains values at centers of square pixels (voxels, etc) locations such as (n, c, d1_in, d2_in, ..., dr_in).
-  The (n, d1_out, d2_out, ..., dr_out, :) values from the tensor `grid` are the normalized positions for interpolating the values
-  at the (n, c, d1_out, d2_out, ..., dr_out) locations from the output tensor `Y` using a specified interpolation method (the mode)
-  and a padding mode (for `grid` positions falling outside the 2-dimensional image).
-
-  For example, the values in `grid[n, h_out, w_out, :]` are size-2 vectors specifying normalized positions in the 2-dimensional space of `X`.
-  They are used to interpolate output values of `Y[n, c, h_out, w_out]`.
-
-  The GridSample operator is often used in doing grid generator and sampler in the
-  [Spatial Transformer Networks](https://arxiv.org/abs/1506.02025).
-  See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html).
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>align_corners</tt> : int (default is 0)</dt>
-<dd>If align_corners=1, the extrema (-1 and 1) are considered as referring to the center points of the input's corner pixels (voxels, etc.). If align_corners=0, they are instead considered as referring to the corner points of the input's corner pixels (voxels, etc.), making the sampling more resolution agnostic.</dd>
-<dt><tt>mode</tt> : string (default is linear)</dt>
-<dd>Three interpolation modes: linear (default), nearest and cubic. The "linear" mode includes linear and N-linear interpolation modes depending on the number of spatial dimensions of the input tensor (i.e. linear for 1 spatial dimension, bilinear for 2 spatial dimensions, etc.). The "cubic" mode also includes N-cubic interpolation modes following the same rules. The "nearest" mode rounds to the nearest even index when the sampling point falls halfway between two indices.</dd>
-<dt><tt>padding_mode</tt> : string (default is zeros)</dt>
-<dd>Support padding modes for outside grid values: `zeros`(default), `border`, `reflection`. zeros: use 0 for out-of-bound grid locations, border: use border values for out-of-bound grid locations, reflection: use values at locations reflected by the border for out-of-bound grid locations. If index 0 represents the margin pixel, the reflected value at index -1 will be the same as the value at index 1. For location far away from the border, it will keep being reflected until becoming in bound. If pixel location x = -3.5 reflects by border -1 and becomes x' = 1.5, then reflects by border 1 and becomes x'' = 0.5.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (differentiable) : T1</dt>
-<dd>Input tensor of rank r+2 that has shape (N, C, D1, D2, ..., Dr), where N is the batch size, C is the number of channels, D1, D2, ..., Dr are the spatial dimensions.</dd>
-<dt><tt>grid</tt> (non-differentiable) : T2</dt>
-<dd>Input offset of shape (N, D1_out, D2_out, ..., Dr_out, r), where D1_out, D2_out, ..., Dr_out are the spatial dimensions of the grid and output, and r is the number of spatial dimensions. Grid specifies the sampling locations normalized by the input spatial dimensions. Therefore, it should have most values in the range of [-1, 1]. If the grid has values outside the range of [-1, 1], the corresponding outputs will be handled as defined by padding_mode. Following computer vision convention, the coordinates in the length-r location vector are listed from the innermost tensor dimension to the outermost, the opposite of regular tensor indexing.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (differentiable) : T1</dt>
-<dd>Output tensor of rank r+2 that has shape (N, C, D1_out, D2_out, ..., Dr_out) of the sampled values. For integer input types, intermediate values are computed as floating point and cast to integer at the end.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input `X` and output `Y` types to all tensor types.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain grid types to float tensors.</dd>
-</dl>
-
-### <a name="ImageDecoder-20"></a>**ImageDecoder-20**</a>
-
-  Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded
-  stream, invalid format, it will return an empty matrix).
-  The following image formats are supported:
-  * BMP
-  * JPEG (note: Lossless JPEG support is optional)
-  * JPEG2000
-  * TIFF
-  * PNG
-  * WebP
-  * Portable image format (PBM, PGM, PPM, PXM, PNM)
-  Decoded images follow a channel-last layout: (Height, Width, Channels).
-  **JPEG chroma upsampling method:**
-  When upsampling the chroma components by a factor of 2, the pixels are linearly interpolated so that the
-  centers of the output pixels are 1/4 and 3/4 of the way between input pixel centers.
-  When rounding, 0.5 is rounded down and up at alternative pixels locations to prevent bias towards
-  larger values (ordered dither pattern).
-  Considering adjacent input pixels A, B, and C, B is upsampled to pixels B0 and B1 so that
-  ```
-  B0 = round_half_down((1/4) * A + (3/4) * B)
-  B1 = round_half_up((3/4) * B + (1/4) * C)
-  ```
-  This method,  is the default chroma upsampling method in the well-established libjpeg-turbo library,
-  also referred as "smooth" or "fancy" upsampling.
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>pixel_format</tt> : string (default is RGB)</dt>
-<dd>Pixel format. Can be one of "RGB", "BGR", or "Grayscale".</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>encoded_stream</tt> (non-differentiable) : T1</dt>
-<dd>Encoded stream</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>image</tt> (non-differentiable) : T2</dt>
-<dd>Decoded image</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(uint8)</dt>
-<dd>Constrain input types to 8-bit unsigned integer tensor.</dd>
-<dt><tt>T2</tt> : tensor(uint8)</dt>
-<dd>Constrain output types to 8-bit unsigned integer tensor.</dd>
-</dl>
-
-### <a name="IsInf-20"></a>**IsInf-20**</a>
-
-  Map infinity to true and other values to false.
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>detect_negative</tt> : int (default is 1)</dt>
-<dd>(Optional) Whether map negative infinity to true. Default to 1 so that negative infinity induces true. Set this attribute to 0 if negative infinity should be mapped to false.</dd>
-<dt><tt>detect_positive</tt> : int (default is 1)</dt>
-<dd>(Optional) Whether map positive infinity to true. Default to 1 so that positive infinity induces true. Set this attribute to 0 if positive infinity should be mapped to false.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (non-differentiable) : T1</dt>
-<dd>input</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (non-differentiable) : T2</dt>
-<dd>output</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain input types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(bool)</dt>
-<dd>Constrain output types to boolean tensors.</dd>
-</dl>
-
-### <a name="IsNaN-20"></a>**IsNaN-20**</a>
-
-  Returns which elements of the input are NaN.
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (non-differentiable) : T1</dt>
-<dd>input</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (non-differentiable) : T2</dt>
-<dd>output</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain input types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(bool)</dt>
-<dd>Constrain output types to boolean tensors.</dd>
-</dl>
-
-### <a name="ReduceMax-20"></a>**ReduceMax-20**</a>
-
-  Computes the max of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
-  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or the minimum value of the data type otherwise.
-
-
-  If the input data type is Boolean, the comparison should consider `False < True`.
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
-<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
-</dl>
-
-#### Inputs (1 - 2)
-
-<dl>
-<dt><tt>data</tt> (differentiable) : T</dt>
-<dd>An input tensor.</dd>
-<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>reduced</tt> (differentiable) : T</dt>
-<dd>Reduced output tensor.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8), tensor(bool)</dt>
-<dd>Constrain input and output types to numeric and Boolean tensors.</dd>
-</dl>
-
-### <a name="ReduceMin-20"></a>**ReduceMin-20**</a>
-
-  Computes the min of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
-  the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid. Reduction over an empty set of values yields plus infinity (if supported by the datatype) or the maximum value of the data type otherwise.
-
-
-  If the input data type is Boolean, the comparison should consider `False < True`.
-
-  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
-  to `False` instead of `True`.
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>keepdims</tt> : int (default is 1)</dt>
-<dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
-<dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
-</dl>
-
-#### Inputs (1 - 2)
-
-<dl>
-<dt><tt>data</tt> (differentiable) : T</dt>
-<dd>An input tensor.</dd>
-<dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>reduced</tt> (differentiable) : T</dt>
-<dd>Reduced output tensor.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8), tensor(bool)</dt>
-<dd>Constrain input and output types to numeric and Boolean tensors.</dd>
-</dl>
-
-### <a name="RegexFullMatch-20"></a>**RegexFullMatch-20**</a>
-
-  RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>pattern</tt> : string</dt>
-<dd>Regex pattern to match on. This must be valid RE2 syntax.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (non-differentiable) : T1</dt>
-<dd>Tensor with strings to match on.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (non-differentiable) : T2</dt>
-<dd>Tensor of bools indicating if each input string fully matches the regex pattern specified.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(string)</dt>
-<dd>Inputs must be UTF-8 strings</dd>
-<dt><tt>T2</tt> : tensor(bool)</dt>
-<dd>Outputs are bools and are True where there is a full regex match and False otherwise.</dd>
-</dl>
-
-### <a name="StringConcat-20"></a>**StringConcat-20**</a>
-
-  StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (non-differentiable) : T</dt>
-<dd>Tensor to prepend in concatenation</dd>
-<dt><tt>Y</tt> (non-differentiable) : T</dt>
-<dd>Tensor to append in concatenation</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Z</tt> (non-differentiable) : T</dt>
-<dd>Concatenated string tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(string)</dt>
-<dd>Inputs and outputs must be UTF-8 strings</dd>
-</dl>
-
-### <a name="StringSplit-20"></a>**StringSplit-20**</a>
-
-  StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
-
-  The first output of this operator is a tensor of strings representing the substrings from splitting each input string on the `delimiter` substring. This tensor has one additional rank compared to the input tensor in order to store the substrings for each input element (where the input tensor is not empty). Note that, in order to ensure the same number of elements are present in the final dimension, this tensor will pad empty strings as illustrated in the examples below. Consecutive delimiters are not grouped together and are deemed to delimit empty strings, except if the `delimiter` is unspecified or is the empty string (""). In the case where the `delimiter` is unspecified or the empty string, consecutive whitespace characters are regarded as a single separator and leading or trailing whitespace is removed in the output.
-
-  The second output tensor represents the number of substrings generated. `maxsplit` can be used to limit the number of splits performed - after the `maxsplit`th split if the string is not fully split, the trailing suffix of input string after the final split point is also added. For elements where fewer splits are possible than specified in `maxsplit`, it has no effect.
-
-#### Version
-
-This version of the operator has been available since version 20 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>delimiter</tt> : string</dt>
-<dd>Delimiter to split on. If left unset or set to the empty string (""), the input is split on consecutive whitespace.</dd>
-<dt><tt>maxsplit</tt> : int</dt>
-<dd>Maximum number of splits (from left to right). If left unset (or if the number of possible splits are less than maxsplit), it will make as many splits as possible. Note that the maximum possible number of substrings returned with `maxsplit` specified is `maxsplit+1` since the remaining suffix after the `maxsplit`th split is included in the output.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (non-differentiable) : T1</dt>
-<dd>Tensor of strings to split.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (non-differentiable) : T2</dt>
-<dd>Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.</dd>
-<dt><tt>Z</tt> (non-differentiable) : T3</dt>
-<dd>The number of substrings generated for each input element.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(string)</dt>
-<dd>The input must be a UTF-8 string tensor</dd>
-<dt><tt>T2</tt> : tensor(string)</dt>
-<dd>Tensor of substrings.</dd>
-<dt><tt>T3</tt> : tensor(int64)</dt>
-<dd>The number of substrings generated.</dd>
 </dl>
 
 # ai.onnx.preview.training
