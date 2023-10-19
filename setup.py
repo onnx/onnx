@@ -159,39 +159,52 @@ class CmakeBuild(setuptools.Command):
         os.makedirs(CMAKE_BUILD_DIR, exist_ok=True)
         logging.info("CMAKE_BUILD_DIR: %s", CMAKE_BUILD_DIR)
         if WINDOWS:
-            with cd(CMAKE_BUILD_DIR):
-                logging.info("os.listdir(): %s", os.listdir())
-                cmake_args = [
-                    CMAKE,
-                    "-G", "Visual Studio 17 2022",
-                    "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF",
-                    "-DONNX_USE_LITE_PROTO=ON",
-                    "-DONNX_WERROR=ON",
-                    "-DONNX_DISABLE_EXCEPTIONS=ON", 
-                    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-                    "-DCMAKE_BUILD_TYPE=Release",
-                    "-DONNX_USE_MSVC_STATIC_RUNTIME=OFF",
-                    "-DONNX_ML=1",
-                    "-DONNX_BUILD_TESTS=ON",
-                    "-S",
-                    ".",
-                    "-B",
-                    ".setuptools-cmake-build\\",
-                ]
-                if platform.architecture()[0] == "64bit":
-                    cmake_args.extend(["-A", "x64"])
-                else:
-                    cmake_args.extend(["-A", "Win32"])
-                logging.info("Using cmake args: %s", cmake_args)
-                subprocess.check_call(cmake_args)
+            build_type = "Release"
+            logging.info("os.listdir(): %s", os.listdir())
+            cmake_args = [
+                CMAKE,
+                "-G", "Visual Studio 17 2022",
+                "-DBUILD_ONNX_PYTHON=ON",
+                "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF",
+                "-DONNX_USE_LITE_PROTO=ON",
+                "-DONNX_WERROR=ON",
+                "-DONNX_DISABLE_EXCEPTIONS=OFF",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DONNX_USE_MSVC_STATIC_RUNTIME=OFF",
+                "-DONNX_ML=1",
+                "-DONNX_BUILD_TESTS=ON",
+                "-S",
+                ".",
+                "-B",
+                ".setuptools-cmake-build",
+            ]
+            if platform.architecture()[0] == "64bit":
+                cmake_args.extend(["-A", "x64"])
+            else:
+                cmake_args.extend(["-A", "Win32"])
+            logging.info("Using cmake args: %s", cmake_args)
+            subprocess.check_call(cmake_args)
 
-                os.chdir('setuptools-cmake-build')
+            # os.chdir('setuptools-cmake-build')
+            os.chdir(CMAKE_BUILD_DIR)
+            if False:
                 build_args = [
                     "msbuild", "onnx.sln", "/m", "/p:Configuration=Release"
                     ]
                 logging.info("Using cmake build args: %s", build_args)
                 subprocess.check_call(build_args)            
-                return
+            else:
+                build_args = [CMAKE, "--build", os.curdir]
+                if WINDOWS:
+                    build_args.extend(["--config", build_type])
+                    build_args.extend(["--", f"/maxcpucount:{self.jobs}"])
+                else:
+                    build_args.extend(["--", "-j", str(self.jobs)])
+                logging.info("Using cmake build: %s", build_args)
+                subprocess.check_call(build_args)
+            return
+
         
         with cd(CMAKE_BUILD_DIR):
             build_type = "Release"
