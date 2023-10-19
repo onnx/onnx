@@ -577,6 +577,11 @@ if(BUILD_ONNX_PYTHON)
     # In MSVC, we will add whole archive in default
     target_link_libraries(onnx_cpp2py_export
                           PRIVATE -WHOLEARCHIVE:$<TARGET_FILE:onnx>)
+    if(TARGET protobuf::libprotobuf)
+        target_link_libraries(onnx_cpp2py_export PRIVATE protobuf::libprotobuf)
+    else()
+        target_link_libraries(onnx_cpp2py_export PRIVATE ${PROTOBUF_LIBRARIES})
+    endif()
   elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
     target_sources(onnx_cpp2py_export
