@@ -674,12 +674,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   printer.def("graph_to_text", ProtoBytesToText<GraphProto>);
 
   // Submodule `large_onnx`
-  auto large_onnx_sub = onnx_cpp2py_export.def_submodule("large_proto");
+  auto large_onnx_sub = onnx_cpp2py_export.def_submodule("large_model");
   defs.doc() = "API to create large onnx models";
 
-  py::class_<large_onnx::LargeModelProto> large_model(large_onnx_sub, "CLargeModelProto", "Large Model Proto");
+  py::class_<large_onnx::LargeModelContainer> large_model(large_onnx_sub, "CLargeModelContainer", "Large Model Container");
   large_model.def(
-      "set_model_proto", &large_onnx::LargeModelProto::SetModelProto, py::arg("model_proto"), "Initilize the model proto.");
+      "set_model_proto", &large_onnx::LargeModelContainer::SetModelProto, py::arg("model_proto"), "Initilize the model proto.");
 }
 
 } // namespace ONNX_NAMESPACE

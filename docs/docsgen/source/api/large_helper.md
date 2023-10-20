@@ -1,21 +1,15 @@
 # onnx.large_helper
 
 
-## LargeModelProto
+## LargeModelContainer
 
 ```{eval-rst}
-.. autoclass:: onnx.large_helper.LargeModelProto
+.. autoclass:: onnx.large_helper.LargeModelContainer
     :members:
 ```
 
-## make_c_large_proto
+## make_large_model
 
 ```{eval-rst}
-.. autofunction:: onnx.large_helper.make_c_large_proto
-```
-
-## make_large_proto
-
-```{eval-rst}
-.. autofunction:: onnx.large_helper.make_large_proto
+.. autofunction:: onnx.large_helper.make_large_model
 ```

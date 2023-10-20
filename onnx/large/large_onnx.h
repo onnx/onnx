@@ -23,10 +23,10 @@ namespace ONNX_NAMESPACE {
 namespace large_onnx {
 
 /** C API to create large onnx models in a single file. */
-class LargeModelProto {
+class LargeModelContainer {
  public:
-  LargeModelProto();
-  virtual ~LargeModelProto();
+  LargeModelContainer();
+  virtual ~LargeModelContainer();
 
   void SetModelProto(ModelProto& proto);
   void Append(TensorProto&& large_tensor, DLManagedTensor* dlpack);
