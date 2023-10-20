@@ -215,7 +215,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         output_ << "..."; // ParseData not instantiated for other types.
         break;
     }
-  } else if (tensor.has_data_location() && tensor.data_location() == onnx::TensorProto_DataLocation_EXTERNAL) {
+  } else if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
     print(tensor.external_data());
   } else {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
