@@ -362,7 +362,7 @@ class LargeModelContainer:
             self._load_lonnx(file_path, load_large_initializers=load_large_initializers)
             return
         raise ValueError(
-            f"Unsupported format {file_format}. It is not implemented yet."  # type: ignore[name-defined]
+            f"Unsupported file format {ext!r}. It is not implemented yet."
         )
 
 
