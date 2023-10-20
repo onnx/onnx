@@ -998,12 +998,12 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             std::string("SUM"))
         .Attr(
             "base_values",
-            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            "Base values for regression, added to final prediction after applying aggregate_function; the size must be the same as the classes or can be left unassigned (assumed 0)",
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr(
             "base_values_as_tensor",
-            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            "Base values for regression, added to final prediction after applying aggregate_function; the size must be the same as the classes or can be left unassigned (assumed 0)",
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
