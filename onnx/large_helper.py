@@ -361,9 +361,7 @@ class LargeModelContainer:
         if ext == ".lonnx":
             self._load_lonnx(file_path, load_large_initializers=load_large_initializers)
             return
-        raise ValueError(
-            f"Unsupported file format {ext!r}. It is not implemented yet."
-        )
+        raise ValueError(f"Unsupported file format {ext!r}. It is not implemented yet.")
 
 
 def make_large_model(
