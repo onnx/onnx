@@ -5,11 +5,11 @@
 import enum
 import os
 import struct
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 
 import numpy as np
 
-from onnx import GraphProto, ModelProto, TensorProto, checker
+from onnx import GraphProto, ModelProto, StringStringEntryProto, TensorProto, checker
 from onnx.helper import make_model, tensor_dtype_to_np_dtype
 from onnx.external_data_helper import _get_all_tensors, uses_external_data
 
@@ -127,7 +127,7 @@ class LargeModelContainer:
         if len(tensor.external_data) == 0:
             return None
         for ext in tensor.external_data:
-            if ext.key == "location":
+            if ext.key == "location":  # type: ignore[attr-defined]
                 return ext.value
         raise RuntimeError(
             f"Unable to find a location for tensor name {tensor.name!r}."
@@ -150,7 +150,7 @@ class LargeModelContainer:
                 continue
             prop = None
             for ext in tensor.external_data:
-                if ext.key == "location":
+                if ext.key == "location":  # type: ignore[attr-defined]
                     prop = ext
             if prop is None:
                 raise RuntimeError(
@@ -219,9 +219,9 @@ class LargeModelContainer:
         :param file_path: model file
         :return: modified main model proto
         """
-        _unique_names = set()
+        _unique_names: Set[str] = set()
 
-        def _clean_name(prefix, name):
+        def _clean_name(prefix: str, name: str) -> str:
             for c in ":/\\;,!":
                 name = name.replace(c, "")
             base_name = name
@@ -246,9 +246,9 @@ class LargeModelContainer:
         for tensor in _get_all_tensors(copy):
             if not uses_external_data(tensor):
                 continue
-            prop = None
+            prop: Optional[StringStringEntryProto] = None
             for ext in tensor.external_data:
-                if ext.key == "location":
+                if ext.key == "location":  # type: ignore[attr-defined]
                     prop = ext
             if prop is None:
                 raise RuntimeError(
@@ -307,7 +307,7 @@ class LargeModelContainer:
         if file_format == LargeOnnxFileFormat.ONNX_AND_WEIGHTS:
             return self._save_external(file_path)
         raise ValueError(
-            f"Unsupported format {file_format}. It is not implemented yet."
+            f"Unsupported format {file_format}. It is not implemented yet."  # type: ignore[name-defined]
         )
 
     def _load_lonnx(self, file_path: str, load_large_initializers: bool = True):
@@ -353,7 +353,7 @@ class LargeModelContainer:
             self._load_lonnx(file_path, load_large_initializers=load_large_initializers)
             return
         raise ValueError(
-            f"Unsupported format {file_format}. It is not implemented yet."
+            f"Unsupported format {file_format}. It is not implemented yet."  # type: ignore[name-defined]
         )
 
 

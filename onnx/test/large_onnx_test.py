@@ -119,7 +119,7 @@ class TestLargeOnnx(unittest.TestCase):
             for tensor in _get_all_tensors(copy):
                 if uses_external_data(tensor):
                     for ext in tensor.external_data:
-                        if ext.key == "location":
+                        if ext.key == "location":  # type: ignore[attr-defined]
                             assert os.path.exists(ext.value)
 
 
