@@ -59,7 +59,7 @@ class TestLargeOnnx(unittest.TestCase):
             large_model.save(filename)
             copy = LargeModelContainer()
             with self.assertRaises(RuntimeError):
-                copy.model_proto
+                assert copy.model_proto
             copy.load(filename)
             assert copy.model_proto is not None
             checker.check_model(copy.model_proto)

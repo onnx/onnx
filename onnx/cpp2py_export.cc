@@ -24,6 +24,7 @@
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
 using namespace pybind11::literals;
+using namespace large_onnx;
 
 template <typename ProtoType>
 static std::tuple<bool, py::bytes, py::bytes> Parse(const char* cstr) {
@@ -677,13 +678,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto large_onnx_sub = onnx_cpp2py_export.def_submodule("large_model");
   defs.doc() = "API to create large onnx models";
 
-  py::class_<large_onnx::LargeModelContainer> large_model(
-      large_onnx_sub, "CLargeModelContainer", "Large Model Container");
+  py::class_<LargeModelContainer> large_model(large_onnx_sub, "CLargeModelContainer", "Large Model Container");
   large_model.def(
-      "set_model_proto",
-      &large_onnx::LargeModelContainer::SetModelProto,
-      py::arg("model_proto"),
-      "Initilize the model proto.");
+      "set_model_proto", &LargeModelContainer::SetModelProto, py::arg("model_proto"), "Initilize the model proto.");
 }
 
 } // namespace ONNX_NAMESPACE

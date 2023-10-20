@@ -93,16 +93,14 @@ class LargeModelContainer:
             for att in node.attribute:
                 if att.g:
                     yield att.g
-                    for g in LargeModelContainer._enumerate_subgraphs(att.g):
-                        yield g
+                    yield from LargeModelContainer._enumerate_subgraphs(att.g)
 
     def enumerate_graph_protos(self) -> Iterable[GraphProto]:
         """
         Enumerates all GraphProtos in a model.
         """
         yield self.model_proto.graph
-        for g in self._enumerate_subgraphs(self.model_proto.graph):
-            yield g
+        yield from self._enumerate_subgraphs(self.model_proto.graph)
 
     @staticmethod
     def element_size(data_type: int) -> int:
@@ -140,7 +138,7 @@ class LargeModelContainer:
         """
         Adds all large tensors (not stored in the model).
         """
-        for k in large_initializers.keys():
+        for k in large_initializers:
             if not k.startswith("#"):
                 raise ValueError(
                     f"The location {k!r} must start with '#' to be ignored by check model."
@@ -163,7 +161,7 @@ class LargeModelContainer:
                 raise RuntimeError(
                     f"Unable to find large tensor named {tensor.name!r} "
                     f"with location {prop.value!r} in "
-                    f"{list(sorted(self.large_initializers))}."
+                    f"{sorted(self.large_initializers)}."
                 )
 
     def _save_lonnx(self, file_path: str):
@@ -265,7 +263,7 @@ class LargeModelContainer:
                 raise RuntimeError(
                     f"Unable to find large tensor named {tensor.name!r} "
                     f"with location {prop.value!r} in "
-                    f"{list(sorted(self.large_initializers))}."
+                    f"{sorted(self.large_initializers)}."
                 )
             np_tensor = self.large_initializers[prop.value]
             name = f"{_clean_name(prefix, prop.value)}.weight"
@@ -314,7 +312,7 @@ class LargeModelContainer:
         if file_format == LargeOnnxFileFormat.ONNX_AND_WEIGHTS:
             return self._save_external(file_path)
         raise ValueError(
-            f"Unsupported format {file_format}. It is not implemented yet."  # type: ignore[name-defined]
+            f"Unsupported format {file_format}. It is not implemented yet."
         )
 
     def _load_lonnx(self, file_path: str, load_large_initializers: bool = True):
@@ -330,7 +328,7 @@ class LargeModelContainer:
             n_large_initializers = struct.unpack("I", f.read(4))[0]
             self.large_initializers = {}
             if load_large_initializers:
-                for i in range(n_large_initializers):
+                for _i in range(n_large_initializers):
                     graph_index = struct.unpack("I", f.read(4))[0]
                     init_index = struct.unpack("I", f.read(4))[0]
                     graph = self.graphs_[graph_index]
