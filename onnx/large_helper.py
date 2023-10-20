@@ -5,13 +5,13 @@
 import enum
 import os
 import struct
-from typing import Any, Dict, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, Optional, Set, Tuple
 
 import numpy as np
 
 from onnx import GraphProto, ModelProto, StringStringEntryProto, TensorProto, checker
-from onnx.helper import make_model, tensor_dtype_to_np_dtype
 from onnx.external_data_helper import _get_all_tensors, uses_external_data
+from onnx.helper import make_model, tensor_dtype_to_np_dtype
 
 
 def make_large_tensor_proto(
@@ -70,13 +70,16 @@ class LargeModelContainer:
 
     def __init__(self):
         self.model_proto_: Optional[ModelProto] = None
-        self.large_initializers: Dict[Tuple[str, str], np.ndarray] = {}
+        self.large_initializers: Dict[str, np.ndarray] = {}
 
     def check_model(self):
-        checker.check_model(self.model_proto)
+        if self.model_proto is not None:
+            checker.check_model(self.model_proto)
 
     @property
-    def model_proto(self):
+    def model_proto(self) -> ModelProto:
+        if self.model_proto_ is None:
+            raise RuntimeError("LargeModelContainer is empty.")
         return self.model_proto_
 
     @model_proto.setter
@@ -93,7 +96,7 @@ class LargeModelContainer:
                     for g in LargeModelContainer._enumerate_subgraphs(att.g):
                         yield g
 
-    def enumerate_graph_protos(self):
+    def enumerate_graph_protos(self) -> Iterable[GraphProto]:
         """
         Enumerates all GraphProtos in a model.
         """
@@ -103,7 +106,7 @@ class LargeModelContainer:
 
     @staticmethod
     def element_size(data_type: int) -> int:
-        values = {
+        values: Dict[int, int] = {
             TensorProto.FLOAT16: 4,
             TensorProto.FLOAT: 4,
             TensorProto.DOUBLE: 8,
@@ -126,14 +129,14 @@ class LargeModelContainer:
             return None
         if len(tensor.external_data) == 0:
             return None
-        for ext in tensor.external_data:
+        for ext in tensor.external_data:  # type: ignore[assignment]
             if ext.key == "location":  # type: ignore[attr-defined]
-                return ext.value
+                return ext.value  # type: ignore[no-any-return]
         raise RuntimeError(
             f"Unable to find a location for tensor name {tensor.name!r}."
         )
 
-    def add_external_data(self, large_initializers: Dict[str, np.ndarray]):
+    def set_large_initializers(self, large_initializers: Dict[str, np.ndarray]):
         """
         Adds all large tensors (not stored in the model).
         """
@@ -148,8 +151,8 @@ class LargeModelContainer:
         for tensor in _get_all_tensors(self.model_proto):
             if not uses_external_data(tensor):
                 continue
-            prop = None
-            for ext in tensor.external_data:
+            prop: Optional[StringStringEntryProto] = None
+            for ext in tensor.external_data:  # type: ignore[assignment]
                 if ext.key == "location":  # type: ignore[attr-defined]
                     prop = ext
             if prop is None:
@@ -196,8 +199,12 @@ class LargeModelContainer:
                     raise RuntimeError(
                         f"Unable to find tensor location {location!r}. Did you change the structure?"
                     )
+                if found_tensor is None:
+                    raise RuntimeError(
+                        f"Large initializer with location={location!r} cannot be found in the model."
+                    )
                 init = found_tensor
-                size = np.prod(init.dims) * self.element_size(init.data_type)
+                size = int(np.prod(init.dims)) * self.element_size(init.data_type)
                 buffer = np_tensor.tobytes()
                 if len(buffer) != size:
                     raise RuntimeError(
@@ -247,9 +254,9 @@ class LargeModelContainer:
             if not uses_external_data(tensor):
                 continue
             prop: Optional[StringStringEntryProto] = None
-            for ext in tensor.external_data:
+            for ext in tensor.external_data:  # type: ignore[assignment]
                 if ext.key == "location":  # type: ignore[attr-defined]
-                    prop = ext
+                    prop = ext  # type: ignore[assignment]
             if prop is None:
                 raise RuntimeError(
                     f"No location found for tensor name {tensor.name!r}."
@@ -335,6 +342,10 @@ class LargeModelContainer:
                         dtype=tensor_dtype_to_np_dtype(init.data_type),
                     ).reshape(tuple(init.dims))
                     location = self.get_tensor_location(init)
+                    if location is None:
+                        raise RuntimeError(
+                            f"Location for initializer {init.name} cannot be None."
+                        )
                     self.large_initializers[location] = np_tensor
 
     def load(self, file_path: str, load_large_initializers: bool = True):
@@ -381,6 +392,6 @@ def make_large_model(
     large_model = LargeModelContainer()
     large_model.model_proto = model
     if large_initializers:
-        large_model.add_external_data(large_initializers)
+        large_model.set_large_initializers(large_initializers)
         large_model.check_large_initializers()
     return large_model

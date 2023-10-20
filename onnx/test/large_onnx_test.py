@@ -10,12 +10,7 @@ import numpy as np
 
 from onnx import ModelProto, TensorProto, checker, load_model
 from onnx.external_data_helper import _get_all_tensors, uses_external_data
-from onnx.helper import (
-    make_graph,
-    make_model,
-    make_node,
-    make_tensor_value_info,
-)
+from onnx.helper import make_graph, make_model, make_node, make_tensor_value_info
 from onnx.large_helper import (
     LargeModelContainer,
     make_large_model,
@@ -63,7 +58,10 @@ class TestLargeOnnx(unittest.TestCase):
             filename = os.path.join(temp, "model.lonnx")
             large_model.save(filename)
             copy = LargeModelContainer()
+            with self.assertRaises(RuntimeError):
+                copy.model_proto
             copy.load(filename)
+            assert copy.model_proto is not None
             checker.check_model(copy.model_proto)
 
     @staticmethod
