@@ -464,10 +464,9 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
       } while (Matches(','));
       MATCH('}');
     }
-  }
-  else if (Matches('[')) {
+  } else if (Matches('[')) {
     tensorProto.set_data_location(TensorProto::DataLocation::TensorProto_DataLocation_EXTERNAL);
-    auto &externalData = *tensorProto.mutable_external_data();
+    auto& externalData = *tensorProto.mutable_external_data();
     Parse(externalData);
     MATCH(']');
   }
