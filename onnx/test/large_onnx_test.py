@@ -101,7 +101,8 @@ class TestLargeOnnx(unittest.TestCase):
         assert isinstance(large_model, LargeModelContainer)
         with tempfile.TemporaryDirectory() as temp:
             filename = os.path.join(temp, "model.lonnx")
-            large_model.save(filename)
+            saved_proto = large_model.save(filename)
+            assert isinstance(saved_proto, ModelProto)
             copy = LargeModelContainer()
             copy.load(filename)
             copy.check_model()
@@ -111,7 +112,8 @@ class TestLargeOnnx(unittest.TestCase):
         assert isinstance(large_model, LargeModelContainer)
         with tempfile.TemporaryDirectory() as temp:
             filename = os.path.join(temp, "model.onnx")
-            large_model.save(filename)
+            saved_proto = large_model.save(filename)
+            assert isinstance(saved_proto, ModelProto)
             copy = load_model(filename)
             checker.check_model(copy)
             for tensor in _get_all_tensors(copy):

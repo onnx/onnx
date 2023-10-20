@@ -133,7 +133,7 @@ class LargeModelContainer:
             f"Unable to find a location for tensor name {tensor.name!r}."
         )
 
-    def add_external_data(self, large_initializers: Dict[Tuple[str, str], np.ndarray]):
+    def add_external_data(self, large_initializers: Dict[str, np.ndarray]):
         """
         Adds all large tensors (not stored in the model).
         """
@@ -208,7 +208,7 @@ class LargeModelContainer:
                 f.write(struct.pack("I", tensor_index))
                 f.write(buffer)
 
-    def _save_external(self, file_path: str):
+    def _save_external(self, file_path: str) -> ModelProto:
         """
         Save the large model into a main onnx file and one file
         per tensor. Follows the same format as :func:`write_external_data_tensors
@@ -217,7 +217,7 @@ class LargeModelContainer:
         the function returns this modified copy.
 
         :param file_path: model file
-        :return: modified main model
+        :return: modified main model proto
         """
         _unique_names = set()
 
@@ -275,19 +275,19 @@ class LargeModelContainer:
         self,
         file_path: str,
         file_format: Optional[LargeOnnxFileFormat] = None,
-    ) -> "LargeModelContainer":
+    ) -> ModelProto:
         """
         Save the large model into a single file.
-        The function returns a LargeModelContainer,
-        itself if the model did not need any modification,
-        a modified copy if it required changes such as new file names
-        for the weights.
+        The function returns a ModelProto,
+        the current one if the model did not need any modification,
+        a modified copy of it if it required changes such as giving file names
+        to every external tensor.
 
         :param file_path: model file
         :param file_format: format to use, it not specified, the extension is used
             to determine the format, `.onnx` means every tensor is saved as a separate file
             beside the main model, `.lonnx` means a single file
-        :return: itself or a copy of the main model
+        :return: the saved ModelProto
         """
         if file_format is None:
             ext = os.path.splitext(file_path)[-1]
@@ -303,16 +303,14 @@ class LargeModelContainer:
 
         if file_format == LargeOnnxFileFormat.LARGE_ONNX:
             self._save_lonnx(file_path)
-            return self
+            return self.model_proto
         if file_format == LargeOnnxFileFormat.ONNX_AND_WEIGHTS:
             return self._save_external(file_path)
         raise ValueError(
             f"Unsupported format {file_format}. It is not implemented yet."
         )
 
-    def _load_lonnx(
-        self, file_path: str, load_large_initializers: bool = True
-    ) -> "LargeModelContainer":
+    def _load_lonnx(self, file_path: str, load_large_initializers: bool = True):
         ext = os.path.splitext(file_path)[-1]
         if ext != ".lonnx":
             raise ValueError(f"file_path {file_path} must have extensions '.lonnx'.")
@@ -339,9 +337,7 @@ class LargeModelContainer:
                     location = self.get_tensor_location(init)
                     self.large_initializers[location] = np_tensor
 
-    def load(
-        self, file_path: str, load_large_initializers: bool = True
-    ) -> "LargeModelContainer":
+    def load(self, file_path: str, load_large_initializers: bool = True):
         """
         Load the large model from a single file.
         The format is guessed based on the file extension.
@@ -363,7 +359,7 @@ class LargeModelContainer:
 
 def make_large_model(
     graph: GraphProto,
-    large_initializers: Optional[Dict[Tuple[str, str], np.ndarray]] = None,
+    large_initializers: Optional[Dict[str, np.ndarray]] = None,
     **kwargs: Any,
 ) -> LargeModelContainer:
     """Construct a LargeModelContainer
