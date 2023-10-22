@@ -197,7 +197,9 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
     output_ << " = ";
   }
   // TODO: does not yet handle all types
-  if (tensor.has_raw_data()) {
+  if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
+    print(tensor.external_data());
+  } else if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
       case TensorProto::DataType::TensorProto_DataType_INT32:
         printSet(" {", ",", "}", ParseData<int32_t>(&tensor));
@@ -215,8 +217,6 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         output_ << "..."; // ParseData not instantiated for other types.
         break;
     }
-  } else if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
-    print(tensor.external_data());
   } else {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
       case TensorProto::DataType::TensorProto_DataType_INT8:

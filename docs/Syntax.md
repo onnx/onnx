@@ -57,6 +57,8 @@ The grammar below describes the syntax:
    value-info ::= type id
    value-infos ::= value-info (',' value-info)*
    value-info-list ::= '(' value-infos? ')'
+   quoted-str :== '"' ([^"])* '"'
+   str-str :== quoted-str ':' quoted-str
    str-str-list :== '[' str-str (',' str-str)* ']'
    internal-data ::= '{' prim-constants '}'
    external-data ::= str-str-list
