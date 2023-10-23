@@ -38,9 +38,13 @@ include = ["onnx*"]
 
 [tool.setuptools.package-data]
 onnx = [
-    "py.typed",
-    "*.pyi",
+    "**/*.c",
+    "**/*.cc",
+    "**/*.h",
+    "**/*.proto",
+    "**/*.pyi",
     "backend/test/data/**/*",
+    "py.typed",
 ]
 
 [tool.pytest.ini_options]
