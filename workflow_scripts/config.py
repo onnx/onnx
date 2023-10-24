@@ -12,8 +12,8 @@ SKIP_VERSION_CONVERTER_MODELS = {
     "vision/object_detection_segmentation/mask-rcnn/model/MaskRCNN-12-int8.onnx",  # unordered_map::at: key not found
     "vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx",  # starts failing after ONNX 1.15.0 due to subgraph shape inference enhancement:
     # [ShapeInferenceError] Inference error(s): (op_type:Loop, node name: generic_loop_Loop__48):
-    # [ShapeInferenceError] Inference error(s): (op_type:If, node name: Postprocessor/BatchMultiClassNonMaxSuppression/map/while/PadOrClipBoxList/cond_If__115): 
-    # [ShapeInferenceError] Inference error(s): (op_type:Concat, node name: Postprocessor/BatchMultiClassNonMaxSuppression/map/while/PadOrClipBoxList/cond/concat): 
+    # [ShapeInferenceError] Inference error(s): (op_type:If, node name: Postprocessor/BatchMultiClassNonMaxSuppression/map/while/PadOrClipBoxList/cond_If__115):
+    # [ShapeInferenceError] Inference error(s): (op_type:Concat, node name: Postprocessor/BatchMultiClassNonMaxSuppression/map/while/PadOrClipBoxList/cond/concat):
     # [ShapeInferenceError] All inputs to Concat must have same rank. Input 1 has rank 1 != 2
     # TODO: remove this skip. Tracking by https://github.com/onnx/models/issues/628
 }
