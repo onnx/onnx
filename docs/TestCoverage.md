@@ -14574,7 +14574,7 @@ expect(
 
 
 ### ReduceMax
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>bool_inputs</summary>
 
@@ -14690,6 +14690,36 @@ expect(
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_random",
     opset_imports=[onnx.helper.make_opsetid("", 18)],
+)
+```
+
+</details>
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+one = np.array(np.ones(reduced_shape, dtype=np.float32))
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = -(one / zero)  # -inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_min_empty_set",
 )
 ```
 
