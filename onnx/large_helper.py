@@ -70,6 +70,29 @@ class LargeModelFileFormat(enum.IntEnum):
     ONE_TENSOR_PER_FILE = 3
 
 
+def _set_external_data(
+    tensor: TensorProto,
+    location: str,
+    offset: Optional[int] = None,
+    length: Optional[int] = None,
+    checksum: Optional[str] = None,
+    basepath: Optional[str] = None,
+) -> None:
+    del tensor.external_data[:]
+    tensor.data_location = TensorProto.EXTERNAL
+    for k, v in {
+        "location": location,
+        "offset": offset,
+        "length": length,
+        "checksum": checksum,
+        "basepath": basepath,
+    }.items():
+        if v is not None:
+            entry = tensor.external_data.add()
+            entry.key = k
+            entry.value = str(v)
+
+
 class LargeModelContainer:
     """
     Implements an API to save large onnx models.
@@ -109,19 +132,6 @@ class LargeModelContainer:
         """
         yield self.model_proto.graph
         yield from self._enumerate_subgraphs(self.model_proto.graph)
-
-    @staticmethod
-    def get_tensor_location(tensor) -> Optional[str]:
-        if tensor.data_location != TensorProto.EXTERNAL:
-            return None
-        if len(tensor.external_data) == 0:
-            return None
-        for ext in tensor.external_data:  # type: ignore[assignment]
-            if ext.key == "location":  # type: ignore[attr-defined]
-                return ext.value  # type: ignore[no-any-return]
-        raise RuntimeError(
-            f"Unable to find a location for tensor name {tensor.name!r}."
-        )
 
     def set_large_initializers(self, large_initializers: Dict[str, np.ndarray]):
         """
@@ -181,8 +191,6 @@ class LargeModelContainer:
             return name
 
         ext = os.path.splitext(file_path)[-1]
-        if ext != ".onnx":
-            raise ValueError(f"file_path {file_path} must have extension '.onnx'.")
         folder = os.path.dirname(file_path)
         if not os.path.exists(folder):
             raise FileNotFoundError(f"Folder {folder!r} does not exist.")
@@ -219,17 +227,15 @@ class LargeModelContainer:
 
             if all_tensors_to_one_file:
                 buffer = np_tensor.tobytes()
-                prop.value = file_weight
-                for ext in tensor.external_data:  # type: ignore[assignment]
-                    if ext.key == "offset":
-                        ext.value = offset
-                    elif ext.key == "length":
-                        ext.value = len(buffer)
+                _set_external_data(
+                    tensor, location=file_weight, offset=offset, length=len(buffer)
+                )
                 offset += len(buffer)
                 with open(full_file_weight, "ab") as f:
                     f.write(buffer)
             else:
                 name = f"{_clean_name(prefix, prop.value)}.weight"
+                _set_external_data(tensor, location=name)
                 full_name = os.path.join(folder, name)
                 prop.value = name
                 with open(full_name, "wb") as f:
@@ -297,11 +303,7 @@ class LargeModelContainer:
 
                 key = f"#t{i}"
                 self.large_initializers[key] = raw_data
-                for ext in tensor.external_data:  # type: ignore[assignment]
-                    if ext.key == "location":  # type: ignore[attr-defined]
-                        ext.value = key
-                    else:
-                        del ext.value
+                _set_external_data(tensor, location=key)
 
 
 def make_large_model(

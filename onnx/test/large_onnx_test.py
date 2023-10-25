@@ -110,7 +110,7 @@ class TestLargeOnnx(unittest.TestCase):
             copy2 = load_model(filename, load_external_data=True)
             checker.check_model(copy2)
 
-    def test_large_onnx_multi_files(self):
+    def test_large_multi_files(self):
         large_model = self._large_linear_regression()
         assert isinstance(large_model, LargeModelContainer)
         with tempfile.TemporaryDirectory() as temp:
