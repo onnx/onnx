@@ -4,14 +4,25 @@
 
 import enum
 import os
-import struct
 from typing import Any, Dict, Iterable, Optional, Set, Tuple
 
 import numpy as np
 
-from onnx import GraphProto, ModelProto, StringStringEntryProto, TensorProto, checker
-from onnx.external_data_helper import _get_all_tensors, uses_external_data
-from onnx.helper import make_model, tensor_dtype_to_np_dtype
+from onnx import (
+    GraphProto,
+    ModelProto,
+    StringStringEntryProto,
+    TensorProto,
+    checker,
+    load_model,
+)
+from onnx.external_data_helper import (
+    ExternalDataInfo,
+    _get_all_tensors,
+    _sanitize_path,
+    uses_external_data,
+)
+from onnx.helper import make_model
 
 
 def make_large_tensor_proto(
@@ -49,22 +60,19 @@ def make_large_tensor_proto(
     return tensor
 
 
-class LargeOnnxFileFormat(enum.IntEnum):
-    # One single file with extension `.lonnx`.
-    # This format has no constraint on the initializer size.
-    # However, the main graph still need to be under 2Gb as it
-    # relies on protobuf.
-    LARGE_ONNX = 1
+class LargeModelFileFormat(enum.IntEnum):
+    # One file for all the weights.
+    SINGLE_TENSOR_FILE = 2
 
     # Multiple files, one file with extension `.onnx` for the
     # main graph and one file `.weight` for every large initializer.
     # It uses the same format as `write_external_data_tensors`.
-    ONNX_AND_WEIGHTS = 2
+    ONE_TENSOR_PER_FILE = 3
 
 
 class LargeModelContainer:
     """
-    Implements an API to save large onnx models into a single file.
+    Implements an API to save large onnx models.
     Avoids copying large initializers when defining the model.
     """
 
@@ -101,25 +109,6 @@ class LargeModelContainer:
         """
         yield self.model_proto.graph
         yield from self._enumerate_subgraphs(self.model_proto.graph)
-
-    @staticmethod
-    def element_size(data_type: int) -> int:
-        values: Dict[int, int] = {
-            TensorProto.FLOAT16: 4,
-            TensorProto.FLOAT: 4,
-            TensorProto.DOUBLE: 8,
-            TensorProto.INT8: 1,
-            TensorProto.INT16: 2,
-            TensorProto.INT32: 4,
-            TensorProto.INT64: 8,
-            TensorProto.UINT8: 1,
-            TensorProto.UINT16: 2,
-            TensorProto.UINT32: 4,
-            TensorProto.UINT64: 8,
-        }
-        if data_type not in values:
-            raise RuntimeError(f"Element type {data_type} is not supported yet.")
-        return values[data_type]
 
     @staticmethod
     def get_tensor_location(tensor) -> Optional[str]:
@@ -164,56 +153,9 @@ class LargeModelContainer:
                     f"{sorted(self.large_initializers)}."
                 )
 
-    def _save_lonnx(self, file_path: str):
-        """
-        Save the large model into a single file.
-
-        :param file_path: model file
-        """
-        ext = os.path.splitext(file_path)[-1]
-        if ext != ".lonnx":
-            raise ValueError(f"file_path {file_path} must have extension '.lonnx'.")
-        with open(file_path, "wb") as f:
-            proto = self.model_proto.SerializeToString()
-            size = len(proto)
-            f.write(struct.pack("Q", size))
-            f.write(proto)
-            f.write(struct.pack("I", len(self.large_initializers)))
-            found_tensor = None
-            graph_index = -1
-            tensor_index = -1
-            for location, np_tensor in self.large_initializers.items():
-                for index, graph in enumerate(self.enumerate_graph_protos()):
-                    for i, init in enumerate(graph.initializer):
-                        loc = self.get_tensor_location(init)
-                        if loc == location:
-                            found_tensor = init
-                            graph_index = index
-                            tensor_index = i
-                            break
-                    if found_tensor is not None:
-                        break
-                if graph_index == -1:
-                    raise RuntimeError(
-                        f"Unable to find tensor location {location!r}. Did you change the structure?"
-                    )
-                if found_tensor is None:
-                    raise RuntimeError(
-                        f"Large initializer with location={location!r} cannot be found in the model."
-                    )
-                init = found_tensor
-                size = int(np.prod(init.dims)) * self.element_size(init.data_type)
-                buffer = np_tensor.tobytes()
-                if len(buffer) != size:
-                    raise RuntimeError(
-                        f"Tensor of shape {tuple(init.dims)} of type {init.data_type} "
-                        f"is expected to have size {size} but larger tensor has size {len(buffer)}."
-                    )
-                f.write(struct.pack("I", graph_index))
-                f.write(struct.pack("I", tensor_index))
-                f.write(buffer)
-
-    def _save_external(self, file_path: str) -> ModelProto:
+    def _save_external(
+        self, file_path: str, all_tensors_to_one_file: bool
+    ) -> ModelProto:
         """
         Save the large model into a main onnx file and one file
         per tensor. Follows the same format as :func:`write_external_data_tensors
@@ -222,6 +164,7 @@ class LargeModelContainer:
         the function returns this modified copy.
 
         :param file_path: model file
+        :param all_tensors_to_one_file: all tensors in one file
         :return: modified main model proto
         """
         _unique_names: Set[str] = set()
@@ -248,6 +191,13 @@ class LargeModelContainer:
         copy.ParseFromString(proto)
         prefix = os.path.splitext(os.path.split(file_path)[-1])[0]
 
+        if all_tensors_to_one_file:
+            file_weight = f"{os.path.split(file_path)[1]}.weight"
+            full_file_weight = f"{file_path}.weight"
+            offset = 0
+            with open(full_file_weight, "wb") as f:
+                pass
+
         for tensor in _get_all_tensors(copy):
             if not uses_external_data(tensor):
                 continue
@@ -266,11 +216,24 @@ class LargeModelContainer:
                     f"{sorted(self.large_initializers)}."
                 )
             np_tensor = self.large_initializers[prop.value]
-            name = f"{_clean_name(prefix, prop.value)}.weight"
-            full_name = os.path.join(folder, name)
-            prop.value = name
-            with open(full_name, "wb") as f:
-                f.write(np_tensor.tobytes())
+
+            if all_tensors_to_one_file:
+                buffer = np_tensor.tobytes()
+                prop.value = file_weight
+                for ext in tensor.external_data:  # type: ignore[assignment]
+                    if ext.key == "offset":
+                        ext.value = offset
+                    elif ext.key == "length":
+                        ext.value = len(buffer)
+                offset += len(buffer)
+                with open(full_file_weight, "ab") as f:
+                    f.write(buffer)
+            else:
+                name = f"{_clean_name(prefix, prop.value)}.weight"
+                full_name = os.path.join(folder, name)
+                prop.value = name
+                with open(full_name, "wb") as f:
+                    f.write(np_tensor.tobytes())
 
         with open(file_path, "wb") as f:
             f.write(copy.SerializeToString())
@@ -279,89 +242,66 @@ class LargeModelContainer:
     def save(
         self,
         file_path: str,
-        file_format: Optional[LargeOnnxFileFormat] = None,
+        file_format: LargeModelFileFormat = LargeModelFileFormat.ONE_TENSOR_PER_FILE,
     ) -> ModelProto:
         """
-        Save the large model into a single file.
+        Save the large model.
         The function returns a ModelProto,
         the current one if the model did not need any modification,
         a modified copy of it if it required changes such as giving file names
         to every external tensor.
 
         :param file_path: model file
-        :param file_format: format to use, it not specified, the extension is used
-            to determine the format, `.onnx` means every tensor is saved as a separate file
-            beside the main model, `.lonnx` means a single file
+        :param file_format: format to use
         :return: the saved ModelProto
         """
-        if file_format is None:
-            ext = os.path.splitext(file_path)[-1]
-            exts = {
-                ".lonnx": LargeOnnxFileFormat.LARGE_ONNX,
-                ".onnx": LargeOnnxFileFormat.ONNX_AND_WEIGHTS,
-            }
-            if ext not in exts:
-                raise ValueError(
-                    f"Unable to guess the format to use from file name {file_path!r}."
-                )
-            file_format = exts[ext]
-
-        if file_format == LargeOnnxFileFormat.LARGE_ONNX:
-            self._save_lonnx(file_path)
-            return self.model_proto
-        if file_format == LargeOnnxFileFormat.ONNX_AND_WEIGHTS:
-            return self._save_external(file_path)
-        raise ValueError(
-            f"Unsupported format {file_format}. It is not implemented yet."
-        )
-
-    def _load_lonnx(self, file_path: str, load_large_initializers: bool = True):
-        ext = os.path.splitext(file_path)[-1]
-        if ext != ".lonnx":
-            raise ValueError(f"file_path {file_path} must have extensions '.lonnx'.")
-        with open(file_path, "rb") as f:
-            size = struct.unpack("Q", f.read(8))[0]
-            proto = f.read(size)
-            self.model_proto = ModelProto()
-            self.model_proto.ParseFromString(proto)
-            self.graphs_ = list(self.enumerate_graph_protos())
-            n_large_initializers = struct.unpack("I", f.read(4))[0]
-            self.large_initializers = {}
-            if load_large_initializers:
-                for _i in range(n_large_initializers):
-                    graph_index = struct.unpack("I", f.read(4))[0]
-                    init_index = struct.unpack("I", f.read(4))[0]
-                    graph = self.graphs_[graph_index]
-                    init = graph.initializer[init_index]
-                    size = np.prod(init.dims) * self.element_size(init.data_type)
-                    buffer = f.read(size)
-                    np_tensor = np.frombuffer(
-                        buffer,
-                        dtype=tensor_dtype_to_np_dtype(init.data_type),
-                    ).reshape(tuple(init.dims))
-                    location = self.get_tensor_location(init)
-                    if location is None:
-                        raise RuntimeError(
-                            f"Location for initializer {init.name} cannot be None."
-                        )
-                    self.large_initializers[location] = np_tensor
+        if file_format in (
+            LargeModelFileFormat.ONE_TENSOR_PER_FILE,
+            LargeModelFileFormat.SINGLE_TENSOR_FILE,
+        ):
+            return self._save_external(
+                file_path,
+                all_tensors_to_one_file=file_format
+                == LargeModelFileFormat.SINGLE_TENSOR_FILE,
+            )
+        raise ValueError(f"Unsupported file format {file_format}.")
 
     def load(self, file_path: str, load_large_initializers: bool = True):
         """
-        Load the large model from a single file.
-        The format is guessed based on the file extension.
-        `.lonnx` means the large onnx file format.
+        Load the large model.
 
         :param file_path: model file
         :param load_large_initializers: loads the large initializers,
             if not done, the model is incomplete but it can be used to
             look into the model without executing it
         """
-        ext = os.path.splitext(file_path)[-1]
-        if ext == ".lonnx":
-            self._load_lonnx(file_path, load_large_initializers=load_large_initializers)
-            return
-        raise ValueError(f"Unsupported file format {ext!r}. It is not implemented yet.")
+        self.model_proto_ = load_model(file_path, load_external_data=False)
+        self.large_initializers = {}
+        if load_large_initializers:
+            base_dir = os.path.dirname(file_path)
+            for i, tensor in enumerate(_get_all_tensors(self.model_proto_)):
+                if not uses_external_data(tensor):
+                    continue
+
+                info = ExternalDataInfo(tensor)
+                file_location = _sanitize_path(info.location)
+                external_data_file_path = os.path.join(base_dir, file_location)
+
+                with open(external_data_file_path, "rb") as data_file:
+                    if info.offset:
+                        data_file.seek(info.offset)
+
+                    raw_data = (
+                        data_file.read(info.length) if info.length else data_file.read()
+                    )
+
+                key = f"#t{i}"
+                self.large_initializers[key] = raw_data
+                for ext in tensor.external_data:  # type: ignore[assignment]
+                    if ext.key == "location":  # type: ignore[attr-defined]
+                        ext.value = key
+                    else:
+                        del ext.value
 
 
 def make_large_model(

@@ -13,6 +13,7 @@ from onnx.external_data_helper import _get_all_tensors, uses_external_data
 from onnx.helper import make_graph, make_model, make_node, make_tensor_value_info
 from onnx.large_helper import (
     LargeModelContainer,
+    LargeModelFileFormat,
     make_large_model,
     make_large_tensor_proto,
 )
@@ -55,7 +56,7 @@ class TestLargeOnnx(unittest.TestCase):
         large_model = make_large_model(model_proto.graph)
         assert isinstance(large_model, LargeModelContainer)
         with tempfile.TemporaryDirectory() as temp:
-            filename = os.path.join(temp, "model.lonnx")
+            filename = os.path.join(temp, "model.onnx")
             large_model.save(filename)
             copy = LargeModelContainer()
             with self.assertRaises(RuntimeError):
@@ -94,23 +95,29 @@ class TestLargeOnnx(unittest.TestCase):
         large_model.check_model()
         return large_model
 
-    def test_large_onnx(self):
+    def test_large_one_weight_file(self):
         large_model = self._large_linear_regression()
         assert isinstance(large_model, LargeModelContainer)
         with tempfile.TemporaryDirectory() as temp:
-            filename = os.path.join(temp, "model.lonnx")
-            saved_proto = large_model.save(filename)
+            filename = os.path.join(temp, "model.onnx")
+            saved_proto = large_model.save(
+                filename, LargeModelFileFormat.SINGLE_TENSOR_FILE
+            )
             assert isinstance(saved_proto, ModelProto)
             copy = LargeModelContainer()
             copy.load(filename)
             copy.check_model()
+            copy2 = load_model(filename, load_external_data=True)
+            checker.check_model(copy2)
 
     def test_large_onnx_multi_files(self):
         large_model = self._large_linear_regression()
         assert isinstance(large_model, LargeModelContainer)
         with tempfile.TemporaryDirectory() as temp:
             filename = os.path.join(temp, "model.onnx")
-            saved_proto = large_model.save(filename)
+            saved_proto = large_model.save(
+                filename, LargeModelFileFormat.ONE_TENSOR_PER_FILE
+            )
             assert isinstance(saved_proto, ModelProto)
             copy = load_model(filename)
             checker.check_model(copy)
@@ -119,6 +126,8 @@ class TestLargeOnnx(unittest.TestCase):
                     for ext in tensor.external_data:
                         if ext.key == "location":  # type: ignore[attr-defined]
                             assert os.path.exists(ext.value)
+            copy2 = load_model(filename, load_external_data=True)
+            checker.check_model(copy2)
 
 
 if __name__ == "__main__":
