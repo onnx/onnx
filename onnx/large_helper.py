@@ -292,6 +292,8 @@ class LargeModelContainer:
 
         :param file_path: model file, the weight are expected to be in the same folder as this file
         """
+        if self.model_proto_ is None:
+            raise RuntimeError("A model must be loaded before loading the weights.")
         self.large_initializers = {}
         base_dir = os.path.dirname(file_path)
         for i, tensor in enumerate(_get_all_tensors(self.model_proto_)):
@@ -301,6 +303,8 @@ class LargeModelContainer:
             info = ExternalDataInfo(tensor)
             file_location = _sanitize_path(info.location)
             external_data_file_path = os.path.join(base_dir, file_location)
+            key = f"#t{i}"
+            _set_external_data(tensor, location=key)
 
             with open(external_data_file_path, "rb") as data_file:
                 if info.offset:
@@ -310,9 +314,7 @@ class LargeModelContainer:
                     data_file.read(info.length) if info.length else data_file.read()
                 )
 
-            key = f"#t{i}"
-            self.large_initializers[key] = raw_data
-            _set_external_data(tensor, location=key)
+                self.large_initializers[key] = raw_data
 
 
 def make_large_model(
