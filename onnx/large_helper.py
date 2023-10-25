@@ -279,31 +279,40 @@ class LargeModelContainer:
         :param file_path: model file
         :param load_large_initializers: loads the large initializers,
             if not done, the model is incomplete but it can be used to
-            look into the model without executing it
+            look into the model without executing it and method
+            :meth:`load_large_initializers` can be used to load them later
         """
         self.model_proto_ = load_model(file_path, load_external_data=False)
-        self.large_initializers = {}
         if load_large_initializers:
-            base_dir = os.path.dirname(file_path)
-            for i, tensor in enumerate(_get_all_tensors(self.model_proto_)):
-                if not uses_external_data(tensor):
-                    continue
+            self.load_large_initializers(file_path)
 
-                info = ExternalDataInfo(tensor)
-                file_location = _sanitize_path(info.location)
-                external_data_file_path = os.path.join(base_dir, file_location)
+    def load_large_initializers(self, file_path):
+        """
+        Loads large initializers.
 
-                with open(external_data_file_path, "rb") as data_file:
-                    if info.offset:
-                        data_file.seek(info.offset)
+        :param file_path: model file, the weight are expected to be in the same folder as this file
+        """
+        self.large_initializers = {}
+        base_dir = os.path.dirname(file_path)
+        for i, tensor in enumerate(_get_all_tensors(self.model_proto_)):
+            if not uses_external_data(tensor):
+                continue
 
-                    raw_data = (
-                        data_file.read(info.length) if info.length else data_file.read()
-                    )
+            info = ExternalDataInfo(tensor)
+            file_location = _sanitize_path(info.location)
+            external_data_file_path = os.path.join(base_dir, file_location)
 
-                key = f"#t{i}"
-                self.large_initializers[key] = raw_data
-                _set_external_data(tensor, location=key)
+            with open(external_data_file_path, "rb") as data_file:
+                if info.offset:
+                    data_file.seek(info.offset)
+
+                raw_data = (
+                    data_file.read(info.length) if info.length else data_file.read()
+                )
+
+            key = f"#t{i}"
+            self.large_initializers[key] = raw_data
+            _set_external_data(tensor, location=key)
 
 
 def make_large_model(
