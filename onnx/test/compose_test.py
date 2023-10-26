@@ -409,7 +409,7 @@ class TestComposeFunctions(unittest.TestCase):
         checker.check_model(m3)
 
     # FIXME: This function should be removed, as tests should not contain a copy of the tested logic.
-    def _test_add_prefix(  # pylint: disable=too-many-branches
+    def _test_add_prefix(
         self,
         rename_nodes: bool = False,
         rename_edges: bool = False,

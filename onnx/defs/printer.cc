@@ -11,8 +11,7 @@
 
 namespace ONNX_NAMESPACE {
 
-using MetaDataProp = StringStringEntryProto;
-using MetaDataProps = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
+using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
 class ProtoPrinter {
  public:
@@ -34,7 +33,7 @@ class ProtoPrinter {
 
   void print(const TypeProto_SparseTensor& sparseType);
 
-  void print(const TensorProto& tensor);
+  void print(const TensorProto& tensor, bool is_initializer = false);
 
   void print(const ValueInfoProto& value_info);
 
@@ -58,11 +57,11 @@ class ProtoPrinter {
 
   void print(const OpsetIdList& opsets);
 
-  void print(const MetaDataProps& metadataprops) {
-    printSet("[", ", ", "]", metadataprops);
+  void print(const StringStringEntryProtos& stringStringProtos) {
+    printSet("[", ", ", "]", stringStringProtos);
   }
 
-  void print(const MetaDataProp& metadata) {
+  void print(const StringStringEntryProto& metadata) {
     printQuoted(metadata.key());
     output_ << ": ";
     printQuoted(metadata.value());
@@ -186,7 +185,7 @@ void ProtoPrinter::print(const TypeProto& type) {
     print(type.sparse_tensor_type());
 }
 
-void ProtoPrinter::print(const TensorProto& tensor) {
+void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
   output_ << PrimitiveTypeNameMap::ToString(tensor.data_type());
   if (tensor.dims_size() > 0)
     printSet("[", ",", "]", tensor.dims());
@@ -194,8 +193,13 @@ void ProtoPrinter::print(const TensorProto& tensor) {
   if (!tensor.name().empty()) {
     output_ << " " << tensor.name();
   }
-  // TODO: does not yet handle all types or externally stored data.
-  if (tensor.has_raw_data()) {
+  if (is_initializer) {
+    output_ << " = ";
+  }
+  // TODO: does not yet handle all types
+  if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
+    print(tensor.external_data());
+  } else if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
       case TensorProto::DataType::TensorProto_DataType_INT32:
         printSet(" {", ",", "}", ParseData<int32_t>(&tensor));
@@ -356,6 +360,21 @@ void ProtoPrinter::print(const NodeList& nodelist) {
 
 void ProtoPrinter::print(const GraphProto& graph) {
   output_ << graph.name() << " " << graph.input() << " => " << graph.output() << " ";
+  if ((graph.initializer_size() > 0) || (graph.value_info_size() > 0)) {
+    output_ << std::endl << std::setw(indent_level) << ' ' << '<';
+    const char* sep = "";
+    for (auto& init : graph.initializer()) {
+      output_ << sep;
+      print(init, true);
+      sep = ", ";
+    }
+    for (auto& vi : graph.value_info()) {
+      output_ << sep;
+      print(vi);
+      sep = ", ";
+    }
+    output_ << ">" << std::endl;
+  }
   print(graph.node());
 }
 

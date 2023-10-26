@@ -1,3 +1,10 @@
+schedules:
+- cron: '0 0 * * *'
+  displayName: Nightly Windows CI in main branch
+  branches:
+    include:
+    - main
+
 trigger:
 - gh-readonly-queue/**
 
@@ -65,19 +72,9 @@ jobs:
       )
 
       pip install -e ".[reference]" -v
-      pytest
+      pytest -n auto --dist loadscope
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "pytest failed"
-        EXIT 1
-      )
-
-      python -m pip install onnxruntime
-      set ORT_MAX_IR_SUPPORTED_VERSION=8
-      set ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-      set ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=18
-      pytest
-      IF NOT %ERRORLEVEL% EQU 0 (
-        @echo "pytest failed when testing onnx with onnxruntime"
         EXIT 1
       )
 
@@ -91,6 +88,15 @@ jobs:
       git diff --exit-code --diff-filter=ADR -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3
       IF NOT %ERRORLEVEL% EQU 0 (
         @echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)."
+        EXIT 1
+      )
+
+      pip uninstall -y pillow
+      python onnx/backend/test/cmd_tools.py generate-data --clean
+      git status
+      git diff --exit-code -- . :!onnx/onnx-data.proto :!onnx/onnx-data.proto3 :!*output_*.pb :!*input_*.pb
+      IF NOT %ERRORLEVEL% EQU 0 (
+        @echo "git diff for test generation without pillow returned failures. Please check updated node test files"
         EXIT 1
       )
 
@@ -108,10 +114,11 @@ jobs:
         set ONNX_BUILD_TESTS=1
         set ONNX_ML=$(onnx_ml)
         set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON
+        python -m pip install -r requirements-release.txt
         pip uninstall -y onnx
-        python setup.py install
+        pip install .
 
-        pytest
+        pytest -n auto --dist loadscope
         IF NOT %ERRORLEVEL% EQU 0 (
           @echo "pytest failed when testing onnx with libprotobuf=3.20"
           EXIT 1

@@ -23,7 +23,7 @@ jobs:
         architecture: ['x64']
 
     steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
     - name: Checkout submodules
       shell: bash
       run: |
@@ -57,7 +57,7 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-    - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+    - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32
       with:
         name: wheels
         path: dist

@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable=unidiomatic-typecheck
 
 from typing import Dict, List, MutableMapping, Optional, Set, Tuple
 
@@ -78,7 +77,7 @@ def check_overlapping_names(
     return result
 
 
-def merge_graphs(  # pylint: disable=too-many-branches,too-many-statements
+def merge_graphs(
     g1: GraphProto,
     g2: GraphProto,
     io_map: List[Tuple[str, str]],
@@ -162,8 +161,8 @@ def merge_graphs(  # pylint: disable=too-many-branches,too-many-statements
             ]
 
         if not outputs:
-            g1_outputs = [o.name for o in g1.input]
-            g2_outputs = [o.name for o in g2.input]
+            g1_outputs = [o.name for o in g1.output]
+            g2_outputs = [o.name for o in g2.output]
         else:
             output_set = set(outputs)
             g1_outputs = [
@@ -265,7 +264,7 @@ def merge_graphs(  # pylint: disable=too-many-branches,too-many-statements
     return g
 
 
-def merge_models(  # pylint: disable=too-many-branches
+def merge_models(
     m1: ModelProto,
     m2: ModelProto,
     io_map: List[Tuple[str, str]],
@@ -411,7 +410,7 @@ def merge_models(  # pylint: disable=too-many-branches
     return model
 
 
-def add_prefix_graph(  # pylint: disable=too-many-branches
+def add_prefix_graph(
     graph: GraphProto,
     prefix: str,
     rename_nodes: Optional[bool] = True,

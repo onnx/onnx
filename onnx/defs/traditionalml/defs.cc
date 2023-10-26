@@ -253,7 +253,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
 static const char* FeatureVectorizer_ver1_doc = R"DOC(
     Concatenates input tensors into one continuous output.<br>
-    All input shapes are 2-D and are concatenated along the second dimention. 1-D tensors are treated as [1,C].
+    All input shapes are 2-D and are concatenated along the second dimension. 1-D tensors are treated as [1,C].
     Inputs are copied to the output maintaining the order of the input arguments.<br>
     All inputs must be integers or floats, while the output will be all floating point values.
 )DOC";
@@ -382,28 +382,6 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             fail_shape_inference(
                 "At least one of values_tensor, values_strings, values_int64s, values_floats must be set.");
           }
-
-          int default_length, default_type;
-          std::tie(default_type, default_length) = getAttributeElementTypeAndLength(
-              ctx, {"default_tensor", "default_string", "default_int64", "default_float"});
-          if (default_type != TensorProto::UNDEFINED) {
-            if (value_type != default_type) {
-              fail_shape_inference(
-                  "The value type ",
-                  value_type,
-                  " and the default type ",
-                  default_type,
-                  " are different, which is not permitted for LabelEncoders.");
-            }
-
-            // Ensure default_tensor is a singleton if set
-            const AttributeProto* default_tensor = ctx.getAttribute("default_tensor");
-            if (default_tensor != nullptr &&
-                (default_tensor->t().dims_size() != 1 || default_tensor->t().dims(0) != 1)) {
-              fail_shape_inference("default_tensor must be a singleton if set.");
-            }
-          }
-
           if (value_length != key_length) {
             fail_shape_inference(
                 "The number of keys ",
@@ -413,6 +391,22 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                 " must be the same in the LabelEncoder.");
           }
 
+          auto default_attr = ctx.getAttribute("default_tensor");
+          if (nullptr != default_attr && default_attr->has_t() && default_attr->t().has_data_type() &&
+              default_attr->t().data_type() != TensorProto_DataType_UNDEFINED) {
+            auto default_tensor = default_attr->t();
+            if (default_tensor.data_type() != value_type) {
+              fail_shape_inference(
+                  "The default tensor type ",
+                  default_tensor.data_type(),
+                  " and the value type ",
+                  value_type,
+                  " must be the same in the LabelEncoder.");
+            }
+            if (1 != default_tensor.dims_size() || 1 != default_tensor.dims(0)) {
+              fail_shape_inference("The default tensor must be a singleton 1D tensor.");
+            }
+          }
           // Propagate shape from input type and assign output type based on value type
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(value_type);
           propagateShapeFromInputToOutput(ctx, 0, 0);
@@ -829,7 +823,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("nodes_falsenodeids", "Child node if expression is false.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_missing_value_tracks_true",
-            "For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.",
+            "For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the default value is false (0) for all nodes.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Attr("class_treeids", "The id of the tree that this node is in.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -983,7 +977,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("nodes_falsenodeids", "Child node if expression is false", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_missing_value_tracks_true",
-            "For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.",
+            "For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the default value is false (0) for all nodes.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Attr("target_treeids", "The id of the tree that each node is in.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -1004,12 +998,12 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             std::string("SUM"))
         .Attr(
             "base_values",
-            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            "Base values for regression, added to final prediction after applying aggregate_function; the size must be the same as the classes or can be left unassigned (assumed 0)",
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr(
             "base_values_as_tensor",
-            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            "Base values for regression, added to final prediction after applying aggregate_function; the size must be the same as the classes or can be left unassigned (assumed 0)",
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
