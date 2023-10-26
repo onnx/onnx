@@ -7,42 +7,29 @@ import os
 from typing import Any, Dict, Iterable, Optional, Set, Tuple
 
 import numpy as np
-
-from onnx import (
-    GraphProto,
-    ModelProto,
-    StringStringEntryProto,
-    TensorProto,
-    checker,
-    load_model,
-)
-from onnx.external_data_helper import (
-    ExternalDataInfo,
-    _get_all_tensors,
-    _sanitize_path,
-    uses_external_data,
-)
-from onnx.helper import make_model
+import onnx
+import onnx.external_data_helper as ext_data
+import onnx.helper
 
 
 def make_large_tensor_proto(
-    location: str, name: str, tensor_type: int, shape: Tuple[int, ...]
-) -> TensorProto:
+    location: str, tensor_name: str, tensor_type: int, shape: Tuple[int, ...]
+) -> onnx.TensorProto:
     """
     Create an external tensor.
 
     :param location: unique identifier (not necessary a path)
-    :param name: initializer name in the graph
+    :param tensor_name: initializer tensor_name in the graph
     :param tensor_type: onnx type
     :param shape: shape the of the initializer
     :return: the created tensor
     """
     tensor_location = location
-    tensor = TensorProto()
-    tensor.name = name
+    tensor = onnx.TensorProto()
+    tensor.name = tensor_name
 
     del tensor.external_data[:]
-    tensor.data_location = TensorProto.EXTERNAL
+    tensor.data_location = onnx.TensorProto.EXTERNAL
     for k, v in {
         "location": tensor_location,
         "offset": None,
@@ -71,7 +58,7 @@ class LargeModelFileFormat(enum.IntEnum):
 
 
 def _set_external_data(
-    tensor: TensorProto,
+    tensor: onnx.TensorProto,
     location: str,
     offset: Optional[int] = None,
     length: Optional[int] = None,
@@ -79,7 +66,7 @@ def _set_external_data(
     basepath: Optional[str] = None,
 ) -> None:
     del tensor.external_data[:]
-    tensor.data_location = TensorProto.EXTERNAL
+    tensor.data_location = onnx.TensorProto.EXTERNAL
     for k, v in {
         "location": location,
         "offset": offset,
@@ -100,21 +87,21 @@ class LargeModelContainer:
     """
 
     def __init__(self):
-        self.model_proto_: Optional[ModelProto] = None
+        self.model_proto_: Optional[onnx.ModelProto] = None
         self.large_initializers: Dict[str, np.ndarray] = {}
 
     def check_model(self):
         if self.model_proto is not None:
-            checker.check_model(self.model_proto)
+            onnx.checker.check_model(self.model_proto)
 
     @property
-    def model_proto(self) -> ModelProto:
+    def model_proto(self) -> onnx.ModelProto:
         if self.model_proto_ is None:
             raise RuntimeError("LargeModelContainer is empty.")
         return self.model_proto_
 
     @model_proto.setter
-    def model_proto(self, model_proto: ModelProto):
+    def model_proto(self, model_proto: onnx.ModelProto):
         self.model_proto_ = model_proto
         self.graphs_ = list(self.enumerate_graph_protos())
 
@@ -126,7 +113,7 @@ class LargeModelContainer:
                     yield att.g
                     yield from LargeModelContainer._enumerate_subgraphs(att.g)
 
-    def enumerate_graph_protos(self) -> Iterable[GraphProto]:
+    def enumerate_graph_protos(self) -> Iterable[onnx.GraphProto]:
         """
         Enumerates all GraphProtos in a model.
         """
@@ -145,10 +132,10 @@ class LargeModelContainer:
         self.large_initializers = large_initializers
 
     def check_large_initializers(self):
-        for tensor in _get_all_tensors(self.model_proto):
-            if not uses_external_data(tensor):
+        for tensor in ext_data._get_all_tensors(self.model_proto):
+            if not ext_data.uses_external_data(tensor):
                 continue
-            prop: Optional[StringStringEntryProto] = None
+            prop: Optional[onnx.StringStringEntryProto] = None
             for ext in tensor.external_data:  # type: ignore[assignment]
                 if ext.key == "location":  # type: ignore[attr-defined]
                     prop = ext
@@ -165,7 +152,7 @@ class LargeModelContainer:
 
     def _save_external(
         self, file_path: str, all_tensors_to_one_file: bool
-    ) -> ModelProto:
+    ) -> onnx.ModelProto:
         """
         Save the large model into a main onnx file and one file
         per tensor. Follows the same format as :func:`write_external_data_tensors
@@ -195,7 +182,7 @@ class LargeModelContainer:
         if not os.path.exists(folder):
             raise FileNotFoundError(f"Folder {folder!r} does not exist.")
         proto = self.model_proto.SerializeToString()
-        copy = ModelProto()
+        copy = onnx.ModelProto()
         copy.ParseFromString(proto)
         prefix = os.path.splitext(os.path.split(file_path)[-1])[0]
 
@@ -206,10 +193,10 @@ class LargeModelContainer:
             with open(full_file_weight, "wb") as f:
                 pass
 
-        for tensor in _get_all_tensors(copy):
-            if not uses_external_data(tensor):
+        for tensor in ext_data._get_all_tensors(copy):
+            if not ext_data.uses_external_data(tensor):
                 continue
-            prop: Optional[StringStringEntryProto] = None
+            prop: Optional[onnx.StringStringEntryProto] = None
             for ext in tensor.external_data:  # type: ignore[assignment]
                 if ext.key == "location":  # type: ignore[attr-defined]
                     prop = ext  # type: ignore[assignment]
@@ -249,7 +236,7 @@ class LargeModelContainer:
         self,
         file_path: str,
         file_format: LargeModelFileFormat = LargeModelFileFormat.ONE_TENSOR_PER_FILE,
-    ) -> ModelProto:
+    ) -> onnx.ModelProto:
         """
         Save the large model.
         The function returns a ModelProto,
@@ -280,13 +267,13 @@ class LargeModelContainer:
         :param load_large_initializers: loads the large initializers,
             if not done, the model is incomplete but it can be used to
             look into the model without executing it and method
-            :meth:`load_large_initializers` can be used to load them later
+            :meth:`_load_large_initializers` can be used to load them later
         """
-        self.model_proto_ = load_model(file_path, load_external_data=False)
+        self.model_proto_ = onnx.load_model(file_path, load_external_data=False)
         if load_large_initializers:
-            self.load_large_initializers(file_path)
+            self._load_large_initializers(file_path)
 
-    def load_large_initializers(self, file_path):
+    def _load_large_initializers(self, file_path):
         """
         Loads large initializers.
 
@@ -296,12 +283,12 @@ class LargeModelContainer:
             raise RuntimeError("A model must be loaded before loading the weights.")
         self.large_initializers = {}
         base_dir = os.path.dirname(file_path)
-        for i, tensor in enumerate(_get_all_tensors(self.model_proto_)):
-            if not uses_external_data(tensor):
+        for i, tensor in enumerate(ext_data._get_all_tensors(self.model_proto_)):
+            if not ext_data.uses_external_data(tensor):
                 continue
 
-            info = ExternalDataInfo(tensor)
-            file_location = _sanitize_path(info.location)
+            info = ext_data.ExternalDataInfo(tensor)
+            file_location = ext_data._sanitize_path(info.location)
             external_data_file_path = os.path.join(base_dir, file_location)
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
@@ -314,11 +301,15 @@ class LargeModelContainer:
                     data_file.read(info.length) if info.length else data_file.read()
                 )
 
-                self.large_initializers[key] = raw_data
+                dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.data_type)
+                shape = tuple(tensor.dims)
+                self.large_initializers[key] = np.frombuffer(
+                    raw_data, dtype=dtype
+                ).reshape(shape)
 
 
 def make_large_model(
-    graph: GraphProto,
+    graph: onnx.GraphProto,
     large_initializers: Optional[Dict[str, np.ndarray]] = None,
     **kwargs: Any,
 ) -> LargeModelContainer:
@@ -337,7 +328,7 @@ def make_large_model(
     Returns:
         LargeModelContainer
     """
-    model = make_model(graph, **kwargs)
+    model = onnx.helper.make_model(graph, **kwargs)
     large_model = LargeModelContainer()
     large_model.model_proto = model
     if large_initializers:
