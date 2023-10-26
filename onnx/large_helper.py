@@ -1,9 +1,11 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+"""Implements function make_large_model to easily create and save models
+bigger than 2 Gb.
+"""
 from __future__ import annotations
 
-import enum
 import os
 from typing import Any, Iterable
 
@@ -37,6 +39,14 @@ def _set_external_data(
             entry.value = str(v)
 
 
+def _enumerate_subgraphs(graph):
+    for node in graph.node:
+        for att in node.attribute:
+            if att.g:
+                yield att.g
+                yield from _enumerate_subgraphs(att.g)
+
+
 def make_large_tensor_proto(
     location: str, tensor_name: str, tensor_type: int, shape: tuple[int, ...]
 ) -> onnx.TensorProto:
@@ -61,20 +71,12 @@ def make_large_tensor_proto(
     return tensor
 
 
-class LargeModelFileFormat(enum.IntEnum):
-    # One file for all the weights.
-    SINGLE_TENSOR_FILE = 2
-
-    # Multiple files, one file with extension `.onnx` for the
-    # main graph and one file `.weight` for every large initializer.
-    # It uses the same format as `write_external_data_tensors`.
-    ONE_TENSOR_PER_FILE = 3
-
-
-class LargeModelContainer:
+class ModelContainer:
     """
-    Implements an API to save large onnx models.
-    Avoids copying large initializers when defining the model.
+    Implements an API to store large tensors outside the main ModelProto,
+    it avoids copying large initializers when defining the model and these initializers
+    are never serialized through protobuf.
+    No tensor is stored on disk until the user explicitly saves the model.
     """
 
     def __init__(self):
@@ -88,7 +90,7 @@ class LargeModelContainer:
     @property
     def model_proto(self) -> onnx.ModelProto:
         if self.model_proto_ is None:
-            raise RuntimeError("LargeModelContainer is empty.")
+            raise RuntimeError("ModelContainer is empty.")
         return self.model_proto_
 
     @model_proto.setter
@@ -96,20 +98,12 @@ class LargeModelContainer:
         self.model_proto_ = model_proto
         self.graphs_ = list(self.enumerate_graph_protos())
 
-    @staticmethod
-    def _enumerate_subgraphs(graph):
-        for node in graph.node:
-            for att in node.attribute:
-                if att.g:
-                    yield att.g
-                    yield from LargeModelContainer._enumerate_subgraphs(att.g)
-
     def enumerate_graph_protos(self) -> Iterable[onnx.GraphProto]:
         """
         Enumerates all GraphProtos in a model.
         """
         yield self.model_proto.graph
-        yield from self._enumerate_subgraphs(self.model_proto.graph)
+        yield from _enumerate_subgraphs(self.model_proto.graph)
 
     def set_large_initializers(self, large_initializers: dict[str, np.ndarray]):
         """
@@ -228,7 +222,7 @@ class LargeModelContainer:
     def save(
         self,
         file_path: str,
-        file_format: LargeModelFileFormat = LargeModelFileFormat.ONE_TENSOR_PER_FILE,
+        all_tensors_to_one_file: bool = False,
     ) -> onnx.ModelProto:
         """
         Save the large model.
@@ -239,21 +233,15 @@ class LargeModelContainer:
 
         Arguments:
             file_path: model file
-            file_format: format to use
+            all_tensors_to_one_file: saves all large tensors in one file or
+                one file per lerge tensor
 
         Returns:
             the saved ModelProto
         """
-        if file_format in (
-            LargeModelFileFormat.ONE_TENSOR_PER_FILE,
-            LargeModelFileFormat.SINGLE_TENSOR_FILE,
-        ):
-            return self._save_external(
-                file_path,
-                all_tensors_to_one_file=file_format
-                == LargeModelFileFormat.SINGLE_TENSOR_FILE,
-            )
-        raise ValueError(f"Unsupported file format {file_format}.")
+        return self._save_external(
+            file_path, all_tensors_to_one_file=all_tensors_to_one_file
+        )
 
     def load(self, file_path: str, load_large_initializers: bool = True):
         """
@@ -310,25 +298,25 @@ def make_large_model(
     graph: onnx.GraphProto,
     large_initializers: dict[str, np.ndarray] | None = None,
     **kwargs: Any,
-) -> LargeModelContainer:
-    """Construct a LargeModelContainer
+) -> ModelContainer:
+    """Construct a ModelContainer
 
     C API and Python API of protobuf do not operate without serializing
-    the protos. This function uses the Python API of LargeModelContainer.
+    the protos. This function uses the Python API of ModelContainer.
 
     Arguments:
         graph: *make_graph* returns
         large_initializers: dictionary `(name, location): large tensor`,
             large tensor is any python object supporting the DLPack protocol,
-            the ownership the tensor is transfered to the LargeModelContainer,
+            the ownership the tensor is transferred to the ModelContainer,
             the tensor must define method `tobytes` like numpy tensors
         **kwargs: any attribute to add to the returned instance
 
     Returns:
-        LargeModelContainer
+        ModelContainer
     """
     model = onnx.helper.make_model(graph, **kwargs)
-    large_model = LargeModelContainer()
+    large_model = ModelContainer()
     large_model.model_proto = model
     if large_initializers:
         large_model.set_large_initializers(large_initializers)

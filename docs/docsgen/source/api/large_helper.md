@@ -1,10 +1,10 @@
 # onnx.large_helper
 
 
-## LargeModelContainer
+## ModelContainer
 
 ```{eval-rst}
-.. autoclass:: onnx.large_helper.LargeModelContainer
+.. autoclass:: onnx.large_helper.ModelContainer
     :members:
 ```
 
