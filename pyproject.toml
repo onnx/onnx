@@ -158,6 +158,9 @@ unfixable = [
     "SIM112", # Envvars should not be modified
 ]
 
+[tool.ruff.flake8-builtins]
+builtins-ignorelist = ["id", "input"]
+
 [tool.ruff.flake8-tidy-imports]
 # Disallow all relative imports.
 ban-relative-imports = "all"
