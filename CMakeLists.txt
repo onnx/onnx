@@ -176,6 +176,8 @@ else()
               NO_DEFAULT_PATH)
     find_package(Protobuf)
     if (Protobuf_FOUND)
+      set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
+      set(PROTOBUF_INCLUDE_DIR "${_PROTOBUF_INSTALL_PREFIX}/include")
       set(Build_Protobuf OFF)
       if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
         # There are extra dependencies for protobuf.
@@ -265,6 +267,8 @@ else()
     set(Protobuf_VERSION "4.22.3")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
+    set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
+    set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
   endif()
   message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
   message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
@@ -717,7 +721,19 @@ install(FILES
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ONNX
   COMPONENT dev)
-install(EXPORT ONNXTargets DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX")
+install(EXPORT ONNXTargets
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
+  NAMESPACE ONNX::
+)
+if (NOT Build_Protobuf)
+  # If we fetched a Protobuf release (and didn't run its install step), then we
+  # don't have the export sets for protobuf and its dependencies, which
+  # prevents us from creating an export set for ONNXTargets.
+  export(EXPORT ONNXTargets
+    FILE "${PROJECT_BINARY_DIR}/ONNXTargets.cmake"
+    NAMESPACE ONNX::
+  )
+endif()
 install(TARGETS
   onnx onnx_proto
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
