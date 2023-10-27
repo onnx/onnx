@@ -5250,7 +5250,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._make_matmulinteger_test((5, 1, 4, 2), (1, 3, 2, 3))
         self._make_matmulinteger_test((4, 2), (3, 2, 3))
 
-    @parameterized.expand([onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16, onnx.TensorProto.BFLOAT16])
+    @parameterized.expand(
+        [onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16, onnx.TensorProto.BFLOAT16]
+    )
     def test_quantizelinear(self, elem_type) -> None:
         graph = self._make_graph(
             [
@@ -5285,7 +5287,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.UINT8, (30, 4, 5))]
         )
 
-    @parameterized.expand([onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16, onnx.TensorProto.BFLOAT16])
+    @parameterized.expand(
+        [onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16, onnx.TensorProto.BFLOAT16]
+    )
     def test_dequantizelinear(self, elem_type) -> None:
         graph = self._make_graph(
             [
