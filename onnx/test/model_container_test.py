@@ -11,7 +11,7 @@ import numpy as np
 import onnx
 import onnx.external_data_helper as ext_data
 import onnx.helper
-import onnx.large_helper
+import onnx.model_container
 import onnx.numpy_helper
 
 
@@ -59,19 +59,19 @@ def _large_linear_regression():
         [X],
         [Y],
         [
-            onnx.large_helper.make_large_tensor_proto(
+            onnx.model_container.make_large_tensor_proto(
                 "#loc0", "A", onnx.TensorProto.FLOAT, (3, 3)
             ),
             onnx.numpy_helper.from_array(
                 np.arange(9).astype(np.float32).reshape((-1, 3)), name="B"
             ),
-            onnx.large_helper.make_large_tensor_proto(
+            onnx.model_container.make_large_tensor_proto(
                 "#loc1", "C", onnx.TensorProto.FLOAT, (3, 3)
             ),
         ],
     )
     onnx_model = onnx.helper.make_model(graph)
-    large_model = onnx.large_helper.make_large_model(
+    large_model = onnx.model_container.make_large_model(
         onnx_model.graph,
         {
             "#loc0": (np.arange(9) * 100).astype(np.float32).reshape((-1, 3)),
@@ -86,12 +86,12 @@ class TestLargeOnnx(unittest.TestCase):
     def test_large_onnx_no_large_initializer(self):
         model_proto = _linear_regression()
         assert isinstance(model_proto, onnx.ModelProto)
-        large_model = onnx.large_helper.make_large_model(model_proto.graph)
-        assert isinstance(large_model, onnx.large_helper.ModelContainer)
+        large_model = onnx.model_container.make_large_model(model_proto.graph)
+        assert isinstance(large_model, onnx.model_container.ModelContainer)
         with tempfile.TemporaryDirectory() as temp:
             filename = os.path.join(temp, "model.onnx")
             large_model.save(filename)
-            copy = onnx.large_helper.ModelContainer()
+            copy = onnx.model_container.ModelContainer()
             with self.assertRaises(RuntimeError):
                 assert copy.model_proto
             copy.load(filename)
@@ -100,12 +100,12 @@ class TestLargeOnnx(unittest.TestCase):
 
     def test_large_one_weight_file(self):
         large_model = _large_linear_regression()
-        assert isinstance(large_model, onnx.large_helper.ModelContainer)
+        assert isinstance(large_model, onnx.model_container.ModelContainer)
         with tempfile.TemporaryDirectory() as temp:
             filename = os.path.join(temp, "model.onnx")
             saved_proto = large_model.save(filename, True)
             assert isinstance(saved_proto, onnx.ModelProto)
-            copy = onnx.large_helper.ModelContainer()
+            copy = onnx.model_container.ModelContainer()
             copy.load(filename)
             copy.check_model()
             copy2 = onnx.load_model(filename, load_external_data=True)
@@ -113,7 +113,7 @@ class TestLargeOnnx(unittest.TestCase):
 
     def test_large_multi_files(self):
         large_model = _large_linear_regression()
-        assert isinstance(large_model, onnx.large_helper.ModelContainer)
+        assert isinstance(large_model, onnx.model_container.ModelContainer)
         with tempfile.TemporaryDirectory() as temp:
             filename = os.path.join(temp, "model.onnx")
             saved_proto = large_model.save(filename, False)
