@@ -579,7 +579,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<AxisAttributeToInput>("DFT", OpSetID(19), OpSetID(20), 2, 1));
     registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
-    registerAdapter(std::make_unique<CompatibleAdapter>("QLinearMatMul", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("IsInf", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("IsNaN", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(19), OpSetID(20)));
@@ -607,6 +606,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
         std::make_unique<TypeRestriction>("ReduceMax", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types));
     registerAdapter(
         std::make_unique<TypeRestriction>("ReduceMin", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types));
+
+    /******** 20 -> 21 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("QLinearMatMul", OpSetID(20), OpSetID(21)));
+
+    /******** 21 -> 20 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("QLinearMatMul", OpSetID(21), OpSetID(20)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
