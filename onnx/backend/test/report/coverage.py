@@ -147,7 +147,7 @@ class Coverage:
         self, all_ops: List[str], passed: List[Optional[str]], experimental: List[str]
     ) -> None:
         for schema in _all_schemas:
-            if schema.domain == "" or schema.domain == "ai.onnx":
+            if schema.domain in {"", "ai.onnx"}:
                 all_ops.append(schema.name)
                 if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
                     experimental.append(schema.name)

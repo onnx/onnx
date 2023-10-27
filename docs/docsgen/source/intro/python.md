@@ -148,16 +148,17 @@ of each object of the graph.
             node.name, node.op_type, node.input, node.output))
 ```
 
-The tensor type is an integer (= 1). The following array gives the
-equivalent type with numpy.
+The tensor type is an integer (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` gives the
+corresponding type with numpy.
 
 ```{eval-rst}
 .. exec_code::
 
-    import pprint
-    from onnx.mapping import TENSOR_TYPE_TO_NP_TYPE
+    from onnx import TensorProto
+    from onnx.helper import tensor_dtype_to_np_dtype, tensor_dtype_to_string
 
-    pprint.pprint(TENSOR_TYPE_TO_NP_TYPE)
+    np_dtype = tensor_dtype_to_np_dtype(TensorProto.FLOAT)
+    print(f"The converted numpy dtype for {tensor_dtype_to_string(TensorProto.FLOAT)} is {np_dtype}.")
 ```
 
 ## Serialization
@@ -843,7 +844,7 @@ neighbors.
     set_model_props(onnx_model, {})
 
     # opsets
-    del onnx_model.opset_import[:]  # pylint: disable=E1101
+    del onnx_model.opset_import[:]
     for dom, value in opsets.items():
         op_set = onnx_model.opset_import.add()
         op_set.domain = dom
@@ -1038,7 +1039,7 @@ from onnx.checker import check_model
 input = '''
     <
         ir_version: 8,
-        opset_import: [ '' : 15]
+        opset_import: [ "" : 15]
     >
     agraph (float[I,J] X, float[I] A, float[I] B) => (float[I] Y) {
         XA = MatMul(X, A)

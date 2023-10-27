@@ -38,9 +38,13 @@ include = ["onnx*"]
 
 [tool.setuptools.package-data]
 onnx = [
-    "py.typed",
-    "*.pyi",
+    "**/*.c",
+    "**/*.cc",
+    "**/*.h",
+    "**/*.proto",
+    "**/*.pyi",
     "backend/test/data/**/*",
+    "py.typed",
 ]
 
 [tool.pytest.ini_options]
@@ -123,6 +127,7 @@ select = [
     "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
     "NPY", # modern numpy
+    "PL", # pylint
     "RUF", # Ruff-specific rules
     "SIM", # flake8-simplify
     "TID252", # Relative imports
@@ -138,6 +143,9 @@ ignore = [
     "N806", # Relax: Variable name in function should be lowercase
     "N999", # Module names
     "NPY002", # np.random.Generator may not be preferred in all cases
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments to function call
+    "PLR0915", # Too many statements
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "SIM102", # We don't perfer always combining if branches
     "SIM108", # We don't encourage ternary operators
@@ -158,8 +166,12 @@ ban-relative-imports = "all"
 # Prefer inline ignores with `noqa: xxx`.
 # Eventually this list should become empty.
 "**/*_test*" = ["N802"] # Function casing
+"onnx/backend/test/**" = ["PLR2004"] # Magic numbers allowed in tests
 "onnx/backend/test/case/**" = ["N802"] # Function casing
-"onnx/reference/ops/**" = ["N801"] # Class casing
+"onnx/reference/ops/**" = [
+    "N801", # Class casing
+    "PLR2004", # Magic numbers
+]
 "onnx/reference/ops/_op_list.py" = ["F401"]
 "onnx/__init__.py" = ["F401"]
 "onnx/reference/__init__.py" = ["F401"]
@@ -170,4 +182,5 @@ ban-relative-imports = "all"
 "onnx/reference/ops/aionnx_preview_training/_op_list.py" = ["F401"]
 "onnx/reference/ops/experimental/__init__.py" = ["F401"]
 "onnx/test/reference_evaluator_test.py"= ["C408"]  # dict(...) -> { ... }
+"onnx/test/**" = ["PLR2004"] # Magic numbers allowed in tests
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]

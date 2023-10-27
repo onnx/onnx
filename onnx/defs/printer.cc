@@ -11,8 +11,7 @@
 
 namespace ONNX_NAMESPACE {
 
-using MetaDataProp = StringStringEntryProto;
-using MetaDataProps = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
+using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
 class ProtoPrinter {
  public:
@@ -58,11 +57,11 @@ class ProtoPrinter {
 
   void print(const OpsetIdList& opsets);
 
-  void print(const MetaDataProps& metadataprops) {
-    printSet("[", ", ", "]", metadataprops);
+  void print(const StringStringEntryProtos& stringStringProtos) {
+    printSet("[", ", ", "]", stringStringProtos);
   }
 
-  void print(const MetaDataProp& metadata) {
+  void print(const StringStringEntryProto& metadata) {
     printQuoted(metadata.key());
     output_ << ": ";
     printQuoted(metadata.value());
@@ -197,8 +196,10 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
   if (is_initializer) {
     output_ << " = ";
   }
-  // TODO: does not yet handle all types or externally stored data.
-  if (tensor.has_raw_data()) {
+  // TODO: does not yet handle all types
+  if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
+    print(tensor.external_data());
+  } else if (tensor.has_raw_data()) {
     switch (static_cast<TensorProto::DataType>(tensor.data_type())) {
       case TensorProto::DataType::TensorProto_DataType_INT32:
         printSet(" {", ",", "}", ParseData<int32_t>(&tensor));

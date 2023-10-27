@@ -14,7 +14,7 @@ from onnx.reference.op_run import OpRun
 class ImageDecoder(OpRun):
     def _run(self, encoded: np.ndarray, pixel_format="RGB") -> tuple[np.ndarray]:  # type: ignore
         try:
-            import PIL.Image  # pylint: disable=import-outside-toplevel
+            import PIL.Image
         except ImportError as e:
             raise ImportError(
                 "Pillow must be installed to use the reference implementation of the ImageDecoder operator"

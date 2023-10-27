@@ -557,5 +557,31 @@ TEST(ParserTest, TypesModelTest2) {
   CheckModel(code);
 }
 
+TEST(ParserTest, ExternalDataTest) {
+  const char* code = R"ONNX(
+agraph (float y = {1.0}, float[N] z) => (w) <
+    float[3, 2] m1 = ["location": "weight_1.bin", "offset": "17"],
+    float[2, 1] m2 = {1.0, 2.0}
+>
+{
+    x = Add(y, z)
+    m = Mul(m1, m1)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.input_size(), 2);
+  EXPECT_EQ(graph.output_size(), 1);
+  EXPECT_EQ(graph.initializer_size(), 3); // m1, m2
+  EXPECT_EQ(graph.value_info_size(), 0); // x
+  EXPECT_EQ(graph.initializer().Get(1).data_location(), TensorProto_DataLocation::TensorProto_DataLocation_EXTERNAL);
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(0).key(), "location");
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(0).value(), "weight_1.bin");
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).key(), "offset");
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).value(), "17");
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE

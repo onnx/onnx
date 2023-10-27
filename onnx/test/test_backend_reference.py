@@ -9,6 +9,7 @@ import unittest
 from typing import Any
 
 import numpy
+import version_utils
 
 import onnx.backend.base
 import onnx.backend.test
@@ -53,7 +54,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     @classmethod
-    def is_opset_supported(cls, model):  # pylint: disable=unused-argument
+    def is_opset_supported(cls, model):
         return True, ""
 
     @classmethod
@@ -179,6 +180,18 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_email_domain_cpu")
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
+
+# op_dft and op_stft requires numpy >= 1.21.5
+if version_utils.numpy_older_than("1.21.5"):
+    backend_test.exclude("test_stft")
+    backend_test.exclude("test_stft_with_window")
+    backend_test.exclude("test_stft_cpu")
+    backend_test.exclude("test_dft")
+    backend_test.exclude("test_dft_axis")
+    backend_test.exclude("test_dft_inverse")
+    backend_test.exclude("test_dft_opset19")
+    backend_test.exclude("test_dft_axis_opset19")
+    backend_test.exclude("test_dft_inverse_opset19")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
