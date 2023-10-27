@@ -106,7 +106,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
-|<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
+|<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-21">21</a>, <a href="Changelog.md#QLinearMatMul-10">10</a>|
 |<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
 |<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-14">14</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
 |<a href="#RandomNormal">RandomNormal</a>|<a href="Changelog.md#RandomNormal-1">1</a>|
@@ -19758,24 +19758,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#QLinearMatMul-10">10</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>a</tt> (non-differentiable) : T1</dt>
 <dd>N-dimensional quantized matrix a</dd>
-<dt><tt>a_scale</tt> (non-differentiable) : tensor(float)</dt>
+<dt><tt>a_scale</tt> (non-differentiable) : TS</dt>
 <dd>scale of quantized input a</dd>
 <dt><tt>a_zero_point</tt> (non-differentiable) : T1</dt>
 <dd>zero point of quantized input a</dd>
 <dt><tt>b</tt> (non-differentiable) : T2</dt>
 <dd>N-dimensional quantized matrix b</dd>
-<dt><tt>b_scale</tt> (non-differentiable) : tensor(float)</dt>
+<dt><tt>b_scale</tt> (non-differentiable) : TS</dt>
 <dd>scale of quantized input b</dd>
 <dt><tt>b_zero_point</tt> (non-differentiable) : T2</dt>
 <dd>zero point of quantized input b</dd>
-<dt><tt>y_scale</tt> (non-differentiable) : tensor(float)</dt>
+<dt><tt>y_scale</tt> (non-differentiable) : TS</dt>
 <dd>scale of quantized output y</dd>
 <dt><tt>y_zero_point</tt> (non-differentiable) : T3</dt>
 <dd>zero point of quantized output y</dd>
@@ -19791,12 +19793,14 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
-<dd>Constrain input a and its zero point data type to 8-bit integer tensor.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
-<dd>Constrain input b and its zero point data type to 8-bit integer tensor.</dd>
-<dt><tt>T3</tt> : tensor(int8), tensor(uint8)</dt>
-<dd>Constrain output y and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>TS</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain scales.</dd>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>The type of input a and its zeropoint.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>The type of input b and its zeropoint.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>The type of the output and its zeropoint.</dd>
 </dl>
 
 
