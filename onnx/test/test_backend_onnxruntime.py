@@ -280,15 +280,12 @@ if ort_version is not None and Version(ort_version) < Version("1.17"):
         "|isinf_float16"
         "|label_encoder"
         "|optional_get_element_optional_sequence"
-<<<<<<< HEAD
         "|qlinearmatmul_2D_int8"
         "|qlinearmatmul_2D_uint8_float16"
         "|qlinearmatmul_3D_int8"
         "|qlinearmatmul_3D_uint8_float16"
-=======
         "|reduce_max_bool_inputs"
         "|reduce_min_bool_inputs"
->>>>>>> b5e1378a35b24a4316900c69b71214cac7ca5736
         "|regex_full_match"
         "|string_concat"
         "|string_split"
