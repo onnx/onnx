@@ -129,13 +129,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'x_scale' determines the output type.")
         .SetDoc(DequantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          auto y_type = ctx.getOutputType(0);
-          // only float is supported
-          y_type->mutable_tensor_type()->set_elem_type(ONNX_NAMESPACE::TensorProto::FLOAT);
-
-          if (!hasInputShape(ctx, 0))
-            return;
-
+          propagateElemTypeFromInputToOutput(ctx, 1, 0);
           auto& input_shape = getInputShape(ctx, 0);
           updateOutputShape(ctx, 0, input_shape);
         }));
