@@ -54,6 +54,7 @@ defs
 external_data_helper
 helper
 hub
+inliner
 mapping
 numpy_helper
 parser
