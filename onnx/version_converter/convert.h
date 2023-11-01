@@ -591,7 +591,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_FLOAT8E4M3FNUZ,
         TensorProto_DataType_FLOAT8E5M2,
         TensorProto_DataType_FLOAT8E5M2FNUZ};
-    registerAdapter(std::make_unique<TypeRestriction>("IsNaN", OpSetID(19), OpSetID(20), is_nan_13_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("IsNaN", OpSetID(20), OpSetID(19), is_nan_13_unallowed_types));
     const std::vector<TensorProto_DataType> is_inf_10_unallowed_types = {
         TensorProto_DataType_FLOAT16,
         TensorProto_DataType_BFLOAT16,
@@ -599,7 +599,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_FLOAT8E4M3FNUZ,
         TensorProto_DataType_FLOAT8E5M2,
         TensorProto_DataType_FLOAT8E5M2FNUZ};
-    registerAdapter(std::make_unique<TypeRestriction>("IsInf", OpSetID(19), OpSetID(20), is_inf_10_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("IsInf", OpSetID(20), OpSetID(19), is_inf_10_unallowed_types));
     registerAdapter(std::make_unique<AxisInputToAttribute>("DFT", OpSetID(20), OpSetID(19), 2, -2));
     const std::vector<TensorProto_DataType> reduce_min_max_18_unallowed_types = {TensorProto_DataType_BOOL};
     registerAdapter(
