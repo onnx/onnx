@@ -55,15 +55,8 @@ else()
   set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
-# Required to use C++17 or higher on Windows
-# For other platforms, set C++14 as standard for the whole project
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-if(MSVC AND CMAKE_CXX_STANDARD LESS 17)
   set(CMAKE_CXX_STANDARD 17)
-elseif(CMAKE_CXX_STANDARD LESS 14)
-  set(CMAKE_CXX_STANDARD 14)
 endif()
 
 include(GNUInstallDirs)

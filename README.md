@@ -111,7 +111,7 @@ conda install -c conda-forge onnx
 
 Before building from source uninstall any existing versions of onnx `pip uninstall onnx`.
 
-c++17 or higher C++ compiler version is required to build ONNX from source on Windows. For other platforms, please use C++14 or higher versions.
+c++17 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
 
 If you don't have protobuf installed, ONNX will internally download and build protobuf for ONNX build.
 
