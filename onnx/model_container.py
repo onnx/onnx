@@ -299,7 +299,7 @@ class ModelContainer:
                 shape = tuple(tensor.dims)
 
                 if sys.byteorder == "big":
-                    np_tensor = np.frombuffer(raw_data.byteswap(), dtype=dtype).reshape(
+                    np_tensor = np.frombuffer(raw_data, dtype=dtype).byteswap().reshape(
                         shape
                     )
                 else:
