@@ -5250,11 +5250,14 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._make_matmulinteger_test((5, 1, 4, 2), (1, 3, 2, 3))
         self._make_matmulinteger_test((4, 2), (3, 2, 3))
 
-    def test_quantizelinear(self) -> None:
+    @parameterized.expand(
+        [onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16, onnx.TensorProto.BFLOAT16]
+    )
+    def test_quantizelinear(self, elem_type) -> None:
         graph = self._make_graph(
             [
-                ("x", TensorProto.FLOAT, (30, 4, 5)),
-                ("y_scale", TensorProto.FLOAT, ()),
+                ("x", elem_type, (30, 4, 5)),
+                ("y_scale", elem_type, ()),
                 ("y_zero_point", TensorProto.UINT8, ()),
             ],
             [make_node("QuantizeLinear", ["x", "y_scale", "y_zero_point"], ["y"])],
@@ -5284,18 +5287,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.UINT8, (30, 4, 5))]
         )
 
-    def test_dequantizelinear(self) -> None:
+    @parameterized.expand(
+        [onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16, onnx.TensorProto.BFLOAT16]
+    )
+    def test_dequantizelinear(self, elem_type) -> None:
         graph = self._make_graph(
             [
                 ("x", TensorProto.UINT8, (30, 4, 5)),
-                ("x_scale", TensorProto.FLOAT, ()),
+                ("x_scale", elem_type, ()),
                 ("x_zero_point", TensorProto.UINT8, ()),
             ],
             [make_node("DequantizeLinear", ["x", "x_scale", "x_zero_point"], ["y"])],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (30, 4, 5))]
+            graph, [make_tensor_value_info("y", elem_type, (30, 4, 5))]
         )
 
     def test_dynamicquantizelinear(self) -> None:
