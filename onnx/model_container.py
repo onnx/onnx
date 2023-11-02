@@ -7,6 +7,7 @@ bigger than 2 Gb.
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any, Iterable
 
 import numpy as np
@@ -199,21 +200,28 @@ class ModelContainer:
                 )
             np_tensor = self.large_initializers[prop.value]
 
+            if sys.byteorder == "big":
+                # Convert endian from little to big
+                tensor_bytes = np_tensor.byteswap().tobytes()
+            else:
+                tensor_bytes = np_tensor.tobytes()
             if all_tensors_to_one_file:
-                buffer = np_tensor.tobytes()
                 _set_external_data(
-                    tensor, location=file_weight, offset=offset, length=len(buffer)
+                    tensor,
+                    location=file_weight,
+                    offset=offset,
+                    length=len(tensor_bytes),
                 )
-                offset += len(buffer)
+                offset += len(tensor_bytes)
                 with open(full_file_weight, "ab") as f:
-                    f.write(buffer)
+                    f.write(tensor_bytes)
             else:
                 name = f"{_clean_name(prefix, prop.value)}.weight"
                 _set_external_data(tensor, location=name)
                 full_name = os.path.join(folder, name)
                 prop.value = name
                 with open(full_name, "wb") as f:
-                    f.write(np_tensor.tobytes())
+                    f.write(tensor_bytes)
 
         with open(file_path, "wb") as f:
             f.write(copy.SerializeToString())
@@ -289,9 +297,15 @@ class ModelContainer:
 
                 dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.data_type)
                 shape = tuple(tensor.dims)
-                self.large_initializers[key] = np.frombuffer(
-                    raw_data, dtype=dtype
-                ).reshape(shape)
+
+                if sys.byteorder == "big":
+                    np_tensor = np.frombuffer(raw_data.byteswap(), dtype=dtype).reshape(
+                        shape
+                    )
+                else:
+                    np_tensor = np.frombuffer(raw_data, dtype=dtype).reshape(shape)
+
+                self.large_initializers[key] = np_tensor
 
 
 def make_large_model(
