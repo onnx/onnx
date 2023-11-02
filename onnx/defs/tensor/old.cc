@@ -3262,9 +3262,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           auto is_negative = [](int64_t index) { return index < 0; };
-          if (std::any_of(starts.begin(), starts.end(), is_negative) ||
-              std::any_of(ends.begin(), ends.end(), is_negative) ||
-              std::any_of(axes.begin(), axes.end(), is_negative)) {
+          if (std::any_of(axes.begin(), axes.end(), is_negative)) {
             // Negative axes were not explicitly discussed in the spec before opset-10.
             // Hence, they are officially not part of the spec, but some models/runtimes may use them.
             // So we perform simple rank inference in this case.
@@ -3281,13 +3279,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
               // There's a lot of potential behaviors. For now just
               // handle some simple cases.
-              if (ctx.getInputType(0)->tensor_type().shape().dim((int)i).has_dim_value() && starts[j] >= 0 &&
-                  ends[j] >= 0) {
-                auto newval =
-                    std::min((int64_t)ctx.getInputType(0)->tensor_type().shape().dim((int)i).dim_value(), ends[j]) -
-                    starts[j];
-                if (newval >= 0) {
-                  newdim->set_dim_value(newval);
+              const auto& dim = ctx.getInputType(0)->tensor_type().shape().dim((int)i);
+              if (dim.has_dim_value()) {
+                auto dim_value = dim.dim_value();
+                if (starts[j] < 0) {
+                  starts[j] += dim_value;
+                }
+                if (ends[j] < 0) {
+                  ends[j] += dim_value;
+                }
+                if (starts[j] >= 0 && ends[j] >= 0) {
+                  auto newval = std::min(dim_value, ends[j]) - starts[j];
+                  if (newval >= 0) {
+                    newdim->set_dim_value(newval);
+                  }
                 }
               }
               ++j;
