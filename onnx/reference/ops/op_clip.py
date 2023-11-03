@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Clip_6(OpRun):
-    def _run(self, data, min=None, max=None):  # type: ignore
+    def _run(self, data, min=None, max=None):  # type: ignore  # noqa: A002
         amin = min
         amax = max
         if amin is amax is None:
