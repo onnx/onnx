@@ -281,7 +281,7 @@ expect(node, inputs=[x], outputs=[y], name="test_abs")
 import numpy as np
 
 
-def abs(input: np.ndarray) -> np.ndarray:
+def abs(input: np.ndarray) -> np.ndarray:  # noqa: A001
     return np.abs(input)  # type: ignore[no-any-return]
 
 ```
@@ -26691,7 +26691,9 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="C
 sum_in = onnx.helper.make_tensor_value_info(
     "sum_in", onnx.TensorProto.FLOAT, [2]
 )
-next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info(  # noqa: A001
+    "next", onnx.TensorProto.FLOAT, [2]
+)
 sum_out = onnx.helper.make_tensor_value_info(
     "sum_out", onnx.TensorProto.FLOAT, [2]
 )
@@ -26748,7 +26750,9 @@ expect(
 sum_in = onnx.helper.make_tensor_value_info(
     "sum_in", onnx.TensorProto.FLOAT, [2]
 )
-next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info(  # noqa: A001
+    "next", onnx.TensorProto.FLOAT, [2]
+)
 sum_out = onnx.helper.make_tensor_value_info(
     "sum_out", onnx.TensorProto.FLOAT, [2]
 )
@@ -33016,7 +33020,7 @@ expect(
 ```python
 axis = 1
 largest = 0
-sorted = 1
+sorted = 1  # noqa: A001
 k = 3
 
 node = onnx.helper.make_node(
