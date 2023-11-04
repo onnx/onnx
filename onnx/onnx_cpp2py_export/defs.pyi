@@ -150,7 +150,7 @@ class OpSchema:
         def __init__(
             self,
             name: str,
-            type: OpSchema.AttrType,
+            type: OpSchema.AttrType,  # noqa: A002
             description: str = "",
             *,
             required: bool = True,
@@ -167,7 +167,7 @@ class OpSchema:
         @property
         def description(self) -> str: ...
         @property
-        def type(self) -> OpSchema.AttrType: ...
+        def type(self) -> OpSchema.AttrType: ...  # noqa: A003
         @property
         def default_value(self) -> AttributeProto: ...
         @property
