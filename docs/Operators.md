@@ -7316,7 +7316,7 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 
 <dl>
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'x_zero_point' and 'x' to 8-bit integer, 16-bit integer, 32-bit integer, or 8-bit float tensor.</dd>
+<dd>The type of the inputs 'x_zero_point' and 'x'.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>'x_scale' determines the output type.</dd>
 </dl>
@@ -19968,9 +19968,9 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
-<dd>Constrain 'x' to float, float16, bfloat16 or int32 tensor.</dd>
+<dd>The type of the input 'x'.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer, 16-bit integer, or 8-bit float tensor.</dd>
+<dd>The type of the input 'y_zero_point' and the output 'y'.</dd>
 </dl>
 
 
