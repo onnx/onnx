@@ -66,6 +66,46 @@ class DequantizeLinear(Base):
         )
 
     @staticmethod
+    def export_uint16() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale", "x_zero_point"],
+            outputs=["y"],
+        )
+
+        x = np.array([30000, 31000, 32768, 33000]).astype(np.uint16)
+        x_scale = np.float32(2)
+        x_zero_point = np.uint16(32767)
+        y = np.array([-5534.0, -3534.0, 2.0, 466.0], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale, x_zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_uint16",
+        )
+
+    @staticmethod
+    def export_int16() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale", "x_zero_point"],
+            outputs=["y"],
+        )
+
+        x = np.array([-300, -30, -1025, 1270]).astype(np.int16)
+        x_scale = np.float32(2)
+        x_zero_point = np.int16(-1024)
+        y = np.array([1448.0, 1988.0, -2.0, 4588.0], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale, x_zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_int16",
+        )
+
+    @staticmethod
     def export_e4m3fn() -> None:
         node = onnx.helper.make_node(
             "DequantizeLinear",
