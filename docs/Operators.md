@@ -46,7 +46,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-19">19</a>|
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
-|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
+|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
@@ -107,7 +107,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
-|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
+|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
 |<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-14">14</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
 |<a href="#RandomNormal">RandomNormal</a>|<a href="Changelog.md#RandomNormal-1">1</a>|
 |<a href="#RandomNormalLike">RandomNormalLike</a>|<a href="Changelog.md#RandomNormalLike-1">1</a>|
@@ -7283,9 +7283,9 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>
+Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>
 
 #### Attributes
 
@@ -7315,8 +7315,8 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain 'x_zero_point' and 'x' to 8-bit integer, 16-bit integer, 32-bit integer, or 8-bit float tensor.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>'x_scale' determines the output type.</dd>
 </dl>
@@ -19924,7 +19924,7 @@ expect(
   The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
   The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
   The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
-  For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
+  For saturation, it saturates to [0, 255] if it's uint8, [-128, 127] if it's int8, [0, 65535] if it's uint16, or [-32768, 32767] if it's int16.
   For (x / y_scale), it's rounding to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
   'y_zero_point' and 'y' must have same type.
   'y_zero_point' is usually not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz,
@@ -19933,9 +19933,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>
+Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>
 
 #### Attributes
 
@@ -19969,8 +19969,8 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
 <dd>Constrain 'x' to float, float16, bfloat16 or int32 tensor.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer/float tensor.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer, 16-bit integer, or 8-bit float tensor.</dd>
 </dl>
 
 
