@@ -26,10 +26,12 @@ from onnx.reference.op_run import OpRun
 class _CommonQuantizeLinear(OpRun):
     float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
     float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
-    quant_integer_ranges = {TensorProto.UINT8: (0, 255),
-                            TensorProto.INT8: (-128, 127),
-                            TensorProto.UINT16: (0, 65535),
-                            TensorProto.INT16: (-32768, 32767)}
+    quant_integer_ranges = {
+        TensorProto.UINT8: (0, 255),
+        TensorProto.INT8: (-128, 127),
+        TensorProto.UINT16: (0, 65535),
+        TensorProto.INT16: (-32768, 32767),
+    }
 
     def get_zero_point_type(self, zero_point: np.ndarray) -> int:
         if (
