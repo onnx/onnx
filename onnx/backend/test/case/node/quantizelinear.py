@@ -214,4 +214,3 @@ class QuantizeLinear(Base):
             outputs=[y],
             name="test_quantizelinear_int16",
         )
-

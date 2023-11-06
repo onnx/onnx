@@ -53,7 +53,7 @@ class _CommonQuantizeLinear(OpRun):
             return TensorProto.FLOAT8E5M2FNUZ
         return np_dtype_to_tensor_dtype(zero_point.dtype)
 
-    def common_run(  # noqa: PLR0911
+    def common_run(
         self,
         x: np.ndarray,
         y_scale: np.ndarray,

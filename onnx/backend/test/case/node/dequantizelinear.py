@@ -189,4 +189,3 @@ class DequantizeLinear(Base):
             outputs=[y],
             name="test_dequantizelinear_int16",
         )
-
