@@ -28,7 +28,7 @@ from onnx.reference.op_run import OpRun
 class _CommonQuantizeLinear(OpRun):
     float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
     float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
-    quant_integer_ranges: ClassVar[dict[str, TensorProto.DataType]] = {
+    quant_integer_ranges: ClassVar[dict[TensorProto.DataType, tuple[int]]] = {
         TensorProto.UINT8: (0, 255),
         TensorProto.INT8: (-128, 127),
         TensorProto.UINT16: (0, 65535),
