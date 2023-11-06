@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from typing import ClassVar, Optional, Tuple
+from typing import ClassVar
 
 import numpy as np
 
@@ -59,10 +59,10 @@ class _CommonQuantizeLinear(OpRun):
         self,
         x: np.ndarray,
         y_scale: np.ndarray,
-        zero_point: Optional[np.ndarray] = None,
+        zero_point: np.ndarray | None = None,
         axis: int = 1,
         saturate: bool = True,
-    ) -> Tuple[np.ndarray]:
+    ) -> tuple[np.ndarray]:
         if len(y_scale.shape) > 1:
             raise RuntimeError("Input 2 must be a vector or a number.")
         if len(y_scale.shape) > 0 and y_scale.size == 1:
