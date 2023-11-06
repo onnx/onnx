@@ -55,8 +55,8 @@ external_data_helper
 helper
 hub
 inliner
-large_helper
 mapping
+model_container
 numpy_helper
 parser
 printer

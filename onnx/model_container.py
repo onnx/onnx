@@ -153,19 +153,19 @@ class ModelContainer:
         Returns:
             modified main model proto
         """
-        _unique_names: set[str] = set()
 
-        def _clean_name(prefix: str, name: str) -> str:
+        def _clean_name(prefix: str, name: str, unique_names: dict[str, int]) -> str:
             for c in ":/\\;,!":
                 name = name.replace(c, "")
             base_name = name
-            i = 0
-            while name in _unique_names:
-                i += 1
-                name = f"{base_name}_{i}"
-            _unique_names.add(name)
+            if name in unique_names:
+                i = unique_names[name] + 1
+                unique_names[name] = i
+                return f"{base_name}_{i}"
+            unique_names[name] = 1
             return name
 
+        unique_names: dict[str, int] = {}
         folder = os.path.dirname(file_path)
         if not os.path.exists(folder):
             raise FileNotFoundError(f"Folder {folder!r} does not exist.")
@@ -216,7 +216,7 @@ class ModelContainer:
                 with open(full_file_weight, "ab") as f:
                     f.write(tensor_bytes)
             else:
-                name = f"{_clean_name(prefix, prop.value)}.weight"
+                name = f"{_clean_name(prefix, prop.value, unique_names)}.weight"
                 _set_external_data(tensor, location=name)
                 full_name = os.path.join(folder, name)
                 prop.value = name
