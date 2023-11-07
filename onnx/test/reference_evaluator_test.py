@@ -3501,6 +3501,184 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"X": data})
         assert_allclose(expected, got[0])
 
+    def test_quantize_linear_uint16(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.UINT16, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["Y"]),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    make_tensor("zero", TensorProto.UINT16, [1], [32767]),
+                ],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array(
+            [
+                # rounding half to even
+                0.0,
+                -128.0,
+                3.0,
+                -3.0,
+                # round < .5
+                2.9,
+                -2.9,
+                # round > .5
+                3.1,
+                -3.1,
+                # critical point
+                65536.0,
+                -65534.0,
+                # saturate case
+                70000.0,
+                -70000.0,
+            ],
+            dtype=np.float32,
+        )
+        expected = np.array(
+            [
+                32767,
+                32703,
+                32769,
+                32765,
+                32768,
+                32766,
+                32769,
+                32765,
+                65535,
+                0,
+                65535,
+                0,
+            ],
+            dtype=np.uint16,
+        )
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_quantize_linear_int16(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.INT16, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["Y"]),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    make_tensor("zero", TensorProto.INT16, [1], [256]),
+                ],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array(
+            [
+                # rounding half to even
+                0.0,
+                -514.0,
+                3.0,
+                -3.0,
+                # round < .5
+                2.9,
+                -2.9,
+                # round > .5
+                3.1,
+                -3.1,
+                # critical point
+                65022.0,
+                -66046.0,
+                65023.0,
+                -66047.0,
+                65024.0,
+                -66048.0,
+                # saturate case
+                70000.0,
+                -70000.0,
+            ],
+            dtype=np.float32,
+        )
+        expected = np.array(
+            [
+                256,
+                -1,
+                258,
+                254,
+                257,
+                255,
+                258,
+                254,
+                32767,
+                -32767,
+                32767,
+                -32768,
+                32767,
+                -32768,
+                32767,
+                -32768,
+            ],
+            dtype=np.int16,
+        )
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_dequantize_linear_uint16(self):
+        X = make_tensor_value_info("X", TensorProto.UINT16, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "DequantizeLinear", ["X", "scale", "zero"], ["Y"], axis=0
+                    ),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    make_tensor("zero", TensorProto.UINT16, [1], [32767]),
+                ],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([30000, 31000, 32768, 33000], dtype=np.uint16)
+        expected = np.array([-5534.0, -3534.0, 2.0, 466.0], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    def test_dequantize_linear_int16(self):
+        X = make_tensor_value_info("X", TensorProto.INT16, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "DequantizeLinear", ["X", "scale", "zero"], ["Y"], axis=0
+                    ),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    make_tensor("zero", TensorProto.INT16, [1], [-1024]),
+                ],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array([-300, -30, -1025, 1270], dtype=np.int16)
+        expected = np.array([1448.0, 1988.0, -2.0, 4588.0], dtype=np.float32)
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
     def test_lrn(self):
         def _expected(x, alpha, beta, bias, size):
             square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
