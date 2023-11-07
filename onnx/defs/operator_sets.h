@@ -1137,12 +1137,16 @@ class OpSet_Onnx_ver20 {
 };
 
 // Forward declarations for ai.onnx version 21
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QuantizeLinear);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QLinearMatMul);
 
 // Iterate over schema from ai.onnx version 21
 class OpSet_Onnx_ver21 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QuantizeLinear)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QLinearMatMul)>());
   }
 };
