@@ -119,6 +119,7 @@ disable = [
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
 target-version = "py38"
 select = [
+    "A", # flake8-builtins
     "B", # flake8-bugbear
     "C4", # flake8-comprehensions
     "E", # pycodestyle
@@ -156,6 +157,9 @@ ignore-init-module-imports = true
 unfixable = [
     "SIM112", # Envvars should not be modified
 ]
+
+[tool.ruff.flake8-builtins]
+builtins-ignorelist = ["id", "input"]
 
 [tool.ruff.flake8-tidy-imports]
 # Disallow all relative imports.

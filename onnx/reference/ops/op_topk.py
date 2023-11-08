@@ -105,7 +105,7 @@ class TopK_10(_CommonTopK):
 
 
 class TopK_11(_CommonTopK):
-    def _run(self, data, ink, axis=None, largest=None, sorted=None):  # type: ignore
+    def _run(self, data, ink, axis=None, largest=None, sorted=None):  # type: ignore  # noqa: A002
         """
         Runtime for operator *TopK*.
         The implementation is not the most efficient

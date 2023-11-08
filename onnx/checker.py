@@ -129,11 +129,20 @@ def check_model(
     full_check: bool = False,
     skip_opset_compatibility_check: bool = False,
 ) -> None:
-    """Check the consistency of a model. An exception is raised if the test fails.
+    """Check the consistency of a model.
+
+    An exception will be raised if the model's ir_version is not set
+    properly or is higher than checker's ir_version, or if the model
+    has duplicate keys in metadata_props.
+
+    If IR version >= 3, the model must specify opset_import.
+    If IR version < 3, the model cannot have any opset_import specified.
 
     Args:
-        model: Model to check.
-        full_check: If True, the function also checks for shapes that can be inferred.
+        model: Model to check. If model is a path, the function checks model
+            path first. If the model bytes size is larger than 2GB, function
+            should be called using model path.
+        full_check: If True, the function also runs shape inference check.
         skip_opset_compatibility_check: If True, the function skips the check for
             opset compatibility.
     """
