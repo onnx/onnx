@@ -164,25 +164,19 @@ void convPoolShapeInference(
       continue;
     }
     // how big is the input, including padding
-    int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
-    effective_input_size += pads[i];
-    effective_input_size += pads[i + kernel_shape_size];
+    int64_t input_size = input_shape.dim(2 + i).dim_value();
+    int64_t effective_input_size = input_size + pads[i] + pads[i + kernel_shape_size];
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
-    // how many times we can move the kernel from it's initial position, based
-    // on the stride
-    int64_t strided_kernel_positions;
+    int64_t output_size =
+        (effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
+    if (ceil_mode == 1 && (output_size - 1) * strides[i] >= (input_size + pads[i])) {
+      --output_size;
+    }
 
-    if (ceil_mode == 1)
-      strided_kernel_positions =
-          (int64_t)(std::ceil((effective_input_size - effective_kernel_shape[i]) / float(strides[i])));
-    else
-      strided_kernel_positions = (effective_input_size - effective_kernel_shape[i]) / strides[i];
-
-    // add in the initial position
-    newdim->set_dim_value(1 + strided_kernel_positions);
+    newdim->set_dim_value(output_size);
   }
 
   if (ctx.getNumOutputs() > 1) {

@@ -10147,7 +10147,7 @@ for op_dtype in all_numeric_dtypes:
 
 
 ### MaxPool
-There are 18 test cases, listed as following:
+There are 19 test cases, listed as following:
 <details>
 <summary>maxpool_1d_default</summary>
 
@@ -10208,6 +10208,38 @@ x = np.array(
 y = np.array([[[[11, 12], [15, 16]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_ceil")
+```
+
+</details>
+<details>
+<summary>maxpool_2d_ceil_output_size_reduce_by_one</summary>
+
+```python
+"""
+input_shape: [1, 1, 2, 2]
+output_shape: [1, 1, 1, 1]
+"""
+node = onnx.helper.make_node(
+    "MaxPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[1, 1],
+    strides=[2, 2],
+    ceil_mode=True,
+)
+x = np.array(
+    [
+        [
+            [
+                [1, 2,],
+                [3, 4,],
+            ]
+        ]
+    ]
+).astype(np.float32)
+y = np.array([[[[1]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_ceil_output_size_reduce_by_one")
 ```
 
 </details>
