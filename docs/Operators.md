@@ -15351,15 +15351,26 @@ x = np.array(
     [
         [
             [
-                [1, 2,],
-                [3, 4,],
+                [
+                    1,
+                    2,
+                ],
+                [
+                    3,
+                    4,
+                ],
             ]
         ]
     ]
 ).astype(np.float32)
 y = np.array([[[[1]]]]).astype(np.float32)
 
-expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_ceil_output_size_reduce_by_one")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_maxpool_2d_ceil_output_size_reduce_by_one",
+)
 ```
 
 </details>
