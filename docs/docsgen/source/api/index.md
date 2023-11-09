@@ -56,6 +56,7 @@ helper
 hub
 inliner
 mapping
+model_container
 numpy_helper
 parser
 printer
