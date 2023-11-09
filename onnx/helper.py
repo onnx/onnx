@@ -149,7 +149,6 @@ def make_node(
     Returns:
         NodeProto
     """
-
     node = NodeProto()
     node.op_type = op_type
     node.input.extend(inputs)
