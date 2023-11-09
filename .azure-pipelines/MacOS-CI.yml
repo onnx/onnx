@@ -14,6 +14,12 @@ jobs:
     vmImage: 'macOS-11'
   strategy:
     matrix:
+      py312-internal-protobuf:
+        python.version: '3.12'
+        onnx_ml: 1
+        build_type: 'Release'
+        documentation: 0
+        protobuf_type: 'Internal'
       py311-external-protobuf:
         python.version: '3.11'
         onnx_ml: 0
