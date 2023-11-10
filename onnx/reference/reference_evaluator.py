@@ -296,7 +296,7 @@ class ReferenceEvaluator:
 
     def _log_arg(self, a: Any) -> Any:
         if isinstance(a, (str, int, float)):
-            return a
+            return str(a)
         if isinstance(a, np.ndarray):
             if self.verbose < 4:  # noqa: PLR2004
                 return f"{a.dtype}:{a.shape} in [{a.min()}, {a.max()}]"
