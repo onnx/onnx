@@ -516,7 +516,15 @@ class ReferenceEvaluator:
         # step 2: execute nodes
         for node in self.rt_nodes_:
             self._log(1, "%s(%s) -> %s", node.op_type, node.input, node.output)
-            inputs = [results[i] for i in node.input]
+            inputs = []
+            for i in node.input:
+                if i not in results:
+                    raise RuntimeError(
+                        f"Unable to find input {i!r} in known results {sorted(results)}, "
+                        f"self.rt_inits_ has {sorted(self.rt_inits_)}, "
+                        f"feed_inputs has {sorted(feed_inputs)}."
+                    )
+                inputs.append(results[i])
             linked_attributes = {}
             if node.has_linked_attribute and attributes:
                 linked_attributes["linked_attributes"] = attributes
