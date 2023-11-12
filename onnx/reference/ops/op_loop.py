@@ -78,7 +78,7 @@ class Loop(OpRun):
             outputs = [inputs[i] for i in body.input_names[2:]]
         else:
             outputs = outputs[1 : 1 + self.N]
-        outputs.extend([np.hstack(x) for x in k_carried_away])
+        outputs.extend([np.vstack(x) for x in k_carried_away])
         while len(outputs) < len(self.onnx_node.output):
             outputs.append(np.empty(shape=()))
         res = tuple(outputs)
