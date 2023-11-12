@@ -422,7 +422,7 @@ class OpRun(abc.ABC):
                 f"is a tuple, this is no onnx correponding type (Map, List, Tensor, SparseTensor). "
                 f"All returned types: {dtypes!r}."
             )
-        res = tuple(
+        res = tuple(  # type: ignore[assignment]
             (np.array(x) if not isinstance(x, (list, dict)) else x) for x in res
         )
         if any(

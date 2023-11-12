@@ -209,7 +209,8 @@ class Runner:
                     )
             else:
                 if ref_outputs[i].dtype in (np.str_, object, np.object_) or isinstance(
-                    ref_outputs[i].dtype, np.dtypes.StrDType
+                    ref_outputs[i].dtype,
+                    getattr(getattr(np, "dtypes", None), "StrDType", type),
                 ):
                     if ref_outputs[i].tolist() != outputs[i].tolist():
                         raise AssertionError(f"{ref_outputs[i]} != {outputs[i]}")
