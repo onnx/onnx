@@ -34,8 +34,8 @@ class Loop(OpRun):
             args = args[1:]
         else:
             v_initial = None
-        if not hasattr(M, "dtype"):
-            raise TypeError(f"M must be an array or a numpy number not {type(M)}.")
+        if M is not None and not hasattr(M, "dtype"):
+            raise TypeError(f"M must be empty or an array but its type is {type(M)}.")
         body = self.body  # type: ignore
         loop_inputs = body.input_names
         inputs = {name: None for name in loop_inputs}
@@ -53,10 +53,10 @@ class Loop(OpRun):
 
         k_carried_away = [[] for i in range(self.K)]  # type: ignore
         it = 0
-        while cond and it < M:
+        while cond and (M is None or it < M):
             self._log("  -- loop> {%r}", context)
             if len(body.input_names) > 0 and body.input_names[0] is not None:
-                inputs[body.input_names[0]] = np.array(it, dtype=M.dtype)  # type: ignore
+                inputs[body.input_names[0]] = np.array(it, dtype=None if M is None else M.dtype)  # type: ignore
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
             outputs = self._run_body(inputs, attributes=attributes)  # type: ignore
