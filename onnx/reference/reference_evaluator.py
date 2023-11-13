@@ -9,7 +9,15 @@ import numpy as np
 
 from onnx import load
 from onnx.defs import onnx_opset_version
-from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
+from onnx.external_data_helper import ExternalDataInfo, uses_external_data
+from onnx.onnx_pb import (
+    FunctionProto,
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    TensorProto,
+    TypeProto,
+)
 from onnx.reference.op_run import (
     OpFunctionContextDependant,
     OpRun,
@@ -18,6 +26,7 @@ from onnx.reference.op_run import (
     to_array_extended,
 )
 from onnx.reference.ops_optimized import optimized_operators
+from onnx.model_container import ModelContainer
 
 
 class ReferenceEvaluator:
@@ -209,6 +218,13 @@ class ReferenceEvaluator:
                         new_ops.append(op)
         self.output_types_ = None
         self.input_types_ = None
+
+        if isinstance(proto, ModelContainer):
+            self.container_ = proto
+            proto = self.container_.model_proto
+        else:
+            self.container_ = None
+
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
@@ -294,6 +310,24 @@ class ReferenceEvaluator:
                 self.new_ops_[key] = cl
         self._init()
 
+    def retrieve_external_data(self, init: TensorProto) -> np.array:
+        """
+        Returns a tensor saved as external.
+        """
+        info = ExternalDataInfo(init)
+        location = info.location
+        if location.startswith("#"):
+            # It comes from a large container.
+            return self.container_[location]
+        # Otherwise, the data is on disk.
+        if self.container_ is not None:
+            raise RuntimeError(
+                "ReferenceEvaluator assumes a LargeContainer was loaded with its external tensor."
+            )
+        raise RuntimeError(
+            "An instance of LargeContainer should be created before using ReferenceEvaluator."
+        )
+
     def _log_arg(self, a: Any) -> Any:
         if isinstance(a, (str, int, float)):
             return a
@@ -370,7 +404,10 @@ class ReferenceEvaluator:
         self.rt_inits_ = {}
         self.rt_nodes_ = []
         for init in self.inits_:
-            self.rt_inits_[init.name] = to_array_extended(init)  # type: ignore[union-attr,arg-type]
+            if uses_external_data(init):
+                self.rt_inits_[init.name] = self.retrieve_external_data(init)
+            else:
+                self.rt_inits_[init.name] = to_array_extended(init)  # type: ignore[union-attr,arg-type]
         run_params = {
             "log": lambda pattern, *args: self._log(10, pattern, *args),
             "opsets": self.opsets,

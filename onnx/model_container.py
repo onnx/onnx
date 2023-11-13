@@ -88,6 +88,16 @@ class ModelContainer:
         if self.model_proto is not None:
             onnx.checker.check_model(self.model_proto)
 
+    def __getitem__(self, name: str) -> dict[str, np.ndarray]:
+        """
+        Returns an external tensor given its name.
+        """
+        if name not in self.large_initializers:
+            raise ValueError(
+                f"Unable to find large tensor {name!r} among {sorted(self.large_initializers)}."
+            )
+        return self.large_initializers[name]
+
     @property
     def model_proto(self) -> onnx.ModelProto:
         if self.model_proto_ is None:
