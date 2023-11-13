@@ -404,9 +404,7 @@ class OpRun(abc.ABC):
         )
 
     def _check_output_run(self, res: tuple[Any]) -> tuple[Any]:
-        """
-        Checks the output are from the expected type.
-        """
+        """Checks the output are from the expected type."""
         if not isinstance(res, tuple):
             raise TypeError(
                 f"Method '_run' of class {self.__class__.__name__!r} does not return a tuple but {type(res)}."
