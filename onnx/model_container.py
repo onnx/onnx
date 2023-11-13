@@ -88,7 +88,7 @@ class ModelContainer:
         if self.model_proto is not None:
             onnx.checker.check_model(self.model_proto)
 
-    def __getitem__(self, name: str) -> dict[str, np.ndarray]:
+    def __getitem__(self, name: str) -> str | np.ndarray:
         """
         Returns an external tensor given its name.
         """

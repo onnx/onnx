@@ -10,7 +10,6 @@ import numpy as np
 import numpy.testing as npt
 
 import onnx
-import onnx.external_data_helper as ext_data
 import onnx.helper
 import onnx.model_container
 import onnx.numpy_helper
