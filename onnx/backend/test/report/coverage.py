@@ -153,10 +153,12 @@ class Coverage:
                     experimental.append(schema.name)
         all_ops.sort()
         nodes_path = os.path.join(
-            str(os.environ.get("CSVDIR")), "nodes.csv"  # type: ignore
+            str(os.environ.get("CSVDIR")),
+            "nodes.csv",  # type: ignore
         )  # type: ignore
         models_path = os.path.join(
-            str(os.environ.get("CSVDIR")), "models.csv"  # type: ignore
+            str(os.environ.get("CSVDIR")),
+            "models.csv",  # type: ignore
         )  # type: ignore
         existing_nodes: OrderedDict[str, Dict[str, str]] = OrderedDict()
         existing_models: OrderedDict[str, Dict[str, str]] = OrderedDict()

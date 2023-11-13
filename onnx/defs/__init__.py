@@ -117,7 +117,11 @@ def get_function_ops() -> List[OpSchema]:
     """
 
     schemas = C.get_all_schemas()
-    return [schema for schema in schemas if schema.has_function or schema.has_context_dependent_function]  # type: ignore
+    return [
+        schema
+        for schema in schemas
+        if schema.has_function or schema.has_context_dependent_function
+    ]  # type: ignore
 
 
 SchemaError = C.SchemaError

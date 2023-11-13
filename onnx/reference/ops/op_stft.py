@@ -93,7 +93,8 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):  # type: ign
         begin = fs
         end = fs + 1
         frame_x = np.squeeze(
-            _slice(x, np.array([begin]), np.array([end]), axisf), axis=axisf[0]  # type: ignore
+            _slice(x, np.array([begin]), np.array([end]), axisf),
+            axis=axisf[0],  # type: ignore
         )
 
         # ifft

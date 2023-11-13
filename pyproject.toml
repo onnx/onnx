@@ -125,6 +125,7 @@ select = [
     "E", # pycodestyle
     "F", # Pyflakes
     "G", # flake8-logging-format
+    "I", # isort
     "ISC", # flake8-implicit-str-concat
     "N", # pep8-naming
     "NPY", # modern numpy

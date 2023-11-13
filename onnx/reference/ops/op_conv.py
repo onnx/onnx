@@ -189,11 +189,13 @@ def _conv_implementation(  # type: ignore
                             iw1, iw2 = max(0, j + ow), min(j + ow + kw, sW)
                             img = X[n : n + 1, c : c + 1, ih1:ih2, iw1:iw2]
                             if img.shape != w.shape:
-                                jh1, jh2 = max(-oh - i, 0), min(
-                                    kh, kh + sH - (i + oh + kh)
+                                jh1, jh2 = (
+                                    max(-oh - i, 0),
+                                    min(kh, kh + sH - (i + oh + kh)),
                                 )
-                                jw1, jw2 = max(-ow - j, 0), min(
-                                    kw, kw + sW - (j + ow + kw)
+                                jw1, jw2 = (
+                                    max(-ow - j, 0),
+                                    min(kw, kw + sW - (j + ow + kw)),
                                 )
                                 w_ = w[:1, :1, jh1:jh2, jw1:jw2]
                                 if img.shape != w_.shape:
@@ -253,14 +255,17 @@ def _conv_implementation(  # type: ignore
                                 iz1, iz2 = max(0, z + oz), min(z + oz + kz, sZ)
                                 img = X[n : n + 1, c : c + 1, ih1:ih2, iw1:iw2, iz1:iz2]
                                 if img.shape != w.shape:
-                                    jh1, jh2 = max(-oh - i, 0), min(
-                                        kh, kh + sH - (i + oh + kh)
+                                    jh1, jh2 = (
+                                        max(-oh - i, 0),
+                                        min(kh, kh + sH - (i + oh + kh)),
                                     )
-                                    jw1, jw2 = max(-ow - j, 0), min(
-                                        kw, kw + sW - (j + ow + kw)
+                                    jw1, jw2 = (
+                                        max(-ow - j, 0),
+                                        min(kw, kw + sW - (j + ow + kw)),
                                     )
-                                    jz1, jz2 = max(-oz - z, 0), min(
-                                        kz, kz + sZ - (z + oz + kz)
+                                    jz1, jz2 = (
+                                        max(-oz - z, 0),
+                                        min(kz, kz + sZ - (z + oz + kz)),
                                     )
                                     w_ = w[:1, :1, jh1:jh2, jw1:jw2, jz1:jz2]
                                     if img.shape != w_.shape:
@@ -271,15 +276,11 @@ def _conv_implementation(  # type: ignore
                                         )
                                     s = np.dot(
                                         img.reshape((1, -1)), w_.reshape((-1, 1))
-                                    )[
-                                        0, 0
-                                    ]  # (img * w_).sum()
+                                    )[0, 0]  # (img * w_).sum()
                                 else:
                                     s = np.dot(
                                         img.reshape((1, -1)), w.reshape((-1, 1))
-                                    )[
-                                        0, 0
-                                    ]  # (img * w).sum()
+                                    )[0, 0]  # (img * w).sum()
                                 res[n, nw, hr, wr, zr] += s  # type: ignore
 
         return res

@@ -61,5 +61,8 @@ class Dropout_12(DropoutBase):
         ratio = 0.5 if len(inputs) <= 1 else inputs[1]
         training_mode = False if len(inputs) <= 2 else inputs[2]
         return self._private_run(
-            X, seed=seed, ratio=ratio, training_mode=training_mode  # type: ignore
+            X,
+            seed=seed,
+            ratio=ratio,
+            training_mode=training_mode,  # type: ignore
         )

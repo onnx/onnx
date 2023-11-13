@@ -10,7 +10,9 @@ from onnx.backend.test.case.node import expect
 from onnx.defs import AI_ONNX_PREVIEW_TRAINING_DOMAIN
 
 
-def apply_adam(r, t, x, g, v, h, norm_coefficient, norm_coefficient_post, alpha, beta, epsilon):  # type: ignore
+def apply_adam(
+    r, t, x, g, v, h, norm_coefficient, norm_coefficient_post, alpha, beta, epsilon
+):  # type: ignore
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Update momentum.
