@@ -403,7 +403,7 @@ class OpRun(abc.ABC):
             f"Method '_run' must be overwritten for operator {self.__class__.__name__!r}."
         )
 
-    def _check_output_run(self, res: tuple[Any]) -> tuple[Any]:
+    def _check_output_run(self, res: tuple[Any, ...]) -> tuple[Any, ...]:
         """Checks the output are from the expected type."""
         if not isinstance(res, tuple):
             raise TypeError(
