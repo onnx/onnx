@@ -430,7 +430,7 @@ class OpRun(abc.ABC):
             dtypes = [type(t) for t in res]
             raise TypeError(
                 f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
-                f"is a float32, this is no onnx correponding type (Map, List, Tensor, SparseTensor). "
+                f"is a float32 value, this is no ONNX corresponding type (Map, List, Tensor, SparseTensor). "
                 f"All returned types: {dtypes!r}."
             )
         return res
