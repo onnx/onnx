@@ -10,6 +10,7 @@ import numpy as np
 from onnx import load
 from onnx.defs import onnx_opset_version
 from onnx.external_data_helper import ExternalDataInfo, uses_external_data
+from onnx.model_container import ModelContainer
 from onnx.onnx_pb import (
     FunctionProto,
     GraphProto,
@@ -26,7 +27,6 @@ from onnx.reference.op_run import (
     to_array_extended,
 )
 from onnx.reference.ops_optimized import optimized_operators
-from onnx.model_container import ModelContainer
 
 
 class ReferenceEvaluator:

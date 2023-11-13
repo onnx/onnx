@@ -96,7 +96,7 @@ class ModelContainer:
             raise ValueError(
                 f"Unable to find large tensor {name!r} among {sorted(self.large_initializers)}."
             )
-        return self.large_initializers[name]
+        return self.large_initializers[name]  # type: ignore[return-value]
 
     @property
     def model_proto(self) -> onnx.ModelProto:
