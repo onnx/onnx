@@ -123,15 +123,6 @@ def create_model():
 class TestReferenceEvaluatorLoop(unittest.TestCase):
     def test_loop_fft(self):
         model = create_model()
-
-        # try:
-        #     from onnxruntime import InferenceSession
-        #     ort_session = InferenceSession(model.SerializeToString(), providers=["CPUExecutionProvider"])
-        # except ImportError:
-        #     # onnxruntime is not available
-        #     pass
-        with open("kkkk.onnx", "wb") as f:
-            f.write(model.SerializeToString())
         session = ReferenceEvaluator(model, verbose=10)
         session.run(None, {"A": -np.arange(10).astype(np.float32)})
 
