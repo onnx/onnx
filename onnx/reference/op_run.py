@@ -409,7 +409,7 @@ class OpRun(abc.ABC):
             raise TypeError(
                 f"Method '_run' of class {self.__class__.__name__!r} does not return a tuple but {type(res)}."
             )
-        if len(res) == 0:
+        if not res:
             raise ValueError(
                 f"Method '_run' of class {self.__class__.__name__!r} does not return any result."
             )
