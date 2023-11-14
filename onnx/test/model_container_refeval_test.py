@@ -102,6 +102,8 @@ class TestLargeOnnxReferenceEvaluator(unittest.TestCase):
         model_proto = _linear_regression()
         large_model = onnx.model_container.make_large_model(model_proto.graph)
         self.common_check_reference_evaluator(large_model)
+        with self.assertRaises(ValueError):
+            large_model["#anymissingkey"]
 
         with tempfile.TemporaryDirectory() as temp:
             filename = os.path.join(temp, "model.onnx")

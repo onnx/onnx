@@ -404,10 +404,11 @@ class ReferenceEvaluator:
         self.rt_inits_ = {}
         self.rt_nodes_ = []
         for init in self.inits_:
-            if uses_external_data(init):
-                self.rt_inits_[init.name] = self.retrieve_external_data(init)
-            else:
-                self.rt_inits_[init.name] = to_array_extended(init)  # type: ignore[union-attr,arg-type]
+            self.rt_inits_[init.name] = (
+                self.retrieve_external_data(init)
+                if uses_external_data(init)
+                else to_array_extended(init)
+            )
         run_params = {
             "log": lambda pattern, *args: self._log(10, pattern, *args),
             "opsets": self.opsets,
