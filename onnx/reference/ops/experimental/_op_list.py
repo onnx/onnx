@@ -4,9 +4,8 @@
 
 
 import textwrap
-from typing import Any, Dict
+from typing import Any, Dict, Union
 from typing import Optional as TOptional
-from typing import Union
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
