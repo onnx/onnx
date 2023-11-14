@@ -93,14 +93,17 @@ def float8e4m3_to_float32(
 ) -> np.ndarray:
     """Converts ndarray of float8, e4m3 (as uint32) to f32 (as uint32).
 
-    :param data: a numpy array, empty dimensions are allowed if dims is None
-    :param dims: if specified, the function reshapes the results
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified.
-
     See :ref:`onnx-detail-float8` for technical details.
+
+    Args:
+        data: A numpy array, empty dimensions are allowed if dims is None.
+        dims: If specified, the function reshapes the results.
+        fn: No infinite values.
+        uz: No negative zero.
+
+    Returns:
+        A numpy array of float32 with the same dimension if dims is None,
+        or reshaped to dims if specified.
     """
     if not fn:
         raise NotImplementedError(
@@ -164,11 +167,16 @@ def float8e5m2_to_float32(
 ) -> np.ndarray:
     """Converts ndarray of float8, e5m2 (as uint32) to f32 (as uint32).
 
-    :param data: a numpy array, empty dimensions are allowed if dims is None
-    :param dims: if specified, the function reshapes the results
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :return: a numpy array of float32 with the same dimension if dims is None,
+    See :ref:`onnx-detail-float8` for technical details.
+
+    Args:
+        data: A numpy array, empty dimensions are allowed if dims is None.
+        dims: If specified, the function reshapes the results.
+        fn: No infinite values.
+        uz: No negative zero.
+
+    Returns:
+        A numpy array of float32 with the same dimension if dims is None,
         or reshaped to dims if specified
     """
     res = _float8e5m2_to_float32(data, fn=fn, uz=uz)

@@ -1550,8 +1550,11 @@ _ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
 def _attr_type_to_str(attr_type: int) -> str:
     """Convert AttributeProto type to string.
 
-    :param attr_type: AttributeProto type.
-    :return: String representing the supplied attr_type.
+    Args:
+        attr_type: AttributeProto type.
+
+    Returns:
+        String representing the supplied attr_type.
     """
     if attr_type in AttributeProto.AttributeType.values():
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
