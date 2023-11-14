@@ -35,7 +35,7 @@ class TestSymbolicShape(unittest.TestCase):
                     assert dim.dim_value == expected_dim.dim_value, f"{onnx_model}"
 
     def _count_unique_dim_param_number(self, onnx_model: ModelProto) -> int:
-        """return the total number of unique symbolic shape"""
+        """Return the total number of unique symbolic shape"""
         symbol_shape_set = set()
         inputs = list(onnx_model.graph.input)
         outputs = list(onnx_model.graph.output)

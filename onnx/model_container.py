@@ -51,8 +51,7 @@ def _enumerate_subgraphs(graph):
 def make_large_tensor_proto(
     location: str, tensor_name: str, tensor_type: int, shape: tuple[int, ...]
 ) -> onnx.TensorProto:
-    """
-    Create an external tensor.
+    """Create an external tensor.
 
     Arguments:
         location: unique identifier (not necessary a path)
@@ -73,8 +72,7 @@ def make_large_tensor_proto(
 
 
 class ModelContainer:
-    """
-    Implements an API to store large tensors outside the main ModelProto,
+    """Implements an API to store large tensors outside the main ModelProto,
     it avoids copying large initializers when defining the model and these initializers
     are never serialized through protobuf.
     No tensor is stored on disk until the user explicitly saves the model.
@@ -100,16 +98,12 @@ class ModelContainer:
         self.graphs_ = list(self.enumerate_graph_protos())
 
     def enumerate_graph_protos(self) -> Iterable[onnx.GraphProto]:
-        """
-        Enumerates all GraphProtos in a model.
-        """
+        """Enumerates all GraphProtos in a model."""
         yield self.model_proto.graph
         yield from _enumerate_subgraphs(self.model_proto.graph)
 
     def set_large_initializers(self, large_initializers: dict[str, np.ndarray]):
-        """
-        Adds all large tensors (not stored in the model).
-        """
+        """Adds all large tensors (not stored in the model)."""
         for k in large_initializers:
             if not k.startswith("#"):
                 raise ValueError(
@@ -139,8 +133,7 @@ class ModelContainer:
     def _save_external(
         self, file_path: str, all_tensors_to_one_file: bool
     ) -> onnx.ModelProto:
-        """
-        Save the large model into a main onnx file and one file
+        """Save the large model into a main onnx file and one file
         per tensor. Follows the same format as :func:`write_external_data_tensors
         <onnx.external_data_helper.write_external_data_tensors>`.
         The main model needs to be modified to update the file location,
@@ -232,8 +225,7 @@ class ModelContainer:
         file_path: str,
         all_tensors_to_one_file: bool = False,
     ) -> onnx.ModelProto:
-        """
-        Save the large model.
+        """Save the large model.
         The function returns a ModelProto,
         the current one if the model did not need any modification,
         a modified copy of it if it required changes such as giving file names
@@ -252,8 +244,7 @@ class ModelContainer:
         )
 
     def load(self, file_path: str, load_large_initializers: bool = True):
-        """
-        Load the large model.
+        """Load the large model.
 
         Arguments:
             file_path: model file
@@ -267,8 +258,7 @@ class ModelContainer:
             self._load_large_initializers(file_path)
 
     def _load_large_initializers(self, file_path):
-        """
-        Loads large initializers.
+        """Loads large initializers.
 
         Arguments:
             file_path: model file, the weight are expected to be in the same folder as this file

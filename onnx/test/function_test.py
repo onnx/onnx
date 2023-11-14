@@ -52,7 +52,6 @@ class TestFunction(unittest.TestCase):
         #                c
         #
         """
-
         # function common
         func_domain = "local"
         func_opset_imports = [onnx.helper.make_opsetid("", 14)]

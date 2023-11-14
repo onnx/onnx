@@ -46,14 +46,11 @@ class RuntimeImplementationError(NotImplementedError):
 
 
 class DefaultNone:
-    """Default value for parameters when the parameter is not set
-    but the operator has a default behavior for it.
-    """
+    """Default value for parameters when the parameter is not set but the operator has a default behavior for it."""
 
 
 class RefAttrName:
-    """Implements a link between a parameter of a function
-    and an attribute in node.
+    """Implements a link between a parameter of a function and an attribute in node.
 
     Args:
         name: name of the input
@@ -63,7 +60,6 @@ class RefAttrName:
         self.name = name
 
     def __repr__(self) -> str:
-        "usual"
         return f"{self.__class__.__name__}({self.name!r})"
 
 

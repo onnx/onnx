@@ -76,7 +76,6 @@ def _replace_constant_of_shape_with_range(
     The function is not recursive. The recursivity is done by
     *replace_initializer_by_constant_of_shape*.
     """
-
     if isinstance(onx, GraphProto):
         nodes = list(onx.node)
     elif isinstance(onx, FunctionProto):
@@ -161,7 +160,6 @@ def _replace_constant_of_shape_value(
     onx: Union[GraphProto, FunctionProto], value_constant_of_shape: float
 ) -> Union[GraphProto, FunctionProto]:
     """Replaces all fill value of all nodes *ConstantOfShape*."""
-
     if isinstance(onx, GraphProto):
         nodes = list(onx.node)
     elif isinstance(onx, FunctionProto):

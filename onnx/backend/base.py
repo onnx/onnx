@@ -107,6 +107,7 @@ class Backend:
         **kwargs: Dict[str, Any],
     ) -> Optional[Tuple[Any, ...]]:
         """Simple run one operator and return the results.
+
         Args:
             outputs_info: a list of tuples, which contains the element type and
             shape of each output. First element of the tuple is the dtype, and

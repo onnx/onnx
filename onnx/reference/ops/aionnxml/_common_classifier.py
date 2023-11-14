@@ -12,9 +12,7 @@ logistic = np.vectorize(compute_logistic)
 
 
 def compute_softmax_zero(values: np.ndarray) -> np.ndarray:
-    """
-    The function modifies the input inplace.
-    """
+    """The function modifies the input inplace."""
     v_max = values.max()
     exp_neg_v_max = np.exp(-v_max)
     s = 0

@@ -169,7 +169,8 @@ def float8e5m2_to_float32(
     :param fn: no infinite values
     :param uz: no negative zero
     :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified"""
+        or reshaped to dims if specified
+    """
     res = _float8e5m2_to_float32(data, fn=fn, uz=uz)
     if dims is None:
         return res  # type: ignore[no-any-return]

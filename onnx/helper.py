@@ -80,7 +80,7 @@ VersionMapType = Dict[Tuple[str, int], int]
 
 
 def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
-    """create a map from (opset-domain, opset-version) to ir-version from above table"""
+    """Create a map from (opset-domain, opset-version) to ir-version from above table."""
     result: VersionMapType = {}
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
@@ -107,6 +107,7 @@ def find_min_ir_version_for(
     Args:
         opsetidlist (List[OperatorSetIdProto]): The list of OperatorSetIdProto
         ignore_unknown (bool): If True, ignore unknown domain and return default min version for that domain.
+
     Returns:
         The minimum IR version required (integer)
     """
@@ -146,6 +147,7 @@ def make_node(
             If it's None, we will just use default domain (which is empty)
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
+
     Returns:
         NodeProto
     """
@@ -996,7 +998,6 @@ def make_tensor_type_proto(
     shape_denotation: Optional[List[str]] = None,
 ) -> TypeProto:
     """Makes a Tensor TypeProto based on the data type and shape."""
-
     type_proto = TypeProto()
     tensor_type_proto = type_proto.tensor_type
     tensor_type_proto.elem_type = elem_type
@@ -1060,7 +1061,6 @@ def make_sparse_tensor_type_proto(
     shape_denotation: Optional[List[str]] = None,
 ) -> TypeProto:
     """Makes a SparseTensor TypeProto based on the data type and shape."""
-
     type_proto = TypeProto()
     sparse_tensor_type_proto = type_proto.sparse_tensor_type
     sparse_tensor_type_proto.elem_type = elem_type
@@ -1548,8 +1548,7 @@ _ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
 
 
 def _attr_type_to_str(attr_type: int) -> str:
-    """
-    Convert AttributeProto type to string.
+    """Convert AttributeProto type to string.
 
     :param attr_type: AttributeProto type.
     :return: String representing the supplied attr_type.

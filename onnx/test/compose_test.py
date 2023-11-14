@@ -184,7 +184,6 @@ class TestComposeFunctions(unittest.TestCase):
         """Tests a scenario where we merge two models, where the inputs/outputs connected
         are named exactly the same
         """
-
         m1_def = """
             <
                 ir_version: 7,
@@ -217,7 +216,6 @@ class TestComposeFunctions(unittest.TestCase):
 
     def test_case_drop_inputs_outputs(self) -> None:
         """Tests a scenario where we merge two models, not including some of the inputs/outputs"""
-
         m1_def = """
             <
                 ir_version: 7,
@@ -259,7 +257,6 @@ class TestComposeFunctions(unittest.TestCase):
         """Tests a scenario where we merge two models that have name collisions, but they
         are avoided by prefixing the models model.
         """
-
         m1_def = """
             <
                 ir_version: 7,

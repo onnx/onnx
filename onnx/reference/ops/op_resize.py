@@ -19,12 +19,14 @@ def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.nd
         1-D arrays to form the cartesian product of.
     out : ndarray
         Array to place the cartesian product in.
-    Returns
+
+    Returns:
     -------
     out : ndarray
         2-D array of shape (M, len(arrays)) containing cartesian products
         formed of input arrays.
-    Examples
+
+    Examples:
     --------
     >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
     array([[1, 4, 6],
@@ -40,7 +42,6 @@ def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.nd
            [3, 5, 6],
            [3, 5, 7]])
     """
-
     arrays = [np.asarray(x) for x in arrays]
     dtype = arrays[0].dtype
 

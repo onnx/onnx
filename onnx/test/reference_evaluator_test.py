@@ -224,8 +224,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @staticmethod
     def _load_model(m_def: str) -> ModelProto:
-        """
-        Parses a model from a string representation, including checking
+        """Parses a model from a string representation, including checking
         the model for correctness
         """
         m = parser.parse_model(m_def)
