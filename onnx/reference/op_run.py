@@ -403,10 +403,8 @@ class OpRun(abc.ABC):
             f"Method '_run' must be overwritten for operator {self.__class__.__name__!r}."
         )
 
-    def _check_and_fix_outputs(self, res: tuple[Any]) -> tuple[Any]:
-        """
-        Checks the output are from the expected type.
-        """
+    def _check_and_fix_outputs(self, res: tuple[Any, ...]) -> tuple[Any, ...]:
+        """Checks the output are from the expected type."""
         if not isinstance(res, tuple):
             raise TypeError(
                 f"Method '_run' of class {self.__class__.__name__!r} does not return a tuple but '{type(res)}'."
@@ -419,7 +417,7 @@ class OpRun(abc.ABC):
             dtypes = [type(t) for t in res]
             raise TypeError(
                 f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
-                f"is a tuple, this is no onnx correponding type (Map, List, Tensor, SparseTensor). "
+                f"is a tuple, this is no ONNX corresponding type (Map, List, Tensor, SparseTensor). "
                 f"All returned types: {dtypes!r}."
             )
         res = tuple(  # type: ignore[assignment]
@@ -432,7 +430,7 @@ class OpRun(abc.ABC):
             dtypes = [type(t) for t in res]
             raise TypeError(
                 f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
-                f"has an unexpected type, this is no onnx correponding type (Map, List, Tensor, SparseTensor). "
+                f"has an unexpected type, this is no ONNX correponding type (Map, List, Tensor, SparseTensor). "
                 f"All returned types: {dtypes!r}."
             )
         return res

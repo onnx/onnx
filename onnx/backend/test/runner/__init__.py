@@ -201,7 +201,7 @@ class Runner:
             if isinstance(outputs[i], (list, tuple)):
                 if not isinstance(ref_outputs[i], (list, tuple)):
                     raise AssertionError(
-                        f"Unexpected type {type(outputs[i])} for outputs[{i}] but expected "
+                        f"Unexpected type {type(outputs[i])} for outputs[{i}]. Expected "
                         f"type is {type(ref_outputs[i])} (known test={model_dir or '?'!r})."
                     )
                 for j in range(len(outputs[i])):
