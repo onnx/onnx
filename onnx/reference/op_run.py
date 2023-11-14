@@ -512,7 +512,9 @@ class OpRun(abc.ABC):
                 f"(operator {self.__class__.__name__!r})."
             ) from e
         self._log(
-            "-- done %s.run -> %d outputs", self.__class__.__name__, len(res) if res is not None else 0
+            "-- done %s.run -> %d outputs",
+            self.__class__.__name__,
+            len(res) if res is not None else 0,
         )
         return self._check_and_fix_outputs(res)
 
