@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0913,W0221,W0622
+
 
 import numpy as np
 
@@ -103,6 +103,7 @@ class TopK_10(_CommonTopK):
 class TopK_11(_CommonTopK):
     def _run(self, data, ink, axis=None, largest=None, sorted=None):  # type: ignore
         """Runtime for operator *TopK*.
+
         The implementation is not the most efficient
         as it sorts everything then extracts the top *k*
         values.

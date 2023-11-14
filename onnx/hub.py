@@ -73,7 +73,7 @@ def set_dir(new_dir: str) -> None:
     Args:
         new_dir: Location of new model hub cache.
     """
-    global _ONNX_HUB_DIR  # pylint: disable=global-statement
+    global _ONNX_HUB_DIR  # noqa: PLW0603
     _ONNX_HUB_DIR = new_dir
 
 

@@ -23,9 +23,9 @@ jobs:
     name: Optional Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: misspell # Check spellings as well
-        uses: reviewdog/action-misspell@9257f108197b44e37995c98bea6ee4a5b9ffc3b0 # v1.13.1
+        uses: reviewdog/action-misspell@cc799b020b057600b66eedf2b6e97ca26137de21 # v1.14.0
         with:
           github_token: ${{ secrets.github_token }}
           locale: "US"
@@ -35,19 +35,20 @@ jobs:
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@50e5e1e2284575f23a1e409d9c0804cdfc4f6e31 # v1.18.1
+        uses: reviewdog/action-shellcheck@96fa305c16b0f9cc9b093af22dcd09de1c8f1c2d # v1.19.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
       - name: cpplint # Static check C++ code
-        uses: reviewdog/action-cpplint@d5ddf147384ab68e12432bf02815d0e49e5388b2 # v1.0.0
+        uses: reviewdog/action-cpplint@b6c13159b10435813edfddea9e1cd02157544f45 # v1.1.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
           level: warning
           flags: --linelength=120
+          filter: "-runtime/references"
 
 
   enforce-style:
@@ -56,9 +57,9 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Setup Python
-        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+        uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
         with:
           # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
           python-version: "3.10"
@@ -86,7 +87,7 @@ jobs:
           if ! lintrunner --force-color --all-files --tee-json=lint.json -v; then
               echo ""
               echo -e "\e[1m\e[36mYou can reproduce these results locally by using \`lintrunner\`.\e[0m"
-              echo -e "\e[1m\e[36mSee https://github.com/onnx/onnx/blob/main/docs/CONTRIBUTING.md#code-style for setup instructions.\e[0m"
+              echo -e "\e[1m\e[36mSee https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md#coding-style for setup instructions.\e[0m"
               exit 1
           fi
       - name: Produce SARIF
@@ -107,7 +108,7 @@ jobs:
       - name: Check auto-gen files are up-to-date
         run: |
           echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
-          
+
           ONNX_ML=1 python onnx/defs/gen_doc.py
           python onnx/gen_proto.py -l
           python onnx/gen_proto.py -l --ml

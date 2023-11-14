@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C3001,C0415,R0902,R0912,R0913,R0914,R0915
+
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -298,10 +298,10 @@ class ReferenceEvaluator:
         if isinstance(a, (str, int, float)):
             return a
         if isinstance(a, np.ndarray):
-            if self.verbose < 4:
+            if self.verbose < 4:  # noqa: PLR2004
                 return f"{a.dtype}:{a.shape} in [{a.min()}, {a.max()}]"
             elements = a.ravel().tolist()
-            if len(elements) > 5:
+            if len(elements) > 5:  # noqa: PLR2004
                 elements = elements[:5]
                 return f"{a.dtype}:{a.shape}:{','.join(map(str, elements))}..."
             return f"{a.dtype}:{a.shape}:{elements}"
@@ -413,7 +413,7 @@ class ReferenceEvaluator:
                 ) from e
             self.rt_nodes_.append(inst)
 
-    def _load_impl(
+    def _load_impl(  # noqa: PLR0911
         self, node: NodeProto, input_types: Optional[TypeProto] = None
     ) -> Any:
         """Loads the implementation for a specified runtime."""

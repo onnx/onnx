@@ -43,7 +43,7 @@ def _simple_tensor() -> onnx.TensorProto:
     ]
 )
 class TestIO(unittest.TestCase):
-    format: str
+    format: str  # noqa: A003
 
     def test_load_model_when_input_is_bytes(self) -> None:
         proto = _simple_model()
@@ -90,7 +90,7 @@ class TestIO(unittest.TestCase):
 class TestIOTensor(unittest.TestCase):
     """Test loading and saving of TensorProto."""
 
-    format: str
+    format: str  # noqa: A003
 
     def test_load_tensor_when_input_is_bytes(self) -> None:
         proto = _simple_tensor()

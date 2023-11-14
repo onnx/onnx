@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0415,R0912
+
 
 from __future__ import annotations
 
@@ -299,7 +299,7 @@ class OpRun(abc.ABC):
                         )
                     if hasattr(v, "default_value"):
                         if v.default_value.type == 0 or (
-                            v.default_value.type == 4
+                            v.default_value.type == 4  # noqa: PLR2004
                             and v.default_value.t.data_type == 0
                         ):
                             # default value is undefined, it depends on the inputs
@@ -583,7 +583,7 @@ class OpRun(abc.ABC):
         return cl
 
     @classmethod
-    def eval(
+    def eval(  # noqa: A003
         cls,
         *args: list[Any],
         n_outputs: int | None = None,
@@ -612,9 +612,7 @@ class OpRun(abc.ABC):
 class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
-    def __init__(
-        self, onnx_node: NodeProto, log_function: Any, impl: Any = None
-    ):  # pylint: disable=super-init-not-called
+    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -649,10 +647,10 @@ class OpFunction(OpRun):
             for name in getattr(self.impl_, "attributes_", attributes)  # type: ignore[union-attr]
         }
 
-    def _run(self, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
+    def _run(self, *inputs, **kwargs):  # type: ignore
         return self._run_impl(self.impl_, *inputs, **kwargs)
 
-    def _run_impl(self, impl, *inputs, **kwargs):  # type: ignore # pylint: disable=W0221
+    def _run_impl(self, impl, *inputs, **kwargs):  # type: ignore
         if len(impl.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
@@ -705,8 +703,6 @@ class OpFunctionContextDependant(OpFunction):
                 else:
                     raise e
             types.append(make_tensor_type_proto(ttype, t.shape))
-        cl = self.parent._load_impl(  # pylint: disable=protected-access
-            self.onnx_node, types
-        )
+        cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)

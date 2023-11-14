@@ -300,40 +300,15 @@ void OpSchema::Verify(const NodeProto& node) const {
           fail_check("Attribute '", name, "' is expected to have field 'type_proto'");
         }
         break;
-      case AttributeProto::FLOATS:
-        if (!attr_proto.floats_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'floats'");
-        }
-        break;
       case AttributeProto::INTS:
-        if (!attr_proto.ints_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'ints'");
-        }
-        break;
-      case AttributeProto::STRINGS:
-        if (!attr_proto.strings_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'strings'");
-        }
-        break;
+      case AttributeProto::FLOATS:
       case AttributeProto::TENSORS:
-        if (!attr_proto.tensors_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'tensors'");
-        }
-        break;
+      case AttributeProto::STRINGS:
       case AttributeProto::SPARSE_TENSORS:
-        // Not adding check ... we should likely delete the check in all other
-        // cases, which will not allow us to have an empty list as a valid value
-        // for an attribute and this seems undesirable.
-        break;
       case AttributeProto::GRAPHS:
-        if (!attr_proto.graphs_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'graphs'");
-        }
-        break;
       case AttributeProto::TYPE_PROTOS:
-        if (!attr_proto.type_protos_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'type_protos'");
-        }
+        // No check ... whether an empty list is a valid value for the attribute
+        // is op specific.
         break;
       default:
         fail_check("Attribute '", name, " has unknown expected type");

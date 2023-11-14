@@ -7,7 +7,9 @@ from typing import Sequence
 import numpy as np
 
 import onnx.defs
+import onnx.parser
 from onnx import (
+    IR_VERSION,
     GraphProto,
     SparseTensorProto,
     TensorProto,
@@ -90,15 +92,23 @@ class TestChecker(unittest.TestCase):
             func_nested_identity_add_nodes,
             func_nested_opset_imports,
         )
-        checker.check_function(func_nested_identity_add)
+        ctx = checker.C.CheckerContext()
+        ctx.ir_version = IR_VERSION
+        ctx.opset_imports = {"": 14}
+
+        lex_ctx = checker.C.LexicalScopeContext()
+
+        checker.check_function(func_nested_identity_add, ctx, lex_ctx)
 
     def test_check_graph_ir_version_3(self) -> None:
         ctx = checker.C.CheckerContext()
         ctx.ir_version = 3
         ctx.opset_imports = {"": onnx.defs.onnx_opset_version()}
 
+        lex_ctx = checker.C.LexicalScopeContext()
+
         def check_ir_version_3(g: GraphProto) -> None:
-            checker.check_graph(g, ctx)
+            checker.check_graph(g, ctx, lex_ctx)
 
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
@@ -1024,6 +1034,36 @@ class TestChecker(unittest.TestCase):
         self.assertRaises(
             shape_inference.InferenceError, checker.check_model, model, True
         )
+
+    def test_empty_list_attribute(self):
+        model = onnx.parser.parse_model(
+            """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 17]
+            >
+            agraph (float[N] x) => (int64[M] y)
+            {
+                y = Constant <value_ints: ints = []>()
+            }
+        """
+        )
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
+        model = onnx.parser.parse_model(
+            """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 17]
+            >
+            agraph (float[N] x) => (float[M] y)
+            {
+                y = Constant <value_floats: floats = []>()
+            }
+        """
+        )
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
 
 
 if __name__ == "__main__":

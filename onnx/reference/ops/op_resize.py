@@ -177,7 +177,7 @@ def _get_neighbor(x: float, n: int, data: np.ndarray) -> tuple[np.ndarray, np.nd
     return idxes - pad_width, ret
 
 
-def _interpolate_1d_with_x(  # pylint: disable=too-many-branches
+def _interpolate_1d_with_x(
     data: np.ndarray,
     scale_factor: float,
     output_width_int: int,
@@ -305,7 +305,7 @@ def _get_all_coords(data: np.ndarray) -> np.ndarray:
     )
 
 
-def _interpolate_nd(  # pylint: disable=too-many-branches
+def _interpolate_nd(
     data: np.ndarray,
     get_coeffs: Callable[[float, float], np.ndarray],
     output_size: list[int] | None = None,
@@ -390,7 +390,7 @@ def _interpolate_nd(  # pylint: disable=too-many-branches
 
 
 class Resize(OpRun):
-    def _run(  # type: ignore  # pylint: disable=arguments-differ
+    def _run(  # type: ignore
         self,
         X,
         roi,

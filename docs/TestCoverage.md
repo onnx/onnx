@@ -4749,9 +4749,44 @@ expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_negative_axis")
 
 
 ### DFT
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>dft</summary>
+
+```python
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.fft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft")
+
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(2, dtype=np.int64)
+y = np.fft.fft(x, axis=1)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_axis")
+
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], inverse=1
+)
+x = np.arange(0, 100, dtype=np.complex64).reshape(10, 10)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.ifft(x, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_inverse")
+```
+
+</details>
+<details>
+<summary>opset19</summary>
 
 ```python
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=1)
@@ -4760,7 +4795,13 @@ y = np.fft.fft(x, axis=0)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=2)
 x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
@@ -4768,7 +4809,13 @@ y = np.fft.fft(x, axis=1)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_axis")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_axis_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node(
     "DFT", inputs=["x"], outputs=["y"], inverse=1, axis=1
@@ -4781,7 +4828,13 @@ y = np.fft.ifft(x, axis=0)
 
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_inverse_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 ```
 
 </details>
@@ -5061,7 +5114,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 ### DequantizeLinear
-There are 6 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -5220,6 +5273,54 @@ expect(
     inputs=[x, x_scale],
     outputs=[y],
     name="test_dequantizelinear_e5m2",
+)
+```
+
+</details>
+<details>
+<summary>int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([-300, -30, -1025, 1270]).astype(np.int16)
+x_scale = np.float32(2)
+x_zero_point = np.int16(-1024)
+y = np.array([1448.0, 1988.0, -2.0, 4588.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_int16",
+)
+```
+
+</details>
+<details>
+<summary>uint16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([30000, 31000, 32768, 33000]).astype(np.uint16)
+x_scale = np.float32(2)
+x_zero_point = np.uint16(32767)
+y = np.array([-5534.0, -3534.0, 2.0, 466.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_uint16",
 )
 ```
 
@@ -8445,7 +8546,7 @@ expect(node, inputs=[x, s, bias], outputs=[y], name="test_instancenorm_epsilon")
 
 
 ### IsInf
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>infinity</summary>
 
@@ -8459,6 +8560,22 @@ node = onnx.helper.make_node(
 x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
 y = np.isinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf")
+```
+
+</details>
+<details>
+<summary>infinity_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsInf",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+y = np.isinf(x)
+expect(node, inputs=[x], outputs=[y], name="test_isinf_float16")
 ```
 
 </details>
@@ -8493,7 +8610,23 @@ expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
 
 
 ### IsNaN
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsNaN",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name="test_isnan_float16")
+```
+
+</details>
 <details>
 <summary>isnan</summary>
 
@@ -8504,7 +8637,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
 y = np.isnan(x)
 expect(node, inputs=[x], outputs=[y], name="test_isnan")
 ```
@@ -13413,7 +13546,7 @@ expect(
 
 
 ### QuantizeLinear
-There are 4 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -13502,6 +13635,68 @@ expect(
 
 </details>
 <details>
+<summary>int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array(
+    [
+        0.0,
+        -514.0,
+        3.0,
+        -3.0,
+        2.9,
+        -2.9,
+        3.1,
+        -3.1,
+        65022.0,
+        -66046.0,
+        65023.0,
+        -66047.0,
+        65024.0,
+        -66048.0,
+        70000.0,
+        -70000.0,
+    ]
+).astype(np.float32)
+y_scale = np.float32(2.0)
+y_zero_point = np.int16(256)
+y = np.array(
+    [
+        256,
+        -1,
+        258,
+        254,
+        257,
+        255,
+        258,
+        254,
+        32767,
+        -32767,
+        32767,
+        -32768,
+        32767,
+        -32768,
+        32767,
+        -32768,
+    ]
+).astype(np.int16)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_int16",
+)
+```
+
+</details>
+<details>
 <summary>quantizelinear</summary>
 
 ```python
@@ -13521,6 +13716,60 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear",
+)
+```
+
+</details>
+<details>
+<summary>uint16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array(
+    [
+        0.0,
+        -128.0,
+        3.0,
+        -3.0,
+        2.9,
+        -2.9,
+        3.1,
+        -3.1,
+        65536.0,
+        -65534.0,
+        70000.0,
+        -70000.0,
+    ]
+).astype(np.float32)
+y_scale = np.float32(2.0)
+y_zero_point = np.uint16(32767)
+y = np.array(
+    [
+        32767,
+        32703,
+        32769,
+        32765,
+        32768,
+        32766,
+        32769,
+        32765,
+        65535,
+        0,
+        65535,
+        0,
+    ]
+).astype(np.uint16)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_uint16",
 )
 ```
 
@@ -13752,7 +14001,7 @@ expect(node, inputs=[x], outputs=[y], name="test_reciprocal")
 
 
 ### ReduceL1
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -13832,6 +14081,34 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_do_not_keepdims_random",
+)
+```
+
+</details>
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceL1",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_l1_empty_set",
 )
 ```
 
@@ -13925,7 +14202,7 @@ expect(
 
 
 ### ReduceL2
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -14011,6 +14288,34 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_do_not_keepdims_random",
+)
+```
+
+</details>
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceL2",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_l2_empty_set",
 )
 ```
 
@@ -14116,7 +14421,36 @@ expect(
 
 
 ### ReduceLogSum
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceLogSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = np.log(zero)  # -inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_empty_set",
+)
+```
+
+</details>
 <details>
 <summary>keepdims</summary>
 
@@ -14199,7 +14533,7 @@ expect(
 
 
 ### ReduceLogSumExp
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -14280,6 +14614,35 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_do_not_keepdims_random",
+)
+```
+
+</details>
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = np.log(zero)  # -inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_exp_empty_set",
 )
 ```
 
@@ -14375,7 +14738,7 @@ expect(
 
 
 ### ReduceMax
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>bool_inputs</summary>
 
@@ -14491,6 +14854,36 @@ expect(
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_random",
     opset_imports=[onnx.helper.make_opsetid("", 18)],
+)
+```
+
+</details>
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+one = np.array(np.ones(reduced_shape, dtype=np.float32))
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = -(one / zero)  # -inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_min_empty_set",
 )
 ```
 
@@ -14774,7 +15167,7 @@ expect(
 
 
 ### ReduceMin
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>bool_inputs</summary>
 
@@ -14898,6 +15291,36 @@ expect(
 
 </details>
 <details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMin",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+one = np.array(np.ones(reduced_shape, dtype=np.float32))
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = one / zero  # inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_min_empty_set",
+)
+```
+
+</details>
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -14994,7 +15417,7 @@ expect(
 
 
 ### ReduceProd
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -15072,6 +15495,34 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_prod_do_not_keepdims_random",
+)
+```
+
+</details>
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceProd",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.ones(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_prod_empty_set",
 )
 ```
 
@@ -15165,7 +15616,7 @@ expect(
 
 
 ### ReduceSum
-There are 5 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -15290,6 +15741,35 @@ expect(
 
 </details>
 <details>
+<summary>empty_set</summary>
+
+```python
+"""Test case with the reduced-axis of size zero."""
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_sum_empty_set",
+)
+```
+
+</details>
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -15371,10 +15851,39 @@ expect(
 ```
 
 </details>
+<details>
+<summary>non_reduced_axis_zero</summary>
+
+```python
+"""Test case with the non-reduced-axis of size zero."""
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 0, 1]
+
+node = onnx.helper.make_node(
+    "ReduceSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([2], dtype=np.int64)
+reduced = np.array([], dtype=np.float32).reshape(reduced_shape)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_sum_empty_set_non_reduced_axis_zero",
+)
+```
+
+</details>
 
 
 ### ReduceSumSquare
-There are 4 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -15457,6 +15966,34 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_do_not_keepdims_random",
+)
+```
+
+</details>
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceSumSquare",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_sum_square_empty_set",
 )
 ```
 
@@ -18099,7 +18636,9 @@ There are 2 test cases, listed as following:
 sum_in = onnx.helper.make_tensor_value_info(
     "sum_in", onnx.TensorProto.FLOAT, [2]
 )
-next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info(  # noqa: A001
+    "next", onnx.TensorProto.FLOAT, [2]
+)
 sum_out = onnx.helper.make_tensor_value_info(
     "sum_out", onnx.TensorProto.FLOAT, [2]
 )
@@ -18154,7 +18693,9 @@ expect(
 sum_in = onnx.helper.make_tensor_value_info(
     "sum_in", onnx.TensorProto.FLOAT, [2]
 )
-next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info(  # noqa: A001
+    "next", onnx.TensorProto.FLOAT, [2]
+)
 sum_out = onnx.helper.make_tensor_value_info(
     "sum_out", onnx.TensorProto.FLOAT, [2]
 )
@@ -22356,7 +22897,7 @@ expect(
 ```python
 axis = 1
 largest = 0
-sorted = 1
+sorted = 1  # noqa: A001
 k = 3
 
 node = onnx.helper.make_node(

@@ -186,7 +186,7 @@ def _get_serializer(
 
 def load_model(
     f: IO[bytes] | str | os.PathLike,
-    format: _SupportedFormat | None = None,  # pylint: disable=redefined-builtin
+    format: _SupportedFormat | None = None,  # noqa: A002
     load_external_data: bool = True,
 ) -> ModelProto:
     """Loads a serialized ModelProto into memory.
@@ -218,7 +218,7 @@ def load_model(
 
 def load_tensor(
     f: IO[bytes] | str | os.PathLike,
-    format: _SupportedFormat | None = None,  # pylint: disable=redefined-builtin
+    format: _SupportedFormat | None = None,  # noqa: A002
 ) -> TensorProto:
     """Loads a serialized TensorProto into memory.
 
@@ -237,7 +237,7 @@ def load_tensor(
 
 def load_model_from_string(
     s: bytes | str,
-    format: _SupportedFormat = _DEFAULT_FORMAT,  # pylint: disable=redefined-builtin
+    format: _SupportedFormat = _DEFAULT_FORMAT,  # noqa: A002
 ) -> ModelProto:
     """Loads a binary string (bytes) that contains serialized ModelProto.
 
@@ -256,7 +256,7 @@ def load_model_from_string(
 
 def load_tensor_from_string(
     s: bytes,
-    format: _SupportedFormat = _DEFAULT_FORMAT,  # pylint: disable=redefined-builtin
+    format: _SupportedFormat = _DEFAULT_FORMAT,  # noqa: A002
 ) -> TensorProto:
     """Loads a binary string (bytes) that contains serialized TensorProto.
 
@@ -276,7 +276,7 @@ def load_tensor_from_string(
 def save_model(
     proto: ModelProto | bytes,
     f: IO[bytes] | str | os.PathLike,
-    format: _SupportedFormat | None = None,  # pylint: disable=redefined-builtin
+    format: _SupportedFormat | None = None,  # noqa: A002
     *,
     save_as_external_data: bool = False,
     all_tensors_to_one_file: bool = True,
@@ -329,7 +329,7 @@ def save_model(
 def save_tensor(
     proto: TensorProto,
     f: IO[bytes] | str | os.PathLike,
-    format: _SupportedFormat | None = None,  # pylint: disable=redefined-builtin
+    format: _SupportedFormat | None = None,  # noqa: A002
 ) -> None:
     """Saves the TensorProto to the specified path.
 

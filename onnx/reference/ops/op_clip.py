@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0622,W0622,W0221
+
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Clip_6(OpRun):
-    def _run(self, data, min=None, max=None):  # type: ignore
+    def _run(self, data, min=None, max=None):  # type: ignore  # noqa: A002
         amin = min
         amax = max
         if amin is amax is None:
