@@ -109,10 +109,14 @@ class Backend:
         """Simple run one operator and return the results.
 
         Args:
+            node: The node proto.
+            inputs: Inputs to the node.
+            device: The device to run on.
             outputs_info: a list of tuples, which contains the element type and
-            shape of each output. First element of the tuple is the dtype, and
-            the second element is the shape. More use case can be found in
-            https://github.com/onnx/onnx/blob/main/onnx/backend/test/runner/__init__.py
+                shape of each output. First element of the tuple is the dtype, and
+                the second element is the shape. More use case can be found in
+                https://github.com/onnx/onnx/blob/main/onnx/backend/test/runner/__init__.py
+            kwargs: Other keyword arguments.
         """
         # TODO Remove Optional from return type
         if "opset_version" in kwargs:

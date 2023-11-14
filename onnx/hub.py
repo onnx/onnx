@@ -389,9 +389,12 @@ def load_composite_model(
     and combine it into a single model
 
     Args:
-        model: The name of the onnx model in the manifest. This field is
-            case-sensitive
-        repo: The location of the model repo in format
+        network_model: The name of the onnx model in the manifest.
+        preprocessing_model: The name of the preprocessing model.
+        network_repo: The location of the model repo in format
+            "user/repo[:branch]". If no branch is found will default to
+            "main"
+        preprocessing_repo: The location of the proprocessing model repo in format
             "user/repo[:branch]". If no branch is found will default to
             "main"
         opset: The opset of the model to download. The default of `None`

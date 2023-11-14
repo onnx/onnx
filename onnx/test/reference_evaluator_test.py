@@ -143,7 +143,7 @@ def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  
     """Naive implementation for `im2col`.
 
     Args:
-        image: image (float)
+        data: image (float)
         kernel_shape: kernel shape
         dilations: dilations
         pads: pads

@@ -421,10 +421,10 @@ def to_dict(map_proto: MapProto) -> Dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
     Args:
-        map: a MapProto object.
+        map_proto: a MapProto object.
 
     Returns:
-        dict: the converted dictionary.
+        The converted dictionary.
     """
     key_list: List[Any] = []
     if map_proto.key_type == TensorProto.STRING:
@@ -447,7 +447,7 @@ def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
     """Converts a Python dictionary into a map def.
 
     Args:
-        dict: Python dictionary
+        dict_: Python dictionary
         name: (optional) the name of the map.
 
     Returns:

@@ -316,7 +316,7 @@ class ReferenceEvaluator:
 
     @property
     def input_names(self):  # type: ignore
-        "Returns the input names."
+        """Returns the input names."""
         return self.input_names_
 
     @property
