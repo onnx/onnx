@@ -9,7 +9,7 @@ from onnx.reference.ops._op_common_window import _CommonWindow
 
 
 class HannWindow(_CommonWindow):
-    """Returns
+    r"""Returns
     :math:`\\omega_n = \\sin^2\\left( \\frac{\\pi n}{N-1} \\right)`
     where *N* is the window length.
     See `hann_window

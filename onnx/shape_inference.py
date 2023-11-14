@@ -32,11 +32,11 @@ def infer_shapes(
     bug in shape inference), and the result is unspecified.
 
     Arguments:
-        model (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
-        check_type (bool): Checks the type-equality for input and output
-        strict_mode (bool): Stricter shape inference, it will throw errors if any;
-            Otherwise, simply stop if any error
-        data_prop (bool): Enables data propagation for limited operators to perform shape computation
+        model: ModelProto.
+        check_type: Checks the type-equality for input and output.
+        strict_mode: Stricter shape inference, it will throw errors if any;
+            Otherwise, simply stop if any error.
+        data_prop: Enables data propagation for limited operators to perform shape computation.
 
     Returns:
         (ModelProto) model with inferred shape information

@@ -140,6 +140,10 @@ select = [
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
 ignore = [
+    "D1", # D1 is for missing docstrings, which is not yet enforced.
+    "D205", # D205 Too strict. "1 blank line required between summary line and description"
+    "D400",
+    "D415",
     "E501", # Line length controlled by black
     "N803", # Argument casing
     "N806", # Relax: Variable name in function should be lowercase

@@ -142,9 +142,9 @@ def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
         get_neighbor_idxes(4.6, 1, 10) == [5]
 
     Args:
-        x
-        n: the number of the wanted indexes
-        limit: the maximum value of index
+        x: float.
+        n: the number of the wanted indexes.
+        limit: the maximum value of index.
 
     Returns:
         An np.array containing n nearest indexes in ascending order

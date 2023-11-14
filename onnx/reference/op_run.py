@@ -262,7 +262,7 @@ class OpRun(abc.ABC):
         return value.run(None, context or {}, attributes=attributes)
 
     def _load_attributes(self) -> None:
-        "Checks and loads attributes."
+        """Checks and loads attributes."""
         self.has_linked_attribute = False
         added_attributes = []
         for att in self.onnx_node.attribute:
@@ -332,22 +332,22 @@ class OpRun(abc.ABC):
 
     @property
     def input(self) -> Iterable[str]:
-        "Returns node attribute `input`."
+        """Returns node attribute `input`."""
         return self.onnx_node.input  # type: ignore
 
     @property
     def output(self) -> Iterable[str]:
-        "Returns node attribute `output`."
+        """Returns node attribute `output`."""
         return self.onnx_node.output  # type: ignore
 
     @property
     def op_type(self) -> str:
-        "Returns node attribute `op_type`."
+        """Returns node attribute `op_type`."""
         return self.onnx_node.op_type  # type: ignore
 
     @property
     def domain(self) -> str:
-        "Returns node attribute `domain`."
+        """Returns node attribute `domain`."""
         return self.onnx_node.domain  # type: ignore
 
     def need_context(self) -> bool:

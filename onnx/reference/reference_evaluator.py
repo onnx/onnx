@@ -21,7 +21,7 @@ from onnx.reference.ops_optimized import optimized_operators
 
 
 class ReferenceEvaluator:
-    """Computes the outputs of an ONNX proto
+    r"""Computes the outputs of an ONNX proto
     (`ModelProto`, `FunctionProto`, `GraphProto`, `NodeProto`).
     This is a pure python implementation of ONNX specifications.
     Mismatches may remain between the official specifications and the implementation here.
@@ -321,22 +321,22 @@ class ReferenceEvaluator:
 
     @property
     def input_types(self):  # type: ignore
-        "Returns the input types if any specified."
+        """Returns the input types if any specified."""
         return self.input_types_
 
     @property
     def output_names(self):  # type: ignore
-        "Returns the output names."
+        """Returns the output names."""
         return self.output_names_
 
     @property
     def output_types(self):  # type: ignore
-        "Returns the output types."
+        """Returns the output types."""
         return self.output_types_
 
     @property
     def opsets(self):  # type: ignore
-        "Returns the opsets."
+        """Returns the opsets."""
         return self.opsets_
 
     @property
