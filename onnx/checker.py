@@ -84,37 +84,37 @@ def check_tensor(tensor: TensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -
 def check_attribute(
     attr: AttributeProto,
     ctx: C.CheckerContext = DEFAULT_CONTEXT,
-    lex_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
+    lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
     _ensure_proto_type(attr, AttributeProto)
-    return C.check_attribute(attr.SerializeToString(), ctx, lex_ctx)
+    return C.check_attribute(attr.SerializeToString(), ctx, lexical_scope_ctx)
 
 
 def check_node(
     node: NodeProto,
     ctx: C.CheckerContext = DEFAULT_CONTEXT,
-    lex_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
+    lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
     _ensure_proto_type(node, NodeProto)
-    return C.check_node(node.SerializeToString(), ctx, lex_ctx)
+    return C.check_node(node.SerializeToString(), ctx, lexical_scope_ctx)
 
 
 def check_function(
     function: FunctionProto,
-    ctx: C.CheckerContext,
-    lex_ctx: C.LexicalScopeContext,
+    ctx: C.CheckerContext = DEFAULT_CONTEXT,
+    lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
     _ensure_proto_type(function, FunctionProto)
-    C.check_function(function.SerializeToString(), ctx, lex_ctx)
+    C.check_function(function.SerializeToString(), ctx, lexical_scope_ctx)
 
 
 def check_graph(
     graph: GraphProto,
     ctx: C.CheckerContext = DEFAULT_CONTEXT,
-    lex_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
+    lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
     _ensure_proto_type(graph, GraphProto)
-    return C.check_graph(graph.SerializeToString(), ctx, lex_ctx)
+    return C.check_graph(graph.SerializeToString(), ctx, lexical_scope_ctx)
 
 
 def check_sparse_tensor(
