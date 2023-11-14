@@ -1289,7 +1289,7 @@ def printable_type(t: TypeProto) -> str:
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
             else:
                 s += ", scalar"
-        return s
+        return s  # type: ignore[no-any-return]
     if t.WhichOneof("value") is None:
         return ""
     return f"Unknown type {t.WhichOneof('value')}"
@@ -1557,5 +1557,5 @@ def _attr_type_to_str(attr_type: int) -> str:
         String representing the supplied attr_type.
     """
     if attr_type in AttributeProto.AttributeType.values():
-        return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]
+        return _ATTRIBUTE_TYPE_TO_STR[attr_type]  # type: ignore[no-any-return]
+    return AttributeProto.AttributeType.keys()[0]  # type: ignore[no-any-return]
