@@ -56,7 +56,7 @@ class _CommonTopK(OpRun):
         as it sorts everything then extracts the top *k*
         values.
 
-        Warning:
+        .. warning::
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
@@ -75,7 +75,7 @@ class TopK_1(_CommonTopK):
         as it sorts everything then extracts the top *k*
         values.
 
-        Warning:
+        .. warning::
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
@@ -91,7 +91,7 @@ class TopK_10(_CommonTopK):
         as it sorts everything then extracts the top *k*
         values.
 
-        Warning:
+        .. warning::
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc
@@ -108,7 +108,7 @@ class TopK_11(_CommonTopK):
         as it sorts everything then extracts the top *k*
         values.
 
-        Warning:
+        .. warning::
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
             does in `top_k.cc

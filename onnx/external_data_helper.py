@@ -104,7 +104,7 @@ def convert_model_to_external_data(
     size_threshold: int = 1024,
     convert_attribute: bool = False,
 ) -> None:
-    """Call to set all tensors with raw data as external data. This call should preceed 'save_model'.
+    """Call to set all tensors with raw data as external data. This call should precede 'save_model'.
     'save_model' saves all the tensors data as external data after calling this function.
 
     Arguments:

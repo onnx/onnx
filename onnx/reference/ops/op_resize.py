@@ -155,19 +155,18 @@ def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
 
 
 def _get_neighbor(x: float, n: int, data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Pad `data` in 'edge' mode, and get n nearest elements in the padded array
-    and their indexes in the original array.
+    """Pad `data` in 'edge' mode, and get n nearest elements in the padded array and their indexes in the original array.
 
     Args:
-        x: center index (in the unpadded coordinate system) of the found
+        x: Center index (in the unpadded coordinate system) of the found
             nearest elements.
-        n: the number of neighbors.
-        data: the array
+        n: The number of neighbors.
+        data: The array.
 
     Returns:
         A tuple containing the indexes of neighbor elements (the index
         can be smaller than 0 or higher than len(data)) and the value of
-        these elements
+        these elements.
     """
     pad_width = np.ceil(n / 2).astype(int)
     padded = np.pad(data, pad_width, mode="edge")

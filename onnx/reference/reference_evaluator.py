@@ -21,8 +21,8 @@ from onnx.reference.ops_optimized import optimized_operators
 
 
 class ReferenceEvaluator:
-    r"""Computes the outputs of an ONNX proto
-    (`ModelProto`, `FunctionProto`, `GraphProto`, `NodeProto`).
+    r"""Computes the outputs of an ONNX proto (`ModelProto`, `FunctionProto`, `GraphProto`, `NodeProto`).
+
     This is a pure python implementation of ONNX specifications.
     Mismatches may remain between the official specifications and the implementation here.
     In the case of such a mismatch, the official spec overrides this implementation.
