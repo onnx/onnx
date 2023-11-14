@@ -96,8 +96,11 @@ class TestInferenceFunctionCall(unittest.TestCase):
         ]
         for ins, outs in cases:
             assert _run_case(
-                ADD_SCHEMA, ["A", "B"], ["C"], _to_tensor_types(ins)
-            ) == _to_tensor_types(outs)  # type: ignore
+                ADD_SCHEMA,
+                ["A", "B"],  # type: ignore[arg-type]
+                ["C"],
+                _to_tensor_types(ins),  # type: ignore[arg-type]
+            ) == _to_tensor_types(outs)  # type: ignore[arg-type]
 
     def test_add_inference_raises_errors(self) -> None:
         with self.assertRaises(ValidationError):

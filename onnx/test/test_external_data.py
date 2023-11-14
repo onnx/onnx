@@ -66,16 +66,16 @@ class TestLoadExternalDataBase(unittest.TestCase):
             inputs=[],
             outputs=["values"],
             value=self.create_external_data_tensor(
-                self.attribute_value,
-                "attribute_value",  # type: ignore[arg-type]
+                self.attribute_value,  # type: ignore[arg-type]
+                "attribute_value",
             ),
         )
 
         initializers = [
             self.create_external_data_tensor(
-                self.initializer_value,
+                self.initializer_value,  # type: ignore[arg-type]
                 "input_value",
-                location,  # type: ignore[arg-type]
+                location,
             )
         ]
         inputs = [

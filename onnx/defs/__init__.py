@@ -121,7 +121,7 @@ def get_function_ops() -> List[OpSchema]:
         schema
         for schema in schemas
         if schema.has_function or schema.has_context_dependent_function
-    ]  # type: ignore
+    ]
 
 
 SchemaError = C.SchemaError
