@@ -82,4 +82,4 @@ class Loop(OpRun):
         while len(outputs) < len(self.onnx_node.output):
             outputs.append(np.empty(shape=()))
         res = tuple(outputs)
-        return self._check_output_run(res)
+        return self._check_and_fix_outputs(res)

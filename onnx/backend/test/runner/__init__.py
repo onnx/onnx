@@ -188,30 +188,32 @@ class Runner:
         outputs: Sequence[Any],
         rtol: float,
         atol: float,
+        model_dir: str | None = None,
     ) -> None:
         try:
             np.testing.assert_equal(len(outputs), len(ref_outputs))
         except TypeError as e:
             raise TypeError(
                 f"Unable to compare expected type {type(ref_outputs)} "
-                f"and runtime type {type(outputs)}"
+                f"and runtime type {type(outputs)} (known test={model_dir or '?'!r})"
             ) from e
         for i in range(len(outputs)):
             if isinstance(outputs[i], (list, tuple)):
                 if not isinstance(ref_outputs[i], (list, tuple)):
                     raise AssertionError(
                         f"Unexpected type {type(outputs[i])} for outputs[{i}] but expected "
-                        f"type is {type(ref_outputs[i])}."
+                        f"type is {type(ref_outputs[i])} (known test={model_dir or '?'!r})."
                     )
                 for j in range(len(outputs[i])):
                     cls.assert_similar_outputs(
-                        ref_outputs[i][j], outputs[i][j], rtol, atol
+                        ref_outputs[i][j],
+                        outputs[i][j],
+                        rtol,
+                        atol,
+                        model_dir=model_dir,
                     )
             else:
-                if ref_outputs[i].dtype in (np.str_, object, np.object_) or isinstance(
-                    ref_outputs[i].dtype,
-                    getattr(getattr(np, "dtypes", None), "StrDType", type),
-                ):
+                if not np.issubdtype(ref_outputs[i].dtype, np.number):
                     if ref_outputs[i].tolist() != outputs[i].tolist():
                         raise AssertionError(f"{ref_outputs[i]} != {outputs[i]}")
                     continue
@@ -460,7 +462,11 @@ class Runner:
                         for f in test_data["outputs"]
                     )
                     self.assert_similar_outputs(
-                        ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
+                        ref_outputs,
+                        outputs,
+                        rtol=model_test.rtol,
+                        atol=model_test.atol,
+                        model_dir=model_dir,
                     )
 
             for test_data_dir in glob.glob(os.path.join(model_dir, "test_data_set*")):
@@ -479,14 +485,13 @@ class Runner:
                         output_file, ref_outputs, model.graph.output[i].type
                     )
                 outputs = list(prepared_model.run(inputs))
-                try:
-                    self.assert_similar_outputs(
-                        ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
-                    )
-                except TypeError as e:
-                    raise AssertionError(
-                        f"Unable to compare outputs in folder {model_dir!r}"
-                    ) from e
+                self.assert_similar_outputs(
+                    ref_outputs,
+                    outputs,
+                    rtol=model_test.rtol,
+                    atol=model_test.atol,
+                    model_dir=model_dir,
+                )
 
         if model_test.name in self._test_kwargs:
             self._add_test(

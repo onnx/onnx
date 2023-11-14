@@ -1186,6 +1186,85 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = 1 / (x + 0.5)
         assert_allclose(expected, got)
 
+    def test_custom_no_output_tuple(self):
+        class InvAlpha(OpRun):
+            op_domain = "custom"
+
+            def _run(self, x, alpha=None):  # type: ignore
+                alpha = alpha or self.alpha  # type: ignore
+                return 1 / (x + alpha)
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
+        ref = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        with self.assertRaises(TypeError):
+            ref.run(None, {"X": x})
+
+    def test_custom_empty_output(self):
+        class InvAlpha(OpRun):
+            op_domain = "custom"
+
+            def _run(self, x, alpha=None):  # type: ignore
+                return tuple()
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
+        ref = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        with self.assertRaises(ValueError):
+            ref.run(None, {"X": x})
+
+    def test_custom_tuple_tuple(self):
+        class InvAlpha(OpRun):
+            op_domain = "custom"
+
+            def _run(self, x, alpha=None):  # type: ignore
+                alpha = alpha or self.alpha  # type: ignore
+                res = tuple([tuple([1 / (x + alpha)])])  # noqa: C409
+                assert isinstance(res, tuple)
+                assert isinstance(res[0], tuple)
+                return res
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
+        ref = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        with self.assertRaises(TypeError):
+            ref.run(None, {"X": x})
+
+    def test_custom_tuple_unexpected_type(self):
+        class CustomType:
+            pass
+
+        class InvAlpha(OpRun):
+            op_domain = "custom"
+
+            def _run(self, x, alpha=None):  # type: ignore
+                res = tuple([CustomType()])  # noqa: C409
+                assert isinstance(res, tuple)
+                assert isinstance(res[0], CustomType)
+                return res
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
+        ref = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        with self.assertRaises(TypeError):
+            ref.run(None, {"X": x})
+
     def test_loop(self):
         # Given a tensor x of values [x1, ..., xN],
         # Return a sequence of tensors of
