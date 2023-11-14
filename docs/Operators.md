@@ -7075,9 +7075,7 @@ offset[
 ] = 0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
 offset[
     0, 13, 0, 1
-] = (
-    -0.1
-)  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+] = -0.1  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
 
 node = onnx.helper.make_node(
     "DeformConv",
@@ -26563,9 +26561,7 @@ y = np.array(
         -2.0,
         -3.0,
     ]
-).astype(
-    np.float32
-)  # expected output
+).astype(np.float32)  # expected output
 expect(node, inputs=[x], outputs=[y], name="test_round")
 ```
 
