@@ -13,8 +13,7 @@ def update_inputs_outputs_dims(
     input_dims: Dict[str, List[Any]],
     output_dims: Dict[str, List[Any]],
 ) -> ModelProto:
-    """
-    This function updates the dimension sizes of the model's inputs and outputs to the values
+    """This function updates the dimension sizes of the model's inputs and outputs to the values
     provided in input_dims and output_dims. if the dim value provided is negative, a unique dim_param
     will be set for that dimension.
 

@@ -17,6 +17,7 @@ def inline_local_functions(
         model: an ONNX ModelProto
         convert_version: if true, try to apply automatic version-conversion to functions requiring a
             different (ONNX) opset version from the model.
+
     Returns:
         ModelProto with all calls to model-local functions inlined (recursively)
     """
@@ -37,6 +38,7 @@ def inline_selected_functions(
             element is a tuple of (function domain, function name).
         exclude: if true, inlines all functions except those specified in function_ids.
            if false, inlines all functions specified in function_ids.
+
     Returns:
         ModelProto with all calls to model-local functions inlined (recursively)
     """
