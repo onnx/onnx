@@ -137,8 +137,7 @@ class Runner:
 
     @property
     def test_cases(self) -> dict[str, type[unittest.TestCase]]:
-        """
-        List of test cases to be applied on the parent scope
+        """List of test cases to be applied on the parent scope
         Example usage:
             globals().update(BackendTest(backend).test_cases)
         """
@@ -153,8 +152,7 @@ class Runner:
 
     @property
     def test_suite(self) -> unittest.TestSuite:
-        """
-        TestSuite that can be run by TestRunner
+        """TestSuite that can be run by TestRunner
         Example usage:
             unittest.TextTestRunner().run(BackendTest(backend).test_suite)
         """
@@ -168,8 +166,7 @@ class Runner:
     # For backward compatibility (we used to expose `.tests`)
     @property
     def tests(self) -> type[unittest.TestCase]:
-        """
-        One single unittest.TestCase that hosts all the test functions
+        """One single unittest.TestCase that hosts all the test functions
         Example usage:
             onnx_backend_tests = BackendTest(backend).tests
         """
@@ -298,9 +295,7 @@ class Runner:
     def generate_dummy_data(
         x: ValueInfoProto, seed: int = 0, name: str = "", random: bool = False
     ) -> np.ndarray:
-        """
-        Generates a random tensor based on the input definition.
-        """
+        """Generates a random tensor based on the input definition."""
         if not x.type.tensor_type:
             raise NotImplementedError(
                 f"Input expected to have tensor type. "

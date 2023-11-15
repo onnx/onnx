@@ -80,7 +80,7 @@ VersionMapType = Dict[Tuple[str, int], int]
 
 
 def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
-    """create a map from (opset-domain, opset-version) to ir-version from above table"""
+    """Create a map from (opset-domain, opset-version) to ir-version from above table."""
     result: VersionMapType = {}
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
@@ -104,9 +104,10 @@ def find_min_ir_version_for(
 ) -> int:
     """Given list of opset ids, determine minimum IR version required.
 
-    Arguments:
+    Args:
         opsetidlist (List[OperatorSetIdProto]): The list of OperatorSetIdProto
         ignore_unknown (bool): If True, ignore unknown domain and return default min version for that domain.
+
     Returns:
         The minimum IR version required (integer)
     """
@@ -136,7 +137,7 @@ def make_node(
 ) -> NodeProto:
     """Construct a NodeProto.
 
-    Arguments:
+    Args:
         op_type (string): The name of the operator to construct
         inputs (list of string): list of input names
         outputs (list of string): list of output names
@@ -146,10 +147,10 @@ def make_node(
             If it's None, we will just use default domain (which is empty)
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
+
     Returns:
         NodeProto
     """
-
     node = NodeProto()
     node.op_type = op_type
     node.input.extend(inputs)
@@ -175,7 +176,7 @@ def make_operatorsetid(
 ) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
-    Arguments:
+    Args:
         domain (string): The domain of the operator set id
         version (integer): Version of operator set id
     Returns:
@@ -199,7 +200,7 @@ def make_graph(
 ) -> GraphProto:
     """Construct a GraphProto
 
-    Arguments:
+    Args:
         nodes: list of NodeProto
         name (string): graph name
         inputs: list of ValueInfoProto
@@ -233,7 +234,7 @@ def make_graph(
 def make_opsetid(domain: str, version: int) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
-    Arguments:
+    Args:
         domain (string): The domain of the operator set id
         version (integer): Version of operator set id
     Returns:
@@ -277,7 +278,7 @@ def make_function(
 def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     """Construct a ModelProto
 
-    Arguments:
+    Args:
         graph (GraphProto): *make_graph* returns
         **kwargs: any attribute to add to the returned instance
     Returns:
@@ -362,19 +363,22 @@ def float32_to_float8e4m3(  # noqa: PLR0911
     uz: bool = False,
     saturate: bool = True,
 ) -> int:
-    """
-    Convert a float32 value to a float8, e4m3 (as int).
-
-    :param fval: float to convert
-    :param scale: scale, divide *fval* by *scale* before casting it
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :param saturate: if True, any value out of range included inf becomes the maximum value,
-        otherwise, it becomes NaN. The description of operator Cast fully describes the
-        differences.
-    :return: converted float
+    """Convert a float32 value to a float8, e4m3 (as int).
 
     See :ref:`onnx-detail-float8` for technical details.
+
+    Args:
+        fval: float to convert
+        scale: scale, divide *fval* by *scale* before casting it
+        fn: no infinite values
+        uz: no negative zero
+        saturate: if True, any value out of range included inf becomes
+            the maximum value, otherwise, it becomes NaN. The
+            description of operator Cast fully describes the
+            differences.
+
+    Returns:
+        converted float
     """
     if not fn:
         raise NotImplementedError(
@@ -495,17 +499,20 @@ def float32_to_float8e5m2(  # noqa: PLR0911
     uz: bool = False,
     saturate: bool = True,
 ) -> int:
-    """
-    Convert a float32 value to a float8, e5m2 (as int).
+    """Convert a float32 value to a float8, e5m2 (as int).
 
-    :param fval: float to convert
-    :param scale: scale, divide *fval* by *scale* before casting it
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :param saturate: if True, any value out of range included inf becomes the maximum value,
-        otherwise, it becomes NaN. The description of operator Cast fully describes the
-        differences.
-    :return: converted float
+    Args:
+        fval: float to convert
+        scale: scale, divide *fval* by *scale* before casting it
+        fn: no infinite values
+        uz: no negative zero
+        saturate: if True, any value out of range included inf becomes
+            the maximum value, otherwise, it becomes NaN. The
+            description of operator Cast fully describes the
+            differences.
+
+    Returns:
+        converted float
     """
     x = fval / scale
     b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
@@ -616,14 +623,13 @@ def float32_to_float8e5m2(  # noqa: PLR0911
 def make_tensor(
     name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
-    """
-    Make a TensorProto with specified arguments.  If raw is False, this
+    """Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
     values based on data_type. If raw is True, use "raw_data" proto
     field to store the values, and values should be of type bytes in
     this case.
 
-    Arguments:
+    Args:
         name (string): tensor name
         data_type (int): a value such as onnx.TensorProto.FLOAT
         dims (List[int]): shape
@@ -720,7 +726,7 @@ def make_sparse_tensor(
 ) -> SparseTensorProto:
     """Construct a SparseTensorProto
 
-    Arguments:
+    Args:
         values (TensorProto): the values
         indices (TensorProto): the indices
         dims: the shape
@@ -740,9 +746,7 @@ def make_sequence(
     elem_type: SequenceProto.DataType,
     values: Sequence[Any],
 ) -> SequenceProto:
-    """
-    Make a Sequence with specified value arguments.
-    """
+    """Make a Sequence with specified value arguments."""
     sequence = SequenceProto()
     sequence.name = name
     sequence.elem_type = elem_type
@@ -769,8 +773,7 @@ def make_sequence(
 def make_map(
     name: str, key_type: int, keys: List[Any], values: SequenceProto
 ) -> MapProto:
-    """
-    Make a Map with specified key-value pair arguments.
+    """Make a Map with specified key-value pair arguments.
 
     Criteria for conversion:
     - Keys and Values must have the same number of elements
@@ -803,9 +806,7 @@ def make_optional(
     elem_type: OptionalProto.DataType,
     value: Optional[Any],
 ) -> OptionalProto:
-    """
-    Make an Optional with specified value arguments.
-    """
+    """Make an Optional with specified value arguments."""
     optional = OptionalProto()
     optional.name = name
     optional.elem_type = elem_type
@@ -997,7 +998,6 @@ def make_tensor_type_proto(
     shape_denotation: Optional[List[str]] = None,
 ) -> TypeProto:
     """Makes a Tensor TypeProto based on the data type and shape."""
-
     type_proto = TypeProto()
     tensor_type_proto = type_proto.tensor_type
     tensor_type_proto.elem_type = elem_type
@@ -1061,7 +1061,6 @@ def make_sparse_tensor_type_proto(
     shape_denotation: Optional[List[str]] = None,
 ) -> TypeProto:
     """Makes a SparseTensor TypeProto based on the data type and shape."""
-
     type_proto = TypeProto()
     sparse_tensor_type_proto = type_proto.sparse_tensor_type
     sparse_tensor_type_proto.elem_type = elem_type
@@ -1290,7 +1289,7 @@ def printable_type(t: TypeProto) -> str:
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
             else:
                 s += ", scalar"
-        return s
+        return s  # type: ignore[no-any-return]
     if t.WhichOneof("value") is None:
         return ""
     return f"Unknown type {t.WhichOneof('value')}"
@@ -1351,10 +1350,9 @@ def printable_node(
 
 
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
-    """
-    Display a GraphProto as a string.
+    """Display a GraphProto as a string.
 
-    Arguments:
+    Args:
         graph (GraphProto): the graph to display
         prefix (string): prefix of every line
 
@@ -1431,9 +1429,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
 
 
 def strip_doc_string(proto: google.protobuf.message.Message) -> None:
-    """
-    Empties `doc_string` field on any nested protobuf messages
-    """
+    """Empties `doc_string` field on any nested protobuf messages"""
     if not isinstance(proto, google.protobuf.message.Message):
         raise TypeError(
             f"proto must be an instance of {google.protobuf.message.Message}."
@@ -1475,41 +1471,49 @@ def make_training_info(
 
 # Following functions are used for mapping
 def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
-    """
-    Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
+    """Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: numpy's data_type
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        numpy's data_type
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
-    """
-    Convert a TensorProto's data_type to corresponding data_type for storage.
+    """Convert a TensorProto's data_type to corresponding data_type for storage.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: data_type for storage
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        data_type for storage
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
-    """
-    Get the name of given TensorProto's data_type.
+    """Get the name of given TensorProto's data_type.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: the name of data_type
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        the name of data_type
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
-    """
-    Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
+    """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: field name
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        field name
     """
     return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
         mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
@@ -1517,11 +1521,13 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
 
 
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
-    """
-    Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
+    """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 
-    :param np_dtype: numpy's data_type
-    :return: TensorsProto's data_type
+    Args:
+        np_dtype: numpy's data_type
+
+    Returns:
+        TensorsProto's data_type
     """
     return cast(
         int,
@@ -1530,10 +1536,10 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
 
 
 def get_all_tensor_dtypes() -> KeysView[int]:
-    """
-    Get all tensor types from TensorProto.
+    """Get all tensor types from TensorProto.
 
-    :return: all tensor types from TensorProto
+    Returns:
+        all tensor types from TensorProto
     """
     return mapping.TENSOR_TYPE_MAP.keys()
 
@@ -1542,12 +1548,14 @@ _ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
 
 
 def _attr_type_to_str(attr_type: int) -> str:
-    """
-    Convert AttributeProto type to string.
+    """Convert AttributeProto type to string.
 
-    :param attr_type: AttributeProto type.
-    :return: String representing the supplied attr_type.
+    Args:
+        attr_type: AttributeProto type.
+
+    Returns:
+        String representing the supplied attr_type.
     """
     if attr_type in AttributeProto.AttributeType.values():
-        return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]
+        return _ATTRIBUTE_TYPE_TO_STR[attr_type]  # type: ignore[no-any-return]
+    return AttributeProto.AttributeType.keys()[0]  # type: ignore[no-any-return]

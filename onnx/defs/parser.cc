@@ -7,6 +7,7 @@
 
 #include "onnx/defs/parser.h"
 
+#include <cctype>
 #include <iostream>
 #include <stdexcept>
 #include <string>

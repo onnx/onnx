@@ -51,8 +51,7 @@ class GridSample(OpRun):
         return x
 
     def _gs_reflect(self, x, x_min, x_max):  # type: ignore
-        """
-        Reflect by the near border till within the borders
+        """Reflect by the near border till within the borders
         Use float for borders to avoid potential issues with integer T
         """
         fx = x
@@ -76,8 +75,7 @@ class GridSample(OpRun):
         return fx
 
     def _gs_get_cubic_coeffs(self, x, coeffs):  # type: ignore
-        """
-        Calculate cubic convolution interpolation coefficients
+        """Calculate cubic convolution interpolation coefficients
         ROBERT G. KEYS https://ieeexplore.ieee.org/document/1163711
         Use float to avoid potential issues with integer.
         """

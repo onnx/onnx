@@ -18,7 +18,6 @@ def load_model_tests(
     kind: Optional[str] = None,
 ) -> List[TestCase]:
     """Load model test cases from on-disk data files."""
-
     supported_kinds = os.listdir(data_dir)
     if kind not in supported_kinds:
         raise ValueError(f"kind must be one of {supported_kinds}")

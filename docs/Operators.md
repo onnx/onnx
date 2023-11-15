@@ -46,7 +46,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-19">19</a>|
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
-|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
+|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
@@ -107,7 +107,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
-|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
+|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
 |<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-14">14</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
 |<a href="#RandomNormal">RandomNormal</a>|<a href="Changelog.md#RandomNormal-1">1</a>|
 |<a href="#RandomNormalLike">RandomNormalLike</a>|<a href="Changelog.md#RandomNormalLike-1">1</a>|
@@ -281,7 +281,7 @@ expect(node, inputs=[x], outputs=[y], name="test_abs")
 import numpy as np
 
 
-def abs(input: np.ndarray) -> np.ndarray:
+def abs(input: np.ndarray) -> np.ndarray:  # noqa: A001
     return np.abs(input)  # type: ignore[no-any-return]
 
 ```
@@ -1695,8 +1695,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">1</a>, <a 
 <summary>averagepool_1d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32]
+"""input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -1726,8 +1725,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_1d_default")
 <summary>averagepool_2d_ceil</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -1762,8 +1760,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_ceil")
 <summary>averagepool_2d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -1793,8 +1790,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_default")
 <summary>averagepool_2d_dilations</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -1833,8 +1829,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
 <summary>averagepool_2d_pads</summary>
 
 ```python
-"""
-input_shape: [1, 3, 28, 28]
+"""input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -1875,8 +1870,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_pads")
 <summary>averagepool_2d_pads_count_include_pad</summary>
 
 ```python
-"""
-input_shape: [1, 3, 28, 28]
+"""input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -1933,8 +1927,7 @@ expect(
 <summary>averagepool_2d_precomputed_pads</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -1984,8 +1977,7 @@ expect(
 <summary>averagepool_2d_precomputed_pads_count_include_pad</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -2039,8 +2031,7 @@ expect(
 <summary>averagepool_2d_precomputed_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 3, 3]
 pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
 """
@@ -2084,8 +2075,7 @@ expect(
 <summary>averagepool_2d_precomputed_strides</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -2125,8 +2115,7 @@ expect(
 <summary>averagepool_2d_same_lower</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -2170,8 +2159,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_lower")
 <summary>averagepool_2d_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -2215,8 +2203,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_upper")
 <summary>averagepool_2d_strides</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -2246,8 +2233,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_strides")
 <summary>averagepool_3d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32, 32]
+"""input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -2277,8 +2263,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_3d_default")
 <summary>averagepool_3d_dilations</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -7283,9 +7268,9 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>
+Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>
 
 #### Attributes
 
@@ -7315,8 +7300,8 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>The type of the inputs 'x_zero_point' and 'x'.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>'x_scale' determines the output type.</dd>
 </dl>
@@ -7492,6 +7477,58 @@ expect(
     inputs=[x, x_scale],
     outputs=[y],
     name="test_dequantizelinear_e5m2",
+)
+```
+
+</details>
+
+
+<details>
+<summary>int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([-300, -30, -1025, 1270]).astype(np.int16)
+x_scale = np.float32(2)
+x_zero_point = np.int16(-1024)
+y = np.array([1448.0, 1988.0, -2.0, 4588.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_int16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>uint16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([30000, 31000, 32768, 33000]).astype(np.uint16)
+x_scale = np.float32(2)
+x_zero_point = np.uint16(32767)
+y = np.array([-5534.0, -3534.0, 2.0, 466.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_uint16",
 )
 ```
 
@@ -14545,8 +14582,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">1</a>, <a href=
 <summary>lppool_1d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32]
+"""input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 p = 3
@@ -14579,8 +14615,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_1d_default")
 <summary>lppool_2d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 p = 4
@@ -14612,8 +14647,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_default")
 <summary>lppool_2d_dilations</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 p = 2
@@ -14660,8 +14694,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_dilations")
 <summary>lppool_2d_pads</summary>
 
 ```python
-"""
-input_shape: [1, 3, 28, 28]
+"""input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -14701,8 +14734,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
 <summary>lppool_2d_same_lower</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -14748,8 +14780,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
 <summary>lppool_2d_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -14795,8 +14826,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
 <summary>lppool_2d_strides</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 p = 2
@@ -14829,8 +14859,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_strides")
 <summary>lppool_3d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32, 32]
+"""input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 p = 3
@@ -15216,8 +15245,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href
 <summary>maxpool_1d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32]
+"""input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -15247,8 +15275,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_1d_default")
 <summary>maxpool_2d_ceil</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -15283,8 +15310,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_ceil")
 <summary>maxpool_2d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -15314,8 +15340,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_default")
 <summary>maxpool_2d_dilations</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -15350,8 +15375,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_dilations")
 <summary>maxpool_2d_pads</summary>
 
 ```python
-"""
-input_shape: [1, 3, 28, 28]
+"""input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -15390,8 +15414,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_pads")
 <summary>maxpool_2d_precomputed_pads</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -15439,8 +15462,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_precomputed_pads")
 <summary>maxpool_2d_precomputed_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 3, 3]
 pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
 """
@@ -15479,8 +15501,7 @@ expect(
 <summary>maxpool_2d_precomputed_strides</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -15513,8 +15534,7 @@ expect(
 <summary>maxpool_2d_same_lower</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -15558,8 +15578,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_lower")
 <summary>maxpool_2d_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -15603,8 +15622,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_upper")
 <summary>maxpool_2d_strides</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -15631,8 +15649,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_strides")
 <summary>maxpool_2d_uint8</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -15680,8 +15697,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_uint8")
 <summary>maxpool_3d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32, 32]
+"""input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -15711,8 +15727,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_3d_default")
 <summary>maxpool_3d_dilations</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4, 4]
+"""input_shape: [1, 1, 4, 4, 4]
 output_shape: [1, 1, 2, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -15769,8 +15784,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_3d_dilations")
 <summary>maxpool_3d_dilations_use_ref_impl</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4, 4]
+"""input_shape: [1, 1, 4, 4, 4]
 output_shape: [1, 1, 2, 2, 2]
 """
 dilations = [2, 2, 2]
@@ -15904,8 +15918,7 @@ expect(
 <summary>maxpool_with_argmax_2d_precomputed_pads</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -15971,8 +15984,7 @@ expect(
 <summary>maxpool_with_argmax_2d_precomputed_strides</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -19924,7 +19936,7 @@ expect(
   The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
   The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
   The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
-  For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
+  For saturation, it saturates to [0, 255] if it's uint8, [-128, 127] if it's int8, [0, 65535] if it's uint16, or [-32768, 32767] if it's int16.
   For (x / y_scale), it's rounding to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
   'y_zero_point' and 'y' must have same type.
   'y_zero_point' is usually not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz,
@@ -19933,9 +19945,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>
+Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>
 
 #### Attributes
 
@@ -19968,9 +19980,9 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
-<dd>Constrain 'x' to float, float16, bfloat16 or int32 tensor.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer/float tensor.</dd>
+<dd>The type of the input 'x'.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>The type of the input 'y_zero_point' and the output 'y'.</dd>
 </dl>
 
 
@@ -20070,6 +20082,70 @@ expect(
 
 
 <details>
+<summary>int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array(
+    [
+        0.0,
+        -514.0,
+        3.0,
+        -3.0,
+        2.9,
+        -2.9,
+        3.1,
+        -3.1,
+        65022.0,
+        -66046.0,
+        65023.0,
+        -66047.0,
+        65024.0,
+        -66048.0,
+        70000.0,
+        -70000.0,
+    ]
+).astype(np.float32)
+y_scale = np.float32(2.0)
+y_zero_point = np.int16(256)
+y = np.array(
+    [
+        256,
+        -1,
+        258,
+        254,
+        257,
+        255,
+        258,
+        254,
+        32767,
+        -32767,
+        32767,
+        -32768,
+        32767,
+        -32768,
+        32767,
+        -32768,
+    ]
+).astype(np.int16)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_int16",
+)
+```
+
+</details>
+
+
+<details>
 <summary>quantizelinear</summary>
 
 ```python
@@ -20089,6 +20165,62 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear",
+)
+```
+
+</details>
+
+
+<details>
+<summary>uint16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array(
+    [
+        0.0,
+        -128.0,
+        3.0,
+        -3.0,
+        2.9,
+        -2.9,
+        3.1,
+        -3.1,
+        65536.0,
+        -65534.0,
+        70000.0,
+        -70000.0,
+    ]
+).astype(np.float32)
+y_scale = np.float32(2.0)
+y_zero_point = np.uint16(32767)
+y = np.array(
+    [
+        32767,
+        32703,
+        32769,
+        32765,
+        32768,
+        32766,
+        32769,
+        32765,
+        65535,
+        0,
+        65535,
+        0,
+    ]
+).astype(np.uint16)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_uint16",
 )
 ```
 
@@ -26691,7 +26823,9 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="C
 sum_in = onnx.helper.make_tensor_value_info(
     "sum_in", onnx.TensorProto.FLOAT, [2]
 )
-next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info(  # noqa: A001
+    "next", onnx.TensorProto.FLOAT, [2]
+)
 sum_out = onnx.helper.make_tensor_value_info(
     "sum_out", onnx.TensorProto.FLOAT, [2]
 )
@@ -26748,7 +26882,9 @@ expect(
 sum_in = onnx.helper.make_tensor_value_info(
     "sum_in", onnx.TensorProto.FLOAT, [2]
 )
-next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info(  # noqa: A001
+    "next", onnx.TensorProto.FLOAT, [2]
+)
 sum_out = onnx.helper.make_tensor_value_info(
     "sum_out", onnx.TensorProto.FLOAT, [2]
 )
@@ -33016,7 +33152,7 @@ expect(
 ```python
 axis = 1
 largest = 0
-sorted = 1
+sorted = 1  # noqa: A001
 k = 3
 
 node = onnx.helper.make_node(
