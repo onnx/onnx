@@ -314,7 +314,9 @@ class ReferenceEvaluator:
         """Returns a tensor saved as external."""
         info = ExternalDataInfo(initializer)
         location = info.location
-        if location.startswith("#"):
+        if self.container_ and self.container_.is_in_memory_external_initializer(
+            location
+        ):
             # It comes from a large container.
             return self.container_[location]
         # Otherwise, the data is on disk.

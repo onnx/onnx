@@ -110,10 +110,16 @@ class ModelContainer:
         yield self.model_proto.graph
         yield from _enumerate_subgraphs(self.model_proto.graph)
 
+    def is_in_memory_external_initializer(self, name: str) -> bool:
+        """Tells if an initializer name is an external initializer stored in memory.
+        The name must start with '#' in that case.
+        """
+        return name.startswith("#")
+
     def set_large_initializers(self, large_initializers: dict[str, np.ndarray]):
         """Adds all large tensors (not stored in the model)."""
         for k in large_initializers:
-            if not k.startswith("#"):
+            if not self.is_in_memory_external_initializer(k):
                 raise ValueError(
                     f"The location {k!r} must start with '#' to be ignored by check model."
                 )
