@@ -27,9 +27,7 @@ all_numeric_dtypes = [
 
 
 def import_recursive(package: ModuleType) -> None:
-    """
-    Takes a package and imports all modules underneath it
-    """
+    """Takes a package and imports all modules underneath it."""
     pkg_dir: Optional[List[str]] = None
     pkg_dir = package.__path__  # type: ignore
     module_location = package.__name__
