@@ -13,8 +13,7 @@ import onnx.reference as orf
 
 
 def create_model():
-    """
-    The following model is equivalent to the following function.
+    """The following model is equivalent to the following function.
 
     .. code-block:: python
 
