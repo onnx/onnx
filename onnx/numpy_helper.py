@@ -22,10 +22,15 @@ def bfloat16_to_float32(
 ) -> np.ndarray:
     """Converts ndarray of bf16 (as uint32) to f32 (as uint32).
 
-    :param data: a numpy array, empty dimensions are allowed if dims is None
-    :param dims: if specified, the function reshapes the results
-    :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified"""
+    Args:
+        data: A numpy array, empty dimensions are allowed if dims is
+            None.
+        dims: If specified, the function reshapes the results.
+
+    Returns:
+        A numpy array of float32 with the same dimension if dims is
+        None, or reshaped to dims if specified
+    """
     shift = lambda x: x << 16  # noqa: E731
     if dims is None:
         if len(data.shape) == 0:
@@ -88,14 +93,17 @@ def float8e4m3_to_float32(
 ) -> np.ndarray:
     """Converts ndarray of float8, e4m3 (as uint32) to f32 (as uint32).
 
-    :param data: a numpy array, empty dimensions are allowed if dims is None
-    :param dims: if specified, the function reshapes the results
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified.
-
     See :ref:`onnx-detail-float8` for technical details.
+
+    Args:
+        data: A numpy array, empty dimensions are allowed if dims is None.
+        dims: If specified, the function reshapes the results.
+        fn: No infinite values.
+        uz: No negative zero.
+
+    Returns:
+        A numpy array of float32 with the same dimension if dims is None,
+        or reshaped to dims if specified.
     """
     if not fn:
         raise NotImplementedError(
@@ -159,12 +167,18 @@ def float8e5m2_to_float32(
 ) -> np.ndarray:
     """Converts ndarray of float8, e5m2 (as uint32) to f32 (as uint32).
 
-    :param data: a numpy array, empty dimensions are allowed if dims is None
-    :param dims: if specified, the function reshapes the results
-    :param fn: no infinite values
-    :param uz: no negative zero
-    :return: a numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified"""
+    See :ref:`onnx-detail-float8` for technical details.
+
+    Args:
+        data: A numpy array, empty dimensions are allowed if dims is None.
+        dims: If specified, the function reshapes the results.
+        fn: No infinite values.
+        uz: No negative zero.
+
+    Returns:
+        A numpy array of float32 with the same dimension if dims is None,
+        or reshaped to dims if specified
+    """
     res = _float8e5m2_to_float32(data, fn=fn, uz=uz)
     if dims is None:
         return res  # type: ignore[no-any-return]
@@ -415,10 +429,10 @@ def to_dict(map_proto: MapProto) -> Dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
     Args:
-        map: a MapProto object.
+        map_proto: a MapProto object.
 
     Returns:
-        dict: the converted dictionary.
+        The converted dictionary.
     """
     key_list: List[Any] = []
     if map_proto.key_type == TensorProto.STRING:
@@ -441,7 +455,7 @@ def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
     """Converts a Python dictionary into a map def.
 
     Args:
-        dict: Python dictionary
+        dict_: Python dictionary
         name: (optional) the name of the map.
 
     Returns:
@@ -573,11 +587,10 @@ def from_optional(
 
 
 def convert_endian(tensor: TensorProto) -> None:
-    """
-    Call to convert endianess of raw data in tensor.
+    """Call to convert endianess of raw data in tensor.
 
-    Arguments:
-        tensor (TensorProto): TensorProto to be converted.
+    Args:
+        tensor: TensorProto to be converted.
     """
     tensor_dtype = tensor.data_type
     np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
@@ -589,16 +602,15 @@ def convert_endian(tensor: TensorProto) -> None:
 def create_random_int(
     input_shape: Tuple[int], dtype: np.dtype, seed: int = 1
 ) -> np.ndarray:
-    """
-    Create random integer array for backend/test/case/node.
+    """Create random integer array for backend/test/case/node.
 
     Args:
-        input_shape: specify the shape for the returned integer array.
-        dtype: specify the NumPy data type for the returned integer array.
-        seed: (optional) the seed for np.random.
+        input_shape: The shape for the returned integer array.
+        dtype: The NumPy data type for the returned integer array.
+        seed: The seed for np.random.
 
     Returns:
-        np.ndarray: the created random integer array.
+        np.ndarray: Random integer array.
     """
     np.random.seed(seed)
     if dtype in (
