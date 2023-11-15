@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,8 @@
 // Adapter for Dropout in default domain from version 11 to 12
 
 #pragma once
+
+#include <memory>
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {

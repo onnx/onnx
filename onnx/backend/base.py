@@ -1,5 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0613
+
 
 from collections import namedtuple
 from typing import Any, Dict, NewType, Optional, Sequence, Tuple, Type
@@ -12,9 +14,7 @@ from onnx import IR_VERSION, ModelProto, NodeProto
 
 
 class DeviceType:
-    """
-    Describes device type.
-    """
+    """Describes device type."""
 
     _Type = NewType("_Type", int)
     CPU: _Type = _Type(0)
@@ -22,8 +22,7 @@ class DeviceType:
 
 
 class Device:
-    """
-    Describes device type and device id
+    """Describes device type and device id
     syntax: device_type:device_id(optional)
     example: 'CPU', 'CUDA', 'CUDA:1'
     """
@@ -54,19 +53,18 @@ def namedtupledict(
 
 
 class BackendRep:
-    """
-    BackendRep is the handle that a Backend returns after preparing to execute
+    """BackendRep is the handle that a Backend returns after preparing to execute
     a model repeatedly. Users will then pass inputs to the run function of
     BackendRep to retrieve the corresponding results.
     """
 
     def run(self, inputs: Any, **kwargs: Any) -> Tuple[Any, ...]:
-        pass
+        """Abstract function."""
+        return (None,)
 
 
 class Backend:
-    """
-    Backend is the entity that will take an ONNX model with inputs,
+    """Backend is the entity that will take an ONNX model with inputs,
     perform a computation, and then return the output.
 
     For one-off execution, users can use run_node and run_model to obtain results quickly.
@@ -109,11 +107,16 @@ class Backend:
         **kwargs: Dict[str, Any],
     ) -> Optional[Tuple[Any, ...]]:
         """Simple run one operator and return the results.
+
         Args:
+            node: The node proto.
+            inputs: Inputs to the node.
+            device: The device to run on.
             outputs_info: a list of tuples, which contains the element type and
-            shape of each output. First element of the tuple is the dtype, and
-            the second element is the shape. More use case can be found in
-            https://github.com/onnx/onnx/blob/main/onnx/backend/test/runner/__init__.py
+                shape of each output. First element of the tuple is the dtype, and
+                the second element is the shape. More use case can be found in
+                https://github.com/onnx/onnx/blob/main/onnx/backend/test/runner/__init__.py
+            kwargs: Other keyword arguments.
         """
         # TODO Remove Optional from return type
         if "opset_version" in kwargs:
@@ -123,12 +126,12 @@ class Backend:
             onnx.checker.check_node(node, special_context)
         else:
             onnx.checker.check_node(node)
+
         return None
 
     @classmethod
     def supports_device(cls, device: str) -> bool:
-        """
-        Checks whether the backend is compiled with particular device support.
+        """Checks whether the backend is compiled with particular device support.
         In particular it's used in the testing suite.
         """
         return True

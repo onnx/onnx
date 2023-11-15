@@ -1,6 +1,10 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
+
+#include <utility>
 
 #include "onnx/defs/shape_inference.h"
 
@@ -44,7 +48,7 @@ inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
 }
 
 inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int idx) {
-  // propogate input data
+  // propagate input data
   const auto input_data = ctx.getInputData(idx);
   if (input_data != nullptr) {
     TensorShapeProto tsp;

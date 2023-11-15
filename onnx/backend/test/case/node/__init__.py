@@ -1,27 +1,31 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
+import subprocess
 import sys
 from copy import deepcopy
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
 import onnx
+from onnx.backend.test.case.test_case import TestCase
+from onnx.backend.test.case.utils import import_recursive
 from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
     GraphProto,
     ModelProto,
     NodeProto,
-    OperatorSetIdProto,
+    TensorProto,
     TypeProto,
 )
 
-from ..test_case import TestCase
-from ..utils import import_recursive
-
 _NodeTestCases = []
 _TargetOpType = None
+_DiffOpTypes = None
 
 
 def _rename_edges_helper(
@@ -74,8 +78,7 @@ def _rename_edges_helper(
                 def subgraph_rename_helper(name: str) -> Any:
                     if name in sg_rename:  # noqa: B023
                         return sg_rename[name]  # noqa: B023
-                    else:
-                        return rename_helper(name)
+                    return rename_helper(name)
 
                 new_nodes = [
                     _rename_edges_helper(
@@ -93,7 +96,7 @@ def _rename_edges_helper(
 def function_expand_helper(
     node: NodeProto, function_proto: FunctionProto, op_prefix: str
 ) -> List[NodeProto]:
-    io_names_map = dict()
+    io_names_map = {}
     attribute_map = {a.name: a for a in node.attribute}
 
     for idx in range(len(function_proto.input)):
@@ -116,8 +119,7 @@ def function_expand_helper(
             return io_names_map[internal_name]
         elif internal_name == "":
             return ""
-        else:
-            return op_prefix + internal_name
+        return op_prefix + internal_name
 
     new_node_list = [
         _rename_edges_helper(internal_node, rename_helper, attribute_map, op_prefix)
@@ -128,31 +130,43 @@ def function_expand_helper(
 
 def function_testcase_helper(
     node: NodeProto, input_types: List[TypeProto], name: str
-) -> Tuple[List[NodeProto], List[OperatorSetIdProto]]:
+) -> Tuple[List[Tuple[List[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, node.domain)
+    schema = onnx.defs.get_schema(test_op, domain=node.domain)
 
-    if schema.has_function:  # type: ignore
-        function_proto = schema.function_body  # type: ignore
-    elif schema.has_context_dependent_function:  # type: ignore
-        function_proto_str = schema.get_context_dependent_function(  # type: ignore
-            node.SerializeToString(), [t.SerializeToString() for t in input_types]
+    # an op schema may have several functions, each for one opset version
+    # opset versions include the op's since_version and other opset versions
+    # if it is needed to define the op for a opset version other than the op's since_version.
+    function_protos = []
+    for opset_version in schema.function_opset_versions:  # type: ignore
+        function_proto_str = schema.get_function_with_opset_version(opset_version)  # type: ignore
+        function_proto = FunctionProto()
+        function_proto.ParseFromString(function_proto_str)
+        function_protos.append(function_proto)
+    for opset_version in schema.context_dependent_function_opset_versions:  # type: ignore
+        function_proto_str = schema.get_context_dependent_function_with_opset_version(  # type: ignore
+            opset_version,
+            node.SerializeToString(),
+            [t.SerializeToString() for t in input_types],
         )
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
-    else:
-        return [], []
+        function_protos.append(function_proto)
 
-    for attr in schema.attributes:
-        if attr in [a.name for a in node.attribute]:
-            continue
-        if schema.attributes[attr].default_value:
-            node.attribute.extend([schema.attributes[attr].default_value])
+    expanded_tests = []
+    for function_proto in function_protos:
+        for attr in schema.attributes:
+            if attr in [a.name for a in node.attribute]:
+                continue
+            if schema.attributes[attr].default_value:
+                node.attribute.extend([schema.attributes[attr].default_value])
 
-    # function_proto.attributes
-    node_list = function_expand_helper(node, function_proto, op_prefix)
-    return node_list, function_proto.opset_import
+        # function_proto.attributes
+        node_list = function_expand_helper(node, function_proto, op_prefix)
+        expanded_tests.append((node_list, function_proto.opset_import))
+
+    return expanded_tests, schema.since_version
 
 
 def _extract_value_info(
@@ -170,6 +184,10 @@ def _extract_value_info(
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
             type_proto = onnx.helper.make_sequence_type_proto(tensor_type_proto)
+        elif isinstance(input, TensorProto):
+            elem_type = input.data_type
+            shape = tuple(input.dims)
+            type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
         else:
             elem_type = onnx.helper.np_dtype_to_tensor_dtype(input.dtype)
             shape = input.shape
@@ -186,7 +204,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
             # directly use make_model to create a model with the latest ir version
             if (
                 (
-                    (opset.domain == "" or opset.domain == "ai.onnx")
+                    (opset.domain in {"", "ai.onnx"})
                     and opset.version == latest_onnx_version + 1
                 )
                 or (
@@ -195,8 +213,8 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
                 )
                 or (
                     (
-                        opset.domain == "ai.onnx.training version"
-                        or opset.domain == "ai.onnx.preview.training"
+                        opset.domain
+                        in {"ai.onnx.training version", "ai.onnx.preview.training"}
                     )
                     and opset.version == latest_training_version + 1
                 )
@@ -218,13 +236,15 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # the latest opset vesion that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
-    inputs: Sequence[np.ndarray],
-    outputs: Sequence[np.ndarray],
+    inputs: Sequence[Union[np.ndarray, TensorProto]],
+    outputs: Sequence[Union[np.ndarray, TensorProto]],
     name: str,
     **kwargs: Any,
 ) -> None:
     # skip if the node_op's op_type is not same as the given one
     if _TargetOpType and node_op.op_type != _TargetOpType:
+        return
+    if _DiffOpTypes is not None and node_op.op_type.lower() not in _DiffOpTypes:
         return
 
     # in case node_op is modified
@@ -258,7 +278,7 @@ def expect(
         # To make sure the model will be produced with the same opset_version after opset changes
         # By default, it uses since_version as opset_version for produced models
         produce_opset_version = onnx.defs.get_schema(
-            node.op_type, node.domain
+            node.op_type, domain=node.domain
         ).since_version
         kwargs["opset_imports"] = [
             onnx.helper.make_operatorsetid(node.domain, produce_opset_version)
@@ -287,27 +307,23 @@ def expect(
     ) -> List[TypeProto]:
         if node_inputs:
             if node_inputs[0] != "":
-                return [present_value_info[0].type] + merge(
-                    node_inputs[1:], present_value_info[1:]
-                )
+                return [
+                    present_value_info[0].type,
+                    *merge(node_inputs[1:], present_value_info[1:]),
+                ]
             else:
-                return [TypeProto()] + merge(node_inputs[1:], present_value_info)
+                return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
         return []
 
     merged_types = merge(list(node.input), inputs_vi)
-    expanded_function_nodes, func_opset_import = function_testcase_helper(
-        node, merged_types, name
-    )
-    if expanded_function_nodes:
-        function_test_name = name + "_expanded"
-        graph = onnx.helper.make_graph(
-            nodes=expanded_function_nodes,
-            name=function_test_name,
-            inputs=inputs_vi,
-            outputs=outputs_vi,
-        )
+    (
+        expanded_tests,
+        since_version,
+    ) = function_testcase_helper(node, merged_types, name)
+    for expanded_function_nodes, func_opset_import in expanded_tests:
         kwargs["producer_name"] = "backend-test"
 
+        # TODO: if kwargs["opset_imports"] already exists, only generate test case for the opset version.
         # replace opset versions with what are specified in function proto
         if "opset_imports" not in kwargs:
             kwargs["opset_imports"] = func_opset_import
@@ -323,6 +339,23 @@ def expect(
                 else:
                     kwargs["opset_imports"].append(opset_import)
 
+        onnx_ai_opset_version = ""
+        if "opset_imports" in kwargs:
+            onnx_ai_opset_imports = [
+                oi for oi in kwargs["opset_imports"] if oi.domain in ("", "ai.onnx")
+            ]
+            if len(onnx_ai_opset_imports) == 1:
+                onnx_ai_opset_version = onnx_ai_opset_imports[0].version
+
+        function_test_name = name + "_expanded"
+        if onnx_ai_opset_version and onnx_ai_opset_version != since_version:
+            function_test_name += f"_ver{onnx_ai_opset_version}"
+        graph = onnx.helper.make_graph(
+            nodes=expanded_function_nodes,
+            name=function_test_name,
+            inputs=inputs_vi,
+            outputs=outputs_vi,
+        )
         model = _make_test_model_gen_version(graph, **kwargs)
         _NodeTestCases.append(
             TestCase(
@@ -342,8 +375,45 @@ def expect(
 def collect_testcases(op_type: str) -> List[TestCase]:
     """Collect node test cases"""
     # only keep those tests related to this operator
-    global _TargetOpType
+    global _TargetOpType  # noqa: PLW0603
     _TargetOpType = op_type
 
     import_recursive(sys.modules[__name__])
     return _NodeTestCases
+
+
+def collect_diff_testcases() -> List[TestCase]:
+    """Collect node test cases which are different from the main branch"""
+    global _DiffOpTypes  # noqa: PLW0603
+    _DiffOpTypes = get_diff_op_types()
+
+    import_recursive(sys.modules[__name__])
+    return _NodeTestCases
+
+
+def get_diff_op_types():
+    cwd_path = Path.cwd()
+    # git fetch first for git diff on GitHub Action
+    subprocess.run(
+        ["git", "fetch", "origin", "main:main"],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    # obtain list of added or modified files in this PR
+    obtain_diff = subprocess.Popen(
+        ["git", "diff", "--name-only", "--diff-filter=AM", "origin/main", "HEAD"],
+        cwd=cwd_path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    stdoutput, _ = obtain_diff.communicate()
+    diff_list = stdoutput.split()
+    changed_op_types = []
+    for file in diff_list:
+        file_name = file.decode("utf-8")
+        if file_name.startswith("onnx/backend/test/case/node/") and file_name.endswith(
+            ".py"
+        ):
+            changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
+    return changed_op_types

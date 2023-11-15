@@ -1,4 +1,8 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # ONNX Open Governance
 
@@ -57,7 +61,7 @@ Member Companies can request their logo be displayed on the website and other ma
 The ONNX community is organized in the following manner, with all governance and execution being planned and coordinated as follows:
 
 * **Steering Committee** is made up of a set number of people whose charter it is to define and iterate on the vision, goals, and governance process of the ONNX community.
-* **Special  Interest Groups (SIGs)** are persistent groups that are responsible for specific parts of the project. SIGs must have open and transparent proceedings. Anyone is welcome to participate and contribute provided they follow the Code of Conduct. The purpose of a SIG is to develop a set of goals to be achieved over a set period of time, and then to gather input, drive consensus and closure, implement code contributions, and other related activities to achieve the goal. SIGs are also responsible for ongoing maintenance of the code in their areas.
+* **Special Interest Groups (SIGs)** are persistent groups that are responsible for specific parts of the project. SIGs must have open and transparent proceedings. Anyone is welcome to participate and contribute provided they follow the Code of Conduct. The purpose of a SIG is to develop a set of goals to be achieved over a set period of time, and then to gather input, drive consensus and closure, implement code contributions, and other related activities to achieve the goal. SIGs are also responsible for ongoing maintenance of the code in their areas.
 * **Working Groups** are temporary groups that are formed to address issues that cross SIG boundaries. Working groups do not own any code ownership or other long term artifacts. Working groups can report back and act through involved SIGs.
 
 ### Steering Committee
@@ -88,7 +92,7 @@ The starting composition will be individuals from Microsoft, Facebook, Amazon, a
 
 After the initial term of each Steering Committee representative is completed, their seat will be open for any contributor in the community to be elected into the seat via a community vote. Only contributors may vote, but would be restricted to one vote per Member Company. Therefore, if a Member Company had three contributors in good standing, the three contributors would have to select who would vote on their behalf.
 
-If a member of the Steering Committee changes companies, by default they retain and may continue on with the role. However, should their company/organization ask this person to resign from the role, new elections will be held. If the employment change results in a single Member Company having more than one representative, then one of them must resign, and new elections are held.
+If a member of the Steering Committee changes companies, by default they retain and may continue on with the role. If the employment change results in a single Member Company having more than one representative, then one of them must resign. When there is a vacancy on the Steering Committee, the remaining members can appoint a new representative for the remainder of the term until the next election.
 
 The Steering Committee will decide on and publish an election process within 3 months of formalizing this organizational structure. This will cover voting eligibility, eligibility for candidacy, election process and schedule. During this time period, the Steering Committee will also establish SIGs and Working Groups.
 
@@ -142,12 +146,9 @@ Working Groups (WGs) are primarily used to facilitate topics of discussion that 
 * have a clear goal measured through specific deliverables
 * will be disbanded after the goal is achieved
 
-Working Groups can create specifications, recommendations, or implementations for submission to the relevant SIGs for approval and acceptance. At time of inception of this organizational structure, the following WGs will be present:
+Working Groups can create specifications, recommendations, or implementations for submission to the relevant SIGs for approval and acceptance.
 
-   * Edge / Mobile
-   * Training
-   * Quantization
-   * Data Processing
+A list of all active, inactive, and completed working groups can be found in the [working-groups repository](https://github.com/onnx/working-groups)
 
 Working Groups are formed by submitting a proposal via PR to the Steering Committee. The proposal should cover:
 
@@ -160,17 +161,10 @@ Working Groups are disbanded when there is no activity for more than *3 months* 
 
 ## Repository Guidelines
 
-All repositories under the ONNX github org:
 
-* Must adopt the ONNX Code of Conduct
-* All code projects use the Apache 2.0 license. Documentation repositories must use the Creative Commons License version 4.0.
-* Must adopt the DCO bot
-* All OWNERS must be members of standing as defined by ability to vote in ONNX steering committee elections
-* Repository must be approved by the Steering Committee
 
-Repositories can be removed when they are inactive by archiving them.
 
-(Code repositories previously used the MIT license and moved to Apache 2.0 in October 2020.)
+The current guidelines for all repos under ONNX github.org could be found [here](repo_guidelines.md).
 
 ## CLA / DCO
 

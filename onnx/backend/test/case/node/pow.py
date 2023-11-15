@@ -1,14 +1,15 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
-from ..base import Base
-from . import expect
 
-
-def pow(x, y):  # type: ignore
+def pow(x, y):  # type: ignore  # noqa: A001
     z = np.power(x, y).astype(x.dtype)
     return z
 

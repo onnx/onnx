@@ -1,11 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
@@ -57,7 +58,7 @@ class TopK(Base):
     def export_top_k_smallest() -> None:
         axis = 1
         largest = 0
-        sorted = 1
+        sorted = 1  # noqa: A001
         k = 3
 
         node = onnx.helper.make_node(

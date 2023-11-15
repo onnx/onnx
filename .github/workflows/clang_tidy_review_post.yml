@@ -1,0 +1,28 @@
+# This standalone CI is needed for commenting in PRs from forks
+name: Post clang-tidy review comments
+
+on:
+  workflow_run:
+    # The name field of the lint action
+    workflows: ["Optional_Clang_Tidy_Review"]
+    types:
+      - completed
+
+permissions:
+  checks: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ZedThree/clang-tidy-review/post@246fe91b9849a61f5db473ef7a9e1120e860fd68 # v0.14.0
+        with:
+          lgtm_comment_body: ""
+          # Use annotations instead of comments
+          annotations: true
+          max_comments: 10

@@ -1,12 +1,13 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class BlackmanWindow(Base):
@@ -23,8 +24,8 @@ class BlackmanWindow(Base):
         a1 = -0.5
         a2 = 0.08
         y = a0
-        y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
-        y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+        y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
+        y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
         expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
 
         # Test symmetric window
@@ -37,9 +38,9 @@ class BlackmanWindow(Base):
         a2 = 0.08
         y = a0
         y += a1 * np.cos(
-            2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+            2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
         )
         y += a2 * np.cos(
-            4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+            4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
         )
         expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")

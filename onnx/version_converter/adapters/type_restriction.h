@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,10 @@
 // Adapter for Add in default domain from version 6 to 5
 
 #pragma once
+
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "onnx/version_converter/adapters/adapter.h"
 
@@ -43,8 +49,10 @@ class TypeRestriction : public Adapter {
     ONNX_ASSERTM(
         std::find(std::begin(unallowed_types_), std::end(unallowed_types_), val->elemType()) ==
             std::end(unallowed_types_),
-        "DataType of Input or Output"
-        " of Add is of an unallowed type for Opset Version %d.",
+        "DataType (%d) of Input or Output"
+        " of operator '%s' is unallowed for Opset Version %d.",
+        val->elemType(),
+        name().c_str(),
         target_version().version());
   }
 };

@@ -1,18 +1,24 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
+# NOTE: Put all metadata in pyproject.toml.
+# Set the environment variable `ONNX_PREVIEW_BUILD=1` to build the dev preview release.
+
+import contextlib
+import datetime
 import glob
+import logging
 import multiprocessing
 import os
 import platform
 import shlex
+import shutil
 import subprocess
 import sys
-from collections import namedtuple
-from contextlib import contextmanager
-from datetime import date
-from distutils import log, sysconfig
-from distutils.spawn import find_executable
-from textwrap import dedent
+import sysconfig
+import textwrap
+from typing import ClassVar
 
 import setuptools
 import setuptools.command.build_ext
@@ -20,20 +26,11 @@ import setuptools.command.build_py
 import setuptools.command.develop
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
-SRC_DIR = os.path.join(TOP_DIR, "onnx")
-TP_DIR = os.path.join(TOP_DIR, "third_party")
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, ".setuptools-cmake-build")
-PACKAGE_NAME = "onnx"
 
 WINDOWS = os.name == "nt"
 
-CMAKE = find_executable("cmake3") or find_executable("cmake")
-MAKE = find_executable("make")
-
-install_requires = []
-setup_requires = []
-tests_require = []
-extras_require = {}
+CMAKE = shutil.which("cmake3") or shutil.which("cmake")
 
 ################################################################################
 # Global variables for controlling the build variant
@@ -41,52 +38,55 @@ extras_require = {}
 
 # Default value is set to TRUE\1 to keep the settings same as the current ones.
 # However going forward the recommended way to is to set this to False\0
-ONNX_ML = not bool(os.getenv("ONNX_ML") == "0")
-ONNX_VERIFY_PROTO3 = bool(os.getenv("ONNX_VERIFY_PROTO3") == "1")
+ONNX_ML = os.getenv("ONNX_ML") != "0"
+ONNX_VERIFY_PROTO3 = os.getenv("ONNX_VERIFY_PROTO3") == "1"
 ONNX_NAMESPACE = os.getenv("ONNX_NAMESPACE", "onnx")
-ONNX_BUILD_TESTS = bool(os.getenv("ONNX_BUILD_TESTS") == "1")
-ONNX_DISABLE_EXCEPTIONS = bool(os.getenv("ONNX_DISABLE_EXCEPTIONS") == "1")
+ONNX_BUILD_TESTS = os.getenv("ONNX_BUILD_TESTS") == "1"
+ONNX_DISABLE_EXCEPTIONS = os.getenv("ONNX_DISABLE_EXCEPTIONS") == "1"
+ONNX_DISABLE_STATIC_REGISTRATION = os.getenv("ONNX_DISABLE_STATIC_REGISTRATION") == "1"
+ONNX_PREVIEW_BUILD = os.getenv("ONNX_PREVIEW_BUILD") == "1"
 
-USE_MSVC_STATIC_RUNTIME = bool(os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1")
-DEBUG = bool(os.getenv("DEBUG", "0") == "1")
-COVERAGE = bool(os.getenv("COVERAGE", "0") == "1")
+USE_MSVC_STATIC_RUNTIME = os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1"
+DEBUG = os.getenv("DEBUG", "0") == "1"
+COVERAGE = os.getenv("COVERAGE", "0") == "1"
+
+# Customize the wheel plat-name, usually needed for MacOS builds.
+# See usage in .github/workflows/release_mac.yml
+ONNX_WHEEL_PLATFORM_NAME = os.getenv("ONNX_WHEEL_PLATFORM_NAME")
+
+################################################################################
+# Pre Check
+################################################################################
+
+assert CMAKE, "Could not find cmake in PATH"
 
 ################################################################################
 # Version
 ################################################################################
 
 try:
-    git_version = (
+    _git_version = (
         subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=TOP_DIR)
         .decode("ascii")
         .strip()
     )
 except (OSError, subprocess.CalledProcessError):
-    git_version = None
+    _git_version = ""
 
-with open(os.path.join(TOP_DIR, "VERSION_NUMBER")) as version_file:
-    VERSION_NUMBER = version_file.read().strip()
-    if "--weekly_build" in sys.argv:
-        today_number = date.today().strftime("%Y%m%d")
-        VERSION_NUMBER += ".dev" + today_number
-        PACKAGE_NAME = "onnx-weekly"
-        sys.argv.remove("--weekly_build")
-    VersionInfo = namedtuple("VersionInfo", ["version", "git_version"])(
-        version=VERSION_NUMBER, git_version=git_version
-    )
-
-################################################################################
-# Pre Check
-################################################################################
-
-assert CMAKE, "Could not find cmake executable!"
+with open(os.path.join(TOP_DIR, "VERSION_NUMBER"), encoding="utf-8") as version_file:
+    _version = version_file.read().strip()
+    if ONNX_PREVIEW_BUILD:
+        # Create the dev build for weekly releases
+        todays_date = datetime.date.today().strftime("%Y%m%d")
+        _version += ".dev" + todays_date
+    VERSION_INFO = {"version": _version, "git_version": _git_version}
 
 ################################################################################
 # Utilities
 ################################################################################
 
 
-@contextmanager
+@contextlib.contextmanager
 def cd(path):
     if not os.path.isabs(path):
         raise RuntimeError(f"Can only cd to absolute path, got: {path}")
@@ -98,42 +98,42 @@ def cd(path):
         os.chdir(orig_path)
 
 
+def get_ext_suffix():
+    if sys.version_info < (3, 8) and sys.platform == "win32":
+        # Workaround for https://bugs.python.org/issue39825
+        # Reference: https://github.com/pytorch/pytorch/commit/4b96fc060b0cb810965b5c8c08bc862a69965667
+        import distutils
+
+        return distutils.sysconfig.get_config_var("EXT_SUFFIX")
+    return sysconfig.get_config_var("EXT_SUFFIX")
+
+
 ################################################################################
 # Customized commands
 ################################################################################
 
 
-class ONNXCommand(setuptools.Command):
-    user_options = []
+def create_version(directory: str):
+    """Create version.py based on VERSION_INFO."""
+    version_file_path = os.path.join(directory, "onnx", "version.py")
+    os.makedirs(os.path.dirname(version_file_path), exist_ok=True)
 
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-
-class create_version(ONNXCommand):
-    def run(self):
-        with open(os.path.join(SRC_DIR, "version.py"), "w") as f:
-            f.write(
-                dedent(
-                    """\
-            # This file is generated by setup.py. DO NOT EDIT!
+    with open(version_file_path, "w", encoding="utf-8") as f:
+        f.write(
+            textwrap.dedent(
+                f"""\
+                # This file is generated by setup.py. DO NOT EDIT!
 
 
-            version = "{version}"
-            git_version = "{git_version}"
-            """.format(
-                        **dict(VersionInfo._asdict())
-                    )
-                )
+                version = "{VERSION_INFO['version']}"
+                git_version = "{VERSION_INFO['git_version']}"
+                """
             )
+        )
 
 
-class cmake_build(setuptools.Command):
-    """
-    Compiles everything when `python setup.py build` is run using cmake.
+class CmakeBuild(setuptools.Command):
+    """Compiles everything when `python setup.py build` is run using cmake.
 
     Custom args can be passed to cmake by specifying the `CMAKE_ARGS`
     environment variable.
@@ -142,9 +142,9 @@ class cmake_build(setuptools.Command):
     to `setup.py build`.  By default all CPUs are used.
     """
 
-    user_options = [("jobs=", "j", "Specifies the number of jobs to use with make")]
-
-    built = False
+    user_options: ClassVar[list] = [
+        ("jobs=", "j", "Specifies the number of jobs to use with make")
+    ]
 
     def initialize_options(self):
         self.jobs = None
@@ -156,23 +156,19 @@ class cmake_build(setuptools.Command):
         self.jobs = multiprocessing.cpu_count() if self.jobs is None else int(self.jobs)
 
     def run(self):
-        if cmake_build.built:
-            return
-        cmake_build.built = True
-        if not os.path.exists(CMAKE_BUILD_DIR):
-            os.makedirs(CMAKE_BUILD_DIR)
+        os.makedirs(CMAKE_BUILD_DIR, exist_ok=True)
 
         with cd(CMAKE_BUILD_DIR):
             build_type = "Release"
             # configure
             cmake_args = [
                 CMAKE,
-                f"-DPYTHON_INCLUDE_DIR={sysconfig.get_python_inc()}",
+                f"-DPYTHON_INCLUDE_DIR={sysconfig.get_path('include')}",
                 f"-DPYTHON_EXECUTABLE={sys.executable}",
                 "-DBUILD_ONNX_PYTHON=ON",
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
-                f"-DPY_EXT_SUFFIX={sysconfig.get_config_var('EXT_SUFFIX') or ''}",
+                f"-DPY_EXT_SUFFIX={get_ext_suffix() or ''}",
             ]
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
@@ -193,9 +189,15 @@ class cmake_build(setuptools.Command):
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append("-DONNX_USE_MSVC_STATIC_RUNTIME=ON")
                 if platform.architecture()[0] == "64bit":
-                    cmake_args.extend(["-A", "x64", "-T", "host=x64"])
-                else:
-                    cmake_args.extend(["-A", "Win32", "-T", "host=x86"])
+                    if "arm" in platform.machine().lower():
+                        cmake_args.extend(["-A", "ARM64"])
+                    else:
+                        cmake_args.extend(["-A", "x64", "-T", "host=x64"])
+                else:  # noqa: PLR5501
+                    if "arm" in platform.machine().lower():
+                        cmake_args.extend(["-A", "ARM"])
+                    else:
+                        cmake_args.extend(["-A", "Win32", "-T", "host=x86"])
             if ONNX_ML:
                 cmake_args.append("-DONNX_ML=1")
             if ONNX_VERIFY_PROTO3:
@@ -204,18 +206,32 @@ class cmake_build(setuptools.Command):
                 cmake_args.append("-DONNX_BUILD_TESTS=ON")
             if ONNX_DISABLE_EXCEPTIONS:
                 cmake_args.append("-DONNX_DISABLE_EXCEPTIONS=ON")
+            if ONNX_DISABLE_STATIC_REGISTRATION:
+                cmake_args.append("-DONNX_DISABLE_STATIC_REGISTRATION=ON")
             if "CMAKE_ARGS" in os.environ:
                 extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
                 # prevent crossfire with downstream scripts
                 del os.environ["CMAKE_ARGS"]
-                log.info(f"Extra cmake args: {extra_cmake_args}")
+                logging.info("Extra cmake args: %s", extra_cmake_args)
                 cmake_args.extend(extra_cmake_args)
             cmake_args.append(TOP_DIR)
-            log.info(f"Using cmake args: {cmake_args}")
+            logging.info("Using cmake args: %s", cmake_args)
             if "-DONNX_DISABLE_EXCEPTIONS=ON" in cmake_args:
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."
                 )
+            if (
+                "PYTHONPATH" in os.environ
+                and "pip-build-env" in os.environ["PYTHONPATH"]
+            ):
+                # When the users use `pip install -e .` to install onnx and
+                # the cmake executable is a python entry script, there will be
+                # `Fix ModuleNotFoundError: No module named 'cmake'` from the cmake script.
+                # This is caused by the additional PYTHONPATH environment variable added by pip,
+                # which makes cmake python entry script not able to find correct python cmake packages.
+                # Actually, sys.path is well enough for `pip install -e .`.
+                # Therefore, we delete the PYTHONPATH variable.
+                del os.environ["PYTHONPATH"]
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, "--build", os.curdir]
@@ -227,158 +243,92 @@ class cmake_build(setuptools.Command):
             subprocess.check_call(build_args)
 
 
-class build_py(setuptools.command.build_py.build_py):
+class BuildPy(setuptools.command.build_py.build_py):
     def run(self):
-        self.run_command("create_version")
-        self.run_command("cmake_build")
-
-        generated_python_files = glob.glob(
-            os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")
-        ) + glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi"))
-
-        for src in generated_python_files:
-            dst = os.path.join(TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
-            self.copy_file(src, dst)
-        # TODO (https://github.com/pypa/setuptools/issues/3606)
-        # Review the command customisations to enable editable_mode
-        self.editable_mode = False
-        return setuptools.command.build_py.build_py.run(self)
+        if self.editable_mode:
+            dst_dir = TOP_DIR
+        else:
+            dst_dir = self.build_lib
+        create_version(dst_dir)
+        return super().run()
 
 
-class develop(setuptools.command.develop.develop):
+class Develop(setuptools.command.develop.develop):
     def run(self):
-        self.run_command("build_py")
-        setuptools.command.develop.develop.run(self)
+        create_version(TOP_DIR)
+        return super().run()
 
 
-class build_ext(setuptools.command.build_ext.build_ext):
+class BuildExt(setuptools.command.build_ext.build_ext):
     def run(self):
         self.run_command("cmake_build")
-        setuptools.command.build_ext.build_ext.run(self)
+        return super().run()
 
     def build_extensions(self):
+        # We override this method entirely because the actual building is done
+        # by cmake_build. Here we just copy the built extensions to the final
+        # destination.
+        build_lib = self.build_lib
+        extension_dst_dir = os.path.join(build_lib, "onnx")
+        os.makedirs(extension_dst_dir, exist_ok=True)
+
         for ext in self.extensions:
             fullname = self.get_ext_fullname(ext.name)
             filename = os.path.basename(self.get_ext_filename(fullname))
 
-            lib_path = CMAKE_BUILD_DIR
-            if os.name == "nt":
-                debug_lib_dir = os.path.join(lib_path, "Debug")
-                release_lib_dir = os.path.join(lib_path, "Release")
+            if not WINDOWS:
+                lib_dir = CMAKE_BUILD_DIR
+            else:
+                # Windows compiled extensions are stored in Release/Debug subfolders
+                debug_lib_dir = os.path.join(CMAKE_BUILD_DIR, "Debug")
+                release_lib_dir = os.path.join(CMAKE_BUILD_DIR, "Release")
                 if os.path.exists(debug_lib_dir):
-                    lib_path = debug_lib_dir
+                    lib_dir = debug_lib_dir
                 elif os.path.exists(release_lib_dir):
-                    lib_path = release_lib_dir
-            src = os.path.join(lib_path, filename)
-            dst = os.path.join(os.path.realpath(self.build_lib), "onnx", filename)
+                    lib_dir = release_lib_dir
+            src = os.path.join(lib_dir, filename)
+            dst = os.path.join(extension_dst_dir, filename)
+            self.copy_file(src, dst)
+
+        # Copy over the generated python files to build/source dir depending on editable mode
+        if self.editable_mode:
+            dst_dir = TOP_DIR
+        else:
+            dst_dir = build_lib
+        generated_python_files = (
+            *glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")),
+            *glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi")),
+        )
+        assert generated_python_files, "Bug: No generated python files found"
+        for src in generated_python_files:
+            dst = os.path.join(dst_dir, os.path.relpath(src, CMAKE_BUILD_DIR))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
             self.copy_file(src, dst)
 
 
-class mypy_type_check(ONNXCommand):
-    description = "Run MyPy type checker"
-
-    def run(self):
-        """Run command."""
-        onnx_script = os.path.realpath(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "tools/mypy-onnx.py"
-            )
-        )
-        returncode = subprocess.call([sys.executable, onnx_script])
-        sys.exit(returncode)
-
-
-cmdclass = {
-    "create_version": create_version,
-    "cmake_build": cmake_build,
-    "build_py": build_py,
-    "develop": develop,
-    "build_ext": build_ext,
-    "typecheck": mypy_type_check,
+CMD_CLASS = {
+    "cmake_build": CmakeBuild,
+    "build_py": BuildPy,
+    "build_ext": BuildExt,
+    "develop": Develop,
 }
 
 ################################################################################
 # Extensions
 ################################################################################
 
-ext_modules = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
+EXT_MODULES = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
 
-################################################################################
-# Packages
-################################################################################
-
-# Add package directories here if you want to package them with the source
-# TODO try to remove unnecessary .cpp files
-include_dirs = [
-    "onnx.backend.test.data.*",
-    "onnx.common",
-    "onnx.defs.*",
-    "onnx.examples*",
-    "onnx.shape_inference",
-    "onnx.test.cpp",
-    "onnx.version_converter*",
-]
-
-packages = setuptools.find_packages() + setuptools.find_namespace_packages(
-    include=include_dirs
-)
-
-requirements_file = "requirements.txt"
-requirements_path = os.path.join(os.getcwd(), requirements_file)
-if not os.path.exists(requirements_path):
-    this = os.path.dirname(__file__)
-    requirements_path = os.path.join(this, requirements_file)
-if not os.path.exists(requirements_path):
-    raise FileNotFoundError("Unable to find " + requirements_file)
-with open(requirements_path) as f:
-    install_requires = f.read().splitlines()
-
-################################################################################
-# Test
-################################################################################
-
-setup_requires.append("pytest-runner")
-tests_require.append("pytest")
-tests_require.append("nbval")
-tests_require.append("tabulate")
-
-extras_require["lint"] = [
-    "clang-format==13.0.0",
-    "flake8>=5.0.2",
-    "mypy>=0.971",
-    "types-protobuf==3.18.4",
-    "black>=22.3",
-    "isort[colors]>=5.10",
-]
 
 ################################################################################
 # Final
 ################################################################################
 
 setuptools.setup(
-    name=PACKAGE_NAME,
-    version=VersionInfo.version,
-    description="Open Neural Network Exchange",
-    long_description=open("README.md").read(),
-    long_description_content_type="text/markdown",
-    ext_modules=ext_modules,
-    cmdclass=cmdclass,
-    packages=packages,
-    license="Apache License v2.0",
-    include_package_data=True,
-    package_data={"onnx": ["py.typed", "*.pyi"]},
-    install_requires=install_requires,
-    setup_requires=setup_requires,
-    tests_require=tests_require,
-    extras_require=extras_require,
-    author="ONNX",
-    author_email="onnx-technical-discuss@lists.lfaidata.foundation",
-    url="https://github.com/onnx/onnx",
-    entry_points={
-        "console_scripts": [
-            "check-model = onnx.bin.checker:check_model",
-            "check-node = onnx.bin.checker:check_node",
-            "backend-test-tools = onnx.backend.test.cmd_tools:main",
-        ]
-    },
+    ext_modules=EXT_MODULES,
+    cmdclass=CMD_CLASS,
+    version=VERSION_INFO["version"],
+    options={"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
+    if ONNX_WHEEL_PLATFORM_NAME is not None
+    else {},
 )

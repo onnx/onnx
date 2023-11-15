@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import csv
@@ -20,7 +22,7 @@ class AttrCoverage:
         self.values: Set[str] = set()
 
     def add(self, attr: onnx.AttributeProto) -> None:
-        assert self.name in [None, attr.name]
+        assert self.name in {None, attr.name}
         self.name = attr.name
         value = helper.get_attribute_value(attr)
         # Turn list into tuple so we can put it into set
@@ -42,7 +44,7 @@ class NodeCoverage:
         if self.op_type is None:
             self.op_type = node.op_type
             assert self.op_type is not None
-            self.schema = defs.get_schema(self.op_type, node.domain)
+            self.schema = defs.get_schema(self.op_type, domain=node.domain)
 
         for attr in node.attribute:
             self.attr_coverages[attr.name].add(attr)
@@ -97,11 +99,7 @@ class Coverage:
     def report_text(self, writer: IO[str]) -> None:
         writer.write("---------- onnx coverage: ----------\n")
         writer.write(
-            "Operators (passed/loaded/total): {}/{}/{}\n".format(
-                len(self.buckets["passed"]),
-                len(self.buckets["loaded"]),
-                len(_all_schemas),
-            )
+            f"Operators (passed/loaded/total): {len(self.buckets['passed'])}/{len(self.buckets['loaded'])}/{len(_all_schemas)}\n"
         )
         writer.write("------------------------------------\n")
 
@@ -133,6 +131,7 @@ class Coverage:
                 tablefmt="plain",
             )
         )
+        writer.write("\n")
         if os.environ.get("CSVDIR") is not None:
             self.report_csv(all_ops, passed, experimental)
 
@@ -148,7 +147,7 @@ class Coverage:
         self, all_ops: List[str], passed: List[Optional[str]], experimental: List[str]
     ) -> None:
         for schema in _all_schemas:
-            if schema.domain == "" or schema.domain == "ai.onnx":
+            if schema.domain in {"", "ai.onnx"}:
                 all_ops.append(schema.name)
                 if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
                     experimental.append(schema.name)
@@ -202,7 +201,7 @@ class Coverage:
                     existing_nodes[node_name][str(backend)] = "Passed!"
                 else:
                     existing_nodes[node_name][str(backend)] = "Failed!"
-            summaries: Dict[Any, Any] = dict()
+            summaries: Dict[Any, Any] = {}
             if "Summary" in existing_nodes:
                 summaries = existing_nodes["Summary"]
                 del existing_nodes["Summary"]
@@ -239,11 +238,7 @@ class Coverage:
                         for other_framework in other_frameworks:
                             existing_models[model][other_framework] = "Skipped!"
                     existing_models[model][str(backend)] = str(
-                        "{}/{} nodes covered: {}".format(
-                            num_covered,
-                            len(self.models[bucket][model].node_coverages),
-                            msg,
-                        )
+                        f"{num_covered}/{len(self.models[bucket][model].node_coverages)} nodes covered: {msg}"
                     )
             summaries.clear()
             if "Summary" in existing_models:
@@ -251,9 +246,9 @@ class Coverage:
                 del existing_models["Summary"]
             if str(backend) in summaries:
                 del summaries[str(backend)]
-            summaries[str(backend)] = "{}/{} model tests passed".format(
-                len(self.models["passed"]), num_models
-            )
+            summaries[
+                str(backend)
+            ] = f"{len(self.models['passed'])}/{num_models} model tests passed"
             summaries["Model"] = "Summary"
             for model in existing_models:  # type: ignore
                 existing_models[model]["Model"] = model

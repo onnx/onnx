@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,9 @@
 #pragma once
 
 #include <cinttypes>
+#include <string>
+#include <utility>
+#include <vector>
 
 // Node transformers commonly used in version-adapters:
 

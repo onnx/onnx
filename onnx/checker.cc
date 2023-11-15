@@ -1,8 +1,17 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/checker.h"
+
+#include <fstream>
+#include <functional>
+#include <iterator>
+#include <set>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 #include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/defs/schema.h"
@@ -11,12 +20,9 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
-#include <fstream>
-#include <iterator>
-#include <unordered_set>
-
 #ifdef _WIN32
 #include <direct.h>
+
 #include <filesystem>
 
 #else // POSIX
@@ -151,8 +157,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "' points outside the directory");
         }
         std::wstring data_path = path_join(utf8str_to_wstring(ctx.get_model_dir()), relative_path);
-        struct _stat buff;
-        if (_wstat(data_path.c_str(), &buff) != 0) {
+        struct _stat64 buff;
+        if (data_path.empty() || (data_path[0] != '#' && _wstat64(data_path.c_str(), &buff) != 0)) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -183,9 +189,14 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               "' points outside the directory");
         }
         std::string data_path = path_join(ctx.get_model_dir(), relative_path);
-        // use stat to check whether the file exists
-        struct stat buffer;
-        if (stat((data_path).c_str(), &buffer) != 0) {
+        // use stat64 to check whether the file exists
+#if defined(__APPLE__) || defined(__wasm__) || !defined(__GLIBC__)
+        struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
+        if (data_path.empty() || (data_path[0] != '#' && stat((data_path).c_str(), &buffer) != 0)) {
+#else
+        struct stat64 buffer; // All POSIX under glibc except APPLE and wasm have stat64
+        if (data_path.empty() || (data_path[0] != '#' && stat64((data_path).c_str(), &buffer) != 0)) {
+#endif
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -194,7 +205,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
               ", but it doesn't exist or is not accessible.");
         }
         // Do not allow symlinks or directories.
-        if (!S_ISREG(buffer.st_mode)) {
+        if (data_path.empty() || (data_path[0] != '#' && !S_ISREG(buffer.st_mode))) {
           fail_check(
               "Data of TensorProto ( tensor name: ",
               tensor.name(),
@@ -257,6 +268,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
       case TensorProto::BFLOAT16:
+      case TensorProto::FLOAT8E4M3FN:
+      case TensorProto::FLOAT8E4M3FNUZ:
+      case TensorProto::FLOAT8E5M2:
+      case TensorProto::FLOAT8E5M2FNUZ:
         check_field(int32_data);
         break;
 
@@ -622,7 +637,14 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   }
   auto domain_version = dit->second;
 
+  // for ops referencing local functions, there is no schema to verify it.
+  // will add a check to verify consistency between these ops and local functions.
+  std::unordered_set<std::string> seen_attr_names{};
   for (const auto& attr : node.attribute()) {
+    if (!seen_attr_names.insert(attr.name()).second) {
+      fail_check("Attribute '", attr.name(), "' appeared multiple times.");
+    };
+
     check_attribute(attr, ctx, lex_ctx);
   }
 
@@ -831,7 +853,7 @@ void check_opset_compatibility(
     fail_check(
         "Opset import for domain " + node.domain() + " in function op " + node.op_type() +
         "is not compatible with the version imported by model. FunctionOp imports version " +
-        ONNX_NAMESPACE::to_string(func_opset_version) + "whereas model imports version " +
+        ONNX_NAMESPACE::to_string(func_opset_version) + " whereas model imports version " +
         ONNX_NAMESPACE::to_string(model_opset_version));
   }
 }
@@ -931,7 +953,8 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
     // check whether the opset version imported for a domain by function and model are
     // compatible
-    check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
+    if (!ctx_copy.skip_opset_compatibility_check())
+      check_opset_compatibility(node, ctx_copy, func_opset_imports, model_opset_imports);
     if (check_is_experimental_op(node)) {
       used_experimental_ops.insert(node.op_type());
     }
@@ -960,7 +983,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
     fail_check("The model does not have an ir_version set properly.");
   }
   if (model.ir_version() > IR_VERSION) {
-    fail_check("Your model ir_version is higher than the checker's.");
+    fail_check("Your model ir_version ", model.ir_version(), " is higher than the checker's (", IR_VERSION, ").");
   }
   if (model.metadata_props_size() > 1) {
     std::unordered_set<std::string> keys;
@@ -994,10 +1017,11 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
 
   if (ctx.get_ir_version() >= 0x00000008) {
     check_model_local_functions(model, ctx, lex_ctx);
+    // TODO: check consistency between local functions and ops referencing it.
   }
 }
 
-void check_model(const std::string& model_path, bool full_check) {
+void check_model(const std::string& model_path, bool full_check, bool skip_opset_compatibility_check) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -1008,6 +1032,7 @@ void check_model(const std::string& model_path, bool full_check) {
     model_dir = model_path.substr(0, pos + 1);
   }
   ctx.set_model_dir(model_dir);
+  ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   check_model(model, ctx);
 
   if (full_check) {
@@ -1016,8 +1041,9 @@ void check_model(const std::string& model_path, bool full_check) {
   }
 }
 
-void check_model(const ModelProto& model, bool full_check) {
+void check_model(const ModelProto& model, bool full_check, bool skip_opset_compatibility_check) {
   CheckerContext ctx;
+  ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   check_model(model, ctx);
   if (full_check) {
     ShapeInferenceOptions options{true, 1, false};

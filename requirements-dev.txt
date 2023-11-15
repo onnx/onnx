@@ -1,19 +1,18 @@
+build
+jupyter
+nbval
 numpy
+parameterized
 protobuf
-typing-extensions
 pytest
 pytest-cov
-nbval
-wheel
-jupyter
-pyzmq
+pytest-xdist
 setuptools
 twine
+wheel
 # Dependencies for linting. Versions match those in setup.py.
-flake8>=5.0.2
-clang-format==13.0.0
-mypy>=0.971
-types-protobuf==3.18.4
-black>=22.3
-isort[colors]>=5.10
-flake8-bugbear>=22.9.23
+lintrunner>=0.10.7
+lintrunner-adapters>=0.8
+# Edit additional linter dependencies in requirements-lintrunner.txt
+# Dependencies for the reference implementation.
+-r requirements-reference.txt

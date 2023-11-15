@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,6 +9,7 @@
 
 #pragma once
 #include <stdint.h>
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -181,6 +184,7 @@ namespace ONNX_NAMESPACE {
   _(Flatten)                        \
   _(ScatterElements)                \
   _(Resize)                         \
+  _(ceil_mode)                      \
   _(num_outputs)
 
 enum BuiltinSymbol {

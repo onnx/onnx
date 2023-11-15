@@ -1,8 +1,14 @@
-numpy == 1.21.5
-protobuf == 3.18.3
-pytest
-nbval
+build
 ipython
-wheel
+nbval
+numpy==1.24.3
+parameterized
+protobuf==4.21.12
+pytest
+pytest-cov
+pytest-xdist
 setuptools
 twine
+wheel
+# Dependencies for the reference implementation.
+-r requirements-reference.txt

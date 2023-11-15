@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,11 @@
 // Adapter for all ops that remove consumed_inputs
 
 #pragma once
+
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "onnx/version_converter/adapters/adapter.h"
 

@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -6,6 +8,7 @@
 
 #pragma once
 #include <limits>
+#include <memory>
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {

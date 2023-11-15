@@ -182,61 +182,40 @@ via some custom implementation such as CuDNN.
 
 Notations:
 
-`X` - input tensor
-
-`i` - input gate
-
-`t` - time step (t-1 means previous time step)
-
-`Wi` - W parameter weight matrix for input gate
-
-`Ri` - R recurrence weight matrix for input gate
-
-`Wbi` - W parameter bias vector for input gate
-
-`Rbi` - R parameter bias vector for input gate
-
-`WBi` - W parameter weight matrix for backward input gate
-
-`RBi` - R recurrence weight matrix for backward input gate
-
-`WBbi` - WR bias vectors for backward input gate
-
-`RBbi` - RR bias vectors for backward input gate
-
-`H` - Hidden state
-
-`num_directions` - 2 if direction == bidirectional else 1
+* `X` - input tensor
+* `i` - input gate
+* `t` - time step (t-1 means previous time step)
+* `Wi` - W parameter weight matrix for input gate
+* `Ri` - R recurrence weight matrix for input gate
+* `Wbi` - W parameter bias vector for input gate
+* `Rbi` - R parameter bias vector for input gate
+* `WBi` - W parameter weight matrix for backward input gate
+* `RBi` - R recurrence weight matrix for backward input gate
+* `WBbi` - WR bias vectors for backward input gate
+* `RBbi` - RR bias vectors for backward input gate
+* `H` - Hidden state
+* `num_directions` - 2 if direction == bidirectional else 1
 
 Activation functions:
 
-  Relu(x)                - max(0, x)
+* Relu(x)                - max(0, x)
+* Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+* Sigmoid(x)             - 1/(1 + e^{-x})
 
-  Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+NOTE: Below are optional
 
-  Sigmoid(x)             - 1/(1 + e^{-x})
-
-  (NOTE: Below are optional)
-
-  Affine(x)              - alpha*x + beta
-
-  LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-  ThresholdedRelu(x)     - x if x >= alpha else 0
-
-  ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-  HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-  Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-  Softsign(x)            - x/(1 + |x|)
-
-  Softplus(x)            - log(1 + e^x)
+* Affine(x)              - alpha*x + beta
+* LeakyRelu(x)           - x if x >= 0 else alpha * x
+* ThresholdedRelu(x)     - x if x >= alpha else 0
+* ScaledTanh(x)          - alpha*Tanh(beta*x)
+* HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
+* Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+* Softsign(x)            - x/(1 + |x|)
+* Softplus(x)            - log(1 + e^x)
 
 Equations (Default: f=Tanh):
 
-  - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
+* Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -293,73 +272,47 @@ implementation such as CuDNN.
 
 Notations:
 
-`X` - input tensor
-
-`z` - update gate
-
-`r` - reset gate
-
-`h` - hidden gate
-
-`t` - time step (t-1 means previous time step)
-
-`W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-
-`R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-
-`Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-
-`Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-
-`WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-
-`RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-
-`WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-
-`RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-
-`H` - Hidden state
-
-`num_directions` - 2 if direction == bidirectional else 1
+* `X` - input tensor
+* `z` - update gate
+* `r` - reset gate
+* `h` - hidden gate
+* `t` - time step (t-1 means previous time step)
+* `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
+* `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
+* `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
+* `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
+* `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
+* `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
+* `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
+* `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
+* `H` - Hidden state
+* `num_directions` - 2 if direction == bidirectional else 1
 
 Activation functions:
 
-  Relu(x)                - max(0, x)
+* Relu(x)                - max(0, x)
+* Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+* Sigmoid(x)             - 1/(1 + e^{-x})
 
-  Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+NOTE:
+  Below are optional
 
-  Sigmoid(x)             - 1/(1 + e^{-x})
-
-  (NOTE: Below are optional)
-
-  Affine(x)              - alpha*x + beta
-
-  LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-  ThresholdedRelu(x)     - x if x >= alpha else 0
-
-  ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-  HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-  Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-  Softsign(x)            - x/(1 + |x|)
-
-  Softplus(x)            - log(1 + e^x)
+* Affine(x)              - alpha * x + beta
+* LeakyRelu(x)           - x if x >= 0 else alpha * x
+* ThresholdedRelu(x)     - x if x >= alpha else 0
+* ScaledTanh(x)          - alpha * Tanh(beta * x)
+* HardSigmoid(x)         - min(max(alpha * x + beta, 0), 1)
+* Elu(x)                 - x if x >= 0 else alpha * (e^x - 1)
+* Softsign(x)            - x/(1 + |x|)
+* Softplus(x)            - log(1 + e^x)
 
 Equations (Default: f=Sigmoid, g=Tanh):
 
-  - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
-
-  - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
-
-  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
-
-  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
-
-  - Ht = (1 - zt) (.) ht + zt (.) Ht-1
+* zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
+* rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
+* ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
+* ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
+* Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -424,81 +377,50 @@ custom implementation such as CuDNN.
 
 Notations:
 
-`X` - input tensor
-
-`i` - input gate
-
-`o` - output gate
-
-`f` - forget gate
-
-`c` - cell gate
-
-`t` - time step (t-1 means previous time step)
-
-`W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
-
-`R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
-
-`Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
-
-`Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-
-`P[iof]`  - P peephole weight vector for input, output, and forget gates
-
-`WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
-
-`RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
-
-`WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
-
-`RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-
-`PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-
-`H` - Hidden state
-
-`num_directions` - 2 if direction == bidirectional else 1
+* `X` - input tensor
+* `i` - input gate
+* `o` - output gate
+* `f` - forget gate
+* `c` - cell gate
+* `t` - time step (t-1 means previous time step)
+* `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
+* `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
+* `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
+* `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
+* `P[iof]`  - P peephole weight vector for input, output, and forget gates
+* `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
+* `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
+* `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
+* `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
+* `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
+* `H` - Hidden state
+* `num_directions` - 2 if direction == bidirectional else 1
 
 Activation functions:
 
-  Relu(x)                - max(0, x)
+* Relu(x)                - max(0, x)
+* Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+* Sigmoid(x)             - 1/(1 + e^{-x})
 
-  Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+NOTE: Below are optional
 
-  Sigmoid(x)             - 1/(1 + e^{-x})
-
-  (NOTE: Below are optional)
-
-  Affine(x)              - alpha*x + beta
-
-  LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-  ThresholdedRelu(x)     - x if x >= alpha else 0
-
-  ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-  HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-  Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-  Softsign(x)            - x/(1 + |x|)
-
-  Softplus(x)            - log(1 + e^x)
+* Affine(x)              - alpha*x + beta
+* LeakyRelu(x)           - x if x >= 0 else alpha * x
+* ThresholdedRelu(x)     - x if x >= alpha else 0
+* ScaledTanh(x)          - alpha*Tanh(beta*x)
+* HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
+* Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+* Softsign(x)            - x/(1 + |x|)
+* Softplus(x)            - log(1 + e^x)
 
 Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
-  - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
-
-  - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
-
-  - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
-
-  - Ct = ft (.) Ct-1 + it (.) ct
-
-  - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
-
-  - Ht = ot (.) h(Ct)
+* it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
+* ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
+* ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
+* Ct = ft (.) Ct-1 + it (.) ct
+* ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
+* Ht = ot (.) h(Ct)
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

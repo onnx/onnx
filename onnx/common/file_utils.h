@@ -1,13 +1,16 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #pragma once
 
+#include <fstream>
+#include <string>
+
 #include "onnx/checker.h"
 #include "onnx/common/path.h"
-
-#include <fstream>
 
 namespace ONNX_NAMESPACE {
 

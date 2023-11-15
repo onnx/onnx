@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,10 @@
 // Adapter for broadcasting ops in default domain from version 7 to 6
 
 #pragma once
+
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "onnx/version_converter/adapters/adapter.h"
 

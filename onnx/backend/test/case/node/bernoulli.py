@@ -1,11 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 def bernoulli_reference_implementation(x, dtype):  # type: ignore
@@ -25,8 +26,8 @@ class Bernoulli(Base):
             outputs=["y"],
         )
 
-        x = np.random.uniform(0.0, 1.0, 10).astype(np.float)
-        y = bernoulli_reference_implementation(x, np.float)
+        x = np.random.uniform(0.0, 1.0, 10).astype(float)
+        y = bernoulli_reference_implementation(x, float)
         expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
 
     @staticmethod
@@ -39,12 +40,12 @@ class Bernoulli(Base):
         )
 
         x = np.random.uniform(0.0, 1.0, 10).astype(np.float32)
-        y = bernoulli_reference_implementation(x, np.float64)
+        y = bernoulli_reference_implementation(x, float)
         expect(node, inputs=[x], outputs=[y], name="test_bernoulli_double")
 
     @staticmethod
     def export_bernoulli_with_seed() -> None:
-        seed = np.float(0)
+        seed = float(0)
         node = onnx.helper.make_node(
             "Bernoulli",
             inputs=["x"],

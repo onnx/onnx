@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,9 @@
 // Adapter for Slice in default domain from version 9 to 10
 
 #pragma once
+
+#include <memory>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {

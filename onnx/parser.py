@@ -1,6 +1,9 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 import onnx
-import onnx.onnx_cpp2py_export.parser as C
+import onnx.onnx_cpp2py_export.parser as C  # noqa: N812
 
 
 class ParseError(Exception):
@@ -18,8 +21,7 @@ def parse_model(model_text: str) -> onnx.ModelProto:
     (success, msg, model_proto_str) = C.parse_model(model_text)
     if success:
         return onnx.load_from_string(model_proto_str)
-    else:
-        raise ParseError(msg)
+    raise ParseError(msg)
 
 
 def parse_graph(graph_text: str) -> onnx.GraphProto:
@@ -32,11 +34,10 @@ def parse_graph(graph_text: str) -> onnx.GraphProto:
     """
     (success, msg, graph_proto_str) = C.parse_graph(graph_text)
     if success:
-        G = onnx.GraphProto()
-        G.ParseFromString(graph_proto_str)
-        return G
-    else:
-        raise ParseError(msg)
+        graph_proto = onnx.GraphProto()
+        graph_proto.ParseFromString(graph_proto_str)
+        return graph_proto
+    raise ParseError(msg)
 
 
 def parse_function(function_text: str) -> onnx.FunctionProto:
@@ -49,8 +50,23 @@ def parse_function(function_text: str) -> onnx.FunctionProto:
     """
     (success, msg, function_proto_str) = C.parse_function(function_text)
     if success:
-        F = onnx.FunctionProto()
-        F.ParseFromString(function_proto_str)
-        return F
-    else:
-        raise ParseError(msg)
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(function_proto_str)
+        return function_proto
+    raise ParseError(msg)
+
+
+def parse_node(node_text: str) -> onnx.NodeProto:
+    """Parse a string to build a NodeProto.
+
+    Arguments:
+        node_text: formatted string
+    Returns:
+        NodeProto
+    """
+    (success, msg, node_proto_str) = C.parse_node(node_text)
+    if success:
+        node_proto = onnx.NodeProto()
+        node_proto.ParseFromString(node_proto_str)
+        return node_proto
+    raise ParseError(msg)

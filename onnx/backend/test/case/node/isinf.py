@@ -1,11 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class IsInf(Base):
@@ -40,3 +41,15 @@ class IsInf(Base):
         x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf], dtype=np.float32)
         y = np.isneginf(x)
         expect(node, inputs=[x], outputs=[y], name="test_isinf_negative")
+
+    @staticmethod
+    def export_infinity_float16() -> None:
+        node = onnx.helper.make_node(
+            "IsInf",
+            inputs=["x"],
+            outputs=["y"],
+        )
+
+        x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+        y = np.isinf(x)
+        expect(node, inputs=[x], outputs=[y], name="test_isinf_float16")

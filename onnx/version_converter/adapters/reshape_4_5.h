@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,8 @@
 // Adapter for Reshape in default domain from version 4 to 5
 
 #pragma once
+
+#include <memory>
 
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 

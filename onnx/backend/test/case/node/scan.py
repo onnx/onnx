@@ -1,11 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class Scan(Base):
@@ -19,7 +20,9 @@ class Scan(Base):
         sum_in = onnx.helper.make_tensor_value_info(
             "sum_in", onnx.TensorProto.FLOAT, [2]
         )
-        next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+        next = onnx.helper.make_tensor_value_info(  # noqa: A001
+            "next", onnx.TensorProto.FLOAT, [2]
+        )
         sum_out = onnx.helper.make_tensor_value_info(
             "sum_out", onnx.TensorProto.FLOAT, [2]
         )
@@ -70,7 +73,9 @@ class Scan(Base):
         sum_in = onnx.helper.make_tensor_value_info(
             "sum_in", onnx.TensorProto.FLOAT, [2]
         )
-        next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+        next = onnx.helper.make_tensor_value_info(  # noqa: A001
+            "next", onnx.TensorProto.FLOAT, [2]
+        )
         sum_out = onnx.helper.make_tensor_value_info(
             "sum_out", onnx.TensorProto.FLOAT, [2]
         )

@@ -1,4 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 import collections.abc
 import numbers
 import struct
@@ -66,16 +69,22 @@ VERSION_TABLE: VersionTableType = [
     ("1.10.2", 8, 15, 2, 1),
     ("1.11.0", 8, 16, 3, 1),
     ("1.12.0", 8, 17, 3, 1),
+    ("1.13.0", 8, 18, 3, 1),
+    ("1.13.1", 8, 18, 3, 1),
+    ("1.14.0", 9, 19, 3, 1),
+    ("1.14.1", 9, 19, 3, 1),
+    ("1.15.0", 9, 20, 4, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
 
 
 def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
-    """create a map from (opset-domain, opset-version) to ir-version from above table"""
-    result: VersionMapType = dict()
+    """Create a map from (opset-domain, opset-version) to ir-version from above table."""
+    result: VersionMapType = {}
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
+        del release_version  # Unused
         for pair in zip(["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args):
             if pair not in result:
                 result[pair] = ir_version
@@ -90,16 +99,27 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
 OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
 
 
-def find_min_ir_version_for(opsetidlist: List[OperatorSetIdProto]) -> int:
-    """Given list of opset ids, determine minimum IR version required"""
+def find_min_ir_version_for(
+    opsetidlist: List[OperatorSetIdProto], ignore_unknown: bool = False
+) -> int:
+    """Given list of opset ids, determine minimum IR version required.
+
+    Args:
+        opsetidlist (List[OperatorSetIdProto]): The list of OperatorSetIdProto
+        ignore_unknown (bool): If True, ignore unknown domain and return default min version for that domain.
+
+    Returns:
+        The minimum IR version required (integer)
+    """
     default_min_version = 3
 
     def find_min(domain: Union[str, None], version: int) -> int:
-        key = (domain if domain else "ai.onnx", version)
+        key = (domain or "ai.onnx", version)
         if key in OP_SET_ID_VERSION_MAP:
             return OP_SET_ID_VERSION_MAP[key]
-        else:
-            raise ValueError("Unsupported opset-version.")
+        if ignore_unknown:
+            return default_min_version
+        raise ValueError("Unsupported opset-version.")
 
     if opsetidlist:
         return max(find_min(x.domain, x.version) for x in opsetidlist)
@@ -117,7 +137,7 @@ def make_node(
 ) -> NodeProto:
     """Construct a NodeProto.
 
-    Arguments:
+    Args:
         op_type (string): The name of the operator to construct
         inputs (list of string): list of input names
         outputs (list of string): list of output names
@@ -127,10 +147,10 @@ def make_node(
             If it's None, we will just use default domain (which is empty)
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
+
     Returns:
         NodeProto
     """
-
     node = NodeProto()
     node.op_type = op_type
     node.input.extend(inputs)
@@ -156,7 +176,7 @@ def make_operatorsetid(
 ) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
-    Arguments:
+    Args:
         domain (string): The domain of the operator set id
         version (integer): Version of operator set id
     Returns:
@@ -180,7 +200,7 @@ def make_graph(
 ) -> GraphProto:
     """Construct a GraphProto
 
-    Arguments:
+    Args:
         nodes: list of NodeProto
         name (string): graph name
         inputs: list of ValueInfoProto
@@ -214,7 +234,7 @@ def make_graph(
 def make_opsetid(domain: str, version: int) -> OperatorSetIdProto:
     """Construct an OperatorSetIdProto.
 
-    Arguments:
+    Args:
         domain (string): The domain of the operator set id
         version (integer): Version of operator set id
     Returns:
@@ -234,10 +254,13 @@ def make_function(
     nodes: Sequence[NodeProto],
     opset_imports: Sequence[OperatorSetIdProto],
     attributes: Optional[Sequence[str]] = None,
+    attribute_protos: Optional[Sequence[AttributeProto]] = None,
     doc_string: Optional[str] = None,
 ) -> FunctionProto:
     if attributes is None:
         attributes = []
+    if attribute_protos is None:
+        attribute_protos = []
     f = FunctionProto()
     f.domain = domain
     f.name = fname
@@ -246,6 +269,7 @@ def make_function(
     f.node.extend(nodes)
     f.opset_import.extend(opset_imports)
     f.attribute.extend(attributes)
+    f.attribute_proto.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
     return f
@@ -254,7 +278,7 @@ def make_function(
 def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     """Construct a ModelProto
 
-    Arguments:
+    Args:
         graph (GraphProto): *make_graph* returns
         **kwargs: any attribute to add to the returned instance
     Returns:
@@ -299,7 +323,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
 
 def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
     del model.metadata_props[:]
-    for (k, v) in dict_value.items():
+    for k, v in dict_value.items():
         entry = model.metadata_props.add()
         entry.key = k
         entry.value = v
@@ -308,7 +332,7 @@ def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
 
 def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
     return [
-        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
+        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)  # type: ignore[misc]
         for i in range(len(ca) * 2)
     ]
 
@@ -328,21 +352,284 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
         return 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
     # drop bottom 16-bits
     # round remaining bits using round-to-nearest-even
-    round = ((ival >> 16) & 1) + 0x7FFF
-    return (ival + round) >> 16
+    rounded = ((ival >> 16) & 1) + 0x7FFF
+    return (ival + rounded) >> 16
+
+
+def float32_to_float8e4m3(  # noqa: PLR0911
+    fval: float,
+    scale: float = 1.0,
+    fn: bool = True,
+    uz: bool = False,
+    saturate: bool = True,
+) -> int:
+    """Convert a float32 value to a float8, e4m3 (as int).
+
+    See :ref:`onnx-detail-float8` for technical details.
+
+    Args:
+        fval: float to convert
+        scale: scale, divide *fval* by *scale* before casting it
+        fn: no infinite values
+        uz: no negative zero
+        saturate: if True, any value out of range included inf becomes
+            the maximum value, otherwise, it becomes NaN. The
+            description of operator Cast fully describes the
+            differences.
+
+    Returns:
+        converted float
+    """
+    if not fn:
+        raise NotImplementedError(
+            "float32_to_float8e4m3 not implemented with fn=False."
+        )
+    x = fval / scale
+    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
+    ret = (b & 0x80000000) >> 24  # sign
+    if uz:
+        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
+            return 0x80
+        if np.isinf(x):
+            if saturate:
+                return ret | 127
+            return 0x80
+        e = (b & 0x7F800000) >> 23  # exponent
+        m = b & 0x007FFFFF  # mantissa
+
+        if e != 0:
+            if e < 116:  # noqa: PLR2004
+                pass
+            elif e < 120:  # noqa: PLR2004
+                # denormalized number
+                ex = e - 119
+                if ex >= -2:  # noqa: PLR2004
+                    ret |= 1 << (2 + ex)
+                    ret |= m >> (21 - ex)
+                elif m > 0:
+                    ret |= 1
+                mask = 1 << (20 - ex)
+                if m & mask and (
+                    ret & 1
+                    or m & (mask - 1) > 0
+                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+                ):
+                    # rounding
+                    ret += 1
+            elif e < 135:  # noqa: PLR2004
+                # normalized number
+                ex = e - 119  # 127 - 8
+                if ex == 0:
+                    ret |= 0x4
+                    ret |= m >> 21
+                else:
+                    ret |= ex << 3
+                    ret |= m >> 20
+                if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
+                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
+                        # rounding
+                        ret += 1
+                    elif not saturate:
+                        return 0x80
+            elif saturate:
+                ret |= 0x7F  # 01111110
+            else:
+                ret = 0x80
+        elif m == 0:
+            # -0
+            ret = 0
+        return int(ret)
+    else:
+        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
+            return 0x7F | ret
+        if np.isinf(x):
+            if saturate:
+                return ret | 126
+            return 0x7F | ret
+        e = (b & 0x7F800000) >> 23  # exponent
+        m = b & 0x007FFFFF  # mantissa
+
+        if e != 0:
+            if e < 117:  # noqa: PLR2004
+                pass
+            elif e < 121:  # noqa: PLR2004
+                # denormalized number
+                ex = e - 120
+                if ex >= -2:  # noqa: PLR2004
+                    ret |= 1 << (2 + ex)
+                    ret |= m >> (21 - ex)
+                elif m > 0:
+                    ret |= 1
+                mask = 1 << (20 - ex)
+                if m & mask and (
+                    ret & 1
+                    or m & (mask - 1) > 0
+                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+                ):
+                    # rounding
+                    ret += 1
+            elif e < 136:  # noqa: PLR2004
+                # normalized number
+                ex = e - 120
+                if ex == 0:
+                    ret |= 0x4
+                    ret |= m >> 21
+                else:
+                    ret |= ex << 3
+                    ret |= m >> 20
+                    if (ret & 0x7F) == 0x7F:  # noqa: PLR2004
+                        ret &= 0xFE
+                if (m & 0x80000) and ((m & 0x100000) or (m & 0x7FFFF)):
+                    if (ret & 0x7F) < 0x7E:  # noqa: PLR2004
+                        # rounding
+                        ret += 1
+                    elif not saturate:
+                        ret |= 0x7F
+            elif saturate:
+                ret |= 126  # 01111110
+            else:
+                ret |= 0x7F
+        return int(ret)
+
+
+def float32_to_float8e5m2(  # noqa: PLR0911
+    fval: float,
+    scale: float = 1.0,
+    fn: bool = False,
+    uz: bool = False,
+    saturate: bool = True,
+) -> int:
+    """Convert a float32 value to a float8, e5m2 (as int).
+
+    Args:
+        fval: float to convert
+        scale: scale, divide *fval* by *scale* before casting it
+        fn: no infinite values
+        uz: no negative zero
+        saturate: if True, any value out of range included inf becomes
+            the maximum value, otherwise, it becomes NaN. The
+            description of operator Cast fully describes the
+            differences.
+
+    Returns:
+        converted float
+    """
+    x = fval / scale
+    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
+    ret = (b & 0x80000000) >> 24  # sign
+
+    if fn and uz:
+        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
+            return 0x80
+        if (b & 0x7FFFFFFF) == 0x7F800000:  # noqa: PLR2004
+            # inf
+            if saturate:
+                return ret | 0x7F
+            return 0x80
+        e = (b & 0x7F800000) >> 23  # exponent
+        m = b & 0x007FFFFF  # mantissa
+
+        if e != 0:
+            if e < 109:  # noqa: PLR2004
+                pass
+            elif e < 112:  # noqa: PLR2004
+                # denormalized number
+                ex = e - 111
+                if ex >= -1:
+                    ret |= 1 << (1 + ex)
+                    ret |= m >> (22 - ex)
+                elif m > 0:
+                    ret |= 1
+                mask = 1 << (21 - ex)
+                if m & mask and (
+                    ret & 1
+                    or m & (mask - 1) > 0
+                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+                ):
+                    # rounding
+                    ret += 1
+            elif e < 143:  # noqa: PLR2004
+                # normalized number
+                ex = e - 111
+                ret |= ex << 2
+                ret |= m >> 21
+                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
+                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
+                        # rounding
+                        ret += 1
+                    elif not saturate:
+                        ret = 0x80
+            elif e == 255 and m == 0:  # inf  # noqa: PLR2004
+                ret = 0x80
+            elif saturate:
+                ret |= 0x7F  # last possible number
+            else:
+                ret = 0x80
+        elif m == 0:
+            # -0
+            ret = 0
+        return int(ret)
+    elif not fn and not uz:
+        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
+            return 0x7F | ret
+        if np.isinf(x):
+            if saturate:
+                return 0x7B | ret
+            return 0x7C | ret
+        e = (b & 0x7F800000) >> 23  # exponent
+        m = b & 0x007FFFFF  # mantissa
+
+        if e != 0:
+            if e < 110:  # noqa: PLR2004
+                pass
+            elif e < 113:  # noqa: PLR2004
+                # denormalized number
+                ex = e - 112
+                if ex >= -1:
+                    ret |= 1 << (1 + ex)
+                    ret |= m >> (22 - ex)
+                elif m > 0:
+                    ret |= 1
+                mask = 1 << (21 - ex)
+                if m & mask and (
+                    ret & 1
+                    or m & (mask - 1) > 0
+                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+                ):
+                    # rounding
+                    ret += 1
+            elif e < 143:  # noqa: PLR2004
+                # normalized number
+                ex = e - 112
+                ret |= ex << 2
+                ret |= m >> 21
+                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
+                    if (ret & 0x7F) < 0x7B:  # noqa: PLR2004
+                        # rounding
+                        ret += 1
+                    elif saturate:
+                        ret |= 0x7B
+                    else:
+                        ret |= 0x7C
+            elif saturate:
+                ret |= 0x7B
+            else:
+                ret |= 0x7C
+        return int(ret)
+    else:
+        raise NotImplementedError("fn and uz must be both False or True.")
 
 
 def make_tensor(
     name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
-    """
-    Make a TensorProto with specified arguments.  If raw is False, this
+    """Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
     values based on data_type. If raw is True, use "raw_data" proto
     field to store the values, and values should be of type bytes in
     this case.
 
-    Arguments:
+    Args:
         name (string): tensor name
         data_type (int): a value such as onnx.TensorProto.FLOAT
         dims (List[int]): shape
@@ -357,8 +644,8 @@ def make_tensor(
     tensor.data_type = data_type
     tensor.name = name
 
-    if data_type == TensorProto.STRING:
-        assert not raw, "Can not use raw_data to store string type"
+    if data_type == TensorProto.STRING and raw:
+        raise TypeError("Can not use raw_data to store string type.")
 
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
@@ -369,6 +656,13 @@ def make_tensor(
         # which has the wrong itemsize.
         if data_type == TensorProto.BFLOAT16:
             expected_size = 2
+        elif data_type in (
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+        ):
+            expected_size = 1
         else:
             expected_size = np_dtype.itemsize
 
@@ -379,29 +673,48 @@ def make_tensor(
 
     if len(vals) != expected_size:
         raise ValueError(
-            "Number of values does not match tensor's size. Expected {}, but it is {}. ".format(
-                expected_size, len(vals)
-            )
+            f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
         )
 
     if raw:
         tensor.raw_data = vals
     else:
-        if data_type == TensorProto.COMPLEX64 or data_type == TensorProto.COMPLEX128:
+        if data_type in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
             vals = split_complex_to_pairs(vals)
         elif data_type == TensorProto.FLOAT16:
             vals = (
                 np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
             )
-        elif data_type == TensorProto.BFLOAT16:
+        elif data_type in (
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+        ):
+            fcast = {
+                TensorProto.BFLOAT16: float32_to_bfloat16,
+                TensorProto.FLOAT8E4M3FN: float32_to_float8e4m3,
+                TensorProto.FLOAT8E4M3FNUZ: lambda *args: float32_to_float8e4m3(  # type: ignore[misc]
+                    *args, uz=True
+                ),
+                TensorProto.FLOAT8E5M2: float32_to_float8e5m2,
+                TensorProto.FLOAT8E5M2FNUZ: lambda *args: float32_to_float8e5m2(  # type: ignore[misc]
+                    *args, fn=True, uz=True
+                ),
+            }[
+                data_type  # type: ignore[index]
+            ]
             vals = list(
-                map(
-                    float32_to_bfloat16,
+                map(  # type: ignore[call-overload]
+                    fcast,
                     np.array(vals).astype(np_dtype).flatten().tolist(),
                 )
             )
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)
+        elif data_type == TensorProto.STRING:
+            vals = np.array(vals).astype(bytes)
         field = tensor_dtype_to_field(data_type)
         getattr(tensor, field).extend(vals)
     tensor.dims.extend(dims)
@@ -413,7 +726,7 @@ def make_sparse_tensor(
 ) -> SparseTensorProto:
     """Construct a SparseTensorProto
 
-    Arguments:
+    Args:
         values (TensorProto): the values
         indices (TensorProto): the indices
         dims: the shape
@@ -433,9 +746,7 @@ def make_sequence(
     elem_type: SequenceProto.DataType,
     values: Sequence[Any],
 ) -> SequenceProto:
-    """
-    Make a Sequence with specified value arguments.
-    """
+    """Make a Sequence with specified value arguments."""
     sequence = SequenceProto()
     sequence.name = name
     sequence.elem_type = elem_type
@@ -445,13 +756,13 @@ def make_sequence(
     if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values
+        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values
+        attribute = sequence.sequence_values  # type: ignore[assignment]
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values
+        attribute = sequence.map_values  # type: ignore[assignment]
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values
+        attribute = sequence.optional_values  # type: ignore[assignment]
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
@@ -462,15 +773,14 @@ def make_sequence(
 def make_map(
     name: str, key_type: int, keys: List[Any], values: SequenceProto
 ) -> MapProto:
-    """
-    Make a Map with specified key-value pair arguments.
+    """Make a Map with specified key-value pair arguments.
 
     Criteria for conversion:
     - Keys and Values must have the same number of elements
     - Every key in keys must be of the same type
     - Every value in values must be of the same type
     """
-    map = MapProto()
+    map_proto = MapProto()
     valid_key_int_types = [
         TensorProto.INT8,
         TensorProto.INT16,
@@ -481,14 +791,14 @@ def make_map(
         TensorProto.UINT32,
         TensorProto.UINT64,
     ]
-    map.name = name
-    map.key_type = key_type
+    map_proto.name = name
+    map_proto.key_type = key_type
     if key_type == TensorProto.STRING:
-        map.string_keys.extend(keys)
+        map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
-        map.keys.extend(keys)
-    map.values.CopyFrom(values)
-    return map
+        map_proto.keys.extend(keys)
+    map_proto.values.CopyFrom(values)
+    return map_proto
 
 
 def make_optional(
@@ -496,9 +806,7 @@ def make_optional(
     elem_type: OptionalProto.DataType,
     value: Optional[Any],
 ) -> OptionalProto:
-    """
-    Make an Optional with specified value arguments.
-    """
+    """Make an Optional with specified value arguments."""
     optional = OptionalProto()
     optional.name = name
     optional.elem_type = elem_type
@@ -508,39 +816,30 @@ def make_optional(
     if elem_type == OptionalProto.TENSOR:
         attribute = optional.tensor_value
     elif elem_type == OptionalProto.SPARSE_TENSOR:
-        attribute = optional.sparse_tensor_value
+        attribute = optional.sparse_tensor_value  # type: ignore[assignment]
     elif elem_type == OptionalProto.SEQUENCE:
-        attribute = optional.sequence_value
+        attribute = optional.sequence_value  # type: ignore[assignment]
     elif elem_type == OptionalProto.MAP:
-        attribute = optional.map_value
+        attribute = optional.map_value  # type: ignore[assignment]
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = optional.optional_value
+        attribute = optional.optional_value  # type: ignore[assignment]
     else:
         raise TypeError("The element type in the input optional is not supported.")
 
-    attribute.CopyFrom(value)
+    attribute.CopyFrom(value)  # type: ignore[arg-type]
     return optional
 
 
-def _to_bytes_or_false(val: Union[str, bytes]) -> Union[bytes, bool]:
-    """An internal graph to convert the input to a bytes or to False.
-
-    The criteria for conversion is as follows and should be python 2 and 3
-    compatible:
-    - If val is py2 str or py3 bytes: return bytes
-    - If val is py2 unicode or py3 str: return val.decode('utf-8')
-    - Otherwise, return False
-    """
-    if isinstance(val, bytes):
-        return val
-    try:
-        return val.encode("utf-8")
-    except AttributeError:
-        return False
+def _to_bytes(value: Union[str, bytes]) -> bytes:
+    """Coerce a string (or bytes) value into UTF-8 bytes."""
+    return value if isinstance(value, bytes) else value.encode("utf-8")
 
 
 def make_attribute(
-    key: str, value: Any, doc_string: Optional[str] = None
+    key: str,
+    value: Any,
+    doc_string: Optional[str] = None,
+    attr_type: Optional[int] = None,
 ) -> AttributeProto:
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
@@ -548,21 +847,16 @@ def make_attribute(
     if doc_string:
         attr.doc_string = doc_string
 
-    is_iterable = isinstance(value, collections.abc.Iterable)
-    bytes_or_false = _to_bytes_or_false(value)
-    # First, singular cases
-    # float
-    if isinstance(value, float):
-        attr.f = value
-        attr.type = AttributeProto.FLOAT
-    # integer
-    elif isinstance(value, numbers.Integral):
-        attr.i = cast(int, value)
+    # Singular cases
+    if isinstance(value, numbers.Integral):
+        attr.i = int(value)
         attr.type = AttributeProto.INT
-    # string
-    elif bytes_or_false is not False:
-        assert isinstance(bytes_or_false, bytes)
-        attr.s = bytes_or_false
+    elif isinstance(value, numbers.Real):
+        attr.f = float(value)
+        attr.type = AttributeProto.FLOAT
+    elif isinstance(value, (str, bytes)):
+        # Encode strings into utf-8
+        attr.s = _to_bytes(value)
         attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
@@ -576,40 +870,62 @@ def make_attribute(
     elif isinstance(value, TypeProto):
         attr.tp.CopyFrom(value)
         attr.type = AttributeProto.TYPE_PROTO
-    # third, iterable cases
-    elif is_iterable:
-        byte_array = [_to_bytes_or_false(v) for v in value]
-        if all(isinstance(v, numbers.Integral) for v in value):
-            # Turn np.int32/64 into Python built-in int.
-            attr.ints.extend(int(v) for v in value)
+    # Iterable cases
+    elif isinstance(value, collections.abc.Iterable):
+        value = list(value)
+        if len(value) == 0 and attr_type is None:
+            raise ValueError(
+                f"Could not infer attribute `{key}` type from empty iterator"
+            )
+        if attr_type is None:
+            types = {type(v) for v in value}
+            for exp_t, exp_enum in (
+                (numbers.Integral, AttributeProto.INTS),
+                (numbers.Real, AttributeProto.FLOATS),
+                ((str, bytes), AttributeProto.STRINGS),
+                (TensorProto, AttributeProto.TENSORS),
+                (SparseTensorProto, AttributeProto.SPARSE_TENSORS),
+                (GraphProto, AttributeProto.GRAPHS),
+                (TypeProto, AttributeProto.TYPE_PROTOS),
+            ):
+                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
+                    attr_type = exp_enum
+                    break
+            if attr_type is None:
+                raise ValueError(
+                    "Could not infer the attribute type from the elements of the passed Iterable value."
+                )
+
+        if attr_type == AttributeProto.INTS:
+            attr.ints.extend(value)
             attr.type = AttributeProto.INTS
-        elif all(isinstance(v, numbers.Real) for v in value):
-            # Since ints and floats are members of Real, this allows a mix of ints and floats
-            # (and converts the ints to floats).
-            attr.floats.extend(float(v) for v in value)
+        elif attr_type == AttributeProto.FLOATS:
+            attr.floats.extend(value)
             attr.type = AttributeProto.FLOATS
-        elif all(map(lambda bytes_or_false: bytes_or_false is not False, byte_array)):
-            attr.strings.extend(cast(List[bytes], byte_array))
+        elif attr_type == AttributeProto.STRINGS:
+            attr.strings.extend(_to_bytes(v) for v in value)
             attr.type = AttributeProto.STRINGS
-        elif all(isinstance(v, TensorProto) for v in value):
+        elif attr_type == AttributeProto.TENSORS:
             attr.tensors.extend(value)
             attr.type = AttributeProto.TENSORS
-        elif all(isinstance(v, SparseTensorProto) for v in value):
+        elif attr_type == AttributeProto.SPARSE_TENSORS:
             attr.sparse_tensors.extend(value)
             attr.type = AttributeProto.SPARSE_TENSORS
-        elif all(isinstance(v, GraphProto) for v in value):
+        elif attr_type == AttributeProto.GRAPHS:
             attr.graphs.extend(value)
             attr.type = AttributeProto.GRAPHS
-        elif all(isinstance(tp, TypeProto) for tp in value):
+        elif attr_type == AttributeProto.TYPE_PROTOS:
             attr.type_protos.extend(value)
             attr.type = AttributeProto.TYPE_PROTOS
         else:
-            raise ValueError(
-                "You passed in an iterable attribute but I cannot figure out "
-                "its applicable type."
-            )
+            raise AssertionError()  # Should not reach since `ValueError` must be raised in attr_type checking
     else:
-        raise TypeError(f'value "{value}" is not valid attribute data type.')
+        raise TypeError(f"'{value}' is not an accepted attribute value.")
+
+    if attr_type is not None and attr.type != attr_type:
+        raise TypeError(
+            f"Inferred attribute type '{_attr_type_to_str(attr.type)}'({attr.type}) mismatched with specified type '{_attr_type_to_str(attr_type)}'({attr_type})"
+        )
     return attr
 
 
@@ -625,7 +941,7 @@ def make_attribute_ref(
     return attr
 
 
-def get_attribute_value(attr: AttributeProto) -> Any:
+def get_attribute_value(attr: AttributeProto) -> Any:  # noqa: PLR0911
     if attr.ref_attr_name:
         raise ValueError(f"Cannot get value of reference attribute: {attr}")
     if attr.type == AttributeProto.FLOAT:
@@ -656,7 +972,18 @@ def get_attribute_value(attr: AttributeProto) -> Any:
         return list(attr.graphs)
     if attr.type == AttributeProto.TYPE_PROTOS:
         return list(attr.type_protos)
+    if attr.type == AttributeProto.UNDEFINED:
+        return None
     raise ValueError(f"Unsupported ONNX attribute: {attr}")
+
+
+def get_node_attr_value(node: NodeProto, attr_name: str) -> Any:
+    matching = [x for x in node.attribute if x.name == attr_name]
+    if len(matching) > 1:
+        raise ValueError(f"Node has multiple attributes with name {attr_name}")
+    if len(matching) < 1:
+        raise ValueError(f"Node has no attribute with name {attr_name}")
+    return get_attribute_value(matching[0])
 
 
 def make_empty_tensor_value_info(name: str) -> ValueInfoProto:
@@ -671,7 +998,6 @@ def make_tensor_type_proto(
     shape_denotation: Optional[List[str]] = None,
 ) -> TypeProto:
     """Makes a Tensor TypeProto based on the data type and shape."""
-
     type_proto = TypeProto()
     tensor_type_proto = type_proto.tensor_type
     tensor_type_proto.elem_type = elem_type
@@ -687,11 +1013,10 @@ def make_tensor_type_proto(
         # an empty shape!
         tensor_shape_proto.dim.extend([])
 
-        if shape_denotation:
-            if len(shape_denotation) != len(shape):
-                raise ValueError(
-                    "Invalid shape_denotation. " "Must be of the same length as shape."
-                )
+        if shape_denotation and len(shape_denotation) != len(shape):
+            raise ValueError(
+                "Invalid shape_denotation. Must be of the same length as shape."
+            )
 
         for i, d in enumerate(shape):
             dim = tensor_shape_proto.dim.add()
@@ -736,7 +1061,6 @@ def make_sparse_tensor_type_proto(
     shape_denotation: Optional[List[str]] = None,
 ) -> TypeProto:
     """Makes a SparseTensor TypeProto based on the data type and shape."""
-
     type_proto = TypeProto()
     sparse_tensor_type_proto = type_proto.sparse_tensor_type
     sparse_tensor_type_proto.elem_type = elem_type
@@ -752,11 +1076,10 @@ def make_sparse_tensor_type_proto(
         # an empty shape!
         sparse_tensor_shape_proto.dim.extend([])
 
-        if shape_denotation:
-            if len(shape_denotation) != len(shape):
-                raise ValueError(
-                    "Invalid shape_denotation. " "Must be of the same length as shape."
-                )
+        if shape_denotation and len(shape_denotation) != len(shape):
+            raise ValueError(
+                "Invalid shape_denotation. Must be of the same length as shape."
+            )
 
         for i, d in enumerate(shape):
             dim = sparse_tensor_shape_proto.dim.add()
@@ -817,6 +1140,17 @@ def make_optional_type_proto(
     return type_proto
 
 
+def make_map_type_proto(
+    key_type: int,
+    value_type: TypeProto,
+) -> TypeProto:
+    """Makes a map TypeProto."""
+    type_proto = TypeProto()
+    type_proto.map_type.key_type = key_type
+    type_proto.map_type.value_type.CopyFrom(value_type)
+    return type_proto
+
+
 def make_value_info(
     name: str,
     type_proto: TypeProto,
@@ -839,9 +1173,9 @@ def _sanitize_str(s: Union[str, bytes]) -> str:
         sanitized = s.decode("utf-8", errors="ignore")
     else:
         sanitized = str(s)
-    if len(sanitized) < 64:
+    if len(sanitized) < 64:  # noqa: PLR2004
         return sanitized
-    return sanitized[:64] + "...<+len=%d>" % (len(sanitized) - 64)
+    return sanitized[:64] + f"...<+len={(len(sanitized) - 64)}>"
 
 
 def make_tensor_sequence_value_info(
@@ -880,7 +1214,7 @@ def printable_attribute(
     def str_int(i: int) -> str:
         return str(i)
 
-    _T = TypeVar("_T")  # noqa
+    _T = TypeVar("_T")
 
     def str_list(str_elem: Callable[[_T], str], xs: Sequence[_T]) -> str:
         return "[" + ", ".join(map(str_elem, xs)) + "]"
@@ -905,7 +1239,7 @@ def printable_attribute(
         else:
             # special case to print scalars
             field = tensor_dtype_to_field(attr.t.data_type)
-            content.append(f"<Scalar Tensor {str(getattr(attr.t, field))}>")
+            content.append(f"<Scalar Tensor {getattr(attr.t, field)}>")
     elif attr.HasField("g"):
         content.append(f"<graph {attr.g.name}>")
         graphs.append(attr.g)
@@ -937,13 +1271,13 @@ def printable_attribute(
         content.append("<Unknown>")
     if subgraphs:
         return " ".join(content), graphs
-    else:
-        return " ".join(content)
+    return " ".join(content)
 
 
 def printable_dim(dim: TensorShapeProto.Dimension) -> str:
     which = dim.WhichOneof("value")
-    assert which is not None
+    if which is None:
+        return "?"
     return str(getattr(dim, which))
 
 
@@ -955,7 +1289,7 @@ def printable_type(t: TypeProto) -> str:
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
             else:
                 s += ", scalar"
-        return s
+        return s  # type: ignore[no-any-return]
     if t.WhichOneof("value") is None:
         return ""
     return f"Unknown type {t.WhichOneof('value')}"
@@ -993,12 +1327,16 @@ def printable_node(
     for attr in node.attribute:
         if subgraphs:
             printed_attr_subgraphs = printable_attribute(attr, subgraphs)
-            assert isinstance(printed_attr_subgraphs[1], list)
+            if not isinstance(printed_attr_subgraphs[1], list):
+                raise TypeError(
+                    f"printed_attr_subgraphs[1] must be an instance of {list}."
+                )
             graphs.extend(printed_attr_subgraphs[1])
             printed_attrs.append(printed_attr_subgraphs[0])
         else:
             printed = printable_attribute(attr)
-            assert isinstance(printed, str)
+            if not isinstance(printed, str):
+                raise TypeError(f"printed must be an instance of {str}.")
             printed_attrs.append(printed)
     printed_attributes = ", ".join(sorted(printed_attrs))
     printed_inputs = ", ".join([f"%{name}" for name in node.input])
@@ -1008,15 +1346,13 @@ def printable_node(
         content.append(f"{node.op_type}({printed_inputs})")
     if subgraphs:
         return prefix + " ".join(content), graphs
-    else:
-        return prefix + " ".join(content)
+    return prefix + " ".join(content)
 
 
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
-    """
-    Display a GraphProto as a string.
+    """Display a GraphProto as a string.
 
-    Arguments:
+    Args:
         graph (GraphProto): the graph to display
         prefix (string): prefix of every line
 
@@ -1076,7 +1412,8 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     # body
     for node in graph.node:
         contents_subgraphs = printable_node(node, indent, subgraphs=True)
-        assert isinstance(contents_subgraphs[1], list)
+        if not isinstance(contents_subgraphs[1], list):
+            raise TypeError(f"contents_subgraphs[1] must be an instance of {list}.")
         content.append(contents_subgraphs[0])
         graphs.extend(contents_subgraphs[1])
     # tail
@@ -1092,10 +1429,11 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
 
 
 def strip_doc_string(proto: google.protobuf.message.Message) -> None:
-    """
-    Empties `doc_string` field on any nested protobuf messages
-    """
-    assert isinstance(proto, google.protobuf.message.Message)
+    """Empties `doc_string` field on any nested protobuf messages"""
+    if not isinstance(proto, google.protobuf.message.Message):
+        raise TypeError(
+            f"proto must be an instance of {google.protobuf.message.Message}."
+        )
     for descriptor in proto.DESCRIPTOR.fields:
         if descriptor.name == "doc_string":
             proto.ClearField(descriptor.name)
@@ -1133,41 +1471,49 @@ def make_training_info(
 
 # Following functions are used for mapping
 def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
-    """
-    Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
+    """Convert a TensorProto's data_type to corresponding numpy dtype. It can be used while making tensor.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: numpy's data_type
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        numpy's data_type
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
-    """
-    Convert a TensorProto's data_type to corresponding data_type for storage.
+    """Convert a TensorProto's data_type to corresponding data_type for storage.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: data_type for storage
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        data_type for storage
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
-    """
-    Get the name of given TensorProto's data_type.
+    """Get the name of given TensorProto's data_type.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: the name of data_type
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        the name of data_type
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
-    """
-    Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
+    """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
-    :param tensor_dtype: TensorProto's data_type
-    :return: field name
+    Args:
+        tensor_dtype: TensorProto's data_type
+
+    Returns:
+        field name
     """
     return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
         mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
@@ -1175,19 +1521,41 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
 
 
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
-    """
-    Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
+    """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 
-    :param np_dtype: numpy's data_type
-    :return: TensorsProto's data_type
+    Args:
+        np_dtype: numpy's data_type
+
+    Returns:
+        TensorsProto's data_type
     """
-    return cast(int, mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype])
+    return cast(
+        int,
+        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
+    )
 
 
 def get_all_tensor_dtypes() -> KeysView[int]:
-    """
-    Get all tensor types from TensorProto.
+    """Get all tensor types from TensorProto.
 
-    :return: all tensor types from TensorProto
+    Returns:
+        all tensor types from TensorProto
     """
     return mapping.TENSOR_TYPE_MAP.keys()
+
+
+_ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
+
+
+def _attr_type_to_str(attr_type: int) -> str:
+    """Convert AttributeProto type to string.
+
+    Args:
+        attr_type: AttributeProto type.
+
+    Returns:
+        String representing the supplied attr_type.
+    """
+    if attr_type in AttributeProto.AttributeType.values():
+        return _ATTRIBUTE_TYPE_TO_STR[attr_type]  # type: ignore[no-any-return]
+    return AttributeProto.AttributeType.keys()[0]  # type: ignore[no-any-return]

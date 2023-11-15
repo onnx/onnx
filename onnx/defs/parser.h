@@ -8,14 +8,14 @@
 #pragma once
 
 #include <ctype.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 
-#include "onnx/onnx_pb.h"
-
 #include "onnx/common/status.h"
+#include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -33,6 +33,8 @@ using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
 using TensorList = google::protobuf::RepeatedPtrField<TensorProto>;
 
 using OpsetIdList = google::protobuf::RepeatedPtrField<OperatorSetIdProto>;
+
+using StringStringList = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
 #define CHECK_PARSER_STATUS(status) \
   {                                 \
@@ -72,22 +74,26 @@ class StringIntMap {
 class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
  public:
   PrimitiveTypeNameMap() : StringIntMap() {
-    map_["float"] = 1;
-    map_["uint8"] = 2;
-    map_["int8"] = 3;
-    map_["uint16"] = 4;
-    map_["int16"] = 5;
-    map_["int32"] = 6;
-    map_["int64"] = 7;
-    map_["string"] = 8;
-    map_["bool"] = 9;
-    map_["float16"] = 10;
-    map_["double"] = 11;
-    map_["uint32"] = 12;
-    map_["uint64"] = 13;
-    map_["complex64"] = 14;
-    map_["complex128"] = 15;
-    map_["bfloat16"] = 16;
+    map_["float"] = TensorProto_DataType_FLOAT;
+    map_["uint8"] = TensorProto_DataType_UINT8;
+    map_["int8"] = TensorProto_DataType_INT8;
+    map_["uint16"] = TensorProto_DataType_UINT16;
+    map_["int16"] = TensorProto_DataType_INT16;
+    map_["int32"] = TensorProto_DataType_INT32;
+    map_["int64"] = TensorProto_DataType_INT64;
+    map_["string"] = TensorProto_DataType_STRING;
+    map_["bool"] = TensorProto_DataType_BOOL;
+    map_["float16"] = TensorProto_DataType_FLOAT16;
+    map_["double"] = TensorProto_DataType_DOUBLE;
+    map_["uint32"] = TensorProto_DataType_UINT32;
+    map_["uint64"] = TensorProto_DataType_UINT64;
+    map_["complex64"] = TensorProto_DataType_COMPLEX64;
+    map_["complex128"] = TensorProto_DataType_COMPLEX128;
+    map_["bfloat16"] = TensorProto_DataType_BFLOAT16;
+    map_["float8e4m3fn"] = TensorProto_DataType_FLOAT8E4M3FN;
+    map_["float8e4m3fnuz"] = TensorProto_DataType_FLOAT8E4M3FNUZ;
+    map_["float8e5m2"] = TensorProto_DataType_FLOAT8E5M2;
+    map_["float8e5m2fnuz"] = TensorProto_DataType_FLOAT8E5M2FNUZ;
   }
 
   static bool IsTypeName(const std::string& dtype) {
@@ -98,20 +104,20 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
 class AttributeTypeNameMap : public StringIntMap<AttributeTypeNameMap> {
  public:
   AttributeTypeNameMap() : StringIntMap() {
-    map_["float"] = 1;
-    map_["int"] = 2;
-    map_["string"] = 3;
-    map_["tensor"] = 4;
-    map_["graph"] = 5;
-    map_["sparse_tensor"] = 11;
-    map_["type_proto"] = 13;
-    map_["floats"] = 6;
-    map_["ints"] = 7;
-    map_["strings"] = 8;
-    map_["tensors"] = 9;
-    map_["graphs"] = 10;
-    map_["sparse_tensors"] = 12;
-    map_["type_protos"] = 14;
+    map_["float"] = AttributeProto_AttributeType_FLOAT;
+    map_["int"] = AttributeProto_AttributeType_INT;
+    map_["string"] = AttributeProto_AttributeType_STRING;
+    map_["tensor"] = AttributeProto_AttributeType_TENSOR;
+    map_["graph"] = AttributeProto_AttributeType_GRAPH;
+    map_["sparse_tensor"] = AttributeProto_AttributeType_SPARSE_TENSOR;
+    map_["type_proto"] = AttributeProto_AttributeType_TYPE_PROTO;
+    map_["floats"] = AttributeProto_AttributeType_FLOATS;
+    map_["ints"] = AttributeProto_AttributeType_INTS;
+    map_["strings"] = AttributeProto_AttributeType_STRINGS;
+    map_["tensors"] = AttributeProto_AttributeType_TENSORS;
+    map_["graphs"] = AttributeProto_AttributeType_GRAPHS;
+    map_["sparse_tensors"] = AttributeProto_AttributeType_SPARSE_TENSORS;
+    map_["type_protos"] = AttributeProto_AttributeType_TYPE_PROTOS;
   }
 };
 
@@ -372,6 +378,8 @@ class ParserBase {
   const char* next_;
   const char* end_;
   const char* saved_pos_;
+
+  bool NextIsValidFloatString();
 };
 
 class OnnxParser : public ParserBase {
@@ -382,9 +390,13 @@ class OnnxParser : public ParserBase {
 
   Status Parse(TypeProto& typeProto);
 
+  Status Parse(StringStringList& stringStringList);
+
   Status Parse(TensorProto& tensorProto);
 
   Status Parse(AttributeProto& attr);
+
+  Status Parse(AttributeProto& attr, std::string& name);
 
   Status Parse(AttrList& attrlist);
 
@@ -411,7 +423,11 @@ class OnnxParser : public ParserBase {
 
   Status Parse(char open, IdList& idlist, char close);
 
-  Status ParseSingleAttributeValue(AttributeProto& attr);
+  Status Parse(IdList& idlist, AttrList& attrlist);
+
+  Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
+
+  Status ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected);
 
   Status Parse(ValueInfoProto& valueinfo);
 
@@ -426,6 +442,8 @@ class OnnxParser : public ParserBase {
   Status Parse(OpsetIdList& opsets);
 
   bool NextIsType();
+
+  bool NextIsIdentifier();
 };
 
 } // namespace ONNX_NAMESPACE

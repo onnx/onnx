@@ -1,25 +1,25 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 class ReduceProd(Base):
     @staticmethod
     def export_do_not_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [1]
+        axes = np.array([1], dtype=np.int64)
         keepdims = 0
 
         node = onnx.helper.make_node(
             "ReduceProd",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -34,7 +34,7 @@ class ReduceProd(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_prod_do_not_keepdims_example",
         )
@@ -44,7 +44,7 @@ class ReduceProd(Base):
         reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_prod_do_not_keepdims_random",
         )
@@ -52,14 +52,13 @@ class ReduceProd(Base):
     @staticmethod
     def export_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [1]
+        axes = np.array([1], dtype=np.int64)
         keepdims = 1
 
         node = onnx.helper.make_node(
             "ReduceProd",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -74,7 +73,7 @@ class ReduceProd(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_prod_keepdims_example",
         )
@@ -84,7 +83,7 @@ class ReduceProd(Base):
         reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_prod_keepdims_random",
         )
@@ -126,14 +125,13 @@ class ReduceProd(Base):
     @staticmethod
     def export_negative_axes_keepdims() -> None:
         shape = [3, 2, 2]
-        axes = [-2]
+        axes = np.array([-2], dtype=np.int64)
         keepdims = 1
 
         node = onnx.helper.make_node(
             "ReduceProd",
-            inputs=["data"],
+            inputs=["data", "axes"],
             outputs=["reduced"],
-            axes=axes,
             keepdims=keepdims,
         )
 
@@ -148,7 +146,7 @@ class ReduceProd(Base):
 
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_prod_negative_axes_keepdims_example",
         )
@@ -158,7 +156,31 @@ class ReduceProd(Base):
         reduced = np.prod(data, axis=tuple(axes), keepdims=keepdims == 1)
         expect(
             node,
-            inputs=[data],
+            inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_prod_negative_axes_keepdims_random",
+        )
+
+    @staticmethod
+    def export_empty_set() -> None:
+        shape = [2, 0, 4]
+        keepdims = 1
+        reduced_shape = [2, 1, 4]
+
+        node = onnx.helper.make_node(
+            "ReduceProd",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
+        )
+
+        data = np.array([], dtype=np.float32).reshape(shape)
+        axes = np.array([1], dtype=np.int64)
+        reduced = np.array(np.ones(reduced_shape, dtype=np.float32))
+
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_prod_empty_set",
         )

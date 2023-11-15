@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import os
@@ -12,10 +14,7 @@ from onnx.backend.test.runner import Runner
 
 
 def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:
-    for s in schemas:
-        if s.domain == "ai.onnx.ml":
-            return True
-    return False
+    return any(s.domain == "ai.onnx.ml" for s in schemas)
 
 
 def gen_outlines(f: IO[Any], ml: bool) -> None:
@@ -37,8 +36,8 @@ experimental_covered: Sequence[str] = []
 def gen_node_test_coverage(
     schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool
 ) -> None:
-    global common_covered
-    global experimental_covered
+    global common_covered  # noqa: PLW0603
+    global experimental_covered  # noqa: PLW0603
     generators = set(
         {
             "Multinomial",
@@ -91,13 +90,9 @@ def gen_node_test_coverage(
     f.write("## Summary\n")
     if num_common:
         f.write(
-            "Node tests have covered {}/{} ({:.2f}%, {} generators excluded) "
-            "common operators.\n\n".format(
-                len(common_covered),
-                num_common,
-                (len(common_covered) / float(num_common) * 100),
-                len(common_generator),
-            )
+            f"Node tests have covered {len(common_covered)}/{num_common} "
+            f"({len(common_covered) / float(num_common) * 100:.2f}%, {len(common_generator)} "
+            f"generators excluded) common operators.\n\n"
         )
     else:
         f.write("Node tests have covered 0/0 (N/A) common operators. \n\n")
@@ -128,22 +123,20 @@ def gen_node_test_coverage(
     for t in titles:
         f.write(f"* [{t[9:]}](#{t[9:].lower().replace(' ', '-')})\n")
     f.write("\n")
-    for t, l in zip(titles, all_lists):
+    for t, l in zip(titles, all_lists):  # noqa: E741
         f.write(f"## {t}\n")
         for s in l:
             f.write(f"### {s}")
             if s in node_tests:
                 f.write(
-                    "\nThere are {} test cases, listed as following:\n".format(
-                        len(node_tests[s])
-                    )
+                    f"\nThere are {len(node_tests[s])} test cases, listed as following:\n"
                 )
                 for summary, code in sorted(node_tests[s]):
                     f.write("<details>\n")
                     f.write(f"<summary>{summary}</summary>\n\n")
                     f.write(f"```python\n{code}\n```\n\n")
                     f.write("</details>\n")
-            else:
+            else:  # noqa: PLR5501
                 if s in generators:
                     f.write(" (random generator operator)\n")
                 else:
@@ -157,16 +150,25 @@ def gen_model_test_coverage(
 ) -> None:
     f.write("# Model Test Coverage\n")
     # Process schemas
-    schema_dict = dict()
+    schema_dict = {}
     for schema in schemas:
         schema_dict[schema.name] = schema
     # Load models from each model test using Runner.prepare_model_data
     # Need to grab associated nodes
-    attrs: Dict[str, Dict[str, List[Any]]] = dict()
+    attrs: Dict[str, Dict[str, List[Any]]] = {}
     model_paths: List[Any] = []
     for rt in load_model_tests(kind="real"):
-        model_dir = Runner.prepare_model_data(rt)
-        model_paths.append(os.path.join(model_dir, "model.onnx"))
+        if rt.url.startswith("onnx/backend/test/data/light/"):
+            # testing local files
+            model_name = os.path.normpath(
+                os.path.join(os.path.dirname(__file__), "..", "..", "..", rt.url)
+            )
+            if not os.path.exists(model_name):
+                raise FileNotFoundError(f"Unable to find model {model_name!r}.")
+            model_paths.append(model_name)
+        else:
+            model_dir = Runner.prepare_model_data(rt)
+            model_paths.append(os.path.join(model_dir, "model.onnx"))
     model_paths.sort()
     model_written = False
     for model_pb_path in model_paths:
@@ -190,7 +192,7 @@ def gen_model_test_coverage(
                 # Iterate through and store each node's attributes
                 for attr in node.attribute:
                     if node.op_type not in attrs:
-                        attrs[node.op_type] = dict()
+                        attrs[node.op_type] = {}
                     if attr.name not in attrs[node.op_type]:
                         attrs[node.op_type][attr.name] = []
                     if attr.type == AttributeProto.FLOAT:
@@ -224,12 +226,9 @@ def gen_model_test_coverage(
                         if attr.graphs not in attrs[node.op_type][attr.name]:
                             attrs[node.op_type][attr.name].append(attr.graphs)
         f.write(
-            "\n{} has {} nodes. Of these, {} are covered by node tests ({}%)\n\n\n".format(
-                model.graph.name,
-                num_covered,
-                len(model.graph.node),
-                100.0 * float(num_covered) / float(len(model.graph.node)),
-            )
+            f"\n{model.graph.name} has {num_covered} nodes. "
+            f"Of these, {len(model.graph.node)} are covered by node tests "
+            f"({100.0 * float(num_covered) / float(len(model.graph.node))}%)\n\n\n"
         )
         # Iterate through attrs, print
         f.write("<details>\n")
@@ -238,9 +237,7 @@ def gen_model_test_coverage(
             f.write("<details>\n")
             # Get total number of attributes for node schema
             f.write(
-                "<summary>{}: {} out of {} attributes covered</summary>\n\n".format(
-                    op, len(attrs[op].keys()), len(schema_dict[op].attributes)
-                )
+                f"<summary>{op}: {len(attrs[op])} out of {len(schema_dict[op].attributes)} attributes covered</summary>\n\n"
             )
             for attribute in sorted(schema_dict[op].attributes):
                 if attribute in attrs[op]:

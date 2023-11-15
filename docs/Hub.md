@@ -1,9 +1,13 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # ONNX Model Hub
 
-The ONNX Model Hub is a simple and fast way to get started with state of the art pre-trained 
-ONNX models from the [ONNX Model Zoo](https://github.com/onnx/models). Furthermore, this allows researchers and model 
+The ONNX Model Hub is a simple and fast way to get started with state of the art pre-trained
+ONNX models from the [ONNX Model Zoo](https://github.com/onnx/models). Furthermore, this allows researchers and model
 developers the opportunity to share their pre-trained models with the broader community.
 
 ## Install
@@ -11,7 +15,7 @@ The ONNX Model hub is available after ONNX 1.11.0.
 
 ## Basic usage
 The ONNX Model Hub is capable of downloading, listing, and querying trained models from any git repository,
- and defaults to the official [ONNX Model Zoo](https://github.com/onnx/models). In this section we demonstrate some of the basic functionality. 
+ and defaults to the official [ONNX Model Zoo](https://github.com/onnx/models). In this section we demonstrate some of the basic functionality.
 
 First please import the hub using:
 ```python
@@ -21,7 +25,7 @@ from onnx import hub
 #### Downloading a model by name:
 
 The `load` function will default to searching the model zoo for the latest model with a matching name,
- download this model to a local cache, and load the model into a `ModelProto` 
+ download this model to a local cache, and load the model into a `ModelProto`
  object for use with the ONNX runtime.
 
 ```python
@@ -42,9 +46,9 @@ model = hub.load("resnet50", repo="onnx/models:771185265efbdc049fb223bd68ab1aeb1
 
 The model hub provides APIs for querying the model zoo to learn more about available models.
  This does not download the models, but rather just returns information about models matching the given arguments
- 
+
  ```python
-# List all models in the onnx/models:master repo
+# List all models in the onnx/models:main repo
 all_models = hub.list_models()
 
 # List all versions/opsets of a specific model
@@ -81,7 +85,7 @@ ModelInfo(
 
 ## Local Caching
 
-The ONNX Model hub locally caches downloaded models in a configurable location 
+The ONNX Model hub locally caches downloaded models in a configurable location
 so that subsequent calls to `hub.load` do not require network connection.
 
 #### Default cache location
@@ -106,20 +110,20 @@ print(hub.get_dir())
 
 #### Additional cache details
 
-To clear the model cache one can simply delete the cache directory using a python utility like `shutil` or `os`. 
+To clear the model cache one can simply delete the cache directory using a python utility like `shutil` or `os`.
 Furthermore one can choose to override the cached model using the `force_reload` option:
 
 ```python
 model = hub.load("resnet50", force_reload=True)
 ```
 
-We include this flag for completeness but note that models in the cache are disambiguated with sha256 hashes so 
+We include this flag for completeness but note that models in the cache are disambiguated with sha256 hashes so
  the force_reload flag is not necessary for normal use.
-Finally we note that the model cache directory structure will mirror the directory structure 
-specified by the `model_path` field of the manifest, but with file names disambiguated with model SHA256 Hashes. 
+Finally we note that the model cache directory structure will mirror the directory structure
+specified by the `model_path` field of the manifest, but with file names disambiguated with model SHA256 Hashes.
 
 This way, the model cache is human readable, can disambiguate between multiple versions of models,
- and can re-use cached models across different hubs if they have the same name and hash. 
+ and can re-use cached models across different hubs if they have the same name and hash.
 
 ## Architecture
 
@@ -127,11 +131,11 @@ This way, the model cache is human readable, can disambiguate between multiple v
 
 The ONNX Hub consists of two main components, the client and the server.
  The client code currently is included in the `onnx` package and can be pointed at a
-  server in the form of a hosted `ONNX_HUB_MANIFEST.json` within a github repository 
-  such as [the one in the ONNX Model Zoo](https://github.com/onnx/models/blob/master/ONNX_HUB_MANIFEST.json).
+  server in the form of a hosted `ONNX_HUB_MANIFEST.json` within a github repository
+  such as [the one in the ONNX Model Zoo](https://github.com/onnx/models/blob/main/ONNX_HUB_MANIFEST.json).
   This manifest file is a JSON document which lists all models and their metadata
    and is designed to be programming language agnostic. An example of a well formed model manifest entry is as follows:
-   
+
    ```json
 {
     "model": "BERT-Squad",
@@ -192,7 +196,7 @@ The ONNX Hub consists of two main components, the client and the server.
 These important fields are:
 
 - `model`: The name of the model used for querying
-- `model_path`: The relative path of the model stored in Git LFS. 
+- `model_path`: The relative path of the model stored in Git LFS.
 - `onnx_version`: The ONNX version of the model
 - `opset_version`: The version of the opset. The client downloads the latest opset if left unspecified.
 - `metadata/model_sha`: Optional model sha specification for increased download security
@@ -205,12 +209,12 @@ All other fields in the `metadata` field are optional for the client but provide
 
 #### Contributing an official model
 
-The simplest way to add a model to the official `onnx/models` version model hub is to follow 
-[these guidelines](https://github.com/onnx/models/blob/master/contribute.md) to contribute your model. Once contributed,
-ensure that your model has a markdown table in its `README.md` 
-([Example](https://github.com/onnx/models/tree/master/vision/classification/mobilenet)). The model hub
+The simplest way to add a model to the official `onnx/models` version model hub is to follow
+[these guidelines](https://github.com/onnx/models/blob/main/contribute.md) to contribute your model. Once contributed,
+ensure that your model has a markdown table in its `README.md`
+([Example](https://github.com/onnx/models/tree/main/vision/classification/mobilenet)). The model hub
  manifest generator will pull information from these markdown tables. To run the generator:
- 
+
  ```shell script
 git clone https://github.com/onnx/models.git
 git lfs pull --include="*" --exclude=""
@@ -223,10 +227,10 @@ Once a new manifest is generated add, submit it in a pull request to ``onnx/mode
 #### Hosting your own ONNX Model Hub
 
 To host your own model hub, add an `ONNX_HUB_MANIFEST.json` to the top level of your github repository
- ([Example](https://github.com/onnx/models/blob/master/ONNX_HUB_MANIFEST.json)). At a minimum your 
- manifest entries should include the fields mentioned in 
+ ([Example](https://github.com/onnx/models/blob/main/ONNX_HUB_MANIFEST.json)). At a minimum your
+ manifest entries should include the fields mentioned in
  the [Architecture Section](Hub.md#Architecture) of this document.
- Once committed, check that you can download models 
+ Once committed, check that you can download models
  using the "Downloading from custom repositories" section of this doc.
 
 ## Raise issue if any

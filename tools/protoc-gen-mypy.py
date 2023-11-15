@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# Copyright (c) ONNX Project Contributors
+
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy
@@ -31,8 +35,12 @@ except ImportError as e:
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet
 d: Any = d_typed
 
-GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is generated
-HEADER = f"# {GENERATED} by generate_proto_mypy_stubs.py.  Do not edit!\n"
+# Split the string so phabricator doesn't think this file is generated
+GENERATED = "@ge" + "nerated"
+HEADER = (
+    f"# {GENERATED} by protoc-gen-mypy.py.  Do not edit!\n"
+    "# mypy: disable-error-code=override\n"
+)
 
 
 class Descriptors:
@@ -369,7 +377,7 @@ class PkgWriter:
 
 def is_scalar(fd: d.FileDescriptorProto) -> bool:
     return not (
-        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE
+        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE  # noqa: PLR1714
         or fd.type == d.FieldDescriptorProto.TYPE_GROUP
     )
 

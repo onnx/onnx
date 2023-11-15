@@ -1,15 +1,15 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
 
 import onnx
-
-from ..base import Base
-from . import expect
+from onnx.backend.test.case.base import Base
+from onnx.backend.test.case.node import expect
 
 
 def scatter_nd_impl(data, indices, updates, reduction="none"):  # type: ignore
-
     # Check tensor shapes
     assert indices.shape[-1] <= len(data.shape)
     assert updates.shape == indices.shape[:-1] + data.shape[indices.shape[-1] :]
@@ -19,15 +19,15 @@ def scatter_nd_impl(data, indices, updates, reduction="none"):  # type: ignore
     for i in np.ndindex(indices.shape[:-1]):
         # NOTE: The order of iteration in this loop is not specified.
         if reduction == "add":
-            output[indices[i]] += updates[i]
+            output[tuple(indices[i])] += updates[i]
         elif reduction == "mul":
-            output[indices[i]] *= updates[i]
+            output[tuple(indices[i])] *= updates[i]
         elif reduction == "max":
-            output[indices[i]] = np.maximum(output[indices[i]], updates[i])
+            output[tuple(indices[i])] = np.maximum(output[indices[i]], updates[i])
         elif reduction == "min":
-            output[indices[i]] = np.minimum(output[indices[i]], updates[i])
+            output[tuple(indices[i])] = np.minimum(output[indices[i]], updates[i])
         else:
-            output[indices[i]] = updates[i]
+            output[tuple(indices[i])] = updates[i]
     return output
 
 

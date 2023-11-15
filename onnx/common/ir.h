@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,15 +10,19 @@
 #pragma once
 
 #include <stdint.h>
+
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "onnx/common/array_ref.h"
@@ -32,6 +38,16 @@
   TypeName& operator=(const TypeName&) = delete
 
 namespace ONNX_NAMESPACE {
+
+namespace { // internal/private API
+
+std::string toVarName(size_t i) {
+  std::ostringstream oss;
+  oss << "_v_" << i;
+  return oss.str();
+}
+
+} // namespace
 
 // Graph represents one "function" of computation.
 // It uses a simple ownership model where the graph owns all the nodes inside it.
@@ -340,7 +356,7 @@ struct Value final {
   std::string uniqueName() const {
     if (has_unique_name())
       return unique_name_;
-    return ONNX_NAMESPACE::to_string(unique());
+    return toVarName(unique());
   }
   Value* setUniqueName(const std::string& name, bool rename_subgraph_captured_nodes = true);
   Value* setStage(size_t s) {
@@ -1028,9 +1044,9 @@ struct Graph final {
   }
 
   size_t getNextUnique() {
-    std::string next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
+    std::string next_unique_name = toVarName(++next_unique_);
     while (!isNameUnique(next_unique_name)) {
-      next_unique_name = ONNX_NAMESPACE::to_string(++next_unique_);
+      next_unique_name = toVarName(++next_unique_);
     }
     return next_unique_;
   }
@@ -1305,7 +1321,7 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
     newValue->setUniqueName(unique_name);
     // The "unique" semantic of unique_name should be kept or uses()
     // will return an incorrect result when the value is used in subgraph
-    this->setUniqueName(ONNX_NAMESPACE::to_string(graph->getNextUnique()), false);
+    this->setUniqueName(toVarName(graph->getNextUnique()), false);
   }
   newValue->uses_in_current_graph_.reserve(this->uses_in_current_graph_.size());
   for (auto u : uses_in_current_graph_) {
