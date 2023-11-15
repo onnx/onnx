@@ -513,7 +513,6 @@ class ReferenceEvaluator:
         # step 2: execute nodes
         for node in self.rt_nodes_:
             self._log(1, "%s(%s) -> %s", node.op_type, node.input, node.output)
-            inputs = []
             for i in node.input:
                 if i not in results:
                     raise RuntimeError(
@@ -521,7 +520,7 @@ class ReferenceEvaluator:
                         f"self.rt_inits_ has {sorted(self.rt_inits_)}, "
                         f"feed_inputs has {sorted(feed_inputs)}."
                     )
-                inputs.append(results[i])
+            inputs = [results[i] for i in node.input]
             linked_attributes = {}
             if node.has_linked_attribute and attributes:
                 linked_attributes["linked_attributes"] = attributes
@@ -530,19 +529,13 @@ class ReferenceEvaluator:
             else:
                 outputs = node.run(*inputs, **linked_attributes)
             for name, value in zip(node.output, outputs):
-                if isinstance(value, tuple):
-                    raise TypeError(
-                        f"Unexected type {type(value)} for output {name!r}."
-                    )
                 self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
 
         # return the results
-        list_results: List[Any] = []
         for name in output_names:
             if name not in results:
                 raise RuntimeError(
                     f"Unable to find output name {name!r} in {sorted(results)}, proto is\n{self.proto_}"
                 )
-            list_results.append(results[name])
-        return list_results
+        return [results[name] for name in output_names]
