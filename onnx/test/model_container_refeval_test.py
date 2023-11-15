@@ -13,7 +13,7 @@ import onnx
 import onnx.helper
 import onnx.model_container
 import onnx.numpy_helper
-import onnx.reference as refeval
+import onnx.reference
 
 
 def _linear_regression():
@@ -86,7 +86,7 @@ def _large_linear_regression():
 class TestLargeOnnxReferenceEvaluator(unittest.TestCase):
     def common_check_reference_evaluator(self, container):
         X = np.arange(9).astype(np.float32).reshape((-1, 3))
-        ref = refeval.ReferenceEvaluator(container)
+        ref = onnx.reference.ReferenceEvaluator(container)
         got = ref.run(None, {"X": X})
         expected = np.array(
             [

@@ -310,11 +310,9 @@ class ReferenceEvaluator:
                 self.new_ops_[key] = cl
         self._init()
 
-    def retrieve_external_data(self, init: TensorProto) -> np.array:
-        """
-        Returns a tensor saved as external.
-        """
-        info = ExternalDataInfo(init)
+    def retrieve_external_data(self, initializer: TensorProto) -> np.array:
+        """Returns a tensor saved as external."""
+        info = ExternalDataInfo(initializer)
         location = info.location
         if location.startswith("#"):
             # It comes from a large container.

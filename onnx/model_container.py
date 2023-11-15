@@ -86,15 +86,13 @@ class ModelContainer:
         if self.model_proto is not None:
             onnx.checker.check_model(self.model_proto)
 
-    def __getitem__(self, name: str) -> str | np.ndarray:
-        """
-        Returns an external tensor given its name.
-        """
+    def __getitem__(self, name: str) -> np.ndarray:
+        """Returns an external tensor given its name."""
         if name not in self.large_initializers:
             raise ValueError(
                 f"Unable to find large tensor {name!r} among {sorted(self.large_initializers)}."
             )
-        return self.large_initializers[name]  # type: ignore[return-value]
+        return self.large_initializers[name]
 
     @property
     def model_proto(self) -> onnx.ModelProto:
@@ -158,6 +156,8 @@ class ModelContainer:
         """
 
         def _clean_name(prefix: str, name: str, unique_names: dict[str, int]) -> str:
+            if prefix:
+                name = f"{prefix}-{name}"
             for c in ":/\\;,!":
                 name = name.replace(c, "")
             base_name = name
@@ -320,7 +320,7 @@ def make_large_model(
 
     Arguments:
         graph: *make_graph* returns
-        large_initializers: dictionary `(name, location): large tensor`,
+        large_initializers: dictionary `name: large tensor`,
             large tensor is any python object supporting the DLPack protocol,
             the ownership the tensor is transferred to the ModelContainer,
             the tensor must define method `tobytes` like numpy tensors
