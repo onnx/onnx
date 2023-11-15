@@ -18,8 +18,7 @@ from onnx.reference.ops.op_pool_common import (
 class AveragePool(Base):
     @staticmethod
     def export_averagepool_2d_precomputed_pads() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
@@ -63,8 +62,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_precomputed_pads_count_include_pad() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
@@ -112,8 +110,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_precomputed_strides() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 2, 2]
         """
         node = onnx.helper.make_node(
@@ -147,8 +144,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_precomputed_same_upper() -> None:
-        """
-        input_shape: [1, 1, 5, 5]
+        """input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 3, 3]
         pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
         """
@@ -186,8 +182,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_1d_default() -> None:
-        """
-        input_shape: [1, 3, 32]
+        """input_shape: [1, 3, 32]
         output_shape: [1, 3, 31]
         """
         node = onnx.helper.make_node(
@@ -211,8 +206,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_default() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 31, 31]
         """
         node = onnx.helper.make_node(
@@ -236,8 +230,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_3d_default() -> None:
-        """
-        input_shape: [1, 3, 32, 32, 32]
+        """input_shape: [1, 3, 32, 32, 32]
         output_shape: [1, 3, 31, 31, 31]
         """
         node = onnx.helper.make_node(
@@ -261,8 +254,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_same_upper() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
         """
@@ -300,8 +292,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_same_lower() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
         """
@@ -339,8 +330,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_pads() -> None:
-        """
-        input_shape: [1, 3, 28, 28]
+        """input_shape: [1, 3, 28, 28]
         output_shape: [1, 3, 30, 30]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
@@ -375,8 +365,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_pads_count_include_pad() -> None:
-        """
-        input_shape: [1, 3, 28, 28]
+        """input_shape: [1, 3, 28, 28]
         output_shape: [1, 3, 30, 30]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
@@ -427,8 +416,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_strides() -> None:
-        """
-        input_shape: [1, 3, 32, 32]
+        """input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 10, 10]
         """
         node = onnx.helper.make_node(
@@ -452,8 +440,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_ceil() -> None:
-        """
-        input_shape: [1, 1, 4, 4]
+        """input_shape: [1, 1, 4, 4]
         output_shape: [1, 1, 2, 2]
         """
         node = onnx.helper.make_node(
@@ -482,8 +469,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_2d_dilations() -> None:
-        """
-        input_shape: [1, 1, 4, 4]
+        """input_shape: [1, 1, 4, 4]
         output_shape: [1, 1, 2, 2]
         """
         node = onnx.helper.make_node(
@@ -516,8 +502,7 @@ class AveragePool(Base):
 
     @staticmethod
     def export_averagepool_3d_dilations() -> None:
-        """
-        input_shape: [1, 1, 4, 4]
+        """input_shape: [1, 1, 4, 4]
         output_shape: [1, 1, 2, 2]
         """
         node = onnx.helper.make_node(

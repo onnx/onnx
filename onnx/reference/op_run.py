@@ -34,43 +34,32 @@ def _split_class_name(name):  # type: ignore
 
 
 class RuntimeTypeError(RuntimeError):
-    """
-    Raised when a type of a variable is unexpected.
-    """
+    """Raised when a type of a variable is unexpected."""
 
 
 class RuntimeContextError(RuntimeError):
-    """
-    Raised when the context is missing but an context dependent implementation is defined for an operator.
-    """
+    """Raised when the context is missing but an context dependent implementation is defined for an operator."""
 
 
 class RuntimeImplementationError(NotImplementedError):
-    """
-    Raised when no implementation was found for an operator.
-    """
+    """Raised when no implementation was found for an operator."""
 
 
 class DefaultNone:
-    """
-    Default value for parameters when the parameter is not set
-    but the operator has a default behavior for it.
-    """
+    """Default value for parameters when the parameter is not set but the operator has a default behavior for it."""
 
 
 class RefAttrName:
-    """
-    Implements a link between a parameter of a function
-    and an attribute in node.
+    """Implements a link between a parameter of a function and an attribute in node.
 
-    :param name: name of the input
+    Args:
+        name: name of the input
     """
 
     def __init__(self, name: str):
         self.name = name
 
     def __repr__(self) -> str:
-        "usual"
         return f"{self.__class__.__name__}({self.name!r})"
 
 
@@ -107,8 +96,7 @@ class OnnxType:
 
 
 class SparseTensor:
-    """
-    Simple representation of a sparse tensor.
+    """Simple representation of a sparse tensor.
     It is based on numpy but does not require scipy.
     """
 
@@ -125,16 +113,13 @@ class SparseTensor:
 
 
 def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
-    """
-    Hosts a sparse tensor.
-    """
+    """Hosts a sparse tensor."""
     shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
     return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
 
 
 def to_array_extended(tensor: TensorProto) -> np.ndarray:
-    """
-    Similar to :func:`to_array` but deals with bfloat16,
+    """Similar to :func:`to_array` but deals with bfloat16,
     float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz.
     """
     elem_type = tensor.data_type
@@ -179,14 +164,14 @@ class Graph:
 
 
 class OpRun(abc.ABC):
-    """
-    Ancestor to all operators in this subfolder.
+    """Ancestor to all operators in this subfolder.
 
-    :param onnx_node: `onnx` node
-    :param run_params: additional parameters such as `verbose`, `opsets`
-        (it can be more than one if the operator has a subgraph),
-        `log` for a logging function
-    :param schema: operator schema
+    Args:
+        onnx_node: `onnx` node
+        run_params: additional parameters such as `verbose`, `opsets`
+            (it can be more than one if the operator has a subgraph),
+            `log` for a logging function
+        schema: operator schema
     """
 
     op_domain = ""
@@ -245,9 +230,7 @@ class OpRun(abc.ABC):
     def _extract_attribute_value(
         self, att: AttributeProto, ref_att: AttributeProto | None = None
     ) -> Any:
-        """
-        Converts an attribute value into a python value.
-        """
+        """Converts an attribute value into a python value."""
         if att.type == AttributeProto.GRAPH:
             from onnx.reference.reference_evaluator import (
                 ReferenceEvaluator,  # type: ignore
@@ -279,7 +262,7 @@ class OpRun(abc.ABC):
         return value.run(None, context or {}, attributes=attributes)
 
     def _load_attributes(self) -> None:
-        "Checks and loads attributes."
+        """Checks and loads attributes."""
         self.has_linked_attribute = False
         added_attributes = []
         for att in self.onnx_node.attribute:
@@ -325,8 +308,7 @@ class OpRun(abc.ABC):
 
     @staticmethod
     def implicit_inputs(graph: GraphProto) -> list[str]:
-        """
-        Returns all varibles not registered as inputs and not produced by
+        """Returns all varibles not registered as inputs and not produced by
         an node inside the graph. This inputs are part of the context
         existing in the graph calling this one.
         """
@@ -350,27 +332,26 @@ class OpRun(abc.ABC):
 
     @property
     def input(self) -> Iterable[str]:
-        "Returns node attribute `input`."
+        """Returns node attribute `input`."""
         return self.onnx_node.input  # type: ignore
 
     @property
     def output(self) -> Iterable[str]:
-        "Returns node attribute `output`."
+        """Returns node attribute `output`."""
         return self.onnx_node.output  # type: ignore
 
     @property
     def op_type(self) -> str:
-        "Returns node attribute `op_type`."
+        """Returns node attribute `op_type`."""
         return self.onnx_node.op_type  # type: ignore
 
     @property
     def domain(self) -> str:
-        "Returns node attribute `domain`."
+        """Returns node attribute `domain`."""
         return self.onnx_node.domain  # type: ignore
 
     def need_context(self) -> bool:
-        """
-        Tells the runtime if this node needs the context
+        """Tells the runtime if this node needs the context
         (all the results produced so far) as it may silently access
         one of them (operator Scan, If, Loop).
         The default answer is `False`.
@@ -389,15 +370,17 @@ class OpRun(abc.ABC):
 
     @abc.abstractmethod
     def _run(self, *args, **kwargs):  # type: ignore
-        """
-        Should be overwritten.
+        """Should be overwritten.
 
-        :param args: operator inputs
-        :param kwargs: optional inputs and overriden attributes,
-            an attribute may be overridden if it belongs to a function,
-            in this case, the same instance of OpRun can be called
-            with different values of the same attribute.
-        :return: outputs
+        Args:
+            *args: operator inputs
+            **kwargs: optional inputs and overriden attributes, an
+                attribute may be overridden if it belongs to a function,
+                in this case, the same instance of OpRun can be called
+                with different values of the same attribute.
+
+        Returns:
+            outputs
         """
         raise NotImplementedError(
             f"Method '_run' must be overwritten for operator {self.__class__.__name__!r}."
@@ -436,16 +419,18 @@ class OpRun(abc.ABC):
         return res
 
     def run(self, *args, linked_attributes=None, context=None):  # type: ignore
-        """
-        Calls method ``_run``, catches exceptions,
+        """Calls method ``_run``, catches exceptions,
         displays a longer error message.
 
-        :param args: inputs
-        :param linked_attributes: used if this has an attriute linked
-            to the attribute of the function it belongs to
-        :param context: if this node is part of the subgraph, `context`
-            is a dictionary with the values this node may use
-        :return: tuple of results
+        Args:
+            *args: inputs
+            linked_attributes: used if this has an attriute linked to
+                the attribute of the function it belongs to
+            context: if this node is part of the subgraph, `context` is
+                a dictionary with the values this node may use
+
+        Returns:
+            tuple of results
         """
         if self.need_context():
             if context is None:
@@ -537,14 +522,18 @@ class OpRun(abc.ABC):
         n_outputs: int | None = None,
         **kwargs: Any,
     ) -> NodeProto:  # type: ignore
-        """
-        Creates an ONNX node for this class based on the given information.
+        """Creates an ONNX node for this class based on the given information.
 
-        :param n_inputs: number of inputs (default is defined by the operator schema)
-        :param n_outputs: number of outputs (default is defined by the operator schema)
-        :param verbose: verbosity
-        :param kwargs: node attributes
-        :return: NodeProto
+        Args:
+            n_inputs: number of inputs (default is defined by the
+                operator schema)
+            n_outputs: number of outputs (default is defined by the
+                operator schema)
+            verbose: verbosity
+            **kwargs: node attributes
+
+        Returns:
+            NodeProto
 
         Method :meth:`eval <onnx.reference.op_run.OpRun.eval>` creates an onnx node
         returned by method :meth:`make_node <onnx.reference.op_run.OpRun.make_node>`.
@@ -582,14 +571,18 @@ class OpRun(abc.ABC):
         verbose: int = 0,
         **kwargs: Any,
     ) -> Any:
-        """
-        Instantiates this class based on the given information.
+        """Instantiates this class based on the given information.
 
-        :param n_inputs: number of inputs (default is defined by the operator schema)
-        :param n_outputs: number of outputs (default is defined by the operator schema)
-        :param verbose: verbosity
-        :param kwargs: node attributes
-        :return: NodeProto
+        Args:
+            n_inputs: number of inputs (default is defined by the
+                operator schema)
+            n_outputs: number of outputs (default is defined by the
+                operator schema)
+            verbose: verbosity
+            **kwargs: node attributes
+
+        Returns:
+            NodeProto
         """
 
         def log_function(pattern: str, *args: Any) -> None:
@@ -614,14 +607,17 @@ class OpRun(abc.ABC):
         verbose: int = 0,
         **kwargs: Any,
     ) -> Any:  # type: ignore
-        """
-        Evaluates this operator.
+        """Evaluates this operator.
 
-        :param args: inputs
-        :param n_outputs: number of outputs (default is defined by the operator schema)
-        :param verbose: verbosity
-        :param kwargs: node attributes
-        :return: NodeProto
+        Args:
+            *args: inputs
+            n_outputs: number of outputs (default is defined by the
+                operator schema)
+            verbose: verbosity
+            **kwargs: node attributes
+
+        Returns:
+            NodeProto
         """
         inst = cls.create(len(args), n_outputs=n_outputs, verbose=verbose, **kwargs)
         res = inst.run(*args)
@@ -631,9 +627,7 @@ class OpRun(abc.ABC):
 
 
 class OpRunExpand(OpRun):
-    """
-    Class any operator to avoid must inherit from.
-    """
+    """Class any operator to avoid must inherit from."""
 
     def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
         raise RuntimeError(
@@ -647,9 +641,7 @@ class OpRunExpand(OpRun):
 
 
 class OpFunction(OpRun):
-    """
-    Runs a custom function.
-    """
+    """Runs a custom function."""
 
     def __init__(
         self,
@@ -696,8 +688,7 @@ class OpFunction(OpRun):
 
 
 class OpFunctionContextDependant(OpFunction):
-    """
-    The function can be instantiated but only at execution time.
+    """The function can be instantiated but only at execution time.
     An instance of OpFunction is created everytime to node is executed.
     This is needed when the schema of an operator defines a context dependant function.
     """

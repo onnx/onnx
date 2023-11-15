@@ -53,7 +53,8 @@ class TestAutomaticConversion(unittest.TestCase):
         optional_outputs: Sequence[int] = (),
         is_upgrade: bool = True,
     ) -> None:
-        """
+        """Test conversion.
+
         Args:
             op: A string representing the name of the operator to test.
             from_opset: An integer representing the lowest opset version to convert.

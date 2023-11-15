@@ -122,6 +122,7 @@ select = [
     "A", # flake8-builtins
     "B", # flake8-bugbear
     "C4", # flake8-comprehensions
+    "D", # pydocstyle
     "E", # pycodestyle
     "F", # Pyflakes
     "G", # flake8-logging-format
@@ -139,6 +140,10 @@ select = [
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
 ignore = [
+    "D1", # D1 is for missing docstrings, which is not yet enforced.
+    "D205", # D205 Too strict. "1 blank line required between summary line and description"
+    "D400",
+    "D415",
     "E501", # Line length controlled by black
     "N803", # Argument casing
     "N806", # Relax: Variable name in function should be lowercase
@@ -164,6 +169,9 @@ builtins-ignorelist = ["id", "input"]
 [tool.ruff.flake8-tidy-imports]
 # Disallow all relative imports.
 ban-relative-imports = "all"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.per-file-ignores]
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.

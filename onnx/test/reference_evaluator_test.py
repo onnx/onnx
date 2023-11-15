@@ -3,8 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
 
-"""
-You can run a specific test by using the following syntax.
+"""You can run a specific test by using the following syntax.
 
 ::
 
@@ -141,15 +140,17 @@ def run_ort_inference(onnx_model):
 
 
 def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  # type: ignore
-    """
-    Naive implementation for `im2col`.
+    """Naive implementation for `im2col`.
 
-    :param image: image (float)
-    :param kernel_shape: kernel shape
-    :param dilations: dilations
-    :param pads: pads
-    :param strides: strides
-    :return: result
+    Args:
+        data: image (float)
+        kernel_shape: kernel shape
+        dilations: dilations
+        pads: pads
+        strides: strides
+
+    Returns:
+        result
     """
     if not isinstance(kernel_shape, tuple):
         raise TypeError(f"Unexpected type {type(kernel_shape)!r} for kernel_shape.")
@@ -223,8 +224,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @staticmethod
     def _load_model(m_def: str) -> ModelProto:
-        """
-        Parses a model from a string representation, including checking
+        """Parses a model from a string representation, including checking
         the model for correctness
         """
         m = parser.parse_model(m_def)

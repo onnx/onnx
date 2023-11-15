@@ -57,8 +57,7 @@ def get_output_shape_explicit_padding(
     dilations: Union[Sequence[int], None] = None,
     ceil_mode: bool = False,
 ) -> Tuple[Sequence[int], Sequence[int]]:
-    """
-    compute output shape according to:
+    """Compute output shape according to:
     https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html?highlight=max+pool#torch.nn.MaxPool1d
     Pads are used to calculate output shape. Use output shape in turn to calculate the actual pads
     that are used to pad the input tensor so that computation in pool() will not cause out of bound error.
@@ -121,8 +120,7 @@ def get_output_shape_auto_pad(
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
 ) -> Sequence[int]:
-    """
-    https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D
+    """https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D
     output_shape = math.floor((input_shape - 1) / strides) + 1  (SAME)
     output_shape = math.floor((input_shape - pool_size) / strides) + 1 (VALID)
     IMPORTANT: this function assumes ceil_mode is False. In tenforflow, ceil_mode is always False.
@@ -172,8 +170,7 @@ def pool(
     count_include_pad: int = 0,
     p: int = 1,
 ) -> np.ndarray:
-    """
-    this function is used to calculate the pooling result of a padded tensor
+    """This function is used to calculate the pooling result of a padded tensor
     padded: the padded tensor
     x_shape: the shape of the original tensor in [N, C, *spatial_shape]
     kernel: the pooling kernel
