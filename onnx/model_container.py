@@ -86,6 +86,14 @@ class ModelContainer:
         if self.model_proto is not None:
             onnx.checker.check_model(self.model_proto)
 
+    def __getitem__(self, name: str) -> np.ndarray:
+        """Returns an external tensor given its name."""
+        if name not in self.large_initializers:
+            raise ValueError(
+                f"Unable to find large tensor {name!r} among {sorted(self.large_initializers)}."
+            )
+        return self.large_initializers[name]
+
     @property
     def model_proto(self) -> onnx.ModelProto:
         if self.model_proto_ is None:
@@ -102,10 +110,16 @@ class ModelContainer:
         yield self.model_proto.graph
         yield from _enumerate_subgraphs(self.model_proto.graph)
 
+    def is_in_memory_external_initializer(self, name: str) -> bool:
+        """Tells if an initializer name is an external initializer stored in memory.
+        The name must start with '#' in that case.
+        """
+        return name.startswith("#")
+
     def set_large_initializers(self, large_initializers: dict[str, np.ndarray]):
         """Adds all large tensors (not stored in the model)."""
         for k in large_initializers:
-            if not k.startswith("#"):
+            if not self.is_in_memory_external_initializer(k):
                 raise ValueError(
                     f"The location {k!r} must start with '#' to be ignored by check model."
                 )
@@ -148,6 +162,8 @@ class ModelContainer:
         """
 
         def _clean_name(prefix: str, name: str, unique_names: dict[str, int]) -> str:
+            if prefix:
+                name = f"{prefix}-{name}"
             for c in ":/\\;,!":
                 name = name.replace(c, "")
             base_name = name
@@ -310,7 +326,7 @@ def make_large_model(
 
     Arguments:
         graph: *make_graph* returns
-        large_initializers: dictionary `(name, location): large tensor`,
+        large_initializers: dictionary `name: large tensor`,
             large tensor is any python object supporting the DLPack protocol,
             the ownership the tensor is transferred to the ModelContainer,
             the tensor must define method `tobytes` like numpy tensors

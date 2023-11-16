@@ -1186,6 +1186,85 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = 1 / (x + 0.5)
         assert_allclose(expected, got)
 
+    def test_custom_no_output_tuple(self):
+        class InvAlpha(OpRun):
+            op_domain = "custom"
+
+            def _run(self, x, alpha=None):  # type: ignore
+                alpha = alpha or self.alpha  # type: ignore
+                return 1 / (x + alpha)
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
+        ref = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        with self.assertRaises(TypeError):
+            ref.run(None, {"X": x})
+
+    def test_custom_empty_output(self):
+        class InvAlpha(OpRun):
+            op_domain = "custom"
+
+            def _run(self, x, alpha=None):  # type: ignore
+                return tuple()
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
+        ref = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        with self.assertRaises(ValueError):
+            ref.run(None, {"X": x})
+
+    def test_custom_tuple_tuple(self):
+        class InvAlpha(OpRun):
+            op_domain = "custom"
+
+            def _run(self, x, alpha=None):  # type: ignore
+                alpha = alpha or self.alpha  # type: ignore
+                res = tuple([tuple([1 / (x + alpha)])])  # noqa: C409
+                assert isinstance(res, tuple)
+                assert isinstance(res[0], tuple)
+                return res
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
+        ref = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        with self.assertRaises(TypeError):
+            ref.run(None, {"X": x})
+
+    def test_custom_tuple_unexpected_type(self):
+        class CustomType:
+            pass
+
+        class InvAlpha(OpRun):
+            op_domain = "custom"
+
+            def _run(self, x, alpha=None):  # type: ignore
+                res = tuple([CustomType()])  # noqa: C409
+                assert isinstance(res, tuple)
+                assert isinstance(res[0], CustomType)
+                return res
+
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        node1 = make_node("InvAlpha", ["X"], ["Y"], alpha=0.5, domain="custom")
+        graph = make_graph([node1], "rs", [X], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("custom", 1)])
+        x = np.arange(60).reshape((3, 4, 5)).astype(np.float32) + 1
+        ref = ReferenceEvaluator(onnx_model, new_ops=[InvAlpha])
+        with self.assertRaises(TypeError):
+            ref.run(None, {"X": x})
+
     def test_loop(self):
         # Given a tensor x of values [x1, ..., xN],
         # Return a sequence of tensors of
@@ -5135,6 +5214,76 @@ class TestReferenceEvaluator(unittest.TestCase):
         np.testing.assert_array_equal(result, np.array(expected_split, dtype=object))
         np.testing.assert_array_equal(
             num_splits, np.array(expected_num_splits, dtype=np.int64)
+        )
+
+    def test_qlinearconv_int8(self):
+        node = make_node(
+            "QLinearMatMul",
+            inputs=[
+                "a",
+                "a_scale",
+                "a_zero_point",
+                "b",
+                "b_scale",
+                "b_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ],
+            outputs=["y"],
+        )
+        graph = make_graph(
+            [node],
+            "g",
+            [
+                make_tensor_value_info("a", TensorProto.FLOAT, [None, None]),
+                make_tensor_value_info("a_scale", TensorProto.FLOAT, [1]),
+                make_tensor_value_info("a_zero_point", TensorProto.INT8, [1]),
+                make_tensor_value_info("b", TensorProto.FLOAT, [None, None]),
+                make_tensor_value_info("b_scale", TensorProto.FLOAT, [1]),
+                make_tensor_value_info("b_zero_point", TensorProto.INT8, [1]),
+                make_tensor_value_info("y_scale", TensorProto.FLOAT, [1]),
+                make_tensor_value_info("y_zero_point", TensorProto.INT8, [1]),
+            ],
+            [make_tensor_value_info("y", TensorProto.FLOAT, [None, None])],
+        )
+        onnx_model = make_model(
+            graph, opset_imports=[make_opsetid("", 20)], ir_version=9
+        )
+        sess = ReferenceEvaluator(onnx_model)
+
+        a = np.array([[208, 236, 0, 238], [3, 214, 255, 29]])
+        a -= 127
+        a = a.astype(np.int8)
+
+        a_scale = np.array([0.0066], dtype=np.float32)
+        a_zero_point = np.array([113 - 127], dtype=np.int8)
+
+        b = np.array([[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]])
+        b -= 127
+        b = b.astype(np.int8)
+
+        b_scale = np.array([0.00705], dtype=np.float32)
+        b_zero_point = np.array([114 - 127], dtype=np.int8)
+
+        y_scale = np.array([0.0107], dtype=np.float32)
+        y_zero_point = np.array([118 - 127], dtype=np.int8)
+
+        got = sess.run(
+            None,
+            dict(
+                a=a,
+                a_scale=a_scale,
+                a_zero_point=a_zero_point,
+                b=b,
+                b_scale=b_scale,
+                b_zero_point=b_zero_point,
+                y_scale=y_scale,
+                y_zero_point=y_zero_point,
+            ),
+        )
+
+        np.testing.assert_array_equal(
+            np.array([[41, -12, -9], [1, -75, 20]], dtype=np.int8), got[0]
         )
 
     @parameterized.parameterized.expand(
