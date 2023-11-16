@@ -128,7 +128,9 @@ class Constant_12(ConstantCommon):
                     )
                     break
         if not hasattr(self, "cst_name"):
-            raise AttributeError("No constant is defined for operator 'Constant'.")
+            raise AttributeError(
+                f"No constant is defined for operator 'Constant', outputs are {onnx_node.output}."
+            )
 
     def _run(self, **overridden_attributes):  # type: ignore
         if self.has_linked_attribute:

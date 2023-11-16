@@ -27,6 +27,6 @@ class DynamicQuantizeLinear(OpRun):
         y = np.clip(np.rint(x / y_scale) + zpi, qmin, qmax)
         return (
             y.astype(dtype),
-            y_scale.astype(x.dtype),
-            zpi.astype(dtype),
+            np.array(y_scale.astype(x.dtype)),
+            np.array(zpi.astype(dtype)),
         )
