@@ -11,19 +11,19 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 class Normalizer(OpRunAiOnnxMl):
     @staticmethod
     def norm_max(x):  # type: ignore
-        "max normalization"
+        """Max normalization"""
         div = np.abs(x).max(axis=1).reshape((x.shape[0], -1))
         return x / np.maximum(div, 1e-30)
 
     @staticmethod
     def norm_l1(x):  # type: ignore
-        "L1 normalization"
+        """L1 normalization"""
         div = np.abs(x).sum(axis=1).reshape((x.shape[0], -1))
         return x / np.maximum(div, 1e-30)
 
     @staticmethod
     def norm_l2(x):  # type: ignore
-        "L2 normalization"
+        """L2 normalization"""
         xn = np.square(x).sum(axis=1)
         np.sqrt(xn, out=xn)
         norm = np.maximum(xn.reshape((x.shape[0], -1)), 1e-30)

@@ -14,8 +14,7 @@ class TestSymbolicShape(unittest.TestCase):
     def _assert_valueinfo_shape(
         self, onnx_model: ModelProto, value_infos: List[ValueInfoProto]
     ) -> None:
-        """
-        Assert onnx_model.value_info should be the same as expected value_infos
+        """Assert onnx_model.value_info should be the same as expected value_infos
         Instead of exact symbol, use -1 to represent symbolic shape in expected value_infos
         """
         for expected_vi in value_infos:
@@ -36,9 +35,7 @@ class TestSymbolicShape(unittest.TestCase):
                     assert dim.dim_value == expected_dim.dim_value, f"{onnx_model}"
 
     def _count_unique_dim_param_number(self, onnx_model: ModelProto) -> int:
-        """
-        return the total number of unique symbolic shape
-        """
+        """Return the total number of unique symbolic shape"""
         symbol_shape_set = set()
         inputs = list(onnx_model.graph.input)
         outputs = list(onnx_model.graph.output)
@@ -52,9 +49,7 @@ class TestSymbolicShape(unittest.TestCase):
     def _get_shape_from_name(
         self, onnx_model: ModelProto, name: str
     ) -> Optional[TensorShapeProto]:
-        """
-        Get shape from tensor_type or sparse_tensor_type according to given name
-        """
+        """Get shape from tensor_type or sparse_tensor_type according to given name"""
         inputs = list(onnx_model.graph.input)
         outputs = list(onnx_model.graph.output)
         valueinfos = list(onnx_model.graph.value_info)
