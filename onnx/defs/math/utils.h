@@ -12,6 +12,7 @@ namespace ONNX_NAMESPACE {
 namespace defs {
 namespace math {
 namespace utils {
+
 template <typename T>
 T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
   if (t == nullptr) {
@@ -32,6 +33,13 @@ T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
       fail_shape_inference("Unsupported input data type of ", data_type);
   }
 }
+
+void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx);
+
+void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx);
+
+const char* QLinearMatMulDoc();
+
 } // namespace utils
 } // namespace math
 } // namespace defs
