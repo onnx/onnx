@@ -33,7 +33,7 @@ class OpRunUnary(OpRun):
                 f"(unary operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunUnaryNum(OpRunUnary):
@@ -59,7 +59,7 @@ class OpRunUnaryNum(OpRunUnary):
                 f"Output type mismatch: input '{x.dtype}' != output '{res[0].dtype}' "
                 f"(operator {self.__class__.__name__!r})."
             )
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunBinary(OpRun):
@@ -95,7 +95,7 @@ class OpRunBinary(OpRun):
                 f"(binary operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunBinaryComparison(OpRunBinary):
@@ -123,7 +123,7 @@ class OpRunBinaryNum(OpRunBinary):
                 f"(operator {self.__class__.__name__!r})"
                 f" type(x)={type(x)} type(y)={type(y)}"
             )
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunBinaryNumpy(OpRunBinaryNum):
@@ -138,7 +138,8 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         self.numpy_fct = numpy_fct
 
     def _run(self, a, b):  # type: ignore
-        return (self.numpy_fct(a, b),)
+        res = (self.numpy_fct(a, b),)
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunReduceNumpy(OpRun):  # type: ignore

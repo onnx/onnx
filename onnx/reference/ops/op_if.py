@@ -64,4 +64,4 @@ class If(OpRun):
                     f"Output {i!r} (branch={branch!r}, name={names[i]!r}) is None, "
                     f"available inputs={sorted(context)}, initializers={inits}."
                 )
-        return final
+        return self._check_and_fix_outputs(final)
