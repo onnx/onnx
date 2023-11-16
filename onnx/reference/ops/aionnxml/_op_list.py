@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# Operator ZipMap is not implemented. Its use should
+# NOTE: Operator ZipMap is not implemented. Its use should
 # be discouraged. It is just a different way to output
-# probabilites not consumed by any operator.
+# probabilities not consumed by any operator.
 
 import textwrap
 from typing import Any, Dict, Union
