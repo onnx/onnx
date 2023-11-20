@@ -397,47 +397,45 @@ def float32_to_float8e4m3(  # noqa: PLR0911
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
 
-        if e != 0:
-            if e < 116:  # noqa: PLR2004
-                pass
-            elif e < 120:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 119
-                if ex >= -2:  # noqa: PLR2004
-                    ret |= 1 << (2 + ex)
-                    ret |= m >> (21 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (20 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
+        if e < 116:  # noqa: PLR2004
+            ret = 0
+        elif e < 120:  # noqa: PLR2004
+            # denormalized number
+            ex = e - 119
+            if ex >= -2:  # noqa: PLR2004
+                ret |= 1 << (2 + ex)
+                ret |= m >> (21 - ex)
+            elif m > 0:
+                ret |= 1
+            else:
+                ret = 0
+            mask = 1 << (20 - ex)
+            if m & mask and (
+                ret & 1
+                or m & (mask - 1) > 0
+                or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+            ):
+                # rounding
+                ret += 1
+        elif e < 135:  # noqa: PLR2004
+            # normalized number
+            ex = e - 119  # 127 - 8
+            if ex == 0:
+                ret |= 0x4
+                ret |= m >> 21
+            else:
+                ret |= ex << 3
+                ret |= m >> 20
+            if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
+                if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
                     # rounding
                     ret += 1
-            elif e < 135:  # noqa: PLR2004
-                # normalized number
-                ex = e - 119  # 127 - 8
-                if ex == 0:
-                    ret |= 0x4
-                    ret |= m >> 21
-                else:
-                    ret |= ex << 3
-                    ret |= m >> 20
-                if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
-                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif not saturate:
-                        return 0x80
-            elif saturate:
-                ret |= 0x7F  # 01111110
-            else:
-                ret = 0x80
-        elif m == 0:
-            # -0
-            ret = 0
+                elif not saturate:
+                    return 0x80
+        elif saturate:
+            ret |= 0x7F  # 01111110
+        else:
+            ret = 0x80
         return int(ret)
     else:
         if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
@@ -529,45 +527,43 @@ def float32_to_float8e5m2(  # noqa: PLR0911
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
 
-        if e != 0:
-            if e < 109:  # noqa: PLR2004
-                pass
-            elif e < 112:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 111
-                if ex >= -1:
-                    ret |= 1 << (1 + ex)
-                    ret |= m >> (22 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (21 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
+        if e < 109:  # noqa: PLR2004
+            ret = 0
+        elif e < 112:  # noqa: PLR2004
+            # denormalized number
+            ex = e - 111
+            if ex >= -1:
+                ret |= 1 << (1 + ex)
+                ret |= m >> (22 - ex)
+            elif m > 0:
+                ret |= 1
+            else:
+                ret = 0
+            mask = 1 << (21 - ex)
+            if m & mask and (
+                ret & 1
+                or m & (mask - 1) > 0
+                or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+            ):
+                # rounding
+                ret += 1
+        elif e < 143:  # noqa: PLR2004
+            # normalized number
+            ex = e - 111
+            ret |= ex << 2
+            ret |= m >> 21
+            if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
+                if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
                     # rounding
                     ret += 1
-            elif e < 143:  # noqa: PLR2004
-                # normalized number
-                ex = e - 111
-                ret |= ex << 2
-                ret |= m >> 21
-                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif not saturate:
-                        ret = 0x80
-            elif e == 255 and m == 0:  # inf  # noqa: PLR2004
-                ret = 0x80
-            elif saturate:
-                ret |= 0x7F  # last possible number
-            else:
-                ret = 0x80
-        elif m == 0:
-            # -0
-            ret = 0
+                elif not saturate:
+                    ret = 0x80
+        elif e == 255 and m == 0:  # inf  # noqa: PLR2004
+            ret = 0x80
+        elif saturate:
+            ret |= 0x7F  # last possible number
+        else:
+            ret = 0x80
         return int(ret)
     elif not fn and not uz:
         if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
