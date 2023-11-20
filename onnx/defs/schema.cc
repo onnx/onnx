@@ -266,9 +266,9 @@ void OpSchema::Verify(const NodeProto& node) const {
           "Mismatched attribute type in '",
           node.name() + " : " + name,
           "'. Expected: '",
-          expected_type,
+          AttributeProto_AttributeType_Name(expected_type),
           "', actual: '",
-          attr_proto.type(),
+          AttributeProto_AttributeType_Name(attr_proto.type()),
           "'");
     }
 
