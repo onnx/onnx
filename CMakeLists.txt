@@ -26,6 +26,7 @@ option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
+option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
@@ -727,6 +728,32 @@ if (NOT Build_Protobuf)
     NAMESPACE ONNX::
   )
 endif()
+
+if(ONNX_USE_UNITY_BUILD)
+
+  set(NEW_LIST __unity_src_files)
+  list(APPEND __unity_src_files ${ONNX_SRCS})
+  # These files have an issue with template explicit specialization after instanciation.
+  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
+  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
+  set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
+
+  set_target_properties(onnx
+    PROPERTIES 
+      UNITY_BUILD ON
+      UNITY_BUILD_MODE GROUP
+  )
+
+  if (MSVC)
+    target_compile_options(onnx PRIVATE /bigobj)
+  endif ()
+
+# should be enabled for onnx_proto when protobuf can support Unity builds
+
+endif()
+
+
+
 install(TARGETS
   onnx onnx_proto
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
