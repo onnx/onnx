@@ -9,7 +9,16 @@ import numpy as np
 
 from onnx import load
 from onnx.defs import onnx_opset_version
-from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
+from onnx.external_data_helper import ExternalDataInfo, uses_external_data
+from onnx.model_container import ModelContainer
+from onnx.onnx_pb import (
+    FunctionProto,
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    TensorProto,
+    TypeProto,
+)
 from onnx.reference.op_run import (
     OpFunctionContextDependant,
     OpRun,
@@ -209,6 +218,13 @@ class ReferenceEvaluator:
                         new_ops.append(op)
         self.output_types_ = None
         self.input_types_ = None
+
+        if isinstance(proto, ModelContainer):
+            self.container_ = proto
+            proto = self.container_.model_proto
+        else:
+            self.container_ = None
+
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
@@ -294,6 +310,24 @@ class ReferenceEvaluator:
                 self.new_ops_[key] = cl
         self._init()
 
+    def retrieve_external_data(self, initializer: TensorProto) -> np.array:
+        """Returns a tensor saved as external."""
+        info = ExternalDataInfo(initializer)
+        location = info.location
+        if self.container_ and self.container_.is_in_memory_external_initializer(
+            location
+        ):
+            # It comes from a large container.
+            return self.container_[location]
+        # Otherwise, the data is on disk.
+        if self.container_ is not None:
+            raise RuntimeError(
+                "ReferenceEvaluator assumes a LargeContainer was loaded with its external tensor."
+            )
+        raise RuntimeError(
+            "An instance of LargeContainer should be created before using ReferenceEvaluator."
+        )
+
     def _log_arg(self, a: Any) -> Any:
         if isinstance(a, (str, int, float)):
             return a
@@ -367,7 +401,11 @@ class ReferenceEvaluator:
         self.rt_inits_ = {}
         self.rt_nodes_ = []
         for init in self.inits_:
-            self.rt_inits_[init.name] = to_array_extended(init)  # type: ignore[union-attr,arg-type]
+            self.rt_inits_[init.name] = (
+                self.retrieve_external_data(init)
+                if uses_external_data(init)
+                else to_array_extended(init)
+            )
         run_params = {
             "log": lambda pattern, *args: self._log(10, pattern, *args),
             "opsets": self.opsets,
@@ -513,6 +551,13 @@ class ReferenceEvaluator:
         # step 2: execute nodes
         for node in self.rt_nodes_:
             self._log(1, "%s(%s) -> %s", node.op_type, node.input, node.output)
+            for i in node.input:
+                if i not in results:
+                    raise RuntimeError(
+                        f"Unable to find input {i!r} in known results {sorted(results)}, "
+                        f"self.rt_inits_ has {sorted(self.rt_inits_)}, "
+                        f"feed_inputs has {sorted(feed_inputs)}."
+                    )
             inputs = [results[i] for i in node.input]
             linked_attributes = {}
             if node.has_linked_attribute and attributes:
@@ -522,19 +567,13 @@ class ReferenceEvaluator:
             else:
                 outputs = node.run(*inputs, **linked_attributes)
             for name, value in zip(node.output, outputs):
-                if isinstance(value, tuple):
-                    raise TypeError(
-                        f"Unexected type {type(value)} for output {name!r}."
-                    )
                 self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
 
         # return the results
-        list_results: List[Any] = []
         for name in output_names:
             if name not in results:
                 raise RuntimeError(
                     f"Unable to find output name {name!r} in {sorted(results)}, proto is\n{self.proto_}"
                 )
-            list_results.append(results[name])
-        return list_results
+        return [results[name] for name in output_names]

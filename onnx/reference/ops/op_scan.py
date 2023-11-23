@@ -140,4 +140,4 @@ class Scan(OpRun):
         for res in results:
             conc = np.vstack(res)
             states.append(conc)
-        return tuple(states)
+        return self._check_and_fix_outputs(tuple(states))
