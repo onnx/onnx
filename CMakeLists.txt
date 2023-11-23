@@ -730,20 +730,23 @@ if (NOT Build_Protobuf)
 endif()
 
 if(ONNX_USE_UNITY_BUILD)
-
-  set(NEW_LIST __unity_src_files)
-  list(APPEND __unity_src_files ${ONNX_SRCS})
-  # These files have an issue with template explicit specialization after instanciation.
-  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
-  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
-  set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
-
+  # If ONNX_USE_UNITY_BUILD is set to ON, set onnx target to use Unity builds.
+  #  We set Unity build to use groups, it allows us to set some specific files to be compiled individualy
   set_target_properties(onnx
     PROPERTIES 
       UNITY_BUILD ON
       UNITY_BUILD_MODE GROUP
   )
 
+  set(NEW_LIST __unity_src_files)
+  list(APPEND __unity_src_files ${ONNX_SRCS})
+  # These files have an issue with template explicit specialization after instanciation:
+  #   We take them out of the unity group so they are compiled individually.
+  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
+  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
+  set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
+
+  # With unity build object file could get big, need this switch in MSVC.
   if (MSVC)
     target_compile_options(onnx PRIVATE /bigobj)
   endif ()
