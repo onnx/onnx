@@ -262,7 +262,14 @@ void OpSchema::Verify(const NodeProto& node) const {
 
     // Type would be UNDEFINED if not set
     if (attr_proto.type() != expected_type) {
-      fail_check("Mismatched attribute type in '", node.name() + " : " + name, "'");
+      fail_check(
+          "Mismatched attribute type in '",
+          node.name() + " : " + name,
+          "'. Expected: '",
+          AttributeProto_AttributeType_Name(expected_type),
+          "', actual: '",
+          AttributeProto_AttributeType_Name(attr_proto.type()),
+          "'");
     }
 
     // ref_attr_name is only valid when non-empty
