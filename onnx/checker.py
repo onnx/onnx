@@ -101,10 +101,19 @@ def check_node(
 
 def check_function(
     function: FunctionProto,
-    ctx: C.CheckerContext = DEFAULT_CONTEXT,
+    ctx: C.CheckerContext | None = None,
     lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
     _ensure_proto_type(function, FunctionProto)
+    if ctx is None:
+        ctx = C.CheckerContext()
+        ctx.ir_version = onnx.helper.find_min_ir_version_for(
+            function.opset_import, ignore_unknown=True
+        )
+        ctx.opset_imports = {
+            domain_version.domain: domain_version.version
+            for domain_version in function.opset_import
+        }
     C.check_function(function.SerializeToString(), ctx, lexical_scope_ctx)
 
 

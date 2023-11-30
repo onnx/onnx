@@ -9,7 +9,6 @@ import numpy as np
 import onnx.defs
 import onnx.parser
 from onnx import (
-    IR_VERSION,
     GraphProto,
     SparseTensorProto,
     TensorProto,
@@ -92,13 +91,7 @@ class TestChecker(unittest.TestCase):
             func_nested_identity_add_nodes,
             func_nested_opset_imports,
         )
-        ctx = checker.C.CheckerContext()
-        ctx.ir_version = IR_VERSION
-        ctx.opset_imports = {"": 14}
-
-        lex_ctx = checker.C.LexicalScopeContext()
-
-        checker.check_function(func_nested_identity_add, ctx, lex_ctx)
+        checker.check_function(func_nested_identity_add)
 
     def test_check_graph_ir_version_3(self) -> None:
         ctx = checker.C.CheckerContext()
