@@ -100,13 +100,14 @@ OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
 
 
 def find_min_ir_version_for(
-    opsetidlist: List[OperatorSetIdProto], ignore_unknown: bool = False
+    opsetidlist: Sequence[OperatorSetIdProto], ignore_unknown: bool = False
 ) -> int:
     """Given list of opset ids, determine minimum IR version required.
 
     Args:
-        opsetidlist (List[OperatorSetIdProto]): The list of OperatorSetIdProto
-        ignore_unknown (bool): If True, ignore unknown domain and return default min version for that domain.
+        opsetidlist: A sequence of OperatorSetIdProto.
+        ignore_unknown: If True, ignore unknown domain and return default minimum
+            version for that domain.
 
     Returns:
         The minimum IR version required (integer)
