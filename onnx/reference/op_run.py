@@ -386,6 +386,38 @@ class OpRun(abc.ABC):
             f"Method '_run' must be overwritten for operator {self.__class__.__name__!r}."
         )
 
+    def _check_and_fix_outputs(self, res: tuple[Any, ...]) -> tuple[Any, ...]:
+        """Checks the output are from the expected type."""
+        if not isinstance(res, tuple):
+            raise TypeError(
+                f"Method '_run' of class {self.__class__.__name__!r} does not return a tuple but '{type(res)}'."
+            )
+        if not res:
+            raise ValueError(
+                f"Method '_run' of class {self.__class__.__name__!r} does not return any result."
+            )
+        if any(isinstance(t, tuple) for t in res):
+            dtypes = [type(t) for t in res]
+            raise TypeError(
+                f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
+                f"is a tuple, this is no ONNX corresponding type (Map, List, Tensor, SparseTensor). "
+                f"All returned types: {dtypes!r}."
+            )
+        res = tuple(  # type: ignore[assignment]
+            (np.array(x) if np.isscalar(x) else x) for x in res
+        )
+        if any(
+            not (isinstance(t, (np.ndarray, list, dict)) or hasattr(t, "todense"))
+            for t in res
+        ):
+            dtypes = [type(t) for t in res]
+            raise TypeError(
+                f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
+                f"has an unexpected type, this is no ONNX correponding type (Map, List, Tensor, SparseTensor). "
+                f"All returned types: {dtypes!r}."
+            )
+        return res
+
     def run(self, *args, linked_attributes=None, context=None):  # type: ignore
         """Calls method ``_run``, catches exceptions,
         displays a longer error message.
@@ -464,23 +496,12 @@ class OpRun(abc.ABC):
                 f"{sorted(kwargs)} and linked attributes={sorted(overridden_attributes)} "
                 f"(operator {self.__class__.__name__!r})."
             ) from e
-        self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
-        if not isinstance(res, tuple):
-            raise TypeError(
-                f"Method '_run' of class {self.__class__.__name__!r} does not return a tuple but {type(res)}."
-            )
-        if len(res) == 0:
-            raise ValueError(
-                f"Method '_run' of class {self.__class__.__name__!r} does not return any result."
-            )
-        if any(isinstance(t, tuple) for t in res):
-            dtypes = [type(t) for t in res]
-            raise TypeError(
-                f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
-                f"is a tuple, this is no onnx correponding type (Map, List, Tensor, SparseTensor). "
-                f"All returned types: {dtypes!r}."
-            )
-        return res
+        self._log(
+            "-- done %s.run -> %d outputs",
+            self.__class__.__name__,
+            len(res) if res is not None else 0,
+        )
+        return self._check_and_fix_outputs(res)
 
     @classmethod
     def infer_name(cls):

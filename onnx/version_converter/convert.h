@@ -610,14 +610,22 @@ class DefaultVersionConverter : public BaseVersionConverter {
     /******** 20 -> 21 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QLinearMatMul", OpSetID(20), OpSetID(21)));
+
+    /******** 21 -> 20 ********/
 
     /******** 21 -> 20 ********/
     const std::vector<TensorProto_DataType> q_dq_20_unallowed_types = {
         TensorProto_DataType_UINT16, TensorProto_DataType_INT16};
+    const std::vector<TensorProto_DataType> q_dqmm_20_unallowed_types = {
+        TensorProto_DataType_BFLOAT16, TensorProto_DataType_FLOAT16};
+
     registerAdapter(
         std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types));
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QLinearMatMul", OpSetID(21), OpSetID(20), q_dqmm_20_unallowed_types));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
