@@ -99,12 +99,6 @@ def cd(path):
 
 
 def get_ext_suffix():
-    if sys.version_info < (3, 8) and sys.platform == "win32":
-        # Workaround for https://bugs.python.org/issue39825
-        # Reference: https://github.com/pytorch/pytorch/commit/4b96fc060b0cb810965b5c8c08bc862a69965667
-        import distutils
-
-        return distutils.sysconfig.get_config_var("EXT_SUFFIX")
     return sysconfig.get_config_var("EXT_SUFFIX")
 
 
@@ -295,12 +289,12 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             dst_dir = TOP_DIR
         else:
             dst_dir = build_lib
-        generated_python_files = (
-            *glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py")),
-            *glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi")),
-        )
-        assert generated_python_files, "Bug: No generated python files found"
-        for src in generated_python_files:
+
+        generated_py_files = glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py"))
+        generated_pyi_files = glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi"))
+        assert generated_py_files, "Bug: No generated python files found"
+        assert generated_pyi_files, "Bug: No generated python stubs found"
+        for src in (*generated_py_files, *generated_pyi_files):
             dst = os.path.join(dst_dir, os.path.relpath(src, CMAKE_BUILD_DIR))
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             self.copy_file(src, dst)
