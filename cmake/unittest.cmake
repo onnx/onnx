@@ -4,6 +4,7 @@ set(UT_NAME ${PROJECT_NAME}_gtests)
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
 include(${ONNX_ROOT}/cmake/Utils.cmake)
+include(CTest)
 
 find_package(Threads)
 
