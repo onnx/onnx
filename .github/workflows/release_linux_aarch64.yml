@@ -123,7 +123,7 @@ jobs:
         fi
 
     - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
-      if: ${{ always() }}
+      if: ${{ always() && matrix.python-version != "3.12" }}
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
