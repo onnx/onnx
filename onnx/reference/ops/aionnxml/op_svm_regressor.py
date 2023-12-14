@@ -8,9 +8,7 @@ from onnx.reference.ops.aionnxml.op_svm_helper import SVMCommon
 
 
 class SVMRegressor(OpRunAiOnnxMl):
-    """
-    The class only implements `POST_TRANSFORM="NONE"`.
-    """
+    """The class only implements `POST_TRANSFORM="NONE"`."""
 
     def _run(  # type: ignore
         self,

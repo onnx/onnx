@@ -371,7 +371,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       list(APPEND PROTOC_ARGS --python_out
                   ${CMAKE_CURRENT_BINARY_DIR})
       if(ONNX_GEN_PB_TYPE_STUBS)
-        # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
           # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
           configure_file(

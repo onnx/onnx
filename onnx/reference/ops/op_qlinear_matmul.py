@@ -22,5 +22,5 @@ class QLinearMatMul(OpRun):
         D = C * (a_scale * b_scale / y_scale)
         if y_zero_point is not None:
             D += y_zero_point
-            return (np.round(D).astype(y_zero_point.dtype),)
-        return (np.round(D).astype(a.dtype),)
+            return (np.rint(D).astype(y_zero_point.dtype),)
+        return (np.rint(D).astype(a.dtype),)

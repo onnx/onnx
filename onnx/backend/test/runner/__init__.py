@@ -137,8 +137,7 @@ class Runner:
 
     @property
     def test_cases(self) -> dict[str, type[unittest.TestCase]]:
-        """
-        List of test cases to be applied on the parent scope
+        """List of test cases to be applied on the parent scope
         Example usage:
             globals().update(BackendTest(backend).test_cases)
         """
@@ -153,8 +152,7 @@ class Runner:
 
     @property
     def test_suite(self) -> unittest.TestSuite:
-        """
-        TestSuite that can be run by TestRunner
+        """TestSuite that can be run by TestRunner
         Example usage:
             unittest.TextTestRunner().run(BackendTest(backend).test_suite)
         """
@@ -168,8 +166,7 @@ class Runner:
     # For backward compatibility (we used to expose `.tests`)
     @property
     def tests(self) -> type[unittest.TestCase]:
-        """
-        One single unittest.TestCase that hosts all the test functions
+        """One single unittest.TestCase that hosts all the test functions
         Example usage:
             onnx_backend_tests = BackendTest(backend).tests
         """
@@ -188,15 +185,35 @@ class Runner:
         outputs: Sequence[Any],
         rtol: float,
         atol: float,
+        model_dir: str | None = None,
     ) -> None:
-        np.testing.assert_equal(len(outputs), len(ref_outputs))
+        try:
+            np.testing.assert_equal(len(outputs), len(ref_outputs))
+        except TypeError as e:
+            raise TypeError(
+                f"Unable to compare expected type {type(ref_outputs)} "
+                f"and runtime type {type(outputs)} (known test={model_dir or '?'!r})"
+            ) from e
         for i in range(len(outputs)):
             if isinstance(outputs[i], (list, tuple)):
+                if not isinstance(ref_outputs[i], (list, tuple)):
+                    raise AssertionError(
+                        f"Unexpected type {type(outputs[i])} for outputs[{i}]. Expected "
+                        f"type is {type(ref_outputs[i])} (known test={model_dir or '?'!r})."
+                    )
                 for j in range(len(outputs[i])):
                     cls.assert_similar_outputs(
-                        ref_outputs[i][j], outputs[i][j], rtol, atol
+                        ref_outputs[i][j],
+                        outputs[i][j],
+                        rtol,
+                        atol,
+                        model_dir=model_dir,
                     )
             else:
+                if not np.issubdtype(ref_outputs[i].dtype, np.number):
+                    if ref_outputs[i].tolist() != outputs[i].tolist():
+                        raise AssertionError(f"{ref_outputs[i]} != {outputs[i]}")
+                    continue
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
                 if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
@@ -298,9 +315,7 @@ class Runner:
     def generate_dummy_data(
         x: ValueInfoProto, seed: int = 0, name: str = "", random: bool = False
     ) -> np.ndarray:
-        """
-        Generates a random tensor based on the input definition.
-        """
+        """Generates a random tensor based on the input definition."""
         if not x.type.tensor_type:
             raise NotImplementedError(
                 f"Input expected to have tensor type. "
@@ -437,9 +452,16 @@ class Runner:
                     test_data = np.load(test_data_npz, encoding="bytes")
                     inputs = list(test_data["inputs"])
                     outputs = list(prepared_model.run(inputs))
-                    ref_outputs = test_data["outputs"]
+                    ref_outputs = tuple(
+                        np.array(x) if not isinstance(x, (list, dict)) else x
+                        for f in test_data["outputs"]
+                    )
                     self.assert_similar_outputs(
-                        ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
+                        ref_outputs,
+                        outputs,
+                        rtol=model_test.rtol,
+                        atol=model_test.atol,
+                        model_dir=model_dir,
                     )
 
             for test_data_dir in glob.glob(os.path.join(model_dir, "test_data_set*")):
@@ -459,7 +481,11 @@ class Runner:
                     )
                 outputs = list(prepared_model.run(inputs))
                 self.assert_similar_outputs(
-                    ref_outputs, outputs, rtol=model_test.rtol, atol=model_test.atol
+                    ref_outputs,
+                    outputs,
+                    rtol=model_test.rtol,
+                    atol=model_test.atol,
+                    model_dir=model_dir,
                 )
 
         if model_test.name in self._test_kwargs:
@@ -488,7 +514,9 @@ class Runner:
             elif model_type_proto.HasField("tensor_type"):
                 tensor = onnx.TensorProto()
                 tensor.ParseFromString(protobuf_content)
-                target_list.append(numpy_helper.to_array(tensor))
+                t = numpy_helper.to_array(tensor)
+                assert isinstance(t, np.ndarray)
+                target_list.append(t)
             elif model_type_proto.HasField("optional_type"):
                 optional = onnx.OptionalProto()
                 optional.ParseFromString(protobuf_content)

@@ -3107,4 +3107,88 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, result_shape_proto);
         }));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    QLinearMatMul,
+    10,
+    OpSchema()
+        .SetDoc(defs::math::utils::QLinearMatMulDoc())
+        .Input(0, "a", "N-dimensional quantized matrix a", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "a_scale",
+            "scale of quantized input a",
+            "tensor(float)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "a_zero_point",
+            "zero point of quantized input a",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(3, "b", "N-dimensional quantized matrix b", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(
+            4,
+            "b_scale",
+            "scale of quantized input b",
+            "tensor(float)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            5,
+            "b_zero_point",
+            "zero point of quantized input b",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            6,
+            "y_scale",
+            "scale of quantized output y",
+            "tensor(float)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            7,
+            "y_zero_point",
+            "zero point of quantized output y",
+            "T3",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "y",
+            "Quantized matrix multiply results from a * b",
+            "T3",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T1",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input a and its zero point data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain input b and its zero point data type to 8-bit integer tensor.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int8)", "tensor(uint8)"},
+            "Constrain output y and its zero point data type to 8-bit integer tensor.")
+        .TypeAndShapeInferenceFunction(defs::math::utils::QLinearMatMulShapeInference));
+
 } // namespace ONNX_NAMESPACE

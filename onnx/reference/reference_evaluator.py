@@ -9,7 +9,16 @@ import numpy as np
 
 from onnx import load
 from onnx.defs import onnx_opset_version
-from onnx.onnx_pb import FunctionProto, GraphProto, ModelProto, NodeProto, TypeProto
+from onnx.external_data_helper import ExternalDataInfo, uses_external_data
+from onnx.model_container import ModelContainer
+from onnx.onnx_pb import (
+    FunctionProto,
+    GraphProto,
+    ModelProto,
+    NodeProto,
+    TensorProto,
+    TypeProto,
+)
 from onnx.reference.op_run import (
     OpFunctionContextDependant,
     OpRun,
@@ -21,36 +30,36 @@ from onnx.reference.ops_optimized import optimized_operators
 
 
 class ReferenceEvaluator:
-    """
-    Computes the outputs of an ONNX proto
-    (`ModelProto`, `FunctionProto`, `GraphProto`, `NodeProto`).
+    r"""Computes the outputs of an ONNX proto (`ModelProto`, `FunctionProto`, `GraphProto`, `NodeProto`).
+
     This is a pure python implementation of ONNX specifications.
     Mismatches may remain between the official specifications and the implementation here.
     In the case of such a mismatch, the official spec overrides this implementation.
 
-    :param proto: :class:`onnx.ModelProto`, :class:`onnx.GraphProto`,
-        :class:`onnx.FunctionProto`, :class:`onnx.NodeProto`,
-        filename or bytes
-    :param verbose: display intermediate results
-        on the standard output during the execution
-    :param opsets: if *proto* is an instance of *GraphProto*,
-        opsets must be defined by a dictionary of
-    :param functions: known onnx functions
-    :param new_ops: this runtime can be used to test the implementations
-        of new operators, *new_ops* is a list of classes
-        derived from :class:`OpRun <onnx.reference.op_run.OpRun>`,
-        every class must define the static attribute `domain`,
-        there may be multiple implementations for the same operator,
-        the first one in the list is used.
-    :param optimized: some operators have two implementations,
-        a naive one corresponding to definition of the mathematical
-        definition of the operator, another one more efficient.
-        This is the case for operator Conv. The naive version is ten times
-        slower than the optimized one using a decomposition
-        into *Conv = im2col + Gemm*. If True, all optimized
-        kernels are added in `new_ops` and are used instead of the
-        inner implementation if list *new_ops* does not already contain
-        one.
+    Args:
+        proto: :class:`onnx.ModelProto`, :class:`onnx.GraphProto`,
+            :class:`onnx.FunctionProto`, :class:`onnx.NodeProto`,
+            filename or bytes
+        verbose: display intermediate results on the standard output
+            during the execution
+        opsets: if *proto* is an instance of *GraphProto*, opsets must
+            be defined by a dictionary of
+        functions: known onnx functions
+        new_ops: this runtime can be used to test the implementations of
+            new operators, *new_ops* is a list of classes derived from
+            :class:`OpRun <onnx.reference.op_run.OpRun>`, every class
+            must define the static attribute `domain`, there may be
+            multiple implementations for the same operator, the first
+            one in the list is used.
+        optimized: some operators have two implementations, a naive one
+            corresponding to definition of the mathematical definition
+            of the operator, another one more efficient. This is the
+            case for operator Conv. The naive version is ten times
+            slower than the optimized one using a decomposition into
+            *Conv = im2col + Gemm*. If True, all optimized kernels are
+            added in `new_ops` and are used instead of the inner
+            implementation if list *new_ops* does not already contain
+            one.
 
     The class maps every node to its associated implementation.
     When a subgraph of a function is met,
@@ -209,6 +218,13 @@ class ReferenceEvaluator:
                         new_ops.append(op)
         self.output_types_ = None
         self.input_types_ = None
+
+        if isinstance(proto, ModelContainer):
+            self.container_ = proto
+            proto = self.container_.model_proto
+        else:
+            self.container_ = None
+
         if isinstance(proto, str):
             with open(proto, "rb") as f:
                 proto = load(f)
@@ -294,6 +310,24 @@ class ReferenceEvaluator:
                 self.new_ops_[key] = cl
         self._init()
 
+    def retrieve_external_data(self, initializer: TensorProto) -> np.array:
+        """Returns a tensor saved as external."""
+        info = ExternalDataInfo(initializer)
+        location = info.location
+        if self.container_ and self.container_.is_in_memory_external_initializer(
+            location
+        ):
+            # It comes from a large container.
+            return self.container_[location]
+        # Otherwise, the data is on disk.
+        if self.container_ is not None:
+            raise RuntimeError(
+                "ReferenceEvaluator assumes a LargeContainer was loaded with its external tensor."
+            )
+        raise RuntimeError(
+            "An instance of LargeContainer should be created before using ReferenceEvaluator."
+        )
+
     def _log_arg(self, a: Any) -> Any:
         if isinstance(a, (str, int, float)):
             return a
@@ -316,33 +350,32 @@ class ReferenceEvaluator:
 
     @property
     def input_names(self):  # type: ignore
-        "Returns the input names."
+        """Returns the input names."""
         return self.input_names_
 
     @property
     def input_types(self):  # type: ignore
-        "Returns the input types if any specified."
+        """Returns the input types if any specified."""
         return self.input_types_
 
     @property
     def output_names(self):  # type: ignore
-        "Returns the output names."
+        """Returns the output names."""
         return self.output_names_
 
     @property
     def output_types(self):  # type: ignore
-        "Returns the output types."
+        """Returns the output types."""
         return self.output_types_
 
     @property
     def opsets(self):  # type: ignore
-        "Returns the opsets."
+        """Returns the opsets."""
         return self.opsets_
 
     @property
     def has_linked_attribute(self):
-        """
-        Checks if the graph has a linked attribute (= an attribute whose value is defined
+        """Checks if the graph has a linked attribute (= an attribute whose value is defined
         by a function attribute.
         """
         return any(node.has_linked_attribute for node in self.rt_nodes_)
@@ -364,13 +397,15 @@ class ReferenceEvaluator:
         return self.all_types_[name]
 
     def _init(self) -> None:
-        """
-        Loads the implementation for every node in the graph.
-        """
+        """Loads the implementation for every node in the graph."""
         self.rt_inits_ = {}
         self.rt_nodes_ = []
         for init in self.inits_:
-            self.rt_inits_[init.name] = to_array_extended(init)  # type: ignore[union-attr,arg-type]
+            self.rt_inits_[init.name] = (
+                self.retrieve_external_data(init)
+                if uses_external_data(init)
+                else to_array_extended(init)
+            )
         run_params = {
             "log": lambda pattern, *args: self._log(10, pattern, *args),
             "opsets": self.opsets,
@@ -419,9 +454,7 @@ class ReferenceEvaluator:
     def _load_impl(  # noqa: PLR0911
         self, node: NodeProto, input_types: Optional[TypeProto] = None
     ) -> Any:
-        """
-        Loads the implementation for a specified runtime.
-        """
+        """Loads the implementation for a specified runtime."""
         if node.domain not in self.opsets:
             raise RuntimeError(
                 f"Domain {node.domain!r} (node type: {node.op_type!r}) "
@@ -490,14 +523,16 @@ class ReferenceEvaluator:
         )
 
     def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Optional[Dict[str, Any]] = None):  # type: ignore
-        """
-        Executes the onnx model.
+        """Executes the onnx model.
 
-        :param output_names: requested outputs by names,
-            None for all
-        :param feed_inputs: dictionary `{ input name: input value }`
-        :param attributes: attributes value if the instance runs a FunctionProto
-        :return: list of requested outputs
+        Args:
+            output_names: requested outputs by names, None for all
+            feed_inputs: dictionary `{ input name: input value }`
+            attributes: attributes value if the instance runs a
+                FunctionProto
+
+        Returns:
+            list of requested outputs
         """
         if output_names is None:
             output_names = self.output_names
@@ -516,6 +551,13 @@ class ReferenceEvaluator:
         # step 2: execute nodes
         for node in self.rt_nodes_:
             self._log(1, "%s(%s) -> %s", node.op_type, node.input, node.output)
+            for i in node.input:
+                if i not in results:
+                    raise RuntimeError(
+                        f"Unable to find input {i!r} in known results {sorted(results)}, "
+                        f"self.rt_inits_ has {sorted(self.rt_inits_)}, "
+                        f"feed_inputs has {sorted(feed_inputs)}."
+                    )
             inputs = [results[i] for i in node.input]
             linked_attributes = {}
             if node.has_linked_attribute and attributes:
@@ -525,19 +567,13 @@ class ReferenceEvaluator:
             else:
                 outputs = node.run(*inputs, **linked_attributes)
             for name, value in zip(node.output, outputs):
-                if isinstance(value, tuple):
-                    raise TypeError(
-                        f"Unexected type {type(value)} for output {name!r}."
-                    )
                 self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
 
         # return the results
-        list_results: List[Any] = []
         for name in output_names:
             if name not in results:
                 raise RuntimeError(
                     f"Unable to find output name {name!r} in {sorted(results)}, proto is\n{self.proto_}"
                 )
-            list_results.append(results[name])
-        return list_results
+        return [results[name] for name in output_names]

@@ -98,8 +98,10 @@ class TestChecker(unittest.TestCase):
         ctx.ir_version = 3
         ctx.opset_imports = {"": onnx.defs.onnx_opset_version()}
 
+        lex_ctx = checker.C.LexicalScopeContext()
+
         def check_ir_version_3(g: GraphProto) -> None:
-            checker.check_graph(g, ctx)
+            checker.check_graph(g, ctx, lex_ctx)
 
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(

@@ -11,8 +11,8 @@ from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 
 class OpRunUnary(OpRun):
-    """
-    Ancestor to all unary operators in this subfolder.
+    """Ancestor to all unary operators in this subfolder.
+
     Checks that input and output types are the same.
     """
 
@@ -20,9 +20,8 @@ class OpRunUnary(OpRun):
         OpRun.__init__(self, onnx_node, run_params)
 
     def run(self, x):  # type: ignore
-        """
-        Calls method ``_run``, catches exceptions,
-        displays a longer error message.
+        """Calls method ``_run``, catches exceptions, displays a longer error message.
+
         Supports only unary operators.
         """
         self._log("-- begin %s.run(1 input)", self.__class__.__name__)
@@ -34,23 +33,22 @@ class OpRunUnary(OpRun):
                 f"(unary operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunUnaryNum(OpRunUnary):
-    """
-    Ancestor to all unary and numerical operators
-    in this subfolder. Checks that input and output types
-    are the same.
+    """Ancestor to all unary and numerical operators in this subfolder.
+
+    Checks that input and output types are the same.
     """
 
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
         OpRunUnary.__init__(self, onnx_node, run_params)
 
     def run(self, x):  # type: ignore
-        """
-        Calls method ``OpRunUnary.run``, catches exceptions,
-        displays a longer error message.
+        """Calls method ``OpRunUnary.run``.
+
+        Catches exceptions, displays a longer error message.
         Checks that the result is not empty.
         """
         res = OpRunUnary.run(self, x)
@@ -61,12 +59,12 @@ class OpRunUnaryNum(OpRunUnary):
                 f"Output type mismatch: input '{x.dtype}' != output '{res[0].dtype}' "
                 f"(operator {self.__class__.__name__!r})."
             )
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunBinary(OpRun):
-    """
-    Ancestor to all binary operators in this subfolder.
+    """Ancestor to all binary operators in this subfolder.
+
     Checks that input and output types are the same.
     """
 
@@ -74,9 +72,8 @@ class OpRunBinary(OpRun):
         OpRun.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore
-        """
-        Calls method ``_run``, catches exceptions,
-        displays a longer error message.
+        """Calls method ``_run``, catches exceptions, displays a longer error message.
+
         Supports only binary operators.
         """
         self._log("-- begin %s.run(2 inputs)", self.__class__.__name__)
@@ -98,22 +95,19 @@ class OpRunBinary(OpRun):
                 f"(binary operator {self.__class__.__name__!r})."
             ) from e
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunBinaryComparison(OpRunBinary):
-    """
-    Ancestor to all binary operators in this subfolder
-    comparing tensors.
-    """
+    """Ancestor to all binary operators in this subfolder comparing tensors."""
 
     def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
         OpRunBinary.__init__(self, onnx_node, run_params)
 
 
 class OpRunBinaryNum(OpRunBinary):
-    """
-    Ancestor to all binary operators in this subfolder.
+    """Ancestor to all binary operators in this subfolder.
+
     Checks that input oud output types are the same.
     """
 
@@ -121,10 +115,7 @@ class OpRunBinaryNum(OpRunBinary):
         OpRunBinary.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore
-        """
-        Calls method ``OpRunBinary.run``, catches exceptions,
-        displays a longer error message.
-        """
+        """Calls method ``OpRunBinary.run``, catches exceptions, displays a longer error message."""
         res = OpRunBinary.run(self, x, y)
         if res[0].dtype != x.dtype:
             raise RuntimeTypeError(
@@ -132,12 +123,11 @@ class OpRunBinaryNum(OpRunBinary):
                 f"(operator {self.__class__.__name__!r})"
                 f" type(x)={type(x)} type(y)={type(y)}"
             )
-        return res
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunBinaryNumpy(OpRunBinaryNum):
-    """
-    *numpy_fct* is a binary numpy function which
+    """*numpy_fct* is a binary numpy function which
     takes two matrices.
     """
 
@@ -148,12 +138,12 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         self.numpy_fct = numpy_fct
 
     def _run(self, a, b):  # type: ignore
-        return (self.numpy_fct(a, b),)
+        res = (self.numpy_fct(a, b),)
+        return self._check_and_fix_outputs(res)
 
 
 class OpRunReduceNumpy(OpRun):  # type: ignore
-    """
-    Implements the reduce logic.
+    """Implements the reduce logic.
     It must have a parameter *axes*.
     """
 
