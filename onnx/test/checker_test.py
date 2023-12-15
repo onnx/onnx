@@ -1066,15 +1066,12 @@ class TestChecker(unittest.TestCase):
         graph_def = helper.make_graph([node_def], 'simple_model', [input_tensor], [output_tensor])
         model_def = helper.make_model(graph_def, producer_name='simple_onnx_generator')
 
-        self.unicode_model_path = '程序员.onnx'
-        onnx.save(model_def, self.unicode_model_path)
-
-        checker.check_model(self.unicode_model_path, True, True)
-
-    def tearDown(self):
-        # Clean up resources after tests
-        import os
-        os.remove(self.unicode_model_path)
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp_dir:
+            import os
+            unicode_model_path = os.path.join(temp_dir, "程序员.onnx")
+            onnx.save(model_def, unicode_model_path)
+            checker.check_model(unicode_model_path, True, True)
 
 
 if __name__ == "__main__":
