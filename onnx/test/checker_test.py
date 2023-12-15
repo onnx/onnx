@@ -1058,6 +1058,24 @@ class TestChecker(unittest.TestCase):
         # Should not throw an error
         checker.check_model(model, full_check=True)
 
+    def test_check_model_unicode_onnx_name(self) -> None:
+        # create temp model file
+        input_tensor = helper.make_tensor_value_info('input', onnx.TensorProto.FLOAT, [1])
+        output_tensor = helper.make_tensor_value_info('output', onnx.TensorProto.FLOAT, [1])
+        node_def = helper.make_node('Identity', ['input'], ['output'])
+        graph_def = helper.make_graph([node_def], 'simple_model', [input_tensor], [output_tensor])
+        model_def = helper.make_model(graph_def, producer_name='simple_onnx_generator')
+
+        self.unicode_model_path = '程序员.onnx'
+        onnx.save(model_def, self.unicode_model_path)
+
+        checker.check_model(self.unicode_model_path, True, True)
+
+    def tearDown(self):
+        # Clean up resources after tests
+        import os
+        os.remove(self.unicode_model_path)
+
 
 if __name__ == "__main__":
     unittest.main()
