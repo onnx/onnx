@@ -11451,7 +11451,7 @@ Other versions of this operator: <a href="Changelog.md#GroupNormalization-18">18
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -11459,33 +11459,15 @@ Other versions of this operator: <a href="Changelog.md#GroupNormalization-18">18
 #### Examples
 
 <details>
-<summary>groupnormalization</summary>
+<summary>epsilon</summary>
 
 ```python
-x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+c = 4
 num_groups = 2
-scale = np.random.randn(4).astype(np.float32)
-bias = np.random.randn(4).astype(np.float32)
-y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
-
-node = onnx.helper.make_node(
-    "GroupNormalization",
-    inputs=["x", "scale", "bias"],
-    outputs=["y"],
-    num_groups=num_groups,
-)
-
-expect(
-    node,
-    inputs=[x, scale, bias],
-    outputs=[y],
-    name="test_group_normalization_example",
-)
-
-x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+x = np.random.randn(3, c, 2, 2).astype(np.float32)
 num_groups = 2
-scale = np.random.randn(4).astype(np.float32)
-bias = np.random.randn(4).astype(np.float32)
+scale = np.random.randn(c).astype(np.float32)
+bias = np.random.randn(c).astype(np.float32)
 epsilon = 1e-2
 y = _group_normalization(x, num_groups, scale, bias, epsilon).astype(np.float32)
 
@@ -11502,6 +11484,35 @@ expect(
     inputs=[x, scale, bias],
     outputs=[y],
     name="test_group_normalization_epsilon",
+)
+```
+
+</details>
+
+
+<details>
+<summary>groupnormalization</summary>
+
+```python
+c = 4
+num_groups = 2
+x = np.random.randn(3, c, 2, 2).astype(np.float32)
+scale = np.random.randn(c).astype(np.float32)
+bias = np.random.randn(c).astype(np.float32)
+y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_example",
 )
 ```
 
