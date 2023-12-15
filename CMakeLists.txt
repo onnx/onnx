@@ -12,6 +12,7 @@ if(NOT CMAKE_BUILD_TYPE)
     FORCE)
 endif()
 cmake_policy(SET CMP0063 NEW)
+cmake_policy(SET CMP0074 NEW)
 
 # Project
 project(onnx C CXX)
@@ -118,8 +119,14 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
 endif()
 
 if(ONNX_BUILD_TESTS)
-  list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
-  include(googletest)
+  find_package(GTest)
+  if(GTest_FOUND)
+    set(googletest_INCLUDE_DIRS)
+    set(googletest_STATIC_LIBRARIES GTest::gtest)
+  else()
+    list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
+    include(googletest)
+  endif()
 endif()
 
 if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
@@ -623,7 +630,10 @@ if(ONNX_BUILD_BENCHMARKS)
     set(BENCHMARK_ENABLE_INSTALL OFF
         CACHE BOOL
               "Disable benchmark install to avoid overwriting vendor install.")
-    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/benchmark)
+    find_package(benchmark)
+    if(NOT benchmark_FOUND)
+      add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/benchmark)
+    endif()
   endif()
 
   add_executable(protobuf-bench tools/protobuf-bench.cc)
@@ -632,7 +642,7 @@ if(ONNX_BUILD_BENCHMARKS)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
-  target_link_libraries(protobuf-bench onnx_proto benchmark)
+  target_link_libraries(protobuf-bench onnx_proto benchmark::benchmark)
 endif()
 
 # Export include directories
