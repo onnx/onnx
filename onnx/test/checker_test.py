@@ -1,5 +1,6 @@
 # Copyright (c) ONNX Project Contributors
-
+import os
+import tempfile
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 from typing import Sequence
@@ -1066,10 +1067,8 @@ class TestChecker(unittest.TestCase):
         graph_def = helper.make_graph([node_def], 'simple_model', [input_tensor], [output_tensor])
         model_def = helper.make_model(graph_def, producer_name='simple_onnx_generator')
 
-        import tempfile
         with tempfile.TemporaryDirectory() as temp_dir:
-            import os
-            unicode_model_path = os.path.join(temp_dir, "程序员.onnx")
+            unicode_model_path = os.path.join(temp_dir, "模型モデル모델✨.onnx")
             onnx.save(model_def, unicode_model_path)
             checker.check_model(unicode_model_path, True, True)
 
