@@ -1061,8 +1061,12 @@ class TestChecker(unittest.TestCase):
         checker.check_model(model, full_check=True)
 
     def test_check_model_supports_unicode_path(self):
-        input_tensor = helper.make_tensor_value_info("input", onnx.TensorProto.FLOAT, [1])
-        output_tensor = helper.make_tensor_value_info("output", onnx.TensorProto.FLOAT, [1])
+        input_tensor = helper.make_tensor_value_info(
+            "input", onnx.TensorProto.FLOAT, [1]
+        )
+        output_tensor = helper.make_tensor_value_info(
+            "output", onnx.TensorProto.FLOAT, [1]
+        )
         node = helper.make_node("Identity", ["input"], ["output"])
         graph = helper.make_graph([node], "test", [input_tensor], [output_tensor])
         model = helper.make_model(graph, producer_name="test")
