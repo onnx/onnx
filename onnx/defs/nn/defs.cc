@@ -2710,7 +2710,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* GroupNormalization_ver18_doc = R"DOC(
+static const char* GroupNormalization_ver21_doc = R"DOC(
 A GroupNormalization function. Carries out group normalization as described in
 the paper https://arxiv.org/abs/1803.08494
 
@@ -2723,6 +2723,14 @@ where the mean and variance are computed per instance per group of channels, and
 groups `num_groups` should be divisible by the number of channels so that there are
 an equal number of channels per group.
 
+The overall computation has two stages: the first stage normalizes the elements to
+have zero mean and unit variance for each instance in each group, and the second
+stage scales and shifts the results of the first stage. The floating-point precision
+used in the first stage is determined by the `stash_type` attribute. For example,
+if `stash_type` is 1, the operator casts all input variables to 32-bit float,
+performs the computation, and finally casts the normalized results back to the
+original type of `X`. The second stage does not edepend on `stash_type`.
+
 When the number of groups is the same as the number of channels, this operator is
 equivalent to InstanceNormalization. When there is only one group, this operator
 is equivalent to LayerNormalization.
@@ -2730,15 +2738,20 @@ is equivalent to LayerNormalization.
 
 ONNX_OPERATOR_SET_SCHEMA(
     GroupNormalization,
-    18,
+    21,
     OpSchema()
-        .SetDoc(GroupNormalization_ver18_doc)
+        .SetDoc(GroupNormalization_ver21_doc)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "num_groups",
             "The number of groups of channels. It should be a divisor of the number of channels `C`.",
             AttributeProto::INT,
             true)
+        .Attr(
+            "stash_type",
+            "The floating-point precision used in stage one of the computation.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
         .Input(
             0,
             "X",
@@ -2751,24 +2764,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .Input(
-            1,
-            "scale",
-            "Scale tensor of shape `(num_groups)`.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            2,
-            "bias",
-            "Bias tensor of shape `(num_groups)`.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(1, "scale", "Scale tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(2, "bias", "Bias tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
             "Y",
@@ -2782,64 +2779,77 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
-        .SetContextDependentFunctionBodyBuilder(
-            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
-              auto* tp = ctx.getInputType(0);
-              if ((tp == nullptr) || (!tp->has_tensor_type()))
-                return false;
-              int64_t T = tp->tensor_type().elem_type();
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
+          auto* tp = ctx.getInputType(0);
+          if ((tp == nullptr) || (!tp->has_tensor_type()))
+            return false;
+          int64_t T = tp->tensor_type().elem_type();
 
-              auto* epsilon_attr = ctx.getAttribute("epsilon");
-              float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
-              auto* num_groups_attr = ctx.getAttribute("num_groups");
-              if (num_groups_attr == nullptr)
-                return false;
-              int64_t num_groups = num_groups_attr->i();
+          auto* epsilon_attr = ctx.getAttribute("epsilon");
+          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+          auto* num_groups_attr = ctx.getAttribute("num_groups");
+          if (num_groups_attr == nullptr)
+            return false;
+          int64_t num_groups = num_groups_attr->i();
 
-              FunctionBuilder builder(functionProto);
-              builder.Const1D("FloatEpsilon", epsilon)
-                  .Add("Epsilon = Cast (FloatEpsilon)", "to", T)
-                  .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
-                  .Add("C = Shape <start = 1, end = 2> (X)")
-                  .Const1D("NumGroups", num_groups)
-                  .Add("GroupSize = Div (C, NumGroups)")
-                  .Add("N = Shape <start = 0, end = 1> (X)") // batch size
-                  .Add("InstanceShape = Shape <start = 2> (X)") // data instance shape
+          auto type_attr = ctx.getAttribute("stash_type");
+          int64_t U = (type_attr != nullptr) ? type_attr->i()
+                                             : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) && (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16))
+            return false; // Error
 
-                  // NewShape = [N, num_groups, group_size, H, W, (...)]
-                  .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, InstanceShape)")
-                  .Add("XReshaped = Reshape (X, NewShape)")
+          FunctionBuilder builder(functionProto);
+          builder.Const1D("FloatEpsilon", epsilon)
+              .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+              .Add("XU = Cast (X)", "to", U)
+              .Add("XShape = Shape (XU)") // shape of input tensor: 1D tensor
+              .Add("C = Shape <start = 1, end = 2> (X)")
+              .Const1D("NumGroups", num_groups)
+              .Add("GroupSize = Div (C, NumGroups)")
+              .Add("N = Shape <start = 0, end = 1> (X)") // batch size
+              .Add("InstanceShape = Shape <start = 2> (X)") // data instance shape
 
-                  // Flatten into 3D tensor: [N, num_groups, group_size x H x W (x ...)]
-                  .Add("Shape3D = Constant <value_ints = [0, 0, -1]> ()")
-                  .Add("X3D = Reshape(XReshaped, Shape3D)")
+              // NewShape = [N, num_groups, group_size, H, W, (...)]
+              .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, InstanceShape)")
+              .Add("XReshaped = Reshape (XU, NewShape)")
 
-                  // Calculate statistics
-                  .Const1D("Axes2", (int64_t)2)
-                  .Add("Mean = ReduceMean (X3D, Axes2)")
-                  .Add("Square = Mul (X3D, X3D)")
-                  .Add("MeanOfSquare = ReduceMean (Square, Axes2)")
-                  .Add("SquareOfMean = Mul (Mean, Mean)")
-                  .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
-                  .Add("VarPlusEpsilon = Add (Var, Epsilon)")
-                  .Add("StdDev = Sqrt (VarPlusEpsilon)")
-                  .Add("Deviation = Sub (X3D, Mean)")
-                  .Add("Normalized = Div (Deviation, StdDev)")
+              // Flatten into 3D tensor: [N, num_groups, group_size x H x W (x ...)]
+              .Add("Shape3D = Constant <value_ints = [0, 0, -1]> ()")
+              .Add("X3D = Reshape (XReshaped, Shape3D)")
 
-                  // Reshape scale and bias for broadcasting
-                  .Add("ScaleShape = Constant <value_ints = [1, -1, 1]> ()")
-                  .Add("ScaleT = Cast (scale)", "to", T)
-                  .Add("BiasT = Cast (bias)", "to", T)
-                  .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
-                  .Add("BiasReshaped = Reshape (BiasT, ScaleShape)")
+              // Calculate statistics
+              .Const1D("Axes2", (int64_t)2)
+              .Add("Mean = ReduceMean (X3D, Axes2)")
+              .Add("Square = Mul (X3D, X3D)")
+              .Add("MeanOfSquare = ReduceMean (Square, Axes2)")
+              .Add("SquareOfMean = Mul (Mean, Mean)")
+              .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
+              .Add("VarPlusEpsilon = Add (Var, Epsilon)")
+              .Add("StdDev = Sqrt (VarPlusEpsilon)")
+              .Add("Deviation = Sub (X3D, Mean)")
+              .Add("NormalizedU = Div (Deviation, StdDev)")
 
-                  // Calculate scaled and biased output
-                  .Add("Scaled = Mul (ScaleReshaped, Normalized)")
-                  .Add("Biased = Add (Scaled, BiasReshaped)")
-                  .Add("Y = Reshape (Biased, XShape)");
+              // Reshape to [N, C, H x W (x ...)] and cast to original type
+              .Add("NormalizedOriginalShape = Reshape (NormalizedU, XShape)")
+              .Add("NormalizedNC = Reshape (NormalizedOriginalShape, Shape3D)")
+              .Add("NormalizedT = Cast (NormalizedNC)", "to", T)
 
-              schema.BuildFunction(functionProto);
-              return true;
-            }));
+              // Reshape scale and bias to [1, C, 1] for broadcasting
+              .Add("ScaleShape = Constant <value_ints = [1, -1, 1]> ()")
+              .Add("ScaleT = Cast (scale)", "to", T)
+              .Add("BiasT = Cast (bias)", "to", T)
+              .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
+              .Add("BiasReshaped = Reshape (BiasT, ScaleShape)")
+
+              // Calculate scaled and biased output
+              .Add("Scaled = Mul (ScaleReshaped, NormalizedT)")
+              .Add("Biased = Add (Scaled, BiasReshaped)")
+              .Add("Y = Reshape (Biased, XShape)");
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
 } // namespace ONNX_NAMESPACE

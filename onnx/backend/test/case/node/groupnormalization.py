@@ -20,11 +20,11 @@ def _group_normalization(x, num_groups, scale, bias, epsilon=1e-5):
     axes = tuple(range(2, len(new_shape)))
     mean = np.mean(x_reshaped, axis=axes, keepdims=True)
     var = np.var(x_reshaped, axis=axes, keepdims=True)
-    dim_ones = (1,) * (len(new_shape) - 2)
+    x_normalized = ((x_reshaped - mean) / np.sqrt(var + epsilon)).reshape(x.shape)
+    dim_ones = (1,) * (len(x.shape) - 2)
     scale = scale.reshape(-1, *dim_ones)
     bias = bias.reshape(-1, *dim_ones)
-    res = scale * (x_reshaped - mean) / np.sqrt(var + epsilon) + bias
-    return res.reshape(x.shape)
+    return scale * x_normalized + bias
 
 
 class GroupNormalization(Base):
@@ -32,8 +32,8 @@ class GroupNormalization(Base):
     def export() -> None:
         x = np.random.randn(3, 4, 2, 2).astype(np.float32)
         num_groups = 2
-        scale = np.random.randn(num_groups).astype(np.float32)
-        bias = np.random.randn(num_groups).astype(np.float32)
+        scale = np.random.randn(4).astype(np.float32)
+        bias = np.random.randn(4).astype(np.float32)
         y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
 
         node = onnx.helper.make_node(
@@ -52,8 +52,8 @@ class GroupNormalization(Base):
 
         x = np.random.randn(3, 4, 2, 2).astype(np.float32)
         num_groups = 2
-        scale = np.random.randn(num_groups).astype(np.float32)
-        bias = np.random.randn(num_groups).astype(np.float32)
+        scale = np.random.randn(4).astype(np.float32)
+        bias = np.random.randn(4).astype(np.float32)
         epsilon = 1e-2
         y = _group_normalization(x, num_groups, scale, bias, epsilon).astype(np.float32)
 

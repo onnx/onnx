@@ -7834,8 +7834,8 @@ There are 1 test cases, listed as following:
 ```python
 x = np.random.randn(3, 4, 2, 2).astype(np.float32)
 num_groups = 2
-scale = np.random.randn(num_groups).astype(np.float32)
-bias = np.random.randn(num_groups).astype(np.float32)
+scale = np.random.randn(4).astype(np.float32)
+bias = np.random.randn(4).astype(np.float32)
 y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
 
 node = onnx.helper.make_node(
@@ -7854,8 +7854,8 @@ expect(
 
 x = np.random.randn(3, 4, 2, 2).astype(np.float32)
 num_groups = 2
-scale = np.random.randn(num_groups).astype(np.float32)
-bias = np.random.randn(num_groups).astype(np.float32)
+scale = np.random.randn(4).astype(np.float32)
+bias = np.random.randn(4).astype(np.float32)
 epsilon = 1e-2
 y = _group_normalization(x, num_groups, scale, bias, epsilon).astype(np.float32)
 
