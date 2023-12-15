@@ -6,9 +6,9 @@
 
 #pragma once
 
+#include <filesystem>
 #include <fstream>
 #include <string>
-#include <filesystem>
 
 #include "onnx/checker.h"
 #include "onnx/common/path.h"
