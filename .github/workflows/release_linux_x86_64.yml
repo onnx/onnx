@@ -75,18 +75,6 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-    - name: Verify ONNX with the minimum supported numpy
-      if: ${{ always() }}
-      run: |
-        if [[ "${{ matrix.python-version }}" == "3.8" || "${{ matrix.python-version }}" == "3.9" ]]; then
-          export minimum_numpy_version=1.16.6
-        else
-          export minimum_numpy_version=1.23.2
-        fi
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$minimum_numpy_version
-        python -m pip install dist/*manylinux2014_x86_64.whl
-        pytest
-
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
@@ -94,10 +82,10 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
-      if: ${{ always() && matrix.python-version != "3.12" }}
+    - name: Verify ONNX with the minimumly supported packages
+      if: ${{ always() }}
       run: |
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.20.2
+        python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
