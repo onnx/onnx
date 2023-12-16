@@ -2796,7 +2796,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   ? stash_type_attr->i()
                   : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
               if ((stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16))
+                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
                 return false; // Error
 
               FunctionBuilder builder(functionProto);

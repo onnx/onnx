@@ -7835,7 +7835,6 @@ There are 2 test cases, listed as following:
 c = 4
 num_groups = 2
 x = np.random.randn(3, c, 2, 2).astype(np.float32)
-num_groups = 2
 scale = np.random.randn(c).astype(np.float32)
 bias = np.random.randn(c).astype(np.float32)
 epsilon = 1e-2
