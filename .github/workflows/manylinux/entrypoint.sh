@@ -15,8 +15,8 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
 # Compile wheels
 # Need to be updated if there is a new Python Version
-PIP_INSTALL_COMMAND="$PY_VERSION -m pip install --no-cache-dir -q"
-PYTHON_COMMAND="$PY_VERSION"
+PIP_INSTALL_COMMAND="python$PY_VERSION -m pip install --no-cache-dir -q"
+PYTHON_COMMAND="python$PY_VERSION"
 declare -A python_map=( ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312")
 PY_VER=${python_map[$PY_VERSION]}
 
