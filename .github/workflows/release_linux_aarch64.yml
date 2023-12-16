@@ -98,7 +98,7 @@ jobs:
           pytest && \
           deactivate'
 
-    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+    - name: Verify ONNX with the minimumly supported packages
       if: ${{ always() }}
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
