@@ -21,8 +21,11 @@ from onnx.reference.custom_element_types import (
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
+    int4,
+    uint4,
 )
 from onnx.reference.op_run import OpRun
+from onnx.subbyte_helper import float32_to_4bit_unpacked
 
 
 class _CommonQuantizeLinear(OpRun):
@@ -53,6 +56,10 @@ class _CommonQuantizeLinear(OpRun):
             and zero_point.dtype.descr[0][0] == "e5m2fnuz"
         ):
             return TensorProto.FLOAT8E5M2FNUZ
+        if zero_point.dtype == uint4 and zero_point.dtype.descr[0][0] == "uint4":
+            return TensorProto.UINT4
+        if zero_point.dtype == int4 and zero_point.dtype.descr[0][0] == "int4":
+            return TensorProto.INT4
         return np_dtype_to_tensor_dtype(zero_point.dtype)
 
     def common_run(
@@ -106,6 +113,20 @@ class _CommonQuantizeLinear(OpRun):
                     x, fn=True, uz=True, saturate=saturate
                 )
                 return (f8.astype(float8e5m2fnuz),)  # type: ignore[attr-defined]
+
+            if tensor_type in (TensorProto.UINT4, TensorProto.INT4):
+                xi = np.rint(x).astype(np.int32)
+                if len(y_scale.shape) > 0:
+                    xi += zero_point.reshape(new_shape)
+                else:
+                    xi += zero_point
+
+                single_func = lambda x: float32_to_4bit_unpacked(
+                    x, signed=(tensor_type == TensorProto.INT4)
+                )
+                func = np.vectorize(single_func)
+                i4 = func(xi)
+                return (i4,)  # type: ignore[attr-defined]
 
             raise RuntimeError(
                 f"Unexpected tensor_type for input 2: tensor_type={tensor_type}, "

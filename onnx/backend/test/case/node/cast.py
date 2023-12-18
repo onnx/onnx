@@ -17,6 +17,8 @@ from onnx.helper import (
     tensor_dtype_to_field,
 )
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32
+from onnx.reference.custom_element_types import int4, uint4
+from onnx.subbyte_helper import float32_to_4bit_unpacked
 
 
 class Cast(Base):
@@ -50,10 +52,25 @@ class Cast(Base):
             ("FLOAT8E5M2", "FLOAT16"),
             ("FLOAT8E5M2FNUZ", "FLOAT"),
             ("FLOAT8E5M2FNUZ", "FLOAT16"),
+            ("FLOAT", "UINT4"),
+            ("FLOAT16", "UINT4"),
+            ("FLOAT", "INT4"),
+            ("FLOAT16", "INT4"),
+            ("UINT4", "FLOAT"),
+            ("UINT4", "FLOAT16"),
+            ("INT4", "FLOAT"),
+            ("INT4", "FLOAT16"),
         ]
 
         vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
         vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+        vect_float32_to_uint4 = np.vectorize(
+            lambda x: float32_to_4bit_unpacked(x, signed=False)
+        )
+        vect_float32_to_int4 = np.vectorize(
+            lambda x: float32_to_4bit_unpacked(x, signed=True)
+        )
+
         f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
 
         for from_type, to_type in test_cases:
@@ -206,6 +223,55 @@ class Cast(Base):
                     "x", getattr(TensorProto, to_type), [3, 5], expected.tolist()
                 )
                 output = expected_tensor
+            elif from_type in ("UINT4", "INT4") or to_type in ("UINT4", "INT4"):
+                np_fp32 = np.arange(-9, 16).astype(np.float32)
+                input_shape = (5, 5)
+                if from_type == "FLOAT":
+                    input_values = np_fp32
+                    input = make_tensor(
+                        "x", TensorProto.FLOAT, input_shape, input_values.tolist()
+                    )
+                elif from_type == "FLOAT16":
+                    input_values = np_fp32.astype(np.float16)
+                    input = make_tensor(
+                        "x", TensorProto.FLOAT16, input_shape, input_values.tolist()
+                    )
+                elif from_type == "UINT4":
+                    input_values = vect_float32_to_uint4(np_fp32)
+                    input = make_tensor(
+                        "x", TensorProto.UINT4, input_shape, input_values.tolist()
+                    )
+                elif from_type == "INT4":
+                    input_values = vect_float32_to_int4(np_fp32)
+                    input = make_tensor(
+                        "x", TensorProto.INT4, input_shape, input_values.tolist()
+                    )
+                else:
+                    raise ValueError(
+                        "Conversion from {from_type} to {to_type} is not tested."
+                    )
+                if to_type == "UINT4":
+                    expected = vect_float32_to_uint4(input_values).astype(uint4)
+                elif to_type == "INT4":
+                    expected = vect_float32_to_int4(input_values).astype(int4)
+                elif to_type == "FLOAT16":
+                    expected = input_values.astype(np.float16)
+                elif to_type == "FLOAT":
+                    expected = input_values
+                else:
+                    raise ValueError(
+                        "Conversion from {from_type} to {to_type} is not tested."
+                    )
+                expected_tensor = make_tensor(
+                    "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
+                )
+                output = expected_tensor
+                input_type_proto = onnx.helper.make_tensor_type_proto(
+                    getattr(TensorProto, from_type), input_shape
+                )
+                output_type_proto = onnx.helper.make_tensor_type_proto(
+                    getattr(TensorProto, to_type), input_shape
+                )
 
             elif from_type != "STRING":
                 input = np.random.random_sample(shape).astype(

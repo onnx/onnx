@@ -155,6 +155,10 @@ if ort is not None:
         "|test_quantizelinear_axis"  # y_scale must be a scalar or 1D tensor of size 1.
         "|test_quantizelinear"  # No corresponding Numpy type for Tensor Type.
         "|test_affine_grid_"  # new IR version 9 and opset version 20 not supported yet.
+        "|test_quantizelinear_uint4"  # No corresponding Numpy type for Tensor Type.
+        "|test_quantizelinear_int4"  # No corresponding Numpy type for Tensor Type.
+        "|test_dequantizelinear_uint4"  # No corresponding Numpy type for Tensor Type.
+        "|test_dequantizelinear_int4"  # No corresponding Numpy type for Tensor Type.
         ")"
     )
 
