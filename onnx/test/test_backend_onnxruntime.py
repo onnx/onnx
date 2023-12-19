@@ -208,7 +208,7 @@ backend_test.exclude(
 )
 
 # The following tests are new with opset 19 and 20, or ai.onnx.ml 4
-if ort_version is not None and ort_version < Version("1.17"):
+if ort_version is not None and ort_version < Version("1.16"):
     backend_test.exclude(
         "("
         "averagepool"
@@ -225,7 +225,7 @@ if ort_version is not None and ort_version < Version("1.17"):
         "|reshape"
         ")"
     )
-if ort_version is not None and ort_version < Version("1.18"):
+if ort_version is not None and ort_version < Version("1.17"):
     backend_test.exclude(
         "("
         "deform_conv"
