@@ -4,9 +4,7 @@
 
 from __future__ import annotations
 
-import os
 import platform
-import sys
 import unittest
 from typing import Any, ClassVar
 
@@ -17,21 +15,16 @@ import onnx.backend.base
 import onnx.backend.test
 import onnx.shape_inference
 import onnx.version_converter
-from onnx import ModelProto
 from onnx.backend.base import Device, DeviceType
 
 try:
-    from onnxruntime import InferenceSession
-    from onnxruntime import __version__ as ort_version
-    from onnxruntime import get_available_providers
-    from onnxruntime.capi.onnxruntime_pybind11_state import InvalidArgument
+    import onnxruntime as ort
+
+    ort_version = Version(ort.__version__)
 except ImportError:
     # onnxruntime is not installed, all tests are skipped.
-    InferenceSession = None
-    ort_version = None
-
-    def get_available_providers():
-        return []
+    ort: Any = None  # type: ignore[no-redef]
+    ort_version: Any = None  # type: ignore[no-redef]
 
 
 # The following just executes a backend based on InferenceSession through the backend test
@@ -42,6 +35,7 @@ class InferenceSessionBackendRep(onnx.backend.base.BackendRep):
         self._session = session
 
     def run(self, inputs, **kwargs):
+        del kwargs  # Unused
         if isinstance(inputs, numpy.ndarray):
             inputs = [inputs]
         if isinstance(inputs, list):
@@ -66,12 +60,18 @@ class InferenceSessionBackendRep(onnx.backend.base.BackendRep):
         return outs
 
 
-class InferenceSessionBackend(onnx.backend.base.Backend):
-    providers: ClassVar[set[str]] = set(get_available_providers())
+def _create_inference_session(model: onnx.ModelProto, device: str):
+    if device == "CPU":
+        providers = ("CPUExecutionProvider",)
+    elif device == "CUDA":
+        providers = ("CUDAExecutionProvider",)
+    else:
+        raise ValueError(f"Unexpected device {device!r}.")
+    return ort.InferenceSession(model.SerializeToString(), providers=providers)
 
-    @classmethod
-    def is_opset_supported(cls, model):
-        return True, ""
+
+class InferenceSessionBackend(onnx.backend.base.Backend):
+    providers: ClassVar[set[str]] = set(ort.get_available_providers())
 
     @classmethod
     def supports_device(cls, device: str) -> bool:
@@ -83,58 +83,19 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
         return False
 
     @classmethod
-    def convert_version_opset_before(cls, model):
-        opsets = {d.domain: d.version for d in model.opset_import}
-        if "" not in opsets:
-            return None
-        try:
-            return onnx.version_converter.convert_version(model, opsets[""] - 1)
-        except RuntimeError:
-            # Let's try without any change.
-            del model.opset_import[:]
-            for k, v in opsets.items():
-                d = model.opset_import.add()
-                d.domain = k
-                d.version = v if k != "" else v - 1
-            return model
-
-    @classmethod
-    def create_inference_session(cls, model, device):
-        if device == "CPU":
-            providers = ["CPUExecutionProvider"]
-        elif device == "CUDA":
-            providers = ["CUDAExecutionProvider"]
-        else:
-            raise ValueError(f"Unexepcted device {device!r}.")
-        try:
-            return InferenceSession(model.SerializeToString(), providers=providers)
-        except InvalidArgument as e:
-            if "Unsupported model IR version" in str(e):
-                model.ir_version -= 1
-                return cls.create_inference_session(model, device)
-            if "Current official support for domain ai.onnx is till opset" in str(e):
-                new_model = cls.convert_version_opset_before(model)
-                if new_model is not None:
-                    return cls.create_inference_session(new_model, device)
-            raise e
-
-    @classmethod
     def prepare(
-        cls, model: Any, device: str = "CPU", **kwargs: Any
+        cls, model: onnx.ModelProto, device: str = "CPU", **kwargs: Any
     ) -> InferenceSessionBackendRep:
-        # if isinstance(model, InferenceSessionBackendRep):
-        #    return model
-        if isinstance(model, InferenceSession):
-            return InferenceSessionBackendRep(model)
-        if isinstance(model, (str, bytes, ModelProto)):
-            inf = cls.create_inference_session(model, device)
-            return cls.prepare(inf, device, **kwargs)
-        raise TypeError(f"Unexpected type {type(model)} for model.")
+        del kwargs  # Unused
+        if not isinstance(model, (str, bytes, onnx.ModelProto)):
+            raise TypeError(f"Unexpected type {type(model)} for model.")
+
+        session = _create_inference_session(model, device)
+        return InferenceSessionBackendRep(session)
 
     @classmethod
-    def run_model(cls, model, inputs, device=None, **kwargs):
-        rep = cls.prepare(model, device, **kwargs)
-        return rep.run(inputs, **kwargs)
+    def run_model(cls, model: onnx.ModelProto, inputs, device=None, **kwargs):
+        return super().run_model(model, inputs, device=device, **kwargs)
 
     @classmethod
     def run_node(cls, node, inputs, device=None, outputs_info=None, **kwargs):
@@ -143,8 +104,7 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
 
 backend_test = onnx.backend.test.BackendTest(InferenceSessionBackend, __name__)
 
-if os.getenv("APPVEYOR"):
-    backend_test.exclude("(test_vgg19|test_zfnet)")
+
 if platform.architecture()[0] == "32bit":
     backend_test.exclude("(test_vgg19|test_zfnet|test_bvlc_alexnet)")
 if platform.system() == "Windows":
@@ -194,7 +154,7 @@ backend_test.exclude(
 )
 
 # The following tests fail due to small discrepancies.
-backend_test.exclude("(cast_FLOAT_to_STRING|castlike_FLOAT_to_STRING|dft|stft)")
+backend_test.exclude("(cast_FLOAT_to_STRING|castlike_FLOAT_to_STRING|stft)")
 
 # The following tests fail due to huge discrepancies.
 backend_test.exclude(
@@ -248,8 +208,7 @@ backend_test.exclude(
 )
 
 # The following tests are new with opset 19 and 20, or ai.onnx.ml 4
-if ort_version is not None and Version(ort_version) < Version("1.16"):
-    # version should be 1.15 but there is no development version number.
+if ort_version is not None and ort_version < Version("1.17"):
     backend_test.exclude(
         "("
         "averagepool"
@@ -266,9 +225,7 @@ if ort_version is not None and Version(ort_version) < Version("1.16"):
         "|reshape"
         ")"
     )
-
-if ort_version is not None and Version(ort_version) < Version("1.17"):
-    # version should be 1.15 but there is no development version number.
+if ort_version is not None and ort_version < Version("1.18"):
     backend_test.exclude(
         "("
         "deform_conv"
@@ -296,27 +253,14 @@ if ort_version is not None and Version(ort_version) < Version("1.17"):
         ")"
     )
 
-if sys.version_info[:2] < (3, 8) or Version(numpy.__version__) < Version("1.23.5"):
-    # Version 1.21.5 causes segmentation faults.
-    # onnxruntime should be tested with the same numpy API
-    # onnxruntime was compiled with.
-    backend_test.exclude("")
 
-# import all test cases at global scope to make them visible to python.unittest
-if InferenceSession is not None:
-    globals().update(backend_test.test_cases)
+# Import all test cases at global scope to make them visible to python.unittest
+globals().update(
+    unittest.skipIf(ort is None, reason="onnxruntime is not installed")(  # type: ignore[type-var]
+        backend_test.test_cases
+    )
+)
 
 
 if __name__ == "__main__":
-    res = unittest.main(verbosity=2, exit=False)
-    tests_run = res.result.testsRun
-    errors = len(res.result.errors)
-    skipped = len(res.result.skipped)
-    unexpected_successes = len(res.result.unexpectedSuccesses)
-    expected_failures = len(res.result.expectedFailures)
-    print("---------------------------------")
-    print(
-        f"tests_run={tests_run} errors={errors} skipped={skipped} "
-        f"unexpected_successes={unexpected_successes} "
-        f"expected_failures={expected_failures}"
-    )
+    unittest.main()
