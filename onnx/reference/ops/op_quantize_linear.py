@@ -83,18 +83,16 @@ class _CommonQuantizeLinear(OpRun):
             x = x / y_scale.reshape(new_shape)
         else:  # per-block
             if len(x.shape) != len(y_scale.shape):
-                raise RuntimeError(
+                raise ValueError(
                     "Input 2 must be a number, a vector or a tensor with the same rank as the input."
                 )
             block_shape = np.array(x.shape) // np.array(y_scale.shape)
             if sum(block_shape != 1) != 1:
-                raise RuntimeError(
-                    "Blocked quantization is defined for 1-D blocks only."
-                )
+                raise ValueError("Blocked quantization is defined for 1-D blocks only.")
 
             # repeat scale to get elementwise scale
             if x.size % y_scale.size != 0:
-                raise RuntimeError(
+                raise ValueError(
                     "Blocked quantization requires the scale dimensions to divide the input dimensions"
                 )
             block_dim = np.where(block_shape != 1)[0][0]
@@ -157,7 +155,7 @@ class _CommonQuantizeLinear(OpRun):
                 i4 = func(xi)
                 return (i4,)  # type: ignore[attr-defined]
 
-            raise RuntimeError(
+            raise ValueError(
                 f"Unexpected tensor_type for input 2: tensor_type={tensor_type}, "
                 f"zero_point.dtype={zero_point.dtype}."
             )
@@ -170,14 +168,14 @@ class _CommonQuantizeLinear(OpRun):
 class QuantizeLinear_10(_CommonQuantizeLinear):
     def _run(self, x, y_scale, zero_point=None, axis=None):  # type: ignore
         if len(y_scale.shape) > 1:
-            raise RuntimeError("Input 2 must be a vector or a number.")
+            raise ValueError("Input 2 must be a vector or a number.")
         return self.common_run(x, y_scale, zero_point, axis=axis)  # type: ignore
 
 
 class QuantizeLinear_19(_CommonQuantizeLinear):
     def _run(self, x, y_scale, zero_point=None, axis=None, saturate=None):  # type: ignore
         if len(y_scale.shape) > 1:
-            raise RuntimeError("Input 2 must be a vector or a number.")
+            raise ValueError("Input 2 must be a vector or a number.")
         return self.common_run(x, y_scale, zero_point, axis=axis, saturate=saturate)  # type: ignore
 
 

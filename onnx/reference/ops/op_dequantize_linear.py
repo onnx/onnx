@@ -60,17 +60,15 @@ class _CommonDequantizeLinear(OpRun):
                 ) from e
         if len(value.shape) >= 2:
             if len(shape) != len(value.shape):
-                raise RuntimeError(
+                raise ValueError(
                     "Input 2 must be a number, a vector or a tensor with the same rank as the input."
                 )
             block_shape = np.array(shape) // np.array(value.shape)
             if sum(block_shape != 1) != 1:
-                raise RuntimeError(
-                    "Blocked quantization is defined for 1-D blocks only."
-                )
+                raise ValueError("Blocked quantization is defined for 1-D blocks only.")
             block_dim = np.where(block_shape != 1)[0][0]
             if shape[block_dim] % value.shape[block_dim] != 0:
-                raise RuntimeError(
+                raise ValueError(
                     "Blocked quantization requires the scale dimensions to divide the input dimensions"
                 )
             block_size = shape[block_dim] // value.shape[block_dim]
@@ -95,7 +93,7 @@ class _CommonDequantizeLinear(OpRun):
         if x_zero_point is not None and not fp8_type:
             zero_type = self.get_x_type(x_zero_point)
             if x_type != zero_type:
-                raise RuntimeError(
+                raise ValueError(
                     f"Type mismatch {x_type} != {zero_type} in DequantizeLinear."
                 )
 
@@ -106,7 +104,7 @@ class _CommonDequantizeLinear(OpRun):
                 umi = u_x_zero_point.min()
                 uma = u_x_zero_point.max()
                 if umi != uma or umi != np.uint8(0):
-                    raise RuntimeError(
+                    raise ValueError(
                         "x_zero_point is not null but should be zero for float8 types."
                     )
             if x_type == TensorProto.FLOAT8E4M3FN:
@@ -126,7 +124,7 @@ class _CommonDequantizeLinear(OpRun):
 class DequantizeLinear_19(_CommonDequantizeLinear):
     def _run(self, x, x_scale, x_zero_point=None, axis=None):
         if len(x_scale.shape) > 1:
-            raise RuntimeError("Input 2 must be a vector or a number.")
+            raise ValueError("Input 2 must be a vector or a number.")
         return self.common_run(x, x_scale, x_zero_point, axis)
 
 

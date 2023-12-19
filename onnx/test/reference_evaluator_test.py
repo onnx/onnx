@@ -3782,6 +3782,30 @@ class TestReferenceEvaluator(unittest.TestCase):
                 np.ones((3, 2)),
                 [[1, 5, 5, 7], [6, 8, 7, 8], [7, 8, 8, 8]],
             ),
+            (
+                np.ones((3, 4)),
+                np.ones((3, 3)),
+                np.zeros((3, 3)),
+                None,  # Blocked quantization requires the scale dimensions to divide the input dimensions
+            ),
+            (
+                np.ones((9, 12)),
+                np.ones((3, 4)),
+                np.zeros((3, 4)),
+                None,  # Blocked quantization is defined for 1-D blocks only
+            ),
+            (
+                np.ones((6,)),
+                np.ones((2,)),
+                np.zeros((2,)),
+                None,  # Blocked Quantization is not supported for 1-D input
+            ),
+            (
+                np.ones((3, 4, 5, 6)),
+                np.ones((3, 4)),
+                np.zeros((3, 4)),
+                None,  # Scale and ZP must have the same rank as the input
+            ),
         ]
     )
     def test_blocked_quantize_linear(self, x, scale, zero_point, expected):
@@ -3809,10 +3833,14 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
 
         data = np.array(x, dtype=np.float32)
-        expected = np.array(expected, dtype=np.int8)
 
-        got = ref.run(None, {"X": data})
-        assert_allclose(expected, got[0])
+        if expected is not None:
+            expected = np.array(expected, dtype=np.int8)
+            got = ref.run(None, {"X": data})
+            assert_allclose(expected, got[0])
+        else:
+            with self.assertRaises(ValueError):
+                ref.run(None, {"X": data})
 
     @parameterized.parameterized.expand(
         [
@@ -3833,6 +3861,30 @@ class TestReferenceEvaluator(unittest.TestCase):
                 np.dstack([np.array([[1, 1], [2, 3]]), np.array([[4, 5], [6, 7]])]),
                 np.zeros((2, 2, 2)),
                 [[[0, 0, 0, 0], [1, 1, 5, 5]], [[4, 4, 12, 12], [9, 9, 21, 21]]],
+            ),
+            (
+                np.ones((3, 4)),
+                np.ones((3, 3)),
+                np.zeros((3, 3)),
+                None,  # Blocked quantization requires the scale dimensions to divide the input dimensions
+            ),
+            (
+                np.ones((9, 12)),
+                np.ones((3, 4)),
+                np.zeros((3, 4)),
+                None,  # Blocked quantization is defined for 1-D blocks only
+            ),
+            (
+                np.ones((6,)),
+                np.ones((2,)),
+                np.zeros((2,)),
+                None,  # Blocked Quantization is not supported for 1-D input
+            ),
+            (
+                np.ones((3, 4, 5, 6)),
+                np.ones((3, 4)),
+                np.zeros((3, 4)),
+                None,  # Scale and ZP must have the same rank as the input
             ),
         ]
     )
@@ -3861,12 +3913,15 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         ref = ReferenceEvaluator(model)
-
         data = np.array(x, dtype=np.int8)
-        expected = np.array(expected, dtype=np.float32)
 
-        got = ref.run(None, {"X": data})
-        assert_allclose(expected, got[0])
+        if expected is not None:
+            expected = np.array(expected, dtype=np.float32)
+            got = ref.run(None, {"X": data})
+            assert_allclose(expected, got[0])
+        else:
+            with self.assertRaises(ValueError):
+                ref.run(None, {"X": data})
 
     def test_lrn(self):
         def _expected(x, alpha, beta, bias, size):

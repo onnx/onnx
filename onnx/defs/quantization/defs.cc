@@ -127,7 +127,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis quantization. "
-            "Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
+            "Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .TypeConstraint(
