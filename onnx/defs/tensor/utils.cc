@@ -394,7 +394,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
     const char* description,
     const char* mode_description,
     const std::vector<std::string> op_schema,
-    const std::string op_schema_desc) {
+    const std::string op_schema_description) {
   return [=](OpSchema& schema) {
     schema.SetDoc(description);
     schema.Attr("mode", mode_description, AttributeProto::STRING, std::string("constant"));
@@ -437,7 +437,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
         OpSchema::NonDifferentiable);
 
     schema.Output(0, "output", "Tensor after padding.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
-    schema.TypeConstraint("T", op_schema, op_schema_desc);
+    schema.TypeConstraint("T", op_schema, op_schema_description);
     schema.TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference

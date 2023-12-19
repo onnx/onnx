@@ -7,7 +7,8 @@ import sys
 import numpy as np
 
 import onnx
-from onnx import TensorProto, helper
+import onnx.reference.custom_element_types as custom
+from onnx import TensorProto, helper, subbyte
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 from onnx.helper import (
@@ -17,8 +18,6 @@ from onnx.helper import (
     tensor_dtype_to_field,
 )
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32
-from onnx.reference.custom_element_types import int4, uint4
-from onnx.subbyte_helper import float32_to_4bit_unpacked
 
 
 class Cast(Base):
@@ -58,17 +57,19 @@ class Cast(Base):
             ("FLOAT16", "INT4"),
             ("UINT4", "FLOAT"),
             ("UINT4", "FLOAT16"),
+            ("UINT4", "UINT8"),
             ("INT4", "FLOAT"),
             ("INT4", "FLOAT16"),
+            ("INT4", "INT8"),
         ]
 
         vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
         vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
         vect_float32_to_uint4 = np.vectorize(
-            lambda x: float32_to_4bit_unpacked(x, signed=False)
+            lambda x: subbyte.float32_to_4bit_unpacked(x, signed=False)
         )
         vect_float32_to_int4 = np.vectorize(
-            lambda x: float32_to_4bit_unpacked(x, signed=True)
+            lambda x: subbyte.float32_to_4bit_unpacked(x, signed=True)
         )
 
         f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
@@ -251,13 +252,17 @@ class Cast(Base):
                         "Conversion from {from_type} to {to_type} is not tested."
                     )
                 if to_type == "UINT4":
-                    expected = vect_float32_to_uint4(input_values).astype(uint4)
+                    expected = vect_float32_to_uint4(input_values).astype(custom.uint4)
                 elif to_type == "INT4":
-                    expected = vect_float32_to_int4(input_values).astype(int4)
+                    expected = vect_float32_to_int4(input_values).astype(custom.int4)
                 elif to_type == "FLOAT16":
                     expected = input_values.astype(np.float16)
                 elif to_type == "FLOAT":
                     expected = input_values
+                elif to_type == "UINT8":
+                    expected = input_values.astype(np.uint8)
+                elif to_type == "INT8":
+                    expected = input_values.astype(np.int8)
                 else:
                     raise ValueError(
                         "Conversion from {from_type} to {to_type} is not tested."

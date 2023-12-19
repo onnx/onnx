@@ -42,8 +42,8 @@ from onnx import (
     ValueInfoProto,
     defs,
     mapping,
+    subbyte,
 )
-from onnx.subbyte_helper import float32x2_to_4bitx2
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
 VersionTableType = List[VersionRowType]
@@ -618,32 +618,31 @@ def float32_to_float8e5m2(  # noqa: PLR0911
         raise NotImplementedError("fn and uz must be both False or True.")
 
 
-"""Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
+def pack_float32_to_4bit(
+    array: Union[np.ndarray, Sequence], signed: bool
+) -> np.ndarray:
+    """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
+    See :ref:`onnx-detail-int4` for technical details.
 
-See :ref:`onnx-detail-int4` for technical details.
+    Args:
+        farray: array of float to convert and pack
+        signed: Whether the 4 bit variant is signed or unsigned
 
-Args:
-    farray: array of float to convert and pack
-    signed: Whether the 4 bit variant is signed or unsigned
+    Returns:
+        Packed array with size `ceil(farray.size/2)` (single dimension).
+    """
+    if not isinstance(array, np.ndarray):
+        array = np.asarray(array, dtype=np.float32)
 
-Returns:
-    Packed array with size `ceil(farray.size/2)` (single dimension).
-"""
+    array_flat = array.ravel()
+    is_odd_volume = np.prod(array.shape) % 2 == 1
+    if is_odd_volume:
+        array_flat = np.append(array_flat, np.array([0]))
 
-
-def pack_float32_to_4bit(farray: np.ndarray, signed: bool) -> np.ndarray:
-    if not isinstance(farray, np.ndarray):
-        farray = np.asarray(farray, dtype=np.float32)
-
-    farray_flat = farray.ravel()
-    odd_flag = np.prod(farray.shape) % 2 == 1
-    if odd_flag:
-        farray_flat = np.append(farray_flat, np.array([0]))
-
-    single_func = lambda x, y: float32x2_to_4bitx2(x, y, signed)
+    single_func = lambda x, y: subbyte.float32x2_to_4bitx2(x, y, signed)
     func = np.frompyfunc(single_func, 2, 1)
 
-    arr = func(farray_flat[0::2], farray_flat[1::2])
+    arr = func(array_flat[0::2], array_flat[1::2])
     return arr.astype(np.uint8)  # type: ignore[no-any-return]
 
 

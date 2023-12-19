@@ -26,7 +26,16 @@ import parameterized
 import version_utils
 from numpy.testing import assert_allclose
 
-from onnx import AttributeProto, FunctionProto, ModelProto, TensorProto, checker, parser
+import onnx.reference.custom_element_types as custom
+from onnx import (
+    AttributeProto,
+    FunctionProto,
+    ModelProto,
+    TensorProto,
+    checker,
+    parser,
+    subbyte,
+)
 from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
@@ -48,7 +57,6 @@ from onnx.helper import (
 )
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, from_array
 from onnx.reference import ReferenceEvaluator
-from onnx.reference.custom_element_types import int4, uint4
 from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
@@ -62,7 +70,6 @@ from onnx.reference.ops.op_col2im import (
 from onnx.reference.ops.op_conv import Conv, _conv_implementation
 from onnx.reference.ops_optimized import Conv as ConvOptimized
 from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_im2col
-from onnx.subbyte_helper import float32_to_4bit_unpacked
 
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
 # For now, bump the version in CIs whenever there is a new onnxruntime release
@@ -5415,7 +5422,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2.4, 2.6, 4, 10], dtype=np.float32)
         signed = cast_to == TensorProto.INT4
-        expected1 = np.array([float32_to_4bit_unpacked(x, signed=signed) for x in data])
+        expected1 = np.array(
+            [subbyte.float32_to_4bit_unpacked(x, signed=signed) for x in data]
+        )
         got = ref.run(None, {"X": data})
         self.assertEqual(expected1.tolist(), got[0].tolist())
 
@@ -5440,9 +5449,11 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array(range(0, 7), dtype=np.float32)
-        cast_from_np = uint4 if cast_from == TensorProto.UINT4 else int4
+        cast_from_np = custom.uint4 if cast_from == TensorProto.UINT4 else custom.int4
         data = data.astype(cast_from_np)
-        expected1 = np.array([float32_to_4bit_unpacked(x, cast_from_np) for x in data])
+        expected1 = np.array(
+            [subbyte.float32_to_4bit_unpacked(x, cast_from_np) for x in data]
+        )
         got = ref.run(None, {"X": data})
         self.assertEqual(expected1.tolist(), got[0].tolist())
 

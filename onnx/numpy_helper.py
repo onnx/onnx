@@ -8,9 +8,8 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
-from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper
+from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
-from onnx.subbyte_helper import unpack_single_4bitx2
 
 
 def combine_pairs_to_complex(fa: Sequence[int]) -> List[complex]:
@@ -203,7 +202,7 @@ def unpack_int4(
     Returns:
         A numpy array of float32 reshaped to dims.
     """
-    single_func = lambda x: unpack_single_4bitx2(x, signed)
+    single_func = lambda x: subbyte.unpack_single_4bitx2(x, signed)
     func = np.frompyfunc(single_func, 1, 2)
 
     res_high, res_low = func(data.ravel())

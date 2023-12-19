@@ -5,6 +5,7 @@
 
 import numpy as np
 
+from onnx import subbyte
 from onnx.helper import (
     float32_to_bfloat16,
     float32_to_float8e4m3,
@@ -27,7 +28,6 @@ from onnx.reference.custom_element_types import (
     uint4,
 )
 from onnx.reference.op_run import OpRun
-from onnx.subbyte_helper import float32_to_4bit_unpacked
 
 
 def cast_to(x, to, saturate):  # noqa: PLR0911
@@ -92,7 +92,7 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
             xf = x.astype(np.float32).ravel()
             y = np.empty(xf.shape, dtype=np_type).ravel()
             for i in range(y.shape[0]):
-                el = float32_to_4bit_unpacked(xf[i], signed=signed)
+                el = subbyte.float32_to_4bit_unpacked(xf[i], signed=signed)
                 y[i] = el
             return y.reshape(x.shape)
 

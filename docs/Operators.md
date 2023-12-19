@@ -3452,17 +3452,19 @@ test_cases = [
     ("FLOAT16", "INT4"),
     ("UINT4", "FLOAT"),
     ("UINT4", "FLOAT16"),
+    ("UINT4", "UINT8"),
     ("INT4", "FLOAT"),
     ("INT4", "FLOAT16"),
+    ("INT4", "INT8"),
 ]
 
 vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
 vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
 vect_float32_to_uint4 = np.vectorize(
-    lambda x: float32_to_4bit_unpacked(x, signed=False)
+    lambda x: subbyte.float32_to_4bit_unpacked(x, signed=False)
 )
 vect_float32_to_int4 = np.vectorize(
-    lambda x: float32_to_4bit_unpacked(x, signed=True)
+    lambda x: subbyte.float32_to_4bit_unpacked(x, signed=True)
 )
 
 f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
@@ -3645,13 +3647,17 @@ for from_type, to_type in test_cases:
                 "Conversion from {from_type} to {to_type} is not tested."
             )
         if to_type == "UINT4":
-            expected = vect_float32_to_uint4(input_values).astype(uint4)
+            expected = vect_float32_to_uint4(input_values).astype(custom.uint4)
         elif to_type == "INT4":
-            expected = vect_float32_to_int4(input_values).astype(int4)
+            expected = vect_float32_to_int4(input_values).astype(custom.int4)
         elif to_type == "FLOAT16":
             expected = input_values.astype(np.float16)
         elif to_type == "FLOAT":
             expected = input_values
+        elif to_type == "UINT8":
+            expected = input_values.astype(np.uint8)
+        elif to_type == "INT8":
+            expected = input_values.astype(np.int8)
         else:
             raise ValueError(
                 "Conversion from {from_type} to {to_type} is not tested."

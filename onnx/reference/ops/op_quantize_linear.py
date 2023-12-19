@@ -9,7 +9,7 @@ from typing import ClassVar
 
 import numpy as np
 
-from onnx import TensorProto
+from onnx import TensorProto, subbyte
 from onnx.helper import (
     float32_to_float8e4m3,
     float32_to_float8e5m2,
@@ -25,7 +25,6 @@ from onnx.reference.custom_element_types import (
     uint4,
 )
 from onnx.reference.op_run import OpRun
-from onnx.subbyte_helper import float32_to_4bit_unpacked
 
 
 class _CommonQuantizeLinear(OpRun):
@@ -121,7 +120,7 @@ class _CommonQuantizeLinear(OpRun):
                 else:
                     xi += zero_point
 
-                single_func = lambda x: float32_to_4bit_unpacked(
+                single_func = lambda x: subbyte.float32_to_4bit_unpacked(
                     x, signed=(tensor_type == TensorProto.INT4)
                 )
                 func = np.vectorize(single_func)

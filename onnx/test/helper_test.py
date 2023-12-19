@@ -636,7 +636,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
     @parameterized.parameterized.expand(
         itertools.product(
-            (TensorProto.UINT4, TensorProto.INT4), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
+            (TensorProto.UINT4, TensorProto.INT4),
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
         )
     )
     def test_make_4bit_tensor(self, dtype, dims) -> None:
