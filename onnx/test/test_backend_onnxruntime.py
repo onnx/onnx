@@ -255,6 +255,16 @@ if ort is not None:
             "|regex_full_match"
             "|string_concat"
             "|string_split"
+            "|constantofshape_float_ones"
+            "|constantofshape_int_shape_zero"
+            "|constantofshape_int_zeros"
+            "|isinf"
+            "|isinf_negative"
+            "|isinf_positive"
+            "|isnan"
+            "|isnan_float16"
+            "|qlinearmatmul_2D_uint8_float32"
+            "|qlinearmatmul_3D_uint8_float32"
             ")"
         )
 
