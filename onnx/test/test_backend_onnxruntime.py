@@ -67,7 +67,13 @@ def _create_inference_session(model: onnx.ModelProto, device: str):
         providers = ("CUDAExecutionProvider",)
     else:
         raise ValueError(f"Unexpected device {device!r}.")
-    return ort.InferenceSession(model.SerializeToString(), providers=providers)
+    try:
+        session = ort.InferenceSession(model.SerializeToString(), providers=providers)
+    except Exception as e:
+        raise RuntimeError(
+            f"Unable to create inference session. Model is:\n\n{onnx.printer.to_text(model)}"
+        ) from e
+    return session
 
 
 class InferenceSessionBackend(onnx.backend.base.Backend):
