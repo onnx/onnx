@@ -136,5 +136,5 @@ jobs:
         python -m pip install -q onnxruntime
         $Env:ORT_MAX_IR_SUPPORTED_VERSION=9
         $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
+        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20
         pytest
