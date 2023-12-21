@@ -740,7 +740,7 @@ endif()
 
 if(ONNX_USE_UNITY_BUILD)
   # If ONNX_USE_UNITY_BUILD is set to ON, set onnx target to use Unity builds.
-  #  We set Unity build to use groups, it allows us to set some specific files to be compiled individualy
+  #  We set Unity build to use groups, it allows us to set some specific files to be compiled individually
   set_target_properties(onnx
     PROPERTIES 
       UNITY_BUILD ON
