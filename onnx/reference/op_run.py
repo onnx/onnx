@@ -237,11 +237,16 @@ class OpRun(abc.ABC):
             )
 
             new_ops = self.run_params.get("new_ops", None)
+            if "existing_functions" in self.run_params:
+                functions = list(self.run_params["existing_functions"].values())
+            else:
+                functions = None
             return ReferenceEvaluator(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
                 new_ops=None if new_ops is None else list(new_ops.values()),
+                functions=functions,
             )
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
@@ -646,7 +651,7 @@ class OpFunction(OpRun):
     def __init__(
         self,
         onnx_node: NodeProto,
-        log_function: Any,
+        run_params: dict[str, Any] | None,
         impl: Any = None,
         attributes: dict[str, Any] | None = None,
     ):
@@ -655,7 +660,7 @@ class OpFunction(OpRun):
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
                 f"from domain {onnx_node.domain!r}."
             )
-        OpRun.__init__(self, onnx_node, log_function)
+        OpRun.__init__(self, onnx_node, run_params)
         self.impl_ = impl
         # The function implementation is the same whenever the function is called
         # but the attributes may be different at every call.
@@ -693,8 +698,13 @@ class OpFunctionContextDependant(OpFunction):
     This is needed when the schema of an operator defines a context dependant function.
     """
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, parent: Any = None):
-        OpFunction.__init__(self, onnx_node, log_function, impl=self, attributes={})
+    def __init__(
+        self,
+        onnx_node: NodeProto,
+        run_params: dict[str, Any] | None,
+        parent: Any = None,
+    ):
+        OpFunction.__init__(self, onnx_node, run_params, impl=self, attributes={})
         self.parent = parent
         version = parent.opsets[onnx_node.domain]
         self.schema_ = get_schema(onnx_node.op_type, version, onnx_node.domain)

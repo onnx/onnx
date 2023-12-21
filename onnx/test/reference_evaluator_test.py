@@ -40,12 +40,14 @@ from onnx.helper import (
     make_model_gen_version,
     make_node,
     make_opsetid,
+    make_operatorsetid,
     make_sequence_type_proto,
     make_tensor,
     make_tensor_sequence_value_info,
     make_tensor_value_info,
     make_value_info,
 )
+from onnx.inliner import inline_local_functions
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, from_array
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun, OpRunExpand
@@ -5338,6 +5340,163 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         with self.assertRaises(ValueError):
             ref.run(None, {"X": np.array(["x"])})
+
+    def test_a_function_calling_a_function_once(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        out = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
+        Z = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
+
+        func_def_add = make_function(
+            "this",
+            "fctadd",
+            ["input2"],
+            ["output"],
+            [
+                make_node("Constant", [], ["one"], value_floats=[1.0], name="CC0"),
+                make_node("Add", ["input2", "one"], ["output"], name="A1"),
+            ],
+            opset_imports=[make_operatorsetid("", 15)],
+        )
+
+        func_def = make_function(
+            "this",
+            "fct",
+            ["input"],
+            ["output"],
+            [
+                make_node("Constant", [], ["one"], value_floats=[1.0], name="CC"),
+                make_node("Greater", ["input", "one"], ["cond"]),
+                make_node(
+                    "If",
+                    ["cond"],
+                    ["output"],
+                    then_branch=make_graph(
+                        [make_node("fctadd", ["input"], ["output"], domain="this")],
+                        "gthen",
+                        [],
+                        [out],
+                    ),
+                    else_branch=make_graph(
+                        [make_node("Add", ["input", "one"], ["output"], domain="")],
+                        "gelse",
+                        [],
+                        [out],
+                    ),
+                    name=":IF",
+                ),
+            ],
+            opset_imports=[
+                make_operatorsetid("", 15),
+                make_operatorsetid("this", 1),
+            ],
+        )
+
+        model_def = make_model(
+            make_graph(
+                [
+                    make_node("fct", ["X"], ["output"], domain="this"),
+                ],
+                "test",
+                [X],
+                [Z],
+            ),
+            ir_version=7,
+            opset_imports=[
+                make_operatorsetid("", 15),
+                make_operatorsetid("this", 1),
+            ],
+            functions=[func_def_add, func_def],
+        )
+
+        feeds = {"X": np.array([-5], dtype=np.float32)}
+        oinf = ReferenceEvaluator(model_def)
+        expected = oinf.run(None, feeds)
+
+        # inlining does not work here
+        # inlined = inline_local_functions(model_def)
+        # oinf = ReferenceEvaluator(inlined)
+        # goti = oinf.run(None, feeds)
+        # self.assertEqual(expected[0].tolist(), goti[0].tolist())
+        self.assertEqual(expected[0], np.array([-4], dtype=np.float32))
+
+    def test_a_function_calling_a_function_double(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        out = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
+        Z = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
+
+        func_def_add = make_function(
+            "this",
+            "fctadd",
+            ["input2"],
+            ["output"],
+            [
+                make_node("Constant", [], ["one"], value_floats=[1.0], name="CC0"),
+                make_node("Add", ["input2", "one"], ["output"], name="A1"),
+            ],
+            opset_imports=[make_operatorsetid("", 15)],
+        )
+
+        func_def = make_function(
+            "this",
+            "fct",
+            ["input"],
+            ["output"],
+            [
+                make_node("Constant", [], ["one"], value_floats=[1.0], name="CC"),
+                make_node("Greater", ["input", "one"], ["cond"]),
+                make_node(
+                    "If",
+                    ["cond"],
+                    ["output"],
+                    then_branch=make_graph(
+                        [make_node("fctadd", ["input"], ["output"], domain="this")],
+                        "gthen",
+                        [],
+                        [out],
+                    ),
+                    else_branch=make_graph(
+                        [make_node("Add", ["input", "one"], ["output"], domain="")],
+                        "gelse",
+                        [],
+                        [out],
+                    ),
+                    name=":IF",
+                ),
+            ],
+            opset_imports=[
+                make_operatorsetid("", 15),
+                make_operatorsetid("this", 1),
+            ],
+        )
+
+        model_def = make_model(
+            make_graph(
+                [
+                    make_node("fct", ["X"], ["ztmp"], domain="this"),
+                    make_node("fct", ["ztmp"], ["output"], domain="this"),
+                ],
+                "test",
+                [X],
+                [Z],
+            ),
+            ir_version=7,
+            opset_imports=[
+                make_operatorsetid("", 15),
+                make_operatorsetid("this", 1),
+            ],
+            functions=[func_def_add, func_def],
+        )
+
+        feeds = {"X": np.array([-5], dtype=np.float32)}
+        oinf = ReferenceEvaluator(model_def)
+        expected = oinf.run(None, feeds)
+
+        # inlining does not work here
+        # inlined = inline_local_functions(model_def)
+        # oinf = ReferenceEvaluator(inlined)
+        # goti = oinf.run(None, feeds)
+        # self.assertEqual(expected[0].tolist(), goti[0].tolist())
+        self.assertEqual(expected[0], np.array([-3], dtype=np.float32))
 
 
 if __name__ == "__main__":
