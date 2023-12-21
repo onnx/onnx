@@ -47,7 +47,6 @@ from onnx.helper import (
     make_tensor_value_info,
     make_value_info,
 )
-from onnx.inliner import inline_local_functions
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, from_array
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun, OpRunExpand
