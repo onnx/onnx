@@ -34,7 +34,7 @@ static void InlineFunctions(ModelProto& model, const char* input, const inliner:
     inliner::InlineLocalFunctions(model, true);
   // std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
 
-  // The following will ensure basic sanity checks hold after inlining, including
+  // The following will ensure basic safety checks hold after inlining, including
   // absence of duplicate names (multiple assignments to same name).
   checker::check_model(model, true, true);
 }

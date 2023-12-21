@@ -3520,6 +3520,9 @@ for from_type, to_type in test_cases:
                 "INF",
                 "+INF",
                 "-INF",
+                "-0.0000001",
+                "0.0000001",
+                "-1000000",
             ],
             dtype=np.float32,
         )
@@ -3527,33 +3530,33 @@ for from_type, to_type in test_cases:
         if from_type == "FLOAT":
             input_values = np_fp32
             input = make_tensor(
-                "x", TensorProto.FLOAT, [3, 4], np_fp32.tolist()
+                "x", TensorProto.FLOAT, [3, 5], np_fp32.tolist()
             )
         elif from_type == "FLOAT16":
             input_values = np_fp32.astype(np.float16).astype(np.float32)
             input = make_tensor(
-                "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT16, [3, 5], input_values.tolist()
             )
         elif from_type == "FLOAT8E4M3FN":
             input_values = float8e4m3_to_float32(
                 vect_float32_to_float8e4m3(np_fp32)
             )
             input = make_tensor(
-                "x", TensorProto.FLOAT8E4M3FN, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E4M3FN, [3, 5], input_values.tolist()
             )
         elif from_type == "FLOAT8E4M3FNUZ":
             input_values = float8e4m3_to_float32(
                 vect_float32_to_float8e4m3(np_fp32, uz=True), uz=True
             )
             input = make_tensor(
-                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 5], input_values.tolist()
             )
         elif from_type == "FLOAT8E5M2":
             input_values = float8e5m2_to_float32(
                 vect_float32_to_float8e5m2(np_fp32)
             )
             input = make_tensor(
-                "x", TensorProto.FLOAT8E5M2, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E5M2, [3, 5], input_values.tolist()
             )
         elif from_type == "FLOAT8E5M2FNUZ":
             input_values = float8e5m2_to_float32(
@@ -3562,7 +3565,7 @@ for from_type, to_type in test_cases:
                 uz=True,
             )
             input = make_tensor(
-                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 5], input_values.tolist()
             )
         else:
             raise ValueError(
@@ -3596,7 +3599,7 @@ for from_type, to_type in test_cases:
                 "Conversion from {from_type} to {to_type} is not tested."
             )
         expected_tensor = make_tensor(
-            "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
+            "x", getattr(TensorProto, to_type), [3, 5], expected.tolist()
         )
         output = expected_tensor
 
@@ -3697,17 +3700,20 @@ for from_type, to_type in test_cases:
             "INF",
             "+INF",
             "-INF",
+            "-0.0000001",
+            "0.0000001",
+            "-1000000",
         ],
         dtype=np.float32,
     )
 
     if from_type == "FLOAT":
         input_values = np_fp32
-        input = make_tensor("x", TensorProto.FLOAT, [3, 4], np_fp32.tolist())
+        input = make_tensor("x", TensorProto.FLOAT, [3, 5], np_fp32.tolist())
     elif from_type == "FLOAT16":
         input_values = np_fp32.astype(np.float16).astype(np.float32)
         input = make_tensor(
-            "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+            "x", TensorProto.FLOAT16, [3, 5], input_values.tolist()
         )
     else:
         raise ValueError(
@@ -3735,7 +3741,7 @@ for from_type, to_type in test_cases:
     tensor = TensorProto()
     tensor.data_type = getattr(TensorProto, to_type)
     tensor.name = "x"
-    tensor.dims.extend([3, 4])
+    tensor.dims.extend([3, 5])
     field = tensor_dtype_to_field(tensor.data_type)
     getattr(tensor, field).extend(ivals)
 
