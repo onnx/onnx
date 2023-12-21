@@ -634,7 +634,9 @@ class OpRun(abc.ABC):
 class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
+    def __init__(
+        self, onnx_node: NodeProto, run_params: dict[str, Any], impl: Any = None
+    ):
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -660,7 +662,7 @@ class OpFunction(OpRun):
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
                 f"from domain {onnx_node.domain!r}."
             )
-        OpRun.__init__(self, onnx_node, run_params)
+        OpRun.__init__(self, onnx_node, run_params)  # type: ignore[arg-type]
         self.impl_ = impl
         # The function implementation is the same whenever the function is called
         # but the attributes may be different at every call.
