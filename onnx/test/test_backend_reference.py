@@ -181,8 +181,8 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
 
-print(f"sys.platform is: {sys.platform}")
 if sys.platform == "darwin":
+    # https://github.com/onnx/onnx/issues/5792
     backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
     backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
 
