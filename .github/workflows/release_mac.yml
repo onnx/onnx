@@ -10,9 +10,9 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:
 
-# Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
+# Use MACOSX_DEPLOYMENT_TARGET=10.15 to produce compatible wheel
 env:
-  MACOSX_DEPLOYMENT_TARGET: 10.12
+  MACOSX_DEPLOYMENT_TARGET: 10.15
 
 permissions:
   contents: read
@@ -55,8 +55,8 @@ jobs:
         # Currently GitHub Action agent is using macos-11, we rename the wheels
         # to use the MACOSX_DEPLOYMENT_TARGET
         # Rename e.g. onnx-1.15.0-cp38-cp38-macosx_11_0_x86_64.whl
-        # to onnx-1.15.0-cp38-cp38-macosx_10_12_universal2.whl
-        ONNX_WHEEL_PLATFORM_NAME: macosx_10_12_${{ matrix.target-architecture }}
+        # to onnx-1.15.0-cp38-cp38-macosx_10_15_universal2.whl
+        ONNX_WHEEL_PLATFORM_NAME: macosx_10_15_${{ matrix.target-architecture }}
         CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
       run: |
         # Install Protobuf from source
