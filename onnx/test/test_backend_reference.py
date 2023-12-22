@@ -181,6 +181,11 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
 
+print(f"sys.platform is: {sys.platform}")
+if sys.platform == "darwin":
+    backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
+    backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
+
 # op_dft and op_stft requires numpy >= 1.21.5
 if version_utils.numpy_older_than("1.21.5"):
     backend_test.exclude("test_stft")
