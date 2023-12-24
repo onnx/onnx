@@ -173,6 +173,10 @@ void convPoolShapeInference(
     int64_t output_size =
         (effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
     if (ceil_mode == 1 && (output_size - 1) * strides[i] >= (input_size + pads[i])) {
+      // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are ignored."
+      // (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d).
+      // this code follows the same logic as PyTorch's C++ implementation:
+      // https://github.com/pytorch/pytorch/blob/f1cdb39da3850c47d51ec6a5b1ae864c32b3accf/aten/src/ATen/native/Pool.h#L54C21-L54C21
       --output_size;
     }
 
@@ -217,7 +221,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  ```
  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
  ```
- if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
+ if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
  ```
