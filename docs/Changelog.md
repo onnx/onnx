@@ -24693,6 +24693,48 @@ This version of the operator has been available since version 21 of the default 
 <dd>The type of the input 'y_zero_point' and the output 'y'.</dd>
 </dl>
 
+# ai.onnx.pnp
+## Version 1 of the 'ai.onnx.pnp' operator set
+### <a name="ai.onnx.pnp.LinalgSVD-1"></a>**ai.onnx.pnp.LinalgSVD-1**</a>
+
+  For internal use.
+
+#### Version
+
+This version of the operator has been available since version 1 of the 'ai.onnx.pnp' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>full_matrices</tt> : int (default is 1)</dt>
+<dd></dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd></dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>U</tt> : T</dt>
+<dd></dd>
+<dt><tt>S</tt> : T</dt>
+<dd></dd>
+<dt><tt>Vh</tt> : T</dt>
+<dd></dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double)</dt>
+<dd></dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>

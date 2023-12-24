@@ -1085,6 +1085,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // versining is not meaningful and that domain should have only one
       // version.
       map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
+      map_[AI_ONNX_PNP_DOMAIN] = std::make_pair(1, 1);
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
@@ -1092,6 +1093,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 4;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
+      last_release_version_map_[AI_ONNX_PNP_DOMAIN] = 1;
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -1376,6 +1378,9 @@ OpSchema GetOpSchema();
 #define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
 
+#define ONNX_PNP_OPERATOR_SET_SCHEMA(name, ver, impl) \
+  ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxPNP, AI_ONNX_PNP_DOMAIN, ver, true, impl)
+
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are
 // normally included in operator sets and registered in OpSchemaRegistry::map().
@@ -1419,6 +1424,10 @@ class DbgOperatorSetTracker {
 // Naming convention for preview operator schema classes
 #define ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(ver, name) \
   ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxPreview, ver, name)
+
+// Naming convention for pnp operator schema classes
+#define ONNX_PNP_OPERATOR_SET_SCHEMA_CLASS_NAME(ver, name) \
+  ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxPNP, ver, name)
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);

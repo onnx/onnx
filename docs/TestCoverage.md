@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 179/192 (93.23%, 5 generators excluded) common operators.
+Node tests have covered 180/193 (93.26%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -9104,6 +9104,40 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(5).astype(np.float32)
 z = np.less_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_bcast")
+```
+
+</details>
+
+
+### LinalgSVD
+There are 1 test cases, listed as following:
+<details>
+<summary>linalgsvd</summary>
+
+```python
+threshold = 1.0
+node = onnx.helper.make_node(
+    "LinalgSVD",
+    inputs=["A"],
+    outputs=["U", "S", "Vh"],
+    threshold=threshold,
+    domain="ai.onnx.pnp",
+)
+
+A = np.array([
+    [
+        [-1.125840, -1.152360, -0.250579, -0.433879],
+        [0.848710, 0.692009, -0.316013, -2.115219],
+        [0.468096, -0.157712, 1.443660, 0.266049],
+    ],
+    [
+        [0.166455, 0.874382, -0.143474, -0.111609],
+        [0.931827, 1.259009, 2.004981, 0.053737],
+        [0.618057, -0.412802, -0.841065, -2.316042]
+    ]
+])
+U, S, Vh = np.linalg.svd(A, full_matrices=True)        
+expect(node, inputs=[A], outputs=[U, S, Vh], name="test_ai_onnx_pnp_linalg_svd")
 ```
 
 </details>
