@@ -173,9 +173,9 @@ void convPoolShapeInference(
     int64_t output_size =
         (effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
     if (ceil_mode == 1 && (output_size - 1) * strides[i] >= (input_size + pads[i])) {
-      // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are ignored."
-      // (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d).
-      // this code follows the same logic as PyTorch's C++ implementation:
+      // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are
+      // ignored." (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d). this code follows the
+      // same logic as PyTorch's C++ implementation:
       // https://github.com/pytorch/pytorch/blob/f1cdb39da3850c47d51ec6a5b1ae864c32b3accf/aten/src/ATen/native/Pool.h#L54C21-L54C21
       --output_size;
     }

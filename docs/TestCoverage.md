@@ -10215,8 +10215,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_ceil")
 <summary>maxpool_2d_ceil_output_size_reduce_by_one</summary>
 
 ```python
-"""
-input_shape: [1, 1, 2, 2]
+"""input_shape: [1, 1, 2, 2]
 output_shape: [1, 1, 1, 1]
 """
 node = onnx.helper.make_node(

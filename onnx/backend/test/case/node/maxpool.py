@@ -503,8 +503,7 @@ class MaxPool(Base):
 
     @staticmethod
     def export_maxpool_2d_ceil_output_size_reduce_by_one() -> None:
-        """
-        input_shape: [1, 1, 2, 2]
+        """input_shape: [1, 1, 2, 2]
         output_shape: [1, 1, 1, 1]
         """
         node = onnx.helper.make_node(
