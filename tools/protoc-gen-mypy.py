@@ -28,8 +28,7 @@ try:
     import google.protobuf.descriptor_pb2 as d_typed
     from google.protobuf.compiler import plugin_pb2 as plugin
 except ImportError as e:
-    sys.stderr.write(f"Failed to generate mypy stubs: {e}\n")
-    sys.exit(0)
+    raise RuntimeError("Failed to generate mypy stubs") from e
 
 
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet

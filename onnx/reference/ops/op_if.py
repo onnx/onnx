@@ -18,8 +18,7 @@ class If(OpRun):
             raise KeyError("run_params must contains key 'verbose'.")
 
     def need_context(self) -> bool:
-        """
-        Tells the runtime if this node needs the context
+        """Tells the runtime if this node needs the context
         (all the results produced so far) as it may silently access
         one of them (operator Loop).
         The default answer is `False`.
@@ -65,4 +64,4 @@ class If(OpRun):
                     f"Output {i!r} (branch={branch!r}, name={names[i]!r}) is None, "
                     f"available inputs={sorted(context)}, initializers={inits}."
                 )
-        return final
+        return self._check_and_fix_outputs(final)
