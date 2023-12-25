@@ -594,7 +594,7 @@ class TestExternalDataToArray(unittest.TestCase):
         # ParseData cannot handle external data and should throw the error as follows:
         # Cannot parse data from external tensors. Please load external data into raw data for tensor: Shape
         self.assertRaises(
-            shape_inference.InferenceError,
+            shape_inference.ShapeError,
             shape_inference.infer_shapes,
             model_without_external_data,
             error_mode=InferenceErrorMode.FailAnyInferenceError,

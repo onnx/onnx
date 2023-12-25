@@ -19,7 +19,7 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.numpy_helper import from_array
-from onnx.shape_inference import InferenceError, InferenceErrorMode, infer_node_outputs
+from onnx.shape_inference import InferenceError, InferenceErrorMode, ShapeError, infer_node_outputs
 
 
 ADD_SCHEMA = max(
@@ -113,7 +113,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
                 ["C"],
                 _to_tensor_types({"A": (TensorProto.FLOAT, (3, 4)), "B": (2, (3, 4))}),
             )
-        with self.assertRaises(InferenceError):
+        with self.assertRaises(ShapeError):
             _run_case(
                 ADD_SCHEMA,
                 ["A", "B"],
@@ -238,7 +238,7 @@ class TestInferenceFunctionCall(unittest.TestCase):
         """
         model = onnx.parser.parse_model(model_script)
         onnx.shape_inference.infer_shapes(model, error_mode=InferenceErrorMode.IgnoreInferenceError)
-        with self.assertRaises(onnx.shape_inference.ShapeError):
+        with self.assertRaises(ShapeError):
             onnx.shape_inference.infer_shapes(model, error_mode=InferenceErrorMode.FailAnyInferenceError)
 
     def test_inference_with_attribute(self) -> None:
