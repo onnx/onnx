@@ -310,7 +310,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
             [make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 4))],
         )
-        self.assertRaises(onnx.shape_inference.ShapeError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.TypeError, self._inferred, graph)
 
     @parameterized.expand(all_versions_for("Transpose"))
     def test_transpose_incorrect_repeated_perm(self, *_) -> None:
@@ -5761,7 +5761,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
         self.assertRaises(
-            onnx.shape_inference.InferenceError,
+            onnx.shape_inference.ShapeError,
             self._inferred,
             graph,
             opset_imports=opset_imports,
@@ -8809,7 +8809,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with self.assertRaises(onnx.shape_inference.ShapeError):
             self._assert_inferred(
                 graph,
                 [
