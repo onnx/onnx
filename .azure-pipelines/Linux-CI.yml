@@ -1,3 +1,10 @@
+schedules:
+- cron: '0 0 * * *'
+  displayName: Nightly Linux CI in main branch
+  branches:
+    include:
+    - main
+
 trigger:
 - gh-readonly-queue/**
 
@@ -74,7 +81,7 @@ jobs:
   - script: |
       source venv/bin/activate
 
-      pytest -sv
+      pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
       if [ $? -ne 0 ]; then
         echo "pytest failed"
         exit 1
@@ -91,6 +98,14 @@ jobs:
     displayName: 'Run ONNX tests'
 
   - script: |
+      curl -Os https://uploader.codecov.io/latest/linux/codecov
+      chmod +x codecov
+      ./codecov
+
+    continueOnError: true
+    displayName: 'Upload to codecov'
+
+  - script: |
       source venv/bin/activate
       python onnx/backend/test/cmd_tools.py generate-data --clean
       git status
@@ -104,6 +119,16 @@ jobs:
       git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
       if [ $? -ne 0 ]; then
         echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
+        exit 1
+      fi
+
+      pip uninstall -y pillow
+      python onnx/backend/test/cmd_tools.py generate-data --clean
+      git status
+      # Verify test generation without pillow for ImageDecoder, it should directly use frozen data
+      git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+      if [ $? -ne 0 ]; then
+        echo "git diff for test generation without pillow returned failures. Please check updated node test files"
         exit 1
       fi
 

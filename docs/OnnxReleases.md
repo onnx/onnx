@@ -9,26 +9,25 @@ SPDX-License-Identifier: Apache-2.0
 The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
 ## Preparation
-
 * Install Twine, a utility tool to interact with PyPI. Do  - ``pip install twine``
 * Get hold of the username and password for the ‘onnx’ PyPI account. Release manager should get onnx pypi account credentials from steering committee or from previous release manager.
-* Pick a release tag (v.1.X.X) for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
-* Prepare a change log for the release –
-    * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
-    * And draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.
-
-* Please use target VERSION_NUMBER with `rc` (e.g., `1.x.0rc1`) to test TestPyPI in advance before using target VERSION_NUMBER (e.g., `1.x.0`) for final release.
-
 * Bump the LAST_RELEASE_VERSION in [version.h](/onnx/common/version.h). Make sure that the IR version number and opset version numbers are up-to-date in
 [ONNX proto files](/onnx/onnx.in.proto),
 [Versioning.md](Versioning.md),
 [schema.h](/onnx/defs/schema.h),
 [helper.py](/onnx/helper.py) and [helper_test.py](/onnx/test/helper_test.py). Please note that this also needs to be happened in the main branch before creating the release branch.
-
-* Create a release branch (please use rel-* as the branch name) from main. Checkout the release tag in a clean branch on your local repo. Make sure all tests pass on that branch.
-
+* Pick a release tag (v.1.X.X) for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
+* Create a release branch (please use rel-* as the branch name) from main.
+    * Make sure all tests pass on that branch.
+    * create the release tag:
+        * git tag v.1.X.X
+        * or create the release tag when drafting a new release statement
 * After cutting a release branch, bump [VERSION_NUMBER file](/VERSION_NUMBER) (next version number for future ONNX) in the main branch.
-
+* Prepare a change log for the release –
+    * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
+* Draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.
+    * when drafting the release, use the tag if it is already created, or create a new tag using the release branch from GitHub Release page.
+* Please use target VERSION_NUMBER with `rc` (e.g., `1.x.0rc1`) to test TestPyPI in advance before using target VERSION_NUMBER (e.g., `1.x.0`) for final release.
 * Create an issue in onnxruntime repo. See [a sample issue](https://github.com/microsoft/onnxruntime/issues/11108) for details. The issue is to request onnxruntime to update with the onnx release branch and to run all CI and packaging pipelines ([How_To_Update_ONNX_Dev_Notes](https://github.com/microsoft/onnxruntime/blob/main/docs/How_To_Update_ONNX_Dev_Notes.md)). It is possible that onnx bugs are detected with onnxruntime pipeline runs. In such case the bugs shall be fixed in the onnx main branch and cherry-picked into the release branch. Follow up with onnxruntime to ensure the issue is resolved in time before onnx release.
 
 ## Upload to TestPyPI

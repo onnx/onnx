@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0913,W0221
+
 
 import numpy as np
 
@@ -13,7 +13,6 @@ _acceptable_str_dtypes = ("U", "O")
 class RegexFullMatch(OpRun):
     def _run(self, x, pattern=None):
         try:
-            # pylint: disable=import-outside-toplevel`
             import re2
         except ImportError as e:
             raise ImportError(

@@ -188,6 +188,7 @@ ONNX version|IR version|Opset version ai.onnx|Opset version ai.onnx.ml|Opset ver
 1.13.1|8|18|3|1
 1.14.0|9|19|3|1
 1.14.1|9|19|3|1
+1.15.0|9|20|4|1
 
 A programmatically accessible version of the above table is available [here](../onnx/helper.py). Limited version number
 information is also maintained in [version.h](../onnx/common/version.h) and [schema.h](../onnx/defs/schema.h).

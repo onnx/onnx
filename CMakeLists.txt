@@ -12,6 +12,7 @@ if(NOT CMAKE_BUILD_TYPE)
     FORCE)
 endif()
 cmake_policy(SET CMP0063 NEW)
+cmake_policy(SET CMP0074 NEW)
 
 # Project
 project(onnx C CXX)
@@ -55,15 +56,8 @@ else()
   set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
-# Required to use C++17 or higher on Windows
-# For other platforms, set C++14 as standard for the whole project
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-if(MSVC AND CMAKE_CXX_STANDARD LESS 17)
   set(CMAKE_CXX_STANDARD 17)
-elseif(CMAKE_CXX_STANDARD LESS 14)
-  set(CMAKE_CXX_STANDARD 14)
 endif()
 
 include(GNUInstallDirs)
@@ -124,8 +118,14 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
 endif()
 
 if(ONNX_BUILD_TESTS)
-  list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
-  include(googletest)
+  find_package(GTest)
+  if(GTest_FOUND)
+    set(googletest_INCLUDE_DIRS)
+    set(googletest_STATIC_LIBRARIES GTest::gtest)
+  else()
+    list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
+    include(googletest)
+  endif()
 endif()
 
 if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
@@ -176,6 +176,8 @@ else()
               NO_DEFAULT_PATH)
     find_package(Protobuf)
     if (Protobuf_FOUND)
+      set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
+      set(PROTOBUF_INCLUDE_DIR "${_PROTOBUF_INSTALL_PREFIX}/include")
       set(Build_Protobuf OFF)
       if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
         # There are extra dependencies for protobuf.
@@ -265,6 +267,8 @@ else()
     set(Protobuf_VERSION "4.22.3")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
+    set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
+    set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
   endif()
   message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
   message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
@@ -374,7 +378,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       list(APPEND PROTOC_ARGS --python_out
                   ${CMAKE_CURRENT_BINARY_DIR})
       if(ONNX_GEN_PB_TYPE_STUBS)
-        # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
           # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
           configure_file(
@@ -624,7 +627,10 @@ if(ONNX_BUILD_BENCHMARKS)
     set(BENCHMARK_ENABLE_INSTALL OFF
         CACHE BOOL
               "Disable benchmark install to avoid overwriting vendor install.")
-    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/benchmark)
+    find_package(benchmark)
+    if(NOT benchmark_FOUND)
+      add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/benchmark)
+    endif()
   endif()
 
   add_executable(protobuf-bench tools/protobuf-bench.cc)
@@ -633,7 +639,7 @@ if(ONNX_BUILD_BENCHMARKS)
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
-  target_link_libraries(protobuf-bench onnx_proto benchmark)
+  target_link_libraries(protobuf-bench onnx_proto benchmark::benchmark)
 endif()
 
 # Export include directories
@@ -717,7 +723,19 @@ install(FILES
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ONNX
   COMPONENT dev)
-install(EXPORT ONNXTargets DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX")
+install(EXPORT ONNXTargets
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
+  NAMESPACE ONNX::
+)
+if (NOT Build_Protobuf)
+  # If we fetched a Protobuf release (and didn't run its install step), then we
+  # don't have the export sets for protobuf and its dependencies, which
+  # prevents us from creating an export set for ONNXTargets.
+  export(EXPORT ONNXTargets
+    FILE "${PROJECT_BINARY_DIR}/ONNXTargets.cmake"
+    NAMESPACE ONNX::
+  )
+endif()
 install(TARGETS
   onnx onnx_proto
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # This file is for testing ONNX with ONNX Runtime
 # Create a general scenario to use ONNX Runtime with ONNX
-# pylint: disable=C0415
+
 import unittest
 
 from onnx.shape_inference import InferenceErrorMode
@@ -11,7 +11,7 @@ from onnx.shape_inference import InferenceErrorMode
 class TestONNXRuntime(unittest.TestCase):
     def test_with_ort_example(self) -> None:
         try:
-            import onnxruntime  # pylint: disable=W0611
+            import onnxruntime
 
             del onnxruntime
         except ImportError:

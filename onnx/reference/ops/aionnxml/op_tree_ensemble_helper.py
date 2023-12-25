@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0911,R0913,R0914,W0221
+
 
 import numpy as np
 
@@ -29,7 +29,7 @@ class TreeEnsembleAttributes:
         rows = ["Attributes"]
         for name in self._names:
             if name.endswith("_as_tensor"):
-                name = name.replace("_as_tensor", "")
+                name = name.replace("_as_tensor", "")  # noqa: PLW2901
             rows.append(f"  {name}={getattr(self, name)}")
         return "\n".join(rows)
 
@@ -59,9 +59,7 @@ class TreeEnsemble:
         return "\n".join(rows)
 
     def leaf_index_tree(self, X: np.ndarray, tree_id: int) -> int:
-        """
-        Computes the leaf index for one tree.
-        """
+        """Computes the leaf index for one tree."""
         index = self.root_index[tree_id]
         while self.atts.nodes_modes[index] != "LEAF":  # type: ignore
             x = X[self.atts.nodes_featureids[index]]  # type: ignore
@@ -95,9 +93,7 @@ class TreeEnsemble:
         return index
 
     def leave_index_tree(self, X: np.ndarray) -> np.ndarray:
-        """
-        Computes the leave index for all trees.
-        """
+        """Computes the leave index for all trees."""
         if len(X.shape) == 1:
             X = X.reshape((1, -1))
         outputs = []

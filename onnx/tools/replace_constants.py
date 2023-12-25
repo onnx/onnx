@@ -1,7 +1,6 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=too-many-statements,too-many-branches
 from typing import List, Optional, Union
 
 import numpy as np
@@ -32,10 +31,7 @@ from onnx.numpy_helper import from_array
 def _replace_constant(
     node: NodeProto, threshold: int, value_constant_of_shape: float
 ) -> List[NodeProto]:
-    """
-    Replaces a Constant node with a large tensor (with more than threshold elements)
-    by a sequence of nodes that produces a dummy constant of same shape as original tensor.
-    """
+    """Replaces a Constant node with a large tensor (with more than threshold elements) by a sequence of nodes that produces a dummy constant of same shape as original tensor."""
     if node.op_type != "Constant":
         raise TypeError(f"Node type must be 'Constant' not {node.op_type!r}.")
     for att in node.attribute:
@@ -75,12 +71,11 @@ def _replace_constant(
 def _replace_constant_of_shape_with_range(
     onx: Union[GraphProto, FunctionProto]
 ) -> Union[GraphProto, FunctionProto]:
-    """
-    Replaces all *ConstantOfShape* by node *Range* to avoid constant tensors.
+    """Replaces all *ConstantOfShape* by node *Range* to avoid constant tensors.
+
     The function is not recursive. The recursivity is done by
     *replace_initializer_by_constant_of_shape*.
     """
-
     if isinstance(onx, GraphProto):
         nodes = list(onx.node)
     elif isinstance(onx, FunctionProto):
@@ -164,11 +159,7 @@ def _replace_constant_of_shape_with_range(
 def _replace_constant_of_shape_value(
     onx: Union[GraphProto, FunctionProto], value_constant_of_shape: float
 ) -> Union[GraphProto, FunctionProto]:
-    """
-    Replaces all fill value of all nodes *ConstantOfShape*.
-    *replace_initializer_by_constant_of_shape*.
-    """
-
+    """Replaces all fill value of all nodes *ConstantOfShape*."""
     if isinstance(onx, GraphProto):
         nodes = list(onx.node)
     elif isinstance(onx, FunctionProto):
@@ -220,27 +211,32 @@ def _replace_constant_of_shape_value(
     raise TypeError(f"Not implemented for type {type(onx)}.")
 
 
-def replace_initializer_by_constant_of_shape(
+def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
     onx: Union[FunctionProto, GraphProto, ModelProto],
     threshold: int = 128,
     ir_version: Optional[int] = None,
     use_range: bool = False,
     value_constant_of_shape: float = 0.5,
 ):
-    """
-    Replace initializers or constant node by nodes *ConstantOfShape* to reduce
-    the size. This reduce the cost to write a unit test about
-    a specific graph structure.
+    """Replace initializers or constant node by nodes *ConstantOfShape* to reduce the size.
 
-    :param onx: ModelProto
-    :param threshold: every initializer under this threshold is not impacted
-    :param ir_version: initializer must be specified as input for `ir_version <= 3`,
-        this must be specified if onx is :class:`FunctionProto` or :class:`GraphProto`
-    :param use_range: if uses operator *Range* instead of *ConstantOfShape* to avoid
-        constant tensors
-    :param value_constant_of_shape: value to use as a value for all nodes *ConstantOfShape*,
-        a high value may produce nan or inf predictions
-    :return: onx, modified ModelProto
+    This reduce the cost to write a unit test about a specific graph structure.
+
+    Args:
+        onx: ModelProto
+        threshold: every initializer under this threshold is not
+            impacted
+        ir_version: initializer must be specified as input for
+            `ir_version <= 3`, this must be specified if onx is
+            :class:`FunctionProto` or :class:`GraphProto`
+        use_range: if uses operator *Range* instead of *ConstantOfShape*
+            to avoid constant tensors
+        value_constant_of_shape: value to use as a value for all nodes
+            *ConstantOfShape*, a high value may produce nan or inf
+            predictions
+
+    Returns:
+        onx, modified ModelProto
 
     The function is designed so that the function can be reapplied on a modified model
     and either replace *ConstantOfShape* with *Range* operators, either replace the fill value
@@ -252,7 +248,7 @@ def replace_initializer_by_constant_of_shape(
         for node in onx.node:
             if node.op_type == "Constant":
                 cst_nodes = _replace_constant(node, threshold, value_constant_of_shape)
-                if len(cst_nodes) == 2:
+                if len(cst_nodes) == 2:  # noqa: PLR2004
                     modified = True
                 new_nodes.extend(cst_nodes)
                 continue
@@ -311,14 +307,14 @@ def replace_initializer_by_constant_of_shape(
             values = {p.key: p.value for p in onx.metadata_props}
             set_model_props(model, values)
 
-        del model.opset_import[:]  # pylint: disable=E1101
+        del model.opset_import[:]
         for oimp in onx.opset_import:
-            op_set = model.opset_import.add()  # pylint: disable=E1101
-            if oimp.domain == "" and oimp.version < 11 and use_range:
+            op_set = model.opset_import.add()
+            if oimp.domain == "" and oimp.version < 11 and use_range:  # noqa: PLR2004
                 raise RuntimeError(
                     f"Range was introduced in opset 11 but opset is {oimp.version}."
                 )
-            if oimp.domain == "" and oimp.version < 9:
+            if oimp.domain == "" and oimp.version < 9:  # noqa: PLR2004
                 raise RuntimeError(
                     f"ConstantOfShape was introduced in "
                     f"opset 9 but opset is {oimp.version}."
@@ -356,7 +352,7 @@ def replace_initializer_by_constant_of_shape(
         )
         new_nodes.append(node)
         removed.add(init.name)
-        if ir_version is not None and ir_version <= 3:
+        if ir_version is not None and ir_version <= 3:  # noqa: PLR2004
             additional_inputs.append(
                 make_tensor_value_info(new_name, TensorProto.INT64, [len(dims)])
             )
@@ -377,7 +373,7 @@ def replace_initializer_by_constant_of_shape(
     for node in onx.node:
         if node.op_type == "Constant":
             shape_nodes = _replace_constant(node, threshold, value_constant_of_shape)
-            if len(shape_nodes) == 2:
+            if len(shape_nodes) == 2:  # noqa: PLR2004
                 n_modifications += 1
             new_nodes.extend(shape_nodes)
             continue
@@ -398,7 +394,7 @@ def replace_initializer_by_constant_of_shape(
                 )
                 if id(g) != id(att.g):
                     modified = True
-                    att = make_attribute(att.name, g)
+                    att = make_attribute(att.name, g)  # noqa: PLW2901
             atts.append(att)
         if modified:
             new_node = make_node(node.op_type, node.input, node.output)

@@ -57,7 +57,13 @@ The grammar below describes the syntax:
    value-info ::= type id
    value-infos ::= value-info (',' value-info)*
    value-info-list ::= '(' value-infos? ')'
-   value-info-or-initializer ::= type id [ = '{' prim-constants '}']
+   quoted-str :== '"' ([^"])* '"'
+   str-str :== quoted-str ':' quoted-str
+   str-str-list :== '[' str-str (',' str-str)* ']'
+   internal-data ::= '{' prim-constants '}'
+   external-data ::= str-str-list
+   constant-data ::= internal-data | external-data
+   value-info-or-initializer ::= type id [ '=' constant-data ]
    value-info-or-initializers ::= value-info-or-initializer (',' value-info-or-initializer)*
    input-list ::= '(' value-info-or-initializers? ')'
    output-list ::= '(' value-infos? ')'

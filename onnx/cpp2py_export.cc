@@ -481,6 +481,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property(
           "opset_imports", &checker::CheckerContext::get_opset_imports, &checker::CheckerContext::set_opset_imports);
 
+  py::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
+  lexical_scope_context.def(py::init<>());
+
   py::register_exception<checker::ValidationError>(checker, "ValidationError");
 
   checker.def("check_value_info", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
@@ -501,31 +504,45 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     checker::check_sparse_tensor(proto, ctx);
   });
 
-  checker.def("check_attribute", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    AttributeProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::check_attribute(proto, ctx, checker::LexicalScopeContext());
-  });
+  checker.def(
+      "check_attribute",
+      [](const py::bytes& bytes,
+         const checker::CheckerContext& ctx,
+         const checker::LexicalScopeContext& lex_ctx) -> void {
+        AttributeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_attribute(proto, ctx, lex_ctx);
+      });
 
-  checker.def("check_node", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    NodeProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::LexicalScopeContext lex_ctx;
-    checker::check_node(proto, ctx, lex_ctx);
-  });
+  checker.def(
+      "check_node",
+      [](const py::bytes& bytes,
+         const checker::CheckerContext& ctx,
+         const checker::LexicalScopeContext& lex_ctx) -> void {
+        NodeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_node(proto, ctx, lex_ctx);
+      });
 
-  checker.def("check_function", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    FunctionProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::check_function(proto, ctx, checker::LexicalScopeContext());
-  });
+  checker.def(
+      "check_function",
+      [](const py::bytes& bytes,
+         const checker::CheckerContext& ctx,
+         const checker::LexicalScopeContext& lex_ctx) -> void {
+        FunctionProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_function(proto, ctx, lex_ctx);
+      });
 
-  checker.def("check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    GraphProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::LexicalScopeContext lex_ctx;
-    checker::check_graph(proto, ctx, lex_ctx);
-  });
+  checker.def(
+      "check_graph",
+      [](const py::bytes& bytes,
+         const checker::CheckerContext& ctx,
+         const checker::LexicalScopeContext& lex_ctx) -> void {
+        GraphProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_graph(proto, ctx, lex_ctx);
+      });
 
   checker.def(
       "check_model",

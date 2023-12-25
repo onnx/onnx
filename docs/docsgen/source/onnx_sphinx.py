@@ -261,7 +261,7 @@ def _populate_all_schemas_with_history():
 
 
 def _get_all_schemas_with_history():
-    global _all_schemas_with_history  # pylint: disable=global-statement
+    global _all_schemas_with_history
     if _all_schemas_with_history is None:
         _all_schemas_with_history = _populate_all_schemas_with_history()
     return _all_schemas_with_history
@@ -677,7 +677,7 @@ def get_onnx_example(op_name, domain):
             found = textwrap.dedent(found)
             lines = found.split("\n")
             first = 0
-            for i in range(len(lines)):  # pylint: disable=C0200
+            for i in range(len(lines)):
                 if lines[i].startswith("def "):
                     first = i + 1
             found = textwrap.dedent("\n".join(lines[first:]))
@@ -761,7 +761,7 @@ def onnx_documentation_folder(
                 table_dom.append(f"      - {col2}")
             table_dom.append("")
             if indent != "":
-                for i in range(len(table_dom)):  # pylint: disable=C0200
+                for i in range(len(table_dom)):
                     table_dom[i] = indent + table_dom[i]
             res = "\n".join(table_dom)
             return res

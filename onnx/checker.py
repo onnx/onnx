@@ -15,6 +15,7 @@ __all__ = [
     "check_tensor",
     "check_value_info",
     "DEFAULT_CONTEXT",
+    "LEXICAL_SCOPE_CONTEXT",
     "ValidationError",
     "C",
     "MAXIMUM_PROTOBUF",
@@ -39,7 +40,6 @@ from onnx import (
     SparseTensorProto,
     TensorProto,
     ValueInfoProto,
-    helper,
 )
 
 # Limitation of single protobuf file is 2GB
@@ -55,6 +55,8 @@ DEFAULT_CONTEXT = C.CheckerContext()
 DEFAULT_CONTEXT.ir_version = IR_VERSION
 # TODO: Maybe ONNX-ML should also be defaulted?
 DEFAULT_CONTEXT.opset_imports = {"": onnx.defs.onnx_opset_version()}
+
+LEXICAL_SCOPE_CONTEXT = C.LexicalScopeContext()
 
 
 FuncType = TypeVar("FuncType", bound=Callable[..., Any])
@@ -80,36 +82,48 @@ def check_tensor(tensor: TensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -
 
 
 def check_attribute(
-    attr: AttributeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+    attr: AttributeProto,
+    ctx: C.CheckerContext = DEFAULT_CONTEXT,
+    lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
     _ensure_proto_type(attr, AttributeProto)
-    return C.check_attribute(attr.SerializeToString(), ctx)
+    return C.check_attribute(attr.SerializeToString(), ctx, lexical_scope_ctx)
 
 
-def check_node(node: NodeProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
+def check_node(
+    node: NodeProto,
+    ctx: C.CheckerContext = DEFAULT_CONTEXT,
+    lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
+) -> None:
     _ensure_proto_type(node, NodeProto)
-    return C.check_node(node.SerializeToString(), ctx)
+    return C.check_node(node.SerializeToString(), ctx, lexical_scope_ctx)
 
 
 def check_function(
-    function: FunctionProto, ctx: C.CheckerContext | None = None
+    function: FunctionProto,
+    ctx: C.CheckerContext | None = None,
+    lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
     _ensure_proto_type(function, FunctionProto)
     if ctx is None:
         ctx = C.CheckerContext()
-        ctx.ir_version = helper.find_min_ir_version_for(
-            list(function.opset_import), True
+        ctx.ir_version = onnx.helper.find_min_ir_version_for(
+            function.opset_import, ignore_unknown=True
         )
-        function_opset_dic = {}
-        for domain_version in function.opset_import:
-            function_opset_dic[domain_version.domain] = domain_version.version
-        ctx.opset_imports = function_opset_dic
-    C.check_function(function.SerializeToString(), ctx)
+        ctx.opset_imports = {
+            domain_version.domain: domain_version.version
+            for domain_version in function.opset_import
+        }
+    C.check_function(function.SerializeToString(), ctx, lexical_scope_ctx)
 
 
-def check_graph(graph: GraphProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
+def check_graph(
+    graph: GraphProto,
+    ctx: C.CheckerContext = DEFAULT_CONTEXT,
+    lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
+) -> None:
     _ensure_proto_type(graph, GraphProto)
-    return C.check_graph(graph.SerializeToString(), ctx)
+    return C.check_graph(graph.SerializeToString(), ctx, lexical_scope_ctx)
 
 
 def check_sparse_tensor(
@@ -124,11 +138,20 @@ def check_model(
     full_check: bool = False,
     skip_opset_compatibility_check: bool = False,
 ) -> None:
-    """Check the consistency of a model. An exception is raised if the test fails.
+    """Check the consistency of a model.
+
+    An exception will be raised if the model's ir_version is not set
+    properly or is higher than checker's ir_version, or if the model
+    has duplicate keys in metadata_props.
+
+    If IR version >= 3, the model must specify opset_import.
+    If IR version < 3, the model cannot have any opset_import specified.
 
     Args:
-        model: Model to check.
-        full_check: If True, the function also checks for shapes that can be inferred.
+        model: Model to check. If model is a path, the function checks model
+            path first. If the model bytes size is larger than 2GB, function
+            should be called using model path.
+        full_check: If True, the function also runs shape inference check.
         skip_opset_compatibility_check: If True, the function skips the check for
             opset compatibility.
     """

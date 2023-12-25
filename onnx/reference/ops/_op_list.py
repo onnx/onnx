@@ -2,8 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=C0415,R0912,R0913,R0914,R0915,W0611,W0603
-"""
-Every class imported in this module defines an implementation of
+"""Every class imported in this module defines an implementation of
 an operator of the main domain. Any class name uses `_` to specify a
 version defined in a specific opset. The class name without `_`
 defines the current implementation. If an operator has no class
@@ -85,7 +84,7 @@ from onnx.reference.ops.op_deform_conv import DeformConv
 from onnx.reference.ops.op_depth_to_space import DepthToSpace
 from onnx.reference.ops.op_dequantize_linear import DequantizeLinear
 from onnx.reference.ops.op_det import Det
-from onnx.reference.ops.op_dft import DFT
+from onnx.reference.ops.op_dft import DFT_17, DFT_20
 from onnx.reference.ops.op_div import Div
 from onnx.reference.ops.op_dropout import Dropout_7, Dropout_12
 from onnx.reference.ops.op_dynamic_quantize_linear import DynamicQuantizeLinear
@@ -247,22 +246,24 @@ def load_op(
     input_types: Union[None, List[TypeProto]] = None,
     expand: bool = False,
 ) -> Any:
-    """
-    Loads the implemented for a specified operator.
+    """Loads the implemented for a specified operator.
 
-    :param domain: domain
-    :param op_type: oprator type
-    :param version: requested version
-    :param custom: custom implementation (like a function)
-    :param node: used if no implementation was found and the operator defines a function
-        which is context dependant
-    :param input_types: used if no implementation was found and the operator defines a function
-        which is context dependant
-    :param expand: use the function implemented in the schema instead
-        of its reference implementation
-    :return: class
+    Args:
+        domain: domain
+        op_type: oprator type
+        version: requested version
+        custom: custom implementation (like a function)
+        node: used if no implementation was found and the operator
+            defines a function which is context dependant
+        input_types: used if no implementation was found and the
+            operator defines a function which is context dependant
+        expand: use the function implemented in the schema instead of
+            its reference implementation
+
+    Returns:
+        class
     """
-    global _registered_operators
+    global _registered_operators  # noqa: PLW0603
     schema = None
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]
@@ -279,7 +280,7 @@ def load_op(
         try:
             schema = get_schema(op_type, version, domain)  # type: ignore
         except SchemaError:
-            raise NotImplementedError(  # pylint: disable=W0707
+            raise NotImplementedError(
                 f"No registered schema for operator {op_type!r} "
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             ) from None

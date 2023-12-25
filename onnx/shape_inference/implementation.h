@@ -33,14 +33,14 @@ class SymbolTableImpl : public SymbolTable {
  public:
   SymbolTableImpl() : index_(0) {}
 
-  void addFromGraph(const GraphProto& g) {
+  void addFromGraph(const GraphProto& g) override {
     AddExistingSymbolicDims(g.input());
     AddExistingSymbolicDims(g.output());
     AddExistingSymbolicDims(g.value_info());
   }
   // Creates a new unique symbol with the given prefix and adds it to the SymbolTable
   // Returns the newly created symbol
-  std::string createNew(const std::string& symbol_prefix = "unk__") {
+  std::string createNew(const std::string& symbol_prefix) override {
     std::string newSymbol;
     do {
       newSymbol = symbol_prefix + std::to_string(index_++);

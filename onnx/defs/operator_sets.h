@@ -1103,30 +1103,51 @@ class OpSet_Onnx_ver19 {
 
 // Forward declarations for ai.onnx version 20
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, AffineGrid);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, GridSample);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Gelu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ConstantOfShape);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringConcat);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, DFT);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Gelu);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, GridSample);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ImageDecoder);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, IsInf);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, IsNaN);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ReduceMax);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ReduceMin);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, RegexFullMatch);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringConcat);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringSplit);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ImageDecoder);
 
 // Iterate over schema from ai.onnx version 20
 class OpSet_Onnx_ver20 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, AffineGrid)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, GridSample)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Gelu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ConstantOfShape)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringConcat)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, DFT)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, Gelu)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, GridSample)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ImageDecoder)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, IsInf)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, IsNaN)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ReduceMax)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ReduceMin)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, RegexFullMatch)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringConcat)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, StringSplit)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 20, ImageDecoder)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 21
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QLinearMatMul);
+
+// Iterate over schema from ai.onnx version 21
+class OpSet_Onnx_ver21 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 21, QLinearMatMul)>());
   }
 };
 
@@ -1151,6 +1172,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver18>();
   RegisterOpSetSchema<OpSet_Onnx_ver19>();
   RegisterOpSetSchema<OpSet_Onnx_ver20>();
+  RegisterOpSetSchema<OpSet_Onnx_ver21>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
@@ -1160,6 +1182,7 @@ inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicat
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
   // Version-sepcific registration sees duplicate schema version request as error if fail_duplicate_schema
+  RegisterOpSetSchema<OpSet_Onnx_ver21>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver20>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver19>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver18>(target_version, fail_duplicate_schema);
