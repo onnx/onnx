@@ -719,19 +719,27 @@ class ShapeInferenceImplBase {
         ONNX_TRY {
           std::rethrow_exception(exceptionPtr);
         }
-        ONNX_CATCH (const TypeError& type_error) {
-          type_inference_errors += type_error.what();
-          any_inference_errors += type_error.what();
+        ONNX_CATCH(const ONNX_NAMESPACE::TypeError& type_error) {
+          ONNX_HANDLE_EXCEPTION([&]() {
+            type_inference_errors += type_error.what();
+            any_inference_errors += type_error.what();
+            });
         }
-        ONNX_CATCH (const ShapeError& shape_error) {
-          shape_inference_errors += shape_error.what();
-          any_inference_errors += shape_error.what();
+        ONNX_CATCH(const ONNX_NAMESPACE::ShapeError& shape_error) {
+          ONNX_HANDLE_EXCEPTION([&]() {
+            shape_inference_errors += shape_error.what();
+            any_inference_errors += shape_error.what();
+            });
         }
-        ONNX_CATCH (const InferenceError& inference_error) {
-          any_inference_errors += inference_error.what();
+        ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& inference_error) {
+          ONNX_HANDLE_EXCEPTION([&]() {
+            any_inference_errors += inference_error.what();
+          });
         }
-        ONNX_CATCH (const std::exception& other_error) {
-          other_errors += other_error.what();
+        ONNX_CATCH(const std::exception& other_error) {
+          ONNX_HANDLE_EXCEPTION([&]() {
+            other_errors += other_error.what();
+          });
         }
       }
       // depend on error_mode and collected errors, fail shape or type inference
