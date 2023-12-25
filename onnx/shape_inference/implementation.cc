@@ -716,17 +716,21 @@ class ShapeInferenceImplBase {
 
     if (!inference_errors.empty() && options.error_mode != IgnoreInferenceError) {
       for (const auto& exceptionPtr : inference_errors) {
-        try {
+        ONNX_TRY {
           std::rethrow_exception(exceptionPtr);
-        } catch (const TypeError& type_error) {
+        }
+        ONNX_CATCH (const TypeError& type_error) {
           type_inference_errors += type_error.what();
           any_inference_errors += type_error.what();
-        } catch (const ShapeError& shape_error) {
+        }
+        ONNX_CATCH (const ShapeError& shape_error) {
           shape_inference_errors += shape_error.what();
           any_inference_errors += shape_error.what();
-        } catch (const InferenceError& inference_error) {
+        }
+        ONNX_CATCH (const InferenceError& inference_error) {
           any_inference_errors += inference_error.what();
-        } catch (const std::exception& other_error) {
+        }
+        ONNX_CATCH (const std::exception& other_error) {
           other_errors += other_error.what();
         }
       }
