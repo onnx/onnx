@@ -723,23 +723,19 @@ class ShapeInferenceImplBase {
           ONNX_HANDLE_EXCEPTION([&]() {
             type_inference_errors += type_error.what();
             any_inference_errors += type_error.what();
-            });
+          });
         }
         ONNX_CATCH(const ONNX_NAMESPACE::ShapeError& shape_error) {
           ONNX_HANDLE_EXCEPTION([&]() {
             shape_inference_errors += shape_error.what();
             any_inference_errors += shape_error.what();
-            });
+          });
         }
         ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& inference_error) {
-          ONNX_HANDLE_EXCEPTION([&]() {
-            any_inference_errors += inference_error.what();
-          });
+          ONNX_HANDLE_EXCEPTION([&]() { any_inference_errors += inference_error.what(); });
         }
         ONNX_CATCH(const std::exception& other_error) {
-          ONNX_HANDLE_EXCEPTION([&]() {
-            other_errors += other_error.what();
-          });
+          ONNX_HANDLE_EXCEPTION([&]() { other_errors += other_error.what(); });
         }
       }
       // depend on error_mode and collected errors, fail shape or type inference
@@ -756,9 +752,9 @@ class ShapeInferenceImplBase {
     }
   }
 
-  //const std::vector<std::string>& getErrors() const {
-  //  return inference_errors;
-  //}
+  // const std::vector<std::string>& getErrors() const {
+  //   return inference_errors;
+  // }
 
  private:
   InferredTypes inferred_types;

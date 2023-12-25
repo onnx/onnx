@@ -13,8 +13,6 @@ import pytest
 from parameterized import parameterized
 
 import onnx.shape_inference
-from onnx.shape_inference import InferenceErrorMode
-
 from onnx import (
     ONNX_ML,
     GraphProto,
@@ -46,6 +44,7 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.parser import parse_graph
+from onnx.shape_inference import InferenceErrorMode
 
 
 def get_available_versions(schema: OpSchema) -> set[int]:
@@ -143,9 +142,11 @@ class TestShapeInferenceHelper(unittest.TestCase):
         else:
             orig_model = graph_or_model
         inferred_model = onnx.shape_inference.infer_shapes(
-            orig_model, error_mode=InferenceErrorMode.FailAnyInferenceError, data_prop=data_prop
+            orig_model,
+            error_mode=InferenceErrorMode.FailAnyInferenceError,
+            data_prop=data_prop,
         )
-        
+
         checker.check_model(inferred_model)
         return inferred_model
 
@@ -7368,7 +7369,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer_shape, input_shape
         )
 
-        onnx.shape_inference.infer_shapes(original_model, error_mode=InferenceErrorMode.FailAnyInferenceError)
+        onnx.shape_inference.infer_shapes(
+            original_model, error_mode=InferenceErrorMode.FailAnyInferenceError
+        )
 
     def test_infer_initializer_input_consistency_single_none(self) -> None:
         initializer_shape = (8, 7)
@@ -7377,7 +7380,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer_shape, input_shape
         )
 
-        onnx.shape_inference.infer_shapes(original_model, error_mode=InferenceErrorMode.FailAnyInferenceError)
+        onnx.shape_inference.infer_shapes(
+            original_model, error_mode=InferenceErrorMode.FailAnyInferenceError
+        )
 
     def test_infer_initializer_input_consistency_differnt_rank(self) -> None:
         initializer_shape = (8, 7, 9)
@@ -7403,7 +7408,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
         onnx.shape_inference.infer_shapes(
-            original_model.SerializeToString(), error_mode=InferenceErrorMode.FailAnyInferenceError
+            original_model.SerializeToString(),
+            error_mode=InferenceErrorMode.FailAnyInferenceError,
         )
 
     def test_trilu_upper(self) -> None:

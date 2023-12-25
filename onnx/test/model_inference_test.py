@@ -31,7 +31,9 @@ class TestModelInference(unittest.TestCase):
         """Check that the model inference raises an InferenceError."""
         model = onnx.parser.parse_model(model_text)
         with self.assertRaises(onnx.shape_inference.InferenceError):
-            onnx.shape_inference.infer_shapes(model, True, error_mode=InferenceErrorMode.FailAnyInferenceError)
+            onnx.shape_inference.infer_shapes(
+                model, True, error_mode=InferenceErrorMode.FailAnyInferenceError
+            )
 
     def test_unknown_op(self):
         """Test that model inference handles unknown ops.
@@ -164,7 +166,12 @@ class TestModelInference(unittest.TestCase):
         known shapes.
         """
         model = onnx.parser.parse_model(model_text)
-        inferred = onnx.shape_inference.infer_shapes(model, True, error_mode=InferenceErrorMode.FailAnyInferenceError, data_prop=True)
+        inferred = onnx.shape_inference.infer_shapes(
+            model,
+            True,
+            error_mode=InferenceErrorMode.FailAnyInferenceError,
+            data_prop=True,
+        )
         outputs = inferred.graph.output
         for output, expected_shape in zip(outputs, expected):
             inferred_type = output.type

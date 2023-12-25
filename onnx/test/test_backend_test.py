@@ -13,11 +13,16 @@ import numpy
 import onnx.backend.base
 import onnx.backend.test
 import onnx.shape_inference
-from onnx.shape_inference import InferenceError, TypeError, ShapeError, InferenceErrorMode
 import onnx.version_converter
 from onnx import ModelProto, NodeProto, TensorProto
 from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
+from onnx.shape_inference import (
+    InferenceError,
+    InferenceErrorMode,
+    ShapeError,
+    TypeError,
+)
 
 # The following just executes the fake backend through the backend test
 # infrastructure. Since we don't have full reference implementation of all ops
@@ -41,7 +46,11 @@ class DummyBackend(onnx.backend.base.Backend):
         onnx.checker.check_model(model)
 
         # by default test strict shape inference
-        kwargs = {"check_type": True, "error_mode": InferenceErrorMode.FailAnyInferenceError, **kwargs}
+        kwargs = {
+            "check_type": True,
+            "error_mode": InferenceErrorMode.FailAnyInferenceError,
+            **kwargs,
+        }
         model = onnx.shape_inference.infer_shapes(model, **kwargs)
 
         value_infos = {
@@ -108,10 +117,18 @@ def do_enforce_test_coverage_safelist(model: ModelProto) -> bool:
 
 test_kwargs = {
     # affine_grid tests will be fixed by https://github.com/onnx/onnx/pull/5501
-    "test_affine_grid_2d_align_corners_expanded": {"error_mode": InferenceErrorMode.IgnoreInferenceError},
-    "test_affine_grid_2d_expanded": {"error_mode": InferenceErrorMode.IgnoreInferenceError},
-    "test_affine_grid_3d_align_corners_expanded": {"error_mode": InferenceErrorMode.IgnoreInferenceError},
-    "test_affine_grid_3d_expanded": {"error_mode": InferenceErrorMode.IgnoreInferenceError},
+    "test_affine_grid_2d_align_corners_expanded": {
+        "error_mode": InferenceErrorMode.IgnoreInferenceError
+    },
+    "test_affine_grid_2d_expanded": {
+        "error_mode": InferenceErrorMode.IgnoreInferenceError
+    },
+    "test_affine_grid_3d_align_corners_expanded": {
+        "error_mode": InferenceErrorMode.IgnoreInferenceError
+    },
+    "test_affine_grid_3d_expanded": {
+        "error_mode": InferenceErrorMode.IgnoreInferenceError
+    },
     # https://github.com/onnx/onnx/issues/5510 (test_mvn fails with test_backend_test.py)
     "test_mvn": {"error_mode": InferenceErrorMode.IgnoreInferenceError},
 }

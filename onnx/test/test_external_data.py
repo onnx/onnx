@@ -15,7 +15,6 @@ import parameterized
 
 import onnx
 from onnx import ModelProto, TensorProto, checker, helper, shape_inference
-from onnx.shape_inference import InferenceErrorMode
 from onnx.external_data_helper import (
     convert_model_from_external_data,
     convert_model_to_external_data,
@@ -24,6 +23,7 @@ from onnx.external_data_helper import (
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
+from onnx.shape_inference import InferenceErrorMode
 
 
 class TestLoadExternalDataBase(unittest.TestCase):

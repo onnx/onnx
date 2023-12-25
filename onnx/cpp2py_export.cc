@@ -611,12 +611,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   py::register_exception<InferenceError>(shape_inference, "InferenceError");
   py::register_exception<TypeError>(shape_inference, "TypeError");
   py::register_exception<ShapeError>(shape_inference, "ShapeError");
-  
+
   py::enum_<InferenceErrorMode>(shape_inference, "InferenceErrorMode")
-    .value("IgnoreInferenceError", IgnoreInferenceError)
-    .value("FailAnyInferenceError", FailAnyInferenceError)
-    .value("FailShapeInferenceError", FailShapeInferenceError)
-    .value("FailTypeInferenceError", FailTypeInferenceError);
+      .value("IgnoreInferenceError", IgnoreInferenceError)
+      .value("FailAnyInferenceError", FailAnyInferenceError)
+      .value("FailShapeInferenceError", FailShapeInferenceError)
+      .value("FailTypeInferenceError", FailTypeInferenceError);
 
   shape_inference.def(
       "infer_shapes",

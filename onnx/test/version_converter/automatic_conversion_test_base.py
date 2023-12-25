@@ -21,11 +21,15 @@ class TestAutomaticConversion(unittest.TestCase):
         if isinstance(model, str):
             model = onnx.parser.parse_model(model)
         onnx.checker.check_model(model)
-        shape_inference.infer_shapes(model, error_mode=InferenceErrorMode.FailAnyInferenceError)
+        shape_inference.infer_shapes(
+            model, error_mode=InferenceErrorMode.FailAnyInferenceError
+        )
 
         converted = version_converter.convert_version(model, to_opset)
         onnx.checker.check_model(converted)
-        shape_inference.infer_shapes(converted, error_mode=InferenceErrorMode.FailAnyInferenceError)
+        shape_inference.infer_shapes(
+            converted, error_mode=InferenceErrorMode.FailAnyInferenceError
+        )
 
     def _test_model_conversion_fails(
         self, to_opset: int, model: str | onnx.ModelProto
@@ -33,7 +37,9 @@ class TestAutomaticConversion(unittest.TestCase):
         if isinstance(model, str):
             model = onnx.parser.parse_model(model)
         onnx.checker.check_model(model)
-        shape_inference.infer_shapes(model, error_mode=InferenceErrorMode.FailAnyInferenceError)
+        shape_inference.infer_shapes(
+            model, error_mode=InferenceErrorMode.FailAnyInferenceError
+        )
 
         with self.assertRaises(RuntimeError):
             version_converter.convert_version(model, to_opset)

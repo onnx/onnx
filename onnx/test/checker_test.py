@@ -162,9 +162,7 @@ class TestChecker(unittest.TestCase):
 
         model = helper.make_model(graph, producer_name="test")
 
-        self.assertRaises(
-            shape_inference.ShapeError, checker.check_model, model, True
-        )
+        self.assertRaises(shape_inference.ShapeError, checker.check_model, model, True)
 
         checker.check_graph(graph)
 
@@ -181,9 +179,7 @@ class TestChecker(unittest.TestCase):
 
         model = helper.make_model(graph, producer_name="test")
 
-        self.assertRaises(
-            shape_inference.ShapeError, checker.check_model, model, True
-        )
+        self.assertRaises(shape_inference.ShapeError, checker.check_model, model, True)
 
         checker.check_graph(graph)
 
@@ -478,9 +474,7 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node("Add", ["X", "Y"], ["Z"])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
-        self.assertRaises(
-            shape_inference.ShapeError, checker.check_model, model, True
-        )
+        self.assertRaises(shape_inference.ShapeError, checker.check_model, model, True)
 
     def test_check_model_inconsistent_type(self) -> None:
         N = 10
@@ -491,9 +485,7 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node("Add", ["X", "Y"], ["Z"])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
-        self.assertRaises(
-            shape_inference.ShapeError, checker.check_model, model, True
-        )
+        self.assertRaises(shape_inference.ShapeError, checker.check_model, model, True)
 
     def test_check_model_unsupported_output_type(self) -> None:
         N = 10
@@ -504,9 +496,7 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node("Add", ["X", "Y"], ["Z"])
         graph = helper.make_graph([node], "test_add_input", [X, Y], [Z])
         model = helper.make_model(graph, producer_name="test", opset_imports=[onnx_id])
-        self.assertRaises(
-            shape_inference.TypeError, checker.check_model, model, True
-        )
+        self.assertRaises(shape_inference.TypeError, checker.check_model, model, True)
 
     def test_loop_with_same_initializer_input_below_ir4(self) -> None:
         # This is for testing IR<4: tensors must exist both in initializer and input
@@ -846,9 +836,7 @@ class TestChecker(unittest.TestCase):
                 ],
             ),
         )
-        self.assertRaises(
-            shape_inference.TypeError, checker.check_model, model, True
-        )
+        self.assertRaises(shape_inference.TypeError, checker.check_model, model, True)
 
     def test_loop_with_same_initializer_input_above_ir4(self) -> None:
         # This is for testing IR>=4:
@@ -1026,9 +1014,7 @@ class TestChecker(unittest.TestCase):
                 ],
             ),
         )
-        self.assertRaises(
-            shape_inference.TypeError, checker.check_model, model, True
-        )
+        self.assertRaises(shape_inference.TypeError, checker.check_model, model, True)
 
     def test_empty_list_attribute(self):
         model = onnx.parser.parse_model(

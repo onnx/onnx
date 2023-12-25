@@ -36,7 +36,7 @@ def infer_shapes(
         check_type: Checks the type-equality for input and output.
         strict_mode: Stricter shape inference, it will throw errors if any;
             Otherwise, simply stop if any error.
-        error_mode (InferenceErrorMode): 
+        error_mode (InferenceErrorMode):
             IgnoreInferenceError: ignore any inference error and continue
             FailAnyInferenceError: stop on any inference error and throw the exception combining all inference errors
             FailShapeInferenceError: stop on shape inference error and throw the exception
