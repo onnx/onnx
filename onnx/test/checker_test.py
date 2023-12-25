@@ -182,7 +182,7 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name="test")
 
         self.assertRaises(
-            shape_inference.InferenceError, checker.check_model, model, True
+            shape_inference.ShapeError, checker.check_model, model, True
         )
 
         checker.check_graph(graph)

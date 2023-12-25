@@ -5787,7 +5787,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
         self.assertRaises(
-            onnx.shape_inference.InferenceError,
+            onnx.shape_inference.ShapeError,
             self._inferred,
             graph,
             opset_imports=opset_imports,
@@ -8852,7 +8852,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with self.assertRaises(onnx.shape_inference.ShapeError):
             self._assert_inferred(
                 graph,
                 [
