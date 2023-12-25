@@ -164,7 +164,7 @@ class TestModelInference(unittest.TestCase):
         known shapes.
         """
         model = onnx.parser.parse_model(model_text)
-        inferred = onnx.shape_inference.infer_shapes(model, True, error_mode=onnx.shape_inference.FailAnyInferenceError, data_prop=True)
+        inferred = onnx.shape_inference.infer_shapes(model, True, error_mode=InferenceErrorMode.FailAnyInferenceError, data_prop=True)
         outputs = inferred.graph.output
         for output, expected_shape in zip(outputs, expected):
             inferred_type = output.type
