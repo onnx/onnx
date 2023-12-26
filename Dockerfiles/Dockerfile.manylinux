@@ -1,0 +1,49 @@
+# Use the manylinux2014_x86_64 image as the base
+FROM quay.io/pypa/manylinux2014_x86_64:latest@sha256:085b7c2c1bcb45b936e5478fe24a5142b0519e242a0104142fd50d569d6cb922
+
+# Update and install dependencies
+RUN yum update -y && yum install -y git gcc openssl-devel bzip2-devel libffi-devel
+
+# Download Python 3.10
+RUN curl -O https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tgz
+RUN tar -xzf Python-3.10.0.tgz
+
+# Compile and install Python 3.10 with SSL support
+RUN cd Python-3.10.0 && ./configure --with-ensurepip=install && make && make install
+
+# Make Python 3.10 as the default version
+RUN ln -sf /usr/local/bin/python3.10 /usr/bin/python
+
+# Upgrade pip
+RUN python -m pip install --upgrade pip
+
+COPY requirements-release.txt /tmp/requirements-release.txt
+COPY requirements-reference.txt /tmp/requirements-reference.txt
+RUN python -m pip install -r /tmp/requirements-release.txt
+
+COPY workflow_scripts/protobuf/build_protobuf_unix.sh /tmp/build_protobuf_unix.sh
+RUN /tmp/build_protobuf_unix.sh $(nproc)
+
+ADD .github/workflows/manylinux /tmp/manylinux
+CMD ["bash", "/tmp/manylinux/entrypoint.sh", "3.10", "manylinux2014_x86_64", "pull_request"]
+
+# RUN python -m pip install -r /tmp/requirements-release.txt
+
+
+# Set the working directory
+# WORKDIR /app
+
+# # Install Python dependencies
+# RUN python -m pip install -q --upgrade pip && \
+#     python -m pip install -q -r requirements-release.txt
+
+# # Copy the requirements file into the container
+# COPY requirements-release.txt .
+
+# # Copy the rest of the code into the container
+# COPY . .
+
+# Run the entrypoint script
+# CMD ["bash", ".github/workflows/manylinux/entrypoint.sh"]
+
+# docker build -t onnx.manylinux -f Dockerfiles/Dockerfile.manylinux .
