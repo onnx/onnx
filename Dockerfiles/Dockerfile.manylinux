@@ -2,33 +2,48 @@
 FROM quay.io/pypa/manylinux2014_x86_64:latest@sha256:085b7c2c1bcb45b936e5478fe24a5142b0519e242a0104142fd50d569d6cb922
 
 # Update and install dependencies
-RUN yum update -y && yum install -y git gcc openssl-devel bzip2-devel libffi-devel
+RUN /usr/bin/python2 /usr/bin/yum update -y && /usr/bin/python2 /usr/bin/yum install -y dos2unix
 
-# Download Python 3.10
-RUN curl -O https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tgz
-RUN tar -xzf Python-3.10.0.tgz
-
-# Compile and install Python 3.10 with SSL support
-RUN cd Python-3.10.0 && ./configure --with-ensurepip=install && make && make install
-
-# Make Python 3.10 as the default version
-RUN ln -sf /usr/local/bin/python3.10 /usr/bin/python
-
-# Upgrade pip
-RUN python -m pip install --upgrade pip
-
-COPY requirements-release.txt /tmp/requirements-release.txt
-COPY requirements-reference.txt /tmp/requirements-reference.txt
-RUN python -m pip install -r /tmp/requirements-release.txt
-
-COPY workflow_scripts/protobuf/build_protobuf_unix.sh /tmp/build_protobuf_unix.sh
-RUN /tmp/build_protobuf_unix.sh $(nproc)
-
+RUN yum install -y wget
 ADD .github/workflows/manylinux /tmp/manylinux
-CMD ["bash", "/tmp/manylinux/entrypoint.sh", "3.10", "manylinux2014_x86_64", "pull_request"]
+# ADD ./workflow_scripts /tmp/manylinux/workflow_scripts
+# COPY requirements-release.txt /tmp/requirements-release.txt
+# COPY requirements-reference.txt /tmp/requirements-reference.txt
 
-# RUN python -m pip install -r /tmp/requirements-release.txt
+RUN chmod +x /tmp/manylinux/entrypoint.sh
 
+WORKDIR /app
+ADD . /app
+
+RUN /tmp/manylinux/entrypoint.sh 3.10 manylinux2014_x86_64 pull_request
+
+# RUN /opt/python/cp310-cp310/bin/python -m pip install dist/*manylinux2014_x86_64.whl
+
+# RUN /opt/python/cp310-cp310/bin/python -m pip install -r /tmp/requirements-release.txt
+
+
+
+# # Update and install dependencies
+# RUN yum update -y && yum install -y openssl openssl-devel
+
+# # Download, compile and install Python with SSL support
+# RUN curl -O https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tgz && \
+#     tar -xzf Python-3.10.0.tgz && \
+#     cd Python-3.10.0 && \
+#     ./configure --with-ensurepip=install --with-openssl=/usr/include/openssl && \
+#     make && \
+#     make install
+
+# # Make Python 3.10 as the default version
+# RUN ln -sf /usr/local/bin/python3.10 /usr/bin/python
+
+# # Upgrade pip
+# RUN python -m pip install --upgrade pip
+
+# # # RUN python -m pip install -r /tmp/requirements-release.txt
+
+# COPY workflow_scripts/protobuf/build_protobuf_unix.sh /tmp/build_protobuf_unix.sh
+# RUN /tmp/build_protobuf_unix.sh $(nproc)
 
 # Set the working directory
 # WORKDIR /app
@@ -47,3 +62,8 @@ CMD ["bash", "/tmp/manylinux/entrypoint.sh", "3.10", "manylinux2014_x86_64", "pu
 # CMD ["bash", ".github/workflows/manylinux/entrypoint.sh"]
 
 # docker build -t onnx.manylinux -f Dockerfiles/Dockerfile.manylinux .
+# # docker run -it --rm onnx.manylinux bash # to check into the docker container
+# to copy the wheel file out of the container:
+# docker run -d --name onnx.manylinux.container onnx.manylinux
+# docker cp onnx.manylinux.container:/app/dist/onnx-1.16.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl C:/LiqunWA/onnx-manylinux-wheels/
+# docker rm -f onnx.manylinux.container
