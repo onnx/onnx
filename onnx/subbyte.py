@@ -34,13 +34,13 @@ def float32_to_4bit_unpacked(
 
 
 def float32x2_to_4bitx2(
-    val_high: np.dtype, val_low: np.dtype, signed: bool
+    val_low: np.dtype, val_high: np.dtype, signed: bool
 ) -> np.ndarray:
     """Cast two elements to 4bit (via rounding and clipping) and pack
     to a single byte
     Args:
-        val_high: element to be packed in the 4 MSB
         val_low: element to be packed in the 4 LSB
+        val_high: element to be packed in the 4 MSB
         signed: boolean, whether to convert to signed int4.
 
     Returns:
@@ -69,4 +69,4 @@ def unpack_single_4bitx2(
     x_low = unpack_signed(x_low) if signed else x_low
     x_high = unpack_signed(x_high) if signed else x_high
     dtype = np.int8 if signed else np.uint8
-    return (x_high.astype(dtype), x_low.astype(dtype))
+    return (x_low.astype(dtype), x_high.astype(dtype))

@@ -45,11 +45,11 @@ nearest-even integer and truncating.
 ## Packing and Unpacking
 
 All 4 bit types are stored as 2x4bit in a single byte.
-The first element is stored in the 4 MSB and the second element is stored in the 4 LSB.
+The first element is stored in the 4 LSB and the second element is stored in the 4 MSB.
 i.e. for elements x, y, that are consecutive elements in the array:
 ```{eval-rst}
-pack(x,y): x << 4 | y & 0x0F
-unpack(z): x = z >> 4, y = z & 0x0F
+pack(x,y): y << 4 | x & 0x0F
+unpack(z): x = z & 0x0F, y = z >> 4
 ```
 In case the total number of elements is odd, padding of 4 bits will be appended.
 The storage size of a 4 bit tensor of size `N` is `ceil(N/2)`.
