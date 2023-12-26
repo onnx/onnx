@@ -65,5 +65,5 @@ RUN /tmp/manylinux/entrypoint.sh 3.10 manylinux2014_x86_64 pull_request
 # # docker run -it --rm onnx.manylinux bash # to check into the docker container
 # to copy the wheel file out of the container:
 # docker run -d --name onnx.manylinux.container onnx.manylinux
-# docker cp onnx.manylinux.container:/app/dist/onnx-1.16.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl C:/LiqunWA/onnx-manylinux-wheels/
+# docker cp onnx.manylinux.container:/app/dist/onnx-1.16.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl C:\LiqunWA\onnx-for-docker\Dockerfiles\dist\
 # docker rm -f onnx.manylinux.container
