@@ -32,6 +32,7 @@
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
+#include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
@@ -614,7 +615,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Flatten", OpSetID(20), OpSetID(21)));
-    registerAdapter(std::make_unique<CompatibleAdapter>("GroupNormalization", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<GroupNormalization_20_21>());
     registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(20), OpSetID(21)));
