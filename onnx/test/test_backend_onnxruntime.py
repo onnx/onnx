@@ -270,6 +270,7 @@ if ort is not None:
             "|dft"
             "|gelu"
             "|gridsample"
+            "|group_normalization"
             "|identity_opt"
             "|image_decoder"
             "|isinf_float16"

@@ -18,13 +18,12 @@ class GroupNormalization_20_21 final : public Adapter {
   explicit GroupNormalization_20_21() : Adapter("GroupNormalization", OpSetID(20), OpSetID(21)) {}
 
   void transform_input(std::shared_ptr<Graph> graph, Node* node, int64_t input_id) const {
-  /*
-  Perform following sequence of ops on input, effect is similar to numpy.repeat()
+    // Perform following sequence of ops on input, effect is similar to numpy.repeat()
 
-      -- Shape<start=1,end=2>() -- Div(Shape_out, num_groups)
-    /                                             \
-  --  Reshape(,[-1,1]) ------------- Expand(Reshape_out,[1,Div_out]) -- Reshape(Expand_out, [-1])
-  */
+    //   -- Shape<start=1,end=2>() -- Div(Shape_out, num_groups)
+    //  /                                             |
+    // --  Reshape(,[-1,1]) ------------- Expand(Reshape_out,[1,Div_out]) -- Reshape(Expand_out, [-1])
+
     Symbol kShape("Shape");
     Node* shape = graph->create(kShape);
     shape->i_(kstart, 1);
@@ -104,4 +103,3 @@ class GroupNormalization_20_21 final : public Adapter {
 
 } // namespace version_conversion
 } // namespace ONNX_NAMESPACE
-
