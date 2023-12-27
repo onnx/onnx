@@ -21,7 +21,7 @@ class GroupNormalization_20_21 final : public Adapter {
   /*
   Perform following sequence of ops on input, effect is similar to numpy.repeat()
 
-      -- Shape<start=1,end=2>() -- Div(Shape_out, num_groups) 
+      -- Shape<start=1,end=2>() -- Div(Shape_out, num_groups)
     /                                             \
   --  Reshape(,[-1,1]) ------------- Expand(Reshape_out,[1,Div_out]) -- Reshape(Expand_out, [-1])
   */

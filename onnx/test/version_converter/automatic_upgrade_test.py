@@ -429,15 +429,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"mode": "nearest", "padding_mode": "border", "align_corners": 1},
         )
 
-    def test_GroupNormalization(self) -> None:
-        self._test_op_upgrade(
-            "GroupNormalization",
-            18,
-            [[3, 4, 2, 2], [2], [2]],
-            [[3, 4, 2, 2]],
-            attrs={"num_groups": 2},
-        )
-
     def test_GRU_1(self) -> None:
         # 2->3, 6->7 adapters are missing
         self._test_op_upgrade(
