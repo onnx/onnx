@@ -33047,7 +33047,7 @@ expect(node, inputs=[x, repeats], outputs=[z], name="test_tile_precomputed")
 ### <a name="TopK"></a><a name="topk">**TopK**</a>
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
-  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+  shape [a_1, a_2, ..., a_n] and integer argument k, return two outputs:
 
   * Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
     which contains the values of the top k elements along the specified axis
