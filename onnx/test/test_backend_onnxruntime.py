@@ -167,6 +167,7 @@ if ort is not None:
     )
 
     # Exclude all tests that require IR10 until onnxruntime aligns
+    # TODO: Unwaive tests once onnxruntime supports Opset21/IR10 https://github.com/onnx/onnx/issues/5840
     backend_test.exclude(
         "("
         "test_cast_"

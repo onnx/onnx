@@ -202,7 +202,7 @@ def unpack_int4(
     Returns:
         A numpy array of float32 reshaped to dims.
     """
-    single_func = lambda x: subbyte.unpack_single_4bitx2(x, signed)
+    single_func = lambda x: subbyte.unpack_single_4bitx2(x, signed)  # noqa: E731
     func = np.frompyfunc(single_func, 1, 2)
 
     res_high, res_low = func(data.ravel())

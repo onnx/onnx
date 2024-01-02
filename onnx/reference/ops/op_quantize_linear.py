@@ -38,30 +38,33 @@ class _CommonQuantizeLinear(OpRun):
     }
 
     def get_zero_point_type(self, zero_point: np.ndarray) -> int:
+        zero_point_type = None
         if (
             zero_point.dtype == float8e4m3fn
             and zero_point.dtype.descr[0][0] == "e4m3fn"
         ):
-            return TensorProto.FLOAT8E4M3FN
-        if (
+            zero_point_type = TensorProto.FLOAT8E4M3FN
+        elif (
             zero_point.dtype == float8e4m3fnuz
             and zero_point.dtype.descr[0][0] == "e4m3fnuz"
         ):
-            return TensorProto.FLOAT8E4M3FNUZ
-        if zero_point.dtype == float8e5m2 and zero_point.dtype.descr[0][0] == "e5m2":
-            return TensorProto.FLOAT8E5M2
-        if (
+            zero_point_type = TensorProto.FLOAT8E4M3FNUZ
+        elif zero_point.dtype == float8e5m2 and zero_point.dtype.descr[0][0] == "e5m2":
+            zero_point_type = TensorProto.FLOAT8E5M2
+        elif (
             zero_point.dtype == float8e5m2fnuz
             and zero_point.dtype.descr[0][0] == "e5m2fnuz"
         ):
-            return TensorProto.FLOAT8E5M2FNUZ
-        if zero_point.dtype == uint4 and zero_point.dtype.descr[0][0] == "uint4":
-            return TensorProto.UINT4
-        if zero_point.dtype == int4 and zero_point.dtype.descr[0][0] == "int4":
-            return TensorProto.INT4
-        return np_dtype_to_tensor_dtype(zero_point.dtype)
+            zero_point_type = TensorProto.FLOAT8E5M2FNUZ
+        elif zero_point.dtype == uint4 and zero_point.dtype.descr[0][0] == "uint4":
+            zero_point_type = TensorProto.UINT4
+        elif zero_point.dtype == int4 and zero_point.dtype.descr[0][0] == "int4":
+            zero_point_type = TensorProto.INT4
+        else:
+            zero_point_type = np_dtype_to_tensor_dtype(zero_point.dtype)
+        return zero_point_type
 
-    def common_run(
+    def common_run(  # noqa: PLR0911
         self,
         x: np.ndarray,
         y_scale: np.ndarray,
@@ -120,7 +123,7 @@ class _CommonQuantizeLinear(OpRun):
                 else:
                     xi += zero_point
 
-                single_func = lambda x: subbyte.float32_to_4bit_unpacked(
+                single_func = lambda x: subbyte.float32_to_4bit_unpacked(  # noqa: E731
                     x, signed=(tensor_type == TensorProto.INT4)
                 )
                 func = np.vectorize(single_func)

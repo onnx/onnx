@@ -23,19 +23,22 @@ from onnx.reference.op_run import OpRun
 
 class DequantizeLinear(OpRun):
     def get_x_type(self, x: np.ndarray) -> int:
+        tensor_dtype = None
         if x.dtype == float8e4m3fn and x.dtype.descr[0][0] == "e4m3fn":
-            return TensorProto.FLOAT8E4M3FN
-        if x.dtype == float8e4m3fnuz and x.dtype.descr[0][0] == "e4m3fnuz":
-            return TensorProto.FLOAT8E4M3FNUZ
-        if x.dtype == float8e5m2 and x.dtype.descr[0][0] == "e5m2":
-            return TensorProto.FLOAT8E5M2
-        if x.dtype == float8e5m2fnuz and x.dtype.descr[0][0] == "e5m2fnuz":
-            return TensorProto.FLOAT8E5M2FNUZ
-        if x.dtype == uint4 and x.dtype.descr[0][0] == "uint4":
-            return TensorProto.UINT4
-        if x.dtype == int4 and x.dtype.descr[0][0] == "int4":
-            return TensorProto.INT4
-        return np_dtype_to_tensor_dtype(x.dtype)
+            tensor_dtype = TensorProto.FLOAT8E4M3FN
+        elif x.dtype == float8e4m3fnuz and x.dtype.descr[0][0] == "e4m3fnuz":
+            tensor_dtype = TensorProto.FLOAT8E4M3FNUZ
+        elif x.dtype == float8e5m2 and x.dtype.descr[0][0] == "e5m2":
+            tensor_dtype = TensorProto.FLOAT8E5M2
+        elif x.dtype == float8e5m2fnuz and x.dtype.descr[0][0] == "e5m2fnuz":
+            tensor_dtype = TensorProto.FLOAT8E5M2FNUZ
+        elif x.dtype == uint4 and x.dtype.descr[0][0] == "uint4":
+            tensor_dtype = TensorProto.UINT4
+        elif x.dtype == int4 and x.dtype.descr[0][0] == "int4":
+            tensor_dtype = TensorProto.INT4
+        else:
+            tensor_dtype = np_dtype_to_tensor_dtype(x.dtype)
+        return tensor_dtype
 
     @staticmethod
     def reshape_input(

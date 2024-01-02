@@ -625,7 +625,7 @@ def pack_float32_to_4bit(
     See :ref:`onnx-detail-int4` for technical details.
 
     Args:
-        farray: array of float to convert and pack
+        array: array of float to convert and pack
         signed: Whether the 4 bit variant is signed or unsigned
 
     Returns:
@@ -639,7 +639,7 @@ def pack_float32_to_4bit(
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
 
-    single_func = lambda x, y: subbyte.float32x2_to_4bitx2(x, y, signed)
+    single_func = lambda x, y: subbyte.float32x2_to_4bitx2(x, y, signed)  # noqa: E731
     func = np.frompyfunc(single_func, 2, 1)
 
     arr = func(array_flat[0::2], array_flat[1::2])

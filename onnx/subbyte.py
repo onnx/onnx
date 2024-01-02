@@ -54,7 +54,7 @@ def float32x2_to_4bitx2(
 def unpack_single_4bitx2(
     x: Union[np.ndarray, np.dtype, float], signed: bool
 ) -> Tuple[np.ndarray, np.ndarray]:
-    unpack_signed = lambda x: np.where((x >> 3) == 0, x, x | 0xF0)
+    unpack_signed = lambda x: np.where((x >> 3) == 0, x, x | 0xF0)  # noqa: E731
     """Unpack a single byte 4bitx2 to two 4 bit elements
     Args:
         x: Input data
