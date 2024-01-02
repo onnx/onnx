@@ -34,6 +34,8 @@ using TensorList = google::protobuf::RepeatedPtrField<TensorProto>;
 
 using OpsetIdList = google::protobuf::RepeatedPtrField<OperatorSetIdProto>;
 
+using StringStringList = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
+
 #define CHECK_PARSER_STATUS(status) \
   {                                 \
     auto local_status_ = status;    \
@@ -376,6 +378,8 @@ class ParserBase {
   const char* next_;
   const char* end_;
   const char* saved_pos_;
+
+  bool NextIsValidFloatString();
 };
 
 class OnnxParser : public ParserBase {
@@ -385,6 +389,8 @@ class OnnxParser : public ParserBase {
   Status Parse(TensorShapeProto& shape);
 
   Status Parse(TypeProto& typeProto);
+
+  Status Parse(StringStringList& stringStringList);
 
   Status Parse(TensorProto& tensorProto);
 

@@ -30,8 +30,7 @@ class ExternalDataInfo:
 
 
 def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
-    """
-    Loads data from an external file for tensor.
+    """Loads data from an external file for tensor.
     Ideally TensorProto should not hold any raw data but if it does it will be ignored.
 
     Arguments:
@@ -53,8 +52,7 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
 
 
 def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
-    """
-    Loads external tensors into model
+    """Loads external tensors into model
 
     Arguments:
         model: ModelProto to load external data to
@@ -106,15 +104,15 @@ def convert_model_to_external_data(
     size_threshold: int = 1024,
     convert_attribute: bool = False,
 ) -> None:
-    """
-    Call to set all tensors with raw data as external data. This call should preceed 'save_model'.
+    """Call to set all tensors with raw data as external data. This call should precede 'save_model'.
     'save_model' saves all the tensors data as external data after calling this function.
 
     Arguments:
         model (ModelProto): Model to be converted.
         all_tensors_to_one_file (bool): If true, save all tensors to one external file specified by location.
             If false, save each tensor to a file named with the tensor name.
-        location: specify the external file that all tensors to save to.
+        location: specify the external file relative to the model that all tensors to save to.
+            Path is relative to the model path.
             If not specified, will use the model name.
         size_threshold: Threshold for size of data. Only when tensor's data is >= the size_threshold
             it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
@@ -128,6 +126,10 @@ def convert_model_to_external_data(
     if all_tensors_to_one_file:
         file_name = str(uuid.uuid1())
         if location:
+            if os.path.isabs(location):
+                raise ValueError(
+                    "location must be a relative path that is relative to the model path."
+                )
             file_name = location
         for tensor in tensors:
             if (
@@ -148,8 +150,7 @@ def convert_model_to_external_data(
 
 
 def convert_model_from_external_data(model: ModelProto) -> None:
-    """
-    Call to set all tensors which use external data as embedded data.
+    """Call to set all tensors which use external data as embedded data.
     save_model saves all the tensors data as embedded data after
     calling this function.
 
@@ -165,8 +166,7 @@ def convert_model_from_external_data(model: ModelProto) -> None:
 
 
 def save_external_data(tensor: TensorProto, base_path: str) -> None:
-    """
-    Writes tensor data to an external file according to information in the `external_data` field.
+    """Writes tensor data to an external file according to information in the `external_data` field.
 
     Arguments:
         tensor (TensorProto): Tensor object to be serialized
@@ -271,15 +271,14 @@ def _is_valid_filename(filename: str) -> bool:
 
 def uses_external_data(tensor: TensorProto) -> bool:
     """Returns true if the tensor stores data in an external location."""
-    return (
+    return (  # type: ignore[no-any-return]
         tensor.HasField("data_location")
         and tensor.data_location == TensorProto.EXTERNAL
     )
 
 
 def remove_external_data_field(tensor: TensorProto, field_key: str) -> None:
-    """
-    Removes a field from a Tensor's external_data key-value store.
+    """Removes a field from a Tensor's external_data key-value store.
 
     Modifies tensor object in place.
 
@@ -293,8 +292,7 @@ def remove_external_data_field(tensor: TensorProto, field_key: str) -> None:
 
 
 def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
-    """
-    Serializes data for all the tensors which have data location set to TensorProto.External.
+    """Serializes data for all the tensors which have data location set to TensorProto.External.
 
     Note: This function also strips basepath information from all tensors' external_data fields.
 

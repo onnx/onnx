@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable=protected-access
+
 import glob
 import os
 import unittest

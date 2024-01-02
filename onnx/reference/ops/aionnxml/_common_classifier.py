@@ -12,13 +12,11 @@ logistic = np.vectorize(compute_logistic)
 
 
 def compute_softmax_zero(values: np.ndarray) -> np.ndarray:
-    """
-    The function modifies the input inplace.
-    """
+    """The function modifies the input inplace."""
     v_max = values.max()
     exp_neg_v_max = np.exp(-v_max)
     s = 0
-    for i in range(len(values)):  # pylint: disable=C0200
+    for i in range(len(values)):
         v = values[i]
         if v > 0.0000001 or v < -0.0000001:
             values[i] = np.exp(v - v_max)
@@ -33,7 +31,7 @@ def compute_softmax_zero(values: np.ndarray) -> np.ndarray:
 
 
 def softmax_zero(values: np.ndarray) -> np.ndarray:
-    "Modifications in place."
+    """Modifications in place."""
     if len(values.shape) == 1:
         compute_softmax_zero(values)
         return values
@@ -43,7 +41,7 @@ def softmax_zero(values: np.ndarray) -> np.ndarray:
 
 
 def softmax(values: np.ndarray) -> np.ndarray:
-    "Modifications in place."
+    """Modifications in place."""
     if len(values.shape) == 2:
         v_max = values.max(axis=1, keepdims=1)  # type: ignore
         values -= v_max

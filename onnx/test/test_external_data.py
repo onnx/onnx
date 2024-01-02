@@ -34,9 +34,7 @@ class TestLoadExternalDataBase(unittest.TestCase):
     serialization_format: str = "protobuf"
 
     def setUp(self) -> None:
-        self._temp_dir_obj = (
-            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
-        )
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
         self.temp_dir: str = self._temp_dir_obj.name
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
@@ -217,9 +215,7 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
     serialization_format: str = "protobuf"
 
     def setUp(self) -> None:
-        self._temp_dir_obj = (
-            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
-        )
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
         self.temp_dir: str = self._temp_dir_obj.name
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
@@ -521,9 +517,7 @@ class TestExternalDataToArray(unittest.TestCase):
     serialization_format: str = "protobuf"
 
     def setUp(self) -> None:
-        self._temp_dir_obj = (
-            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
-        )
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
         self.temp_dir: str = self._temp_dir_obj.name
         self._model_file_path: str = os.path.join(self.temp_dir, "model.onnx")
         self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
@@ -680,7 +674,8 @@ class TestExternalDataToArray(unittest.TestCase):
 
 class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBase):
     """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
-    directory."""
+    directory.
+    """
 
     def create_external_data_tensor(
         self, value: list[Any], tensor_name: str, location: str = ""
@@ -719,7 +714,8 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
     TestNotAllowToLoadExternalDataOutsideModelDirectory
 ):
     """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
-    directory."""
+    directory.
+    """
 
     def test_check_model(self) -> None:
         """We only test the model validation as onnxruntime uses this to load the model."""

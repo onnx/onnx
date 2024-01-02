@@ -10,9 +10,9 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:
 
-# Use MACOSX_DEPLOYMENT_TARGET=10.12 to produce compatible wheel
+# Use MACOSX_DEPLOYMENT_TARGET=10.15 to produce compatible wheel
 env:
-  MACOSX_DEPLOYMENT_TARGET: 10.12
+  MACOSX_DEPLOYMENT_TARGET: 10.15
 
 permissions:
   contents: read
@@ -28,7 +28,7 @@ jobs:
         target-architecture: ['x86_64', 'universal2']
 
     steps:
-    - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - name: Checkout submodules
       shell: bash
       run: |
@@ -36,7 +36,7 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
+      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.host-architecture }}
@@ -51,30 +51,31 @@ jobs:
         CC: "clang"
         CXX: "clang++"
         ONNX_ML: 1
+        CMAKE_OSX_ARCHITECTURES: ${{ matrix.target-architecture == 'x86_64' && 'x86_64' || 'arm64;x86_64' }}
+        # Currently GitHub Action agent is using macos-11, we rename the wheels
+        # to use the MACOSX_DEPLOYMENT_TARGET
+        # Rename e.g. onnx-1.15.0-cp38-cp38-macosx_11_0_x86_64.whl
+        # to onnx-1.15.0-cp38-cp38-macosx_10_15_universal2.whl
+        ONNX_WHEEL_PLATFORM_NAME: macosx_10_15_${{ matrix.target-architecture }}
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
       run: |
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
-        if [ '${{ matrix.target-architecture }}' == 'x86_64' ]; then
-          export CMAKE_OSX_ARCHITECTURES=x86_64
-        elif [ '${{ matrix.target-architecture }}' == 'universal2' ]; then
-          export CMAKE_OSX_ARCHITECTURES='arm64;x86_64'
-        fi
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-        export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
-        # Currently GitHub Action agent is using macos-11, use -p to force change the final MACOSX_DEPLOYMENT_TARGET
-        # Change -p if MACOSX_DEPLOYMENT_TARGET is different
         if [ '${{ github.event_name }}' == 'schedule' ]; then
-          python setup.py bdist_wheel -p macosx_10_12_${{ matrix.target-architecture }} --weekly_build
-        else
-          python setup.py bdist_wheel -p macosx_10_12_${{ matrix.target-architecture }}
+          sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+          export ONNX_PREVIEW_BUILD=1
         fi
-        for file in dist/*.whl; do python -m pip install --upgrade $file; done
+        python -m build --wheel
 
+        for file in dist/*.whl; do
+          python -m pip install --upgrade $file;
+        done
     - name: Test the installed wheel
       run: |
         pytest
 
-    - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+    - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
       with:
         name: wheels
         path: dist
@@ -123,7 +124,8 @@ jobs:
       run: |
         # Build and upload source distribution to PyPI
         git clean -xdf
-        python setup.py sdist --weekly_build
+        sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+        ONNX_PREVIEW_BUILD=1 python -m build --sdist
         twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
         # Test weekly source distribution from PyPI

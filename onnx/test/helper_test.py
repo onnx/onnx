@@ -2,7 +2,6 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable=unnecessary-lambda
 
 import random
 import struct
@@ -403,10 +402,12 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 17)], 8)
         test([("", 18)], 8)
         test([("", 19)], 9)
+        test([("", 20)], 9)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
         test([("ai.onnx.ml", 3)], 8)
+        test([("ai.onnx.ml", 4)], 9)
         test([("ai.onnx.training", 1)], 7)
         # helper should pick *max* IR version required from all opsets specified.
         test([("", 10), ("ai.onnx.ml", 2)], 6)
@@ -485,10 +486,13 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
     def test_make_float8e4m3fnuz_tensor(self) -> None:
         y = helper.make_tensor(
-            "zero_point", TensorProto.FLOAT8E4M3FNUZ, [5], [0, 0.5, 1, 50000, 10.1]
+            "zero_point",
+            TensorProto.FLOAT8E4M3FNUZ,
+            [7],
+            [0, 0.5, 1, 50000, 10.1, -0.00001, 0.00001],
         )
         ynp = numpy_helper.to_array(y)
-        expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
+        expected = np.array([0, 0.5, 1, 240, 10, 0, 0], dtype=np.float32)
         np.testing.assert_equal(expected, ynp)
 
     def test_make_float8e5m2_tensor(self) -> None:
@@ -501,10 +505,13 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
     def test_make_float8e5m2fnuz_tensor(self) -> None:
         y = helper.make_tensor(
-            "zero_point", TensorProto.FLOAT8E5M2FNUZ, [5], [0, 0.5, 1, 50000, 96]
+            "zero_point",
+            TensorProto.FLOAT8E5M2FNUZ,
+            [7],
+            [0, 0.5, 1, 50000, 96, -0.0000001, 0.0000001],
         )
         ynp = numpy_helper.to_array(y)
-        expected = np.array([0, 0.5, 1, 49152, 96], dtype=np.float32)
+        expected = np.array([0, 0.5, 1, 49152, 96, 0, 0], dtype=np.float32)
         np.testing.assert_equal(expected, ynp)
 
     def test_make_bfloat16_tensor_raw(self) -> None:
@@ -925,11 +932,11 @@ class TestAttrTypeToStr(unittest.TestCase):
         ]
     )
     def test_attr_type_to_str(self, attr_type, expected_str):
-        result = helper._attr_type_to_str(attr_type)  # pylint: disable=protected-access
+        result = helper._attr_type_to_str(attr_type)
         self.assertEqual(result, expected_str)
 
     def test_attr_type_to_str_undefined(self):
-        result = helper._attr_type_to_str(9999)  # pylint: disable=protected-access
+        result = helper._attr_type_to_str(9999)
         self.assertEqual(result, "UNDEFINED")
 
 
