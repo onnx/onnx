@@ -527,7 +527,7 @@ message TensorProto {
     // 4-bit data-types
     UINT4 = 21;
     INT4 = 22;
-    
+
     // Future extensions go here.
   }
 
