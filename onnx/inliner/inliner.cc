@@ -445,13 +445,14 @@ using FunctionMap = std::unordered_map<FunctionIdKey, std::pair<const FunctionPr
 
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
+void InlineFunctions(GraphProto& graph, const FunctionMap& map, NameGenerator& name_generator, ModelProto* model, int inline_count = 0) ;
+
 // Shared utility used for inlining into either a GraphProto or a FunctionProto.
-void InlineFunctions(NodeList& nodes, const FunctionMap& map, NameGenerator& name_generator, ModelProto* model) {
+void InlineFunctions(NodeList& nodes, const FunctionMap& map, NameGenerator& name_generator, ModelProto* model, int inline_count = 0) {
   NodeList original_nodes;
   // Move all nodes into original_nodes
   original_nodes.Swap(&nodes);
 
-  int inline_count = 0;
   std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
     FunctionProto callee;
     auto iter = map.find(GetCalleeId(node));
@@ -479,12 +480,27 @@ void InlineFunctions(NodeList& nodes, const FunctionMap& map, NameGenerator& nam
       // Append node without inlining.
       // TODO: use std::move instead of copying. Use of move doesn't seem to work with
       // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
+
+      for (auto& attr : *node.mutable_attribute()) {
+        if (attr.has_g()) {
+          InlineFunctions(*attr.mutable_g(), map, name_generator, model, inline_count);
+        }
+        for (auto&g : *attr.mutable_graphs()) {
+          InlineFunctions(g, map, name_generator, model, inline_count);
+        }
+      }
+
       *nodes.Add() = node;
     }
   };
   for (auto& node : original_nodes) {
     append_node(node);
   }
+}
+
+void InlineFunctions(GraphProto& graph, const FunctionMap& map, NameGenerator& name_generator, ModelProto* model, int inline_count) {
+  auto* nodes = graph.mutable_node();
+  InlineFunctions(*nodes, map, name_generator, model, inline_count);
 }
 
 void InlineFunctions(ModelProto& model, FunctionMap& map) {
