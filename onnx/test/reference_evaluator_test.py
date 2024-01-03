@@ -5342,7 +5342,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     def test_a_function_calling_a_function_once(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
-        out = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
+        output = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
         Z = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
 
         func_def_add = make_function(
@@ -5373,13 +5373,13 @@ class TestReferenceEvaluator(unittest.TestCase):
                         [make_node("fctadd", ["input"], ["output"], domain="this")],
                         "gthen",
                         [],
-                        [out],
+                        [output],
                     ),
                     else_branch=make_graph(
                         [make_node("Add", ["input", "one"], ["output"], domain="")],
                         "gelse",
                         [],
-                        [out],
+                        [output],
                     ),
                     name=":IF",
                 ),
@@ -5420,7 +5420,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     def test_a_function_calling_a_function_double(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
-        out = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
+        output = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
         Z = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
 
         func_def_add = make_function(
@@ -5451,13 +5451,13 @@ class TestReferenceEvaluator(unittest.TestCase):
                         [make_node("fctadd", ["input"], ["output"], domain="this")],
                         "gthen",
                         [],
-                        [out],
+                        [output],
                     ),
                     else_branch=make_graph(
                         [make_node("Add", ["input", "one"], ["output"], domain="")],
                         "gelse",
                         [],
-                        [out],
+                        [output],
                     ),
                     name=":IF",
                 ),
