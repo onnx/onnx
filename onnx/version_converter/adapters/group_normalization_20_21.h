@@ -33,13 +33,13 @@ class GroupNormalization_20_21 final : public Adapter {
     shape->addInput(node->inputs()[input_id]);
     shape->insertBefore(node);
 
-    Tensor tensor_num_grp;
-    tensor_num_grp.elem_type() = TensorProto_DataType_INT64;
+    Tensor tensor_num_groups;
+    tensor_num_groups.elem_type() = TensorProto_DataType_INT64;
     int64_t num_groups = node->i(knum_groups);
-    tensor_num_grp.sizes() = {1};
-    tensor_num_grp.int64s() = {num_groups};
+    tensor_num_groups.sizes() = {1};
+    tensor_num_groups.int64s() = {num_groups};
     Node* constant_num_grp = graph->create(kConstant);
-    constant_num_grp->t_(kvalue, tensor_num_grp);
+    constant_num_grp->t_(kvalue, tensor_num_groups);
     constant_num_grp->insertBefore(node);
 
     Node* div = graph->create(kDiv);
@@ -55,7 +55,7 @@ class GroupNormalization_20_21 final : public Adapter {
     constant_reshape0_shape->t_(kvalue, tensor_reshape0_shape);
     constant_reshape0_shape->insertBefore(node);
     Node* reshape0 = graph->create(kReshape);
-    reshape0->addInput(node->inputs()[1]);
+    reshape0->addInput(node->inputs()[input_id]);
     reshape0->addInput(constant_reshape0_shape->output());
     reshape0->insertBefore(node);
 
