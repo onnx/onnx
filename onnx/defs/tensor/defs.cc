@@ -427,7 +427,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shape_ver15_doc = R"DOC(
+static const char* Shape_ver19_doc = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 Optional attributes start and end can be used to compute a slice of the input tensor's shape.
 If start axis is omitted, the slice starts from axis 0.
@@ -472,7 +472,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     19,
     OpSchema()
-        .SetDoc(Shape_ver15_doc)
+        .SetDoc(Shape_ver19_doc)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -530,7 +530,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Size_ver13_doc = R"DOC(
+static const char* Size_ver19_doc = R"DOC(
 Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 )DOC";
 
@@ -538,7 +538,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Size,
     19,
     OpSchema()
-        .SetDoc(Size_ver13_doc)
+        .SetDoc(Size_ver19_doc)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
