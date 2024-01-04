@@ -2648,7 +2648,7 @@ Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * (roi_end - roi_start) * scale) if input \"sizes\" is not specified.
 )DOC";
 
-static const char* Resize_attr_coordinate_transformation_mode_doc = R"DOC(
+static const char* Resize_attr_coordinate_transformation_mode_ver11_doc = R"DOC(
 This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor. <br/>
 
 The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example.
@@ -2698,7 +2698,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "coordinate_transformation_mode",
-            Resize_attr_coordinate_transformation_mode_doc,
+            Resize_attr_coordinate_transformation_mode_ver11_doc,
             AttributeProto::STRING,
             std::string("half_pixel"))
         .Attr(

@@ -188,7 +188,7 @@ static const char* mvn_ver9_doc = R"DOC(
       on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 )DOC";
 
-static std::vector<int64_t> mvn_default_axes = {0, 2, 3};
+static const std::vector<int64_t> old_mvn_default_axes = {0, 2, 3};
 
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
@@ -204,7 +204,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "along each channel. Two variables with the same C-coordinate "
             "are associated with the same mean and variance.",
             AttributeProto::INTS,
-            mvn_default_axes)
+            old_mvn_default_axes)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
