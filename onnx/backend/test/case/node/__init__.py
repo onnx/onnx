@@ -398,6 +398,7 @@ def get_diff_op_types() -> List[str]:
         ["git", "diff", "--name-only", "--diff-filter=AM", "origin/HEAD", "HEAD"],
         cwd=cwd_path,
         capture_output=True,
+        check=True,
     )
     diff_list = obtain_diff.stdout.split()
     changed_op_types = []
