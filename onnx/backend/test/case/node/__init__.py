@@ -391,24 +391,15 @@ def collect_diff_testcases() -> List[TestCase]:
     return _NodeTestCases
 
 
-def get_diff_op_types():
+def get_diff_op_types() -> List[str]:
     cwd_path = Path.cwd()
-    # git fetch first for git diff on GitHub Action
-    subprocess.run(
-        ["git", "fetch", "origin", "main:main"],
+    # obtain list of added or modified files in this PR
+    obtain_diff = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=AM", "origin/HEAD", "HEAD"],
         cwd=cwd_path,
         capture_output=True,
-        check=True,
     )
-    # obtain list of added or modified files in this PR
-    obtain_diff = subprocess.Popen(
-        ["git", "diff", "--name-only", "--diff-filter=AM", "origin/main", "HEAD"],
-        cwd=cwd_path,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    stdoutput, _ = obtain_diff.communicate()
-    diff_list = stdoutput.split()
+    diff_list = obtain_diff.stdout.split()
     changed_op_types = []
     for file in diff_list:
         file_name = file.decode("utf-8")
