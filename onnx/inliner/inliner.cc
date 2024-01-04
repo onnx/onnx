@@ -445,13 +445,37 @@ using FunctionMap = std::unordered_map<FunctionIdKey, std::pair<const FunctionPr
 
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
-// Shared utility used for inlining into either a GraphProto or a FunctionProto.
-void InlineFunctions(NodeList& nodes, const FunctionMap& map, NameGenerator& name_generator, ModelProto* model) {
+/** Utility function used for inlining into a GraphProto.
+ * @param graph Mutable graph
+ * @param map Map from function-id to function for functions to be inlined
+ * @param name_generator Name generator for generating unique names for inlined variables
+ * @param model If non-null, the model being inlined into. Used for version conversion.
+ * @param inline_count Mutable counter for number of inlined calls. Used for name generation.
+ */
+void InlineFunctions(
+    GraphProto& graph,
+    const FunctionMap& map,
+    NameGenerator& name_generator,
+    ModelProto* model,
+    int& inline_count);
+
+/** Shared utility function used for inlining into either a GraphProto or a FunctionProto.
+ * @param nodes Mutable list of nodes (of function or graph)
+ * @param map Map from function-id to function for functions to be inlined
+ * @param name_generator Name generator for generating unique names for inlined variables
+ * @param model If non-null, the model being inlined into. Used for version conversion.
+ * @param inline_count Mutable counter for number of inlined calls. Used for name generation.
+ */
+void InlineFunctions(
+    NodeList& nodes,
+    const FunctionMap& map,
+    NameGenerator& name_generator,
+    ModelProto* model,
+    int& inline_count) {
   NodeList original_nodes;
   // Move all nodes into original_nodes
   original_nodes.Swap(&nodes);
 
-  int inline_count = 0;
   std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
     FunctionProto callee;
     auto iter = map.find(GetCalleeId(node));
@@ -479,6 +503,16 @@ void InlineFunctions(NodeList& nodes, const FunctionMap& map, NameGenerator& nam
       // Append node without inlining.
       // TODO: use std::move instead of copying. Use of move doesn't seem to work with
       // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
+
+      for (auto& attr : *node.mutable_attribute()) {
+        if (attr.has_g()) {
+          InlineFunctions(*attr.mutable_g(), map, name_generator, model, inline_count);
+        }
+        for (auto& g : *attr.mutable_graphs()) {
+          InlineFunctions(g, map, name_generator, model, inline_count);
+        }
+      }
+
       *nodes.Add() = node;
     }
   };
@@ -487,16 +521,43 @@ void InlineFunctions(NodeList& nodes, const FunctionMap& map, NameGenerator& nam
   }
 }
 
+/** Utility function used for inlining into a GraphProto.
+ * @param graph Mutable graph
+ * @param map Map from function-id to function for functions to be inlined
+ * @param name_generator Name generator for generating unique names for inlined variables
+ * @param model If non-null, the model being inlined into. Used for version conversion.
+ * @param inline_count Mutable counter for number of inlined calls. Used for name generation.
+ */
+void InlineFunctions(
+    GraphProto& graph,
+    const FunctionMap& map,
+    NameGenerator& name_generator,
+    ModelProto* model,
+    int& inline_count) {
+  auto* nodes = graph.mutable_node();
+  InlineFunctions(*nodes, map, name_generator, model, inline_count);
+}
+
+/** Utility function used for inlining into a ModelProto.
+ * @param model Mutable model
+ * @param map Map from function-id to function for functions to be inlined
+ */
 void InlineFunctions(ModelProto& model, FunctionMap& map) {
+  int inline_count = 0;
   auto* graph = model.mutable_graph();
   NameGenerator name_generator(*graph);
   auto* nodes = graph->mutable_node();
-  InlineFunctions(*nodes, map, name_generator, &model);
+  InlineFunctions(*nodes, map, name_generator, &model, inline_count);
 }
 
+/** Utility function used for inlining into a FunctionProto.
+ * @param function Mutable function
+ * @param map Map from function-id to function for functions to be inlined
+ */
 void InlineFunctions(FunctionProto& function, FunctionMap& map) {
+  int inline_count = 0;
   NameGenerator name_generator(function);
-  InlineFunctions(*function.mutable_node(), map, name_generator, nullptr);
+  InlineFunctions(*function.mutable_node(), map, name_generator, nullptr, inline_count);
 }
 
 class VectorSet : public FunctionIdSet {
