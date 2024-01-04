@@ -16,6 +16,8 @@ class If(OpRun):
             raise KeyError("run_params must contains key 'opsets'.")
         if "verbose" not in run_params:
             raise KeyError("run_params must contains key 'verbose'.")
+        if "existing_functions" not in self.run_params:
+            raise KeyError("run_params must contains key 'existing_functions'.")
 
     def need_context(self) -> bool:
         """Tells the runtime if this node needs the context
