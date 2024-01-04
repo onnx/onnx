@@ -124,7 +124,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-static const char* NonMaxSuppression_doc = R"DOC(
+static const char* NonMaxSuppression_ver11_doc = R"DOC(
 Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
 Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
 Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
@@ -175,7 +175,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(NonMaxSuppression_doc)
+        .SetDoc(NonMaxSuppression_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference - Output is always of type INT64
           auto* selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();

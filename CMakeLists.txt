@@ -27,6 +27,7 @@ option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
+option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 option(ONNX_BUILD_SHARED "Build ONNX as a shared library." OFF)
 
 if(NOT DEFINED ONNX_ML)
@@ -739,6 +740,35 @@ if (NOT Build_Protobuf)
     NAMESPACE ONNX::
   )
 endif()
+
+if(ONNX_USE_UNITY_BUILD)
+  # If ONNX_USE_UNITY_BUILD is set to ON, set onnx target to use Unity builds.
+  #  We set Unity build to use groups, it allows us to set some specific files to be compiled individually
+  set_target_properties(onnx
+    PROPERTIES 
+      UNITY_BUILD ON
+      UNITY_BUILD_MODE GROUP
+  )
+
+  set(NEW_LIST __unity_src_files)
+  list(APPEND __unity_src_files ${ONNX_SRCS})
+  # These files have an issue with template explicit specialization after instanciation:
+  #   We take them out of the unity group so they are compiled individually.
+  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
+  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
+  set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
+
+  # With unity build object file could get big, need this switch in MSVC.
+  if (MSVC)
+    target_compile_options(onnx PRIVATE /bigobj)
+  endif ()
+
+# should be enabled for onnx_proto when protobuf can support Unity builds
+
+endif()
+
+
+
 install(TARGETS
   onnx onnx_proto
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
