@@ -15,21 +15,30 @@ from onnx.reference.custom_element_types import (
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
+    int4,
+    uint4,
 )
 from onnx.reference.op_run import OpRun
 
 
 class DequantizeLinear(OpRun):
     def get_x_type(self, x: np.ndarray) -> int:
+        tensor_dtype = None
         if x.dtype == float8e4m3fn and x.dtype.descr[0][0] == "e4m3fn":
-            return TensorProto.FLOAT8E4M3FN
-        if x.dtype == float8e4m3fnuz and x.dtype.descr[0][0] == "e4m3fnuz":
-            return TensorProto.FLOAT8E4M3FNUZ
-        if x.dtype == float8e5m2 and x.dtype.descr[0][0] == "e5m2":
-            return TensorProto.FLOAT8E5M2
-        if x.dtype == float8e5m2fnuz and x.dtype.descr[0][0] == "e5m2fnuz":
-            return TensorProto.FLOAT8E5M2FNUZ
-        return np_dtype_to_tensor_dtype(x.dtype)
+            tensor_dtype = TensorProto.FLOAT8E4M3FN
+        elif x.dtype == float8e4m3fnuz and x.dtype.descr[0][0] == "e4m3fnuz":
+            tensor_dtype = TensorProto.FLOAT8E4M3FNUZ
+        elif x.dtype == float8e5m2 and x.dtype.descr[0][0] == "e5m2":
+            tensor_dtype = TensorProto.FLOAT8E5M2
+        elif x.dtype == float8e5m2fnuz and x.dtype.descr[0][0] == "e5m2fnuz":
+            tensor_dtype = TensorProto.FLOAT8E5M2FNUZ
+        elif x.dtype == uint4 and x.dtype.descr[0][0] == "uint4":
+            tensor_dtype = TensorProto.UINT4
+        elif x.dtype == int4 and x.dtype.descr[0][0] == "int4":
+            tensor_dtype = TensorProto.INT4
+        else:
+            tensor_dtype = np_dtype_to_tensor_dtype(x.dtype)
+        return tensor_dtype
 
     @staticmethod
     def reshape_input(
@@ -60,13 +69,13 @@ class DequantizeLinear(OpRun):
             raise RuntimeError("Input 2 must be a vector or a number.")
 
         x_type = self.get_x_type(x)
-        f8_type = x_type in {
+        fp8_type = x_type in {
             TensorProto.FLOAT8E4M3FN,
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
         }
-        if x_zero_point is not None and not f8_type:
+        if x_zero_point is not None and not fp8_type:
             zero_type = self.get_x_type(x_zero_point)
             if x_type != zero_type:
                 raise RuntimeError(
@@ -77,13 +86,13 @@ class DequantizeLinear(OpRun):
                 x_zero_point, x.shape, axis
             )
         else:
-            if f8_type and x_zero_point is not None:
+            if fp8_type and x_zero_point is not None:
                 u_x_zero_point = x_zero_point.astype(np.uint8)
                 umi = u_x_zero_point.min()
                 uma = u_x_zero_point.max()
                 if umi != uma or umi != np.uint8(0):
                     raise RuntimeError(
-                        "x_zero_point is not null but should be zero for float 8 types."
+                        "x_zero_point is not null but should be zero for float8 types."
                     )
             if x_type == TensorProto.FLOAT8E4M3FN:
                 dx = float8e4m3_to_float32(x)

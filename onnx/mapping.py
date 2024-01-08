@@ -80,6 +80,13 @@ TENSOR_TYPE_MAP = {
     int(TensorProto.FLOAT8E5M2FNUZ): TensorDtypeMap(
         np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2FNUZ"
     ),
+    # Native numpy does not support uint4/int4 so now use uint8/int8 for these types.
+    int(TensorProto.UINT4): TensorDtypeMap(
+        np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.UINT4"
+    ),
+    int(TensorProto.INT4): TensorDtypeMap(
+        np.dtype("int8"), int(TensorProto.INT32), "TensorProto.INT4"
+    ),
 }
 
 
@@ -154,6 +161,8 @@ _NP_TYPE_TO_TENSOR_TYPE = {
         TensorProto.FLOAT8E4M3FNUZ,
         TensorProto.FLOAT8E5M2,
         TensorProto.FLOAT8E5M2FNUZ,
+        TensorProto.UINT4,
+        TensorProto.INT4,
     )
 }
 
