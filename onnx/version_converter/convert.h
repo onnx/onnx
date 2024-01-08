@@ -662,7 +662,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
     registerAdapter(
-        std::make_unique<TypeRestriction>("QLinearMatMul", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types));
+        std::make_unique<TypeRestriction>("QLinearMatMul", OpSetID(21), OpSetID(20), q_dqmm_20_unallowed_types));
     registerAdapter(std::make_unique<QuantizeLinear_21_20>());
     registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
