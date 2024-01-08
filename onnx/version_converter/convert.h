@@ -36,6 +36,7 @@
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
+#include "onnx/version_converter/adapters/q_dq_21_20.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
@@ -654,8 +655,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(
         std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
-    registerAdapter(
-        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types));
+    registerAdapter(std::make_unique<DequantizeLinear_21_20>());
     registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
     registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
@@ -663,8 +663,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
     registerAdapter(
         std::make_unique<TypeRestriction>("QLinearMatMul", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types));
-    registerAdapter(
-        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types));
+    registerAdapter(std::make_unique<QuantizeLinear_21_20>());
     registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));

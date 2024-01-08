@@ -72,25 +72,52 @@ class _CommonQuantizeLinear(OpRun):
         axis: int = 1,
         saturate: bool = True,
     ) -> tuple[np.ndarray]:
-        if len(y_scale.shape) > 1:
-            raise RuntimeError("Input 2 must be a vector or a number.")
-        if len(y_scale.shape) > 0 and y_scale.size == 1:
-            y_scale = y_scale[0]
-        if len(y_scale.shape) > 0:
-            new_shape = [1 for s in x.shape]
-            new_shape[axis] = len(y_scale)
-            x = x / y_scale.reshape(new_shape)
-        else:
+        if len(y_scale.shape) == 0 or y_scale.size == 1:  # per-tensor
+            if len(y_scale.shape) > 0:
+                y_scale = y_scale[0]
             x = x / y_scale
             new_shape = x.shape  # unused
+        elif len(y_scale.shape) == 1 and y_scale.size > 1:  # per-axis
+            new_shape = [1] * len(x.shape)
+            new_shape[axis] = len(y_scale)
+            x = x / y_scale.reshape(new_shape)
+        else:  # per-block
+            if len(x.shape) != len(y_scale.shape):
+                raise RuntimeError(
+                    "Input 2 must be a number, a vector or a tensor with the same rank as the input."
+                )
+            block_shape = np.array(x.shape) // np.array(y_scale.shape)
+            if sum(block_shape != 1) != 1:
+                raise RuntimeError(
+                    "Blocked quantization is defined for 1-D blocks only."
+                )
+
+            # repeat scale to get elementwise scale
+            if x.size % y_scale.size != 0:
+                raise RuntimeError(
+                    "Blocked quantization requires the scale dimensions to divide the input dimensions"
+                )
+            block_dim = np.where(block_shape != 1)[0][0]
+            block_size = x.shape[block_dim] // y_scale.shape[block_dim]
+            assert block_size == x.size // y_scale.size
+
+            y_scale = np.repeat(y_scale, repeats=block_size, axis=block_dim)
+            # compute
+            x = x / y_scale
+
         if zero_point is not None:
             tensor_type = self.get_zero_point_type(zero_point)
 
             if tensor_type in _CommonQuantizeLinear.quant_integer_ranges:
                 xi = np.rint(x).astype(np.int32)
-                if len(y_scale.shape) > 0:
+                if y_scale.size == 1:
+                    xi += zero_point
+                elif len(y_scale.shape) == 1:
                     xi += zero_point.reshape(new_shape)
                 else:
+                    zero_point = np.repeat(
+                        zero_point, repeats=block_size, axis=block_dim
+                    )
                     xi += zero_point
                 dtype = tensor_dtype_to_np_dtype(tensor_type)
                 quant_range = _CommonQuantizeLinear.quant_integer_ranges[tensor_type]
@@ -141,12 +168,20 @@ class _CommonQuantizeLinear(OpRun):
 
 
 class QuantizeLinear_10(_CommonQuantizeLinear):
-    def _run(self, *args, axis=None):  # type: ignore
-        # args: x, y_scale, zero_point
-        return self.common_run(*args, axis=axis)  # type: ignore
+    def _run(self, x, y_scale, zero_point=None, axis=None):  # type: ignore
+        if len(y_scale.shape) > 1:
+            raise RuntimeError("Input 2 must be a vector or a number.")
+        return self.common_run(x, y_scale, zero_point, axis=axis)  # type: ignore
 
 
 class QuantizeLinear_19(_CommonQuantizeLinear):
+    def _run(self, x, y_scale, zero_point=None, axis=None, saturate=None):  # type: ignore
+        if len(y_scale.shape) > 1:
+            raise RuntimeError("Input 2 must be a vector or a number.")
+        return self.common_run(x, y_scale, zero_point, axis=axis, saturate=saturate)  # type: ignore
+
+
+class QuantizeLinear_21(_CommonQuantizeLinear):
     def _run(self, *args, axis=None, saturate=None):  # type: ignore
         # args: x, y_scale, zero_point
         return self.common_run(*args, axis=axis, saturate=saturate)  # type: ignore

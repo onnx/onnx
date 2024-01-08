@@ -21,7 +21,7 @@ from onnx.reference.custom_element_types import (
 from onnx.reference.op_run import OpRun
 
 
-class DequantizeLinear(OpRun):
+class _CommonDequantizeLinear(OpRun):
     def get_x_type(self, x: np.ndarray) -> int:
         tensor_dtype = None
         if x.dtype == float8e4m3fn and x.dtype.descr[0][0] == "e4m3fn":
@@ -48,26 +48,43 @@ class DequantizeLinear(OpRun):
             raise ValueError("axis cannot be None.")
         if len(value.shape) == 0:
             return value
-        dims = [1] * len(shape)
-        try:
-            dims[axis] = value.size
-        except IndexError as e:
-            raise IndexError(
-                f"axis is out of boundary, axis={axis}, "
-                f"value.shape={value.shape}, shape={shape}."
-            ) from e
-        return value.reshape(tuple(dims))
+        if len(value.shape) == 1:
+            dims = [1] * len(shape)
+            try:
+                dims[axis] = value.size
+                return value.reshape(tuple(dims))
+            except IndexError as e:
+                raise IndexError(
+                    f"axis is out of boundary, axis={axis}, "
+                    f"value.shape={value.shape}, shape={shape}."
+                ) from e
+        if len(value.shape) >= 2:
+            if len(shape) != len(value.shape):
+                raise RuntimeError(
+                    "Input 2 must be a number, a vector or a tensor with the same rank as the input."
+                )
+            block_shape = np.array(shape) // np.array(value.shape)
+            if sum(block_shape != 1) != 1:
+                raise RuntimeError(
+                    "Blocked quantization is defined for 1-D blocks only."
+                )
+            block_dim = np.where(block_shape != 1)[0][0]
+            if shape[block_dim] % value.shape[block_dim] != 0:
+                raise RuntimeError(
+                    "Blocked quantization requires the scale dimensions to divide the input dimensions"
+                )
+            block_size = shape[block_dim] // value.shape[block_dim]
+            return np.repeat(value, repeats=block_size, axis=block_dim)
 
-    def _run(
+        return None
+
+    def common_run(
         self,
         x: np.ndarray,
         x_scale: np.ndarray,
         x_zero_point: Optional[np.ndarray] = None,
         axis: Optional[int] = None,
     ):  # type: ignore
-        if len(x_scale.shape) > 1:
-            raise RuntimeError("Input 2 must be a vector or a number.")
-
         x_type = self.get_x_type(x)
         fp8_type = x_type in {
             TensorProto.FLOAT8E4M3FN,
@@ -82,9 +99,7 @@ class DequantizeLinear(OpRun):
                     f"Type mismatch {x_type} != {zero_type} in DequantizeLinear."
                 )
 
-            dx = x.astype(np.float32) - DequantizeLinear.reshape_input(
-                x_zero_point, x.shape, axis
-            )
+            dx = x.astype(np.float32) - self.reshape_input(x_zero_point, x.shape, axis)
         else:
             if fp8_type and x_zero_point is not None:
                 u_x_zero_point = x_zero_point.astype(np.uint8)
@@ -104,5 +119,18 @@ class DequantizeLinear(OpRun):
                 dx = float8e5m2_to_float32(x, fn=True, uz=True)
             else:
                 dx = x.astype(np.float32)
-        y = dx * DequantizeLinear.reshape_input(x_scale, x.shape, axis)
+        y = dx * self.reshape_input(x_scale, x.shape, axis)
         return (y.astype(x_scale.dtype),)
+
+
+class DequantizeLinear_19(_CommonDequantizeLinear):
+    def _run(self, x, x_scale, x_zero_point=None, axis=None):
+        if len(x_scale.shape) > 1:
+            raise RuntimeError("Input 2 must be a vector or a number.")
+        return self.common_run(x, x_scale, x_zero_point, axis)
+
+
+class DequantizeLinear_21(_CommonDequantizeLinear):
+    def _run(self, *args, axis=None):  # type: ignore
+        # args: x, y_scale, zero_point
+        return self.common_run(*args, axis=axis)  # type: ignore

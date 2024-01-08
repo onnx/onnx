@@ -5175,7 +5175,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 ### DequantizeLinear
-There are 10 test cases, listed as following:
+There are 11 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -5208,6 +5208,79 @@ expect(
     inputs=[x, x_scale, x_zero_point],
     outputs=[y],
     name="test_dequantizelinear_axis",
+)
+```
+
+</details>
+<details>
+<summary>blocked</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array(
+    [
+        [
+            [[3, 89], [34, 200], [74, 59]],
+            [[5, 24], [24, 87], [32, 13]],
+            [[5, 12], [12, 33], [65, 42]],
+            [[245, 99], [4, 142], [121, 102]],
+        ],
+    ],
+    dtype=np.uint8,
+)
+
+x_scale = np.array(
+    [
+        [
+            [[3.0, 2.0], [4.0, 1.0], [2.0, 2.0]],
+            [[5.0, 2.0], [4.0, 3.0], [5.0, 2.0]],
+        ],
+    ],
+    dtype=np.float32,
+)
+x_zero_point = np.array(
+    [
+        [
+            [[1, 0], [0, 1], [2, 20]],
+            [[3, 2], [4, 3], [15, 2]],
+        ],
+    ],
+    dtype=np.uint8,
+)
+
+# x.shape = (1, 4, 3, 2)
+# x_scale.shape = (1, 2, 3, 2)
+assert x_scale.shape == x_zero_point.shape
+block_axis = 1
+# The block shape is [x.shape[i] // x_scale.shape[i] for i in range(len(x.shape))] = (1, 2, 1, 1)
+assert all(
+    x.shape[i] == x_scale.shape[i]
+    for i in range(len(x.shape))
+    if i != block_axis
+)
+assert x.shape[block_axis] % x_scale.shape[block_axis] == 0
+repeats = x.shape[block_axis] // x_scale.shape[block_axis]
+
+# Create element-wise scale and zero point
+x_scale_elementwise = np.repeat(x_scale, repeats=repeats, axis=block_axis)
+x_zero_point_elementwise = np.repeat(
+    x_zero_point, repeats=repeats, axis=block_axis
+)
+
+y = (
+    x.astype(np.float32) - x_zero_point_elementwise.astype(np.float32)
+) * x_scale_elementwise
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_blocked",
 )
 ```
 
@@ -13703,7 +13776,7 @@ for quant_type_name in ["uint8", "int8"]:
 
 
 ### QuantizeLinear
-There are 8 test cases, listed as following:
+There are 9 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -13735,6 +13808,70 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_axis",
+)
+```
+
+</details>
+<details>
+<summary>blocked</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array(
+    [
+        [6.0, 12.0, 50.0, 5.0],
+        [1.0, 8.0, 4.0, 5.0],
+        [0.0, 20.0, 10.0, 4.0],
+    ],
+    dtype=np.float32,
+)
+y_scale = np.array(
+    [
+        [1.5, 2.5],
+        [3.0, 4.9],
+        [5.1, 6.9],
+    ],
+    dtype=np.float32,
+)
+y_zero_point = np.array(
+    [
+        [0, 1],
+        [1, 0],
+        [2, 3],
+    ],
+    dtype=np.uint8,
+)
+# x.shape = (3, 4)
+# y_scale.shape = (3, 2)
+assert y_scale.shape == y_zero_point.shape
+block_axis = 1
+# The block shape is [x.shape[i] // y_scale.shape[i] for i in range(len(x.shape))] = (1, 2)
+assert all(
+    x.shape[i] == y_scale.shape[i]
+    for i in range(len(x.shape))
+    if i != block_axis
+)
+assert x.shape[block_axis] % y_scale.shape[block_axis] == 0
+repeats = x.shape[block_axis] // y_scale.shape[block_axis]
+
+# Create element-wise scale and zero point
+y_scale_elementwise = np.repeat(y_scale, repeats=repeats, axis=block_axis)
+y_zero_point_elementwise = np.repeat(
+    y_zero_point, repeats=repeats, axis=block_axis
+)
+
+y = np.rint(x / y_scale_elementwise + y_zero_point_elementwise).astype(np.uint8)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_blocked",
 )
 ```
 

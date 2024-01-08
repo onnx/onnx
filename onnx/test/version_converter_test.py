@@ -1984,6 +1984,48 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[3].op_type == "Reshape"
         assert converted_model.opset_import[0].version == 13
 
+    def test_quantize_21_20(self) -> None:
+        def test(input_shape, scale_shape) -> None:
+            nodes = [helper.make_node("QuantizeLinear", ["X", "S", "ZP"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, input_shape),
+                    helper.make_tensor_value_info("S", TensorProto.FLOAT, scale_shape),
+                    helper.make_tensor_value_info("ZP", TensorProto.INT8, scale_shape),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.INT8, input_shape)],
+            )
+            _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
+
+        test((16, 3), (1,))  # per-tensor - compatible
+        test((16, 3), (16,))  # per-axis - compatible
+        with self.assertRaises(RuntimeError):
+            test((16, 3), (4, 3))  # blocked - incompatible
+            test((16, 3, 8), (4, 3, 8))  # blocked - incompatible
+
+    def test_dequantize_21_20(self) -> None:
+        def test(input_shape, scale_shape) -> None:
+            nodes = [helper.make_node("DequantizeLinear", ["X", "S", "ZP"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [
+                    helper.make_tensor_value_info("X", TensorProto.INT8, input_shape),
+                    helper.make_tensor_value_info("S", TensorProto.FLOAT, scale_shape),
+                    helper.make_tensor_value_info("ZP", TensorProto.INT8, scale_shape),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, input_shape)],
+            )
+            _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
+
+        test((16, 3), (1,))  # per-tensor - compatible
+        test((16, 3), (16,))  # per-axis - compatible
+        with self.assertRaises(RuntimeError):
+            test((16, 3), (4, 3))  # blocked - incompatible
+            test((16, 3, 8), (4, 3, 8))  # blocked - incompatible
+
 
 if __name__ == "__main__":
     unittest.main()

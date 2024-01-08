@@ -3768,6 +3768,106 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"X": data})
         assert_allclose(expected, got[0])
 
+    @parameterized.parameterized.expand(
+        [
+            (
+                4 * np.arange(12).reshape(3, 4),
+                np.arange(1, 7).reshape(3, 2),
+                np.zeros((3, 2)),
+                [[0, 4, 4, 6], [5, 7, 6, 7], [6, 7, 7, 7]],
+            ),
+            (
+                4 * np.arange(12).reshape(3, 4),
+                np.arange(1, 7).reshape(3, 2),
+                np.ones((3, 2)),
+                [[1, 5, 5, 7], [6, 8, 7, 8], [7, 8, 8, 8]],
+            ),
+        ]
+    )
+    def test_blocked_quantize_linear(self, x, scale, zero_point, expected):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.INT8, [None])
+
+        scale_data = np.array(scale, dtype=np.float32)
+        zp_data = np.array(zero_point, dtype=np.int8)
+        model = make_model(
+            make_graph(
+                [
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor(
+                        "scale", TensorProto.FLOAT, scale_data.shape, scale_data
+                    ),
+                    make_tensor("zero", TensorProto.INT8, scale_data.shape, zp_data),
+                ],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+
+        data = np.array(x, dtype=np.float32)
+        expected = np.array(expected, dtype=np.int8)
+
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
+    @parameterized.parameterized.expand(
+        [
+            (
+                np.arange(12).reshape(3, 4),
+                np.arange(1, 7).reshape(3, 2),
+                np.zeros((3, 2)),
+                [[0, 1, 4, 6], [12, 15, 24, 28], [40, 45, 60, 66]],
+            ),
+            (
+                np.arange(12).reshape(3, 4),
+                np.arange(1, 7).reshape(3, 2),
+                np.ones((3, 2)),
+                [[-1, 0, 2, 4], [9, 12, 20, 24], [35, 40, 54, 60]],
+            ),
+            (
+                np.dstack([np.arange(4).reshape(2, 2)] * 4),
+                np.dstack([np.array([[1, 1], [2, 3]]), np.array([[4, 5], [6, 7]])]),
+                np.zeros((2, 2, 2)),
+                [[[0, 0, 0, 0], [1, 1, 5, 5]], [[4, 4, 12, 12], [9, 9, 21, 21]]],
+            ),
+        ]
+    )
+    def test_blocked_dequantize_linear(self, x, scale, zero_point, expected):
+        X = make_tensor_value_info("X", TensorProto.INT8, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+
+        scale_data = np.array(scale, dtype=np.float32)
+        zp_data = np.array(zero_point, dtype=np.int8)
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "DequantizeLinear", ["X", "scale", "zero"], ["Y"], axis=0
+                    ),
+                ],
+                "g",
+                [X],
+                [Y],
+                [
+                    make_tensor(
+                        "scale", TensorProto.FLOAT, scale_data.shape, scale_data
+                    ),
+                    make_tensor("zero", TensorProto.INT8, scale_data.shape, zp_data),
+                ],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+
+        data = np.array(x, dtype=np.int8)
+        expected = np.array(expected, dtype=np.float32)
+
+        got = ref.run(None, {"X": data})
+        assert_allclose(expected, got[0])
+
     def test_lrn(self):
         def _expected(x, alpha, beta, bias, size):
             square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
