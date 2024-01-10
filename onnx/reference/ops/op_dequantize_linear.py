@@ -76,7 +76,7 @@ class _CommonDequantizeLinear(OpRun):
 
         return None
 
-    def common_run(
+    def _run(
         self,
         x: np.ndarray,
         x_scale: np.ndarray,
@@ -125,10 +125,10 @@ class DequantizeLinear_19(_CommonDequantizeLinear):
     def _run(self, x, x_scale, x_zero_point=None, axis=None):
         if len(x_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
-        return self.common_run(x, x_scale, x_zero_point, axis)
+        return super()._run(x, x_scale, x_zero_point, axis)
 
 
 class DequantizeLinear_21(_CommonDequantizeLinear):
     def _run(self, *args, axis=None):  # type: ignore
         # args: x, y_scale, zero_point
-        return self.common_run(*args, axis=axis)  # type: ignore
+        return super()._run(*args, axis=axis)  # type: ignore

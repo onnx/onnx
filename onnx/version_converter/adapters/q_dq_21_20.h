@@ -26,8 +26,9 @@ class QuantizeLinear_21_20 final : public TypeRestriction {
       : TypeRestriction("QuantizeLinear", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types) {}
 
   void adapt_quantize_linear_21_20(std::shared_ptr<Graph>, Node* node) const {
-    if (node->inputs()[1]->sizes().size() > 1)
+    if (node->inputs()[1]->sizes().size() > 1) {
       ONNX_ASSERTM(false, "Scale must be a vector or a number for Opset Version %d.", target_version().version())
+    }
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
@@ -43,8 +44,9 @@ class DequantizeLinear_21_20 final : public TypeRestriction {
       : TypeRestriction("DequantizeLinear", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types) {}
 
   void adapt_dequantize_linear_21_20(std::shared_ptr<Graph>, Node* node) const {
-    if (node->inputs()[1]->sizes().size() > 1)
+    if (node->inputs()[1]->sizes().size() > 1) {
       ONNX_ASSERTM(false, "Scale must be a vector or a number for Opset Version %d.", target_version().version())
+    }
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {

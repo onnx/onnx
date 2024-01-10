@@ -64,7 +64,7 @@ class _CommonQuantizeLinear(OpRun):
             zero_point_type = np_dtype_to_tensor_dtype(zero_point.dtype)
         return zero_point_type
 
-    def common_run(  # noqa: PLR0911
+    def _run(  # noqa: PLR0911
         self,
         x: np.ndarray,
         y_scale: np.ndarray,
@@ -169,17 +169,17 @@ class QuantizeLinear_10(_CommonQuantizeLinear):
     def _run(self, x, y_scale, zero_point=None, axis=None):  # type: ignore
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
-        return self.common_run(x, y_scale, zero_point, axis=axis)  # type: ignore
+        return super()._run(x, y_scale, zero_point, axis=axis)  # type: ignore
 
 
 class QuantizeLinear_19(_CommonQuantizeLinear):
     def _run(self, x, y_scale, zero_point=None, axis=None, saturate=None):  # type: ignore
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
-        return self.common_run(x, y_scale, zero_point, axis=axis, saturate=saturate)  # type: ignore
+        return super()._run(x, y_scale, zero_point, axis=axis, saturate=saturate)  # type: ignore
 
 
 class QuantizeLinear_21(_CommonQuantizeLinear):
     def _run(self, *args, axis=None, saturate=None):  # type: ignore
         # args: x, y_scale, zero_point
-        return self.common_run(*args, axis=axis, saturate=saturate)  # type: ignore
+        return super()._run(*args, axis=axis, saturate=saturate)  # type: ignore
