@@ -4,6 +4,7 @@
 
 import struct
 import unittest
+from typing import Tuple
 
 import numpy as np
 import parameterized
@@ -1987,13 +1988,19 @@ class TestVersionConverter(unittest.TestCase):
 
     @parameterized.parameterized.expand(
         [
-            ((16, 3), (1,), True),  # per-tensor - compatible
-            ((16, 3), (16,), True),  # per-axis - compatible
-            ((16, 3), (4, 3), False),  # blocked - incompatible
-            ((16, 3, 8), (4, 3, 8), False),  # blocked - incompatible
+            ("per_tensor", (16, 3), (1,), True),
+            ("per_axis", (16, 3), (16,), True),
+            ("blocked", (16, 3), (4, 3), False),
+            ("blocked", (16, 3, 8), (4, 3, 8), False),
         ]
     )
-    def test_quantize_21_20(self, x_shape, scale_shape, compatible) -> None:
+    def test_quantize_21_20(
+        self,
+        _: str,
+        x_shape: Tuple[int, ...],
+        scale_shape: Tuple[int, ...],
+        compatible: bool,
+    ) -> None:
         def test(input_shape, scale_shape) -> None:
             nodes = [helper.make_node("QuantizeLinear", ["X", "S", "ZP"], ["Y"])]
             graph = helper.make_graph(
@@ -2016,13 +2023,19 @@ class TestVersionConverter(unittest.TestCase):
 
     @parameterized.parameterized.expand(
         [
-            ((16, 3), (1,), True),  # per-tensor - compatible
-            ((16, 3), (16,), True),  # per-axis - compatible
-            ((16, 3), (4, 3), False),  # blocked - incompatible
-            ((16, 3, 8), (4, 3, 8), False),  # blocked - incompatible
+            ("per_tensor", (16, 3), (1,), True),
+            ("per_axis", (16, 3), (16,), True),
+            ("blocked", (16, 3), (4, 3), False),
+            ("blocked", (16, 3, 8), (4, 3, 8), False),
         ]
     )
-    def test_dequantize_21_20(self, y_shape, scale_shape, compatible) -> None:
+    def test_dequantize_21_20(
+        self,
+        _: str,
+        y_shape: Tuple[int, ...],
+        scale_shape: Tuple[int, ...],
+        compatible: bool,
+    ) -> None:
         def test(input_shape, scale_shape) -> None:
             nodes = [helper.make_node("DequantizeLinear", ["X", "S", "ZP"], ["Y"])]
             graph = helper.make_graph(
