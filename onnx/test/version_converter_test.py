@@ -2,6 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
+import contextlib
 import struct
 import unittest
 from typing import Tuple
@@ -1990,8 +1991,8 @@ class TestVersionConverter(unittest.TestCase):
         [
             ("per_tensor", (16, 3), (1,), True),
             ("per_axis", (16, 3), (16,), True),
-            ("blocked", (16, 3), (4, 3), False),
-            ("blocked", (16, 3, 8), (4, 3, 8), False),
+            ("blocked_2d", (16, 3), (4, 3), False),
+            ("blocked_3d", (16, 3, 8), (4, 3, 8), False),
         ]
     )
     def test_quantize_21_20(
@@ -2015,18 +2016,18 @@ class TestVersionConverter(unittest.TestCase):
             )
             _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
 
-        if compatible:
+        context_manager = (
+            contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
+        )
+        with context_manager:  # type: ignore[attr-defined]
             test(x_shape, scale_shape)
-        else:
-            with self.assertRaises(RuntimeError):
-                test(x_shape, scale_shape)
 
     @parameterized.parameterized.expand(
         [
             ("per_tensor", (16, 3), (1,), True),
             ("per_axis", (16, 3), (16,), True),
-            ("blocked", (16, 3), (4, 3), False),
-            ("blocked", (16, 3, 8), (4, 3, 8), False),
+            ("blocked_2d", (16, 3), (4, 3), False),
+            ("blocked_3d", (16, 3, 8), (4, 3, 8), False),
         ]
     )
     def test_dequantize_21_20(
@@ -2050,11 +2051,11 @@ class TestVersionConverter(unittest.TestCase):
             )
             _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
 
-        if compatible:
+        context_manager = (
+            contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
+        )
+        with context_manager:  # type: ignore[attr-defined]
             test(y_shape, scale_shape)
-        else:
-            with self.assertRaises(RuntimeError):
-                test(y_shape, scale_shape)
 
 
 if __name__ == "__main__":
