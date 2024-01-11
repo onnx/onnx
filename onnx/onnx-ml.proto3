@@ -522,7 +522,11 @@ message TensorProto {
     FLOAT8E4M3FN = 17;    // float 8, mostly used for coefficients, supports nan, not inf
     FLOAT8E4M3FNUZ = 18;  // float 8, mostly used for coefficients, supports nan, not inf, no negative zero
     FLOAT8E5M2 = 19;      // follows IEEE 754, supports nan, inf, mostly used for gradients
-    FLOAT8E5M2FNUZ = 20;  // follows IEEE 754, supports nan, inf, mostly used for gradients, no negative zero
+    FLOAT8E5M2FNUZ = 20;  // follows IEEE 754, supports nan, not inf, mostly used for gradients, no negative zero
+
+    // 4-bit data-types
+    UINT4 = 21;
+    INT4 = 22;
 
     // Future extensions go here.
   }

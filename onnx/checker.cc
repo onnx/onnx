@@ -39,13 +39,6 @@ namespace checker {
     }                                                                                \
   } while (0)
 
-#define enforce_has_repeated_field(proto, field)                                              \
-  do {                                                                                        \
-    if (!proto.field##_size()) {                                                              \
-      fail_check("Repeated Field '", #field, "' of '", #proto, "' is required but missing."); \
-    }                                                                                         \
-  } while (0)
-
 #define enforce_non_empty_field(proto, field)                                            \
   do {                                                                                   \
     if (proto.field().empty()) {                                                         \
@@ -272,6 +265,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E4M3FNUZ:
       case TensorProto::FLOAT8E5M2:
       case TensorProto::FLOAT8E5M2FNUZ:
+      case TensorProto::UINT4:
+      case TensorProto::INT4:
         check_field(int32_data);
         break;
 
@@ -1071,9 +1066,7 @@ bool check_is_experimental_op(const NodeProto& node) {
   return (node.domain() == ONNX_DOMAIN || node.domain() == "ai.onnx") && experimental_ops.count(node.op_type());
 }
 
-#undef fail_check
 #undef enforce_has_field
-#undef enforce_has_repeated_field
 #undef enforce_non_empty_field
 
 } // namespace checker

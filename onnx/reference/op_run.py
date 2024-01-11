@@ -11,7 +11,7 @@ import numpy as np
 from onnx import TensorProto
 from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
 from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
-from onnx.numpy_helper import to_array
+from onnx.numpy_helper import to_array, unpack_int4
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 from onnx.reference.custom_element_types import (
     bfloat16,
@@ -19,6 +19,8 @@ from onnx.reference.custom_element_types import (
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
+    int4,
+    uint4,
 )
 
 
@@ -119,8 +121,8 @@ def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
 
 
 def to_array_extended(tensor: TensorProto) -> np.ndarray:
-    """Similar to :func:`to_array` but deals with bfloat16,
-    float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz.
+    """Similar to :func:`to_array` but deals with non-numpy types bfloat16,
+    float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, uint4, int4.
     """
     elem_type = tensor.data_type
     if elem_type == TensorProto.BFLOAT16:
@@ -153,6 +155,21 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
         for i, d in enumerate(data):
             y[i] = d
         return y.reshape(shape)
+    if elem_type in (TensorProto.UINT4, TensorProto.INT4):
+        if tensor.HasField("raw_data"):
+            data = tensor.raw_data  # type: ignore[assignment]
+        else:
+            data = tensor.int32_data
+        shape = tuple(tensor.dims)
+        m = {TensorProto.INT4: int4, TensorProto.UINT4: uint4}
+        dtype = m[elem_type]  # type: ignore[index]
+        signed = elem_type == TensorProto.INT4
+        y = np.empty(len(data), dtype=dtype).ravel()
+        for i, d in enumerate(data):
+            y[i] = d
+
+        unpacked_data = unpack_int4(y, dims=shape, signed=signed)
+        return unpacked_data.astype(dtype)
     return to_array(tensor)
 
 
@@ -237,11 +254,16 @@ class OpRun(abc.ABC):
             )
 
             new_ops = self.run_params.get("new_ops", None)
+            if "existing_functions" in self.run_params:
+                functions = list(self.run_params["existing_functions"].values())
+            else:
+                functions = None
             return ReferenceEvaluator(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
                 new_ops=None if new_ops is None else list(new_ops.values()),
+                functions=functions,
             )
         if att.type in OpRun._attribute_conversion_functions:
             return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
@@ -629,7 +651,9 @@ class OpRun(abc.ABC):
 class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, impl: Any = None):
+    def __init__(
+        self, onnx_node: NodeProto, run_params: dict[str, Any], impl: Any = None
+    ):
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -646,7 +670,7 @@ class OpFunction(OpRun):
     def __init__(
         self,
         onnx_node: NodeProto,
-        log_function: Any,
+        run_params: dict[str, Any] | None,
         impl: Any = None,
         attributes: dict[str, Any] | None = None,
     ):
@@ -655,7 +679,7 @@ class OpFunction(OpRun):
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
                 f"from domain {onnx_node.domain!r}."
             )
-        OpRun.__init__(self, onnx_node, log_function)
+        OpRun.__init__(self, onnx_node, run_params)  # type: ignore[arg-type]
         self.impl_ = impl
         # The function implementation is the same whenever the function is called
         # but the attributes may be different at every call.
@@ -693,8 +717,13 @@ class OpFunctionContextDependant(OpFunction):
     This is needed when the schema of an operator defines a context dependant function.
     """
 
-    def __init__(self, onnx_node: NodeProto, log_function: Any, parent: Any = None):
-        OpFunction.__init__(self, onnx_node, log_function, impl=self, attributes={})
+    def __init__(
+        self,
+        onnx_node: NodeProto,
+        run_params: dict[str, Any] | None,
+        parent: Any = None,
+    ):
+        OpFunction.__init__(self, onnx_node, run_params, impl=self, attributes={})
         self.parent = parent
         version = parent.opsets[onnx_node.domain]
         self.schema_ = get_schema(onnx_node.op_type, version, onnx_node.domain)
@@ -717,6 +746,10 @@ class OpFunctionContextDependant(OpFunction):
                     ttype = TensorProto.FLOAT8E5M2FNUZ  # type: ignore[attr-defined]
                 elif t.dtype == bfloat16:
                     ttype = TensorProto.BLOFAT16  # type: ignore[attr-defined]
+                elif t.dtype == uint4:
+                    ttype = TensorProto.UINT4  # type: ignore[attr-defined]
+                elif t.dtype == int4:
+                    ttype = TensorProto.INT4  # type: ignore[attr-defined]
                 else:
                     raise e
             types.append(make_tensor_type_proto(ttype, t.shape))

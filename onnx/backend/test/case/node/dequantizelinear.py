@@ -189,3 +189,47 @@ class DequantizeLinear(Base):
             outputs=[y],
             name="test_dequantizelinear_int16",
         )
+
+    @staticmethod
+    def export_uint4() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale", "x_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
+        x_scale = np.float32(2)
+        x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+        y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale, x_zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_uint4",
+        )
+
+    @staticmethod
+    def export_int4() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale", "x_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
+        x_scale = np.float32(2)
+        x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+        y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale, x_zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_int4",
+        )
