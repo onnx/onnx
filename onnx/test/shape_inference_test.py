@@ -3183,6 +3183,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_split_uneven_split_2d_maximize_diff(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (8, 2))],
+            [make_node("Split", ["x"], ["y", "z", "a"], axis=0, num_outputs=3, minimize_diff=False)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (3, 2)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (3, 2)),
+                make_tensor_value_info("a", TensorProto.FLOAT, (2, 2)),
+            ],
+        )
+
     def test_split_uneven_split_3d(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 7, 3))],
@@ -3193,10 +3208,75 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info("y", TensorProto.FLOAT, (2, 3, 3)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (2, 2, 3)),
+                make_tensor_value_info("a", TensorProto.FLOAT, (2, 2, 3)),
+            ],
+        )
+
+    def test_split_uneven_split_3d_maximize_diff(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 7, 3))],
+            [make_node("Split", ["x"], ["y", "z", "a"], axis=1, num_outputs=3, minimize_diff=False)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (2, 3, 3)),
                 make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 3)),
                 make_tensor_value_info("a", TensorProto.FLOAT, (2, 1, 3)),
             ],
         )
+
+    def test_split_uneven_split_3d_2(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 7, 10))],
+            [make_node("Split", ["x"], ["y", "z", "a", "b"], axis=2, num_outputs=4)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (2, 7, 3)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (2, 7, 3)),
+                make_tensor_value_info("a", TensorProto.FLOAT, (2, 7, 2)),
+                make_tensor_value_info("a", TensorProto.FLOAT, (2, 7, 2)),
+            ],
+        )
+
+    def test_split_uneven_split_3d_3(self) -> None:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (2, 7, 4))],
+                [make_node("Split", ["x"], ["y", "z", "a", "b"], axis=2, num_outputs=4)],
+                [],
+            )
+            self._assert_inferred(
+                graph,
+                [
+                    make_tensor_value_info("y", TensorProto.FLOAT, (2, 7, 1)),
+                    make_tensor_value_info("z", TensorProto.FLOAT, (2, 7, 1)),
+                    make_tensor_value_info("a", TensorProto.FLOAT, (2, 7, 1)),
+                    make_tensor_value_info("b", TensorProto.FLOAT, (2, 7, 1)),
+                ],
+            )
+
+    def test_split_uneven_split_3d_4(self) -> None:
+            graph = self._make_graph(
+                [("x", TensorProto.FLOAT, (2, 7, 3))],
+                [make_node("Split", ["x"], ["y", "z", "a", "b", "c", "d"], axis=2, num_outputs=6)],
+                [],
+            )
+            self._assert_inferred(
+                graph,
+                [
+                    make_tensor_value_info("y", TensorProto.FLOAT, (2, 7, 1)),
+                    make_tensor_value_info("z", TensorProto.FLOAT, (2, 7, 1)),
+                    make_tensor_value_info("a", TensorProto.FLOAT, (2, 7, 1)),
+                    make_tensor_value_info("b", TensorProto.FLOAT, (2, 7, 0)),
+                    make_tensor_value_info("c", TensorProto.FLOAT, (2, 7, 0)),
+                    make_tensor_value_info("d", TensorProto.FLOAT, (2, 7, 0)),
+                ],
+            )
 
     def test_GLU_partial(self) -> None:
         graph = self._make_graph(

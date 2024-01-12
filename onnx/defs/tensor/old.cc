@@ -1378,6 +1378,131 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* Split_ver18_doc =
+    R"DOC(Split a tensor into a list of tensors, along the specified 'axis'.
+Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
+If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
+If the tensor is not evenly splittable into `num_outputs`, the last chunk will be smaller.
+If the input 'split' is specified, it indicates the sizes of each output in the split.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Split,
+    18,
+    OpSchema()
+        .Input(0, "input", "The tensor to split", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(
+            1,
+            "split",
+            "Optional length of each output. Values should be >= 0."
+            "Sum of the values must be equal to the dim value at 'axis' specified.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "outputs",
+            "One or more outputs forming list of tensors after splitting",
+            "T",
+            OpSchema::Variadic,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
+        .Attr(
+            "axis",
+            "Which axis to split on. "
+            "A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1] "
+            "where r = rank(input).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "num_outputs",
+            "Number of outputs to split parts of the tensor into. "
+            "If the tensor is not evenly splittable the last chunk will be smaller.",
+            AttributeProto::INT,
+            false)
+        .SetDoc(Split_ver18_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
+            propagateElemTypeFromInputToOutput(ctx, 0, i);
+          }
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+          int rank = shape.dim_size();
+          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          if (axis < -rank || axis >= rank) {
+            fail_type_inference("Invalid value of attribute 'axis'. Rank=", rank, " Value=", axis);
+          }
+          if (axis < 0) {
+            axis += rank;
+          }
+          const auto& split_dim = shape.dim(axis);
+          if (!split_dim.has_dim_value()) {
+            for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+              *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() = shape;
+              ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->Clear();
+            }
+            return;
+          }
+          int split_dim_value = static_cast<int>(split_dim.dim_value());
+          std::vector<int64_t> split;
+          const auto num_outputs_attr = ctx.getAttribute("num_outputs");
+          if (ctx.hasInput(1) && num_outputs_attr) {
+            fail_shape_inference("Both 'split' input and 'num_outputs' attribute were given");
+          }
+          if (ctx.hasInput(1)) { //'split' is input
+            auto split_proto = ctx.getInputData(1);
+            if (split_proto == nullptr) {
+              // skip if split is not an initializer
+              return;
+            }
+            split = ParseData<int64_t>(split_proto);
+            if (split.size() != ctx.getNumOutputs()) {
+              fail_shape_inference(
+                  "Mismatch between number of splits (", split.size(), ") and outputs (", ctx.getNumOutputs(), ")");
+            }
+            int64_t total_dim = 0;
+            for (int64_t d : split) {
+              total_dim += d;
+            }
+            if (total_dim != split_dim_value) {
+              fail_shape_inference(
+                  "Mismatch between the sum of 'split' (",
+                  total_dim,
+                  ") and the split dimension of the input (",
+                  split_dim_value,
+                  ")");
+            }
+          } else { // no value available for 'split'
+            if (num_outputs_attr) {
+              const auto num_outputs = num_outputs_attr->i();
+              if (num_outputs < 1) {
+                fail_shape_inference("Attribute `num_outputs` value cannot be lower than 1");
+              }
+              if (split_dim_value % num_outputs == 0) { // tensor is evenly splittable
+                int chunk_size = split_dim_value / num_outputs;
+                split.resize(num_outputs, chunk_size);
+              } else { // tensor needs to be split unevenly
+                int chunk_size = (split_dim_value / num_outputs) + 1;
+                int last_chunk_size = split_dim_value - (chunk_size * (num_outputs - 1));
+                split.resize(num_outputs - 1, chunk_size);
+                split.push_back(last_chunk_size);
+              }
+            } else {
+              fail_shape_inference("Neither 'split' input nor 'num_outputs' attribute has been given");
+            }
+          }
+          for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+            *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() = shape;
+            ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->set_dim_value(split[i]);
+          }
+        }));
+
 static const char* Slice_ver11_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
