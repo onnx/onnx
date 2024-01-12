@@ -16,7 +16,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # -- Project information -----------------------------------------------------
 
 author = "ONNX"
-copyright = "2023"
+copyright = "2024"
 project = "ONNX"
 release = onnx.__version__
 version = onnx.__version__
