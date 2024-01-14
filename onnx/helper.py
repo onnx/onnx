@@ -42,6 +42,7 @@ from onnx import (
     ValueInfoProto,
     defs,
     mapping,
+    subbyte,
 )
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
@@ -617,6 +618,34 @@ def float32_to_float8e5m2(  # noqa: PLR0911
         raise NotImplementedError("fn and uz must be both False or True.")
 
 
+def pack_float32_to_4bit(
+    array: Union[np.ndarray, Sequence], signed: bool
+) -> np.ndarray:
+    """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
+    See :ref:`onnx-detail-int4` for technical details.
+
+    Args:
+        array: array of float to convert and pack
+        signed: Whether the 4 bit variant is signed or unsigned
+
+    Returns:
+        Packed array with size `ceil(farray.size/2)` (single dimension).
+    """
+    if not isinstance(array, np.ndarray):
+        array = np.asarray(array, dtype=np.float32)
+
+    array_flat = array.ravel()
+    is_odd_volume = np.prod(array.shape) % 2 == 1
+    if is_odd_volume:
+        array_flat = np.append(array_flat, np.array([0]))
+
+    single_func = lambda x, y: subbyte.float32x2_to_4bitx2(x, y, signed)  # noqa: E731
+    func = np.frompyfunc(single_func, 2, 1)
+
+    arr = func(array_flat[0::2], array_flat[1::2])
+    return arr.astype(np.uint8)  # type: ignore[no-any-return]
+
+
 def make_tensor(
     name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
@@ -649,8 +678,7 @@ def make_tensor(
     # Check number of vals specified equals tensor size
     expected_size = 1
     if raw:
-        # NumPy doesn't have BFLOAT16. TENSOR_TYPE_TO_NP_TYPE maps it to float32,
-        # which has the wrong itemsize.
+        # NumPy doesn't have BFLOAT16. TENSOR_TYPE_MAP maps it to float32, which has the wrong itemsize.
         if data_type == TensorProto.BFLOAT16:
             expected_size = 2
         elif data_type in (
@@ -660,6 +688,9 @@ def make_tensor(
             TensorProto.FLOAT8E5M2FNUZ,
         ):
             expected_size = 1
+        # NumPy doesn't have INT4. It is packed in couples to UINT8 buffers.
+        elif data_type in (TensorProto.UINT4, TensorProto.INT4):
+            expected_size = 0.5  # type: ignore[assignment]
         else:
             expected_size = np_dtype.itemsize
 
@@ -669,9 +700,14 @@ def make_tensor(
         expected_size *= d
 
     if len(vals) != expected_size:
-        raise ValueError(
-            f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
-        )
+        # padding of half a byte is acceptable for 4bit types
+        if not (
+            data_type in (TensorProto.UINT4, TensorProto.INT4)
+            and len(vals) == expected_size + 0.5
+        ):
+            raise ValueError(
+                f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
+            )
 
     if raw:
         tensor.raw_data = vals
@@ -707,6 +743,17 @@ def make_tensor(
                     fcast,
                     np.array(vals).astype(np_dtype).flatten().tolist(),
                 )
+            )
+        elif data_type in (
+            TensorProto.UINT4,
+            TensorProto.INT4,
+        ):
+            signed = data_type == TensorProto.INT4
+            vals = (
+                pack_float32_to_4bit(vals, signed=signed)
+                .astype(np_dtype)
+                .flatten()
+                .tolist()
             )
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)

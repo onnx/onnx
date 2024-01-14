@@ -34,7 +34,7 @@ static void InlineFunctions(ModelProto& model, const char* input, const inliner:
     inliner::InlineLocalFunctions(model, true);
   // std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
 
-  // The following will ensure basic sanity checks hold after inlining, including
+  // The following will ensure basic safety checks hold after inlining, including
   // absence of duplicate names (multiple assignments to same name).
   checker::check_model(model, true, true);
 }
@@ -76,6 +76,46 @@ square (x) => (y) {
   InlineFunctions(model, code);
   auto num_nodes = model.graph().node_size();
   ASSERT_EQ(num_nodes, 4);
+  auto num_functions = model.functions_size();
+  ASSERT_EQ(num_functions, 0);
+}
+
+// Test that inlining processes subgraphs.
+TEST(FunctionInliner, SubgraphTest) {
+  const char* code = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 10, "local" : 1 ]
+>
+agraph (bool cond, float[N] X) => (float[N] Y)
+{
+  Y = If (cond) <
+    then_branch = then_graph () => (y) {
+        y = local.square (X)
+    },
+    else_branch = else_graph () => (y) {
+        y = local.square (X)
+    }
+  >
+}
+
+<
+  opset_import: [ "" : 10 ],
+  domain: "local",
+  doc_string: "Function square."
+>
+square (x) => (y) {
+  y = Mul (x, x)
+}
+)ONNX";
+
+  ModelProto model;
+  InlineFunctions(model, code);
+  auto& if_node = model.graph().node(0);
+  auto& graph1 = if_node.attribute(0).g();
+  ASSERT_EQ(graph1.node(0).op_type(), "Mul");
+  auto& graph2 = if_node.attribute(1).g();
+  ASSERT_EQ(graph2.node(0).op_type(), "Mul");
   auto num_functions = model.functions_size();
   ASSERT_EQ(num_functions, 0);
 }

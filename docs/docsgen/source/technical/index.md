@@ -15,4 +15,5 @@ deeper than the code documentation.
 :maxdepth: 2
 
 float8
+int4
 ```

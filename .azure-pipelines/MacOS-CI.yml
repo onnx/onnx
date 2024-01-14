@@ -86,7 +86,7 @@ jobs:
       fi
 
       python -m pip install onnxruntime
-      export ORT_MAX_IR_SUPPORTED_VERSION=8
+      export ORT_MAX_IR_SUPPORTED_VERSION=9
       export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
       export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
       pytest -n auto --dist loadscope

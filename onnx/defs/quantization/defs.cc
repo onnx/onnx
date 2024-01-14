@@ -11,7 +11,8 @@ static const char* QuantizeLinear_ver21_doc = R"DOC(
 The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
 The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
 The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
-For saturation, it saturates to [0, 255] if it's uint8, [-128, 127] if it's int8, [0, 65535] if it's uint16, or [-32768, 32767] if it's int16.
+For saturation, it saturates according to:
+uint8: [0, 255], int8: [-128, 127], uint16: [0, 65535], int16: [-32768, 32767], uint4: [0, 15], int4: [-8, 7]
 For (x / y_scale), it's rounding to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
 'y_zero_point' and 'y' must have same type.
 'y_zero_point' is usually not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz,
@@ -64,7 +65,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float8e4m3fn)",
              "tensor(float8e4m3fnuz)",
              "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)"},
+             "tensor(float8e5m2fnuz)",
+             "tensor(uint4)",
+             "tensor(int4)"},
             "The type of the input 'y_zero_point' and the output 'y'.")
         .SetDoc(QuantizeLinear_ver21_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
@@ -125,7 +128,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float8e4m3fn)",
              "tensor(float8e4m3fnuz)",
              "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)"},
+             "tensor(float8e5m2fnuz)",
+             "tensor(uint4)",
+             "tensor(int4)"},
             "The type of the inputs 'x_zero_point' and 'x'.")
         .TypeConstraint(
             "T2",
