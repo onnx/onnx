@@ -5349,8 +5349,10 @@ class TestReferenceEvaluator(unittest.TestCase):
         with self.assertRaises(ValueError):
             ref.run(None, {"X": np.array(["x"])})
 
-
-    @unittest.skipIf(version_utils.numpy_older_than("1.22.0"), "The test requires numpy 1.22.0 or later",)
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.22.0"),
+        "The test requires numpy 1.22.0 or later",
+    )
     @parameterized.parameterized.expand(
         [
             (
