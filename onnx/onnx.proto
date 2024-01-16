@@ -110,7 +110,7 @@ enum Version {
 
   // IR VERSION 10 published on TBD
   // Added UINT4, INT4.
-  IR_VERSION = 0x0000000000000010;
+  IR_VERSION = 0x000000000000000A;
 }
 
 // Attributes
