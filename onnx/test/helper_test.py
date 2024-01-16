@@ -27,6 +27,7 @@ from onnx import (
     numpy_helper,
 )
 from onnx.reference.op_run import to_array_extended
+import version_utils
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -634,6 +635,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(expected, ynp)
 
+    @unittest.skipIf(version_utils.numpy_older_than("1.22.0"), "The test requires numpy 1.22.0 or later",)
     @parameterized.parameterized.expand(
         itertools.product(
             (TensorProto.UINT4, TensorProto.INT4),
