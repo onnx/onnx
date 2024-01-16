@@ -5349,10 +5349,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         with self.assertRaises(ValueError):
             ref.run(None, {"X": np.array(["x"])})
 
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.22.0"),
-        "The test requires numpy 1.22.0 or later",
-    )
     @parameterized.parameterized.expand(
         [
             (
@@ -5374,6 +5370,10 @@ class TestReferenceEvaluator(unittest.TestCase):
             ),
             (TensorProto.INT4, [0], [0]),
         ]
+    )
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.22.0"),
+        "The test requires numpy 1.22.0 or later",
     )
     def test_quantize_linear_int4(self, qtype, data, expected):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
