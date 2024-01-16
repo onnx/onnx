@@ -12,6 +12,7 @@ from typing import Any, List, Tuple
 import numpy as np
 import parameterized
 import pytest
+import version_utils
 
 from onnx import (
     AttributeProto,
@@ -639,6 +640,10 @@ class TestHelperTensorFunctions(unittest.TestCase):
             (TensorProto.UINT4, TensorProto.INT4),
             ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
         )
+    )
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.22.0"),
+        "The test requires numpy 1.22.0 or later",
     )
     def test_make_4bit_tensor(self, dtype, dims) -> None:
         type_range = {
