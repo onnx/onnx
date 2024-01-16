@@ -1087,7 +1087,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "perm",
             "A list of integers. By default, reverse the dimensions, "
-            "otherwise permute the axes according to the values given.",
+            "otherwise permute the axes according to the values given. "
+            "Its length must be equal to the rank of the input.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
