@@ -33454,7 +33454,7 @@ Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>, <a hr
 
 <dl>
 <dt><tt>perm</tt> : list of ints</dt>
-<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given.</dd>
+<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given. Its length must be equal to the rank of the input.</dd>
 </dl>
 
 #### Inputs
