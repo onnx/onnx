@@ -25724,7 +25724,7 @@ This version of the operator has been available since version 21 of the default 
 
 <dl>
 <dt><tt>perm</tt> : list of ints</dt>
-<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given. Its length must be equal to the rank of the input.</dd>
+<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given.</dd>
 </dl>
 
 #### Inputs
