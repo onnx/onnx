@@ -185,7 +185,11 @@ namespace ONNX_NAMESPACE {
   _(ScatterElements)                \
   _(Resize)                         \
   _(ceil_mode)                      \
-  _(num_outputs)
+  _(num_outputs)                    \
+  _(start)                          \
+  _(end)                            \
+  _(num_groups)                     \
+  _(stash_type)
 
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,

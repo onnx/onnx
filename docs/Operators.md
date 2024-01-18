@@ -177,7 +177,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
-|<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-18">18</a>|18|
+|<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-21">21</a>, <a href="Changelog.md#GroupNormalization-18">18</a>|21|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|17|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|17|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|18|
@@ -11401,13 +11401,23 @@ expect(
   groups `num_groups` should be divisible by the number of channels so that there are
   an equal number of channels per group.
 
+  The overall computation has two stages: the first stage normalizes the elements to
+  have zero mean and unit variance for each instance in each group, and the second
+  stage scales and shifts the results of the first stage. The floating-point precision
+  used in the first stage is determined by the `stash_type` attribute. For example,
+  if `stash_type` is 1, the operator casts all input variables to 32-bit float,
+  performs the computation, and finally casts the normalized results back to the
+  original type of `X`. The second stage does not depend on `stash_type`.
+
   When the number of groups is the same as the number of channels, this operator is
   equivalent to InstanceNormalization. When there is only one group, this operator
   is equivalent to LayerNormalization.
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GroupNormalization-18">18</a>
 
 #### Attributes
 
@@ -11416,6 +11426,8 @@ This version of the operator has been available since version 18 of the default 
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>num_groups</tt> : int (required)</dt>
 <dd>The number of groups of channels. It should be a divisor of the number of channels `C`.</dd>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in stage one of the computation.</dd>
 </dl>
 
 #### Inputs
@@ -11424,9 +11436,9 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, `C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are in the form of `(N x C x D1 x D2 ... Dn)`.</dd>
 <dt><tt>scale</tt> (differentiable) : T</dt>
-<dd>Scale tensor of shape `(num_groups)`.</dd>
+<dd>Scale tensor of shape `(C)`.</dd>
 <dt><tt>bias</tt> (differentiable) : T</dt>
-<dd>Bias tensor of shape `(num_groups)`.</dd>
+<dd>Bias tensor of shape `(C)`.</dd>
 </dl>
 
 #### Outputs
@@ -11439,7 +11451,7 @@ This version of the operator has been available since version 18 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -11447,33 +11459,14 @@ This version of the operator has been available since version 18 of the default 
 #### Examples
 
 <details>
-<summary>groupnormalization</summary>
+<summary>epsilon</summary>
 
 ```python
-x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+c = 4
 num_groups = 2
-scale = np.random.randn(num_groups).astype(np.float32)
-bias = np.random.randn(num_groups).astype(np.float32)
-y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
-
-node = onnx.helper.make_node(
-    "GroupNormalization",
-    inputs=["x", "scale", "bias"],
-    outputs=["y"],
-    num_groups=num_groups,
-)
-
-expect(
-    node,
-    inputs=[x, scale, bias],
-    outputs=[y],
-    name="test_group_normalization_example",
-)
-
-x = np.random.randn(3, 4, 2, 2).astype(np.float32)
-num_groups = 2
-scale = np.random.randn(num_groups).astype(np.float32)
-bias = np.random.randn(num_groups).astype(np.float32)
+x = np.random.randn(3, c, 2, 2).astype(np.float32)
+scale = np.random.randn(c).astype(np.float32)
+bias = np.random.randn(c).astype(np.float32)
 epsilon = 1e-2
 y = _group_normalization(x, num_groups, scale, bias, epsilon).astype(np.float32)
 
@@ -11490,6 +11483,35 @@ expect(
     inputs=[x, scale, bias],
     outputs=[y],
     name="test_group_normalization_epsilon",
+)
+```
+
+</details>
+
+
+<details>
+<summary>groupnormalization</summary>
+
+```python
+c = 4
+num_groups = 2
+x = np.random.randn(3, c, 2, 2).astype(np.float32)
+scale = np.random.randn(c).astype(np.float32)
+bias = np.random.randn(c).astype(np.float32)
+y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_example",
 )
 ```
 
