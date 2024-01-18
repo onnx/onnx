@@ -155,6 +155,35 @@ if ort is not None:
         "|test_quantizelinear_axis"  # y_scale must be a scalar or 1D tensor of size 1.
         "|test_quantizelinear"  # No corresponding Numpy type for Tensor Type.
         "|test_affine_grid_"  # new IR version 9 and opset version 20 not supported yet.
+        "|test_quantizelinear_uint4"  # No corresponding Numpy type for Tensor Type.
+        "|test_quantizelinear_int4"  # No corresponding Numpy type for Tensor Type.
+        "|test_dequantizelinear_uint4"  # No corresponding Numpy type for Tensor Type.
+        "|test_dequantizelinear_int4"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_UINT4_to_FLOAT"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_INT4_to_FLOAT"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_UINT4_to_FLOAT16"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_INT4_to_FLOAT16"  # No corresponding Numpy type for Tensor Type.
+        ")"
+    )
+
+    # Exclude all tests that require IR10 until onnxruntime aligns
+    # TODO: Unwaive tests once onnxruntime supports Opset21/IR10 https://github.com/onnx/onnx/issues/5840
+    backend_test.exclude(
+        "("
+        "test_cast_"
+        "|test_castlike_"
+        "|test_constant"
+        "|test_edge_pad_cpu"
+        "|test_flatten_"
+        "|test_identity"
+        "|test_reflect_pad"
+        "|test_reshape_"
+        "|test_shape_"
+        "|test_size_"
+        "|test_squeeze_"
+        "|test_transpose_"
+        "|test_unsqueeze_"
+        "|test_wrap_pad_"
         ")"
     )
 

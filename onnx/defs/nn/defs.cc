@@ -454,7 +454,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 }
 
-static const char* MaxUnpool_ver9_doc = R"DOC(
+static const char* MaxUnpool_ver11_doc = R"DOC(
 MaxUnpool essentially computes the partial inverse of the MaxPool op.
  The input information to this op is typically the output information from a MaxPool op. The first
  input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
@@ -479,7 +479,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
     11,
     OpSchema()
-        .SetDoc(MaxUnpool_ver9_doc)
+        .SetDoc(MaxUnpool_ver11_doc)
         .Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS)
         .Attr(
             "strides",
@@ -1995,7 +1995,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* Flatten_ver13_doc = R"DOC(
+static const char* Flatten_ver11_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -2003,9 +2003,9 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    13,
+    21,
     OpSchema()
-        .SetDoc(Flatten_ver13_doc)
+        .SetDoc(Flatten_ver11_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -2019,7 +2019,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output to all tensor types.")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_ir10(),
+            "Constrain input and output to all tensor types up to IRv10.")
         .Attr(
             "axis",
             "Indicate up to which input dimensions "

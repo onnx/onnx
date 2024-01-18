@@ -284,9 +284,8 @@ class ReferenceEvaluator:
         if functions is not None:
             for f in functions:  # type: ignore
                 if isinstance(f, FunctionProto):
-                    existing_functions = list(self.functions_.values())
                     self.functions_[f.domain, f.name] = ReferenceEvaluator(
-                        f, verbose=verbose, functions=existing_functions
+                        f, verbose=verbose, functions=list(self.functions_.values())
                     )
                 elif isinstance(f, ReferenceEvaluator):
                     onx = f.proto_  # type: ignore
@@ -411,6 +410,7 @@ class ReferenceEvaluator:
             "opsets": self.opsets,
             "verbose": self.verbose,
             "new_ops": self.new_ops_,
+            "existing_functions": self.functions_.copy(),
         }
         if self.input_types_:
             all_types = {i.name: i.type for i in self.onnx_graph_.input}
