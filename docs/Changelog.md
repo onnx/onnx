@@ -24870,7 +24870,7 @@ This version of the operator has been available since version 21 of the default 
   used in the first stage is determined by the `stash_type` attribute. For example,
   if `stash_type` is 1, the operator casts all input variables to 32-bit float,
   performs the computation, and finally casts the normalized results back to the
-  original type of `X`. The second stage does not edepend on `stash_type`.
+  original type of `X`. The second stage does not depend on `stash_type`.
 
   When the number of groups is the same as the number of channels, this operator is
   equivalent to InstanceNormalization. When there is only one group, this operator
