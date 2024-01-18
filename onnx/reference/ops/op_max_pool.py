@@ -87,9 +87,10 @@ class MaxPool(CommonPool):
                         + 1
                     )
                 )
-                if (output_spatial_shape[i] - 1) * strides[i] >= input_spatial_shape[
-                    i
-                ] + new_pads[i][0]:
+                need_to_reduce_out_size_in_ceil_mode = (
+                    output_spatial_shape[i] - 1
+                ) * strides[i] >= input_spatial_shape[i] + new_pads[i][0]
+                if need_to_reduce_out_size_in_ceil_mode:
                     output_spatial_shape[i] -= 1
         else:
             for i in range(len(input_spatial_shape)):

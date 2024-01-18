@@ -500,22 +500,7 @@ class MaxPool(Base):
             strides=[2, 2],
             ceil_mode=True,
         )
-        x = np.array(
-            [
-                [
-                    [
-                        [
-                            1,
-                            2,
-                        ],
-                        [
-                            3,
-                            4,
-                        ],
-                    ]
-                ]
-            ]
-        ).astype(np.float32)
+        x = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
         y = np.array([[[[1]]]]).astype(np.float32)
 
         expect(
