@@ -74,9 +74,7 @@ class QuantizeLinear(Base):
         x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
         y_scale = np.float32(2)
         y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
-        y = make_tensor(
-            "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96]
-        )
+        y = make_tensor("y", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96])
 
         expect(
             node,
@@ -96,9 +94,7 @@ class QuantizeLinear(Base):
         x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
         y_scale = np.float32(2)
         y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
-        y = make_tensor(
-            "zero_point", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96]
-        )
+        y = make_tensor("y", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
 
         expect(
             node,
@@ -213,4 +209,68 @@ class QuantizeLinear(Base):
             inputs=[x, y_scale, y_zero_point],
             outputs=[y],
             name="test_quantizelinear_int16",
+        )
+
+    @staticmethod
+    def export_uint4() -> None:
+        node = onnx.helper.make_node(
+            "QuantizeLinear",
+            inputs=["x", "y_scale", "y_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        x = np.array(
+            [
+                [0.0, 2.5, 4.8, 8.6],
+                [-30, -20, 6, 9],
+                [12, 15, 16, 40],
+            ]
+        ).astype(np.float32)
+
+        y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+        y_zero_point = make_tensor(
+            "zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
+        )
+        y = make_tensor(
+            "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, -1, -1, 3, 4, 4, 5, 5, 11]
+        )
+
+        expect(
+            node,
+            inputs=[x, y_scale, y_zero_point],
+            outputs=[y],
+            name="test_quantizelinear_uint4",
+        )
+
+    @staticmethod
+    def export_int4() -> None:
+        node = onnx.helper.make_node(
+            "QuantizeLinear",
+            inputs=["x", "y_scale", "y_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        x = np.array(
+            [
+                [0.0, 2.5, 4.8, 8.6],
+                [-30, -20, 6, 9],
+                [12, 15, 16, 40],
+            ]
+        ).astype(np.float32)
+
+        y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+        y_zero_point = make_tensor(
+            "zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
+        )
+        y = make_tensor(
+            "y", TensorProto.INT4, x.shape, [1, 2, 3, 5, -8, -6, 3, 4, 4, 5, 5, 7]
+        )
+
+        expect(
+            node,
+            inputs=[x, y_scale, y_zero_point],
+            outputs=[y],
+            name="test_quantizelinear_int4",
         )

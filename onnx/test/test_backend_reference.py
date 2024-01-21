@@ -120,12 +120,18 @@ backend_test.exclude(
     "|test_cast_FLOAT16_to_FLOAT8"
     "|test_castlike_FLOAT_to_FLOAT8"
     "|test_castlike_FLOAT16_to_FLOAT8"
+    "|test_cast_FLOAT_to_UINT4"
+    "|test_cast_FLOAT16_to_UINT4"
+    "|test_cast_FLOAT_to_INT4"
+    "|test_cast_FLOAT16_to_INT4"
     "|test_cast_no_saturate_FLOAT_to_FLOAT8"
     "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
     "|test_cast_BFLOAT16_to_FLOAT"
     "|test_castlike_BFLOAT16_to_FLOAT"
     "|test_quantizelinear_e4m3"
     "|test_quantizelinear_e5m2"
+    "|test_quantizelinear_uint4"
+    "|test_quantizelinear_int4"
     ")"
 )
 
@@ -180,6 +186,11 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_email_domain_cpu")
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
+
+if sys.platform == "darwin":
+    # FIXME: https://github.com/onnx/onnx/issues/5792
+    backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
+    backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
 
 # op_dft and op_stft requires numpy >= 1.21.5
 if version_utils.numpy_older_than("1.21.5"):

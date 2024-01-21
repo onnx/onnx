@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import itertools
 import random
 import struct
 import unittest
@@ -11,6 +12,7 @@ from typing import Any, List, Tuple
 import numpy as np
 import parameterized
 import pytest
+import version_utils
 
 from onnx import (
     AttributeProto,
@@ -25,6 +27,7 @@ from onnx import (
     helper,
     numpy_helper,
 )
+from onnx.reference.op_run import to_array_extended
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -632,6 +635,51 @@ class TestHelperTensorFunctions(unittest.TestCase):
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(expected, ynp)
 
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT4, TensorProto.INT4),
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
+        )
+    )
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.22.0"),
+        "The test requires numpy 1.22.0 or later",
+    )
+    def test_make_4bit_tensor(self, dtype, dims) -> None:
+        type_range = {
+            TensorProto.UINT4: (0, 15),
+            TensorProto.INT4: (-8, 7),
+        }
+        data = np.random.randint(
+            type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
+        )
+        y = helper.make_tensor("y", dtype, data.shape, data)
+        ynp = to_array_extended(y)
+        np.testing.assert_equal(data, ynp)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT4, TensorProto.INT4), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
+        )
+    )
+    def test_make_4bit_raw_tensor(self, dtype, dims) -> None:
+        type_range = {
+            TensorProto.UINT4: (0, 15),
+            TensorProto.INT4: (-8, 7),
+        }
+        data = np.random.randint(
+            type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
+        )
+        packed_data = helper.pack_float32_to_4bit(
+            data, signed=(dtype == TensorProto.INT4)
+        )
+
+        y = helper.make_tensor(
+            "packed_int4", dtype, dims, packed_data.tobytes(), raw=True
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(data, ynp)
+
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
         values_tensor = helper.make_tensor(
@@ -826,6 +874,8 @@ class TestPrintableGraph(unittest.TestCase):
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
             TensorProto.STRING,
             TensorProto.COMPLEX64,
             TensorProto.COMPLEX128,
@@ -856,6 +906,8 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
         }
     ],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),

@@ -136,4 +136,6 @@ DEFINE_PARSE_DATA(int64_t, int64_data, TensorProto_DataType_INT64)
 DEFINE_PARSE_DATA(float, float_data, TensorProto_DataType_FLOAT)
 DEFINE_PARSE_DATA(double, double_data, TensorProto_DataType_DOUBLE)
 
+#undef DEFINE_PARSE_DATA
+
 } // namespace ONNX_NAMESPACE

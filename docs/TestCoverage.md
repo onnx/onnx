@@ -2330,10 +2330,27 @@ test_cases = [
     ("FLOAT8E5M2", "FLOAT16"),
     ("FLOAT8E5M2FNUZ", "FLOAT"),
     ("FLOAT8E5M2FNUZ", "FLOAT16"),
+    ("FLOAT", "UINT4"),
+    ("FLOAT16", "UINT4"),
+    ("FLOAT", "INT4"),
+    ("FLOAT16", "INT4"),
+    ("UINT4", "FLOAT"),
+    ("UINT4", "FLOAT16"),
+    ("UINT4", "UINT8"),
+    ("INT4", "FLOAT"),
+    ("INT4", "FLOAT16"),
+    ("INT4", "INT8"),
 ]
 
 vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
 vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+vect_float32_to_uint4 = np.vectorize(
+    lambda x: subbyte.float32_to_4bit_unpacked(x, signed=False)
+)
+vect_float32_to_int4 = np.vectorize(
+    lambda x: subbyte.float32_to_4bit_unpacked(x, signed=True)
+)
+
 f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
 
 for from_type, to_type in test_cases:
@@ -2486,6 +2503,59 @@ for from_type, to_type in test_cases:
             "x", getattr(TensorProto, to_type), [3, 5], expected.tolist()
         )
         output = expected_tensor
+    elif from_type in ("UINT4", "INT4") or to_type in ("UINT4", "INT4"):
+        np_fp32 = np.arange(-9, 16).astype(np.float32)
+        input_shape = (5, 5)
+        if from_type == "FLOAT":
+            input_values = np_fp32
+            input = make_tensor(
+                "x", TensorProto.FLOAT, input_shape, input_values.tolist()
+            )
+        elif from_type == "FLOAT16":
+            input_values = np_fp32.astype(np.float16)
+            input = make_tensor(
+                "x", TensorProto.FLOAT16, input_shape, input_values.tolist()
+            )
+        elif from_type == "UINT4":
+            input_values = vect_float32_to_uint4(np_fp32)
+            input = make_tensor(
+                "x", TensorProto.UINT4, input_shape, input_values.tolist()
+            )
+        elif from_type == "INT4":
+            input_values = vect_float32_to_int4(np_fp32)
+            input = make_tensor(
+                "x", TensorProto.INT4, input_shape, input_values.tolist()
+            )
+        else:
+            raise ValueError(
+                "Conversion from {from_type} to {to_type} is not tested."
+            )
+        if to_type == "UINT4":
+            expected = vect_float32_to_uint4(input_values).astype(custom.uint4)
+        elif to_type == "INT4":
+            expected = vect_float32_to_int4(input_values).astype(custom.int4)
+        elif to_type == "FLOAT16":
+            expected = input_values.astype(np.float16)
+        elif to_type == "FLOAT":
+            expected = input_values
+        elif to_type == "UINT8":
+            expected = input_values.astype(np.uint8)
+        elif to_type == "INT8":
+            expected = input_values.astype(np.int8)
+        else:
+            raise ValueError(
+                "Conversion from {from_type} to {to_type} is not tested."
+            )
+        expected_tensor = make_tensor(
+            "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
+        )
+        output = expected_tensor
+        input_type_proto = onnx.helper.make_tensor_type_proto(
+            getattr(TensorProto, from_type), input_shape
+        )
+        output_type_proto = onnx.helper.make_tensor_type_proto(
+            getattr(TensorProto, to_type), input_shape
+        )
 
     elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
@@ -5105,7 +5175,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 ### DequantizeLinear
-There are 8 test cases, listed as following:
+There are 10 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -5293,6 +5363,32 @@ expect(
 
 </details>
 <details>
+<summary>int4</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
+x_scale = np.float32(2)
+x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_int4",
+)
+```
+
+</details>
+<details>
 <summary>uint16</summary>
 
 ```python
@@ -5312,6 +5408,32 @@ expect(
     inputs=[x, x_scale, x_zero_point],
     outputs=[y],
     name="test_dequantizelinear_uint16",
+)
+```
+
+</details>
+<details>
+<summary>uint4</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
+x_scale = np.float32(2)
+x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_uint4",
 )
 ```
 
@@ -7705,35 +7827,16 @@ expect(
 
 
 ### GroupNormalization
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
-<summary>groupnormalization</summary>
+<summary>epsilon</summary>
 
 ```python
-x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+c = 4
 num_groups = 2
-scale = np.random.randn(num_groups).astype(np.float32)
-bias = np.random.randn(num_groups).astype(np.float32)
-y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
-
-node = onnx.helper.make_node(
-    "GroupNormalization",
-    inputs=["x", "scale", "bias"],
-    outputs=["y"],
-    num_groups=num_groups,
-)
-
-expect(
-    node,
-    inputs=[x, scale, bias],
-    outputs=[y],
-    name="test_group_normalization_example",
-)
-
-x = np.random.randn(3, 4, 2, 2).astype(np.float32)
-num_groups = 2
-scale = np.random.randn(num_groups).astype(np.float32)
-bias = np.random.randn(num_groups).astype(np.float32)
+x = np.random.randn(3, c, 2, 2).astype(np.float32)
+scale = np.random.randn(c).astype(np.float32)
+bias = np.random.randn(c).astype(np.float32)
 epsilon = 1e-2
 y = _group_normalization(x, num_groups, scale, bias, epsilon).astype(np.float32)
 
@@ -7750,6 +7853,33 @@ expect(
     inputs=[x, scale, bias],
     outputs=[y],
     name="test_group_normalization_epsilon",
+)
+```
+
+</details>
+<details>
+<summary>groupnormalization</summary>
+
+```python
+c = 4
+num_groups = 2
+x = np.random.randn(3, c, 2, 2).astype(np.float32)
+scale = np.random.randn(c).astype(np.float32)
+bias = np.random.randn(c).astype(np.float32)
+y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_example",
 )
 ```
 
@@ -13546,7 +13676,7 @@ for quant_type_name in ["uint8", "int8"]:
 
 
 ### QuantizeLinear
-There are 6 test cases, listed as following:
+There are 8 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -13595,9 +13725,7 @@ node = onnx.helper.make_node(
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
 y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
-y = make_tensor(
-    "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96]
-)
+y = make_tensor("y", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96])
 
 expect(
     node,
@@ -13621,9 +13749,7 @@ node = onnx.helper.make_node(
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
 y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
-y = make_tensor(
-    "zero_point", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96]
-)
+y = make_tensor("y", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
 
 expect(
     node,
@@ -13692,6 +13818,42 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_int16",
+)
+```
+
+</details>
+<details>
+<summary>int4</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-30, -20, 6, 9],
+        [12, 15, 16, 40],
+    ]
+).astype(np.float32)
+
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
+)
+y = make_tensor(
+    "y", TensorProto.INT4, x.shape, [1, 2, 3, 5, -8, -6, 3, 4, 4, 5, 5, 7]
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_int4",
 )
 ```
 
@@ -13770,6 +13932,42 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_uint16",
+)
+```
+
+</details>
+<details>
+<summary>uint4</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-30, -20, 6, 9],
+        [12, 15, 16, 40],
+    ]
+).astype(np.float32)
+
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
+)
+y = make_tensor(
+    "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, -1, -1, 3, 4, 4, 5, 5, 11]
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_uint4",
 )
 ```
 
