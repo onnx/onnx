@@ -22,7 +22,7 @@ Candidate applications will be accepted in April, and the election will be held 
 | Schedule     | Event               |
 |:-------------|:--------------------|
 | 1st Monday of April| Application for Steering Committee candidates open. |
-| 3rd Monday of April| Candidates and their applications posted on github. Campaigning session held over video conference with an option to pre-record.|
+| 3rd Monday of April| Candidates and their applications posted on github.|
 | 1st Monday of May| Election begins.     |
 | 2nd Monday of May| Election closes, and votes counted. Election results announced in the same week.|
 | 3rd Monday of May| Previous Steering Committee to meet the newly elected Committee for official transition.|
