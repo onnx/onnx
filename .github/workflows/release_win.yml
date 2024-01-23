@@ -19,7 +19,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
@@ -99,19 +99,6 @@ jobs:
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
-    # TODO: Remove if conditions in all release CIs after the minimum supported numpy is upgraded to 1.23.2 or higher
-    - name: Verify ONNX with the minimum supported numpy
-      if: ${{ always() }}
-      run: |
-        cd onnx
-        if ('${{ matrix.python-version }}' -eq '3.8' -Or '${{ matrix.python-version }}' -eq '3.9') {
-          $minimum_numpy_version="1.16.6"
-        } else {
-          $minimum_numpy_version="1.23.2"
-        }
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$minimum_numpy_version
-        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest
 
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
@@ -121,15 +108,16 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
-    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+    - name: Verify ONNX with the minimumly supported packages
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.20.2
+        python -m pip uninstall -y protobuf numpy onnx && python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != '3.12'
       run: |
         cd onnx
         python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
