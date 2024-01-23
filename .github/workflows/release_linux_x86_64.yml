@@ -32,7 +32,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Build manylinux2014_x86_64
-      uses: docker://quay.io/pypa/manylinux2014_x86_64:latest@sha256:085b7c2c1bcb45b936e5478fe24a5142b0519e242a0104142fd50d569d6cb922
+      uses: docker://quay.io/pypa/manylinux2014_x86_64:latest
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
