@@ -110,6 +110,15 @@ Other versions of this operator:
 ### Summary
 
 {{process_documentation(sch.doc)}}
+
+{% if sch.has_function %}
+
+#### Function Body
+
+```
+{{get_function_body(sch)}}
+```
+{% endif %}
 {% if sch.attributes %}
 
 ### Attributes
@@ -119,7 +128,9 @@ Other versions of this operator:
   if attr.required %} (required){% endif %} {%
   if attr.default_value %}{{clean_default_value(attr)}}{%
   endif %}:
-  {{text_wrap(process_documentation(attr.description), 2)}}
+
+{{text_indent(attr.description, 2)}}
+
 {% endfor %}
 {% endif %}
 {% if sch.inputs %}
@@ -131,7 +142,8 @@ Other versions of this operator:
 {% endif %}
 {% for ii, inp in enumerate(sch.inputs) %}
 - **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.type_str}}**:
-{{text_wrap(inp.description, 2)}}{% endfor %}
+
+{{text_indent(inp.description, 2)}}{% endfor %}
 {% endif %}
 {% if sch.outputs %}
 
@@ -142,7 +154,8 @@ Other versions of this operator:
 {% endif %}
 {% for ii, out in enumerate(sch.outputs) %}
 - **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.type_str}}**:
-{{text_wrap(out.description, 2)}}{% endfor %}
+
+{{text_indent(out.description, 2)}}{% endfor %}
 {% endif %}
 {% if sch.type_constraints %}
 
@@ -150,7 +163,8 @@ Other versions of this operator:
 
 {% for ii, type_constraint in enumerate(sch.type_constraints)
 %}* {{get_constraint(type_constraint, ii)}}:
-{{text_wrap(type_constraint.description, 2)}}
+
+{{text_indent(type_constraint.description, 2)}}
 {% endfor %}
 {% endif %}
 {% if examples and is_last_schema(sch): %}
@@ -166,11 +180,9 @@ Other versions of this operator:
 ```
 {% endfor %}
 {% endif %}
-{% endfor %}
-"""
-        ),
-        autoescape=False,
-    )
+{% endfor %}""",
+    autoescape=False,
+)
 
 
 def _get_main_template():
@@ -433,10 +445,14 @@ def get_markdown_doc(
             sval = format_default_value(default_value)
         return f"(default is `{sval!r}`)"
 
-    def text_wrap(text, indent):
+    def text_indent(text: str, indent: int) -> str:
         s = " " * indent
-        lines = textwrap.wrap(text, initial_indent=s, subsequent_indent=s)
-        return "\n".join(lines)
+        return textwrap.indent(text, s)
+
+    def get_function_body(schema: OpSchema) -> str:
+        if schema.has_function:
+            return onnx.printer.to_text(schema.function_body)
+        return ""
 
     examples = get_onnx_example(op_name, domain) if example else {}
     docs = _template_operator.render(
@@ -452,12 +468,13 @@ def get_markdown_doc(
         format_name_with_domain=format_name_with_domain,
         process_documentation=process_documentation,
         build_doc_url=build_doc_url,
-        text_wrap=text_wrap,
+        text_indent=text_indent,
         str=str,
         clean_default_value=clean_default_value,
         examples=examples,
         format_example=format_example,
         is_last_schema=is_last_schema,
+        get_function_body=get_function_body,
     )
 
     d_links = {}
