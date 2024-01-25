@@ -115,6 +115,8 @@ Other versions of this operator:
 
 #### Function Body
 
+The function definition for this operator.
+
 ```
 {{get_function_body(sch)}}
 ```
@@ -450,9 +452,7 @@ def get_markdown_doc(
         return textwrap.indent(text, s)
 
     def get_function_body(schema: OpSchema) -> str:
-        if schema.has_function:
-            return onnx.printer.to_text(schema.function_body)
-        return ""
+        return onnx.printer.to_text(schema.function_body)
 
     examples = get_onnx_example(op_name, domain) if example else {}
     docs = _template_operator.render(
