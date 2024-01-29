@@ -356,9 +356,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("default_float", "A float.", AttributeProto::FLOAT, -0.f)
         .Attr(
             "default_tensor",
-            "A default tensor.",
-            "{\"_Unused\"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.",
-            AttributeProto::TENSOR)
+            "A default tensor. {\"_Unused\"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           int key_length, key_type;
           std::tie(key_type, key_length) =

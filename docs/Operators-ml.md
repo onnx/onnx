@@ -428,8 +428,8 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncode
 <dd>An integer.</dd>
 <dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string.</dd>
-<dt><tt>default_tensor</tt> : tensor (default is {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.)</dt>
-<dd>A default tensor.</dd>
+<dt><tt>default_tensor</tt> : tensor</dt>
+<dd>A default tensor. {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.</dd>
 <dt><tt>keys_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>keys_int64s</tt> : list of ints</dt>
