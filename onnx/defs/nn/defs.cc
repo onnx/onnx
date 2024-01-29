@@ -164,25 +164,23 @@ void convPoolShapeInference(
       continue;
     }
     // how big is the input, including padding
-    int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
-    effective_input_size += pads[i];
-    effective_input_size += pads[i + kernel_shape_size];
+    int64_t input_size = input_shape.dim(2 + i).dim_value();
+    int64_t effective_input_size = input_size + pads[i] + pads[i + kernel_shape_size];
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
-    // how many times we can move the kernel from it's initial position, based
-    // on the stride
-    int64_t strided_kernel_positions;
+    int64_t output_size =
+        (effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
+    if (ceil_mode == 1 && (output_size - 1) * strides[i] >= (input_size + pads[i])) {
+      // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are
+      // ignored." (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d). this code follows the
+      // same logic as PyTorch's C++ implementation:
+      // https://github.com/pytorch/pytorch/blob/f1cdb39da3850c47d51ec6a5b1ae864c32b3accf/aten/src/ATen/native/Pool.h#L54C21-L54C21
+      --output_size;
+    }
 
-    if (ceil_mode == 1)
-      strided_kernel_positions =
-          (int64_t)(std::ceil((effective_input_size - effective_kernel_shape[i]) / float(strides[i])));
-    else
-      strided_kernel_positions = (effective_input_size - effective_kernel_shape[i]) / strides[i];
-
-    // add in the initial position
-    newdim->set_dim_value(1 + strided_kernel_positions);
+    newdim->set_dim_value(output_size);
   }
 
   if (ctx.getNumOutputs() > 1) {
@@ -223,7 +221,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  ```
  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
  ```
- if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
+ if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
  ```
