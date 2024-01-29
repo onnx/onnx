@@ -1623,7 +1623,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
@@ -15323,7 +15323,7 @@ for op_dtype in all_numeric_dtypes:
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
@@ -15455,6 +15455,35 @@ x = np.array(
 y = np.array([[[[11, 12], [15, 16]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_ceil")
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_ceil_output_size_reduce_by_one</summary>
+
+```python
+"""input_shape: [1, 1, 2, 2]
+output_shape: [1, 1, 1, 1]
+"""
+node = onnx.helper.make_node(
+    "MaxPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[1, 1],
+    strides=[2, 2],
+    ceil_mode=True,
+)
+x = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
+y = np.array([[[[1]]]]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_maxpool_2d_ceil_output_size_reduce_by_one",
+)
 ```
 
 </details>
