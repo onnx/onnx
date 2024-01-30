@@ -1,2 +1,0 @@
-*B
-zero_point
