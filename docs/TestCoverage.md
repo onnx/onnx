@@ -5220,6 +5220,8 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale", "x_zero_point"],
     outputs=["y"],
+    axis=1,
+    block_size=2,
 )
 
 x = np.array(
@@ -13820,6 +13822,8 @@ node = onnx.helper.make_node(
     "QuantizeLinear",
     inputs=["x", "y_scale", "y_zero_point"],
     outputs=["y"],
+    axis=1,
+    block_size=2,
 )
 
 x = np.array(

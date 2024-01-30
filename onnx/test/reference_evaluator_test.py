@@ -3774,41 +3774,59 @@ class TestReferenceEvaluator(unittest.TestCase):
                 4 * np.arange(12).reshape(3, 4),
                 np.arange(1, 7).reshape(3, 2),
                 np.zeros((3, 2)),
+                1,
+                2,
                 [[0, 4, 4, 6], [5, 7, 6, 7], [6, 7, 7, 7]],
             ),
             (
                 4 * np.arange(12).reshape(3, 4),
                 np.arange(1, 7).reshape(3, 2),
                 np.ones((3, 2)),
+                1,
+                2,
                 [[1, 5, 5, 7], [6, 8, 7, 8], [7, 8, 8, 8]],
             ),
             (
-                np.ones((3, 4)),
-                np.ones((3, 3)),
+                np.arange(24).reshape(3, 8),
+                [[0.25, 0.5, 1], [0.25, 0.5, 1], [0.25, 0.5, 1]],
                 np.zeros((3, 3)),
-                None,  # Blocked quantization requires the scale dimensions to divide the input dimensions
+                1,
+                3,
+                [
+                    [0, 4, 8, 6, 8, 10, 6, 7],
+                    [32, 36, 40, 22, 24, 26, 14, 15],
+                    [64, 68, 72, 38, 40, 42, 22, 23],
+                ],
+            ),
+            (
+                np.arange(6),
+                [0.25, 0.5],
+                [-1, -2],
+                0,
+                3,
+                [-1, 3, 7, 4, 6, 8],
             ),
             (
                 np.ones((9, 12)),
                 np.ones((3, 4)),
                 np.zeros((3, 4)),
+                0,
+                3,
                 None,  # Blocked quantization is defined for 1-D blocks only
-            ),
-            (
-                np.ones((6,)),
-                np.ones((2,)),
-                np.zeros((2,)),
-                None,  # Blocked Quantization is not supported for 1-D input
             ),
             (
                 np.ones((3, 4, 5, 6)),
                 np.ones((3, 4)),
                 np.zeros((3, 4)),
+                2,
+                2,
                 None,  # Scale and ZP must have the same rank as the input
             ),
         ]
     )
-    def test_blocked_quantize_linear(self, x, scale, zero_point, expected):
+    def test_blocked_quantize_linear(
+        self, x, scale, zero_point, axis, block_size, expected
+    ):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.INT8, [None])
 
@@ -3817,7 +3835,13 @@ class TestReferenceEvaluator(unittest.TestCase):
         model = make_model(
             make_graph(
                 [
-                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["Y"], axis=0),
+                    make_node(
+                        "QuantizeLinear",
+                        ["X", "scale", "zero"],
+                        ["Y"],
+                        axis=axis,
+                        block_size=block_size,
+                    ),
                 ],
                 "g",
                 [X],
@@ -3848,47 +3872,69 @@ class TestReferenceEvaluator(unittest.TestCase):
                 np.arange(12).reshape(3, 4),
                 np.arange(1, 7).reshape(3, 2),
                 np.zeros((3, 2)),
+                1,
+                2,
                 [[0, 1, 4, 6], [12, 15, 24, 28], [40, 45, 60, 66]],
             ),
             (
                 np.arange(12).reshape(3, 4),
                 np.arange(1, 7).reshape(3, 2),
                 np.ones((3, 2)),
+                1,
+                2,
                 [[-1, 0, 2, 4], [9, 12, 20, 24], [35, 40, 54, 60]],
             ),
             (
                 np.dstack([np.arange(4).reshape(2, 2)] * 4),
                 np.dstack([np.array([[1, 1], [2, 3]]), np.array([[4, 5], [6, 7]])]),
                 np.zeros((2, 2, 2)),
+                2,
+                2,
                 [[[0, 0, 0, 0], [1, 1, 5, 5]], [[4, 4, 12, 12], [9, 9, 21, 21]]],
             ),
             (
-                np.ones((3, 4)),
-                np.ones((3, 3)),
+                np.arange(24).reshape(3, 8),
+                [[2, 1, 3], [2, 1, 3], [2, 1, 3]],
                 np.zeros((3, 3)),
-                None,  # Blocked quantization requires the scale dimensions to divide the input dimensions
+                1,
+                3,
+                [
+                    [0, 2, 4, 3, 4, 5, 18, 21],
+                    [16, 18, 20, 11, 12, 13, 42, 45],
+                    [32, 34, 36, 19, 20, 21, 66, 69],
+                ],
+            ),
+            (
+                np.arange(
+                    6,
+                ),
+                [2, 3],
+                [1, 2],
+                0,
+                3,
+                [-2, 0, 2, 3, 6, 9],
             ),
             (
                 np.ones((9, 12)),
                 np.ones((3, 4)),
                 np.zeros((3, 4)),
+                0,
+                3,
                 None,  # Blocked quantization is defined for 1-D blocks only
-            ),
-            (
-                np.ones((6,)),
-                np.ones((2,)),
-                np.zeros((2,)),
-                None,  # Blocked Quantization is not supported for 1-D input
             ),
             (
                 np.ones((3, 4, 5, 6)),
                 np.ones((3, 4)),
                 np.zeros((3, 4)),
+                2,
+                2,
                 None,  # Scale and ZP must have the same rank as the input
             ),
         ]
     )
-    def test_blocked_dequantize_linear(self, x, scale, zero_point, expected):
+    def test_blocked_dequantize_linear(
+        self, x, scale, zero_point, axis, block_size, expected
+    ):
         X = make_tensor_value_info("X", TensorProto.INT8, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
 
@@ -3898,7 +3944,11 @@ class TestReferenceEvaluator(unittest.TestCase):
             make_graph(
                 [
                     make_node(
-                        "DequantizeLinear", ["X", "scale", "zero"], ["Y"], axis=0
+                        "DequantizeLinear",
+                        ["X", "scale", "zero"],
+                        ["Y"],
+                        axis=axis,
+                        block_size=block_size,
                     ),
                 ],
                 "g",
@@ -5557,7 +5607,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         ref = ReferenceEvaluator(model)
-        got = ref.run(None, {"X": data})
+        got = ref.run(None, {"X": np.asarray(data)})
         assert_allclose(expected, got[0])
 
     @parameterized.parameterized.expand(

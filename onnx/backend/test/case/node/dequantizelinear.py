@@ -240,6 +240,8 @@ class DequantizeLinear(Base):
             "DequantizeLinear",
             inputs=["x", "x_scale", "x_zero_point"],
             outputs=["y"],
+            axis=1,
+            block_size=2,
         )
 
         x = np.array(

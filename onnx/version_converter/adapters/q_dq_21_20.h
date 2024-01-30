@@ -29,6 +29,12 @@ class QuantizeLinear_21_20 final : public TypeRestriction {
     if (node->inputs()[1]->sizes().size() > 1) {
       ONNX_ASSERTM(false, "Scale must be a vector or a number for Opset Version %d.", target_version().version())
     }
+    if (node->hasAttribute(kblock_size)) {
+      if ((node->i(kblock_size) != 0)) {
+        ONNX_ASSERTM(false, "Blocked quantization is not supported for Opset Version %d.", target_version().version())
+      }
+      node->removeAttribute(kblock_size);
+    }
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
@@ -46,6 +52,12 @@ class DequantizeLinear_21_20 final : public TypeRestriction {
   void adapt_dequantize_linear_21_20(std::shared_ptr<Graph>, Node* node) const {
     if (node->inputs()[1]->sizes().size() > 1) {
       ONNX_ASSERTM(false, "Scale must be a vector or a number for Opset Version %d.", target_version().version())
+    }
+    if (node->hasAttribute(kblock_size)) {
+      if ((node->i(kblock_size) != 0)) {
+        ONNX_ASSERTM(false, "Blocked quantization is not supported for Opset Version %d.", target_version().version())
+      }
+      node->removeAttribute(kblock_size);
     }
   }
 

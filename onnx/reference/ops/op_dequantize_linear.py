@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import numpy as np
 
@@ -19,6 +19,7 @@ from onnx.reference.custom_element_types import (
     uint4,
 )
 from onnx.reference.op_run import OpRun
+from onnx.reference.ops.op_quantize_linear import reshape_input
 
 
 class _CommonDequantizeLinear(OpRun):
@@ -40,48 +41,13 @@ class _CommonDequantizeLinear(OpRun):
             tensor_dtype = np_dtype_to_tensor_dtype(x.dtype)
         return tensor_dtype
 
-    @staticmethod
-    def reshape_input(
-        value: np.ndarray, shape: Tuple[int, ...], axis: Optional[int]
-    ) -> np.ndarray:
-        if axis is None:
-            raise ValueError("axis cannot be None.")
-        if len(value.shape) == 0:
-            return value
-        if len(value.shape) == 1:
-            dims = [1] * len(shape)
-            try:
-                dims[axis] = value.size
-                return value.reshape(tuple(dims))
-            except IndexError as e:
-                raise IndexError(
-                    f"axis is out of boundary, axis={axis}, "
-                    f"value.shape={value.shape}, shape={shape}."
-                ) from e
-        if len(value.shape) >= 2:
-            if len(shape) != len(value.shape):
-                raise ValueError(
-                    "Input 2 must be a number, a vector or a tensor with the same rank as the input."
-                )
-            block_shape = np.array(shape) // np.array(value.shape)
-            if sum(block_shape != 1) != 1:
-                raise ValueError("Blocked quantization is defined for 1-D blocks only.")
-            block_dim = np.where(block_shape != 1)[0][0]
-            if shape[block_dim] % value.shape[block_dim] != 0:
-                raise ValueError(
-                    "Blocked quantization requires the scale dimensions to divide the input dimensions"
-                )
-            block_size = shape[block_dim] // value.shape[block_dim]
-            return np.repeat(value, repeats=block_size, axis=block_dim)
-
-        return None
-
     def _run(
         self,
         x: np.ndarray,
         x_scale: np.ndarray,
         x_zero_point: Optional[np.ndarray] = None,
         axis: Optional[int] = None,
+        block_size: Optional[int] = None,
     ):  # type: ignore
         x_type = self.get_x_type(x)
         fp8_type = x_type in {
@@ -97,7 +63,9 @@ class _CommonDequantizeLinear(OpRun):
                     f"Type mismatch {x_type} != {zero_type} in DequantizeLinear."
                 )
 
-            dx = x.astype(np.float32) - self.reshape_input(x_zero_point, x.shape, axis)
+            dx = x.astype(np.float32) - reshape_input(
+                x_zero_point, x.shape, axis, block_size
+            )
         else:
             if fp8_type and x_zero_point is not None:
                 u_x_zero_point = x_zero_point.astype(np.uint8)
@@ -117,7 +85,7 @@ class _CommonDequantizeLinear(OpRun):
                 dx = float8e5m2_to_float32(x, fn=True, uz=True)
             else:
                 dx = x.astype(np.float32)
-        y = dx * self.reshape_input(x_scale, x.shape, axis)
+        y = dx * reshape_input(x_scale, x.shape, axis, block_size)
         return (y.astype(x_scale.dtype),)
 
 
@@ -129,6 +97,6 @@ class DequantizeLinear_19(_CommonDequantizeLinear):
 
 
 class DequantizeLinear_21(_CommonDequantizeLinear):
-    def _run(self, *args, axis=None):  # type: ignore
+    def _run(self, *args, axis=None, block_size=None):  # type: ignore
         # args: x, y_scale, zero_point
-        return super()._run(*args, axis=axis)  # type: ignore
+        return super()._run(*args, axis=axis, block_size=block_size)  # type: ignore
