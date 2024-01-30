@@ -103,8 +103,32 @@ class ConvTranspose(OpRun):
                         res += B[c]
                     final[image_id, c, ...] = res[...]
         else:
-            raise NotImplementedError(
-                f"Implementation for group={group} > 1 is not available yet."
-            )
+            final = np.zeros((X.shape[0], num_output_channels ) + tuple(output_shape))
+            output_array = []
+
+            for group_id in range(group):
+                group_X = X[:, group_id * C // group : (group_id + 1) * C // group, ...]
+                group_W = W[group_id * num_output_channels // group : (group_id + 1) * num_output_channels // group, ...]
+
+                group_output = self._run(
+                    group_X,
+                    group_W,
+                    B=B,  
+                    auto_pad=auto_pad,
+                    dilations=dilations,
+                    group=1, 
+                    kernel_shape=kernel_shape,
+                    output_padding=output_padding,
+                    output_shape=output_shape,
+                    pads=pads,
+                    strides=strides,
+                )
+                group_output = np.array(group_output[0])
+                output_array.append(group_output)
+
+            for image_id in range(X.shape[0]):
+                for group_id in range(group):
+                    group_output = output_array[group_id]
+                    final[image_id, group_id:(group_id+1), ...] = group_output[image_id, ...]
 
         return (final.astype(X.dtype),)  # type: ignore[union-attr]
