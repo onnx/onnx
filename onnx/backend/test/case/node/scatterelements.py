@@ -28,7 +28,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
         return unpacked
 
     def make_indices_for_duplicate(idx):  # type: ignore
-        final_idx = list()
+        final_idx = []
         for i in range(len(idx[0])):
             final_idx.append(tuple(idx_element[i] for idx_element in idx))
         return list(final_idx)
@@ -59,7 +59,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
         idx, updates_idx = make_indices_for_duplicate(idx), make_indices_for_duplicate(
             updates_idx
         )
-        for iter, idx_set in enumerate(idx):
+        for iter, idx_set in enumerate(idx):  # noqa: A001
             if reduction == "add":
                 scattered[idx_set] += updates[updates_idx[iter]]
             elif reduction == "mul":

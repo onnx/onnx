@@ -1,6 +1,8 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-# pylint: disable=C3001,C0302,C0415,R0904,R0913,R0914,R0915,W0221,W0707
+
 
 import unittest
 from functools import wraps
@@ -8,6 +10,7 @@ from os import getenv
 
 import numpy as np  # type: ignore
 from numpy.testing import assert_allclose  # type: ignore
+from parameterized import parameterized
 
 from onnx import ONNX_ML, TensorProto, TypeProto, ValueInfoProto
 from onnx.checker import check_model
@@ -17,6 +20,7 @@ from onnx.helper import (
     make_model_gen_version,
     make_node,
     make_opsetid,
+    make_tensor,
     make_tensor_value_info,
 )
 from onnx.reference import ReferenceEvaluator
@@ -32,13 +36,13 @@ ORT_MAX_ML_OPSET_SUPPORTED_VERSION = int(
 )
 
 TARGET_OPSET = onnx_opset_version() - 2
-TARGET_OPSET_ML = 3
+TARGET_OPSET_ML = 4
 OPSETS = [make_opsetid("", TARGET_OPSET), make_opsetid("ai.onnx.ml", TARGET_OPSET_ML)]
 
 
 def has_onnxruntime():
     try:
-        import onnxruntime  # pylint: disable=W0611
+        import onnxruntime
 
         del onnxruntime
 
@@ -375,6 +379,35 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self.assertEqual(expected.tolist(), got.tolist())
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
+    def test_label_encoder_int_string_tensor_attributes(self):
+        X = make_tensor_value_info("X", TensorProto.INT64, [None, None])
+        Y = make_tensor_value_info("Y", TensorProto.STRING, [None, None])
+        node = make_node(
+            "LabelEncoder",
+            ["X"],
+            ["Y"],
+            domain="ai.onnx.ml",
+            keys_tensor=make_tensor(
+                "keys_tensor", TensorProto.INT64, [4], [1, 2, 3, 4]
+            ),
+            values_tensor=make_tensor(
+                "values_tensor", TensorProto.STRING, [4], ["a", "b", "cc", "ddd"]
+            ),
+            default_tensor=make_tensor(
+                "default_tensor", TensorProto.STRING, [], ["NONE"]
+            ),
+        )
+        graph = make_graph([node], "ml", [X], [Y])
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        check_model(model)
+        x = np.array([[0, 1, 3, 4]], dtype=np.int64).T
+        expected = np.array([["NONE"], ["a"], ["cc"], ["ddd"]])
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
+        got = sess.run(None, {"X": x})[0]
+        self.assertEqual(expected.tolist(), got.tolist())
+
+    @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_dict_vectorizer(self):
         value_type = TypeProto()
         value_type.tensor_type.elem_type = TensorProto.INT64
@@ -588,7 +621,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 ),
             ],
         }
-        for post in ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"]:
+        for post in ("SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO", "PROBIT"):
             if post == "PROBIT":
                 coefficients = [0.058, 0.029, 0.09, 0.058, 0.029, 0.09]
                 intercepts = [0.27, 0.27, 0.05]
@@ -651,7 +684,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         }
         x = np.arange(6).reshape((-1, 3)).astype(np.float32)
-        for post in ["SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO"]:
+        for post in ("SOFTMAX", "NONE", "LOGISTIC", "SOFTMAX_ZERO"):
             expected = expected_post[post]
             with self.subTest(post_transform=post):
                 node1 = make_node(
@@ -699,7 +732,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         }
         x = np.arange(6).reshape((-1, 3)).astype(np.float32)
-        for post in ["NONE", "LOGISTIC", "SOFTMAX_ZERO", "SOFTMAX"]:
+        for post in ("NONE", "LOGISTIC", "SOFTMAX_ZERO", "SOFTMAX"):
             expected = expected_post[post]
             with self.subTest(post_transform=post):
                 node1 = make_node(
@@ -725,7 +758,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
     @staticmethod
     def _get_test_tree_ensemble_regressor(
-        aggregate_function, rule="BRANCH_LEQ", unique_targets=False
+        aggregate_function, rule="BRANCH_LEQ", unique_targets=False, base_values=None
     ):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
@@ -754,6 +787,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             domain="ai.onnx.ml",
             n_targets=1,
             aggregate_function=aggregate_function,
+            base_values=base_values,
             nodes_falsenodeids=[4, 3, 0, 0, 0, 2, 0, 4, 0, 0],
             nodes_featureids=[0, 2, 0, 0, 0, 0, 0, 2, 0, 0],
             nodes_hitrates=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
@@ -796,8 +830,17 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         check_model(onx)
         return onx
 
+    @parameterized.expand(
+        [
+            (f"{agg}_{base_values}", base_values, agg)
+            for base_values in (None, [1.0])
+            for agg in ("SUM", "AVERAGE", "MIN", "MAX")
+        ]
+    )
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
-    def test_tree_ensemble_regressor(self):
+    def test_tree_ensemble_regressor(self, name, base_values, agg):
+        self.assertTrue(ONNX_ML)
+        del name  # variable only used to print test name
         x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
         expected_agg = {
             "SUM": np.array([[0.576923], [0.576923], [0.576923]], dtype=np.float32),
@@ -805,14 +848,16 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "MIN": np.array([[0.076923], [0.076923], [0.076923]], dtype=np.float32),
             "MAX": np.array([[0.5], [0.5], [0.5]], dtype=np.float32),
         }
-        for agg in ["SUM", "AVERAGE", "MIN", "MAX"]:
-            expected = expected_agg[agg]
-            with self.subTest(aggregate_function=agg):
-                onx = self._get_test_tree_ensemble_regressor(agg)
-                self._check_ort(onx, {"X": x}, equal=True)
-                sess = ReferenceEvaluator(onx)
-                got = sess.run(None, {"X": x})
-                assert_allclose(expected, got[0], atol=1e-6)
+
+        expected = expected_agg[agg]
+        if base_values is not None:
+            expected += base_values[0]
+        with self.subTest(aggregate_function=agg):
+            onx = self._get_test_tree_ensemble_regressor(agg, base_values=base_values)
+            self._check_ort(onx, {"X": x}, equal=True)
+            sess = ReferenceEvaluator(onx)
+            got = sess.run(None, {"X": x})
+            assert_allclose(expected, got[0], atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_rule(self):
@@ -1295,9 +1340,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         In = make_tensor_value_info("I", TensorProto.INT64, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
         if linear:
-            kwargs = dict(
-                classlabels_ints=[0, 1, 2, 3],
-                coefficients=[
+            kwargs = {
+                "classlabels_ints": [0, 1, 2, 3],
+                "coefficients": [
                     -1.55181212e-01,
                     2.42698956e-01,
                     7.01893432e-03,
@@ -1311,23 +1356,23 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     4.56869105e-02,
                     -1.29375499e-02,
                 ],
-                kernel_params=[0.001, 0.0, 3.0],
-                kernel_type="LINEAR",
-                prob_a=[-5.139118194580078],
-                prob_b=[0.06399919837713242],
-                rho=[-0.07489691, -0.1764396, -0.21167431, -0.51619097],
-                post_transform=post_transform,
-            )
+                "kernel_params": [0.001, 0.0, 3.0],
+                "kernel_type": "LINEAR",
+                "prob_a": [-5.139118194580078],
+                "prob_b": [0.06399919837713242],
+                "rho": [-0.07489691, -0.1764396, -0.21167431, -0.51619097],
+                "post_transform": post_transform,
+            }
         else:
-            kwargs = dict(
-                classlabels_ints=[0, 1],
-                coefficients=[1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0],
-                kernel_params=[0.3824487328529358, 0.0, 3.0],
-                kernel_type="RBF",
-                prob_a=[-5.139118194580078],
-                prob_b=[0.06399919837713242],
-                rho=[0.16708599030971527],
-                support_vectors=[
+            kwargs = {
+                "classlabels_ints": [0, 1],
+                "coefficients": [1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0],
+                "kernel_params": [0.3824487328529358, 0.0, 3.0],
+                "kernel_type": "RBF",
+                "prob_a": [-5.139118194580078],
+                "prob_b": [0.06399919837713242],
+                "rho": [0.16708599030971527],
+                "support_vectors": [
                     0.19125767052173615,
                     -1.062204122543335,
                     0.5006636381149292,
@@ -1353,9 +1398,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     0.49261474609375,
                     0.4470972716808319,
                 ],
-                vectors_per_class=[4, 4],
-                post_transform=post_transform,
-            )
+                "vectors_per_class": [4, 4],
+                "post_transform": post_transform,
+            }
 
         if not probability:
             del kwargs["prob_a"]
@@ -1614,15 +1659,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         In = make_tensor_value_info("I", TensorProto.INT64, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
-        kwargs = dict(
-            classlabels_ints=[0, 1],
-            coefficients=[
+        kwargs = {
+            "classlabels_ints": [0, 1],
+            "coefficients": [
                 0.766398549079895,
                 0.0871576070785522,
                 0.110420741140842,
                 -0.963976919651031,
             ],
-            support_vectors=[
+            "support_vectors": [
                 4.80000019073486,
                 3.40000009536743,
                 1.89999997615814,
@@ -1636,14 +1681,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 2.5,
                 3.0,
             ],
-            kernel_params=[0.122462183237076, 0.0, 3.0],
-            kernel_type="LINEAR",
-            prob_a=[-5.139118194580078],
-            prob_b=[0.06399919837713242],
-            rho=[2.23510527610779],
-            post_transform=post_transform,
-            vectors_per_class=[3, 1],
-        )
+            "kernel_params": [0.122462183237076, 0.0, 3.0],
+            "kernel_type": "LINEAR",
+            "prob_a": [-5.139118194580078],
+            "prob_b": [0.06399919837713242],
+            "rho": [2.23510527610779],
+            "post_transform": post_transform,
+            "vectors_per_class": [3, 1],
+        }
 
         if not probability:
             del kwargs["prob_a"]
@@ -1703,15 +1748,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
     def _get_test_svm_regressor_linear(post_transform, one_class=0):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
-        kwargs = dict(
-            coefficients=[0.28290501, -0.0266512, 0.01674867],
-            kernel_params=[0.001, 0.0, 3.0],
-            kernel_type="LINEAR",
-            rho=[1.24032312],
-            post_transform=post_transform,
-            n_supports=0,
-            one_class=one_class,
-        )
+        kwargs = {
+            "coefficients": [0.28290501, -0.0266512, 0.01674867],
+            "kernel_params": [0.001, 0.0, 3.0],
+            "kernel_type": "LINEAR",
+            "rho": [1.24032312],
+            "post_transform": post_transform,
+            "n_supports": 0,
+            "one_class": one_class,
+        }
 
         node1 = make_node("SVMRegressor", ["X"], ["Y"], domain="ai.onnx.ml", **kwargs)
         graph = make_graph([node1], "ml", [X], [Y])
@@ -1756,6 +1801,86 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
                 assert_allclose(expected[0], got[0], atol=1e-6)
+
+    def test_onnxrt_tfidf_vectorizer_ints(self):
+        inputi = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int64)
+        output = np.array(
+            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0]]
+        ).astype(np.float32)
+
+        ngram_counts = np.array([0, 4]).astype(np.int64)
+        ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+        pool_int64s = np.array([2, 3, 5, 4, 5, 6, 7, 8, 6, 7]).astype(  # unigrams
+            np.int64
+        )  # bigrams
+
+        model = make_model_gen_version(
+            make_graph(
+                [
+                    make_node(
+                        "TfIdfVectorizer",
+                        ["tokens"],
+                        ["out"],
+                        mode="TF",
+                        min_gram_length=2,
+                        max_gram_length=2,
+                        max_skip_count=0,
+                        ngram_counts=ngram_counts,
+                        ngram_indexes=ngram_indexes,
+                        pool_int64s=pool_int64s,
+                    )
+                ],
+                "tfidf",
+                [make_tensor_value_info("tokens", TensorProto.INT64, [None, None])],
+                [make_tensor_value_info("out", TensorProto.FLOAT, [None, None])],
+            ),
+            opset_imports=OPSETS,
+        )
+
+        oinf = ReferenceEvaluator(model)
+        res = oinf.run(None, {"tokens": inputi})
+        self.assertEqual(output.tolist(), res[0].tolist())
+
+    def test_onnxrt_tfidf_vectorizer_strings(self):
+        inputi = np.array(
+            [["i1", "i1", "i3", "i3", "i3", "i7"], ["i8", "i6", "i7", "i5", "i6", "i8"]]
+        )
+        output = np.array(
+            [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0]]
+        ).astype(np.float32)
+
+        ngram_counts = np.array([0, 4]).astype(np.int64)
+        ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+        pool_strings = np.array(
+            ["i2", "i3", "i5", "i4", "i5", "i6", "i7", "i8", "i6", "i7"]
+        )
+
+        model = make_model_gen_version(
+            make_graph(
+                [
+                    make_node(
+                        "TfIdfVectorizer",
+                        ["tokens"],
+                        ["out"],
+                        mode="TF",
+                        min_gram_length=2,
+                        max_gram_length=2,
+                        max_skip_count=0,
+                        ngram_counts=ngram_counts,
+                        ngram_indexes=ngram_indexes,
+                        pool_strings=pool_strings,
+                    )
+                ],
+                "tfidf",
+                [make_tensor_value_info("tokens", TensorProto.INT64, [None, None])],
+                [make_tensor_value_info("out", TensorProto.FLOAT, [None, None])],
+            ),
+            opset_imports=OPSETS,
+        )
+
+        oinf = ReferenceEvaluator(model)
+        res = oinf.run(None, {"tokens": inputi})
+        self.assertEqual(output.tolist(), res[0].tolist())
 
 
 if __name__ == "__main__":

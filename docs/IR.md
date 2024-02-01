@@ -4,8 +4,7 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-Open Neural Network Exchange Intermediate Representation (ONNX IR) Specification
-=========
+# Open Neural Network Exchange Intermediate Representation (ONNX IR) Specification
 
 __Purpose__
 
@@ -411,9 +410,9 @@ It is common to represent a tensor as a nested list. This generally works fine, 
 
 |Group|Types|Description|
 |---|---|---|
-Floating Point Types|float16, float32, float64|Values adhering to the IEEE 754-2008 standard representation of floating-point data.
-Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for 8-64 bit widths.
-Unsigned Integer Types|uint8, uint16, uint32, uint64|Unsigned integers are supported for 8-64 bit widths.
+Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433) and [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915)
+Signed Integer Types|int4, int8, int16, int32, int64|Signed integers are supported for 4-64 bit widths.
+Unsigned Integer Types|uint4, uint8, uint16, uint32, uint64|Unsigned integers are supported for 4-64 bit widths.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
 Other|string|Strings represent textual data. All strings are encoded using UTF-8.
 Other|bool|Boolean values represent data with only two values, typically true and false.
@@ -424,7 +423,7 @@ The following types are used to define the types of graph and node inputs and ou
 
 |Variant | Type | Description |
 |---|---|---|
-ONNX|dense tensors|Represents a Tensor. See definition above. 
+ONNX|dense tensors|Represents a Tensor. See definition above.
 ONNX|sequence|Sequences are dense, ordered, collections of elements that are of homogeneous types.
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
 ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](ONNXTypes.md)

@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0200,R0912,R0913,R0914,R0915,R0916,R1702,W0221
+
 
 import numpy as np
 
@@ -87,6 +87,11 @@ class MaxPool(CommonPool):
                         + 1
                     )
                 )
+                need_to_reduce_out_size_in_ceil_mode = (
+                    output_spatial_shape[i] - 1
+                ) * strides[i] >= input_spatial_shape[i] + new_pads[i][0]
+                if need_to_reduce_out_size_in_ceil_mode:
+                    output_spatial_shape[i] -= 1
         else:
             for i in range(len(input_spatial_shape)):
                 output_spatial_shape[i] = int(
@@ -177,12 +182,12 @@ class MaxPool(CommonPool):
     def _max_pool_1d(  # type: ignore
         self,
         x,
-        auto_pad,  # pylint: disable=W0613
-        ceil_mode,  # pylint: disable=W0613
+        auto_pad,
+        ceil_mode,
         dilations,
         kernel_shape,
         new_pads,
-        storage_order,  # pylint: disable=W0613
+        storage_order,
         strides,
         output_spatial_shape,
     ):
@@ -233,8 +238,8 @@ class MaxPool(CommonPool):
     def _max_pool_2d(  # type: ignore
         self,
         x,
-        auto_pad,  # pylint: disable=W0613
-        ceil_mode,  # pylint: disable=W0613
+        auto_pad,
+        ceil_mode,
         dilations,
         kernel_shape,
         new_pads,
@@ -310,8 +315,8 @@ class MaxPool(CommonPool):
     def _max_pool_3d(  # type: ignore
         self,
         x,
-        auto_pad,  # pylint: disable=W0613
-        ceil_mode,  # pylint: disable=W0613
+        auto_pad,
+        ceil_mode,
         dilations,
         kernel_shape,
         new_pads,

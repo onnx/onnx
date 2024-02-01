@@ -1,0 +1,123 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+  optional-lint:
+    name: Optional Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: misspell # Check spellings as well
+        uses: reviewdog/action-misspell@06d6a480724fa783c220081bbc22336a78dbbe82 # v1.15.0
+        with:
+          github_token: ${{ secrets.github_token }}
+          locale: "US"
+          reporter: github-pr-check
+          level: info
+          filter_mode: diff_context
+          exclude: |
+            ./docs/docsgen/source/_static/*
+      - name: shellcheck # Static check shell scripts
+        uses: reviewdog/action-shellcheck@96fa305c16b0f9cc9b093af22dcd09de1c8f1c2d # v1.19.0
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: info
+          filter_mode: diff_context
+      - name: cpplint # Static check C++ code
+        uses: reviewdog/action-cpplint@b6c13159b10435813edfddea9e1cd02157544f45 # v1.1.0
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: warning
+          flags: --linelength=120
+          filter: "-runtime/references"
+
+
+  enforce-style:
+    name: Enforce style
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Setup Python
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+        with:
+          # Version range or exact version of Python to use, using SemVer's version range syntax. Reads from .python-version if unset.
+          python-version: "3.10"
+      - name: Install ONNX
+        run: |
+          source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
+
+          python -m pip install --quiet --upgrade pip setuptools wheel
+          python -m pip install --quiet -r requirements-release.txt
+
+          git submodule update --init --recursive
+          export ONNX_BUILD_TESTS=0
+          export ONNX_ML=1
+          export CMAKE_ARGS="-DONNXIFI_DUMMY_BACKEND=ON -DONNX_WERROR=ON"
+          export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+
+          python setup.py install
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements-dev.txt
+          lintrunner init
+      - name: Run lintrunner on all files
+        run: |
+          set +e
+          if ! lintrunner --force-color --all-files --tee-json=lint.json -v; then
+              echo ""
+              echo -e "\e[1m\e[36mYou can reproduce these results locally by using \`lintrunner\`.\e[0m"
+              echo -e "\e[1m\e[36mSee https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md#coding-style for setup instructions.\e[0m"
+              exit 1
+          fi
+      - name: Produce SARIF
+        if: always()
+        run: |
+          python -m lintrunner_adapters to-sarif lint.json lintrunner.sarif
+      - name: Upload SARIF file
+        # Use always() to always upload SARIF even if lintrunner returns with error code
+        # To toggle linter comments in the files page, press `i` on the keyboard
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v2.13.4
+        with:
+          # Path to SARIF file relative to the root of the repository
+          sarif_file: lintrunner.sarif
+          category: lintrunner
+          checkout_path: ${{ github.workspace }}
+      - name: Check auto-gen files are up-to-date
+        run: |
+          echo -e "\n::group:: ===> check auto-gen files are up-to-date..."
+
+          ONNX_ML=1 python onnx/defs/gen_doc.py
+          python onnx/gen_proto.py -l
+          python onnx/gen_proto.py -l --ml
+          python onnx/backend/test/stat_coverage.py
+
+          git status
+          git diff --exit-code -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
+          if [ $? -ne 0 ]; then
+            echo "git diff returned failures"
+            exit 1
+          fi
+          echo -e "::endgroup::"

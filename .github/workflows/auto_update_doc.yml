@@ -1,0 +1,50 @@
+name: Auto update documentation/backend test data
+on:
+  pull_request_target:
+  workflow_dispatch:
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+    cancel-in-progress: true
+
+jobs:
+  auto-update-doc:
+    if: contains( github.event.pull_request.labels.*.name, 'auto update doc')
+    runs-on: ubuntu-latest
+    permissions:
+        contents: write
+
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        # Checkout the branch made in the fork. Will automatically push changes
+        # back to this branch.
+        ref: ${{ github.head_ref }}
+    - name: Setup Python
+      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      with:
+        python-version: "3.11"
+    - name: Install ONNX from source and update documentation
+      run: |
+        python -m pip install -q --upgrade pip
+        python -m pip install -r requirements-release.txt
+        git submodule update --init --recursive
+        export ONNX_ML=1
+        pip install -e .
+
+        python onnx/defs/gen_doc.py
+        python onnx/gen_proto.py -l
+        python onnx/gen_proto.py -l --ml
+        python onnx/backend/test/stat_coverage.py
+
+        python onnx/backend/test/cmd_tools.py generate-data --diff
+
+        git diff -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
+
+
+    - name: Commit changes with updated files
+      uses: stefanzweifel/git-auto-commit-action@8756aa072ef5b4a080af5dc8fef36c5d586e521d # v5.0.0
+      with:
+        commit_message: CI:apply auto updated documentation/backend test data
+        commit_options: "--signoff"

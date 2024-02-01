@@ -3,8 +3,11 @@
  */
 
 #include "onnx/defs/schema.h"
+
 #include <stdexcept>
 #include <unordered_set>
+#include <utility>
+
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/operator_sets_preview.h"
@@ -15,7 +18,6 @@
 #endif
 
 #include "onnx/common/assertions.h"
-#include "onnx/common/stl_backports.h"
 #include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {
@@ -28,8 +30,8 @@ constexpr int OpSchema::kUninitializedSinceVersion;
 
 // By default if opset_version_to_load=0, it registers all opset schema for all opset versions
 // Otherwise, it only registers the latest schema according to opset_version_to_load
-void RegisterSchema(OpSchema schema, int opset_version_to_load) {
-  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load);
+void RegisterSchema(OpSchema schema, int opset_version_to_load, bool fail_duplicate_schema) {
+  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load, fail_duplicate_schema);
 }
 
 #ifndef NDEBUG
@@ -260,7 +262,14 @@ void OpSchema::Verify(const NodeProto& node) const {
 
     // Type would be UNDEFINED if not set
     if (attr_proto.type() != expected_type) {
-      fail_check("Mismatched attribute type in '", node.name() + " : " + name, "'");
+      fail_check(
+          "Mismatched attribute type in '",
+          node.name() + " : " + name,
+          "'. Expected: '",
+          AttributeProto_AttributeType_Name(expected_type),
+          "', actual: '",
+          AttributeProto_AttributeType_Name(attr_proto.type()),
+          "'");
     }
 
     // ref_attr_name is only valid when non-empty
@@ -298,40 +307,15 @@ void OpSchema::Verify(const NodeProto& node) const {
           fail_check("Attribute '", name, "' is expected to have field 'type_proto'");
         }
         break;
-      case AttributeProto::FLOATS:
-        if (!attr_proto.floats_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'floats'");
-        }
-        break;
       case AttributeProto::INTS:
-        if (!attr_proto.ints_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'ints'");
-        }
-        break;
-      case AttributeProto::STRINGS:
-        if (!attr_proto.strings_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'strings'");
-        }
-        break;
+      case AttributeProto::FLOATS:
       case AttributeProto::TENSORS:
-        if (!attr_proto.tensors_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'tensors'");
-        }
-        break;
+      case AttributeProto::STRINGS:
       case AttributeProto::SPARSE_TENSORS:
-        // Not adding check ... we should likely delete the check in all other
-        // cases, which will not allow us to have an empty list as a valid value
-        // for an attribute and this seems undesirable.
-        break;
       case AttributeProto::GRAPHS:
-        if (!attr_proto.graphs_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'graphs'");
-        }
-        break;
       case AttributeProto::TYPE_PROTOS:
-        if (!attr_proto.type_protos_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'type_protos'");
-        }
+        // No check ... whether an empty list is a valid value for the attribute
+        // is op specific.
         break;
       default:
         fail_check("Attribute '", name, " has unknown expected type");
@@ -392,14 +376,14 @@ OpSchema& OpSchema::Deprecate() {
 }
 
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  num_inputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n) -> bool {
+  num_inputs_allowed_ = [allowed_input_nums = std::move(allowed_input_nums)](int n) -> bool {
     return allowed_input_nums.count(n);
   };
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  num_outputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
+  num_outputs_allowed_ = [allowed_output_nums = std::move(allowed_output_nums)](int n) -> bool {
     return allowed_output_nums.count(n) > 0;
   };
   return *this;
@@ -553,6 +537,14 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
   return *this;
 }
 
+OpSchema& OpSchema::Input(int n, FormalParameter formal_parameter) {
+  if (inputs_.size() <= static_cast<size_t>(n)) {
+    inputs_.resize(n + 1);
+  }
+  inputs_[n] = std::move(formal_parameter);
+  return *this;
+}
+
 OpSchema& OpSchema::Input(
     int n,
     std::string name,
@@ -562,22 +554,20 @@ OpSchema& OpSchema::Input(
     bool is_homogeneous,
     int min_arity,
     DifferentiationCategory differentiation_category) {
-  if (int(inputs_.size()) <= n) {
-    inputs_.resize(n + 1);
-  }
-  inputs_[n] = FormalParameter(
-      std::move(name),
+  return Input(
+      n,
+      FormalParameter(
+          std::move(name),
 #ifndef __ONNX_NO_DOC_STRINGS
-      description,
+          description,
 #else
-      std::string(),
+          std::string(),
 #endif
-      std::move(type_str),
-      param_option,
-      is_homogeneous,
-      min_arity,
-      differentiation_category);
-  return *this;
+          std::move(type_str),
+          param_option,
+          is_homogeneous,
+          min_arity,
+          differentiation_category));
 }
 
 OpSchema& OpSchema::Input(
@@ -604,6 +594,14 @@ OpSchema& OpSchema::Input(
       differentiation_category);
 }
 
+OpSchema& OpSchema::Output(int n, FormalParameter formal_parameter) {
+  if (outputs_.size() <= static_cast<size_t>(n)) {
+    outputs_.resize(n + 1);
+  }
+  outputs_[n] = std::move(formal_parameter);
+  return *this;
+}
+
 OpSchema& OpSchema::Output(
     int n,
     std::string name,
@@ -613,22 +611,20 @@ OpSchema& OpSchema::Output(
     bool is_homogeneous,
     int min_arity,
     DifferentiationCategory differentiation_category) {
-  if (int(outputs_.size()) <= n) {
-    outputs_.resize(n + 1);
-  }
-  outputs_[n] = FormalParameter(
-      std::move(name),
+  return Output(
+      n,
+      FormalParameter(
+          std::move(name),
 #ifndef __ONNX_NO_DOC_STRINGS
-      description,
+          description,
 #else
-      std::string(),
+          std::string(),
 #endif
-      std::move(type_str),
-      param_option,
-      is_homogeneous,
-      min_arity,
-      differentiation_category);
-  return *this;
+          std::move(type_str),
+          param_option,
+          is_homogeneous,
+          min_arity,
+          differentiation_category));
 }
 
 OpSchema& OpSchema::Output(

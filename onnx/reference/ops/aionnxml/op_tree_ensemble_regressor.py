@@ -1,5 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0913,R0914,W0221
+
 
 import numpy as np
 
@@ -8,9 +10,7 @@ from onnx.reference.ops.aionnxml.op_tree_ensemble_helper import TreeEnsemble
 
 
 class TreeEnsembleRegressor(OpRunAiOnnxMl):
-    """
-    `nodes_hitrates` and `nodes_hitrates_as_tensor` are not used.
-    """
+    """`nodes_hitrates` and `nodes_hitrates_as_tensor` are not used."""
 
     def _run(  # type: ignore
         self,
@@ -56,7 +56,7 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
             target_weights_as_tensor=target_weights_as_tensor,
         )
         # unused unless for debugging purposes
-        self._tree = tr  # pylint: disable=W0201
+        self._tree = tr
         leaves_index = tr.leave_index_tree(X)
         res = np.zeros((leaves_index.shape[0], n_targets), dtype=X.dtype)
         n_trees = len(set(tr.atts.nodes_treeids))  # type: ignore
@@ -91,12 +91,14 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
                         )
             else:
                 raise NotImplementedError(
-                    f"aggregate_transform={aggregate_function!r} " f"not supported yet."
+                    f"aggregate_transform={aggregate_function!r} not supported yet."
                 )
         if aggregate_function == "AVERAGE":
             res /= n_trees
+
+        # Convention is to add base_values after aggregate function
         if base_values is not None:
-            res[:, :] = np.array(base_values).reshape((1, -1))
+            res[:, :] += np.array(base_values).reshape((1, -1))
 
         if post_transform in (None, "NONE"):
             return (res,)

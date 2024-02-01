@@ -58,7 +58,7 @@ class TopK(Base):
     def export_top_k_smallest() -> None:
         axis = 1
         largest = 0
-        sorted = 1
+        sorted = 1  # noqa: A001
         k = 3
 
         node = onnx.helper.make_node(

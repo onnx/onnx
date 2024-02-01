@@ -1,13 +1,13 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0913,R0914,W0221
+
 
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 def _array_feature_extrator(data, indices):  # type: ignore
-    """
-    Implementation of operator *ArrayFeatureExtractor*.
-    """
+    """Implementation of operator *ArrayFeatureExtractor*."""
     if len(indices.shape) == 2 and indices.shape[0] == 1:
         index = indices.ravel().tolist()
         add = len(index)
@@ -33,9 +33,9 @@ def _array_feature_extrator(data, indices):  # type: ignore
 
 class ArrayFeatureExtractor(OpRunAiOnnxMl):
     def _run(self, data, indices):  # type: ignore
-        """
-        Runtime for operator *ArrayFeatureExtractor*.
-        .. warning::
+        """Runtime for operator *ArrayFeatureExtractor*.
+
+        Warning:
             ONNX specifications may be imprecise in some cases.
             When the input data is a vector (one dimension),
             the output has still two like a matrix with one row.

@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 import typing
 import unittest
@@ -23,6 +25,28 @@ class TestModelInference(unittest.TestCase):
             self.assertTrue(tensor_type.HasField("elem_type"))
             elem_type = tensor_type.elem_type
             self.assertEqual(elem_type, expected_elem_type)
+
+    def _check_inference_error(self, model_text: str):
+        """Check that the model inference raises an InferenceError."""
+        model = onnx.parser.parse_model(model_text)
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, True, True)
+
+    def test_unknown_op(self):
+        """Test that model inference handles unknown ops.
+        This special treatment is to support custom ops.
+        See comments in shape inference code for details.
+        """
+        model = """
+            <ir_version: 7, opset_import: [ "" : 17]>
+            agraph (float[N] x) => (y)
+            {
+                y = SomeUnknownOp (x)
+            }
+        """
+        # No output types are inferred for unknown ops.
+        # But ensure that the inference does not fail.
+        self._check(model)
 
     def test_mi_basic(self):
         """Test that model inference infers model output type."""
@@ -201,6 +225,24 @@ class TestModelInference(unittest.TestCase):
             }
             """
         self._check_shape(model, [4, 4], [8, 8, 8])
+
+    def test_mi_function_default_attr(self):
+        """Test use of default values of function attributes."""
+        model = """
+            <ir_version: 7, opset_import: [ "" : 17, "local" : 1]>
+            agraph (float[N] x) => (y, z)
+            {
+                y = local.cast <target=6> (x) # casts to INT32 type (encoding value 6)
+                z = local.cast (x)  # uses default-attribute value of 1 (FLOAT type)
+            }
+
+            <opset_import: [ "" : 17 ], domain: "local">
+            cast <target: int = 1> (x) => (y)
+            {
+                y = Cast <to:int = @target> (x)
+            }
+        """
+        self._check(model, onnx.TensorProto.INT32, onnx.TensorProto.FLOAT)
 
 
 if __name__ == "__main__":

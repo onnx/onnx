@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -6,6 +8,9 @@
 // Adventurous users should note that the APIs will probably change.
 
 #pragma once
+#include <memory>
+#include <string>
+
 #include "onnx/common/common.h"
 #include "onnx/common/ir.h"
 #include "onnx/onnx_pb.h"

@@ -8,14 +8,14 @@
 #pragma once
 
 #include <ctype.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 
-#include "onnx/onnx_pb.h"
-
 #include "onnx/common/status.h"
+#include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -33,6 +33,8 @@ using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
 using TensorList = google::protobuf::RepeatedPtrField<TensorProto>;
 
 using OpsetIdList = google::protobuf::RepeatedPtrField<OperatorSetIdProto>;
+
+using StringStringList = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
 #define CHECK_PARSER_STATUS(status) \
   {                                 \
@@ -88,6 +90,10 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["complex64"] = TensorProto_DataType_COMPLEX64;
     map_["complex128"] = TensorProto_DataType_COMPLEX128;
     map_["bfloat16"] = TensorProto_DataType_BFLOAT16;
+    map_["float8e4m3fn"] = TensorProto_DataType_FLOAT8E4M3FN;
+    map_["float8e4m3fnuz"] = TensorProto_DataType_FLOAT8E4M3FNUZ;
+    map_["float8e5m2"] = TensorProto_DataType_FLOAT8E5M2;
+    map_["float8e5m2fnuz"] = TensorProto_DataType_FLOAT8E5M2FNUZ;
   }
 
   static bool IsTypeName(const std::string& dtype) {
@@ -372,6 +378,8 @@ class ParserBase {
   const char* next_;
   const char* end_;
   const char* saved_pos_;
+
+  bool NextIsValidFloatString();
 };
 
 class OnnxParser : public ParserBase {
@@ -381,6 +389,8 @@ class OnnxParser : public ParserBase {
   Status Parse(TensorShapeProto& shape);
 
   Status Parse(TypeProto& typeProto);
+
+  Status Parse(StringStringList& stringStringList);
 
   Status Parse(TensorProto& tensorProto);
 
@@ -417,7 +427,7 @@ class OnnxParser : public ParserBase {
 
   Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
 
-  Status ParseSingleAttributeValue(AttributeProto& attr);
+  Status ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected);
 
   Status Parse(ValueInfoProto& valueinfo);
 
@@ -432,6 +442,8 @@ class OnnxParser : public ParserBase {
   Status Parse(OpsetIdList& opsets);
 
   bool NextIsType();
+
+  bool NextIsIdentifier();
 };
 
 } // namespace ONNX_NAMESPACE

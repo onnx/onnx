@@ -1,8 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0415,R0912,W0611,W0603
+
 
 import textwrap
-from typing import Any, Dict, Union
+from typing import Any, Dict
+from typing import Optional as TOptional
+from typing import Union
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
@@ -19,16 +23,18 @@ def _build_registered_operators() -> (
 def load_op(
     domain: str, op_type: str, version: Union[None, int], custom: Any = None
 ) -> Any:
-    """
-    Loads the implemented for a specified operator.
+    """Loads the implemented for a specified operator.
 
-    :param domain: domain
-    :param op_type: oprator type
-    :param version: requested version
-    :param custom: custom implementation (like a function)
-    :return: class
+    Args:
+        domain: domain
+        op_type: oprator type
+        version: requested version
+        custom: custom implementation (like a function)
+
+    Returns:
+        class
     """
-    global _registered_operators
+    global _registered_operators  # noqa: PLW0603
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]
     if custom is not None:
@@ -73,6 +79,6 @@ def load_op(
     return cl
 
 
-# Python 3.7 does not support this annotation for a global variable.
-# _registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRunExperimental]]] = None
-_registered_operators = None  # type: ignore
+_registered_operators: TOptional[
+    Dict[str, Dict[Union[int, None], OpRunExperimental]]
+] = None

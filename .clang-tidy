@@ -16,7 +16,6 @@ Checks: >-
   clang-analyzer-alpha.cplusplus.*,
   clang-analyzer-alpha.security.*,
   cppcoreguidelines-avoid-goto,
-  cppcoreguidelines-init-variables,
   cppcoreguidelines-interfaces-global-init,
   cppcoreguidelines-no-malloc,
   cppcoreguidelines-prefer-member-initializer,

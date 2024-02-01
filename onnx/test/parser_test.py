@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 
@@ -88,7 +90,6 @@ class TestBasicFunctions(unittest.TestCase):
          {
             out = custom_domain.Selu<alpha=2.0, gamma=3.0>(x)
          }
-
          <
          domain: "custom_domain",
          opset_import: [ "" : 15],
@@ -204,6 +205,66 @@ class TestBasicFunctions(unittest.TestCase):
 
         expect_model_function_attribute(model)
         expect_custom_node_attribute(model.graph.node[0], expected_attribute)
+
+    def test_parse_node(self):
+        node = onnx.parser.parse_node(
+            "out1, out2 = SomeDomain.SomeOp <attr1 = 1> (in1, in2)"
+        )
+        self.assertEqual(list(node.input), ["in1", "in2"])
+        self.assertEqual(list(node.output), ["out1", "out2"])
+        self.assertEqual(len(node.attribute), 1)
+        attr_val = onnx.helper.get_node_attr_value(node, "attr1")
+        self.assertEqual(attr_val, 1)
+        self.assertEqual(node.domain, "SomeDomain")
+        self.assertEqual(node.op_type, "SomeOp")
+
+    @parameterized.expand(
+        [
+            ("not_a_good_float", True),
+            ("inf1", True),
+            ("-inf1", True),
+            ("nan0", True),
+            ("-nan0", True),
+            ("naninf", True),
+            ("inf", False),
+            ("-inf", False),
+            ("infinity", False),
+            ("-infinity", False),
+            ("nan", False),
+            ("-NaN", False),
+        ]
+    )
+    def test_parse_various_float_values(self, test_literal, expect_exception):
+        model_text = f"""
+        <
+        ir_version: 8,
+        opset_import: ["" : 18, "this" : 1],
+        producer_name: "FunctionProtoTest",
+        producer_version: "1.0"
+        >
+        _func () => ()
+        {{
+        tmp = Constant <value_float = {test_literal}>()
+        }}
+        """
+        if expect_exception:
+            self.assertRaises(
+                onnx.parser.ParseError, lambda: onnx.parser.parse_model(model_text)
+            )
+        else:
+            model = onnx.parser.parse_model(model_text)
+            self.assertEqual(model.ir_version, 8)
+            self.assertEqual(model.producer_name, "FunctionProtoTest")
+            self.assertEqual(model.producer_version, "1.0")
+            self.assertEqual(len(model.graph.node), 1)
+            self.assertEqual(len(model.graph.node[0].attribute), 1)
+            self.assertEqual(model.graph.node[0].attribute[0].name, "value_float")
+            self.assertEqual(
+                model.graph.node[0].attribute[0].type, onnx.AttributeProto.FLOAT
+            )
+            self.assertEqual(
+                str(model.graph.node[0].attribute[0].f), str(float(test_literal))
+            )
 
 
 if __name__ == "__main__":

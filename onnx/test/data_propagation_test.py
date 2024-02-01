@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 from __future__ import annotations
@@ -7,6 +9,7 @@ import unittest
 # TODO: remove the following ignore after mypy upgrade in ONNX
 from shape_inference_test import TestShapeInferenceHelper
 
+import onnx.parser
 from onnx import TensorProto
 from onnx.helper import make_node, make_tensor, make_tensor_value_info
 
@@ -52,6 +55,82 @@ class TestDataPropagation(TestShapeInferenceHelper):
             ],
             data_prop=True,
         )  # type: ignore
+
+    def test_model_data_propagation(self) -> None:
+        """Infer the shape of z by propagating the value of xshape."""
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 18]>
+            agraph (float[4, 1, 16] x, float[1, 8, 16] y) => () {
+                xshape = Shape (x)
+                z = Expand (y, xshape)
+            }
+        """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("xshape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (4, 8, 16)),
+            ],
+            data_prop=True,
+        )
+
+    def test_data_prop_via_function(self) -> None:
+        """Test value-propagation through function calls.
+        Underlying core example is same as previous test_model_data_propagation.
+        """
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 18, "local" : 1 ]>
+            agraph (float[4, 1, 16] x, float[1, 8, 16] y) => () {
+                xshape = local.GetShape (x)
+                z = Expand (y, xshape)
+            }
+            <domain: "local", opset_import: [ "" : 18 ]>
+            GetShape (x) => (shapeval) {
+                shapeval = Shape(x)
+            }
+        """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("xshape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (4, 8, 16)),
+            ],
+            data_prop=True,
+        )
+
+    def test_multiple_calls_to_function(self) -> None:
+        """Test value-propagation handles multiple calls to same function correctly.
+        Underlying core example is same as previous test_model_data_propagation.
+        """
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 18, "local" : 1 ]>
+            agraph (float[4, 1, 16] x, float[1, 8, 16] y) => () {
+                yshape = local.GetShape (y)
+                xshape = local.GetShape (x)
+                z = Expand (y, xshape)
+                w = Expand (y, yshape)
+            }
+            <domain: "local", opset_import: [ "" : 18 ]>
+            GetShape (x) => (shapeval) {
+                shapeval = Shape(x)
+            }
+        """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("yshape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("xshape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("z", TensorProto.FLOAT, (4, 8, 16)),
+                make_tensor_value_info("w", TensorProto.FLOAT, (1, 8, 16)),
+            ],
+            data_prop=True,
+        )
 
 
 if __name__ == "__main__":

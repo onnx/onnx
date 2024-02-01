@@ -1,14 +1,16 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 # This file is for testing ONNX with ONNX Runtime
 # Create a general scenario to use ONNX Runtime with ONNX
-# pylint: disable=C0415
+
 import unittest
 
 
 class TestONNXRuntime(unittest.TestCase):
     def test_with_ort_example(self) -> None:
         try:
-            import onnxruntime  # pylint: disable=W0611
+            import onnxruntime
 
             del onnxruntime
         except ImportError:
@@ -33,7 +35,9 @@ class TestONNXRuntime(unittest.TestCase):
         converted_model = version_converter.convert_version(inferred_model, 10)
 
         # test ONNX Runtime functions
-        sess = InferenceSession(converted_model.SerializeToString())
+        sess = InferenceSession(
+            converted_model.SerializeToString(), providers=["CPUExecutionProvider"]
+        )
         input_name = sess.get_inputs()[0].name
         output_name = sess.get_outputs()[0].name
         x = random.random((3, 4, 5))

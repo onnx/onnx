@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 import unittest
 from typing import Sequence
@@ -11,8 +13,11 @@ import onnx.shape_inference
 from onnx import AttributeProto, TypeProto
 
 float_type_ = onnx.helper.make_tensor_type_proto(1, None)
+uint8_type_ = onnx.helper.make_tensor_type_proto(2, None)
+int8_type_ = onnx.helper.make_tensor_type_proto(3, None)
 int32_type_ = onnx.helper.make_tensor_type_proto(6, None)
 float16_type_ = onnx.helper.make_tensor_type_proto(10, None)
+no_type_ = TypeProto()
 
 
 class TestFunctionInference(TestShapeInferenceHelper):
@@ -70,6 +75,42 @@ class TestFunctionInference(TestShapeInferenceHelper):
 
         dtype_10 = onnx.helper.make_attribute("dtype", 10)
         self._check(code, [float_type_], [dtype_10], [float16_type_])
+
+    def test_fi_optional_input(self):
+        code = """
+            <opset_import: [ "" : 18 ], domain: "local">
+            DoReduce (x, axes) => (y) {
+                y = ReduceMax (x, axes)
+            }
+        """
+        # We can omit the type for a missing trailing optional parameter
+        self._check(code, [float_type_], [], [float_type_])
+        # Or, we can pass in a default-value of TypeProto() for a missing optional parameter
+        self._check(code, [float_type_, no_type_], [], [float_type_])
+
+        code = """
+            <opset_import: [ "" : 18 ], domain: "local">
+            Quantize (x, scale, zero_point) => (y) {
+                y = QuantizeLinear (x, scale, zero_point)
+            }
+        """
+        # If the optional third parameter is specified, it determines the output type.
+        self._check(code, [float_type_, float_type_, int8_type_], [], [int8_type_])
+        self._check(code, [float_type_, float_type_, uint8_type_], [], [uint8_type_])
+        # If the optional third parameter is omitted, the output type is uint8 (default).
+        self._check(code, [float_type_, float_type_, no_type_], [], [uint8_type_])
+
+        code = """
+            <opset_import: [ "" : 18 ], domain: "local">
+            DoClip (x, min, max) => (y) {
+                y = Clip (x, min, max)
+            }
+        """
+        # A test-case with a non-trailing missing optional parameter
+        self._check(code, [float_type_, no_type_, float_type_], [], [float_type_])
+
+        # A failing test-case with a non-trailing missing optional parameter
+        self._check_fails(code, [float_type_, no_type_, int8_type_], [])
 
 
 if __name__ == "__main__":

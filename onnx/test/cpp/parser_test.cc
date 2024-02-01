@@ -1,9 +1,10 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "gtest/gtest.h"
-
 #include "onnx/checker.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
@@ -185,6 +186,10 @@ TEST(ParserTest, AttributeTest) {
   EXPECT_EQ(attr.ref_attr_name(), "xyz");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
 
+  Parse(attr, "x : ints = []");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
+  EXPECT_EQ(attr.ints_size(), 0);
+
   Parse(attr, R"ONNX(
     body = somegraph (float[N] y, float[N] z) => (float[N] w)
       {
@@ -194,6 +199,12 @@ TEST(ParserTest, AttributeTest) {
 )ONNX");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_GRAPH);
   EXPECT_EQ(attr.g().node_size(), 2);
+
+  Parse(attr, "type = float[3]");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_TYPE_PROTO);
+  EXPECT_TRUE(attr.tp().has_tensor_type());
+  int float_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_FLOAT);
+  EXPECT_EQ(attr.tp().tensor_type().elem_type(), float_type);
 }
 
 TEST(ParserTest, AttrListTest) {
@@ -544,6 +555,32 @@ TEST(ParserTest, TypesModelTest2) {
     }
 )ONNX";
   CheckModel(code);
+}
+
+TEST(ParserTest, ExternalDataTest) {
+  const char* code = R"ONNX(
+agraph (float y = {1.0}, float[N] z) => (w) <
+    float[3, 2] m1 = ["location": "weight_1.bin", "offset": "17"],
+    float[2, 1] m2 = {1.0, 2.0}
+>
+{
+    x = Add(y, z)
+    m = Mul(m1, m1)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.input_size(), 2);
+  EXPECT_EQ(graph.output_size(), 1);
+  EXPECT_EQ(graph.initializer_size(), 3); // m1, m2
+  EXPECT_EQ(graph.value_info_size(), 0); // x
+  EXPECT_EQ(graph.initializer().Get(1).data_location(), TensorProto_DataLocation::TensorProto_DataLocation_EXTERNAL);
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(0).key(), "location");
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(0).value(), "weight_1.bin");
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).key(), "offset");
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).value(), "17");
 }
 
 } // namespace Test

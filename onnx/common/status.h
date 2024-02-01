@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,6 +9,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <utility>
 
 namespace ONNX_NAMESPACE {
 namespace Common {

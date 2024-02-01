@@ -1,8 +1,9 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/common/model_helpers.h"
+
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
 #include "onnx/string_utils.h"

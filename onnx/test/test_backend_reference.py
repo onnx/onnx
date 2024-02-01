@@ -1,11 +1,15 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import os
 import platform
+import sys
 import unittest
 from typing import Any
 
 import numpy
+import version_utils
 
 import onnx.backend.base
 import onnx.backend.test
@@ -23,19 +27,25 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
         self._session = session
 
     def run(self, inputs, **kwargs):
+        if isinstance(inputs, numpy.ndarray):
+            inputs = [inputs]
         if isinstance(inputs, list):
-            feeds = {}
-            for i, inp in enumerate(self._session.input_names):
-                if i >= len(inputs):
-                    break
-                feeds[inp] = inputs[i]
+            if len(inputs) == len(self._session.input_names):
+                feeds = dict(zip(self._session.input_names, inputs))
+            else:
+                feeds = {}
+                pos_inputs = 0
+                for inp, tshape in zip(
+                    self._session.input_names, self._session.input_types
+                ):
+                    shape = tuple(d.dim_value for d in tshape.tensor_type.shape.dim)
+                    if shape == inputs[pos_inputs].shape:
+                        feeds[inp] = inputs[pos_inputs]
+                        pos_inputs += 1
+                        if pos_inputs >= len(inputs):
+                            break
         elif isinstance(inputs, dict):
             feeds = inputs
-        elif isinstance(inputs, numpy.ndarray):
-            names = self._session.input_names
-            if len(names) != 1:
-                raise RuntimeError(f"Expecting one input not {len(names)}.")
-            feeds = {names[0]: inputs}
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
         outs = self._session.run(None, feeds)
@@ -44,7 +54,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     @classmethod
-    def is_opset_supported(cls, model):  # pylint: disable=unused-argument
+    def is_opset_supported(cls, model):
         return True, ""
 
     @classmethod
@@ -101,6 +111,29 @@ backend_test.exclude(
 # The following tests are about deprecated operators.
 backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
 
+# The following tests are using types not supported by numpy.
+# They could be if method to_array is extended to support custom
+# types the same as the reference implementation does
+# (see onnx.reference.op_run.to_array_extended).
+backend_test.exclude(
+    "(test_cast_FLOAT_to_FLOAT8"
+    "|test_cast_FLOAT16_to_FLOAT8"
+    "|test_castlike_FLOAT_to_FLOAT8"
+    "|test_castlike_FLOAT16_to_FLOAT8"
+    "|test_cast_FLOAT_to_UINT4"
+    "|test_cast_FLOAT16_to_UINT4"
+    "|test_cast_FLOAT_to_INT4"
+    "|test_cast_FLOAT16_to_INT4"
+    "|test_cast_no_saturate_FLOAT_to_FLOAT8"
+    "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
+    "|test_cast_BFLOAT16_to_FLOAT"
+    "|test_castlike_BFLOAT16_to_FLOAT"
+    "|test_quantizelinear_e4m3"
+    "|test_quantizelinear_e5m2"
+    "|test_quantizelinear_uint4"
+    "|test_quantizelinear_int4"
+    ")"
+)
 
 # The following tests are using types not supported by NumPy.
 # They could be if method to_array is extended to support custom
@@ -136,7 +169,9 @@ backend_test.exclude(
 
 # The following tests fail due to a shape mismatch.
 backend_test.exclude(
-    "(test_center_crop_pad_crop_axes_hwc_expanded|test_lppool_2d_dilations)"
+    "(test_center_crop_pad_crop_axes_hwc_expanded"
+    "|test_lppool_2d_dilations"
+    "|test_averagepool_2d_dilations)"
 )
 
 # The following tests fail due to a type mismatch.
@@ -144,6 +179,30 @@ backend_test.exclude("(test_eyelike_without_dtype)")
 
 # The following tests fail due to discrepancies (small but still higher than 1e-7).
 backend_test.exclude("test_adam_multiple")  # 1e-2
+
+# Currently google-re2/Pillow is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
+if sys.platform == "win32":
+    backend_test.exclude("test_regex_full_match_basic_cpu")
+    backend_test.exclude("test_regex_full_match_email_domain_cpu")
+    backend_test.exclude("test_regex_full_match_empty_cpu")
+    backend_test.exclude("test_image_decoder_decode_")
+
+if sys.platform == "darwin":
+    # FIXME: https://github.com/onnx/onnx/issues/5792
+    backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
+    backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
+
+# op_dft and op_stft requires numpy >= 1.21.5
+if version_utils.numpy_older_than("1.21.5"):
+    backend_test.exclude("test_stft")
+    backend_test.exclude("test_stft_with_window")
+    backend_test.exclude("test_stft_cpu")
+    backend_test.exclude("test_dft")
+    backend_test.exclude("test_dft_axis")
+    backend_test.exclude("test_dft_inverse")
+    backend_test.exclude("test_dft_opset19")
+    backend_test.exclude("test_dft_axis_opset19")
+    backend_test.exclude("test_dft_inverse_opset19")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

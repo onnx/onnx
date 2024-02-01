@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2022 Free Software Foundation Europe e.V. <https://fsfe.org>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+name: REUSE Compliance Check
+
+on: [push, pull_request]
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - name: REUSE Compliance Check
+      uses: fsfe/reuse-action@4f2804894b54004c8ed4b8a62b7c649e54a3aa4b # v2.0.0

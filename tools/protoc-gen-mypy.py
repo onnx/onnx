@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 # Copyright (c) ONNX Project Contributors
+
+# Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -26,17 +28,17 @@ try:
     import google.protobuf.descriptor_pb2 as d_typed
     from google.protobuf.compiler import plugin_pb2 as plugin
 except ImportError as e:
-    sys.stderr.write(f"Failed to generate mypy stubs: {e}\n")
-    sys.exit(0)
+    raise RuntimeError("Failed to generate mypy stubs") from e
 
 
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet
 d: Any = d_typed
 
-GENERATED = "@ge" + "nerated"  # So phabricator doesn't think this file is generated
+# Split the string so phabricator doesn't think this file is generated
+GENERATED = "@ge" + "nerated"
 HEADER = (
     f"# {GENERATED} by protoc-gen-mypy.py.  Do not edit!\n"
-    + "# mypy: disable-error-code=override\n"
+    "# mypy: disable-error-code=override\n"
 )
 
 
@@ -374,7 +376,7 @@ class PkgWriter:
 
 def is_scalar(fd: d.FileDescriptorProto) -> bool:
     return not (
-        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE
+        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE  # noqa: PLR1714
         or fd.type == d.FieldDescriptorProto.TYPE_GROUP
     )
 
