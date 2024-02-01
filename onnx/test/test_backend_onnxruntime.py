@@ -298,6 +298,23 @@ if ort is not None:
             "|qlinearmatmul_3D_uint8_float32"
             ")"
         )
+    if ort_version is not None and ort_version < Version("1.18"):
+        backend_test.exclude(
+            "("
+            "deform_conv"
+            "|dft"  # Max absolute difference > atol=1e-07. shall be able to set atol
+            "|group_normalization"
+            "|identity_opt"
+            "|image_decoder"
+            "|optional_get_element_optional_sequence"
+            "|qlinearmatmul_2D_int8"
+            "|qlinearmatmul_2D_uint8_float16"
+            "|qlinearmatmul_3D_int8"
+            "|qlinearmatmul_3D_uint8_float16"
+            "|qlinearmatmul_2D_uint8_float32"
+            "|qlinearmatmul_3D_uint8_float32"
+            ")"
+        )
 
     # Import all test cases at global scope to make them visible to python.unittest
     globals().update(backend_test.test_cases)
