@@ -300,7 +300,7 @@ if ort is not None:
         )
     if ort_version is not None and ort_version < Version("1.18"):
         # when adding new tests to the list, please add a comment with the reason for exclusion
-        # for tests that "not supported by onnxruntime 1.17", it will be solved in the next 
+        # for tests that "not supported by onnxruntime 1.17", it will be solved in the next
         # onnxruntime release with ONNX 1.16.0 integrated. The work is covered in ONNX integration procedure.
         backend_test.exclude(
             "("
