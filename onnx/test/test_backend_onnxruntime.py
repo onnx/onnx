@@ -304,18 +304,18 @@ if ort is not None:
         # onnxruntime release with ONNX 1.16.0 integrated. The work is covered in ONNX integration procedure.
         backend_test.exclude(
             "("
-            "deform_conv"   # deform_conv is not supported in onnxruntime
+            "deform_conv"  # deform_conv is not supported in onnxruntime
             "|dft"  # Max absolute difference > atol=1e-07. shall be able to set atol (https://github.com/onnx/onnx/issues/5897)
             "|group_normalization"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
-            "|identity_opt" # fixed in ort 1.18 (https://github.com/microsoft/onnxruntime/pull/19273)
-            "|image_decoder"    # image_decoder is not supported in onnxruntime
-            "|optional_get_element_optional_sequence"   # fixed in ort 1.18 (https://github.com/microsoft/onnxruntime/pull/19273)
-            "|qlinearmatmul_2D_int8"    # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
-            "|qlinearmatmul_2D_uint8_float16"   # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
-            "|qlinearmatmul_3D_int8"    # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
-            "|qlinearmatmul_3D_uint8_float16"   # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
-            "|qlinearmatmul_2D_uint8_float32"   # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
-            "|qlinearmatmul_3D_uint8_float32"   # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
+            "|identity_opt"  # fixed in ort 1.18 (https://github.com/microsoft/onnxruntime/pull/19273)
+            "|image_decoder"  # image_decoder is not supported in onnxruntime
+            "|optional_get_element_optional_sequence"  # fixed in ort 1.18 (https://github.com/microsoft/onnxruntime/pull/19273)
+            "|qlinearmatmul_2D_int8"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
+            "|qlinearmatmul_2D_uint8_float16"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
+            "|qlinearmatmul_3D_int8"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
+            "|qlinearmatmul_3D_uint8_float16"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
+            "|qlinearmatmul_2D_uint8_float32"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
+            "|qlinearmatmul_3D_uint8_float32"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
             ")"
         )
 
