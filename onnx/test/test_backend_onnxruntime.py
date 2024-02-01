@@ -298,6 +298,8 @@ if ort is not None:
             "|qlinearmatmul_3D_uint8_float32"
             ")"
         )
+    if ort_version is not None and ort_version < Version("1.18"):
+        backend_test.exclude("(tree_ensemble)")
 
     # Import all test cases at global scope to make them visible to python.unittest
     globals().update(backend_test.test_cases)
