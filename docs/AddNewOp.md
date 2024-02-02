@@ -66,7 +66,7 @@ Once the criteria of proposing new operator/function has been satisfied, you wil
     1. Write a detailed description about the operator, and its expected behavior. Pretty much, the description should be clear enough to avoid confusion between implementors.
     2. Add an example in the description to illustrate the usage.
     3. Add reference to the source of the operator in the corresponding framework in the description (if possible).
-    4. Write the mathematic formula or a pseudocode in the description. The core algorithm needs to be very clear.
+    4. Write the mathematical formula or a pseudocode in the description. The core algorithm needs to be very clear.
 2. Write a reference implementation in Python, this reference implementation should cover all the expected behavior of the operator. Only in extremely rare case, we will waive this requirement.
 3. Operator version: check out our
 [versioning doc](/docs/Versioning.md#operator-versioning)
