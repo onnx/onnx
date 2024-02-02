@@ -316,6 +316,7 @@ if ort is not None:
             "|qlinearmatmul_3D_uint8_float16"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
             "|qlinearmatmul_2D_uint8_float32"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
             "|qlinearmatmul_3D_uint8_float32"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
+            "|tree_ensemble"  # tree_ensemble not yet implemented in ort
             ")"
         )
 

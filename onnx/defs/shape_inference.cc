@@ -511,6 +511,23 @@ std::string stringify(const Container& elements) {
   return ss.str();
 }
 
+std::pair<int, int> getAttributeProtoElemTypeAndLength(const AttributeProto* attr_proto) {
+  if (attr_proto->ints_size()) {
+    return {TensorProto_DataType_INT64, attr_proto->ints_size()};
+  } else if (attr_proto->floats_size()) {
+    return {TensorProto_DataType_FLOAT, attr_proto->floats_size()};
+  } else if (attr_proto->strings_size()) {
+    return {TensorProto_DataType_STRING, attr_proto->strings_size()};
+  } else if (attr_proto->has_t()) {
+    if (attr_proto->t().dims_size() != 1) {
+      fail_type_inference(
+          "Attribute ", attr_proto->name(), " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
+    }
+    return {attr_proto->t().data_type(), attr_proto->t().dims(0)};
+  }
+  return {TensorProto::UNDEFINED, 0};
+}
+
 std::pair<int, int> getAttributeElementTypeAndLength(
     const InferenceContext& ctx,
     const std::initializer_list<std::string>& attribute_names) {
@@ -524,23 +541,7 @@ std::pair<int, int> getAttributeElementTypeAndLength(
         // Another attribute was already set
         fail_shape_inference("One and only one attribute must be set out of ", stringify(attribute_names));
       }
-      if (attr_proto->ints_size()) {
-        elem_type = TensorProto_DataType_INT64;
-        length = attr_proto->ints_size();
-      } else if (attr_proto->floats_size()) {
-        elem_type = TensorProto_DataType_FLOAT;
-        length = attr_proto->floats_size();
-      } else if (attr_proto->strings_size()) {
-        elem_type = TensorProto_DataType_STRING;
-        length = attr_proto->strings_size();
-      } else if (attr_proto->has_t()) {
-        if (attr_proto->t().dims_size() != 1) {
-          fail_type_inference(
-              "Attribute ", attribute, " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
-        }
-        elem_type = attr_proto->t().data_type();
-        length = attr_proto->t().dims(0);
-      }
+      std::tie(elem_type, length) = getAttributeProtoElemTypeAndLength(attr_proto);
     }
   }
   return {elem_type, length};
