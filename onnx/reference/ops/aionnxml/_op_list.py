@@ -25,6 +25,7 @@ from onnx.reference.ops.aionnxml.op_one_hot_encoder import OneHotEncoder
 from onnx.reference.ops.aionnxml.op_scaler import Scaler
 from onnx.reference.ops.aionnxml.op_svm_classifier import SVMClassifier
 from onnx.reference.ops.aionnxml.op_svm_regressor import SVMRegressor
+from onnx.reference.ops.aionnxml.op_tree_ensemble import TreeEnsemble
 from onnx.reference.ops.aionnxml.op_tree_ensemble_classifier import (
     TreeEnsembleClassifier,
 )
