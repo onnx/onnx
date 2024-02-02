@@ -208,10 +208,8 @@ class TfIdfVectorizer(OpRun):
 
         w = self.weights_
         if self.weighting_criteria_ == WeightingCriteria.TF:
-            i = 0
-            for f in frequencies:
+            for i, f in enumerate(frequencies):
                 Y[i] = f
-                i += 1
         elif self.weighting_criteria_ == WeightingCriteria.IDF:
             if len(w) > 0:
                 p = 0

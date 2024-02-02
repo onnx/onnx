@@ -318,7 +318,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
     ir_version_field = "ir_version"
     if ir_version_field not in kwargs:
         opset_imports_field = "opset_imports"
-        imports = kwargs[opset_imports_field] if opset_imports_field in kwargs else []
+        imports = kwargs.get(opset_imports_field, [])
         kwargs[ir_version_field] = find_min_ir_version_for(imports)
     return make_model(graph, **kwargs)
 
