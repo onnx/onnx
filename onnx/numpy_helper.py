@@ -252,40 +252,41 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
 
     if tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
+        raw_data = tensor.raw_data
         if sys.byteorder == "big":
             # Convert endian from little to big
-            convert_endian(tensor)
+            raw_data = np.frombuffer(raw_data, dtype=np_dtype).byteswap().tobytes()
 
         # manually convert bf16 since there's no numpy support
         if tensor_dtype == TensorProto.BFLOAT16:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int16)
+            data = np.frombuffer(raw_data, dtype=np.int16)
             return bfloat16_to_float32(data, dims)
 
         if tensor_dtype == TensorProto.FLOAT8E4M3FN:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            data = np.frombuffer(raw_data, dtype=np.int8)
             return float8e4m3_to_float32(data, dims)
 
         if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            data = np.frombuffer(raw_data, dtype=np.int8)
             return float8e4m3_to_float32(data, dims, uz=True)
 
         if tensor_dtype == TensorProto.FLOAT8E5M2:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            data = np.frombuffer(raw_data, dtype=np.int8)
             return float8e5m2_to_float32(data, dims)
 
         if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            data = np.frombuffer(raw_data, dtype=np.int8)
             return float8e5m2_to_float32(data, dims, fn=True, uz=True)
 
         if tensor_dtype == TensorProto.UINT4:
-            data = np.frombuffer(tensor.raw_data, dtype=np.uint8)
+            data = np.frombuffer(raw_data, dtype=np.uint8)
             return unpack_int4(data, dims, signed=False)
 
         if tensor_dtype == TensorProto.INT4:
-            data = np.frombuffer(tensor.raw_data, dtype=np.int8)
+            data = np.frombuffer(raw_data, dtype=np.int8)
             return unpack_int4(data, dims, signed=True)
 
-        return np.frombuffer(tensor.raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
+        return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
 
     # float16 is stored as int32 (uint16 type); Need view to get the original value
     if tensor_dtype == TensorProto.FLOAT16:
