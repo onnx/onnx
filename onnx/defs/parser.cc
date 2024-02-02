@@ -334,8 +334,8 @@ Status OnnxParser::ParseGraphInputOutput(ValueInfoList& vilist) {
 }
 
 Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilist) {
+  // Do not clear vilist, as it accumulates values over inputs and outputs.
   idlist.Clear();
-  vilist.Clear();
   MATCH('(');
   if (!Matches(')')) {
     do {
@@ -344,12 +344,12 @@ Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilis
       // The name is added to idlist. If the optional type is present, an entry is
       // added to vilist.
 
-      std::string *name = *idlist.Add();
+      std::string *name = idlist.Add();
       ValueInfoProto *vi = nullptr;
       
       if (NextIsType()) {
         vi = vilist.Add();
-        PARSE(*valueinfo.mutable_type());
+        PARSE(*(vi->mutable_type()));
       }
       CHECK_PARSER_STATUS(ParseIdentifier(*name));
       if (vi != nullptr)
@@ -747,7 +747,7 @@ Status OnnxParser::Parse(std::string name, GraphProto& graph) {
   CHECK_PARSER_STATUS(ParseInput(*graph.mutable_input(), *graph.mutable_initializer()));
   MATCH('=');
   MATCH('>', false);
-  PARSE(*graph.mutable_output());
+  CHECK_PARSER_STATUS(ParseGraphInputOutput(*graph.mutable_output()));
   CHECK_PARSER_STATUS(ParseValueInfo(*graph.mutable_value_info(), *graph.mutable_initializer()));
   return Parse(*graph.mutable_node());
 }
@@ -783,10 +783,11 @@ Status OnnxParser::Parse(FunctionProto& fn) {
   fn.set_name(id);
 
   PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>');
-  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_input(), *fn.value_info()));
+  fn.mutable_value_info()->Clear();
+  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_input(), *fn.mutable_value_info()));
   MATCH('=');
   MATCH('>', false);
-  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_output(), *fn.value_info()));
+  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_output(), *fn.mutable_value_info()));
   if (NextChar() == '<') {
     PARSE('<', *fn.mutable_value_info(), '>');
   }

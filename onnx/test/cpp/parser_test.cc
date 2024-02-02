@@ -381,8 +381,8 @@ f (float[N] y, float[N] z) => (float[N] w)
   Parse(fp, code);
 
   EXPECT_EQ(fp.input_size(), 2);
-  EXPECT_EQ(fp.value_info_size(), 3);
   EXPECT_EQ(fp.output_size(), 1);
+  ASSERT_EQ(fp.value_info_size(), 3);
   EXPECT_EQ(fp.value_info(0).name(), "y");
   EXPECT_EQ(fp.value_info(1).name(), "z");
   EXPECT_EQ(fp.value_info(2).name(), "w");
