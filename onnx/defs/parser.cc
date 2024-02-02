@@ -344,9 +344,9 @@ Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilis
       // The name is added to idlist. If the optional type is present, an entry is
       // added to vilist.
 
-      std::string *name = idlist.Add();
-      ValueInfoProto *vi = nullptr;
-      
+      std::string* name = idlist.Add();
+      ValueInfoProto* vi = nullptr;
+
       if (NextIsType()) {
         vi = vilist.Add();
         PARSE(*(vi->mutable_type()));
