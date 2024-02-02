@@ -316,12 +316,44 @@ Status OnnxParser::Parse(ValueInfoProto& valueinfo) {
   return Status::OK();
 }
 
-Status OnnxParser::Parse(ValueInfoList& vilist) {
+Status OnnxParser::Parse(char open, ValueInfoList& vilist, char close) {
+  MATCH(open);
+  if (!Matches(close)) {
+    do {
+      PARSE(*vilist.Add());
+    } while (Matches(','));
+    MATCH(close);
+  }
+  return Status::OK();
+}
+
+Status OnnxParser::ParseGraphInputOutput(ValueInfoList& vilist) {
+  vilist.Clear();
+  PARSE('(', vilist, ')');
+  return Status::OK();
+}
+
+Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilist) {
+  idlist.Clear();
   vilist.Clear();
   MATCH('(');
   if (!Matches(')')) {
     do {
-      PARSE(*vilist.Add());
+      // Function inputs/outputs can be optionally typed.
+      // Syntax: Name | Type Name
+      // The name is added to idlist. If the optional type is present, an entry is
+      // added to vilist.
+
+      std::string *name = *idlist.Add();
+      ValueInfoProto *vi = nullptr;
+      
+      if (NextIsType()) {
+        vi = vilist.Add();
+        PARSE(*valueinfo.mutable_type());
+      }
+      CHECK_PARSER_STATUS(ParseIdentifier(*name));
+      if (vi != nullptr)
+        vi->set_name(*name);
     } while (Matches(','));
     MATCH(')');
   }
@@ -751,10 +783,13 @@ Status OnnxParser::Parse(FunctionProto& fn) {
   fn.set_name(id);
 
   PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>');
-  PARSE('(', *fn.mutable_input(), ')');
+  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_input(), *fn.value_info()));
   MATCH('=');
   MATCH('>', false);
-  PARSE('(', *fn.mutable_output(), ')');
+  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_output(), *fn.value_info()));
+  if (NextChar() == '<') {
+    PARSE('<', *fn.mutable_value_info(), '>');
+  }
   return Parse(*fn.mutable_node());
 }
 

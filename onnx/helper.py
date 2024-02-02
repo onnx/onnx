@@ -258,11 +258,14 @@ def make_function(
     attributes: Optional[Sequence[str]] = None,
     attribute_protos: Optional[Sequence[AttributeProto]] = None,
     doc_string: Optional[str] = None,
+    value_info: Optional[Sequence[ValueInfoProto]] = None,
 ) -> FunctionProto:
     if attributes is None:
         attributes = []
     if attribute_protos is None:
         attribute_protos = []
+    if value_info is None:
+        value_info = []
     f = FunctionProto()
     f.domain = domain
     f.name = fname
@@ -274,6 +277,7 @@ def make_function(
     f.attribute_proto.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
+    f.value_info.extend(value_info)
     return f
 
 
