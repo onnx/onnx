@@ -7,6 +7,7 @@ __all__ = [
     "ONNX_DOMAIN",
     "ONNX_ML_DOMAIN",
     "AI_ONNX_PREVIEW_TRAINING_DOMAIN",
+    "AI_ONNX_PNP_DOMAIN",
     "has",
     "get_schema",
     "get_all_schemas",
@@ -25,6 +26,7 @@ from onnx import AttributeProto, FunctionProto
 ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = "ai.onnx.ml"
 AI_ONNX_PREVIEW_TRAINING_DOMAIN = "ai.onnx.preview.training"
+AI_ONNX_PNP_DOMAIN = "ai.onnx.pnp"
 
 
 has = C.has_schema
