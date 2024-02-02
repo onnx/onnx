@@ -38,6 +38,11 @@ def onnx_opset_version() -> int:
     return C.schema_version_map()[ONNX_DOMAIN][1]
 
 
+def onnx_ml_opset_version() -> int:
+    """Return current opset for domain `ai.onnx.ml`."""
+    return C.schema_version_map()[ONNX_ML_DOMAIN][1]
+
+
 @property  # type: ignore
 def _function_proto(self):  # type: ignore
     func_proto = FunctionProto()
