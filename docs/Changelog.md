@@ -24766,13 +24766,15 @@ This version of the operator has been available since version 21 of the default 
 
 ### <a name="DequantizeLinear-21"></a>**DequantizeLinear-21**</a>
 
-  The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
-  The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
-  for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-  `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
-  there's no zero point (zero point is supposed to be 0).
+  The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
+  full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
+  must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
+  a 1-D tensor for per-axis quantization, or have a rank identical to the input for blocked quantization.
+  See QuantizeLinear for details on quantization granularity."
+  `x_zero_point` and `x` must have the same type. `x` and `y` must have the same shape. In the case of dequantizing
+  `int32`, there's no zero point (zero point is supposed to be 0).
   `zero-point` is usually not used in the case of float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz quantization,
-  but the dequantization formula remains the same for consistency and 'x_scale' still determines the output type.
+  but the dequantization formula remains the same for consistency, and `x_scale` still determines the output type.
 
 #### Version
 
@@ -24782,7 +24784,9 @@ This version of the operator has been available since version 21 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dt><tt>block_size</tt> : int (default is 0)</dt>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -24791,16 +24795,16 @@ This version of the operator has been available since version 21 of the default 
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D quantized input tensor to be de-quantized.</dd>
 <dt><tt>x_scale</tt> : T2</dt>
-<dd>Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization.</dd>
+<dd>Scale for input `x`. For per-tensor/layer dequantization the scale is a scalar, for per per-axis dequantization it is a 1-D Tensor and for blocked dequantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
 <dt><tt>x_zero_point</tt> (optional) : T1</dt>
-<dd>Zero point for input 'x'. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
+<dd>Zero point for input `x`. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>y</tt> : T2</dt>
-<dd>N-D full precision output tensor. It has same shape as input 'x'.</dd>
+<dd>N-D full precision output tensor. It has same shape as input `x`.</dd>
 </dl>
 
 #### Type Constraints
@@ -25367,16 +25371,25 @@ This version of the operator has been available since version 21 of the default 
 
 ### <a name="QuantizeLinear-21"></a>**QuantizeLinear-21**</a>
 
-  The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
-  The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-  The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
+  The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
+  low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
+  granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
   For saturation, it saturates according to:
-  uint8: [0, 255], int8: [-128, 127], uint16: [0, 65535], int16: [-32768, 32767], uint4: [0, 15], int4: [-8, 7]
-  For (x / y_scale), it's rounding to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
-  'y_zero_point' and 'y' must have same type.
-  'y_zero_point' is usually not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz,
-  but the quantization formula remains the same for consistency and
-  the type of the attribute 'y_zero_point' still determines the quantization type.
+  `uint8`: `[0, 255]`, `int8`: `[-128, 127]`, `uint16`: `[0, 65535]`, `int16`: `[-32768, 32767]`, `uint4`: `[0, 15]`,
+  `int4`: `[-8, 7]`.
+  For `(x / y_scale)`, it rounds to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+  `y_zero_point` and `y` must have the same type.
+  `y_zero_point` is usually not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, but
+  the quantization formula remains the same for consistency, and the type of the attribute `y_zero_point` still
+  determines the quantization type.
+  There are three supported quantization granularities, determined by the shape of `y_scale`.
+  In all cases, `y_zero_point` must have the same shape as `y_scale`.
+  - Per-tensor (per-layer) quantization: `y_scale` is a scalar.
+  - Per-axis quantization: The scale must be a 1-D tensor, with the length of the quantization axis. For an input shape
+   `(D0, ..., Di, ..., Dn)` and `axis=i`, `y_scale` is a 1-D tensor of length `Di`.
+  - Blocked quantization: The scale's shape is identical to the input's shape, except for one dimension, in which
+    blocking is performed. Given `x` shape `(D0, ..., Di, ..., Dn)`, `axis=i`, and block size `B`: `y_scale` shape is
+    `(D0, ..., ceil(Di/B), ..., Dn)`.
 
 #### Version
 
@@ -25386,7 +25399,9 @@ This version of the operator has been available since version 21 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the quantization dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dt><tt>block_size</tt> : int (default is 0)</dt>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
 <dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>
@@ -25397,16 +25412,16 @@ This version of the operator has been available since version 21 of the default 
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D full precision Input tensor to be quantized.</dd>
 <dt><tt>y_scale</tt> : T1</dt>
-<dd>Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, or a 1-D Tensor for per-axis quantization.</dd>
+<dd>Scale for doing quantization to get `y`. For per-tensor/layer quantization the scale is a scalar, for per-axis quantization it is a 1-D Tensor and for blocked quantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
-<dd>Zero point for doing quantization to get 'y'. Shape must match y_scale. Default is uint8 with zero point of 0 if it's not specified.</dd>
+<dd>Zero point for doing quantization to get `y`. Shape must match `y_scale`.Default is uint8 with zero point of 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>y</tt> : T2</dt>
-<dd>N-D quantized output tensor. It has same shape as input 'x'.</dd>
+<dd>N-D quantized output tensor. It has same shape as input `x`.</dd>
 </dl>
 
 #### Type Constraints
@@ -25415,7 +25430,7 @@ This version of the operator has been available since version 21 of the default 
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
 <dd>The type of the input 'x'.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
-<dd>The type of the input 'y_zero_point' and the output 'y'.</dd>
+<dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
 ### <a name="Reshape-21"></a>**Reshape-21**</a>
