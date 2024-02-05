@@ -919,6 +919,11 @@ void OpSchema::Finalize() {
   // all inputs or std::numeric_limits<int>::max() (if the last input is
   // variadic).
 
+  max_input_ = 0;
+  min_input_ = 0;
+  min_output_ = 0;
+  max_output_ = 0;
+
   // Flag indicates whether an optional input is trailing one (there's no single
   // or variadic input behind).
   for (size_t i = 0; i < inputs_.size(); ++i) {

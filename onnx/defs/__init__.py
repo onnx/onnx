@@ -8,6 +8,7 @@ __all__ = [
     "ONNX_ML_DOMAIN",
     "AI_ONNX_PREVIEW_TRAINING_DOMAIN",
     "has",
+    "register_schema",
     "get_schema",
     "get_all_schemas",
     "get_all_schemas_with_history",
@@ -120,3 +121,15 @@ def get_function_ops() -> List[OpSchema]:
 
 
 SchemaError = C.SchemaError
+
+def register_schema(op: OpSchema):
+    name: str = op.name
+    domain: str = op.domain
+    ver: int = op.since_version
+    assert ver > 0, f'OpSchema {domain}::{name} need positive version but got {ver}'
+    if has(name, domain):
+        exist_op = get_schema(name, ver, domain)
+        if exist_op is not None:
+            if exist_op.since_version == ver:
+                raise SchemaError(f'OpSchema {domain}::{name} already exist in file: {exist_op.file}:{exist_op.line}')
+    C.register_schema(op)

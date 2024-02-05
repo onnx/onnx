@@ -257,6 +257,44 @@ class TestAttribute(unittest.TestCase):
         self.assertEqual("attr1", attribute.name)
         self.assertEqual("attr1 description", attribute.description)
 
+class TestOpSchemaRegister(unittest.TestCase):
+    def test_register(self):
+        input = """
+           agraph (float[N, 128] X, int32 Y) => (float[N] Z)
+           {
+              Z = CustomOp<attr1=[1,2]>(X, Y)
+           }
+           """
+        model = onnx.parser.parse_graph(input)
+        op_schema = defs.OpSchema(
+            "CustomOp",
+            "",
+            1,
+            inputs=[
+                defs.OpSchema.FormalParameter("input1", "T"),
+                defs.OpSchema.FormalParameter("input2", "int32"),
+            ],
+            outputs=[
+                defs.OpSchema.FormalParameter("output1", "T"),
+            ],
+            type_constraints=[("T", ["tensor(float)"], "")],
+            attributes=[
+                defs.OpSchema.Attribute(
+                    "attr1", defs.OpSchema.AttrType.INTS, "attr1 description"
+                )
+            ],
+        )
+        onnx.defs.register_schema(op_schema)
+        onnx.checker.check_graph(model)
+
+    def test_duplicited_register(self):
+        op_schema = defs.OpSchema(
+            "CustomOpDuplicited",
+            "",
+            1,
+        )
+        onnx.defs.register_schema(op_schema)
+        self.assertRaises(onnx.defs.SchemaError, lambda: onnx.defs.register_schema(op_schema))
 
 if __name__ == "__main__":
     unittest.main()
