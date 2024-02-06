@@ -125,6 +125,7 @@ def get_function_ops() -> List[OpSchema]:
 SchemaError = C.SchemaError
 
 def register_schema(schema: OpSchema):
+    """Register a user provided OpSchema."""
     name = schema.name
     domain = schema.domain
     version = schema.since_version
