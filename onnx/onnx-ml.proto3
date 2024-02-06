@@ -853,6 +853,12 @@ message FunctionProto {
   // The domain which this function belongs to. Combined with FunctionProto.name, this forms the unique identity of
   // the FunctionProto.
   string domain = 10;
+
+  // Information for the values in the function. The ValueInfoProto.name's
+  // must be distinct and refer to names in the function (including inputs,
+  // outputs, and intermediate values). It is optional for a value to appear
+  // in value_info list.
+  repeated ValueInfoProto value_info = 12;
 }
 
 // For using protobuf-lite
