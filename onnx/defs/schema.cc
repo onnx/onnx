@@ -34,6 +34,12 @@ void RegisterSchema(OpSchema schema, int opset_version_to_load, bool fail_duplic
   OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load, fail_duplicate_schema);
 }
 
+// The (name, version, domain) must exactly matches the target
+// Otherwise will raise an SchemaError
+void DeRegisterSchema(const std::string& name, const int version, const std::string& domain) {
+  OpSchemaRegistry::OpSchemaDeregister(name, version, domain);
+}
+
 #ifndef NDEBUG
 DbgOperatorSetTracker& DbgOperatorSetTracker::Instance() {
   static DbgOperatorSetTracker instance;

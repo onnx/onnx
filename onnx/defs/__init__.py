@@ -32,6 +32,7 @@ has = C.has_schema
 get_schema = C.get_schema
 get_all_schemas = C.get_all_schemas
 get_all_schemas_with_history = C.get_all_schemas_with_history
+deregister_schema = C.deregister_schema
 
 
 def onnx_opset_version() -> int:

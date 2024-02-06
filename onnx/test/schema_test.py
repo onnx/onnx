@@ -295,6 +295,15 @@ class TestOpSchemaRegister(unittest.TestCase):
         )
         onnx.defs.register_schema(op_schema)
         self.assertRaises(onnx.defs.SchemaError, lambda: onnx.defs.register_schema(op_schema))
+        
+    def test_deregister_opschema(self):
+        self.assertRaises(onnx.defs.SchemaError, lambda: onnx.defs.get_schema('CustomOpSchemaTmp', 1))
+        onnx.defs.register_schema(defs.OpSchema('CustomOpSchemaTmp', "", 1))
+        op_schema = onnx.defs.get_schema('CustomOpSchemaTmp', 1)
+        self.assertIsNotNone(op_schema)
+        onnx.defs.deregister_schema('CustomOpSchemaTmp', 1)
+        self.assertRaises(onnx.defs.SchemaError, lambda: onnx.defs.get_schema('CustomOpSchemaTmp', 1))
+        
 
 if __name__ == "__main__":
     unittest.main()

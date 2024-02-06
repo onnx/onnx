@@ -471,7 +471,16 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
           "Return the schema of all existing operators and all versions.")
       .def(
-          "register_schema", [](OpSchema* op) { RegisterSchema(*op); }, "op"_a, "Register the custom OpSchema.");
+          "register_schema", [](OpSchema* op) { RegisterSchema(*op); }, "op"_a, "Register the custom OpSchema.")
+      .def(
+          "deregister_schema",
+          [](const std::string& op_type, const int version, const std::string& domain) {
+            DeRegisterSchema(op_type, version, domain);
+          },
+          "op_type"_a,
+          "version"_a,
+          "domain"_a = ONNX_DOMAIN,
+          "Register the custom OpSchema.");
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
