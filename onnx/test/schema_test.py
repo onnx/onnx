@@ -284,25 +284,44 @@ class TestOpSchemaRegister(unittest.TestCase):
                 )
             ],
         )
+        self.assertFalse(onnx.defs.has(op_schema.name))
+        with self.assertRaises(onnx.checker.ValidationError):
+            onnx.checker.check_graph(model)
         onnx.defs.register_schema(op_schema)
         onnx.checker.check_graph(model)
+        
+        # cleanup
+        onnx.defs.deregister_schema(op_schema.name, op_schema.since_version, op_schema.domain)
 
-    def test_duplicited_register(self):
+    def test_register_schema_raises_error_when_registering_a_schema_twice(self):
         op_schema = defs.OpSchema(
-            "CustomOpDuplicited",
+            "CustomOp",
             "",
             1,
         )
+        self.assertFalse(onnx.defs.has(op_schema.name))
         onnx.defs.register_schema(op_schema)
-        self.assertRaises(onnx.defs.SchemaError, lambda: onnx.defs.register_schema(op_schema))
+        with self.assertRaises(onnx.defs.SchemaError):
+             onnx.defs.register_schema(op_schema)
+
+        # cleanup
+        onnx.defs.deregister_schema(op_schema.name, op_schema.since_version, op_schema.domain)
         
     def test_deregister_opschema(self):
-        self.assertRaises(onnx.defs.SchemaError, lambda: onnx.defs.get_schema('CustomOpSchemaTmp', 1))
-        onnx.defs.register_schema(defs.OpSchema('CustomOpSchemaTmp', "", 1))
-        op_schema = onnx.defs.get_schema('CustomOpSchemaTmp', 1)
+        with self.assertRaises(onnx.defs.SchemaError):
+            onnx.defs.get_schema('CustomOp', 1)
+        onnx.defs.register_schema(defs.OpSchema('CustomOp', "", 1))
+        op_schema = onnx.defs.get_schema('CustomOp', 1)
         self.assertIsNotNone(op_schema)
-        onnx.defs.deregister_schema('CustomOpSchemaTmp', 1)
-        self.assertRaises(onnx.defs.SchemaError, lambda: onnx.defs.get_schema('CustomOpSchemaTmp', 1))
+        onnx.defs.deregister_schema('CustomOp', 1)
+        with self.assertRaises(onnx.defs.SchemaError):
+            onnx.defs.get_schema('CustomOp', 1)
+    
+    def test_deregister_raise_error_when_deregister_noexist_opschema(self):
+        with self.assertRaises(onnx.defs.SchemaError):
+            onnx.defs.get_schema('CustomOp', 1)
+        with self.assertRaises(onnx.defs.SchemaError):
+            onnx.defs.deregister_schema('CustomOp', 1)
         
 
 if __name__ == "__main__":

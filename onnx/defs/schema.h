@@ -1307,14 +1307,15 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     }
   };
 
-  static void OpSchemaDeregister(const std::string& name, const int version, const std::string& domain = ONNX_DOMAIN) {
+  static void
+  OpSchemaDeregister(const std::string& name, const int specific_version, const std::string& domain = ONNX_DOMAIN) {
     auto& schema_map = GetMapWithoutEnsuringRegistration();
-    if (schema_map.count(name) && schema_map[name].count(domain) && schema_map[name][domain].count(version)) {
-      schema_map[name][domain].erase(version);
+    if (schema_map.count(name) && schema_map[name].count(domain) && schema_map[name][domain].count(specific_version)) {
+      schema_map[name][domain].erase(specific_version);
     } else {
       std::stringstream err;
-      err << "Trying to deregister schema with name: " << name << " domain: " << domain << " version: " << version
-          << std::endl;
+      err << "Trying to deregister schema with name: " << name << " domain: " << domain
+          << " version: " << specific_version << std::endl;
       fail_schema(err.str());
     }
   }
@@ -1436,7 +1437,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 };
 
 void RegisterSchema(OpSchema schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true);
-void DeRegisterSchema(const std::string& name, const int version, const std::string& domain = ONNX_DOMAIN);
+void DeRegisterSchema(const std::string& name, const int specific_version, const std::string& domain = ONNX_DOMAIN);
 
 // Registers the latest opset schema before opset_version_to_load
 // By default opset_version_to_load=0 means it will register all versions

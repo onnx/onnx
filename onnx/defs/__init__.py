@@ -123,16 +123,14 @@ def get_function_ops() -> List[OpSchema]:
 
 SchemaError = C.SchemaError
 
-def register_schema(op: OpSchema):
-    name = op.name
-    domain = op.domain
-    ver = op.since_version
-    assert ver > 0, f'OpSchema {domain}::{name} need positive version but got {ver}'
+def register_schema(schema: OpSchema):
+    name = schema.name
+    domain = schema.domain
+    version = schema.since_version
     try:
-        exist_op = get_schema(name, ver, domain)
+        existing_schema = get_schema(name, version, domain)
     except SchemaError:
-        exist_op = None
-    if exist_op is not None:
-        if exist_op.since_version == ver:
-            raise SchemaError(f'OpSchema {domain}::{name} already exist in file: {exist_op.file}:{exist_op.line}')
-    C.register_schema(op)
+        existing_schema = None
+    if existing_schema is not None and existing_schema.since_version == version:
+        raise SchemaError(f'OpSchema {domain}::{name} already exist in file: {existing_schema.file}:{existing_schema.line}')
+    C.register_schema(schema)
