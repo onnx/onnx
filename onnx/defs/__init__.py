@@ -9,6 +9,7 @@ __all__ = [
     "AI_ONNX_PREVIEW_TRAINING_DOMAIN",
     "has",
     "register_schema",
+    "deregister_schema",
     "get_schema",
     "get_all_schemas",
     "get_all_schemas_with_history",
