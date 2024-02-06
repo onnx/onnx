@@ -622,7 +622,7 @@ class OpRun(abc.ABC):
         return cl
 
     @classmethod
-    def eval(  # noqa: A003
+    def eval(
         cls,
         *args: list[Any],
         n_outputs: int | None = None,
