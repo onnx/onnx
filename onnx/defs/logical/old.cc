@@ -224,13 +224,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
         {
             O1 = Less (A, B)
             O2 = Equal (A, B)
             C = Or (O1, O2)
         }
-        )ONNX"));
+        )ONNX",
+            12));
 
 ONNX_OPERATOR_SET_SCHEMA(
     GreaterOrEqual,
@@ -240,13 +242,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor.")
         .TypeAndShapeInferenceFunction(InferenceFunction())
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
         {
             O1 = Greater (A, B)
             O2 = Equal (A, B)
             C = Or (O1, O2)
         }
-        )ONNX"));
+        )ONNX",
+            12));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Equal,

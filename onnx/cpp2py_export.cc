@@ -395,7 +395,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               }
               FunctionBodyBuildContextImpl ctx(proto, input_types);
               FunctionProto func_proto;
-              op->BuildContextDependentFunction(ctx, func_proto);
+              op->BuildContextDependentFunction(ctx, func_proto, op->SinceVersion());
               func_proto.SerializeToString(&func_bytes);
             }
             return py::bytes(func_bytes);

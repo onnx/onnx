@@ -2259,7 +2259,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
         {
           Exponent = Constant <value = float {2.0}>()
           Epsilon = Constant <value = float {1e-9}>()
@@ -2273,7 +2274,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           Processed_STD = Add (STD, Epsilon)
           Y = Div (X_variance, Processed_STD)
         }
-        )ONNX")
+        )ONNX",
+            13)
         .FunctionBody(
             R"ONNX(
         {
@@ -2849,5 +2851,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            }));
+            },
+            21));
 } // namespace ONNX_NAMESPACE

@@ -363,7 +363,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                       .c_str());
               schema.BuildFunction(functionProto);
               return true;
-            }));
+            },
+            19));
 
 static const char* CastLike_ver15_doc = R"DOC(
 The operator casts the elements of a given input tensor (the first input) to
@@ -447,7 +448,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               builder.Add("output = Cast (input)", "to", (int64_t)(target_elt_type));
               schema.BuildFunction(functionProto);
               return true;
-            }));
+            },
+            15));
 
 static const char* Cast_ver9_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type

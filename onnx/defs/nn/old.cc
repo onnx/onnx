@@ -255,19 +255,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(FunctionBodyHelper::BuildNodes(
-            {// nodes: {outputs, op, inputs, attributes}
-             FunctionBodyHelper::Const<float>("Exponent", 2.0f),
-             FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
-             {{"X_RM"}, "ReduceMean", {"X"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
-             {{"X_squared"}, "Pow", {"X", "Exponent"}},
-             {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
-             {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
-             {{"STD"}, "Sqrt", {"Variance"}},
-             {{"X_variance"}, "Sub", {"X", "X_RM"}},
-             {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
-             {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
+        .FunctionBody(
+            FunctionBodyHelper::BuildNodes(
+                {// nodes: {outputs, op, inputs, attributes}
+                 FunctionBodyHelper::Const<float>("Exponent", 2.0f),
+                 FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
+                 {{"X_RM"}, "ReduceMean", {"X"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
+                 {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
+                 {{"X_squared"}, "Pow", {"X", "Exponent"}},
+                 {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
+                 {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
+                 {{"STD"}, "Sqrt", {"Variance"}},
+                 {{"X_variance"}, "Sub", {"X", "X_RM"}},
+                 {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
+                 {{"Y"}, "Div", {"X_variance", "Processed_STD"}}}),
+            9));
 
 const char* pads_doc2 =
     "Padding for the beginning and ending along each spatial axis, it can take any value greater "
@@ -2546,5 +2548,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            }));
+            },
+            18));
 } // namespace ONNX_NAMESPACE

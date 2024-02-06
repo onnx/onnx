@@ -329,7 +329,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Alpha = Constant <value_float: float = @alpha>()
             AlphaCast = CastLike (Alpha, X)
@@ -339,7 +340,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AlphaMulX = Mul (AlphaCast, X)
             Y = Where (XLessThanZero, AlphaMulX, X)
           }
-        )ONNX"));
+        )ONNX",
+            16));
 
 static const char* ThresholdedRelu_ver10_doc = R"DOC(
 ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
@@ -483,13 +485,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input X and output types to float tensors.")
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             Softplus_X = Softplus (X)
             TanHSoftplusX = Tanh (Softplus_X)
             Y = Mul (X, TanHSoftplusX)
            }
-        )ONNX")
+        )ONNX",
+            18)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* celu_ver12_doc = R"DOC(
@@ -557,7 +561,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             celu_default_alpha)
         .TypeConstraint("T", {"tensor(float)"}, "Constrain input and output types to float32 tensors.")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu, 12)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* gelu_ver20_doc = R"DOC(
@@ -641,7 +645,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGelu)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGelu, 20)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Exp_ver13_doc = R"DOC(
@@ -813,7 +817,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int64)"},
             "Constrain input and output types to float/int tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
         {
           Zero = Constant <value = float {0.0}>()
           ZeroCast = CastLike(Zero, X)
@@ -821,7 +826,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           SlopeMulX = Mul (slope, X)
           Y = Where(XLessThanZero, SlopeMulX, X)
         }
-        )ONNX"));
+        )ONNX",
+            16));
 
 static const char* Sigmoid_ver13_doc = R"DOC(
 Sigmoid takes one input data (Tensor<T>) and produces one output data
@@ -899,12 +905,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             HS_X = HardSigmoid<alpha = 0.16666667163372, beta = 0.5>(X)
             Y = Mul (X, HS_X)
           }
-        )ONNX"));
+        )ONNX",
+            14));
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
@@ -1067,7 +1075,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_numeric_types_ir4(),
             "Constrain input and output types to all numeric tensors.")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyClip)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyClip, 13)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 std::function<void(OpSchema&)>
@@ -1158,7 +1166,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-            })
+            },
+            13)
         // function body builder for opset version 18.
         // ReduceSum is updated in opset 18 to have axes as the second input.
         // Therefore function body for opset version 18
@@ -2505,7 +2514,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input, weight, and output types to floating-point tensors.")
         .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain target to integer types")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBody)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBody, 13)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2862,7 +2871,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain target to integer types")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE, 13)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           std::string reduction = getAttribute(ctx, "reduction", "mean");
@@ -3164,7 +3173,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(CosineSumWindowOpDocGenerator("Hann"))
         .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int64_t.")
         .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
         {
           A0 = Constant <value = float {0.5}>()
           A1 = Constant <value = float {0.5}>()
@@ -3193,7 +3203,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           Temp1 = Add (Temp0, A2_Component)
           output = Cast <to : int = @output_datatype> (Temp1)
         }
-        )ONNX"));
+        )ONNX",
+            17));
 
 ONNX_OPERATOR_SET_SCHEMA(
     HammingWindow,
@@ -3202,7 +3213,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(CosineSumWindowOpDocGenerator("Hamming"))
         .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int64_t.")
         .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
         {
           A0 = Constant <value = float {0.54347826087}>()
           A1 = Constant <value = float {0.45652173913}>()
@@ -3231,7 +3243,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           Temp1 = Add (Temp0, A2_Component)
           output = Cast <to : int = @output_datatype> (Temp1)
         }
-        )ONNX"));
+        )ONNX",
+            17));
 
 ONNX_OPERATOR_SET_SCHEMA(
     BlackmanWindow,
@@ -3240,7 +3253,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(CosineSumWindowOpDocGenerator("Blackman"))
         .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int64_t.")
         .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
         {
           A0 = Constant <value = float {0.42}>()
           A1 = Constant <value = float {0.5}>()
@@ -3269,7 +3283,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           Temp1 = Add (Temp0, A2_Component)
           output = Cast <to : int = @output_datatype> (Temp1)
         }
-        )ONNX"));
+        )ONNX",
+            17));
 
 static const char* MelWeightMatrix_ver17_doc = R"DOC(
 Generate a MelWeightMatrix that can be used to re-weight a Tensor containing a linearly sampled frequency spectra (from DFT or STFT) into num_mel_bins frequency information based on the [lower_edge_hertz, upper_edge_hertz] range on the mel scale.

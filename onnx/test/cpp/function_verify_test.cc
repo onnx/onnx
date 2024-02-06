@@ -367,10 +367,11 @@ TEST(FunctionVerification, VerifyFunctionExpandHelper) {
 }
 
 void RegisterFunctionSchema() {
+  const int since_version = 2;
   ONNX_NAMESPACE::OpSchema function_schema;
   function_schema.SetName("DynamicQuantizeLinear_Fake")
       .SetDomain(AI_ONNX_ML_DOMAIN)
-      .SinceVersion(2)
+      .SinceVersion(since_version)
       .SetDoc("Test Op")
       .Input(0, "x", "Input tensor", "T1")
       .Output(0, "y", "Quantized output tensor", "T2")
@@ -409,7 +410,8 @@ void RegisterFunctionSchema() {
             test_opset.set_version(2);
 
             return operator_sets;
-          }());
+          }(),
+          since_version);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(function_schema);
   (void)unused;
 }

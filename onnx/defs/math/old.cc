@@ -1280,7 +1280,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input, weight, and output types to floating-point tensors.")
         .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain target to integer types")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBody_opset12)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBody_opset12, 12)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1477,7 +1477,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain target to integer types")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE_opset12)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodySCE_opset12, 12)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           std::string reduction = getAttribute(ctx, "reduction", "mean");

@@ -1023,14 +1023,14 @@ class OpSchema final {
     return !opset_version_to_function_body_.empty();
   }
 
-  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version = kUninitializedSinceVersion);
+  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version);
 
   OpSchema& FunctionBody(
       const std::vector<NodeProto>& func_nodes,
       const std::vector<OperatorSetIdProto>& opsets,
-      int opset_version = kUninitializedSinceVersion);
+      int opset_version);
 
-  OpSchema& FunctionBody(const char* func_body, int opset_version = kUninitializedSinceVersion);
+  OpSchema& FunctionBody(const char* func_body, int opset_version);
 
   // since_version_ of an OpSchema tells the last opset version when an op is defined.
   // When the op's definition is changed, a new OpSchema (of the same op_type) is created
@@ -1070,14 +1070,12 @@ class OpSchema final {
     return opset_version_to_function_builder_.find(opset_version) != opset_version_to_function_builder_.end();
   }
 
-  OpSchema& SetContextDependentFunctionBodyBuilder(
-      ContextDependentFunctionBodyBuilder,
-      int opset_version = kUninitializedSinceVersion);
+  OpSchema& SetContextDependentFunctionBodyBuilder(ContextDependentFunctionBodyBuilder, int opset_version);
 
   bool BuildContextDependentFunction(
       const FunctionBodyBuildContext& ctx,
       FunctionProto& function_proto,
-      int requested_opset_version = OpSchema::kUninitializedSinceVersion) const;
+      int requested_opset_version) const;
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid

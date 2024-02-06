@@ -83,15 +83,16 @@ BuildFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& sche
 }
 
 void RegisterCustomFuncFloatSchema() {
+  const int since_version = 12;
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName("CustomFuncFloat")
       .SetDomain(ONNX_DOMAIN)
-      .SinceVersion(12)
+      .SinceVersion(since_version)
       .SetDoc("This operator returns an output tensor that is twice the input tensor.")
       .Input(0, "X", "Input tensor", "T", OpSchema::Single)
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)"}, "Type of the input and output values")
-      .SetContextDependentFunctionBodyBuilder(BuildFloatFunctionBody);
+      .SetContextDependentFunctionBodyBuilder(BuildFloatFunctionBody, since_version);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;
 }
@@ -112,7 +113,7 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
 
   FunctionBodyBuildContextImpl ctx(nodeProto);
   FunctionProto fnProto;
-  EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
+  EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto, schema->SinceVersion()));
   EXPECT_EQ(fnProto.node_size(), 2);
 
   LexicalScopeContext lexicalScope;
@@ -142,15 +143,16 @@ BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, F
 }
 
 void RegisterCustomFunctionSchema() {
+  const int since_version = 12;
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName("CustomFunction")
       .SetDomain(ONNX_DOMAIN)
-      .SinceVersion(12)
+      .SinceVersion(since_version)
       .SetDoc("This operator returns an output tensor that is twice the input tensor.")
       .Input(0, "X", "Input tensor", "T", OpSchema::Single)
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
-      .SetContextDependentFunctionBodyBuilder(BuildFunctionBody);
+      .SetContextDependentFunctionBodyBuilder(BuildFunctionBody, since_version);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;
 }
@@ -263,7 +265,7 @@ TEST(FunctionAPITest, TypeContextTest) {
 
   FunctionBodyBuildContextImpl ctx(nodeProto, {floatTypeProto});
   FunctionProto fnProto;
-  EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
+  EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto, schema->SinceVersion()));
   EXPECT_EQ(fnProto.node_size(), 2);
 
   LexicalScopeContext lexicalScope;

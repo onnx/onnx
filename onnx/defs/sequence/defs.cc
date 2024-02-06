@@ -782,7 +782,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain to any tensor or sequence type.")
-        .SetContextDependentFunctionBodyBuilder(BuildSequenceMapBodyFunc)
+        .SetContextDependentFunctionBodyBuilder(BuildSequenceMapBodyFunc, 17)
         .TypeAndShapeInferenceFunction(SequenceMapInferenceFunction));
 
 } // namespace ONNX_NAMESPACE

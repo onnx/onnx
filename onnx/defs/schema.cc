@@ -699,11 +699,7 @@ void OpSchema::ParseAndSetTypes(
 OpSchema& OpSchema::SetContextDependentFunctionBodyBuilder(
     ContextDependentFunctionBodyBuilder functionBuilder,
     int opset_version) {
-  if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
-    opset_version_to_function_builder_[since_version_] = std::move(functionBuilder);
-  } else {
-    opset_version_to_function_builder_[opset_version] = std::move(functionBuilder);
-  }
+  opset_version_to_function_builder_[opset_version] = std::move(functionBuilder);
   return *this;
 }
 
@@ -711,9 +707,6 @@ bool OpSchema::BuildContextDependentFunction(
     const FunctionBodyBuildContext& ctx,
     FunctionProto& function_proto,
     int requested_opset_version) const {
-  if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
-    requested_opset_version = since_version_;
-
   std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
       opset_version_to_function_builder_.upper_bound(requested_opset_version);
   if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
@@ -759,9 +752,6 @@ void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_pro
 }
 
 OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
-  if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
-    opset_version = since_version_;
-  }
   std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
   OnnxParser parser(func_body);
   auto status = parser.Parse(*function_proto->mutable_node());
@@ -779,9 +769,6 @@ OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
 }
 
 OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version) {
-  if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
-    opset_version = since_version_;
-  }
   std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
   for (const auto& node : func_nodes) {
     auto new_node = function_proto->add_node();
@@ -799,10 +786,6 @@ OpSchema& OpSchema::FunctionBody(
     const std::vector<NodeProto>& func_nodes,
     const std::vector<OperatorSetIdProto>& relied_opsets,
     int opset_version) {
-  if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
-    opset_version = since_version_;
-  }
-
   std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
   for (auto& relied_opset : relied_opsets) {
     *(function_proto->mutable_opset_import()->Add()) = relied_opset;

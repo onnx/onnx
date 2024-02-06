@@ -479,7 +479,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)"},
             "Constrain input types to common numeric type tensors.")
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
           {
             sub_result = Sub (limit, start)
             sub_result_casted = Cast <to = 1> (sub_result)
@@ -496,7 +497,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 range = Identity (prev)
               }>
           }
-        )ONNX")
+        )ONNX",
+            11)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -618,5 +620,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("output = Cast (X_greater)", "to", int64_t(dtype));
               schema.BuildFunction(functionProto);
               return true;
-            }));
+            },
+            15));
 } // namespace ONNX_NAMESPACE
