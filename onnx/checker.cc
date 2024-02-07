@@ -651,8 +651,8 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   const auto* schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
   if (!schema) {
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN || node.domain() == "ai.onnx" ||
-        node.domain() == AI_ONNX_TRAINING_DOMAIN || ctx.check_custom_op()) {
-      // fail the checker if op which is in built-in domains or enable `check_custom_op` has no schema
+        node.domain() == AI_ONNX_TRAINING_DOMAIN || ctx.check_custom_domain()) {
+      // fail the checker if op which is in built-in domains or enable `check_custom_domain` has no schema
       fail_check(
           "No Op registered for " + node.op_type() + " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
@@ -1014,7 +1014,7 @@ void check_model(
     const std::string& model_path,
     bool full_check,
     bool skip_opset_compatibility_check,
-    bool check_custom_op) {
+    bool check_custom_domain) {
   ModelProto model;
   LoadProtoFromPath(model_path, model);
 
@@ -1026,7 +1026,7 @@ void check_model(
   }
   ctx.set_model_dir(model_dir);
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
-  ctx.set_check_custom_op(check_custom_op);
+  ctx.set_check_custom_domain(check_custom_domain);
   check_model(model, ctx);
 
   if (full_check) {
@@ -1035,10 +1035,10 @@ void check_model(
   }
 }
 
-void check_model(const ModelProto& model, bool full_check, bool skip_opset_compatibility_check, bool check_custom_op) {
+void check_model(const ModelProto& model, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain) {
   CheckerContext ctx;
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
-  ctx.set_check_custom_op(check_custom_op);
+  ctx.set_check_custom_domain(check_custom_domain);
   check_model(model, ctx);
   if (full_check) {
     ShapeInferenceOptions options{true, 1, false};

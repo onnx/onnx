@@ -320,10 +320,10 @@ class TestOpSchemaRegister(unittest.TestCase):
             ],
         )
         with self.assertRaises(onnx.checker.ValidationError):
-            onnx.checker.check_model(model, check_custom_op=True)
+            onnx.checker.check_model(model, check_custom_domain=True)
         onnx.defs.register_schema(op_schema)
         self.assertTrue(onnx.defs.has(self.op_type, self.op_domain))
-        onnx.checker.check_model(model, check_custom_op=True)
+        onnx.checker.check_model(model, check_custom_domain=True)
 
         registered_op = onnx.defs.get_schema(
             op_schema.name, op_schema.since_version, op_schema.domain
