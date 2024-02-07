@@ -30,8 +30,13 @@ constexpr int OpSchema::kUninitializedSinceVersion;
 
 // By default if opset_version_to_load=0, it registers all opset schema for all opset versions
 // Otherwise, it only registers the latest schema according to opset_version_to_load
-void RegisterSchema(OpSchema schema, int opset_version_to_load, bool fail_duplicate_schema) {
-  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load, fail_duplicate_schema);
+void RegisterSchema(OpSchema schema, int opset_version_to_load, bool fail_duplicate_schema, bool fail_with_exception) {
+  if (fail_with_exception) {
+    OpSchemaRegistry::OpSchemaRegisterOnce::OpSchemaRegisterImpl(schema, opset_version_to_load, fail_duplicate_schema);
+  } else {
+    OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(
+        schema, opset_version_to_load, fail_duplicate_schema);
+  }
 }
 
 // The (name, version, domain) must match the target exactly

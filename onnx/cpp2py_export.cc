@@ -472,7 +472,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "Return the schema of all existing operators and all versions.")
       .def(
           "register_schema",
-          [](OpSchema* schema) { RegisterSchema(*schema); },
+          [](OpSchema* schema) { RegisterSchema(*schema, 0, true, true); },
           "schema"_a,
           "Register a user provided OpSchema.")
       .def(

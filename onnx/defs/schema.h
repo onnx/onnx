@@ -1215,50 +1215,53 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    public:
     OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       ONNX_TRY {
-        op_schema.Finalize();
-        auto& m = GetMapWithoutEnsuringRegistration();
-        auto& op_name = op_schema.Name();
-        auto& op_domain = op_schema.domain();
-        auto& schema_ver_map = m[op_name][op_domain];
-        auto ver = op_schema.SinceVersion();
-        if (OpSchema::kUninitializedSinceVersion == ver) {
-          op_schema.SinceVersion(1);
-          ver = op_schema.SinceVersion();
-        }
-
-        // Stops because the exact opset_version is registered
-        if (schema_ver_map.count(ver)) {
-          if (fail_duplicate_schema) {
-            const auto& schema = schema_ver_map[ver];
-            std::stringstream err;
-            err << "Trying to register schema with name " << op_name << " (domain: " << op_domain << " version: " << ver
-                << ") from file " << op_schema.file() << " line " << op_schema.line()
-                << ", but it is already registered from file " << schema.file() << " line " << schema.line()
-                << std::endl;
-            fail_schema(err.str());
-          }
-          return;
-        }
-
-        if (opset_version_to_load != 0) {
-          // Stops because the opset_version is higher than opset_version_to_load
-          if (ver > opset_version_to_load)
-            return;
-
-          // Stops because a later version is registered within target opset version
-          if (!schema_ver_map.empty()) {
-            int max_registered_ver_le_target = GetMaxRegisteredVerWithinTarget(schema_ver_map, opset_version_to_load);
-            if (max_registered_ver_le_target >= ver)
-              return;
-          }
-        }
-
-        CheckDomainAndVersionToRegister(op_schema, op_name, op_domain);
-        schema_ver_map.insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
+        OpSchemaRegisterImpl(op_schema, opset_version_to_load, fail_duplicate_schema);
       }
       ONNX_CATCH(const std::exception& e) {
         ONNX_HANDLE_EXCEPTION([&]() { std::cerr << "Schema error: " << e.what() << std::endl; });
       }
+    }
+    static void
+    OpSchemaRegisterImpl(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+      op_schema.Finalize();
+      auto& m = GetMapWithoutEnsuringRegistration();
+      auto& op_name = op_schema.Name();
+      auto& op_domain = op_schema.domain();
+      auto& schema_ver_map = m[op_name][op_domain];
+      auto ver = op_schema.SinceVersion();
+      if (OpSchema::kUninitializedSinceVersion == ver) {
+        op_schema.SinceVersion(1);
+        ver = op_schema.SinceVersion();
+      }
+
+      // Stops because the exact opset_version is registered
+      if (schema_ver_map.count(ver)) {
+        if (fail_duplicate_schema) {
+          const auto& schema = schema_ver_map[ver];
+          std::stringstream err;
+          err << "Trying to register schema with name " << op_name << " (domain: " << op_domain << " version: " << ver
+              << ") from file " << op_schema.file() << " line " << op_schema.line()
+              << ", but it is already registered from file " << schema.file() << " line " << schema.line() << std::endl;
+          fail_schema(err.str());
+        }
+        return;
+      }
+
+      if (opset_version_to_load != 0) {
+        // Stops because the opset_version is higher than opset_version_to_load
+        if (ver > opset_version_to_load)
+          return;
+
+        // Stops because a later version is registered within target opset version
+        if (!schema_ver_map.empty()) {
+          int max_registered_ver_le_target = GetMaxRegisteredVerWithinTarget(schema_ver_map, opset_version_to_load);
+          if (max_registered_ver_le_target >= ver)
+            return;
+        }
+      }
+
+      CheckDomainAndVersionToRegister(op_schema, op_name, op_domain);
+      schema_ver_map.insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
     }
 
    private:
@@ -1435,7 +1438,11 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   }
 };
 
-void RegisterSchema(OpSchema schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true);
+void RegisterSchema(
+    OpSchema schema,
+    int opset_version_to_load = 0,
+    bool fail_duplicate_schema = true,
+    bool fail_with_exception = false);
 void DeregisterSchema(const std::string& name, int version, const std::string& domain = ONNX_DOMAIN);
 
 // Registers the latest opset schema before opset_version_to_load

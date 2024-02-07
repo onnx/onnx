@@ -33,6 +33,7 @@ has = C.has_schema
 get_schema = C.get_schema
 get_all_schemas = C.get_all_schemas
 get_all_schemas_with_history = C.get_all_schemas_with_history
+register_schema = C.register_schema
 deregister_schema = C.deregister_schema
 
 
@@ -123,16 +124,3 @@ def get_function_ops() -> List[OpSchema]:
 
 
 SchemaError = C.SchemaError
-
-def register_schema(schema: OpSchema):
-    """Register a user provided OpSchema."""
-    name = schema.name
-    domain = schema.domain
-    version = schema.since_version
-    try:
-        existing_schema = get_schema(name, version, domain)
-    except SchemaError:
-        existing_schema = None
-    if existing_schema is not None and existing_schema.since_version == version:
-        raise SchemaError(f"OpSchema '{domain}::{name}' already defined in file: {existing_schema.file}:{existing_schema.line}")
-    C.register_schema(schema)
