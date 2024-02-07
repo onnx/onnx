@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+import contextlib
 import unittest
 from typing import Sequence
 
@@ -257,6 +258,7 @@ class TestAttribute(unittest.TestCase):
         self.assertEqual("attr1", attribute.name)
         self.assertEqual("attr1 description", attribute.description)
 
+
 @parameterized.parameterized_class(
     [
         {
@@ -268,7 +270,7 @@ class TestAttribute(unittest.TestCase):
             "op_type": "CustomOp",
             "op_version": 1,
             "op_domain": "test",
-        }
+        },
     ]
 )
 class TestOpSchemaRegister(unittest.TestCase):
@@ -282,22 +284,16 @@ class TestOpSchemaRegister(unittest.TestCase):
 
     def tearDown(self) -> None:
         # Clean up the registered schema
-        try:
-            onnx.defs.deregister_schema(
-                self.op_type,
-                self.op_version,
-                self.op_domain
-            )
-        except onnx.defs.SchemaError:
-            pass
+        with contextlib.suppress(onnx.defs.SchemaError):
+            onnx.defs.deregister_schema(self.op_type, self.op_version, self.op_domain)
 
     def test_register_schema(self):
         input = f"""
             <
-            ir_version: 7,
-            opset_import: [
-                "{self.op_domain}" : {self.op_version}
-            ]
+                ir_version: 7,
+                opset_import: [
+                    "{self.op_domain}" : {self.op_version}
+                ]
             >
             agraph (float[N, 128] X, int32 Y) => (float[N] Z)
             {{
@@ -337,7 +333,7 @@ class TestOpSchemaRegister(unittest.TestCase):
         )
         onnx.defs.register_schema(op_schema)
         with self.assertRaises(onnx.defs.SchemaError):
-             onnx.defs.register_schema(op_schema)
+            onnx.defs.register_schema(op_schema)
 
     def test_deregister_schema(self):
         op_schema = defs.OpSchema(
@@ -347,7 +343,9 @@ class TestOpSchemaRegister(unittest.TestCase):
         )
         onnx.defs.register_schema(op_schema)
         self.assertTrue(onnx.defs.has(op_schema.name, op_schema.domain))
-        onnx.defs.deregister_schema(op_schema.name, op_schema.since_version, op_schema.domain)
+        onnx.defs.deregister_schema(
+            op_schema.name, op_schema.since_version, op_schema.domain
+        )
         self.assertFalse(onnx.defs.has(op_schema.name, op_schema.domain))
 
     def test_deregister_raise_error_when_deregister_nonexistent_opschema(self):
