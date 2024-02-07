@@ -480,7 +480,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "min_version"_a,
           "max_version"_a,
           "last_release_version"_a = -1,
-          "Register a user provided OpSchema.")
+          "Set the version range of the specified domain.")
       .def(
           "register_schema",
           [](OpSchema* schema) { RegisterSchema(*schema, 0, true, true); },
