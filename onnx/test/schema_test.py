@@ -325,6 +325,11 @@ class TestOpSchemaRegister(unittest.TestCase):
         self.assertTrue(onnx.defs.has(self.op_type, self.op_domain))
         onnx.checker.check_model(model, check_custom_op=True)
 
+        registered_op = onnx.defs.get_schema(
+            op_schema.name, op_schema.since_version, op_schema.domain
+        )
+        self.assertEqual(str(registered_op), str(op_schema))
+
     def test_register_schema_raises_error_when_registering_a_schema_twice(self):
         op_schema = defs.OpSchema(
             self.op_type,
