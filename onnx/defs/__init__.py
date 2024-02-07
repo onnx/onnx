@@ -126,11 +126,11 @@ SchemaError = C.SchemaError
 
 def register_schema(schema: OpSchema):
     """Register a user provided OpSchema. And extend domain automatically."""
-    map = C.schema_version_map()
+    version_map = C.schema_version_map()
     domain = schema.domain
     version = schema.since_version
-    min_version, max_version = map.get(domain, (version, version))
-    if domain not in map or not (min_version <= version <= max_version):
+    min_version, max_version = version_map.get(domain, (version, version))
+    if domain not in version_map or not (min_version <= version <= max_version):
         min_version = min(min_version, version)
         max_version = max(max_version, version)
         C.set_domain_to_version(schema.domain, min_version, max_version)
