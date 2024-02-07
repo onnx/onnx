@@ -477,13 +477,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "Register a user provided OpSchema.")
       .def(
           "deregister_schema",
-          [](const std::string& op_type, const int specific_version, const std::string& domain) {
-            DeRegisterSchema(op_type, specific_version, domain);
+          [](const std::string& op_type, int version, const std::string& domain) {
+            DeregisterSchema(op_type, version, domain);
           },
           "op_type"_a,
-          "specific_version"_a,
-          "domain"_a = ONNX_DOMAIN,
-          "DeRegister the specified OpSchema.");
+          "version"_a,
+          "domain"_a,
+          "Deregister the specified OpSchema.");
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");

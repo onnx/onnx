@@ -34,10 +34,10 @@ void RegisterSchema(OpSchema schema, int opset_version_to_load, bool fail_duplic
   OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load, fail_duplicate_schema);
 }
 
-// The (name, version, domain) must exactly matches the target
+// The (name, version, domain) must match the target exactly
 // Otherwise will raise an SchemaError
-void DeRegisterSchema(const std::string& name, const int specific_version, const std::string& domain) {
-  OpSchemaRegistry::OpSchemaDeregister(name, specific_version, domain);
+void DeregisterSchema(const std::string& name, int version, const std::string& domain) {
+  OpSchemaRegistry::OpSchemaDeregister(name, version, domain);
 }
 
 #ifndef NDEBUG

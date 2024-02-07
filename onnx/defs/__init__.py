@@ -134,5 +134,5 @@ def register_schema(schema: OpSchema):
     except SchemaError:
         existing_schema = None
     if existing_schema is not None and existing_schema.since_version == version:
-        raise SchemaError(f'OpSchema {domain}::{name} already exist in file: {existing_schema.file}:{existing_schema.line}')
+        raise SchemaError(f"OpSchema '{domain}::{name}' already defined in file: {existing_schema.file}:{existing_schema.line}")
     C.register_schema(schema)

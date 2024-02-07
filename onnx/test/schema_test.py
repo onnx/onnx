@@ -257,19 +257,51 @@ class TestAttribute(unittest.TestCase):
         self.assertEqual("attr1", attribute.name)
         self.assertEqual("attr1 description", attribute.description)
 
+@parameterized.parameterized_class(
+    [
+        {
+            "op_type": "CustomOp",
+            "op_version": 1,
+            "op_domain": "",
+        }
+    ]
+)
 class TestOpSchemaRegister(unittest.TestCase):
-    def test_register(self):
-        input = """
-           agraph (float[N, 128] X, int32 Y) => (float[N] Z)
-           {
-              Z = CustomOp<attr1=[1,2]>(X, Y)
-           }
+    op_type: str
+    op_version: int
+    op_domain: str
+
+    def setUp(self) -> None:
+        # Ensure the schema is unregistered
+        self.assertFalse(onnx.defs.has(self.op_type, self.op_domain))
+
+    def tearDown(self) -> None:
+        # Clean up the registered schema
+        try:
+            onnx.defs.deregister_schema(
+                self.op_type,
+                self.op_version,
+                self.op_domain
+            )
+        except onnx.defs.SchemaError:
+            pass
+
+    def test_register_schema(self):
+        input = f"""
+            <
+            ir_version: 7,
+            opset_import: ["{self.op_domain}" : {self.op_version}]
+            >
+            agraph (float[N, 128] X, int32 Y) => (float[N] Z)
+            {{
+                Z = {self.op_type}<attr1=[1,2]>(X, Y)
+            }}
            """
-        model = onnx.parser.parse_graph(input)
+        model = onnx.parser.parse_model(input)
         op_schema = defs.OpSchema(
-            "CustomOp",
-            "",
-            1,
+            self.op_type,
+            self.op_domain,
+            self.op_version,
             inputs=[
                 defs.OpSchema.FormalParameter("input1", "T"),
                 defs.OpSchema.FormalParameter("input2", "int32"),
@@ -284,45 +316,37 @@ class TestOpSchemaRegister(unittest.TestCase):
                 )
             ],
         )
-        self.assertFalse(onnx.defs.has(op_schema.name))
         with self.assertRaises(onnx.checker.ValidationError):
-            onnx.checker.check_graph(model)
+            onnx.checker.check_model(model)
         onnx.defs.register_schema(op_schema)
-        onnx.checker.check_graph(model)
-        
-        # cleanup
-        onnx.defs.deregister_schema(op_schema.name, op_schema.since_version, op_schema.domain)
+        self.assertTrue(onnx.defs.has(self.op_type, self.op_domain))
+        onnx.checker.check_model(model)
 
     def test_register_schema_raises_error_when_registering_a_schema_twice(self):
         op_schema = defs.OpSchema(
-            "CustomOp",
-            "",
-            1,
+            self.op_type,
+            self.op_domain,
+            self.op_version,
         )
-        self.assertFalse(onnx.defs.has(op_schema.name))
         onnx.defs.register_schema(op_schema)
         with self.assertRaises(onnx.defs.SchemaError):
              onnx.defs.register_schema(op_schema)
 
-        # cleanup
+    def test_deregister_schema(self):
+        op_schema = defs.OpSchema(
+            self.op_type,
+            self.op_domain,
+            self.op_version,
+        )
+        onnx.defs.register_schema(op_schema)
+        self.assertTrue(onnx.defs.has(op_schema.name, op_schema.domain))
         onnx.defs.deregister_schema(op_schema.name, op_schema.since_version, op_schema.domain)
-        
-    def test_deregister_opschema(self):
+        self.assertFalse(onnx.defs.has(op_schema.name, op_schema.domain))
+
+    def test_deregister_raise_error_when_deregister_nonexistent_opschema(self):
         with self.assertRaises(onnx.defs.SchemaError):
-            onnx.defs.get_schema('CustomOp', 1)
-        onnx.defs.register_schema(defs.OpSchema('CustomOp', "", 1))
-        op_schema = onnx.defs.get_schema('CustomOp', 1)
-        self.assertIsNotNone(op_schema)
-        onnx.defs.deregister_schema('CustomOp', 1)
-        with self.assertRaises(onnx.defs.SchemaError):
-            onnx.defs.get_schema('CustomOp', 1)
-    
-    def test_deregister_raise_error_when_deregister_noexist_opschema(self):
-        with self.assertRaises(onnx.defs.SchemaError):
-            onnx.defs.get_schema('CustomOp', 1)
-        with self.assertRaises(onnx.defs.SchemaError):
-            onnx.defs.deregister_schema('CustomOp', 1)
-        
+            onnx.defs.deregister_schema(self.op_type, self.op_version, self.op_domain)
+
 
 if __name__ == "__main__":
     unittest.main()
