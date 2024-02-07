@@ -17,5 +17,5 @@ def check_attribute(bytes: bytes, checker_context: CheckerContext, lexical_scope
 def check_node(bytes: bytes, checker_context: CheckerContext, lexical_scope_context: LexicalScopeContext) -> None: ...  # noqa: A002
 def check_function(bytes: bytes, checker_context: CheckerContext, lexical_scope_context: LexicalScopeContext) -> None: ...  # noqa: A002
 def check_graph(bytes: bytes, checker_context: CheckerContext, lexical_scope_context: LexicalScopeContext) -> None: ...  # noqa: A002
-def check_model(bytes: bytes, full_check: bool, skip_opset_compatibility_check: bool) -> None: ...  # noqa: A002
-def check_model_path(path: str, full_check: bool, skip_opset_compatibility_check: bool) -> None: ...
+def check_model(bytes: bytes, full_check: bool, skip_opset_compatibility_check: bool, check_custom_op: bool) -> None: ...  # noqa: A002
+def check_model_path(path: str, full_check: bool, skip_opset_compatibility_check: bool, check_custom_op: bool) -> None: ...
