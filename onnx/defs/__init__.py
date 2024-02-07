@@ -33,7 +33,6 @@ has = C.has_schema
 get_schema = C.get_schema
 get_all_schemas = C.get_all_schemas
 get_all_schemas_with_history = C.get_all_schemas_with_history
-register_schema = C.register_schema
 deregister_schema = C.deregister_schema
 
 
