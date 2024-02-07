@@ -263,6 +263,11 @@ class TestAttribute(unittest.TestCase):
             "op_type": "CustomOp",
             "op_version": 1,
             "op_domain": "",
+        },
+        {
+            "op_type": "CustomOp",
+            "op_version": 1,
+            "op_domain": "test",
         }
     ]
 )
@@ -290,11 +295,13 @@ class TestOpSchemaRegister(unittest.TestCase):
         input = f"""
             <
             ir_version: 7,
-            opset_import: ["{self.op_domain}" : {self.op_version}]
+            opset_import: [
+                "{self.op_domain}" : {self.op_version}
+            ]
             >
             agraph (float[N, 128] X, int32 Y) => (float[N] Z)
             {{
-                Z = {self.op_type}<attr1=[1,2]>(X, Y)
+                Z = {self.op_domain}.{self.op_type}<attr1=[1,2]>(X, Y)
             }}
            """
         model = onnx.parser.parse_model(input)
@@ -317,10 +324,10 @@ class TestOpSchemaRegister(unittest.TestCase):
             ],
         )
         with self.assertRaises(onnx.checker.ValidationError):
-            onnx.checker.check_model(model)
+            onnx.checker.check_model(model, check_custom_op=True)
         onnx.defs.register_schema(op_schema)
         self.assertTrue(onnx.defs.has(self.op_type, self.op_domain))
-        onnx.checker.check_model(model)
+        onnx.checker.check_model(model, check_custom_op=True)
 
     def test_register_schema_raises_error_when_registering_a_schema_twice(self):
         op_schema = defs.OpSchema(

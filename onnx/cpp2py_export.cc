@@ -471,6 +471,17 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
           "Return the schema of all existing operators and all versions.")
       .def(
+          "set_domain_to_version",
+          [](const std::string& domain, int min_version, int max_version, int last_release_version) {
+            OpSchemaRegistry::DomainToVersionRange::Instance().AddDomainToVersion(
+                domain, min_version, max_version, last_release_version, true);
+          },
+          "domain"_a,
+          "min_version"_a,
+          "max_version"_a,
+          "last_release_version"_a = -1,
+          "Register a user provided OpSchema.")
+      .def(
           "register_schema",
           [](OpSchema* schema) { RegisterSchema(*schema, 0, true, true); },
           "schema"_a,
