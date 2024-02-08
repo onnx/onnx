@@ -21,9 +21,12 @@ std::string barf(const char* fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  // Although vsnprintf might have vulnerability issue while using format string with overflowed length,
-  // it should be safe here to use fixed length for buffer "msg". No further checking is needed.
-  vsnprintf(msg, 2048, fmt, args);
+
+  // use fixed length for buffer "msg" to avoid buffer overflow
+  vsnprintf(msg, sizeof(msg) - 1, fmt, args);
+
+  // ensure null-terminated string to avoid out of bounds read
+  msg[sizeof(msg) - 1] = '\0';
   va_end(args);
 
   return std::string(msg);
