@@ -250,8 +250,20 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
   }
 }
 
-std::string GetModelLocalFunctionsMapIdentifier(const std::string& domain, const std::string& func_name) {
-  return domain + ":" + func_name;
+std::string GetFunctionIdentifier(int ir_version, const FunctionProto& function) {
+  if (ir_version < 10) {
+    return function.domain() + ":" + function.name();
+  } else {
+    return function.domain() + ":" + function.name() + ":" + function.overload();
+  }
+}
+
+std::string GetFunctionIdentifier(int ir_version, const NodeProto& node) {
+  if (ir_version < 10) {
+    return node.domain() + ":" + node.name();
+  } else {
+    return node.domain() + ":" + node.name() + ":" + node.overload();
+  }
 }
 
 // InferredTypes: abstracts the differences between FunctionProto and GraphProto
@@ -467,7 +479,7 @@ class ShapeInferenceImplBase {
           schema->CheckInputOutputType(ctx);
         }
       } else if (model_local_functions_map.size() > 0) {
-        auto iter = model_local_functions_map.find(GetModelLocalFunctionsMapIdentifier(n.domain(), n.op_type()));
+        auto iter = model_local_functions_map.find(GetFunctionIdentifier(this->ir_version, n));
         if (iter != model_local_functions_map.end()) {
           ProcessCall(n, *(iter->second), ctx);
         } else {
@@ -806,7 +818,7 @@ void InferShapes(
   ModelLocalFunctionsMap model_local_functions_by_id;
   for (const auto& function_proto : m.functions()) {
     model_local_functions_by_id.insert(
-        {GetModelLocalFunctionsMapIdentifier(function_proto.domain(), function_proto.name()), &function_proto});
+        {GetFunctionIdentifier(m.ir_version(), function_proto), &function_proto});
   }
   InferShapesImpl(
       m.mutable_graph(),
