@@ -488,9 +488,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "Register a user provided OpSchema.")
       .def(
           "deregister_schema",
-          [](const std::string& op_type, int version, const std::string& domain) {
-            DeregisterSchema(op_type, version, domain);
-          },
+          &DeregisterSchema,
           "op_type"_a,
           "version"_a,
           "domain"_a,
