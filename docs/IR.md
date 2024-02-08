@@ -193,7 +193,7 @@ A serialized function (a _FunctionProto_) has the following properties:
 |---|---|---|
 name|string|The name of the function
 domain|string|The domain to which this function belongs
-overload|string|Part of unique id of function (added in IR version 9)
+overload|string|Part of unique id of function (added in IR version 10)
 doc_string|string|Human-readable documentation for this function. Markdown is allowed.
 attribute|string[]|The attribute parameters of the function
 attribute_proto|Attribute[]| (IR version 9+) The attribute parameters with default values of the function. A function attribute shall be represented either as a string attribute or an Attribute, not both.
@@ -203,7 +203,7 @@ node|Node[]|A list of nodes, forming a partially ordered computation graph. It m
 |opset_import|OperatorSetId|A collection of operator set identifiers used by the function implementation.
 value_info|ValueInfo[]|Used to store the type and shape information of values used in the function.
 
-The name and domain serve to identify the operator uniquely in IR versions upto 8. IR version adds the
+The name and domain serve to identify the operator uniquely in IR versions upto 9. IR version 10 adds the
 field overload, and the triple (name, domain, overload) acts as a unique-id across functions stored in
 a model. This is intended to support cases where distinct function-bodies are required for distinct
 calls to the function within the model.
@@ -290,6 +290,7 @@ op_type|string|The symbolic identifier of the operator to invoke.
 domain|string|The domain of the operator set that contains the operator named by the op_type.
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
 doc_string|string|Human-readable documentation for this value. Markdown is allowed.
+overload|string|Part of unique id of function (added in IR version 10)
 
 A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, a graph initializer, or as a node output is said to be a definition and the occurrence of a name as a node input or as a graph output is said to be a use.
 
