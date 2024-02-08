@@ -12852,7 +12852,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float32)
 y = np.isinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf")
 ```
@@ -12870,7 +12870,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float16)
 y = np.isinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf_float16")
 ```
@@ -12886,7 +12886,7 @@ node = onnx.helper.make_node(
     "IsInf", inputs=["x"], outputs=["y"], detect_positive=0
 )
 
-x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.7, np.nan, np.inf, -3.6, -np.inf, np.inf], dtype=np.float32)
 y = np.isneginf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf_negative")
 ```
@@ -12902,7 +12902,7 @@ node = onnx.helper.make_node(
     "IsInf", inputs=["x"], outputs=["y"], detect_negative=0
 )
 
-x = np.array([-1.7, np.nan, np.inf, 3.6, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.7, np.nan, np.inf, 3.6, -np.inf, np.inf], dtype=np.float32)
 y = np.isposinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
 ```
@@ -12956,7 +12956,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float16)
 y = np.isnan(x)
 expect(node, inputs=[x], outputs=[y], name="test_isnan_float16")
 ```
@@ -12974,7 +12974,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float32)
 y = np.isnan(x)
 expect(node, inputs=[x], outputs=[y], name="test_isnan")
 ```

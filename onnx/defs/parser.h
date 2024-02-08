@@ -431,7 +431,11 @@ class OnnxParser : public ParserBase {
 
   Status Parse(ValueInfoProto& valueinfo);
 
-  Status Parse(ValueInfoList& vilist);
+  Status ParseGraphInputOutput(ValueInfoList& vilist);
+
+  Status ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilist);
+
+  Status Parse(char open, ValueInfoList& vilist, char close);
 
   Status ParseInput(ValueInfoList& vilist, TensorList& initializers);
 
