@@ -255,11 +255,9 @@ def _get_attribute_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto
 
 
 def _sanitize_path(path: str) -> str:
-    """Remove path components which would allow traversing up a directory tree from a base path.
-
-    Note: This method is currently very basic and should be expanded.
-    """
-    return path.lstrip("/.")
+    """Remove path components which would allow traversing up a directory tree from a base path."""
+    path = os.path.normpath(path)
+    return os.path.basename(path)
 
 
 def _is_valid_filename(filename: str) -> bool:
