@@ -260,9 +260,9 @@ std::string GetFunctionIdentifier(int ir_version, const FunctionProto& function)
 
 std::string GetFunctionIdentifier(int ir_version, const NodeProto& node) {
   if (ir_version < 10) {
-    return node.domain() + ":" + node.name();
+    return node.domain() + ":" + node.op_type();
   } else {
-    return node.domain() + ":" + node.name() + ":" + node.overload();
+    return node.domain() + ":" + node.op_type() + ":" + node.overload();
   }
 }
 

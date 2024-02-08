@@ -247,7 +247,7 @@ class TestModelInference(unittest.TestCase):
     def test_mi_overloaded_function(self):
         """Test use of functions."""
         model = """
-            <ir_version: 7, opset_import: [ "" : 17, "local" : 1]>
+            <ir_version: 10, opset_import: [ "" : 17, "local" : 1]>
             agraph (float[N] x) => (y, z)
             {
                 y = local.cast:to_int32 (x)
