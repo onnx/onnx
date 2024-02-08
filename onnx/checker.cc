@@ -652,7 +652,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   if (!schema) {
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN || node.domain() == "ai.onnx" ||
         node.domain() == AI_ONNX_TRAINING_DOMAIN || ctx.check_custom_domain()) {
-      // fail the checker if op which is in built-in domains or enable `check_custom_domain` has no schema
+      // fail the checker if op is in built-in domains or if it has no schema when `check_custom_domain` is true
       fail_check(
           "No Op registered for " + node.op_type() + " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
@@ -1035,7 +1035,11 @@ void check_model(
   }
 }
 
-void check_model(const ModelProto& model, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain) {
+void check_model(
+    const ModelProto& model,
+    bool full_check,
+    bool skip_opset_compatibility_check,
+    bool check_custom_domain) {
   CheckerContext ctx;
   ctx.set_skip_opset_compatibility_check(skip_opset_compatibility_check);
   ctx.set_check_custom_domain(check_custom_domain);

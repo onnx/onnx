@@ -353,7 +353,7 @@ class TestOpSchemaRegister(unittest.TestCase):
         )
         self.assertFalse(onnx.defs.has(op_schema.name, op_schema.domain))
 
-    def test_deregister_raise_error_when_deregister_nonexistent_opschema(self):
+    def test_deregister_schema_raises_error_when_opschema_does_not_exist(self):
         with self.assertRaises(onnx.defs.SchemaError):
             onnx.defs.deregister_schema(self.op_type, self.op_version, self.op_domain)
 

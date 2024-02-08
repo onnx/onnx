@@ -124,8 +124,15 @@ def get_function_ops() -> List[OpSchema]:
 
 SchemaError = C.SchemaError
 
-def register_schema(schema: OpSchema):
-    """Register a user provided OpSchema. And extend domain automatically."""
+
+def register_schema(schema: OpSchema) -> None:
+    """Register a user provided OpSchema.
+
+    The function extends available operator set versions for the provided domain if necessary.
+
+    Args:
+        schema: The OpSchema to register.
+    """
     version_map = C.schema_version_map()
     domain = schema.domain
     version = schema.since_version

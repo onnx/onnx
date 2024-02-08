@@ -1199,8 +1199,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       map_[domain] = std::make_pair(min_version, max_version);
       // If a last-release-version is not explicitly specified, use max as
       // last-release-version.
-      if (last_release_version == -1)
+      if (last_release_version == -1) {
         last_release_version = max_version;
+      }
       last_release_version_map_[domain] = last_release_version;
     }
 
@@ -1256,14 +1257,16 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
       if (opset_version_to_load != 0) {
         // Stops because the opset_version is higher than opset_version_to_load
-        if (ver > opset_version_to_load)
+        if (ver > opset_version_to_load) {
           return;
+        }
 
         // Stops because a later version is registered within target opset version
         if (!schema_ver_map.empty()) {
           int max_registered_ver_le_target = GetMaxRegisteredVerWithinTarget(schema_ver_map, opset_version_to_load);
-          if (max_registered_ver_le_target >= ver)
+          if (max_registered_ver_le_target >= ver) {
             return;
+          }
         }
       }
 
