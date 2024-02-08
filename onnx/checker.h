@@ -167,8 +167,16 @@ void check_model_local_functions(
     const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex);
 
-void check_model(const ModelProto& model, bool full_check = false, bool skip_opset_compatibility_check = false, bool check_custom_domain = false);
-void check_model(const std::string& model_path, bool full_check = false, bool skip_opset_compatibility_check = false, bool check_custom_domain = false);
+void check_model(
+    const ModelProto& model,
+    bool full_check = false,
+    bool skip_opset_compatibility_check = false,
+    bool check_custom_domain = false);
+void check_model(
+    const std::string& model_path,
+    bool full_check = false,
+    bool skip_opset_compatibility_check = false,
+    bool check_custom_domain = false);
 
 bool check_is_experimental_op(const NodeProto& node);
 
