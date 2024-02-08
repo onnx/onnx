@@ -6,10 +6,10 @@ import re
 import sys
 import uuid
 from itertools import chain
+from pathlib import Path
 from typing import Callable, Iterable, Optional
 
 from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
-
 
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
@@ -257,7 +257,7 @@ def _get_attribute_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto
 def _sanitize_path(path: str) -> str:
     """Remove path components which would allow traversing up a directory tree from a base path."""
     path = os.path.normpath(path)
-    return os.path.basename(path)
+    return path.lstrip("\/.")
 
 
 def _is_valid_filename(filename: str) -> bool:
