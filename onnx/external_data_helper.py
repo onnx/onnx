@@ -10,6 +10,7 @@ from typing import Callable, Iterable, Optional
 
 from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
 
+
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
         self.location = ""
@@ -256,7 +257,7 @@ def _get_attribute_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto
 def _sanitize_path(path: str) -> str:
     """Remove path components which would allow traversing up a directory tree from a base path."""
     path = os.path.normpath(path)
-    return path.lstrip("\/.")
+    return path.lstrip(r"\/.")
 
 
 def _is_valid_filename(filename: str) -> bool:
