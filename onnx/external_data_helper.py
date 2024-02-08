@@ -6,7 +6,6 @@ import re
 import sys
 import uuid
 from itertools import chain
-from pathlib import Path
 from typing import Callable, Iterable, Optional
 
 from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
