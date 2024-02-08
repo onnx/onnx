@@ -9,27 +9,27 @@
 
 #include "onnx/common/assertions.h"
 
+#include <array>
 #include <cstdarg>
 #include <cstdio>
-
 #include "onnx/common/common.h"
 
 namespace ONNX_NAMESPACE {
 
 std::string barf(const char* fmt, ...) {
-  char msg[2048];
+  std::array<char, 2048> msg;
   va_list args;
 
   va_start(args, fmt);
 
   // use fixed length for buffer "msg" to avoid buffer overflow
-  vsnprintf(msg, sizeof(msg) - 1, fmt, args);
+  vsnprintf(msg.data(), msg.size() - 1, fmt, args);
 
   // ensure null-terminated string to avoid out of bounds read
-  msg[sizeof(msg) - 1] = '\0';
+  msg.back() = '\0';
   va_end(args);
 
-  return std::string(msg);
+   return std::string(msg.data());
 }
 
 void throw_assert_error(std::string& msg) {
