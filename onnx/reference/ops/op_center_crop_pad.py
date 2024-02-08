@@ -1,5 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0914,R1702,W0221
+
 
 import numpy as np
 
@@ -9,11 +11,11 @@ from onnx.reference.op_run import OpRun
 class CenterCropPad(OpRun):
     def _run(self, input_data, shape, axes=None):  # type: ignore
         axes = axes or self.axes  # type: ignore
-
+        input_rank = len(input_data.shape)
         if axes is None:
-            axes = list(range(shape.shape[0]))
+            axes = list(range(input_rank))
         else:
-            axes = [(a + len(input_data.shape)) % len(input_data.shape) for a in axes]
+            axes = [axis if axis >= 0 else axis + input_rank for axis in axes]
         pad_slices = [slice(0, s) for s in input_data.shape]
         crop_slices = [slice(0, s) for s in input_data.shape]
         new_shape = list(input_data.shape)

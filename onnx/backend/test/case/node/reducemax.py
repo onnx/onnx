@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
@@ -36,6 +38,7 @@ class ReduceMax(Base):
             inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_do_not_keepdims_example",
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
         )
 
         np.random.seed(0)
@@ -47,6 +50,7 @@ class ReduceMax(Base):
             inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_do_not_keepdims_random",
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
         )
 
     @staticmethod
@@ -77,6 +81,7 @@ class ReduceMax(Base):
             inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_keepdims_example",
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
         )
 
         np.random.seed(0)
@@ -88,6 +93,7 @@ class ReduceMax(Base):
             inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_keepdims_random",
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
         )
 
     @staticmethod
@@ -110,6 +116,7 @@ class ReduceMax(Base):
             inputs=[data],
             outputs=[reduced],
             name="test_reduce_max_default_axes_keepdim_example",
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
         )
 
         np.random.seed(0)
@@ -121,6 +128,7 @@ class ReduceMax(Base):
             inputs=[data],
             outputs=[reduced],
             name="test_reduce_max_default_axes_keepdims_random",
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
         )
 
     @staticmethod
@@ -151,6 +159,7 @@ class ReduceMax(Base):
             inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_negative_axes_keepdims_example",
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
         )
 
         np.random.seed(0)
@@ -162,4 +171,60 @@ class ReduceMax(Base):
             inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_max_negative_axes_keepdims_random",
+            opset_imports=[onnx.helper.make_opsetid("", 18)],
+        )
+
+    @staticmethod
+    def export_bool_inputs() -> None:
+        axes = np.array([1], dtype=np.int64)
+        keepdims = 1
+
+        node = onnx.helper.make_node(
+            "ReduceMax",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
+        )
+
+        data = np.array(
+            [[True, True], [True, False], [False, True], [False, False]],
+        )
+        reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=bool(keepdims))
+        # print(reduced)
+        # [[True],
+        #  [True],
+        #  [True],
+        #  [False]]
+
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_max_bool_inputs",
+        )
+
+    @staticmethod
+    def export_empty_set() -> None:
+        shape = [2, 0, 4]
+        keepdims = 1
+        reduced_shape = [2, 1, 4]
+
+        node = onnx.helper.make_node(
+            "ReduceMax",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
+        )
+
+        data = np.array([], dtype=np.float32).reshape(shape)
+        axes = np.array([1], dtype=np.int64)
+        one = np.array(np.ones(reduced_shape, dtype=np.float32))
+        zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+        reduced = -(one / zero)  # -inf
+
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_min_empty_set",
         )

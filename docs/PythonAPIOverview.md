@@ -1,10 +1,15 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # Python API Overview
 
 The full API is described at [API Reference](https://onnx.ai/onnx/api).
 
 ## Loading an ONNX Model
+
 ```python
 import onnx
 
@@ -304,7 +309,7 @@ print(f"The model before conversion:\n{original_model}")
 # Apply the version conversion on the original model
 converted_model = version_converter.convert_version(original_model, <int target_version>)
 
-print(f"The model after conversion:\n{converted_mode}")
+print(f"The model after conversion:\n{converted_model}")
 ```
 
 ## Utility Functions
@@ -469,4 +474,22 @@ input = """
 """
 model = onnx.parser.parse_model(input)
 
+```
+
+## ONNX Inliner
+
+Functions `onnx.inliner.inline_local_functions` and `inline_selected_functions` can be used
+to inline model-local functions in an ONNX model. In particular, `inline_local_functions` can
+be used to produce a function-free model (suitable for backends that do not handle or support
+functions). On the other hand, `inline_selected_functions` can be used to inline selected
+functions. There is no support yet for inlining ONNX standard ops that are functions (also known
+as schema-defined functions).
+
+```python
+import onnx
+import onnx.inliner
+
+model = onnx.load("path/to/the/model.onnx")
+inlined = onnx.inliner.inline_local_functions(model)
+onnx.save("path/to/the/inlinedmodel.onnx")
 ```

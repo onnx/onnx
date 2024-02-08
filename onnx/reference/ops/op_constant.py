@@ -1,14 +1,32 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=W0221
+
 
 import numpy as np
 
+from onnx.reference.custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+    int4,
+    uint4,
+)
 from onnx.reference.op_run import OpRun, RefAttrName
 
 
 def _check_dtype(val):  # type: ignore
     a = val.dtype
     if not isinstance(a, np.dtype) and a not in {
+        bfloat16,
+        float8e4m3fn,
+        float8e4m3fnuz,
+        float8e5m2,
+        float8e5m2fnuz,
+        uint4,
+        int4,
         np.int8,
         np.uint8,
         np.float16,
@@ -114,7 +132,9 @@ class Constant_12(ConstantCommon):
                     )
                     break
         if not hasattr(self, "cst_name"):
-            raise AttributeError("No constant is defined for operator 'Constant'.")
+            raise AttributeError(
+                f"No constant is defined for operator 'Constant', outputs are {onnx_node.output}."
+            )
 
     def _run(self, **overridden_attributes):  # type: ignore
         if self.has_linked_attribute:

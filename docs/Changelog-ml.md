@@ -227,7 +227,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 ### <a name="ai.onnx.ml.FeatureVectorizer-1"></a>**ai.onnx.ml.FeatureVectorizer-1**</a>
 
   Concatenates input tensors into one continuous output.<br>
-      All input shapes are 2-D and are concatenated along the second dimention. 1-D tensors are treated as [1,C].
+      All input shapes are 2-D and are concatenated along the second dimension. 1-D tensors are treated as [1,C].
       Inputs are copied to the output maintaining the order of the input arguments.<br>
       All inputs must be integers or floats, while the output will be all floating point values.
 
@@ -740,7 +740,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>nodes_hitrates</tt> : list of floats</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.</dd>
+<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the default value is false (0) for all nodes.</dd>
 <dt><tt>nodes_modes</tt> : list of strings</dt>
 <dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
 <dt><tt>nodes_nodeids</tt> : list of ints</dt>
@@ -813,7 +813,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>nodes_hitrates</tt> : list of floats</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
+<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the default value is false (0) for all nodes.</dd>
 <dt><tt>nodes_modes</tt> : list of strings</dt>
 <dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
 <dt><tt>nodes_nodeids</tt> : list of ints</dt>
@@ -1018,7 +1018,7 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 <dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.</dd>
+<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the default value is false (0) for all nodes.</dd>
 <dt><tt>nodes_modes</tt> : list of strings</dt>
 <dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
 <dt><tt>nodes_nodeids</tt> : list of ints</dt>
@@ -1085,9 +1085,9 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 <dt><tt>aggregate_function</tt> : string (default is SUM)</dt>
 <dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE,' 'SUM,' 'MIN,' 'MAX.'</dd>
 <dt><tt>base_values</tt> : list of floats</dt>
-<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dd>Base values for regression, added to final prediction after applying aggregate_function; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
 <dt><tt>base_values_as_tensor</tt> : tensor</dt>
-<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
+<dd>Base values for regression, added to final prediction after applying aggregate_function; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
 <dt><tt>n_targets</tt> : int</dt>
 <dd>The total number of targets.</dd>
 <dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
@@ -1099,7 +1099,7 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 <dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
+<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the default value is false (0) for all nodes.</dd>
 <dt><tt>nodes_modes</tt> : list of strings</dt>
 <dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
 <dt><tt>nodes_nodeids</tt> : list of ints</dt>
@@ -1146,4 +1146,204 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
 <dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
+
+## Version 4 of the 'ai.onnx.ml' operator set
+### <a name="ai.onnx.ml.LabelEncoder-4"></a>**ai.onnx.ml.LabelEncoder-4**</a>
+
+  Maps each element in the input tensor to another value.<br>
+      The mapping is determined by the two parallel attributes, 'keys_*' and
+      'values_*' attribute. The i-th value in the specified 'keys_*' attribute
+      would be mapped to the i-th value in the specified 'values_*' attribute. It
+      implies that input's element type and the element type of the specified
+      'keys_*' should be identical while the output type is identical to the
+      specified 'values_*' attribute. Note that the 'keys_*' and 'values_*' attributes
+      must have the same length. If an input element can not be found in the
+      specified 'keys_*' attribute, the 'default_*' that matches the specified
+      'values_*' attribute may be used as its output value. The type of the 'default_*'
+      attribute must match the 'values_*' attribute chosen. <br>
+      Let's consider an example which maps a string tensor to an integer tensor.
+      Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
+      and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
+      "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
+      Since this operator is an one-to-one mapping, its input and output shapes
+      are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
+      Float keys with value 'NaN' match any input 'NaN' value regardless of bit
+      value. If a key is repeated, the last key takes precedence.
+
+#### Version
+
+This version of the operator has been available since version 4 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>default_float</tt> : float (default is -0.0)</dt>
+<dd>A float.</dd>
+<dt><tt>default_int64</tt> : int (default is -1)</dt>
+<dd>An integer.</dd>
+<dt><tt>default_string</tt> : string (default is _Unused)</dt>
+<dd>A string.</dd>
+<dt><tt>default_tensor</tt> : tensor</dt>
+<dd>A default tensor. {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.</dd>
+<dt><tt>keys_floats</tt> : list of floats</dt>
+<dd>A list of floats.</dd>
+<dt><tt>keys_int64s</tt> : list of ints</dt>
+<dd>A list of ints.</dd>
+<dt><tt>keys_strings</tt> : list of strings</dt>
+<dd>A list of strings.</dd>
+<dt><tt>keys_tensor</tt> : tensor</dt>
+<dd>Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.</dd>
+<dt><tt>values_floats</tt> : list of floats</dt>
+<dd>A list of floats.</dd>
+<dt><tt>values_int64s</tt> : list of ints</dt>
+<dd>A list of ints.</dd>
+<dt><tt>values_strings</tt> : list of strings</dt>
+<dd>A list of strings.</dd>
+<dt><tt>values_tensor</tt> : tensor</dt>
+<dd>Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data. It must have the same element type as the keys_* attribute set.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>Output data. This tensor's element type is based on the values_* attribute set.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
+<dd>The input type is a tensor of any shape.</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
+<dd>Output type is determined by the specified 'values_*' attribute.</dd>
+</dl>
+
+## Version 5 of the 'ai.onnx.ml' operator set
+### <a name="ai.onnx.ml.TreeEnsemble-5"></a>**ai.onnx.ml.TreeEnsemble-5**</a>
+
+  Tree Ensemble operator.  Returns the regressed values for each input in a batch.
+      Inputs have dimensions `[N, F]` where `N` is the input batch size and `F` is the number of input features.
+      Outputs have dimensions `[N, num_targets]` where `N` is the batch size and `num_targets` is the number of targets, which is a configurable attribute.
+
+      The encoding of this attribute is split along interior nodes and the leaves of the trees. Notably, attributes with the prefix `nodes_*` are associated with interior nodes, and attributes with the prefix `leaf_*` are associated with leaves.
+      The attributes `nodes_*` must all have the same length and encode a sequence of tuples, as defined by taking all the `nodes_*` fields at a given position.
+
+      All fields prefixed with `leaf_*` represent tree leaves, and similarly define tuples of leaves and must have identical length.
+
+      This operator can be used to implement both the previous `TreeEnsembleRegressor` and `TreeEnsembleClassifier` nodes.
+      The `TreeEnsembleRegressor` node maps directly to this node and requires changing how the nodes are represented.
+      The `TreeEnsembleClassifier` node can be implemented by adding a `ArgMax` node after this node to determine the top class.
+      To encode class labels, a `LabelEncoder` or `GatherND` operator may be used.
+
+#### Version
+
+This version of the operator has been available since version 5 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>aggregate_function</tt> : int (default is 1)</dt>
+<dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE' (0) 'SUM' (1) 'MIN' (2) 'MAX (3) defaults to 'SUM' (1)</dd>
+<dt><tt>leaf_targetids</tt> : list of ints (required)</dt>
+<dd>The index of the target that this leaf contributes to (this must be in range `[0, n_targets)`).</dd>
+<dt><tt>leaf_weights</tt> : tensor (required)</dt>
+<dd>The weight for each leaf.</dd>
+<dt><tt>membership_values</tt> : tensor</dt>
+<dd>Members to test membership of for each set membership node. List all of the members to test again in the order that the 'BRANCH_MEMBER' mode appears in `node_modes`, delimited by `NaN`s. Will have the same number of sets of values as nodes with mode 'BRANCH_MEMBER'. This may be omitted if the node doesn't contain any 'BRANCH_MEMBER' nodes.</dd>
+<dt><tt>n_targets</tt> : int</dt>
+<dd>The total number of targets.</dd>
+<dt><tt>nodes_falseleafs</tt> : list of ints (required)</dt>
+<dd>1 if false branch is leaf for each node and 0 if an interior node. To represent a tree that is a leaf (only has one node), one can do so by having a single `nodes_*` entry with true and false branches referencing the same `leaf_*` entry</dd>
+<dt><tt>nodes_falsenodeids</tt> : list of ints (required)</dt>
+<dd>If `nodes_falseleafs` is false at an entry, this represents the position of the false branch node. This position can be used to index into a `nodes_*` entry. If `nodes_falseleafs` is false, it is an index into the leaf_* attributes.</dd>
+<dt><tt>nodes_featureids</tt> : list of ints (required)</dt>
+<dd>Feature id for each node.</dd>
+<dt><tt>nodes_hitrates</tt> : tensor</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
+<dd>For each node, define whether to follow the true branch (if attribute value is 1) or false branch (if attribute value is 0) in the presence of a NaN input feature. This attribute may be left undefined and the default value is false (0) for all nodes.</dd>
+<dt><tt>nodes_modes</tt> : tensor (required)</dt>
+<dd>The comparison operation performed by the node. This is encoded as an enumeration of 0 ('BRANCH_LEQ'), 1 ('BRANCH_LT'), 2 ('BRANCH_GTE'), 3 ('BRANCH_GT'), 4 ('BRANCH_EQ'), 5 ('BRANCH_NEQ'), and 6 ('BRANCH_MEMBER'). Note this is a tensor of type uint8.</dd>
+<dt><tt>nodes_splits</tt> : tensor (required)</dt>
+<dd>Thresholds to do the splitting on for each node with mode that is not 'BRANCH_MEMBER'.</dd>
+<dt><tt>nodes_trueleafs</tt> : list of ints (required)</dt>
+<dd>1 if true branch is leaf for each node and 0 an interior node. To represent a tree that is a leaf (only has one node), one can do so by having a single `nodes_*` entry with true and false branches referencing the same `leaf_*` entry</dd>
+<dt><tt>nodes_truenodeids</tt> : list of ints (required)</dt>
+<dd>If `nodes_trueleafs` is false at an entry, this represents the position of the true branch node. This position can be used to index into a `nodes_*` entry. If `nodes_trueleafs` is false, it is an index into the leaf_* attributes.</dd>
+<dt><tt>post_transform</tt> : int (default is 0)</dt>
+<dd>Indicates the transform to apply to the score. <br>One of 'NONE' (0), 'SOFTMAX' (1), 'LOGISTIC' (2), 'SOFTMAX_ZERO' (3) or 'PROBIT' (4), defaults to 'NONE' (0)</dd>
+<dt><tt>tree_roots</tt> : list of ints (required)</dt>
+<dd>Index into `nodes_*` for the root of each tree. The tree structure is derived from the branching of each node.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input of shape [Batch Size, Number of Features]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output of shape [Batch Size, Number of targets]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(float16)</dt>
+<dd>The input type must be a tensor of a numeric type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.TreeEnsembleClassifier-5"></a>**ai.onnx.ml.TreeEnsembleClassifier-5** (deprecated)</a>
+
+  This operator is DEPRECATED. Please use TreeEnsemble with provides similar functionality.
+      In order to determine the top class, the ArgMax node can be applied to the output of TreeEnsemble.
+      To encode class labels, use a LabelEncoder operator.
+      Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
+      The attributes named 'nodes_X' form a sequence of tuples, associated by
+      index into the sequences, which must all be of equal length. These tuples
+      define the nodes.<br>
+      Similarly, all fields prefixed with 'class_' are tuples of votes at the leaves.
+      A leaf may have multiple votes, where each vote is weighted by
+      the associated class_weights index.<br>
+      One and only one of classlabels_strings or classlabels_int64s
+      will be defined. The class_ids are indices into this list.
+      All fields ending with <i>_as_tensor</i> can be used instead of the
+      same parameter without the suffix if the element type is double and not float.
+
+#### Version
+
+This version of the operator has been deprecated since version 5 of the 'ai.onnx.ml' operator set.
+
+### <a name="ai.onnx.ml.TreeEnsembleRegressor-5"></a>**ai.onnx.ml.TreeEnsembleRegressor-5** (deprecated)</a>
+
+  This operator is DEPRECATED. Please use TreeEnsemble instead which provides the same
+      functionality.<br>
+      Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
+      All args with nodes_ are fields of a tuple of tree nodes, and
+      it is assumed they are the same length, and an index i will decode the
+      tuple across these inputs.  Each node id can appear only once
+      for each tree id.<br>
+      All fields prefixed with target_ are tuples of votes at the leaves.<br>
+      A leaf may have multiple votes, where each vote is weighted by
+      the associated target_weights index.<br>
+      All fields ending with <i>_as_tensor</i> can be used instead of the
+      same parameter without the suffix if the element type is double and not float.
+      All trees must have their node ids start at 0 and increment by 1.<br>
+      Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
+
+#### Version
+
+This version of the operator has been deprecated since version 5 of the 'ai.onnx.ml' operator set.
 

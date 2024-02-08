@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 2/18 (11.11%, 0 generators excluded) common operators.
+Node tests have covered 4/19 (21.05%, 0 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -66,6 +66,228 @@ expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
 </details>
 
 
+### LabelEncoder
+There are 2 test cases, listed as following:
+<details>
+<summary>string_int_label_encoder</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=["a", "b", "c"],
+    values_int64s=[0, 1, 2],
+    default_int64=42,
+)
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, 42, 2, 42]).astype(np.int64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int",
+)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=["a", "b", "c"],
+    values_int64s=[0, 1, 2],
+)
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, -1, 2, -1]).astype(np.int64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int_no_default",
+)
+```
+
+</details>
+<details>
+<summary>tensor_based_label_encoder</summary>
+
+```python
+tensor_keys = make_tensor(
+    "keys_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
+)
+repeated_string_keys = ["a", "b", "c"]
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, 42, 2, 42]).astype(np.int16)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_tensor=tensor_keys,
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_mapping",
+)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=repeated_string_keys,
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_value_only_mapping",
+)
+```
+
+</details>
+
+
+### TreeEnsemble
+There are 2 test cases, listed as following:
+<details>
+<summary>tree_ensemble_set_membership</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TreeEnsemble",
+    ["X"],
+    ["Y"],
+    domain="ai.onnx.ml",
+    n_targets=4,
+    aggregate_function=1,
+    membership_values=make_tensor(
+        "membership_values",
+        onnx.TensorProto.FLOAT,
+        (8,),
+        [1.2, 3.7, 8, 9, np.nan, 12, 7, np.nan],
+    ),
+    nodes_missing_value_tracks_true=None,
+    nodes_hitrates=None,
+    post_transform=0,
+    tree_roots=[0],
+    nodes_modes=make_tensor(
+        "nodes_modes",
+        onnx.TensorProto.UINT8,
+        (3,),
+        np.array([0, 6, 6], dtype=np.uint8),
+    ),
+    nodes_featureids=[0, 0, 0],
+    nodes_splits=make_tensor(
+        "nodes_splits",
+        onnx.TensorProto.FLOAT,
+        (3,),
+        np.array([11, 232344.0, np.nan], dtype=np.float32),
+    ),
+    nodes_trueleafs=[0, 1, 1],
+    nodes_truenodeids=[1, 0, 1],
+    nodes_falseleafs=[1, 0, 1],
+    nodes_falsenodeids=[2, 2, 3],
+    leaf_targetids=[0, 1, 2, 3],
+    leaf_weights=make_tensor(
+        "leaf_weights", onnx.TensorProto.FLOAT, (4,), [1, 10, 1000, 100]
+    ),
+)
+
+x = np.array([1.2, 3.4, -0.12, np.nan, 12, 7], np.float32).reshape(-1, 1)
+expected = np.array(
+    [
+        [1, 0, 0, 0],
+        [0, 0, 0, 100],
+        [0, 0, 0, 100],
+        [0, 0, 1000, 0],
+        [0, 0, 1000, 0],
+        [0, 10, 0, 0],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[x],
+    outputs=[expected],
+    name="test_ai_onnx_ml_tree_ensemble_set_membership",
+)
+```
+
+</details>
+<details>
+<summary>tree_ensemble_single_tree</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TreeEnsemble",
+    ["X"],
+    ["Y"],
+    domain="ai.onnx.ml",
+    n_targets=2,
+    membership_values=None,
+    nodes_missing_value_tracks_true=None,
+    nodes_hitrates=None,
+    aggregate_function=1,
+    post_transform=0,
+    tree_roots=[0],
+    nodes_modes=make_tensor(
+        "nodes_modes",
+        onnx.TensorProto.UINT8,
+        (3,),
+        np.array([0, 0, 0], dtype=np.uint8),
+    ),
+    nodes_featureids=[0, 0, 0],
+    nodes_splits=make_tensor(
+        "nodes_splits",
+        onnx.TensorProto.DOUBLE,
+        (3,),
+        np.array([3.14, 1.2, 4.2], dtype=np.float64),
+    ),
+    nodes_truenodeids=[1, 0, 1],
+    nodes_trueleafs=[0, 1, 1],
+    nodes_falsenodeids=[2, 2, 3],
+    nodes_falseleafs=[0, 1, 1],
+    leaf_targetids=[0, 1, 0, 1],
+    leaf_weights=make_tensor(
+        "leaf_weights",
+        onnx.TensorProto.DOUBLE,
+        (4,),
+        np.array([5.23, 12.12, -12.23, 7.21], dtype=np.float64),
+    ),
+)
+
+x = np.array([1.2, 3.4, -0.12, 1.66, 4.14, 1.77], np.float64).reshape(3, 2)
+y = np.array([[5.23, 0], [5.23, 0], [0, 12.12]], dtype=np.float64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_tree_ensemble_single_tree",
+)
+```
+
+</details>
+
+
 <br/>
 
 ## &#x1F494;No Cover Common Operators
@@ -82,9 +304,6 @@ expect(node, inputs=[x], outputs=[y], name="test_ai_onnx_ml_binarizer")
 
 
 ### Imputer (call for test cases)
-
-
-### LabelEncoder (call for test cases)
 
 
 ### LinearClassifier (call for test cases)

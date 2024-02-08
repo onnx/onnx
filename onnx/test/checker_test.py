@@ -1,11 +1,15 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
+import os
+import tempfile
 import unittest
 from typing import Sequence
 
 import numpy as np
 
 import onnx.defs
-import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
+import onnx.parser
 from onnx import (
     GraphProto,
     SparseTensorProto,
@@ -69,19 +73,19 @@ class TestChecker(unittest.TestCase):
     def test_check_function_nested(self) -> None:
         func_domain = "local"
         func_nested_opset_imports = [
-            onnx.helper.make_opsetid("", 14),
-            onnx.helper.make_opsetid(func_domain, 1),
+            helper.make_opsetid("", 14),
+            helper.make_opsetid(func_domain, 1),
         ]
         # nested identity/add function
         func_nested_identity_add_name = "func_nested_identity_add"
         func_nested_identity_add_inputs = ["a", "b"]
         func_nested_identity_add_outputs = ["c"]
         func_nested_identity_add_nodes = [
-            onnx.helper.make_node("func_identity", ["a"], ["a1"], domain=func_domain),
-            onnx.helper.make_node("func_identity", ["b"], ["b1"], domain=func_domain),
-            onnx.helper.make_node("func_add", ["a1", "b1"], ["c"], domain=func_domain),
+            helper.make_node("func_identity", ["a"], ["a1"], domain=func_domain),
+            helper.make_node("func_identity", ["b"], ["b1"], domain=func_domain),
+            helper.make_node("func_add", ["a1", "b1"], ["c"], domain=func_domain),
         ]
-        func_nested_identity_add = onnx.helper.make_function(
+        func_nested_identity_add = helper.make_function(
             func_domain,
             func_nested_identity_add_name,
             func_nested_identity_add_inputs,
@@ -89,15 +93,17 @@ class TestChecker(unittest.TestCase):
             func_nested_identity_add_nodes,
             func_nested_opset_imports,
         )
-        onnx.checker.check_function(func_nested_identity_add)
+        checker.check_function(func_nested_identity_add)
 
     def test_check_graph_ir_version_3(self) -> None:
-        ctx = C.CheckerContext()
+        ctx = checker.C.CheckerContext()
         ctx.ir_version = 3
         ctx.opset_imports = {"": onnx.defs.onnx_opset_version()}
 
+        lex_ctx = checker.C.LexicalScopeContext()
+
         def check_ir_version_3(g: GraphProto) -> None:
-            checker.check_graph(g, ctx)
+            checker.check_graph(g, ctx, lex_ctx)
 
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
         graph = helper.make_graph(
@@ -1023,6 +1029,52 @@ class TestChecker(unittest.TestCase):
         self.assertRaises(
             shape_inference.InferenceError, checker.check_model, model, True
         )
+
+    def test_empty_list_attribute(self):
+        model = onnx.parser.parse_model(
+            """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 17]
+            >
+            agraph (float[N] x) => (int64[M] y)
+            {
+                y = Constant <value_ints: ints = []>()
+            }
+        """
+        )
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
+        model = onnx.parser.parse_model(
+            """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 17]
+            >
+            agraph (float[N] x) => (float[M] y)
+            {
+                y = Constant <value_floats: floats = []>()
+            }
+        """
+        )
+        # Should not throw an error
+        checker.check_model(model, full_check=True)
+
+    def test_check_model_supports_unicode_path(self):
+        input_tensor = helper.make_tensor_value_info(
+            "input", onnx.TensorProto.FLOAT, [1]
+        )
+        output_tensor = helper.make_tensor_value_info(
+            "output", onnx.TensorProto.FLOAT, [1]
+        )
+        node = helper.make_node("Identity", ["input"], ["output"])
+        graph = helper.make_graph([node], "test", [input_tensor], [output_tensor])
+        model = helper.make_model(graph, producer_name="test")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            unicode_model_path = os.path.join(temp_dir, "模型モデル모델✨.onnx")
+            onnx.save(model, unicode_model_path)
+            checker.check_model(unicode_model_path, full_check=True)
 
 
 if __name__ == "__main__":

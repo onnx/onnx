@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import unittest
@@ -22,25 +24,19 @@ from onnx import (
 
 
 def _load_model(m_def: str) -> ModelProto:
-    """
-    Parses a model from a string representation, including checking the model for correctness
-    """
+    """Parses a model from a string representation, including checking the model for correctness"""
     m = parser.parse_model(m_def)
     checker.check_model(m)
     return m
 
 
 def _prefixed(prefix: str, s: str) -> str:
-    """
-    Prefixes a string (if not empty)
-    """
+    """Prefixes a string (if not empty)"""
     return prefix + s if len(s) > 0 else s
 
 
 def _get_shape(value_info: ValueInfoProto) -> List[int]:
-    """
-    Returns a list of integers representing the shape of the provided ValueInfoProto
-    """
+    """Returns a list of integers representing the shape of the provided ValueInfoProto"""
     return [
         value_info.type.tensor_type.shape.dim[d].dim_value
         for d in range(len(value_info.type.tensor_type.shape.dim))
@@ -74,7 +70,7 @@ M1_DEF = """
         ir_version: 7,
         opset_import: [ "": 10, "com.microsoft": 1]
     >
-    agraph (float[N, M] A0, float[N, M] A1) => (float[N, M] B00, float[N, M] B10, float[N, M] B20)
+    agraph (float[N, M] A0, float[N, M] A1, float[N, M] _A) => (float[N, M] B00, float[N, M] B10, float[N, M] B20)
     {
         B00 = Add(A0, A1)
         B10 = Sub(A0, A1)
@@ -133,8 +129,7 @@ class TestComposeFunctions(unittest.TestCase):
         check_expectations(m1.graph, m2.graph, m3.graph)
 
     def test_case_connect_all_no_name_collision(self) -> None:
-        """
-        Tests a simple scenario where two models without overlapping names are merged by
+        """Tests a simple scenario where two models without overlapping names are merged by
         connecting all the outputs in the first models to all the inputs in the second model
         """
 
@@ -150,8 +145,7 @@ class TestComposeFunctions(unittest.TestCase):
         self._test_merge_models(M1_DEF, M2_DEF, io_map, check_expectations)
 
     def test_case_connect_same_output_twice(self) -> None:
-        """
-        Tests a scenario where we merge two models by connecting a single output in the first model
+        """Tests a scenario where we merge two models by connecting a single output in the first model
         to all the inputs in the second
         """
 
@@ -168,8 +162,7 @@ class TestComposeFunctions(unittest.TestCase):
         self._test_merge_models(M1_DEF, M2_DEF, io_map, check_expectations)
 
     def test_case_connect_same_output_drop_outputs(self) -> None:
-        """
-        Tests a scenario where we merge two models by connecting a single output in the first model
+        """Tests a scenario where we merge two models by connecting a single output in the first model
         to all the inputs in the second, while dropping the rest of the outputs in the first model
         """
 
@@ -188,11 +181,9 @@ class TestComposeFunctions(unittest.TestCase):
         )
 
     def test_case_connect_same_input_output_name(self) -> None:
-        """
-        Tests a scenario where we merge two models, where the inputs/outputs connected
+        """Tests a scenario where we merge two models, where the inputs/outputs connected
         are named exactly the same
         """
-
         m1_def = """
             <
                 ir_version: 7,
@@ -224,10 +215,7 @@ class TestComposeFunctions(unittest.TestCase):
         self._test_merge_models(m1_def, m2_def, io_map, check_expectations)
 
     def test_case_drop_inputs_outputs(self) -> None:
-        """
-        Tests a scenario where we merge two models, not including some of the inputs/outputs
-        """
-
+        """Tests a scenario where we merge two models, not including some of the inputs/outputs"""
         m1_def = """
             <
                 ir_version: 7,
@@ -266,11 +254,9 @@ class TestComposeFunctions(unittest.TestCase):
         )
 
     def test_case_name_collision_prefix(self) -> None:
-        """
-        Tests a scenario where we merge two models that have name collisions, but they
+        """Tests a scenario where we merge two models that have name collisions, but they
         are avoided by prefixing the models model.
         """
-
         m1_def = """
             <
                 ir_version: 7,
@@ -295,8 +281,7 @@ class TestComposeFunctions(unittest.TestCase):
         )
 
     def test_case_connect_partially_no_name_collision(self) -> None:
-        """
-        Tests a scenario where two models without overlapping names are merged by
+        """Tests a scenario where two models without overlapping names are merged by
         connecting some outputs from the first model to some inputs in the second.
         The remaining inputs/outputs should be present in the combined model
         """
@@ -306,7 +291,9 @@ class TestComposeFunctions(unittest.TestCase):
 
             # B20 <-> B21 not connected. They should still be present
             # in the inputs and outputs of the combined graph
-            self.assertEqual(["A0", "A1", "B21"], [elem.name for elem in g4.input])
+            self.assertEqual(
+                ["A0", "A1", "_A", "B21"], [elem.name for elem in g4.input]
+            )
             self.assertEqual(["B20", "D0"], [elem.name for elem in g4.output])
 
         io_map = [("B00", "B01"), ("B10", "B11")]
@@ -333,9 +320,7 @@ class TestComposeFunctions(unittest.TestCase):
         self.assertRaises(ValueError, compose.merge_models, m1, m2, io_map=io_map)
 
     def test_error_wrong_input_output_name(self) -> None:
-        """
-        Tests that providing a non existing output/input name in the io_map argument produces an error.
-        """
+        """Tests that providing a non existing output/input name in the io_map argument produces an error."""
         m1, m2 = _load_model(M1_DEF), _load_model(M2_DEF)
 
         self.assertRaises(
@@ -404,7 +389,8 @@ class TestComposeFunctions(unittest.TestCase):
         m3 = compose.merge_models(m1, m2, io_map=io_map)
         checker.check_model(m3)
 
-    def _test_add_prefix(  # pylint: disable=too-many-branches
+    # FIXME: This function should be removed, as tests should not contain a copy of the tested logic.
+    def _test_add_prefix(
         self,
         rename_nodes: bool = False,
         rename_edges: bool = False,
@@ -462,13 +448,12 @@ class TestComposeFunctions(unittest.TestCase):
                         name_mapping[e] = _prefixed(prefix, e)
                     for e in n.output:
                         name_mapping[e] = _prefixed(prefix, e)
-            else:
-                if rename_inputs:
-                    for elem in g_in.input:
-                        name_mapping[elem.name] = _prefixed(prefix, elem.name)
-                if rename_outputs:
-                    for elem in g_in.output:
-                        name_mapping[elem.name] = _prefixed(prefix, elem.name)
+            if rename_inputs:
+                for elem in g_in.input:
+                    name_mapping[elem.name] = _prefixed(prefix, elem.name)
+            if rename_outputs:
+                for elem in g_in.output:
+                    name_mapping[elem.name] = _prefixed(prefix, elem.name)
 
             if rename_initializers:
                 for init in g_in.initializer:
@@ -522,33 +507,23 @@ class TestComposeFunctions(unittest.TestCase):
                     self.assertEqual(_prefixed(prefix, n0.name), n1.name)
 
     def test_add_prefix_nodes(self) -> None:
-        """
-        Tests renaming nodes only
-        """
+        """Tests renaming nodes only"""
         self._test_add_prefix(rename_nodes=True)
 
     def test_add_prefix_edges(self) -> None:
-        """
-        Tests prefixing nodes edges. This will also rename inputs/outputs, since the names are shared
-        """
+        """Tests prefixing nodes edges. This will also rename inputs/outputs, since the names are shared"""
         self._test_add_prefix(rename_edges=True)
 
     def test_add_prefix_inputs(self) -> None:
-        """
-        Tests prefixing graph inputs only. Relevant node edges should be renamed as well
-        """
+        """Tests prefixing graph inputs only. Relevant node edges should be renamed as well"""
         self._test_add_prefix(rename_inputs=True)
 
     def test_add_prefix_outputs(self) -> None:
-        """
-        Tests prefixing graph outputs only. Relevant node edges should be renamed as well
-        """
+        """Tests prefixing graph outputs only. Relevant node edges should be renamed as well"""
         self._test_add_prefix(rename_outputs=True)
 
     def test_add_prefix_attribute_subgraph(self) -> None:
-        """
-        Tests prefixing attribute's subgraph. Relevant subgraph should be renamed as well
-        """
+        """Tests prefixing attribute's subgraph. Relevant subgraph should be renamed as well"""
         C = helper.make_tensor_value_info("C", TensorProto.BOOL, [1])
         X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [None, 1])
         Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [None, 1])
@@ -593,20 +568,15 @@ class TestComposeFunctions(unittest.TestCase):
                             self.assertEqual(_prefixed(prefix, output_n0), output_n1)
 
     def test_add_prefix_all(self) -> None:
-        """
-        Tests prefixing all names in the graph
-        """
+        """Tests prefixing all names in the graph"""
         self._test_add_prefix(True, True, True, True, True, True)
 
     def test_add_prefix_inplace(self) -> None:
-        """
-        Tests prefixing inplace
-        """
+        """Tests prefixing inplace"""
         self._test_add_prefix(inplace=True)
 
     def test_expand_out_dim(self) -> None:
-        """
-        Tests expanding output dimensions. The resulting graph should have the same output names,
+        """Tests expanding output dimensions. The resulting graph should have the same output names,
         but with one more dimension at the specified index.
         """
         m1 = _load_model(M1_DEF)
@@ -734,24 +704,24 @@ class TestComposeFunctions(unittest.TestCase):
         overlapping_inputs = list(set(inputs0) & set(inputs1))
         overlapping_outputs = list(set(outputs0) & set(outputs1))
         overlapping_edges = list(set(overlapping_inputs + overlapping_outputs))
-        if len(overlapping_edges) > 0:
+        if overlapping_edges:
             self.assertEqual(overlap[i], ("edge", overlapping_edges))
             i += 1
 
         overlapping_vis = list(set(value_info0) & set(value_info1))
-        if len(overlapping_vis) > 0:
+        if overlapping_vis:
             self.assertEqual(overlap[i], ("value_info", overlapping_vis))
             i += 1
 
         overlapping_init = list(set(initializer0) & set(initializer1))
-        if len(overlapping_init) > 0:
+        if overlapping_init:
             self.assertEqual(overlap[i], ("initializer", overlapping_init))
             i += 1
 
         overlapping_sparse_init = list(
             set(sparse_initializer0) & set(sparse_initializer1)
         )
-        if len(overlapping_sparse_init) > 0:
+        if overlapping_sparse_init:
             expected_overlap = []
             for overlapping_name in overlapping_sparse_init:
                 expected_overlap.append(overlapping_name + "_values")
@@ -764,46 +734,34 @@ class TestComposeFunctions(unittest.TestCase):
         self.assertEqual(0, len(overlap))
 
     def test_overlapping_input_names(self) -> None:
-        """
-        Tests error checking when the name of the inputs overlaps
-        """
+        """Tests error checking when the name of the inputs overlaps"""
         self._test_overlapping_names(inputs0=["i0", "i1"], inputs1=["i1", "i2"])
 
     def test_overlapping_output_names(self) -> None:
-        """
-        Tests error checking when the name of the output overlaps
-        """
+        """Tests error checking when the name of the output overlaps"""
         self._test_overlapping_names(outputs0=["o0", "o1"], outputs1=["o1", "o2"])
 
     def test_overlapping_value_info_names(self) -> None:
-        """
-        Tests error checking when the name of value_info entries overlaps
-        """
+        """Tests error checking when the name of value_info entries overlaps"""
         self._test_overlapping_names(
             value_info0=["vi0", "vi1"], value_info1=["vi1", "vi2"]
         )
 
     def test_overlapping_initializer_names(self) -> None:
-        """
-        Tests error checking when the name of initializer entries overlaps
-        """
+        """Tests error checking when the name of initializer entries overlaps"""
         self._test_overlapping_names(
             initializer0=["init0", "init1"], initializer1=["init1", "init2"]
         )
 
     def test_overlapping_sparse_initializer_names(self) -> None:
-        """
-        Tests error checking when the name of sparse_initializer entries overlaps
-        """
+        """Tests error checking when the name of sparse_initializer entries overlaps"""
         self._test_overlapping_names(
             sparse_initializer0=["sparse_init0", "sparse_init1"],
             sparse_initializer1=["sparse_init1", "sparse_init2"],
         )
 
     def test_overlapping_function_names(self) -> None:
-        """
-        Tests error checking when the name of local function entries overlaps
-        """
+        """Tests error checking when the name of local function entries overlaps"""
         ops = [helper.make_opsetid("", 10), helper.make_opsetid("local", 10)]
 
         def _make_function(
@@ -940,9 +898,7 @@ class TestComposeFunctions(unittest.TestCase):
         )
 
     def test_merge_drop_unnecessary_initializers_and_value_info(self) -> None:
-        """
-        Tests automatic removal of initializers when merging graphs
-        """
+        """Tests automatic removal of initializers when merging graphs"""
         ops = [helper.make_opsetid("", 10)]
 
         g = GraphProto()

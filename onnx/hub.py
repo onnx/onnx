@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 """ONNX Model Hub
 
@@ -25,8 +27,7 @@ else:
 
 
 class ModelInfo:
-    """
-    A class to represent a model's property and metadata in the ONNX Hub.
+    """A class to represent a model's property and metadata in the ONNX Hub.
     It extracts model name, path, sha, tags, etc. from the passed in raw_model_info dict.
 
     Attributes:
@@ -39,8 +40,9 @@ class ModelInfo:
     """
 
     def __init__(self, raw_model_info: Dict[str, Any]) -> None:
-        """
-        Parameters:
+        """Initializer.
+
+        Args:
             raw_model_info: A JSON dict containing the model info.
         """
         self.model = cast(str, raw_model_info["model"])
@@ -66,28 +68,26 @@ class ModelInfo:
 
 
 def set_dir(new_dir: str) -> None:
-    """
-    Sets the current ONNX hub cache location
+    """Sets the current ONNX hub cache location.
 
-    :param new_dir: location of new model hub cache
+    Args:
+        new_dir: Location of new model hub cache.
     """
-    global _ONNX_HUB_DIR  # pylint: disable=global-statement
+    global _ONNX_HUB_DIR  # noqa: PLW0603
     _ONNX_HUB_DIR = new_dir
 
 
 def get_dir() -> str:
-    """
-    Gets the current ONNX hub cache location
+    """Gets the current ONNX hub cache location.
 
-    :return: The location of the ONNX hub model cache
+    Returns:
+        The location of the ONNX hub model cache.
     """
     return _ONNX_HUB_DIR
 
 
 def _parse_repo_info(repo: str) -> Tuple[str, str, str]:
-    """
-    Gets the repo owner, name and ref from a repo specification string.
-    """
+    """Gets the repo owner, name and ref from a repo specification string."""
     repo_owner = repo.split(":")[0].split("/")[0]
     repo_name = repo.split(":")[0].split("/")[1]
     if ":" in repo:
@@ -98,8 +98,7 @@ def _parse_repo_info(repo: str) -> Tuple[str, str, str]:
 
 
 def _verify_repo_ref(repo: str) -> bool:
-    """
-    Verifies whether the given model repo can be trusted.
+    """Verifies whether the given model repo can be trusted.
     A model repo can be trusted if it matches onnx/models:main.
     """
     repo_owner, repo_name, repo_ref = _parse_repo_info(repo)
@@ -107,13 +106,16 @@ def _verify_repo_ref(repo: str) -> bool:
 
 
 def _get_base_url(repo: str, lfs: bool = False) -> str:
-    """
-    Gets the base github url from a repo specification string
+    """Gets the base github url from a repo specification string.
 
-    :param repo: The location of the model repo in format "user/repo[:branch]".
-        If no branch is found will default to "main"
-    :param lfs: whether the url is for downloading lfs models
-    :return: the base github url for downloading
+    Args:
+        repo: The location of the model repo in format
+            "user/repo[:branch]". If no branch is found will default to
+            "main".
+        lfs: Whether the url is for downloading lfs models.
+
+    Returns:
+        The base github url for downloading.
     """
     repo_owner, repo_name, repo_ref = _parse_repo_info(repo)
 
@@ -123,11 +125,11 @@ def _get_base_url(repo: str, lfs: bool = False) -> str:
 
 
 def _download_file(url: str, file_name: str) -> None:
-    """
-    Downloads the file with specifed file_name from the url
+    """Downloads the file with specified file_name from the url.
 
-    :param url: a url of download link
-    :param file_name: a specified file name for the downloaded file
+    Args:
+        url: A url of download link.
+        file_name: A specified file name for the downloaded file.
     """
     chunk_size = 16384  # 1024 * 16
     with urlopen(url) as response, open(file_name, "wb") as f:
@@ -144,14 +146,19 @@ def list_models(
     model: Optional[str] = None,
     tags: Optional[List[str]] = None,
 ) -> List[ModelInfo]:
-    """
-    Gets the list of model info consistent with a given name and tags
+    """Gets the list of model info consistent with a given name and tags
 
-    :param repo: The location of the model repo in format "user/repo[:branch]".
-        If no branch is found will default to "main"
-    :param model: The name of the model to search for. If `None`, will return all models with matching tags.
-    :param tags: A list of tags to filter models by. If `None`, will return all models with matching name.
-    :return: list of ModelInfo
+    Args:
+        repo: The location of the model repo in format
+            "user/repo[:branch]". If no branch is found will default to
+            "main"
+        model: The name of the model to search for. If `None`, will
+            return all models with matching tags.
+        tags: A list of tags to filter models by. If `None`, will return
+            all models with matching name.
+
+    Returns:
+        ``ModelInfo``s.
     """
     base_url = _get_base_url(repo)
     manifest_url = base_url + "ONNX_HUB_MANIFEST.json"
@@ -186,14 +193,19 @@ def list_models(
 def get_model_info(
     model: str, repo: str = "onnx/models:main", opset: Optional[int] = None
 ) -> ModelInfo:
-    """
-    Gets the model info matching the given name and opset.
+    """Gets the model info matching the given name and opset.
 
-    :param model: The name of the onnx model in the manifest. This field is case-sensitive
-    :param repo: The location of the model repo in format "user/repo[:branch]".
-        If no branch is found will default to "main"
-    :param opset: The opset of the model to get. The default of `None` will return the model with largest opset.
-    :return: ModelInfo
+    Args:
+        model: The name of the onnx model in the manifest. This field is
+            case-sensitive
+        repo: The location of the model repo in format
+            "user/repo[:branch]". If no branch is found will default to
+            "main"
+        opset: The opset of the model to get. The default of `None` will
+            return the model with largest opset.
+
+    Returns:
+        ``ModelInfo``.
     """
     matching_models = list_models(repo, model)
     if not matching_models:
@@ -203,7 +215,7 @@ def get_model_info(
         selected_models = sorted(matching_models, key=lambda m: -m.opset)
     else:
         selected_models = [m for m in matching_models if m.opset == opset]
-        if len(selected_models) == 0:
+        if not selected_models:
             valid_opsets = [m.opset for m in matching_models]
             raise AssertionError(
                 f"{model} has no version with opset {opset}. Valid opsets: {valid_opsets}"
@@ -218,16 +230,23 @@ def load(
     force_reload: bool = False,
     silent: bool = False,
 ) -> Optional[onnx.ModelProto]:
-    """
-    Downloads a model by name from the onnx model hub
+    """Downloads a model by name from the onnx model hub.
 
-    :param model: The name of the onnx model in the manifest. This field is case-sensitive
-    :param repo: The location of the model repo in format "user/repo[:branch]".
-        If no branch is found will default to "main"
-    :param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
-    :param force_reload: Whether to force the model to re-download even if its already found in the cache
-    :param silent: Whether to suppress the warning message if the repo is not trusted.
-    :return: ModelProto or None
+    Args:
+        model: The name of the onnx model in the manifest. This field is
+            case-sensitive
+        repo: The location of the model repo in format
+            "user/repo[:branch]". If no branch is found will default to
+            "main"
+        opset: The opset of the model to download. The default of `None`
+            automatically chooses the largest opset
+        force_reload: Whether to force the model to re-download even if
+            its already found in the cache
+        silent: Whether to suppress the warning message if the repo is
+            not trusted.
+
+    Returns:
+        ModelProto or None
     """
     selected_model = get_model_info(model, repo, opset)
     local_model_path_arr = selected_model.model_path.split("/")
@@ -260,10 +279,10 @@ def load(
         downloaded_sha = hashlib.sha256(model_bytes).hexdigest()
         if not downloaded_sha == selected_model.model_sha:
             raise AssertionError(
-                (
-                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {selected_model.model_sha}."
-                    + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
-                )
+                f"The cached model {selected_model.model} has SHA256 {downloaded_sha} "
+                f"while checksum should be {selected_model.model_sha}. "
+                "The model in the hub may have been updated. Use force_reload to "
+                "download the model from the model hub."
             )
 
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
@@ -276,16 +295,23 @@ def download_model_with_test_data(
     force_reload: bool = False,
     silent: bool = False,
 ) -> Optional[str]:
-    """
-    Downloads a model along with test data by name from the onnx model hub and returns the directory to which the files have been extracted.
+    """Downloads a model along with test data by name from the onnx model hub and returns the directory to which the files have been extracted.
 
-    :param model: The name of the onnx model in the manifest. This field is case-sensitive
-    :param repo: The location of the model repo in format "user/repo[:branch]".
-        If no branch is found will default to "main"
-    :param opset: The opset of the model to download. The default of `None` automatically chooses the largest opset
-    :param force_reload: Whether to force the model to re-download even if its already found in the cache
-    :param silent: Whether to suppress the warning message if the repo is not trusted.
-    :return: str or None
+    Args:
+        model: The name of the onnx model in the manifest. This field is
+            case-sensitive
+        repo: The location of the model repo in format
+            "user/repo[:branch]". If no branch is found will default to
+            "main"
+        opset: The opset of the model to download. The default of `None`
+            automatically chooses the largest opset
+        force_reload: Whether to force the model to re-download even if
+            its already found in the cache
+        silent: Whether to suppress the warning message if the repo is
+            not trusted.
+
+    Returns:
+        str or None
     """
     selected_model = get_model_info(model, repo, opset)
 
@@ -329,10 +355,10 @@ def download_model_with_test_data(
         downloaded_sha = hashlib.sha256(model_with_data_bytes).hexdigest()
         if not downloaded_sha == model_with_data_sha:
             raise AssertionError(
-                (
-                    f"The cached model {selected_model.model} has SHA256 {downloaded_sha} while checksum should be {model_with_data_sha}."
-                    + "The model in the hub may have been updated. Use force_reload to download the model from the model hub."
-                )
+                f"The cached model {selected_model.model} has SHA256 {downloaded_sha} "
+                f"while checksum should be {model_with_data_sha}. "
+                "The model in the hub may have been updated. Use force_reload to "
+                "download the model from the model hub."
             )
 
     with tarfile.open(local_model_with_data_path) as model_with_data_zipped:
@@ -348,3 +374,105 @@ def download_model_with_test_data(
     )
 
     return model_with_data_path
+
+
+def load_composite_model(
+    network_model: str,
+    preprocessing_model: str,
+    network_repo: str = "onnx/models:main",
+    preprocessing_repo: str = "onnx/models:main",
+    opset: Optional[int] = None,
+    force_reload: bool = False,
+    silent: bool = False,
+) -> Optional[onnx.ModelProto]:
+    """Builds a composite model including data preprocessing by downloading a network and a preprocessing model
+    and combine it into a single model
+
+    Args:
+        network_model: The name of the onnx model in the manifest.
+        preprocessing_model: The name of the preprocessing model.
+        network_repo: The location of the model repo in format
+            "user/repo[:branch]". If no branch is found will default to
+            "main"
+        preprocessing_repo: The location of the proprocessing model repo in format
+            "user/repo[:branch]". If no branch is found will default to
+            "main"
+        opset: The opset of the model to download. The default of `None`
+            automatically chooses the largest opset
+        force_reload: Whether to force the model to re-download even if
+            its already found in the cache
+        silent: Whether to suppress the warning message if the repo is
+            not trusted.
+
+    Returns:
+        ModelProto or None
+    """
+    preprocessing = load(
+        preprocessing_model, preprocessing_repo, opset, force_reload, silent
+    )
+    if preprocessing is None:
+        raise RuntimeError(
+            f"Could not load the preprocessing model: {preprocessing_model}"
+        )
+    network = load(network_model, network_repo, opset, force_reload, silent)
+    if network is None:
+        raise RuntimeError(f"Could not load the network model: {network_model}")
+
+    all_domains: Set[str] = set()
+    domains_to_version_network: Dict[str, int] = {}
+    domains_to_version_preprocessing: Dict[str, int] = {}
+
+    for opset_import_entry in network.opset_import:
+        domain = (
+            "ai.onnx" if opset_import_entry.domain == "" else opset_import_entry.domain
+        )
+        all_domains.add(domain)
+        domains_to_version_network[domain] = opset_import_entry.version
+
+    for opset_import_entry in preprocessing.opset_import:
+        domain = (
+            "ai.onnx" if opset_import_entry.domain == "" else opset_import_entry.domain
+        )
+        all_domains.add(domain)
+        domains_to_version_preprocessing[domain] = opset_import_entry.version
+
+    preprocessing_opset_version = -1
+    network_opset_version = -1
+    for domain in all_domains:
+        if domain == "ai.onnx":
+            preprocessing_opset_version = domains_to_version_preprocessing[domain]
+            network_opset_version = domains_to_version_network[domain]
+        elif (
+            domain in domains_to_version_preprocessing
+            and domain in domains_to_version_network
+            and domains_to_version_preprocessing[domain]
+            != domains_to_version_preprocessing[domain]
+        ):
+            raise ValueError(
+                f"Can not merge {preprocessing_model} and {network_model} because they contain "
+                f"different opset versions for domain {domain} ({domains_to_version_preprocessing[domain]}) "
+                f"and {domains_to_version_network[domain]}). Only the default domain can be "
+                "automatically converted to the highest version of the two."
+            )
+    if preprocessing_opset_version > network_opset_version:
+        network = onnx.version_converter.convert_version(
+            network, preprocessing_opset_version
+        )
+        network.ir_version = preprocessing.ir_version
+        onnx.checker.check_model(network)
+    elif network_opset_version > preprocessing_opset_version:
+        preprocessing = onnx.version_converter.convert_version(
+            preprocessing, network_opset_version
+        )
+        preprocessing.ir_version = network.ir_version
+        onnx.checker.check_model(preprocessing)
+
+    io_map = [
+        (out_entry.name, in_entry.name)
+        for out_entry, in_entry in zip(preprocessing.graph.output, network.graph.input)
+    ]
+
+    model_with_preprocessing = onnx.compose.merge_models(
+        preprocessing, network, io_map=io_map
+    )
+    return model_with_preprocessing

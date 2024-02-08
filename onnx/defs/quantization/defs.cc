@@ -7,44 +7,89 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* QuantizeLinear_ver13_doc = R"DOC(
-The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
-The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
-For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
-For (x / y_scale), it's rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
+static const char* QuantizeLinear_ver21_doc = R"DOC(
+The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
+low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
+granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
+For saturation, it saturates according to:
+`uint8`: `[0, 255]`, `int8`: `[-128, 127]`, `uint16`: `[0, 65535]`, `int16`: `[-32768, 32767]`, `uint4`: `[0, 15]`,
+`int4`: `[-8, 7]`.
+For `(x / y_scale)`, it rounds to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+`y_zero_point` and `y` must have the same type.
+`y_zero_point` is usually not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, but
+the quantization formula remains the same for consistency, and the type of the attribute `y_zero_point` still
+determines the quantization type.
+There are three supported quantization granularities, determined by the shape of `y_scale`.
+In all cases, `y_zero_point` must have the same shape as `y_scale`.
+- Per-tensor (per-layer) quantization: `y_scale` is a scalar.
+- Per-axis quantization: The scale must be a 1-D tensor, with the length of the quantization axis. For an input shape
+ `(D0, ..., Di, ..., Dn)` and `axis=i`, `y_scale` is a 1-D tensor of length `Di`.
+- Blocked quantization: The scale's shape is identical to the input's shape, except for one dimension, in which
+  blocking is performed. Given `x` shape `(D0, ..., Di, ..., Dn)`, `axis=i`, and block size `B`: `y_scale` shape is
+  `(D0, ..., ceil(Di/B), ..., Dn)`.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
-    13,
+    21,
     OpSchema()
         .Input(0, "x", "N-D full precision Input tensor to be quantized.", "T1")
         .Input(
             1,
             "y_scale",
-            "Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, "
-            "or a 1-D Tensor for per-axis quantization.",
-            "tensor(float)")
+            "Scale for doing quantization to get `y`. For per-tensor/layer quantization the scale is a scalar, for "
+            "per-axis quantization it is a 1-D Tensor and for blocked quantization it has the same shape as the "
+            "input, except for one dimension in which blocking is performed.",
+            "T1")
         .Input(
             2,
             "y_zero_point",
-            "Zero point for doing quantization to get 'y'. Shape must match y_scale. "
+            "Zero point for doing quantization to get `y`. Shape must match `y_scale`."
             "Default is uint8 with zero point of 0 if it's not specified.",
             "T2",
             OpSchema::Optional)
-        .Output(0, "y", "N-D quantized output tensor. It has same shape as input 'x'.", "T2")
+        .Output(0, "y", "N-D quantized output tensor. It has same shape as input `x`.", "T2")
         .Attr(
             "axis",
-            "(Optional) The axis of the quantization dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
+            "(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked "
+            "quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` "
+            "where `r = rank(input)`.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .TypeConstraint("T1", {"tensor(float)", "tensor(int32)"}, "Constrain 'x' to float or int32 tensor.")
+        .Attr(
+            "saturate",
+            "The parameter defines how the conversion behaves if an input value is out of "
+            "range of the destination type. It only applies for float 8 quantization "
+            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. "
+            "All cases are fully described in two tables inserted in the operator description.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "block_size",
+            "(Optional) The size of the quantization block (number of times every scale is replicated). Used only for "
+            "blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, "
+            "`y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is "
+            "`[ceil(Di/Si), ceil(Di/(Si-1))-1]`",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .TypeConstraint(
+            "T1",
+            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)", "tensor(int32)"},
+            "The type of the input 'x'.")
         .TypeConstraint(
             "T2",
-            {"tensor(int8)", "tensor(uint8)"},
-            "Constrain 'y_zero_point' and 'y' to 8-bit integer tensor.")
-        .SetDoc(QuantizeLinear_ver13_doc)
+            {"tensor(int8)",
+             "tensor(uint8)",
+             "tensor(int16)",
+             "tensor(uint16)",
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)",
+             "tensor(uint4)",
+             "tensor(int4)"},
+            "The type of the input `y_zero_point` and the output `y`.")
+        .SetDoc(QuantizeLinear_ver21_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.hasInput(2)) {
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
@@ -59,64 +104,87 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver13_doc = R"DOC(
-The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
-The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
-for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-`x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
-there's no zero point (zero point is supposed to be 0).
+static const char* DequantizeLinear_ver21_doc = R"DOC(
+The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
+full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
+must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
+a 1-D tensor for per-axis quantization, or have a rank identical to the input for blocked quantization.
+See QuantizeLinear for details on quantization granularity."
+`x_zero_point` and `x` must have the same type. `x` and `y` must have the same shape. In the case of dequantizing
+`int32`, there's no zero point (zero point is supposed to be 0).
+`zero-point` is usually not used in the case of float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz quantization,
+but the dequantization formula remains the same for consistency, and `x_scale` still determines the output type.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
-    13,
+    21,
     OpSchema()
-        .Input(0, "x", "N-D quantized input tensor to be de-quantized.", "T")
+        .Input(0, "x", "N-D quantized input tensor to be de-quantized.", "T1")
         .Input(
             1,
             "x_scale",
-            "Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, "
-            "or a 1-D tensor for per-axis dequantization.",
-            "tensor(float)")
+            "Scale for input `x`. For per-tensor/layer dequantization the scale is a scalar, for "
+            "per per-axis dequantization it is a 1-D Tensor and for blocked dequantization it has the same shape as "
+            "the input, except for one dimension in which blocking is performed.",
+            "T2")
         .Input(
             2,
             "x_zero_point",
-            "Zero point for input 'x'. Shape must match x_scale. "
+            "Zero point for input `x`. Shape must match x_scale. "
             "It's optional. Zero point is 0 when it's not specified.",
-            "T",
+            "T1",
             OpSchema::Optional)
-        .Output(0, "y", "N-D full precision output tensor. It has same shape as input 'x'.", "tensor(float)")
+        .Output(0, "y", "N-D full precision output tensor. It has same shape as input `x`.", "T2")
         .Attr(
             "axis",
-            "(Optional) The axis of the dequantizing dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
+            "(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked "
+            "quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` "
+            "where `r = rank(input)`.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
+        .Attr(
+            "block_size",
+            "(Optional) The size of the quantization block (number of times every scale is replicated). Used only for "
+            "blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, "
+            "`y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is "
+            "`[ceil(Di/Si), ceil(Di/(Si-1))-1]`",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .TypeConstraint(
-            "T",
-            {"tensor(int8)", "tensor(uint8)", "tensor(int32)"},
-            "Constrain 'x_zero_point' and 'x' to 8-bit/32-bit integer tensor.")
-        .SetDoc(DequantizeLinear_ver13_doc)
+            "T1",
+            {"tensor(int8)",
+             "tensor(uint8)",
+             "tensor(int16)",
+             "tensor(uint16)",
+             "tensor(int32)",
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)",
+             "tensor(uint4)",
+             "tensor(int4)"},
+            "The type of the inputs 'x_zero_point' and 'x'.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
+            "'x_scale' determines the output type.")
+        .SetDoc(DequantizeLinear_ver21_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          auto y_type = ctx.getOutputType(0);
-          // only float is supported
-          y_type->mutable_tensor_type()->set_elem_type(ONNX_NAMESPACE::TensorProto::FLOAT);
-
-          if (!hasInputShape(ctx, 0))
-            return;
-
+          propagateElemTypeFromInputToOutput(ctx, 1, 0);
           auto& input_shape = getInputShape(ctx, 0);
           updateOutputShape(ctx, 0, input_shape);
         }));
 
 static const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
-A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+A Function to fuse calculation for Scale, Zero Point and FP32->8Bit conversion of FP32 Input data.
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
 Scale is calculated as:
 ```
-y_scale = (max(x) - min(x))/(qmax - qmin)
+y_scale = (maximum(0, max(x)) - minimum(0, min(x))) / (qmax - qmin)
 ```
 
-* where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+* where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
 * data range is adjusted to include 0.
 
 Zero point is calculated as:

@@ -13,12 +13,16 @@ on:
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
 jobs:
   build:
     if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'test ONNX Model Zoo')
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       name: Checkout repo
     - name: Checkout submodules
       shell: bash
@@ -27,7 +31,7 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     - name: Set up Python
-      uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: '3.10'
     - name: Install dependencies
@@ -47,12 +51,8 @@ jobs:
         export CC=clang
         export CXX=clang++
         export ONNX_ML=1
-        pip install -e .
+        pip install -e . -v
 
     - name: Test all models with onnx.checker, onnx.shape_inference, onnx.version_converter
       run: |
-        cd ..
-        git clone https://github.com/onnx/models.git
-        cd models
-        python ../onnx/workflow_scripts/test_model_zoo.py
-
+        python workflow_scripts/test_model_zoo.py

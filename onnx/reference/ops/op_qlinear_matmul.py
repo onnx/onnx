@@ -1,5 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0913,W0221
+
 
 import numpy as np
 
@@ -20,5 +22,5 @@ class QLinearMatMul(OpRun):
         D = C * (a_scale * b_scale / y_scale)
         if y_zero_point is not None:
             D += y_zero_point
-            return (np.round(D).astype(y_zero_point.dtype),)
-        return (np.round(D).astype(a.dtype),)
+            return (np.rint(D).astype(y_zero_point.dtype),)
+        return (np.rint(D).astype(a.dtype),)

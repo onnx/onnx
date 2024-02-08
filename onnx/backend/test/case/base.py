@@ -1,9 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import inspect
 from collections import defaultdict
 from textwrap import dedent
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any, ClassVar, Dict, List, Tuple, Type
 
 import numpy as np
 
@@ -22,7 +24,7 @@ Snippets: Dict[str, List[Tuple[str, str]]] = defaultdict(list)
 
 
 class _Exporter(type):
-    exports: Dict[str, List[Tuple[str, str]]] = defaultdict(list)
+    exports: ClassVar[Dict[str, List[Tuple[str, str]]]] = defaultdict(list)
 
     def __init__(
         cls, name: str, bases: Tuple[Type[Any], ...], dct: Dict[str, Any]

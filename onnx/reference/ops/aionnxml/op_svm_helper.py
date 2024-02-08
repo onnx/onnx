@@ -1,5 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0911,R0913,R0914,W0221
+
 
 from typing import Any
 
@@ -26,9 +28,7 @@ class SVMAttributes:
 
 
 class SVMCommon:
-    """
-    Base class for SVM.
-    """
+    """Base class for SVM."""
 
     def __init__(self, **kwargs):  # type: ignore
         self.atts = SVMAttributes()

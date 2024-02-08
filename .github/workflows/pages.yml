@@ -13,11 +13,6 @@ permissions:
   pages: write
   id-token: write
 
-# Allow one concurrent deployment
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
   # Single deploy job since we're just deploying
   deploy:
@@ -27,17 +22,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Setup Python
-        uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
           python-version: '3.10'
       - name: Setup Pages
-        uses: actions/configure-pages@7110e9e03ffb4a421945e5d0607007b8e9f1f52b # v3.0.5
+        uses: actions/configure-pages@1f0c5cde4bc74cd7e1254d0cb4de8d49e9068c7d # v4.0.0
       - name: Install Dependencies
         run: |
           python -m pip install --quiet --upgrade pip setuptools wheel
           python -m pip install -r docs/docsgen/source/requirements.txt
+          python -m pip install protobuf==3.20.2
       - name: Uninstall onnx
         run: python -m pip uninstall -y onnx
       - name: Install onnx development version
@@ -45,15 +41,16 @@ jobs:
           sudo apt-get install libprotobuf-dev protobuf-compiler
           git submodule update --init --recursive
           export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-          python setup.py install
+          export ONNX_ML=1
+          pip install .
       - name: Build Docs
         run: |
           cd docs/docsgen
           make html
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@253fd476ed429e83b7aae64a92a75b4ceb1a17cf # v1.0.7
+        uses: actions/upload-pages-artifact@0252fc4ba7626f0298f0cf00902a25c6afc77fa8 # v3.0.0
         with:
           path: 'docs/docsgen/build/html'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@e690f03220f8a0e2d4da521d8b3a50e0b52650e0 # v1.2.6
+        uses: actions/deploy-pages@7a9bd943aa5e5175aeb8502edcc6c1c02d398e10 # v4.0.2

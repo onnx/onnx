@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,10 @@
 // Adapter for Scan in default domain from version 8 to 9
 
 #pragma once
+
+#include <memory>
+#include <utility>
+#include <vector>
 
 #include "onnx/version_converter/adapters/adapter.h"
 
@@ -30,9 +36,7 @@ struct Scan_8_9 final : public Adapter {
 
     node->removeAllInputs();
 
-    if (inputs[0]->uniqueName() != "") {
-      ONNX_ASSERT("Unsupported conversion to opset 9");
-    }
+    ONNX_ASSERTM(inputs[0]->uniqueName() == "", "Unsupported conversion to opset 9");
 
     for (Value* input : inputs) {
       if (!input->sizes().empty()) {

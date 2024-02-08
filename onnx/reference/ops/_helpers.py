@@ -1,4 +1,9 @@
+# Copyright (c) ONNX Project Contributors
+
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
+
 from typing import Any, Dict, Union
 
 from onnx.reference.op_run import OpRun, _split_class_name

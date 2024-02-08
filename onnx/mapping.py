@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 import warnings
 from typing import Any, Dict, NamedTuple, Union, cast
 
@@ -5,9 +9,12 @@ import numpy as np
 
 from onnx import OptionalProto, SequenceProto, TensorProto
 
-TensorDtypeMap = NamedTuple(
-    "TensorDtypeMap", [("np_dtype", np.dtype), ("storage_dtype", int), ("name", str)]
-)
+
+class TensorDtypeMap(NamedTuple):
+    np_dtype: np.dtype
+    storage_dtype: int
+    name: str
+
 
 # tensor_dtype: (numpy type, storage type, string name)
 TENSOR_TYPE_MAP = {
@@ -38,8 +45,7 @@ TENSOR_TYPE_MAP = {
     int(TensorProto.FLOAT16): TensorDtypeMap(
         np.dtype("float16"), int(TensorProto.UINT16), "TensorProto.FLOAT16"
     ),
-    # Native numpy does not support bfloat16 so now use float32 for bf16 values
-    # TODO ONNX should dirtectly use bfloat16 for bf16 values after numpy has supported bfloat16 type
+    # Native numpy does not support bfloat16 so now use float32.
     int(TensorProto.BFLOAT16): TensorDtypeMap(
         np.dtype("float32"), int(TensorProto.UINT16), "TensorProto.BFLOAT16"
     ),
@@ -60,6 +66,26 @@ TENSOR_TYPE_MAP = {
     ),
     int(TensorProto.STRING): TensorDtypeMap(
         np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"
+    ),
+    # Native numpy does not support float8 types, so now use float32 for these types.
+    int(TensorProto.FLOAT8E4M3FN): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FN"
+    ),
+    int(TensorProto.FLOAT8E4M3FNUZ): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FNUZ"
+    ),
+    int(TensorProto.FLOAT8E5M2): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2"
+    ),
+    int(TensorProto.FLOAT8E5M2FNUZ): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2FNUZ"
+    ),
+    # Native numpy does not support uint4/int4 so now use uint8/int8 for these types.
+    int(TensorProto.UINT4): TensorDtypeMap(
+        np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.UINT4"
+    ),
+    int(TensorProto.INT4): TensorDtypeMap(
+        np.dtype("int8"), int(TensorProto.INT32), "TensorProto.INT4"
     ),
 }
 
@@ -126,7 +152,18 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = DeprecatedWarningDict(
 # NP_TYPE_TO_TENSOR_TYPE will be eventually removed in the future
 # and _NP_TYPE_TO_TENSOR_TYPE will only be used internally
 _NP_TYPE_TO_TENSOR_TYPE = {
-    v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items() if k != TensorProto.BFLOAT16
+    v: k
+    for k, v in TENSOR_TYPE_TO_NP_TYPE.items()
+    if k
+    not in (
+        TensorProto.BFLOAT16,
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+        TensorProto.UINT4,
+        TensorProto.INT4,
+    )
 }
 
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
@@ -143,6 +180,7 @@ _STORAGE_TENSOR_TYPE_TO_FIELD = {
     int(TensorProto.FLOAT): "float_data",
     int(TensorProto.INT32): "int32_data",
     int(TensorProto.INT64): "int64_data",
+    int(TensorProto.UINT8): "int32_data",
     int(TensorProto.UINT16): "int32_data",
     int(TensorProto.DOUBLE): "double_data",
     int(TensorProto.COMPLEX64): "float_data",

@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # To get started with Dependabot version updates, you'll need to specify which
 # package ecosystems to update and where the package manifests are located.
 # Please see the documentation for all configuration options:
@@ -8,18 +12,35 @@ updates:
   - package-ecosystem: "pip" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "weekly"
-    # disable version updates for pip dependencies 
-    open-pull-requests-limit: 0    
-   
+      interval: "monthly"
+    ignore:
+      # Only update them manually since updating them might break compatibility
+      - dependency-name: "numpy"
+      - dependency-name: "protobuf"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "python"
+      - "run release CIs"
+
   - package-ecosystem: "github-actions"
     # Workflow files stored in the
     # default location of `.github/workflows`
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
+      interval: "monthly"
+    open-pull-requests-limit: 10
     labels:
       - "dependencies"
       - "github_actions"
+      - "run release CIs"      
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "docker"
       - "run release CIs"

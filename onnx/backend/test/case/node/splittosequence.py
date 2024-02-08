@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
@@ -67,7 +69,7 @@ class SplitToSequence(Base):
             keepdims=0,
         )
 
-        expected_outputs = [list(data[:, i] for i in range(data.shape[1]))]
+        expected_outputs = [[data[:, i] for i in range(data.shape[1])]]
 
         expect(
             node,

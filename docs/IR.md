@@ -1,7 +1,10 @@
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+<!--
+Copyright (c) ONNX Project Contributors
 
-Open Neural Network Exchange Intermediate Representation (ONNX IR) Specification
-=========
+SPDX-License-Identifier: Apache-2.0
+-->
+
+# Open Neural Network Exchange Intermediate Representation (ONNX IR) Specification
 
 __Purpose__
 
@@ -198,6 +201,7 @@ input|string[]|The input parameters of the function
 output|string[]|The output parameters of the function.
 node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
 |opset_import|OperatorSetId|A collection of operator set identifiers used by the function implementation.
+value_info|ValueInfo[]|Used to store the type and shape information of values used in the function.
 
 The name and domain serve to identify the operator uniquely in IR versions upto 8. IR version adds the
 field overload, and the triple (name, domain, overload) acts as a unique-id across functions stored in
@@ -210,6 +214,8 @@ The input, output, attribute, and attribute_proto (added in IR version 9) consti
 is explicitly included in the signature. The attribute_proto field describes attribute parameters of the function along with their default-value (when not specified by an call-site node), while the attribute field lists attribute parameters without a default-value. The names in these two lists must be distinct. When an attribute-parameter of the function is used in a node within the function, it is replaced by the actual parameter value specified for the attribute at a call-site node (of the function) when such a attribute is specified, and it is replaced by the default-value if the attribute has a default-value specified, and it is omitted otherwise.
 
 The opset_import and node fields describe the implementation of the function.
+
+The value_info field (added in IR version 10) allows a model to store type and shape information about the values used in a function, including its inputs and outputs. Note that this is optional, and ONNX allows functions to be polymorphic.
 
 ### Graphs
 
@@ -411,9 +417,9 @@ It is common to represent a tensor as a nested list. This generally works fine, 
 
 |Group|Types|Description|
 |---|---|---|
-Floating Point Types|float16, float32, float64|Values adhering to the IEEE 754-2008 standard representation of floating-point data.
-Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for 8-64 bit widths.
-Unsigned Integer Types|uint8, uint16, uint32, uint64|Unsigned integers are supported for 8-64 bit widths.
+Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433) and [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915)
+Signed Integer Types|int4, int8, int16, int32, int64|Signed integers are supported for 4-64 bit widths.
+Unsigned Integer Types|uint4, uint8, uint16, uint32, uint64|Unsigned integers are supported for 4-64 bit widths.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
 Other|string|Strings represent textual data. All strings are encoded using UTF-8.
 Other|bool|Boolean values represent data with only two values, typically true and false.
@@ -424,7 +430,7 @@ The following types are used to define the types of graph and node inputs and ou
 
 |Variant | Type | Description |
 |---|---|---|
-ONNX|dense tensors|Represents a Tensor. See definition above. 
+ONNX|dense tensors|Represents a Tensor. See definition above.
 ONNX|sequence|Sequences are dense, ordered, collections of elements that are of homogeneous types.
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
 ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](ONNXTypes.md)

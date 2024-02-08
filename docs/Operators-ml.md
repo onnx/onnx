@@ -18,7 +18,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ai.onnx.ml.DictVectorizer">ai.onnx.ml.DictVectorizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.DictVectorizer-1">1</a>|
 |<a href="#ai.onnx.ml.FeatureVectorizer">ai.onnx.ml.FeatureVectorizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.FeatureVectorizer-1">1</a>|
 |<a href="#ai.onnx.ml.Imputer">ai.onnx.ml.Imputer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Imputer-1">1</a>|
-|<a href="#ai.onnx.ml.LabelEncoder">ai.onnx.ml.LabelEncoder</a>|<a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>|
+|<a href="#ai.onnx.ml.LabelEncoder">ai.onnx.ml.LabelEncoder</a>|<a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-4">4</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>|
 |<a href="#ai.onnx.ml.LinearClassifier">ai.onnx.ml.LinearClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.LinearClassifier-1">1</a>|
 |<a href="#ai.onnx.ml.LinearRegressor">ai.onnx.ml.LinearRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.LinearRegressor-1">1</a>|
 |<a href="#ai.onnx.ml.Normalizer">ai.onnx.ml.Normalizer</a>|<a href="Changelog-ml.md#ai.onnx.ml.Normalizer-1">1</a>|
@@ -26,8 +26,9 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ai.onnx.ml.SVMClassifier">ai.onnx.ml.SVMClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.SVMClassifier-1">1</a>|
 |<a href="#ai.onnx.ml.SVMRegressor">ai.onnx.ml.SVMRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.SVMRegressor-1">1</a>|
 |<a href="#ai.onnx.ml.Scaler">ai.onnx.ml.Scaler</a>|<a href="Changelog-ml.md#ai.onnx.ml.Scaler-1">1</a>|
-|<a href="#ai.onnx.ml.TreeEnsembleClassifier">ai.onnx.ml.TreeEnsembleClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-3">3</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-1">1</a>|
-|<a href="#ai.onnx.ml.TreeEnsembleRegressor">ai.onnx.ml.TreeEnsembleRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-3">3</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-1">1</a>|
+|<a href="#ai.onnx.ml.TreeEnsemble">ai.onnx.ml.TreeEnsemble</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsemble-5">5</a>|
+|<a href="#ai.onnx.ml.TreeEnsembleClassifier">ai.onnx.ml.TreeEnsembleClassifier</a> (deprecated)|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-5">5</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-3">3</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-1">1</a>|
+|<a href="#ai.onnx.ml.TreeEnsembleRegressor">ai.onnx.ml.TreeEnsembleRegressor</a> (deprecated)|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-5">5</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-3">3</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-1">1</a>|
 |<a href="#ai.onnx.ml.ZipMap">ai.onnx.ml.ZipMap</a>|<a href="Changelog-ml.md#ai.onnx.ml.ZipMap-1">1</a>|
 
 
@@ -304,7 +305,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 ### <a name="ai.onnx.ml.FeatureVectorizer"></a><a name="ai.onnx.ml.featurevectorizer">**ai.onnx.ml.FeatureVectorizer**</a>
 
   Concatenates input tensors into one continuous output.<br>
-      All input shapes are 2-D and are concatenated along the second dimention. 1-D tensors are treated as [1,C].
+      All input shapes are 2-D and are concatenated along the second dimension. 1-D tensors are treated as [1,C].
       Inputs are copied to the output maintaining the order of the input arguments.<br>
       All inputs must be integers or floats, while the output will be all floating point values.
 
@@ -399,23 +400,25 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       would be mapped to the i-th value in the specified 'values_*' attribute. It
       implies that input's element type and the element type of the specified
       'keys_*' should be identical while the output type is identical to the
-      specified 'values_*' attribute. If an input element can not be found in the
+      specified 'values_*' attribute. Note that the 'keys_*' and 'values_*' attributes
+      must have the same length. If an input element can not be found in the
       specified 'keys_*' attribute, the 'default_*' that matches the specified
-      'values_*' attribute may be used as its output value.<br>
+      'values_*' attribute may be used as its output value. The type of the 'default_*'
+      attribute must match the 'values_*' attribute chosen. <br>
       Let's consider an example which maps a string tensor to an integer tensor.
       Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
       and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
       "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
       Since this operator is an one-to-one mapping, its input and output shapes
       are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
-      For key look-up, bit-wise comparison is used so even a float NaN can be
-      mapped to a value in 'values_*' attribute.<br>
+      Float keys with value 'NaN' match any input 'NaN' value regardless of bit
+      value. If a key is repeated, the last key takes precedence.
 
 #### Version
 
-This version of the operator has been available since version 2 of the 'ai.onnx.ml' operator set.
+This version of the operator has been available since version 4 of the 'ai.onnx.ml' operator set.
 
-Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">1</a>, <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-2">2</a>
 
 #### Attributes
 
@@ -426,42 +429,150 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncode
 <dd>An integer.</dd>
 <dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string.</dd>
+<dt><tt>default_tensor</tt> : tensor</dt>
+<dd>A default tensor. {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.</dd>
 <dt><tt>keys_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>keys_int64s</tt> : list of ints</dt>
 <dd>A list of ints.</dd>
 <dt><tt>keys_strings</tt> : list of strings</dt>
-<dd>A list of strings. One and only one of 'keys_*'s should be set.</dd>
+<dd>A list of strings.</dd>
+<dt><tt>keys_tensor</tt> : tensor</dt>
+<dd>Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.</dd>
 <dt><tt>values_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>values_int64s</tt> : list of ints</dt>
 <dd>A list of ints.</dd>
 <dt><tt>values_strings</tt> : list of strings</dt>
-<dd>A list of strings. One and only one of 'value_*'s should be set.</dd>
+<dd>A list of strings.</dd>
+<dt><tt>values_tensor</tt> : tensor</dt>
+<dd>Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T1</dt>
-<dd>Input data. It can be either tensor or scalar.</dd>
+<dd>Input data. It must have the same element type as the keys_* attribute set.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T2</dt>
-<dd>Output data.</dd>
+<dd>Output data. This tensor's element type is based on the values_* attribute set.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
 <dd>The input type is a tensor of any shape.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
 <dd>Output type is determined by the specified 'values_*' attribute.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>string_int_label_encoder</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=["a", "b", "c"],
+    values_int64s=[0, 1, 2],
+    default_int64=42,
+)
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, 42, 2, 42]).astype(np.int64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int",
+)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=["a", "b", "c"],
+    values_int64s=[0, 1, 2],
+)
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, -1, 2, -1]).astype(np.int64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_string_int_no_default",
+)
+```
+
+</details>
+
+
+<details>
+<summary>tensor_based_label_encoder</summary>
+
+```python
+tensor_keys = make_tensor(
+    "keys_tensor", onnx.TensorProto.STRING, (3,), ["a", "b", "c"]
+)
+repeated_string_keys = ["a", "b", "c"]
+x = np.array(["a", "b", "d", "c", "g"]).astype(object)
+y = np.array([0, 1, 42, 2, 42]).astype(np.int16)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_tensor=tensor_keys,
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_mapping",
+)
+
+node = onnx.helper.make_node(
+    "LabelEncoder",
+    inputs=["X"],
+    outputs=["Y"],
+    domain="ai.onnx.ml",
+    keys_strings=repeated_string_keys,
+    values_tensor=make_tensor(
+        "values_tensor", onnx.TensorProto.INT16, (3,), [0, 1, 2]
+    ),
+    default_tensor=make_tensor(
+        "default_tensor", onnx.TensorProto.INT16, (1,), [42]
+    ),
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_label_encoder_tensor_value_only_mapping",
+)
+```
+
+</details>
 
 
 ### <a name="ai.onnx.ml.LinearClassifier"></a><a name="ai.onnx.ml.linearclassifier">**ai.onnx.ml.LinearClassifier**</a>
@@ -808,9 +919,215 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 </dl>
 
 
-### <a name="ai.onnx.ml.TreeEnsembleClassifier"></a><a name="ai.onnx.ml.treeensembleclassifier">**ai.onnx.ml.TreeEnsembleClassifier**</a>
+### <a name="ai.onnx.ml.TreeEnsemble"></a><a name="ai.onnx.ml.treeensemble">**ai.onnx.ml.TreeEnsemble**</a>
 
-  Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
+  Tree Ensemble operator.  Returns the regressed values for each input in a batch.
+      Inputs have dimensions `[N, F]` where `N` is the input batch size and `F` is the number of input features.
+      Outputs have dimensions `[N, num_targets]` where `N` is the batch size and `num_targets` is the number of targets, which is a configurable attribute.
+
+      The encoding of this attribute is split along interior nodes and the leaves of the trees. Notably, attributes with the prefix `nodes_*` are associated with interior nodes, and attributes with the prefix `leaf_*` are associated with leaves.
+      The attributes `nodes_*` must all have the same length and encode a sequence of tuples, as defined by taking all the `nodes_*` fields at a given position.
+
+      All fields prefixed with `leaf_*` represent tree leaves, and similarly define tuples of leaves and must have identical length.
+
+      This operator can be used to implement both the previous `TreeEnsembleRegressor` and `TreeEnsembleClassifier` nodes.
+      The `TreeEnsembleRegressor` node maps directly to this node and requires changing how the nodes are represented.
+      The `TreeEnsembleClassifier` node can be implemented by adding a `ArgMax` node after this node to determine the top class.
+      To encode class labels, a `LabelEncoder` or `GatherND` operator may be used.
+
+#### Version
+
+This version of the operator has been available since version 5 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>aggregate_function</tt> : int (default is 1)</dt>
+<dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE' (0) 'SUM' (1) 'MIN' (2) 'MAX (3) defaults to 'SUM' (1)</dd>
+<dt><tt>leaf_targetids</tt> : list of ints (required)</dt>
+<dd>The index of the target that this leaf contributes to (this must be in range `[0, n_targets)`).</dd>
+<dt><tt>leaf_weights</tt> : tensor (required)</dt>
+<dd>The weight for each leaf.</dd>
+<dt><tt>membership_values</tt> : tensor</dt>
+<dd>Members to test membership of for each set membership node. List all of the members to test again in the order that the 'BRANCH_MEMBER' mode appears in `node_modes`, delimited by `NaN`s. Will have the same number of sets of values as nodes with mode 'BRANCH_MEMBER'. This may be omitted if the node doesn't contain any 'BRANCH_MEMBER' nodes.</dd>
+<dt><tt>n_targets</tt> : int</dt>
+<dd>The total number of targets.</dd>
+<dt><tt>nodes_falseleafs</tt> : list of ints (required)</dt>
+<dd>1 if false branch is leaf for each node and 0 if an interior node. To represent a tree that is a leaf (only has one node), one can do so by having a single `nodes_*` entry with true and false branches referencing the same `leaf_*` entry</dd>
+<dt><tt>nodes_falsenodeids</tt> : list of ints (required)</dt>
+<dd>If `nodes_falseleafs` is false at an entry, this represents the position of the false branch node. This position can be used to index into a `nodes_*` entry. If `nodes_falseleafs` is false, it is an index into the leaf_* attributes.</dd>
+<dt><tt>nodes_featureids</tt> : list of ints (required)</dt>
+<dd>Feature id for each node.</dd>
+<dt><tt>nodes_hitrates</tt> : tensor</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
+<dd>For each node, define whether to follow the true branch (if attribute value is 1) or false branch (if attribute value is 0) in the presence of a NaN input feature. This attribute may be left undefined and the default value is false (0) for all nodes.</dd>
+<dt><tt>nodes_modes</tt> : tensor (required)</dt>
+<dd>The comparison operation performed by the node. This is encoded as an enumeration of 0 ('BRANCH_LEQ'), 1 ('BRANCH_LT'), 2 ('BRANCH_GTE'), 3 ('BRANCH_GT'), 4 ('BRANCH_EQ'), 5 ('BRANCH_NEQ'), and 6 ('BRANCH_MEMBER'). Note this is a tensor of type uint8.</dd>
+<dt><tt>nodes_splits</tt> : tensor (required)</dt>
+<dd>Thresholds to do the splitting on for each node with mode that is not 'BRANCH_MEMBER'.</dd>
+<dt><tt>nodes_trueleafs</tt> : list of ints (required)</dt>
+<dd>1 if true branch is leaf for each node and 0 an interior node. To represent a tree that is a leaf (only has one node), one can do so by having a single `nodes_*` entry with true and false branches referencing the same `leaf_*` entry</dd>
+<dt><tt>nodes_truenodeids</tt> : list of ints (required)</dt>
+<dd>If `nodes_trueleafs` is false at an entry, this represents the position of the true branch node. This position can be used to index into a `nodes_*` entry. If `nodes_trueleafs` is false, it is an index into the leaf_* attributes.</dd>
+<dt><tt>post_transform</tt> : int (default is 0)</dt>
+<dd>Indicates the transform to apply to the score. <br>One of 'NONE' (0), 'SOFTMAX' (1), 'LOGISTIC' (2), 'SOFTMAX_ZERO' (3) or 'PROBIT' (4), defaults to 'NONE' (0)</dd>
+<dt><tt>tree_roots</tt> : list of ints (required)</dt>
+<dd>Index into `nodes_*` for the root of each tree. The tree structure is derived from the branching of each node.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input of shape [Batch Size, Number of Features]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output of shape [Batch Size, Number of targets]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(float16)</dt>
+<dd>The input type must be a tensor of a numeric type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tree_ensemble_set_membership</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TreeEnsemble",
+    ["X"],
+    ["Y"],
+    domain="ai.onnx.ml",
+    n_targets=4,
+    aggregate_function=1,
+    membership_values=make_tensor(
+        "membership_values",
+        onnx.TensorProto.FLOAT,
+        (8,),
+        [1.2, 3.7, 8, 9, np.nan, 12, 7, np.nan],
+    ),
+    nodes_missing_value_tracks_true=None,
+    nodes_hitrates=None,
+    post_transform=0,
+    tree_roots=[0],
+    nodes_modes=make_tensor(
+        "nodes_modes",
+        onnx.TensorProto.UINT8,
+        (3,),
+        np.array([0, 6, 6], dtype=np.uint8),
+    ),
+    nodes_featureids=[0, 0, 0],
+    nodes_splits=make_tensor(
+        "nodes_splits",
+        onnx.TensorProto.FLOAT,
+        (3,),
+        np.array([11, 232344.0, np.nan], dtype=np.float32),
+    ),
+    nodes_trueleafs=[0, 1, 1],
+    nodes_truenodeids=[1, 0, 1],
+    nodes_falseleafs=[1, 0, 1],
+    nodes_falsenodeids=[2, 2, 3],
+    leaf_targetids=[0, 1, 2, 3],
+    leaf_weights=make_tensor(
+        "leaf_weights", onnx.TensorProto.FLOAT, (4,), [1, 10, 1000, 100]
+    ),
+)
+
+x = np.array([1.2, 3.4, -0.12, np.nan, 12, 7], np.float32).reshape(-1, 1)
+expected = np.array(
+    [
+        [1, 0, 0, 0],
+        [0, 0, 0, 100],
+        [0, 0, 0, 100],
+        [0, 0, 1000, 0],
+        [0, 0, 1000, 0],
+        [0, 10, 0, 0],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[x],
+    outputs=[expected],
+    name="test_ai_onnx_ml_tree_ensemble_set_membership",
+)
+```
+
+</details>
+
+
+<details>
+<summary>tree_ensemble_single_tree</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TreeEnsemble",
+    ["X"],
+    ["Y"],
+    domain="ai.onnx.ml",
+    n_targets=2,
+    membership_values=None,
+    nodes_missing_value_tracks_true=None,
+    nodes_hitrates=None,
+    aggregate_function=1,
+    post_transform=0,
+    tree_roots=[0],
+    nodes_modes=make_tensor(
+        "nodes_modes",
+        onnx.TensorProto.UINT8,
+        (3,),
+        np.array([0, 0, 0], dtype=np.uint8),
+    ),
+    nodes_featureids=[0, 0, 0],
+    nodes_splits=make_tensor(
+        "nodes_splits",
+        onnx.TensorProto.DOUBLE,
+        (3,),
+        np.array([3.14, 1.2, 4.2], dtype=np.float64),
+    ),
+    nodes_truenodeids=[1, 0, 1],
+    nodes_trueleafs=[0, 1, 1],
+    nodes_falsenodeids=[2, 2, 3],
+    nodes_falseleafs=[0, 1, 1],
+    leaf_targetids=[0, 1, 0, 1],
+    leaf_weights=make_tensor(
+        "leaf_weights",
+        onnx.TensorProto.DOUBLE,
+        (4,),
+        np.array([5.23, 12.12, -12.23, 7.21], dtype=np.float64),
+    ),
+)
+
+x = np.array([1.2, 3.4, -0.12, 1.66, 4.14, 1.77], np.float64).reshape(3, 2)
+y = np.array([[5.23, 0], [5.23, 0], [0, 12.12]], dtype=np.float64)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_ai_onnx_ml_tree_ensemble_single_tree",
+)
+```
+
+</details>
+
+
+### <a name="ai.onnx.ml.TreeEnsembleClassifier"></a><a name="ai.onnx.ml.treeensembleclassifier">**ai.onnx.ml.TreeEnsembleClassifier** (deprecated)</a>
+
+  This operator is DEPRECATED. Please use TreeEnsemble with provides similar functionality.
+      In order to determine the top class, the ArgMax node can be applied to the output of TreeEnsemble.
+      To encode class labels, use a LabelEncoder operator.
+      Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
       The attributes named 'nodes_X' form a sequence of tuples, associated by
       index into the sequences, which must all be of equal length. These tuples
       define the nodes.<br>
@@ -824,86 +1141,16 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 3 of the 'ai.onnx.ml' operator set.
+This version of the operator has been deprecated since version 5 of the 'ai.onnx.ml' operator set.
 
-Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-1">1</a>
-
-#### Attributes
-
-<dl>
-<dt><tt>base_values</tt> : list of floats</dt>
-<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
-<dt><tt>base_values_as_tensor</tt> : tensor</dt>
-<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
-<dt><tt>class_ids</tt> : list of ints</dt>
-<dd>The index of the class list that each weight is for.</dd>
-<dt><tt>class_nodeids</tt> : list of ints</dt>
-<dd>node id that this weight is for.</dd>
-<dt><tt>class_treeids</tt> : list of ints</dt>
-<dd>The id of the tree that this node is in.</dd>
-<dt><tt>class_weights</tt> : list of floats</dt>
-<dd>The weight for the class in class_id.</dd>
-<dt><tt>class_weights_as_tensor</tt> : tensor</dt>
-<dd>The weight for the class in class_id.</dd>
-<dt><tt>classlabels_int64s</tt> : list of ints</dt>
-<dd>Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
-<dt><tt>classlabels_strings</tt> : list of strings</dt>
-<dd>Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be defined.</dd>
-<dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
-<dd>Child node if expression is false.</dd>
-<dt><tt>nodes_featureids</tt> : list of ints</dt>
-<dd>Feature id for each node.</dd>
-<dt><tt>nodes_hitrates</tt> : list of floats</dt>
-<dd>Popularity of each node, used for performance and may be omitted.</dd>
-<dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
-<dd>Popularity of each node, used for performance and may be omitted.</dd>
-<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.</dd>
-<dt><tt>nodes_modes</tt> : list of strings</dt>
-<dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
-<dt><tt>nodes_nodeids</tt> : list of ints</dt>
-<dd>Node id for each node. Ids may restart at zero for each tree, but it not required to.</dd>
-<dt><tt>nodes_treeids</tt> : list of ints</dt>
-<dd>Tree id for each node.</dd>
-<dt><tt>nodes_truenodeids</tt> : list of ints</dt>
-<dd>Child node if expression is true.</dd>
-<dt><tt>nodes_values</tt> : list of floats</dt>
-<dd>Thresholds to do the splitting on for each node.</dd>
-<dt><tt>nodes_values_as_tensor</tt> : tensor</dt>
-<dd>Thresholds to do the splitting on for each node.</dd>
-<dt><tt>post_transform</tt> : string (default is NONE)</dt>
-<dd>Indicates the transform to apply to the score. <br> One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T1</dt>
-<dd>Input of shape [N,F]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T2</dt>
-<dd>N, Top class for each point</dd>
-<dt><tt>Z</tt> : tensor(float)</dt>
-<dd>The class score for each class, for each point, a tensor of shape [N,E].</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd>The input type must be a tensor of a numeric type.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd>The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used.</dd>
-</dl>
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-1">1</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-3">3</a>
 
 
-### <a name="ai.onnx.ml.TreeEnsembleRegressor"></a><a name="ai.onnx.ml.treeensembleregressor">**ai.onnx.ml.TreeEnsembleRegressor**</a>
+### <a name="ai.onnx.ml.TreeEnsembleRegressor"></a><a name="ai.onnx.ml.treeensembleregressor">**ai.onnx.ml.TreeEnsembleRegressor** (deprecated)</a>
 
-  Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
+  This operator is DEPRECATED. Please use TreeEnsemble instead which provides the same
+      functionality.<br>
+      Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
       All args with nodes_ are fields of a tuple of tree nodes, and
       it is assumed they are the same length, and an index i will decode the
       tuple across these inputs.  Each node id can appear only once
@@ -918,77 +1165,9 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembl
 
 #### Version
 
-This version of the operator has been available since version 3 of the 'ai.onnx.ml' operator set.
+This version of the operator has been deprecated since version 5 of the 'ai.onnx.ml' operator set.
 
-Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-1">1</a>
-
-#### Attributes
-
-<dl>
-<dt><tt>aggregate_function</tt> : string (default is SUM)</dt>
-<dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE,' 'SUM,' 'MIN,' 'MAX.'</dd>
-<dt><tt>base_values</tt> : list of floats</dt>
-<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
-<dt><tt>base_values_as_tensor</tt> : tensor</dt>
-<dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
-<dt><tt>n_targets</tt> : int</dt>
-<dd>The total number of targets.</dd>
-<dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
-<dd>Child node if expression is false</dd>
-<dt><tt>nodes_featureids</tt> : list of ints</dt>
-<dd>Feature id for each node.</dd>
-<dt><tt>nodes_hitrates</tt> : list of floats</dt>
-<dd>Popularity of each node, used for performance and may be omitted.</dd>
-<dt><tt>nodes_hitrates_as_tensor</tt> : tensor</dt>
-<dd>Popularity of each node, used for performance and may be omitted.</dd>
-<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
-<dt><tt>nodes_modes</tt> : list of strings</dt>
-<dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
-<dt><tt>nodes_nodeids</tt> : list of ints</dt>
-<dd>Node id for each node. Node ids must restart at zero for each tree and increase sequentially.</dd>
-<dt><tt>nodes_treeids</tt> : list of ints</dt>
-<dd>Tree id for each node.</dd>
-<dt><tt>nodes_truenodeids</tt> : list of ints</dt>
-<dd>Child node if expression is true</dd>
-<dt><tt>nodes_values</tt> : list of floats</dt>
-<dd>Thresholds to do the splitting on for each node.</dd>
-<dt><tt>nodes_values_as_tensor</tt> : tensor</dt>
-<dd>Thresholds to do the splitting on for each node.</dd>
-<dt><tt>post_transform</tt> : string (default is NONE)</dt>
-<dd>Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
-<dt><tt>target_ids</tt> : list of ints</dt>
-<dd>The index of the target that each weight is for</dd>
-<dt><tt>target_nodeids</tt> : list of ints</dt>
-<dd>The node id of each weight</dd>
-<dt><tt>target_treeids</tt> : list of ints</dt>
-<dd>The id of the tree that each node is in.</dd>
-<dt><tt>target_weights</tt> : list of floats</dt>
-<dd>The weight for each target</dd>
-<dt><tt>target_weights_as_tensor</tt> : tensor</dt>
-<dd>The weight for each target</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input of shape [N,F]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : tensor(float)</dt>
-<dd>N classes</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd>The input type must be a tensor of a numeric type.</dd>
-</dl>
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-1">1</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-3">3</a>
 
 
 ### <a name="ai.onnx.ml.ZipMap"></a><a name="ai.onnx.ml.zipmap">**ai.onnx.ml.ZipMap**</a>

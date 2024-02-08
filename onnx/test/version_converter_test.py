@@ -1,9 +1,14 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
+import contextlib
 import struct
 import unittest
+from typing import Tuple
 
 import numpy as np
+import parameterized
 
 import onnx.version_converter
 from onnx import (
@@ -1960,6 +1965,123 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == 12
+
+    def test_softmax_12_13(self) -> None:
+        axis = 0
+        nodes = [helper.make_node("Softmax", ["X"], ["Y"], axis=axis)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 3))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2, 3))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 11), 13)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Shape"
+        assert converted_model.graph.node[1].op_type == "Flatten"
+        assert converted_model.graph.node[1].attribute[0].name == "axis"
+        assert converted_model.graph.node[1].attribute[0].i == axis
+        assert converted_model.graph.node[2].op_type == "Softmax"
+        assert converted_model.graph.node[2].attribute[0].name == "axis"
+        assert converted_model.graph.node[2].attribute[0].i == -1
+        assert converted_model.graph.node[3].op_type == "Reshape"
+        assert converted_model.opset_import[0].version == 13
+
+    @parameterized.parameterized.expand(
+        [
+            ("per_tensor", (16, 3), (1,), None, None, True),
+            ("per_axis_none_block_shape", (16, 3), (16,), 1, None, True),
+            ("per_axis_zero_block_shape", (16, 3), (16,), 1, 0, True),
+            ("per_tensor_positive_block_shape", (16, 3), (1,), 1, 2, False),
+            ("per_axis_positive_block_shape", (16, 3), (16,), 1, 2, False),
+            ("blocked_2d", (16, 3), (4, 3), 0, 4, False),
+            ("blocked_3d", (4, 3, 32), (4, 3, 8), 2, 4, False),
+        ]
+    )
+    def test_quantize_21_20(
+        self,
+        _: str,
+        x_shape: Tuple[int, ...],
+        scale_shape: Tuple[int, ...],
+        axis: int,
+        block_size: int,
+        compatible: bool,
+    ) -> None:
+        def test(input_shape, scale_shape, axis, block_size) -> None:
+            nodes = [
+                helper.make_node(
+                    "QuantizeLinear",
+                    ["X", "S", "ZP"],
+                    ["Y"],
+                    axis=axis,
+                    block_size=block_size,
+                )
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, input_shape),
+                    helper.make_tensor_value_info("S", TensorProto.FLOAT, scale_shape),
+                    helper.make_tensor_value_info("ZP", TensorProto.INT8, scale_shape),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.INT8, input_shape)],
+            )
+            _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
+
+        context_manager = (
+            contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
+        )
+        with context_manager:  # type: ignore[attr-defined]
+            test(x_shape, scale_shape, axis, block_size)
+
+    @parameterized.parameterized.expand(
+        [
+            ("per_tensor", (16, 3), (1,), None, None, True),
+            ("per_axis_none_block_shape", (16, 3), (16,), 1, None, True),
+            ("per_axis_zero_block_shape", (16, 3), (16,), 1, 0, True),
+            ("per_tensor_positive_block_shape", (16, 3), (1,), 1, 2, False),
+            ("per_axis_positive_block_shape", (16, 3), (16,), 1, 2, False),
+            ("blocked_2d", (16, 3), (4, 3), 0, 4, False),
+            ("blocked_3d", (4, 3, 32), (4, 3, 8), 2, 4, False),
+        ]
+    )
+    def test_dequantize_21_20(
+        self,
+        _: str,
+        y_shape: Tuple[int, ...],
+        scale_shape: Tuple[int, ...],
+        axis: int,
+        block_size: int,
+        compatible: bool,
+    ) -> None:
+        def test(input_shape, scale_shape, axis, block_size) -> None:
+            nodes = [
+                helper.make_node(
+                    "DequantizeLinear",
+                    ["X", "S", "ZP"],
+                    ["Y"],
+                    axis=axis,
+                    block_size=block_size,
+                )
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [
+                    helper.make_tensor_value_info("X", TensorProto.INT8, input_shape),
+                    helper.make_tensor_value_info("S", TensorProto.FLOAT, scale_shape),
+                    helper.make_tensor_value_info("ZP", TensorProto.INT8, scale_shape),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, input_shape)],
+            )
+            _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
+
+        context_manager = (
+            contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
+        )
+        with context_manager:  # type: ignore[attr-defined]
+            test(y_shape, scale_shape, axis, block_size)
 
 
 if __name__ == "__main__":

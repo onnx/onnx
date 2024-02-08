@@ -3,7 +3,10 @@
  */
 
 #include "tensor_util.h"
+
+#include <string>
 #include <vector>
+
 #include "onnx/common/platform_helpers.h"
 
 namespace ONNX_NAMESPACE {
@@ -54,5 +57,7 @@ DEFINE_PARSE_DATA(int64_t, int64s)
 DEFINE_PARSE_DATA(float, floats)
 DEFINE_PARSE_DATA(double, doubles)
 DEFINE_PARSE_DATA(uint64_t, uint64s)
+
+#undef DEFINE_PARSE_DATA
 
 } // namespace ONNX_NAMESPACE

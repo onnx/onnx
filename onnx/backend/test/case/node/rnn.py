@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Any, Tuple
@@ -33,7 +35,7 @@ class RNNHelper:
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
 
-            layout = params[LAYOUT] if LAYOUT in params else 0
+            layout = params.get(LAYOUT, 0)
             x = params[X]
             x = x if layout == 0 else np.swapaxes(x, 0, 1)
             b = (

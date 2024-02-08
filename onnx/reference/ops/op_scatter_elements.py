@@ -1,5 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C3001,R0912,R0913,R0914,R0915,W0108,W0221
+
 
 import numpy as np
 
@@ -7,13 +9,14 @@ from onnx.reference.op_run import OpRun
 
 
 def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: ignore
-    """
+    """Scatter elements.
+
     ::
-        // for 3-dim and axis=0
-        //    output[indices[i][j][k]][j][k] = updates[i][j][k]
-        // for axis 1
-        //    output[i][indices[i][j][k]][k] = updates[i][j][k]
-        // and so on
+        for 3-dim and axis=0
+            output[indices[i][j][k]][j][k] = updates[i][j][k]
+        for axis 1
+            output[i][indices[i][j][k]][k] = updates[i][j][k]
+        and so on.
     """
     if reduction == "add":
 
@@ -32,7 +35,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
 
     else:
 
-        def f(x, y):  # pylint: disable=unused-argument
+        def f(x, y):
             return y
 
     if axis < 0:

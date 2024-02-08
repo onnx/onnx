@@ -1,5 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0913,W0221
+
 
 import locale as pylocale
 import unicodedata
@@ -11,8 +13,7 @@ from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 
 class StringNormalizer(OpRun):
-    """
-    The operator is not really threadsafe as python cannot
+    """The operator is not really threadsafe as python cannot
     play with two locales at the same time. stop words
     should not be implemented here as the tokenization
     usually happens after this steps.
@@ -33,9 +34,9 @@ class StringNormalizer(OpRun):
         else:
             raw_stops = set(stopwords)
             if case_change_action == "LOWER":
-                stops = set(w.lower() for w in stopwords)
+                stops = {w.lower() for w in stopwords}
             elif case_change_action == "UPPER":
-                stops = set(w.upper() for w in stopwords)
+                stops = {w.upper() for w in stopwords}
             else:
                 stops = set(stopwords)
         res = np.empty(x.shape, dtype=x.dtype)
@@ -87,7 +88,8 @@ class StringNormalizer(OpRun):
                 pylocale.setlocale(pylocale.LC_ALL, slocale)
             except pylocale.Error as e:
                 warnings.warn(
-                    f"Unknown local setting {slocale!r} (current: {pylocale.getlocale()!r}) - {e!r}."
+                    f"Unknown local setting {slocale!r} (current: {pylocale.getlocale()!r}) - {e!r}.",
+                    stacklevel=1,
                 )
         cout[:] = cin[:]
 
@@ -126,15 +128,16 @@ class StringNormalizer(OpRun):
 
     @staticmethod
     def strip_accents_unicode(s):  # type: ignore
-        """
-        Transforms accentuated unicode symbols into their simple counterpart.
+        """Transforms accentuated unicode symbols into their simple counterpart.
         Source: `sklearn/feature_extraction/text.py
         <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/
         feature_extraction/text.py#L115>`_.
 
-        :param s: string
-            The string to strip
-        :return: the cleaned string
+        Args:
+            s: string The string to strip
+
+        Returns:
+            the cleaned string
         """
         try:
             # If `s` is ASCII-compatible, then it does not contain any accented

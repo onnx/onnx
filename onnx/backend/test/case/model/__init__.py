@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+
 # SPDX-License-Identifier: Apache-2.0
 
 import sys
@@ -40,7 +42,6 @@ BASE_URL = "onnx/backend/test/data/light/light_%s.onnx"
 
 def collect_testcases() -> List[TestCase]:
     """Collect model test cases defined in python/numpy code."""
-
     real_model_testcases = []
 
     model_tests = [

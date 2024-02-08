@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -5,6 +7,9 @@
 // Adapter for Upsample in default domain from version 8 to 9
 
 #pragma once
+
+#include <memory>
+#include <vector>
 
 #include "onnx/version_converter/adapters/adapter.h"
 

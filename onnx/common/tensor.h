@@ -1,3 +1,5 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,6 +12,10 @@
 #include <cmath>
 #include <functional>
 #include <numeric>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "onnx/common/assertions.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"

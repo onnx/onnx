@@ -1,3 +1,5 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy as np
@@ -162,4 +164,29 @@ class ReduceLogSumExp(Base):
             inputs=[data, axes],
             outputs=[reduced],
             name="test_reduce_log_sum_exp_negative_axes_keepdims_random",
+        )
+
+    @staticmethod
+    def export_empty_set() -> None:
+        shape = [2, 0, 4]
+        keepdims = 1
+        reduced_shape = [2, 1, 4]
+
+        node = onnx.helper.make_node(
+            "ReduceLogSumExp",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
+        )
+
+        data = np.array([], dtype=np.float32).reshape(shape)
+        axes = np.array([1], dtype=np.int64)
+        zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+        reduced = np.log(zero)  # -inf
+
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_log_sum_exp_empty_set",
         )

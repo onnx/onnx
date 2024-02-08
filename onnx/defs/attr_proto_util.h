@@ -1,8 +1,13 @@
+// Copyright (c) ONNX Project Contributors
+
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
 
 #pragma once
+
+#include <string>
+#include <vector>
 
 #include "onnx/onnx-operators_pb.h"
 
