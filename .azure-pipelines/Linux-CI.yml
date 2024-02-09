@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 schedules:
 - cron: '0 0 * * *'
   displayName: Nightly Linux CI in main branch

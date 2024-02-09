@@ -9,9 +9,6 @@ Source: onnx.ai
 # Copyright: $YEAR $NAME <$CONTACT>
 # License: ...
 
-Files: .azure-pipelines/*.yml
-COPYRIGHT: Copyright (c) ONNX Project Contributors
-License: Apache-2.0
 
 Files: codecov.yml
 COPYRIGHT: Copyright (c) ONNX Project Contributors
@@ -29,7 +26,6 @@ Files: onnx/backend/test/data/simple/**/test_data_set_0/*pb
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-
 Files: onnx/backend/test/data/node/**/test_data_set_0/*.pb
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
@@ -46,7 +42,6 @@ Files: onnx/backend/test/data/pytorch-operator/**/*.onnx
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
 
-
 Files: onnx/backend/test/data/pytorch-operator/**/*.pb
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
@@ -54,7 +49,6 @@ License: Apache-2.0
 Files: onnx/backend/test/data/node/**/*.onnx
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
-
 
 Files: onnx/backend/test/data/pytorch-converted/**/test_data_set_0/*.pb
 COPYRIGHT: Copyright (c) ONNX Project Contributors
@@ -79,7 +73,6 @@ License: Apache-2.0
 Files: onnx/backend/test/data/light/light/*.onnx
 COPYRIGHT: Copyright (c) ONNX Project Contributors
 License: Apache-2.0
-
 
 Files: onnx/onnx-operators* onnx/onnx-ml* onnx/onnx-data* onnx/onnx*
 COPYRIGHT: Copyright (c) ONNX Project Contributors
