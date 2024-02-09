@@ -18,7 +18,8 @@
 namespace ONNX_NAMESPACE {
 
 std::string barf(const char* fmt, ...) {
-  std::array<char, 2048> msg;
+  constexpr size_t BufferSize = 2048;
+  std::array<char, BufferSize> msg{};
   va_list args;
 
   va_start(args, fmt);
