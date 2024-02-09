@@ -149,6 +149,8 @@ def make_node(
         doc_string (string, default None): optional documentation string for NodeProto
         domain (string, default None): optional domain for NodeProto.
             If it's None, we will just use default domain (which is empty)
+        overload (string, default None): optional field, used to
+            resolve calls to model-local functions
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
 
