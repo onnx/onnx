@@ -821,8 +821,7 @@ void InferShapes(
   SymbolTableImpl symbol_table;
   ModelLocalFunctionsMap model_local_functions_by_id;
   for (const auto& function_proto : m.functions()) {
-    model_local_functions_by_id.insert(
-        {GetFunctionIdentifier(function_proto), &function_proto});
+    model_local_functions_by_id.insert({GetFunctionIdentifier(function_proto), &function_proto});
   }
   InferShapesImpl(
       m.mutable_graph(),

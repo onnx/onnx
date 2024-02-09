@@ -781,7 +781,7 @@ Status OnnxParser::Parse(FunctionProto& fn) {
         case KeyWordMap::KeyWord::OVERLOAD_KW:
           PARSE_TOKEN(strval);
           fn.set_overload(strval);
-          break;  
+          break;
         default:
           return ParseError("Unhandled keyword.");
       }

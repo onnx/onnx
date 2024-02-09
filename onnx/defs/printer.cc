@@ -417,7 +417,7 @@ void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "<\n";
   output_ << "  "
           << "domain: \"" << fn.domain() << "\",\n";
-  if (! fn.overload().empty())
+  if (!fn.overload().empty())
     output_ << "  "
             << "overload: \"" << fn.overload() << "\",\n";
 

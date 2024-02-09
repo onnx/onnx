@@ -266,5 +266,6 @@ class TestModelInference(unittest.TestCase):
         """
         self._check(model, onnx.TensorProto.INT32, onnx.TensorProto.INT64)
 
+
 if __name__ == "__main__":
     unittest.main()
