@@ -250,20 +250,24 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
   }
 }
 
-std::string GetFunctionIdentifier(int ir_version, const FunctionProto& function) {
-  if (ir_version < 10) {
+std::string GetFunctionIdentifier(const FunctionProto& function) {
+  // Note: Models with IR version < 10 do not have the overload attribute.
+  // However, that will be mapped to an empty identifier.
+  std::string overload = function.overload();
+  if (overload.empty()) {
     return function.domain() + ":" + function.name();
-  } else {
-    return function.domain() + ":" + function.name() + ":" + function.overload();
   }
+  return function.domain() + ":" + function.name() + ":" + overload;
 }
 
-std::string GetFunctionIdentifier(int ir_version, const NodeProto& node) {
-  if (ir_version < 10) {
+std::string GetFunctionIdentifier(const NodeProto& node) {
+  // Note: Models with IR version < 10 do not have the overload attribute.
+  // However, that will be mapped to an empty identifier.
+  std::string overload = node.overload();
+  if (overload.empty()) {
     return node.domain() + ":" + node.op_type();
-  } else {
-    return node.domain() + ":" + node.op_type() + ":" + node.overload();
   }
+  return node.domain() + ":" + node.op_type() + ":" + overload;
 }
 
 // InferredTypes: abstracts the differences between FunctionProto and GraphProto
@@ -479,7 +483,7 @@ class ShapeInferenceImplBase {
           schema->CheckInputOutputType(ctx);
         }
       } else if (model_local_functions_map.size() > 0) {
-        auto iter = model_local_functions_map.find(GetFunctionIdentifier(this->ir_version, n));
+        auto iter = model_local_functions_map.find(GetFunctionIdentifier(n));
         if (iter != model_local_functions_map.end()) {
           ProcessCall(n, *(iter->second), ctx);
         } else {
@@ -818,7 +822,7 @@ void InferShapes(
   ModelLocalFunctionsMap model_local_functions_by_id;
   for (const auto& function_proto : m.functions()) {
     model_local_functions_by_id.insert(
-        {GetFunctionIdentifier(m.ir_version(), function_proto), &function_proto});
+        {GetFunctionIdentifier(function_proto), &function_proto});
   }
   InferShapesImpl(
       m.mutable_graph(),
