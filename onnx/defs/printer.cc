@@ -336,6 +336,8 @@ void ProtoPrinter::print(const NodeProto& node) {
   if (node.domain() != "")
     output_ << node.domain() << ".";
   output_ << node.op_type();
+  if (node.overload() != "")
+    output_ << ":" << node.overload();
   bool has_subgraph = false;
   for (auto attr : node.attribute())
     if (attr.has_g() || (attr.graphs_size() > 0))
@@ -415,6 +417,10 @@ void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "<\n";
   output_ << "  "
           << "domain: \"" << fn.domain() << "\",\n";
+  if (! fn.overload().empty())
+    output_ << "  "
+            << "overload: \"" << fn.overload() << "\",\n";
+
   output_ << "  "
           << "opset_import: ";
   printSet("[", ",", "]", fn.opset_import());
