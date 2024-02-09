@@ -371,7 +371,10 @@ class TestOpSchemaRegister(unittest.TestCase):
             op_schema.name, op_schema.since_version, op_schema.domain
         )
         schema_b = onnx.defs.get_schema(op_schema.name, op_schema.domain)
-        filter_schema = lambda schemas: [op for op in schemas if op.name == op_schema.name]
+
+        def filter_schema(schemas):
+            return [op for op in schemas if op.name == op_schema.name]
+
         schema_c = filter_schema(onnx.defs.get_all_schemas())
         schema_d = filter_schema(onnx.defs.get_all_schemas_with_history())
         self.assertEqual(len(schema_c), 1)
@@ -381,7 +384,6 @@ class TestOpSchemaRegister(unittest.TestCase):
         self.assertEqual(str(schema_b), str(op_schema))
         self.assertEqual(str(schema_c[0]), str(op_schema))
         self.assertEqual(str(schema_d[0]), str(op_schema))
-
 
 
 if __name__ == "__main__":
