@@ -12,6 +12,7 @@
 #include <array>
 #include <cstdarg>
 #include <cstdio>
+
 #include "onnx/common/common.h"
 
 namespace ONNX_NAMESPACE {
@@ -29,7 +30,7 @@ std::string barf(const char* fmt, ...) {
   msg.back() = '\0';
   va_end(args);
 
-   return std::string(msg.data());
+  return std::string(msg.data());
 }
 
 void throw_assert_error(std::string& msg) {
