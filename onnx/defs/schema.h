@@ -1184,17 +1184,20 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     // standard ONNX domains as above). Custom-domains are free to interpret
     // this as appropriate (that is, as relative to releases of custom-domain
     // as opposed to ONNX releases).
-    void AddDomainToVersion(
-        const std::string& domain,
-        int min_version,
-        int max_version,
-        int last_release_version = -1,
-        bool rewrite = false) {
+    void AddDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version) {
       std::lock_guard<std::mutex> lock(mutex_);
-      if (!rewrite) {
-        // Maybe we need raise an exception when domain is already exist.
-        assert(map_.end() == map_.find(domain));
-        assert(last_release_version_map_.end() == last_release_version_map_.find(domain));
+      if (map_.count(domain) != 0) {
+        std::stringstream err;
+        err << "Trying to add a domain to DomainToVersion map, but the domain is already exist with version range ("
+            << map_.at(domain).first << ", " << map_.at(domain).second << "). domain: \"" << domain << "\""
+            << std::endl;
+        fail_schema(err.str());
+      }
+      if (last_release_version_map_.count(domain) != 0) {
+        std::stringstream err;
+        err << "Trying to add a domain to LastReleaseVersion map, but the domain is already exist with last version: "
+            << last_release_version_map_.at(domain) << ", domain: \"" << domain << "\"" << std::endl;
+        fail_schema(err.str());
       }
       map_[domain] = std::make_pair(min_version, max_version);
       // If a last-release-version is not explicitly specified, use max as
@@ -1203,6 +1206,29 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         last_release_version = max_version;
       }
       last_release_version_map_[domain] = last_release_version;
+    }
+
+    void UpdateDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version) {
+      std::lock_guard<std::mutex> lock(mutex_);
+      if (map_.count(domain) == 0) {
+        std::stringstream err;
+        err << "Trying to update a domain in DomainToVersion map, but the domain has not been add. domain: \"" << domain
+            << "\"" << std::endl;
+        fail_schema(err.str());
+      }
+      if (last_release_version_map_.count(domain) == 0) {
+        std::stringstream err;
+        err << "Trying to update a domain in LastReleaseVersion map, but the domain has not been add. domain: \""
+            << domain << "\"" << std::endl;
+        fail_schema(err.str());
+      }
+      map_.at(domain).first = min_version;
+      map_.at(domain).second = max_version;
+      // Correspond to `AddDomainToVersion`
+      if (last_release_version == -1) {
+        last_release_version = max_version;
+      }
+      last_release_version_map_.at(domain) = last_release_version;
     }
 
     static DomainToVersionRange& Instance();

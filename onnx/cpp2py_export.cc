@@ -473,14 +473,18 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def(
           "set_domain_to_version",
           [](const std::string& domain, int min_version, int max_version, int last_release_version) {
-            OpSchemaRegistry::DomainToVersionRange::Instance().AddDomainToVersion(
-                domain, min_version, max_version, last_release_version, true);
+            auto& obj = OpSchemaRegistry::DomainToVersionRange::Instance();
+            if (obj.Map().count(domain) == 0) {
+              obj.AddDomainToVersion(domain, min_version, max_version, last_release_version);
+            } else {
+              obj.UpdateDomainToVersion(domain, min_version, max_version, last_release_version);
+            }
           },
           "domain"_a,
           "min_version"_a,
           "max_version"_a,
           "last_release_version"_a = -1,
-          "Set the version range of the specified domain.")
+          "Set the version range and last release version of the specified domain.")
       .def(
           "register_schema",
           [](OpSchema* schema) { RegisterSchema(*schema, 0, true, true); },
