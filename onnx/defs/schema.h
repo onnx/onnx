@@ -1247,7 +1247,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+    OpSchemaRegisterOnce(const OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       ONNX_TRY {
         OpSchemaRegisterImpl(op_schema, opset_version_to_load, fail_duplicate_schema);
       }
@@ -1256,7 +1256,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       }
     }
     static void
-    OpSchemaRegisterImpl(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+    OpSchemaRegisterImpl(OpSchema op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       op_schema.Finalize();
       auto& m = GetMapWithoutEnsuringRegistration();
       auto& op_name = op_schema.Name();
@@ -1478,7 +1478,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 };
 
 void RegisterSchema(
-    OpSchema schema,
+    const OpSchema& schema,
     int opset_version_to_load = 0,
     bool fail_duplicate_schema = true,
     bool fail_with_exception = false);
