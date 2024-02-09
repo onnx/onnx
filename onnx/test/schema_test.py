@@ -325,6 +325,7 @@ class TestOpSchemaRegister(unittest.TestCase):
         self.assertTrue(onnx.defs.has(self.op_type, self.op_domain))
         onnx.checker.check_model(model, check_custom_domain=True)
 
+        # Also make sure the `op_schema` is accessible after register
         registered_op = onnx.defs.get_schema(
             op_schema.name, op_schema.since_version, op_schema.domain
         )
@@ -356,6 +357,29 @@ class TestOpSchemaRegister(unittest.TestCase):
     def test_deregister_schema_raises_error_when_opschema_does_not_exist(self):
         with self.assertRaises(onnx.defs.SchemaError):
             onnx.defs.deregister_schema(self.op_type, self.op_version, self.op_domain)
+
+    def test_legacy_schema_accessible_after_deregister(self):
+        op_schema = defs.OpSchema(
+            self.op_type,
+            self.op_domain,
+            self.op_version,
+        )
+        onnx.defs.register_schema(op_schema)
+        schema_a = onnx.defs.get_schema(
+            op_schema.name, op_schema.since_version, op_schema.domain
+        )
+        schema_b = onnx.defs.get_schema(op_schema.name, op_schema.domain)
+        filter_schema = lambda schemas: [op for op in schemas if op.name == op_schema.name]
+        schema_c = filter_schema(onnx.defs.get_all_schemas())
+        schema_d = filter_schema(onnx.defs.get_all_schemas_with_history())
+        self.assertEqual(len(schema_c), 1)
+        self.assertEqual(len(schema_d), 1)
+        # Avoid memory residue and access storage as much as possible
+        self.assertEqual(str(schema_a), str(op_schema))
+        self.assertEqual(str(schema_b), str(op_schema))
+        self.assertEqual(str(schema_c[0]), str(op_schema))
+        self.assertEqual(str(schema_d[0]), str(op_schema))
+
 
 
 if __name__ == "__main__":

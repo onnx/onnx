@@ -1442,7 +1442,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     for (auto& x : map()) {
       for (auto& y : x.second) {
         auto& version2schema = y.second;
-        r.emplace_back(version2schema.rbegin()->second);
+        if (!version2schema.empty()) {
+          r.emplace_back(version2schema.rbegin()->second);
+        }
       }
     }
     return r;
