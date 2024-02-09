@@ -24,7 +24,7 @@ std::string barf(const char* fmt, ...) {
   va_start(args, fmt);
 
   // use fixed length for buffer "msg" to avoid buffer overflow
-  vsnprintf(msg.data(), msg.size() - 1, fmt, args);
+  vsnprintf(static_cast<char*>(msg.data()), msg.size() - 1, fmt, args);
 
   // ensure null-terminated string to avoid out of bounds read
   msg.back() = '\0';
