@@ -9,6 +9,7 @@
 
 #include "onnx/common/assertions.h"
 
+#include <array>
 #include <cstdarg>
 #include <cstdio>
 
@@ -17,16 +18,20 @@
 namespace ONNX_NAMESPACE {
 
 std::string barf(const char* fmt, ...) {
-  char msg[2048];
+  constexpr size_t buffer_size = 2048;
+  std::array<char, buffer_size> msg{};
   va_list args;
 
   va_start(args, fmt);
-  // Although vsnprintf might have vulnerability issue while using format string with overflowed length,
-  // it should be safe here to use fixed length for buffer "msg". No further checking is needed.
-  vsnprintf(msg, 2048, fmt, args);
+
+  // use fixed length for buffer "msg" to avoid buffer overflow
+  vsnprintf(static_cast<char*>(msg.data()), msg.size() - 1, fmt, args);
+
+  // ensure null-terminated string to avoid out of bounds read
+  msg.back() = '\0';
   va_end(args);
 
-  return std::string(msg);
+  return std::string(msg.data());
 }
 
 void throw_assert_error(std::string& msg) {
