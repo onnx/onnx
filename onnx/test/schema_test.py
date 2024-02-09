@@ -261,11 +261,13 @@ class TestAttribute(unittest.TestCase):
 
 @parameterized.parameterized_class(
     [
+        # register to exist domain
         {
             "op_type": "CustomOp",
             "op_version": 1,
             "op_domain": "",
         },
+        # register to new domain
         {
             "op_type": "CustomOp",
             "op_version": 1,
