@@ -715,6 +715,12 @@ Status OnnxParser::Parse(NodeProto& node) {
   }
   node.set_domain(domain);
   node.set_op_type(id);
+
+  if (Matches(':')) {
+    std::string overload;
+    ParseIdentifier(overload);
+    node.set_overload(overload);
+  }
   PARSE(*node.mutable_attribute());
   MATCH('(');
   PARSE(*node.mutable_input());
@@ -771,6 +777,10 @@ Status OnnxParser::Parse(FunctionProto& fn) {
         case KeyWordMap::KeyWord::DOMAIN_KW:
           PARSE_TOKEN(strval);
           fn.set_domain(strval);
+          break;
+        case KeyWordMap::KeyWord::OVERLOAD_KW:
+          PARSE_TOKEN(strval);
+          fn.set_overload(strval);
           break;
         default:
           return ParseError("Unhandled keyword.");

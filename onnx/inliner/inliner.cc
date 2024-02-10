@@ -28,25 +28,21 @@ namespace { // internal/private API
 
 using namespace internal;
 
-// Function lookup function. Returns true iff lookup is successful, in which case
-// the found FunctionProto is copied into *return_value. The opset version is not
-// a parameter since it is determined by the domain for a given model.
-using FunctionResolver =
-    std::function<bool(const std::string& domain, const std::string& op, FunctionProto* return_value)>;
-
 // We use a string of the form "domain::name" as the key for a function id.
 using FunctionIdKey = std::string;
 
-FunctionIdKey GetFunctionId(const std::string& domain, const std::string& op) {
-  return NormalizeDomain(domain) + "::" + op;
+FunctionIdKey GetFunctionId(const std::string& domain, const std::string& op, const std::string& overload) {
+  if (overload.empty())
+    return NormalizeDomain(domain) + "::" + op;
+  return NormalizeDomain(domain) + "::" + op + "::" + overload;
 }
 
 FunctionIdKey GetFunctionId(const FunctionProto& function) {
-  return GetFunctionId(function.domain(), function.name());
+  return GetFunctionId(function.domain(), function.name(), function.overload());
 }
 
 FunctionIdKey GetCalleeId(const NodeProto& node) {
-  return GetFunctionId(node.domain(), node.op_type());
+  return GetFunctionId(node.domain(), node.op_type(), node.overload());
 }
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
