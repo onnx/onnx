@@ -136,6 +136,7 @@ def make_node(
     name: Optional[str] = None,
     doc_string: Optional[str] = None,
     domain: Optional[str] = None,
+    overload: Optional[str] = None,
     **kwargs: Any,
 ) -> NodeProto:
     """Construct a NodeProto.
@@ -148,6 +149,8 @@ def make_node(
         doc_string (string, default None): optional documentation string for NodeProto
         domain (string, default None): optional domain for NodeProto.
             If it's None, we will just use default domain (which is empty)
+        overload (string, default None): optional field, used to
+            resolve calls to model-local functions
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
 
@@ -164,6 +167,8 @@ def make_node(
         node.doc_string = doc_string
     if domain is not None:
         node.domain = domain
+    if overload is not None:
+        node.overload = overload
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
@@ -259,6 +264,7 @@ def make_function(
     attributes: Optional[Sequence[str]] = None,
     attribute_protos: Optional[Sequence[AttributeProto]] = None,
     doc_string: Optional[str] = None,
+    overload: Optional[str] = None,
     value_info: Optional[Sequence[ValueInfoProto]] = None,
 ) -> FunctionProto:
     if attributes is None:
@@ -278,6 +284,8 @@ def make_function(
     f.attribute_proto.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
+    if overload is not None:
+        f.overload = overload
     f.value_info.extend(value_info)
     return f
 
