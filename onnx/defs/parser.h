@@ -136,7 +136,8 @@ class KeyWordMap {
     SEQ_TYPE,
     MAP_TYPE,
     OPTIONAL_TYPE,
-    SPARSE_TENSOR_TYPE
+    SPARSE_TENSOR_TYPE,
+    OVERLOAD_KW
   };
 
   KeyWordMap() {
@@ -152,6 +153,7 @@ class KeyWordMap {
     map_["map"] = KeyWord::MAP_TYPE;
     map_["optional"] = KeyWord::OPTIONAL_TYPE;
     map_["sparse_tensor"] = KeyWord::SPARSE_TENSOR_TYPE;
+    map_["overload"] = KeyWord::OVERLOAD_KW;
   }
 
   static const std::unordered_map<std::string, KeyWord>& Instance() {

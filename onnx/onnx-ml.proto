@@ -217,6 +217,8 @@ message NodeProto {
   optional string op_type = 4;  // namespace Operator
   // The domain of the OperatorSet that specifies the operator named by op_type.
   optional string domain = 7;   // namespace Domain
+  // Overload identifier, used only to map this to a model-local function.
+  optional string overload = 8;
 
   // Additional named attributes.
   repeated AttributeProto attribute = 5;
@@ -407,7 +409,7 @@ message ModelProto {
 
   // A list of function protos local to the model.
   //
-  // Name of the function "FunctionProto.name" should be unique within the domain "FunctionProto.domain".
+  // The (domain, name, overload) tuple must be unique across the function protos in this list.
   // In case of any conflicts the behavior (whether the model local functions are given higher priority,
   // or standard operator sets are given higher priotity or this is treated as error) is defined by
   // the runtimes.
@@ -801,9 +803,8 @@ enum OperatorStatus {
 }
 
 message FunctionProto {
-  // The name of the function, similar usage of op_type in OperatorProto.
-  // Combined with FunctionProto.domain, this forms the unique identity of
-  // the FunctionProto.
+  // The name of the function, similar to op_type in NodeProto.
+  // This is part of the unique-id (domain, name, overload) of FunctionProtos in a model.
   optional string name = 1;
 
   // Deprecated since IR Version 8
@@ -850,9 +851,13 @@ message FunctionProto {
 
   repeated OperatorSetIdProto opset_import = 9;
 
-  // The domain which this function belongs to. Combined with FunctionProto.name, this forms the unique identity of
-  // the FunctionProto.
+  // The domain which this function belongs to.
+  // This is part of the unique-id (domain, name, overload) of FunctionProtos in a model.
   optional string domain = 10;
+
+  // The overload identifier of the function.
+  // This is part of the unique-id (domain, name, overload) of FunctionProtos in a model.
+  optional string overload = 13;
 
   // Information for the values in the function. The ValueInfoProto.name's
   // must be distinct and refer to names in the function (including inputs,
