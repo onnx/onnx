@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "onnx/common/file_utils.h"
-#include "onnx/common/path.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/proto_utils.h"
@@ -128,85 +127,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-#ifdef _WIN32
-        auto file_path = std::filesystem::path(utf8str_to_wstring(entry.value()));
-        if (file_path.is_absolute()) {
-          fail_check(
-              "Location of external TensorProto ( tensor name: ",
-              tensor.name(),
-              ") should be a relative path, but it is an absolute path: ",
-              entry.value());
-        }
-        auto relative_path = file_path.lexically_normal().make_preferred().wstring();
-        // Check that normalized relative path contains ".." on Windows.
-        if (relative_path.find(L"..", 0) != std::string::npos) {
-          fail_check(
-              "Data of TensorProto ( tensor name: ",
-              tensor.name(),
-              ") should be file inside the ",
-              ctx.get_model_dir(),
-              ", but the '",
-              entry.value(),
-              "' points outside the directory");
-        }
-        std::wstring data_path = path_join(utf8str_to_wstring(ctx.get_model_dir()), relative_path);
-        struct _stat64 buff;
-        if (data_path.empty() || (data_path[0] != '#' && _wstat64(data_path.c_str(), &buff) != 0)) {
-          fail_check(
-              "Data of TensorProto ( tensor name: ",
-              tensor.name(),
-              ") should be stored in ",
-              entry.value(),
-              ", but it doesn't exist or is not accessible.");
-        }
-#else // POSIX
-        if (entry.value().empty()) {
-          fail_check("Location of external TensorProto ( tensor name: ", tensor.name(), ") should not be empty.");
-        } else if (entry.value()[0] == '/') {
-          fail_check(
-              "Location of external TensorProto ( tensor name: ",
-              tensor.name(),
-              ") should be a relative path, but it is an absolute path: ",
-              entry.value());
-        }
-        std::string relative_path = clean_relative_path(entry.value());
-        // Check that normalized relative path contains ".." on POSIX
-        if (relative_path.find("..", 0) != std::string::npos) {
-          fail_check(
-              "Data of TensorProto ( tensor name: ",
-              tensor.name(),
-              ") should be file inside the ",
-              ctx.get_model_dir(),
-              ", but the '",
-              entry.value(),
-              "' points outside the directory");
-        }
-        std::string data_path = path_join(ctx.get_model_dir(), relative_path);
-        // use stat64 to check whether the file exists
-#if defined(__APPLE__) || defined(__wasm__) || !defined(__GLIBC__)
-        struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
-        if (data_path.empty() || (data_path[0] != '#' && stat((data_path).c_str(), &buffer) != 0)) {
-#else
-        struct stat64 buffer; // All POSIX under glibc except APPLE and wasm have stat64
-        if (data_path.empty() || (data_path[0] != '#' && stat64((data_path).c_str(), &buffer) != 0)) {
-#endif
-          fail_check(
-              "Data of TensorProto ( tensor name: ",
-              tensor.name(),
-              ") should be stored in ",
-              data_path,
-              ", but it doesn't exist or is not accessible.");
-        }
-        // Do not allow symlinks or directories.
-        if (data_path.empty() || (data_path[0] != '#' && !S_ISREG(buffer.st_mode))) {
-          fail_check(
-              "Data of TensorProto ( tensor name: ",
-              tensor.name(),
-              ") should be stored in ",
-              data_path,
-              ", but it is not regular file.");
-        }
-#endif
+        check_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
       }
     }
     if (!has_location) {
@@ -1047,6 +968,91 @@ void check_model(const ModelProto& model, bool full_check, bool skip_opset_compa
     ModelProto copy = model;
     ONNX_NAMESPACE::shape_inference::InferShapes(copy, ctx.get_schema_registry(), options);
   }
+}
+
+void check_external_data_location(
+    const std::string& base_dir,
+    const std::string& location,
+    const std::string& tensor_name) {
+#ifdef _WIN32
+  auto file_path = std::filesystem::path(utf8str_to_wstring(location));
+  if (file_path.is_absolute()) {
+    fail_check(
+        "Location of external TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be a relative path, but it is an absolute path: ",
+        location);
+  }
+  auto relative_path = file_path.lexically_normal().make_preferred().wstring();
+  // Check that normalized relative path contains ".." on Windows.
+  if (relative_path.find(L"..", 0) != std::string::npos) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be file inside the ",
+        base_dir,
+        ", but the '",
+        location,
+        "' points outside the directory");
+  }
+  std::wstring data_path = path_join(utf8str_to_wstring(base_dir), relative_path);
+  struct _stat64 buff;
+  if (data_path.empty() || (data_path[0] != '#' && _wstat64(data_path.c_str(), &buff) != 0)) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be stored in ",
+        location,
+        ", but it doesn't exist or is not accessible.");
+  }
+#else // POSIX
+  if (location.empty()) {
+    fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
+  } else if (location[0] == '/') {
+    fail_check(
+        "Location of external TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be a relative path, but it is an absolute path: ",
+        location);
+  }
+  std::string relative_path = clean_relative_path(location);
+  // Check that normalized relative path contains ".." on POSIX
+  if (relative_path.find("..", 0) != std::string::npos) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be file inside the ",
+        base_dir,
+        ", but the '",
+        location,
+        "' points outside the directory");
+  }
+  std::string data_path = path_join(base_dir, relative_path);
+  // use stat64 to check whether the file exists
+#if defined(__APPLE__) || defined(__wasm__) || !defined(__GLIBC__)
+  struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
+  if (data_path.empty() || (data_path[0] != '#' && stat((data_path).c_str(), &buffer) != 0)) {
+#else
+  struct stat64 buffer; // All POSIX under glibc except APPLE and wasm have stat64
+  if (data_path.empty() || (data_path[0] != '#' && stat64((data_path).c_str(), &buffer) != 0)) {
+#endif
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be stored in ",
+        data_path,
+        ", but it doesn't exist or is not accessible.");
+  }
+  // Do not allow symlinks or directories.
+  if (data_path.empty() || (data_path[0] != '#' && !S_ISREG(buffer.st_mode))) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be stored in ",
+        data_path,
+        ", but it is not regular file.");
+  }
+#endif
 }
 
 std::set<std::string> experimental_ops = {

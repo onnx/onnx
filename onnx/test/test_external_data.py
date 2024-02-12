@@ -204,6 +204,33 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         attribute_tensor = new_model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
+    def test_save_external_invalid_single_file_data_and_check(self) -> None:
+        model = onnx.load_model(self.model_filename, self.serialization_format)
+
+        # temp_dir/invlid_external_data/tensors.bin
+        # temp_dir/external_data/
+        # traversal_location = ../invlid_external_data/tensors.bin
+        # temp_dir/save_copy/model.onnx
+        model_dir = os.path.join(self.temp_dir, "save_copy")
+        os.mkdir(model_dir)
+
+        traversal_external_data_dir = os.path.join(self.temp_dir, "invlid_external_data")
+        os.mkdir(traversal_external_data_dir)
+        external_data_dir = os.path.join(self.temp_dir, "external_data")
+        os.mkdir(external_data_dir)
+        new_model_filepath = os.path.join(model_dir, "model.onnx")
+
+        convert_model_to_external_data(
+            model,
+            size_threshold=0,
+            all_tensors_to_one_file=True,
+            location=traversal_external_data_dir,
+        )
+
+        onnx.save_model(model, new_model_filepath, self.serialization_format)
+        onnx_model = onnx.load(new_model_filepath, load_external_data=False)
+        load_external_data_for_model(onnx_model, external_data_dir)
+
 
 @parameterized.parameterized_class(
     [

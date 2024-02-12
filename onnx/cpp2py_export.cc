@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "onnx/checker.h"
+#include "onnx/proto_utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
@@ -561,6 +562,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "path"_a,
       "full_check"_a = false,
       "skip_opset_compatibility_check"_a = false);
+
+  checker.def(
+      "check_external_data_location",
+      [](const std::string& base_dir, const std::string& file_path, const std::string& tensor_name) -> void {
+        checker::check_external_data_location(base_dir, file_path, tensor_name);
+      });
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
