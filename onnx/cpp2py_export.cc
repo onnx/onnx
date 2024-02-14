@@ -431,6 +431,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "op_type"_a,
           "domain"_a = ONNX_DOMAIN)
       .def(
+          "has_schema",
+          [](const std::string& op_type, int max_inclusive_version, const std::string& domain) -> bool {
+            return OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain) != nullptr;
+          },
+          "op_type"_a,
+          "max_inclusive_version"_a,
+          "domain"_a = ONNX_DOMAIN)
+      .def(
           "schema_version_map",
           []() -> std::unordered_map<std::string, std::pair<int, int>> {
             return OpSchemaRegistry::DomainToVersionRange::Instance().Map();
