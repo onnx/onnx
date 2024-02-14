@@ -213,7 +213,10 @@ class OpRun(abc.ABC):
     }
 
     def __init__(
-        self, onnx_node: NodeProto, run_params: dict[str, Any], schema: Any = None
+        self,
+        onnx_node: NodeProto,
+        run_params: dict[str, Any],
+        schema: Any = None,
     ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
@@ -245,20 +248,22 @@ class OpRun(abc.ABC):
         self.run_params["log"](pattern, *args)
 
     def _extract_attribute_value(
-        self, att: AttributeProto, ref_att: AttributeProto | None = None
+        self,
+        att: AttributeProto,
+        ref_att: AttributeProto | None = None,
     ) -> Any:
         """Converts an attribute value into a python value."""
         if att.type == AttributeProto.GRAPH:
-            from onnx.reference.reference_evaluator import (
-                ReferenceEvaluator,  # type: ignore
-            )
-
             new_ops = self.run_params.get("new_ops", None)
             if "existing_functions" in self.run_params:
                 functions = list(self.run_params["existing_functions"].values())
             else:
                 functions = None
-            return ReferenceEvaluator(
+            evaluator_cls = self.run_params.get("evaluator_cls", None)
+            assert (
+                evaluator_cls is not None
+            ), f"evaluator_cls must be specified to evaluate att={att}"
+            return evaluator_cls(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
@@ -652,7 +657,10 @@ class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
     def __init__(
-        self, onnx_node: NodeProto, run_params: dict[str, Any], impl: Any = None
+        self,
+        onnx_node: NodeProto,
+        run_params: dict[str, Any],
+        impl: Any = None,
     ):
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
