@@ -284,7 +284,7 @@ class ReferenceEvaluator:
         if functions is not None:
             for f in functions:  # type: ignore
                 if isinstance(f, FunctionProto):
-                    self.functions_[f.domain, f.name] = ReferenceEvaluator(
+                    self.functions_[f.domain, f.name] = self.__class__(
                         f, verbose=verbose, functions=list(self.functions_.values())
                     )
                 elif isinstance(f, ReferenceEvaluator):
