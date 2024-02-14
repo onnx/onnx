@@ -1184,7 +1184,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     // standard ONNX domains as above). Custom-domains are free to interpret
     // this as appropriate (that is, as relative to releases of custom-domain
     // as opposed to ONNX releases).
-    void AddDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version) {
+    void
+    AddDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
       if (map_.count(domain) != 0) {
         std::stringstream err;
@@ -1208,7 +1209,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       last_release_version_map_[domain] = last_release_version;
     }
 
-    void UpdateDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version) {
+    void
+    UpdateDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
       if (map_.count(domain) == 0) {
         std::stringstream err;
