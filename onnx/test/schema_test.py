@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import contextlib
 import unittest
-from typing import Sequence
+from typing import List, Sequence
 
 import parameterized
 
@@ -264,14 +264,16 @@ class TestAttribute(unittest.TestCase):
         # register to exist domain
         {
             "op_type": "CustomOp",
-            "op_version": 1,
+            "op_version": 5,
             "op_domain": "",
+            "trap_op_version": [1, 2, 6, 7],
         },
         # register to new domain
         {
             "op_type": "CustomOp",
-            "op_version": 1,
+            "op_version": 5,
             "op_domain": "test",
+            "trap_op_version": [1, 2, 6, 7],
         },
     ]
 )
@@ -279,6 +281,8 @@ class TestOpSchemaRegister(unittest.TestCase):
     op_type: str
     op_version: int
     op_domain: str
+    # register some fake schema to check behavior
+    trap_op_version: List[int]
 
     def setUp(self) -> None:
         # Ensure the schema is unregistered
@@ -286,10 +290,32 @@ class TestOpSchemaRegister(unittest.TestCase):
 
     def tearDown(self) -> None:
         # Clean up the registered schema
-        with contextlib.suppress(onnx.defs.SchemaError):
-            onnx.defs.deregister_schema(self.op_type, self.op_version, self.op_domain)
+        for version in [*self.trap_op_version, self.op_version]:
+            with contextlib.suppress(onnx.defs.SchemaError):
+                onnx.defs.deregister_schema(self.op_type, version, self.op_domain)
 
-    def test_register_schema(self):
+    def test_register_multi_schema(self):
+        for version in [*self.trap_op_version, self.op_version]:
+            op_schema = defs.OpSchema(
+                self.op_type,
+                self.op_domain,
+                version,
+            )
+            onnx.defs.register_schema(op_schema)
+            self.assertTrue(onnx.defs.has(self.op_type, version, self.op_domain))
+        for version in [*self.trap_op_version, self.op_version]:
+            # Also make sure the `op_schema` is accessible after register
+            registered_op = onnx.defs.get_schema(
+                op_schema.name, version, op_schema.domain
+            )
+            op_schema = defs.OpSchema(
+                self.op_type,
+                self.op_domain,
+                version,
+            )
+            self.assertEqual(str(registered_op), str(op_schema))
+
+    def test_using_the_specified_version_in_onnx_check(self):
         input = f"""
             <
                 ir_version: 7,
@@ -324,14 +350,19 @@ class TestOpSchemaRegister(unittest.TestCase):
         with self.assertRaises(onnx.checker.ValidationError):
             onnx.checker.check_model(model, check_custom_domain=True)
         onnx.defs.register_schema(op_schema)
-        self.assertTrue(onnx.defs.has(self.op_type, self.op_domain))
+        # The fake schema will raise check exception if selected in checker
+        for version in self.trap_op_version:
+            onnx.defs.register_schema(
+                defs.OpSchema(
+                    self.op_type,
+                    self.op_domain,
+                    version,
+                    outputs=[
+                        defs.OpSchema.FormalParameter("output1", "int32"),
+                    ],
+                )
+            )
         onnx.checker.check_model(model, check_custom_domain=True)
-
-        # Also make sure the `op_schema` is accessible after register
-        registered_op = onnx.defs.get_schema(
-            op_schema.name, op_schema.since_version, op_schema.domain
-        )
-        self.assertEqual(str(registered_op), str(op_schema))
 
     def test_register_schema_raises_error_when_registering_a_schema_twice(self):
         op_schema = defs.OpSchema(
@@ -343,18 +374,24 @@ class TestOpSchemaRegister(unittest.TestCase):
         with self.assertRaises(onnx.defs.SchemaError):
             onnx.defs.register_schema(op_schema)
 
-    def test_deregister_schema(self):
-        op_schema = defs.OpSchema(
-            self.op_type,
-            self.op_domain,
-            self.op_version,
-        )
-        onnx.defs.register_schema(op_schema)
-        self.assertTrue(onnx.defs.has(op_schema.name, op_schema.domain))
-        onnx.defs.deregister_schema(
-            op_schema.name, op_schema.since_version, op_schema.domain
-        )
-        self.assertFalse(onnx.defs.has(op_schema.name, op_schema.domain))
+    def test_deregister_the_specified_schema(self):
+        for version in [*self.trap_op_version, self.op_version]:
+            op_schema = defs.OpSchema(
+                self.op_type,
+                self.op_domain,
+                version,
+            )
+            onnx.defs.register_schema(op_schema)
+            self.assertTrue(onnx.defs.has(op_schema.name, version, op_schema.domain))
+        onnx.defs.deregister_schema(op_schema.name, self.op_version, op_schema.domain)
+        for version in self.trap_op_version:
+            self.assertTrue(onnx.defs.has(op_schema.name, version, op_schema.domain))
+        # Maybe has lesser op version in trap list
+        if onnx.defs.has(op_schema.name, self.op_version, op_schema.domain):
+            schema = onnx.defs.get_schema(
+                op_schema.name, self.op_version, op_schema.domain
+            )
+            self.assertLess(schema.since_version, self.op_version)
 
     def test_deregister_schema_raises_error_when_opschema_does_not_exist(self):
         with self.assertRaises(onnx.defs.SchemaError):
