@@ -92,7 +92,7 @@ void RegisterCustomFuncFloatSchema() {
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)"}, "Type of the input and output values")
       .SetContextDependentFunctionBodyBuilder(BuildFloatFunctionBody);
-  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
+  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(std::move(schema));
   (void)unused;
 }
 
@@ -151,7 +151,7 @@ void RegisterCustomFunctionSchema() {
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
       .SetContextDependentFunctionBodyBuilder(BuildFunctionBody);
-  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
+  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(std::move(schema));
   (void)unused;
 }
 
@@ -212,9 +212,9 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
         )ONNX",
           16);
 
-  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused2(schema_ver2);
+  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused2(std::move(schema_ver2));
   (void)unused2;
-  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused9(schema_ver9);
+  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused9(std::move(schema_ver9));
   (void)unused9;
 
   const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
