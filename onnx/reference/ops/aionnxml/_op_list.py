@@ -100,6 +100,6 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]] = (
-    None
-)
+_registered_operators: TOptional[
+    Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]
+] = None
