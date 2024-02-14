@@ -213,10 +213,7 @@ class OpRun(abc.ABC):
     }
 
     def __init__(
-        self,
-        onnx_node: NodeProto,
-        run_params: dict[str, Any],
-        schema: Any = None,
+        self, onnx_node: NodeProto, run_params: dict[str, Any], schema: Any = None
     ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
@@ -248,9 +245,7 @@ class OpRun(abc.ABC):
         self.run_params["log"](pattern, *args)
 
     def _extract_attribute_value(
-        self,
-        att: AttributeProto,
-        ref_att: AttributeProto | None = None,
+        self, att: AttributeProto, ref_att: AttributeProto | None = None
     ) -> Any:
         """Converts an attribute value into a python value."""
         if att.type == AttributeProto.GRAPH:
@@ -657,10 +652,7 @@ class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
     def __init__(
-        self,
-        onnx_node: NodeProto,
-        run_params: dict[str, Any],
-        impl: Any = None,
+        self, onnx_node: NodeProto, run_params: dict[str, Any], impl: Any = None
     ):
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
