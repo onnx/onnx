@@ -410,7 +410,7 @@ void RegisterFunctionSchema() {
 
             return operator_sets;
           }());
-  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(std::move(function_schema));
+  ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(function_schema);
   (void)unused;
 }
 
