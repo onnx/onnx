@@ -39,7 +39,7 @@ void RegisterSchema(
     OpSchemaRegistry::OpSchemaRegisterOnce::OpSchemaRegisterImpl(
         std::forward<OpSchema>(schema), opset_version_to_load, fail_duplicate_schema);
   } else {
-    OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(
+    OpSchemaRegistry::OpSchemaRegisterOnce::OpSchemaRegisterNoExcept(
         std::forward<OpSchema>(schema), opset_version_to_load, fail_duplicate_schema);
   }
 }

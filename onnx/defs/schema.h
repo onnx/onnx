@@ -1249,7 +1249,12 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    OpSchemaRegisterOnce(OpSchema&& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+    // Export to cpp custom register macro
+    OpSchemaRegisterOnce(OpSchema op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+      OpSchemaRegisterNoExcept(std::move(op_schema), opset_version_to_load, fail_duplicate_schema);
+    }
+    static void
+    OpSchemaRegisterNoExcept(OpSchema&& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       ONNX_TRY {
         OpSchemaRegisterImpl(std::forward<OpSchema>(op_schema), opset_version_to_load, fail_duplicate_schema);
       }
