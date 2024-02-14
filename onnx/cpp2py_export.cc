@@ -487,7 +487,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "Set the version range and last release version of the specified domain.")
       .def(
           "register_schema",
-          [](OpSchema* schema) { RegisterSchema(*schema, 0, true, true); },
+          [](OpSchema schema) { RegisterSchema(std::move(schema), 0, true, true); },
           "schema"_a,
           "Register a user provided OpSchema.")
       .def(

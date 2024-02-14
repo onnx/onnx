@@ -1247,16 +1247,16 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+    OpSchemaRegisterOnce(OpSchema&& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       ONNX_TRY {
-        OpSchemaRegisterImpl(op_schema, opset_version_to_load, fail_duplicate_schema);
+        OpSchemaRegisterImpl(std::forward<OpSchema>(op_schema), opset_version_to_load, fail_duplicate_schema);
       }
       ONNX_CATCH(const std::exception& e) {
         ONNX_HANDLE_EXCEPTION([&]() { std::cerr << "Schema error: " << e.what() << std::endl; });
       }
     }
     static void
-    OpSchemaRegisterImpl(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+    OpSchemaRegisterImpl(OpSchema&& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       op_schema.Finalize();
       auto& m = GetMapWithoutEnsuringRegistration();
       auto& op_name = op_schema.Name();
@@ -1297,7 +1297,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       }
 
       CheckDomainAndVersionToRegister(op_schema, op_name, op_domain);
-      schema_ver_map.insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
+      schema_ver_map.insert(std::pair<int, OpSchema&&>(ver, std::forward<OpSchema>(op_schema)));
     }
 
    private:
@@ -1478,7 +1478,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 };
 
 void RegisterSchema(
-    OpSchema schema,
+    OpSchema&& schema,
     int opset_version_to_load = 0,
     bool fail_duplicate_schema = true,
     bool fail_with_exception = false);
@@ -1489,7 +1489,7 @@ void DeregisterSchema(const std::string& op_type, int version, const std::string
 template <class T>
 void RegisterOpSetSchema(int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
   T::ForEachSchema([opset_version_to_load, fail_duplicate_schema](OpSchema&& schema) {
-    RegisterSchema(schema, opset_version_to_load, fail_duplicate_schema);
+    RegisterSchema(std::forward<OpSchema>(schema), opset_version_to_load, fail_duplicate_schema);
   });
 };
 
