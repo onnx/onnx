@@ -37,7 +37,6 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
         tensor: a TensorProto object.
         base_dir: directory that contains the external data.
     """
-
     from onnx import checker
 
     info = ExternalDataInfo(tensor)
