@@ -127,7 +127,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     for (const StringStringEntryProto& entry : tensor.external_data()) {
       if (entry.has_key() && entry.has_value() && entry.key() == "location") {
         has_location = true;
-        check_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
+        resolve_external_data_location(ctx.get_model_dir(), entry.value(), tensor.name());
       }
     }
     if (!has_location) {
@@ -970,7 +970,7 @@ void check_model(const ModelProto& model, bool full_check, bool skip_opset_compa
   }
 }
 
-void check_external_data_location(
+std::string resolve_external_data_location(
     const std::string& base_dir,
     const std::string& location,
     const std::string& tensor_name) {
@@ -1005,6 +1005,7 @@ void check_external_data_location(
         location,
         ", but it doesn't exist or is not accessible.");
   }
+  return wstring_to_utf8str(data_path);
 #else // POSIX
   if (location.empty()) {
     fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
@@ -1052,6 +1053,7 @@ void check_external_data_location(
         data_path,
         ", but it is not regular file.");
   }
+  return data_path;
 #endif
 }
 

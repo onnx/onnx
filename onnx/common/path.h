@@ -41,6 +41,15 @@ inline std::wstring utf8str_to_wstring(const std::string& utf8str) {
   MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), (int)utf8str.size(), &ws_str[0], size_required);
   return ws_str;
 }
+inline std::string wstring_to_utf8str(const std::wstring& ws_str) {
+  if (ws_str.size() > INT_MAX) {
+    fail_check("wstring_to_utf8str: string is too long for converting to UTF-8.");
+  }
+  int size_required = WideCharToMultiByte(CP_UTF8, 0, ws_str.c_str(), (int)ws_str.size(), NULL, 0, NULL, NULL);
+  std::string utf8str(size_required, 0);
+  WideCharToMultiByte(CP_UTF8, 0, ws_str.c_str(), (int)ws_str.size(), &utf8str[0], size_required, NULL, NULL);
+  return utf8str;
+}
 
 #else
 std::string path_join(const std::string& origin, const std::string& append);

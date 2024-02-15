@@ -183,8 +183,8 @@ The function definition for this operator.
 {% endfor %}
 {% endif %}
 {% endfor %}""",
-    autoescape=False,
-)
+        autoescape=False,
+    )
 
 
 def _get_main_template():
