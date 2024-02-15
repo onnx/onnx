@@ -205,7 +205,9 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
     @parameterized.parameterized.expand([True, False])
-    def test_save_external_invalid_single_file_data_and_check(self, use_absolute_path) -> None:
+    def test_save_external_invalid_single_file_data_and_check(
+        self, use_absolute_path
+    ) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
 
         # temp_dir/invlid_external_data/tensors.bin
@@ -221,7 +223,9 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         os.mkdir(traversal_external_data_dir)
 
         if use_absolute_path:
-            traversal_external_data_location = os.path.join(traversal_external_data_dir, "tensors.bin")
+            traversal_external_data_location = os.path.join(
+                traversal_external_data_dir, "tensors.bin"
+            )
         else:
             traversal_external_data_location = "../invlid_external_data/tensors.bin"
 
@@ -240,7 +244,9 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         )
 
         onnx.save_model(model, new_model_filepath, self.serialization_format)
-        onnx_model = onnx.load_model(new_model_filepath, self.serialization_format, load_external_data=False)
+        onnx_model = onnx.load_model(
+            new_model_filepath, self.serialization_format, load_external_data=False
+        )
         with self.assertRaises(onnx.checker.ValidationError):
             load_external_data_for_model(onnx_model, external_data_dir)
 

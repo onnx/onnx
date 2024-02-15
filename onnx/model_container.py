@@ -288,8 +288,9 @@ class ModelContainer:
                 continue
 
             info = ext_data.ExternalDataInfo(tensor)
-            file_location = ext_data._sanitize_path(info.location)
-            external_data_file_path = os.path.join(base_dir, file_location)
+            external_data_file_path = onnx.checker.resolve_external_data_location(
+                base_dir, info.location, tensor.name
+            )
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
 
