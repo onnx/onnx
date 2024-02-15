@@ -174,7 +174,11 @@ def check_model(
 def resolve_external_data_location(
     base_dir: str, location: str, tensor_name: str
 ) -> str:
-    return C.resolve_external_data_location(base_dir, location, tensor_name)
+    result = C.resolve_external_data_location(base_dir, location, tensor_name)
+    if result is None:
+        return ''
+    else:
+        return str(result)
 
 
 ValidationError = C.ValidationError
