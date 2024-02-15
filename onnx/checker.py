@@ -176,7 +176,7 @@ def resolve_external_data_location(
 ) -> str:
     result = C.resolve_external_data_location(base_dir, location, tensor_name)
     if result is None:
-        return ''
+        return ""
     else:
         return str(result)
 

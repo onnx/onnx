@@ -43,6 +43,3 @@ def check_model(
 def check_model_path(
     path: str, full_check: bool, skip_opset_compatibility_check: bool
 ) -> None: ...
-def resolve_external_data_location(
-    base_dir: str, location: str, tensor_name: str
-) -> None: ...
