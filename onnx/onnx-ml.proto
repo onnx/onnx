@@ -603,6 +603,7 @@ message TensorProto {
   // Complex64 elements must be written as two consecutive FLOAT values, real component first.
   // Complex128 elements must be written as two consecutive DOUBLE values, real component first.
   // Boolean type MUST be written one byte per tensor element (00000001 for true, 00000000 for false).
+  // uint4 and int4 values must be packed to 4bitx2, the first element is stored in the 4 LSB and the second element is stored in the 4 MSB.
   //
   // Note: the advantage of specific field rather than the raw_data field is
   // that in some cases (e.g. int data), protobuf does a better packing via
