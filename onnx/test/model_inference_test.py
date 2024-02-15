@@ -244,6 +244,28 @@ class TestModelInference(unittest.TestCase):
         """
         self._check(model, onnx.TensorProto.INT32, onnx.TensorProto.FLOAT)
 
+    def test_mi_overloaded_function(self):
+        """Test use of functions."""
+        model = """
+            <ir_version: 10, opset_import: [ "" : 17, "local" : 1]>
+            agraph (float[N] x) => (y, z)
+            {
+                y = local.cast:to_int32 (x)
+                z = local.cast:to_int64 (x)
+            }
+            <opset_import: [ "" : 17 ], domain: "local", overload: "to_int32">
+            cast (x) => (y)
+            {
+                y = Cast<to=6> (x)
+            }
+            <opset_import: [ "" : 17 ], domain: "local", overload: "to_int64">
+            cast (x) => (y)
+            {
+                y = Cast<to=7> (x)
+            }
+        """
+        self._check(model, onnx.TensorProto.INT32, onnx.TensorProto.INT64)
+
 
 if __name__ == "__main__":
     unittest.main()
