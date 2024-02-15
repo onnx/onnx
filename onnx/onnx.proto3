@@ -529,8 +529,8 @@ message TensorProto {
     FLOAT8E5M2FNUZ = 20;  // follows IEEE 754, supports nan, not inf, mostly used for gradients, no negative zero
 
     // 4-bit data-types
-    UINT4 = 21;
-    INT4 = 22;
+    UINT4 = 21;  // Unsigned integer in range [0, 15]
+    INT4 = 22;   // Signed integer in range [-8, 7], using two's-complement representation
 
     // Future extensions go here.
   }
@@ -568,7 +568,8 @@ message TensorProto {
   // For int32, uint8, int8, uint16, int16, uint4, int4, bool, float8 and float16 values
   // float16 and float8 values must be bit-wise converted to an uint16_t prior
   // to writing to the buffer.
-  // uint4 and int4 values must be packed to 4bitx2 prior to writing to the buffer.
+  // uint4 and int4 values must be packed to 4bitx2 prior to writing to the buffer, the first element is stored in
+  // the 4 LSB and the second element is stored in the 4 MSB.
   // When this field is present, the data_type field MUST be
   // INT32, INT16, INT8, INT4, UINT16, UINT8, UINT4, BOOL, FLOAT16, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ
   repeated int32 int32_data = 5 [packed = true];
