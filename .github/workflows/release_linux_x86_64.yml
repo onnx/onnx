@@ -98,3 +98,36 @@ jobs:
         export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
         export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
         pytest
+
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') # TODO: remove github.event_name == 'push' ?
+    needs: [build]
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: dist
+
+      - name: Publish wheels to pypi
+        uses: pypa/gh-action-pypi-publish@2f6f737ca5f74c637829c0f5c3acd0e29ea5e8bf
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Create GitHub Release # TODO: notes?
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create '${{ github.run_number }}' --repo '${{ github.repository }}' --notes ""
+
+      - name: Upload artifact signatures to GitHub Release # TODO: 1) don't upload wheels?
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # Upload to GitHub Release using the `gh` CLI.
+        # `dist/` contains the built packages, and the
+        # sigstore-produced signatures and certificates.
+        run: >-
+          gh release upload '${{ github.run_number  }}' dist/**
+          --repo '${{ github.repository }}'
