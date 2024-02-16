@@ -485,9 +485,9 @@ message GraphProto {
   repeated TensorAnnotation quantization_annotation = 14;
 
   // Named metadata values; keys should be distinct.
-  repeated StringStringEntryProto metadata_props = 15;
+  repeated StringStringEntryProto metadata_props = 16;
 
-  reserved 3, 4, 6 to 9;
+  reserved 3, 4, 6 to 9;/message
   reserved "ir_version", "producer_version", "producer_tag", "domain";
 }
 
