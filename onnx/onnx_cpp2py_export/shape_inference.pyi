@@ -13,4 +13,4 @@ def infer_shapes_path(
     data_prop: bool,
 ) -> None: ...
 
-def infer_function_output_types(bytes: bytes, input_types: list[bytes], attributes: list[bytes]) -> list[bytes]: ... # noqa: A002
+def infer_function_output_types(bytes: bytes, input_types: list[bytes], attributes: list[bytes]) -> list[bytes]: ...  # noqa: A002
