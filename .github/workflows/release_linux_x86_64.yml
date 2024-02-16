@@ -103,7 +103,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') # TODO: remove github.event_name == 'push' ?
+    if: github.event_name == 'release' && github.event.action == 'published' && startsWith(github.ref, 'refs/tags/v') 
     needs: [build]
     steps:
       - uses: actions/download-artifact@348754975ef0295bfa2c111cba996120cfdf8a5d
@@ -120,7 +120,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: >-
-          gh release create '${{ github.run_number }}' --repo '${{ github.repository }}' --notes ""
+          gh release create ''${{ github.ref_name }}' --repo '${{ github.repository }}' --notes ""
 
       - name: Upload artifact signatures to GitHub Release # TODO: 1) don't upload wheels?
         env:
@@ -129,5 +129,5 @@ jobs:
         # `dist/` contains the built packages, and the
         # sigstore-produced signatures and certificates.
         run: >-
-          gh release upload '${{ github.run_number  }}' dist/**
+          gh release upload '${{ github.ref_name }}' dist/**
           --repo '${{ github.repository }}'
