@@ -40,7 +40,7 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
     info = ExternalDataInfo(tensor)
     external_data_file_path = C.resolve_external_data_location(
         base_dir, info.location, tensor.name
-    )
+    )  # type: ignore[attr-defined]
     with open(external_data_file_path, "rb") as data_file:
         if info.offset:
             data_file.seek(info.offset)
