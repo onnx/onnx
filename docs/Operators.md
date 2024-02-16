@@ -2439,7 +2439,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 <dt><tt>training_mode</tt> : int (default is 0)</dt>
-<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1 and 2 are to be computed.</dd>
 </dl>
 
 #### Inputs
