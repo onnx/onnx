@@ -337,7 +337,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
 
 
 def set_metadata_props(
-    proto: Union[ModelProto, GraphProto, FunctionProto, NodeProto],
+    proto: Union[ModelProto, GraphProto, FunctionProto, NodeProto, TensorProto],
     dict_value: Dict[str, str],
 ) -> None:
     del proto.metadata_props[:]
