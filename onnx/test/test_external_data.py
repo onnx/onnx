@@ -211,10 +211,6 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
     ) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
 
-        # temp_dir/invlid_external_data/tensors.bin
-        # temp_dir/external_data/
-        # traversal_location = ../invlid_external_data/tensors.bin
-        # temp_dir/save_copy/model.onnx
         model_dir = os.path.join(self.temp_dir, "save_copy")
         os.mkdir(model_dir)
 
@@ -239,7 +235,6 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
                 if tensor.HasField("raw_data"):
                     set_external_data(tensor, location)
 
-        print(traversal_external_data_location)
         convert_model_to_external_data_no_check(
             model,
             location=traversal_external_data_location,
@@ -248,7 +243,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         onnx.save_model(model, new_model_filepath, self.serialization_format)
         if use_model_path:
             with self.assertRaises(onnx.checker.ValidationError):
-                onnx_model = onnx.load_model(
+                _ = onnx.load_model(
                     new_model_filepath, self.serialization_format
                 )
         else:
