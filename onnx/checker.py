@@ -171,14 +171,4 @@ def check_model(
         C.check_model(protobuf_string, full_check, skip_opset_compatibility_check)
 
 
-def resolve_external_data_location(
-    base_dir: str, location: str, tensor_name: str
-) -> str:
-    result = C.resolve_external_data_location(base_dir, location, tensor_name)  # type: ignore[attr-defined]
-    if result is None:
-        return ""
-    else:
-        return str(result)
-
-
 ValidationError = C.ValidationError

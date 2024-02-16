@@ -8,8 +8,8 @@ import uuid
 from itertools import chain
 from typing import Callable, Iterable, Optional
 
+import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
 from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
-
 
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
@@ -37,10 +37,8 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
         tensor: a TensorProto object.
         base_dir: directory that contains the external data.
     """
-    from onnx import checker
-
     info = ExternalDataInfo(tensor)
-    external_data_file_path = checker.resolve_external_data_location(
+    external_data_file_path = C.resolve_external_data_location(
         base_dir, info.location, tensor.name
     )
     with open(external_data_file_path, "rb") as data_file:
