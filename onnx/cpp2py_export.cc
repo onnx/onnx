@@ -689,8 +689,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](GraphInferencer* inferencer,
          const std::vector<py::bytes>& input_types,
          const std::vector<py::bytes>& input_data) {
-        std::vector<const TypeProto> type_proto;
-        std::vector<const TensorProto> tensor_proto;
+        std::vector<TypeProto> type_proto;
+        std::vector<TensorProto> tensor_proto;
         std::vector<const TypeProto*> type_inputs;
         std::vector<const TensorProto*> tensor_inputs;
         for (const auto& bytes : input_types) {
