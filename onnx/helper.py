@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
 import collections.abc
 import numbers
 import struct
