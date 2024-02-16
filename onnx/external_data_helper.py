@@ -11,6 +11,7 @@ from typing import Callable, Iterable, Optional
 import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
 from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
 
+
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
         self.location = ""

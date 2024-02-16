@@ -17,6 +17,7 @@ import onnx.external_data_helper as ext_data
 import onnx.helper
 import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
 
+
 def _set_external_data(
     tensor: onnx.TensorProto,
     location: str,
