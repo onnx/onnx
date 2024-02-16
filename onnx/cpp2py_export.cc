@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -398,6 +399,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               func_proto.SerializeToString(&func_bytes);
             }
             return py::bytes(func_bytes);
+          })
+      .def(
+          "set_type_and_shape_inference_function",
+          [](OpSchema* op, const std::function<void(InferenceContext*)>& func) {
+            auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
+            return op->TypeAndShapeInferenceFunction(wrapper);
           });
 
   defs.def(
@@ -628,6 +635,85 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
   py::register_exception<InferenceError>(shape_inference, "InferenceError");
+
+  py::class_<InferenceContext> inference_ctx(shape_inference, "InferenceContext", "Inference context");
+
+  inference_ctx.def("__get_attribute", [](InferenceContext* ctx, std::string name) {
+    auto attr = ctx->getAttribute(name);
+    std::string data;
+    attr->SerializeToString(&data);
+    return py::bytes(data);
+  });
+  inference_ctx.def("get_num_inputs", &InferenceContext::getNumInputs);
+  inference_ctx.def("has_input", &InferenceContext::hasInput);
+  inference_ctx.def("__get_input_type", [](InferenceContext* ctx, size_t index) {
+    auto type = ctx->getInputType(index);
+    std::string data;
+    type->SerializeToString(&data);
+    return py::bytes(data);
+  });
+  inference_ctx.def("__get_input_data", [](InferenceContext* ctx, size_t index) {
+    auto tensor = ctx->getInputData(index);
+    std::string data;
+    tensor->SerializeToString(&data);
+    return py::bytes(data);
+  });
+  inference_ctx.def("__get_input_sparse_data", [](InferenceContext* ctx, size_t index) {
+    auto stensor = ctx->getInputSparseData(index);
+    std::string data;
+    stensor->SerializeToString(&data);
+    return py::bytes(data);
+  });
+  inference_ctx.def("__get_symbolic_input", [](InferenceContext* ctx, size_t index) {
+    auto shape = ctx->getSymbolicInput(index);
+    std::string data;
+    shape->SerializeToString(&data);
+    return py::bytes(data);
+  });
+  inference_ctx.def("__get_graph_attribute_inferencer", &InferenceContext::getGraphAttributeInferencer);
+  inference_ctx.def("get_num_outputs", &InferenceContext::getNumOutputs);
+  inference_ctx.def("__get_output_type", [](InferenceContext* ctx, size_t index) {
+    auto type = ctx->getOutputType(index);
+    std::string data;
+    type->SerializeToString(&data);
+    return py::bytes(data);
+  });
+  inference_ctx.def("__set_output_type", [](InferenceContext* ctx, size_t index, py::bytes bytes) {
+    auto type = ctx->getOutputType(index);
+    ParseProtoFromPyBytes(type, bytes);
+  });
+
+  py::class_<GraphInferencer> graph_inferencer(shape_inference, "GraphInferencer", "Graph Inferencer");
+  graph_inferencer.def(
+      "__do_inferencing",
+      [](GraphInferencer* inferencer,
+         const std::vector<py::bytes>& input_types,
+         const std::vector<py::bytes>& input_data) {
+        std::vector<const TypeProto> type_proto;
+        std::vector<const TensorProto> tensor_proto;
+        std::vector<const TypeProto*> type_inputs;
+        std::vector<const TensorProto*> tensor_inputs;
+        for (const auto& bytes : input_types) {
+          TypeProto proto{};
+          ParseProtoFromPyBytes(&proto, bytes);
+          type_proto.emplace_back(proto);
+          type_inputs.emplace_back(&type_proto.back());
+        }
+        for (const auto& bytes : input_data) {
+          TensorProto proto{};
+          ParseProtoFromPyBytes(&proto, bytes);
+          tensor_proto.emplace_back(proto);
+          tensor_inputs.emplace_back(&tensor_proto.back());
+        }
+        auto ret = inferencer->doInferencing(type_inputs, tensor_inputs);
+        std::vector<py::bytes> out;
+        for (const auto& type : ret) {
+          std::string data;
+          type->SerializeToString(&data);
+          out.emplace_back(py::bytes(data));
+        }
+        return out;
+      });
 
   shape_inference.def(
       "infer_shapes",
