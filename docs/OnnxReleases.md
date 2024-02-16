@@ -10,7 +10,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 ## Preparation
 * Install Twine, a utility tool to interact with PyPI. Do  - ``pip install twine``
-* Get hold of the username and password for the ‘onnx’ PyPI account. Release manager should get onnx pypi account credentials from steering committee or from previous release manager.
+* ~~Get hold of the username and password for the ‘onnx’ PyPI account. Release manager should get onnx pypi account credentials from steering committee or from previous release manager.~~ (New ways: The wheels should be uploaded by the pipeline directly when a tag is created)
 * Bump the LAST_RELEASE_VERSION in [version.h](/onnx/common/version.h). Make sure that the IR version number and opset version numbers are up-to-date in
 [ONNX proto files](/onnx/onnx.in.proto),
 [Versioning.md](Versioning.md),
