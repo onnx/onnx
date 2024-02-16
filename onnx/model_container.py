@@ -288,9 +288,9 @@ class ModelContainer:
                 continue
 
             info = ext_data.ExternalDataInfo(tensor)
-            external_data_file_path = C.resolve_external_data_location(
+            external_data_file_path = C.resolve_external_data_location(  # type: ignore[attr-defined]
                 base_dir, info.location, tensor.name
-            )  # type: ignore[attr-defined]
+            )
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
 
