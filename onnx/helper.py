@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from __future__ import annotations
 import collections.abc
 import numbers
 import struct
@@ -338,7 +337,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
 
 
 def set_metadata_props(
-    proto: ModelProto | GraphProto | FunctionProto | NodeProto,
+    proto: Union[ModelProto, GraphProto, FunctionProto, NodeProto],
     dict_value: Dict[str, str],
 ) -> None:
     del proto.metadata_props[:]
