@@ -2439,7 +2439,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 <dt><tt>training_mode</tt> : int (default is 0)</dt>
-<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1 and 2 are to be computed.</dd>
 </dl>
 
 #### Inputs
@@ -7334,13 +7334,16 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 ### <a name="DequantizeLinear"></a><a name="dequantizelinear">**DequantizeLinear**</a>
 
-  The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
-  The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
-  for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-  `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
-  there's no zero point (zero point is supposed to be 0).
-  `zero-point` is usually not used in the case of float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz quantization,
-  but the dequantization formula remains the same for consistency and 'x_scale' still determines the output type.
+  The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
+  full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
+  must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
+  a 1-D tensor for per-axis quantization, or have a rank identical to the input for blocked quantization.
+  See QuantizeLinear for details on quantization granularity.
+
+  `x_zero_point` and `x` must have the same type. `x` and `y` must have the same shape. In the case of dequantizing
+  `int32`, there's no zero point (zero point is supposed to be 0).
+  `zero-point` is usually not used in the case of float8 types quantization, but the dequantization formula remains the same
+  for consistency, and `x_scale` still determines the output type.
 
 #### Version
 
@@ -7352,7 +7355,9 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dt><tt>block_size</tt> : int (default is 0)</dt>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -7361,16 +7366,16 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D quantized input tensor to be de-quantized.</dd>
 <dt><tt>x_scale</tt> : T2</dt>
-<dd>Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization.</dd>
+<dd>Scale for input `x`. For per-tensor/layer dequantization the scale is a scalar, for per per-axis dequantization it is a 1-D Tensor and for blocked dequantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
 <dt><tt>x_zero_point</tt> (optional) : T1</dt>
-<dd>Zero point for input 'x'. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
+<dd>Zero point for input `x`. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>y</tt> : T2</dt>
-<dd>N-D full precision output tensor. It has same shape as input 'x'.</dd>
+<dd>N-D full precision output tensor. It has same shape as input `x`.</dd>
 </dl>
 
 #### Type Constraints
@@ -7417,6 +7422,83 @@ expect(
     inputs=[x, x_scale, x_zero_point],
     outputs=[y],
     name="test_dequantizelinear_axis",
+)
+```
+
+</details>
+
+
+<details>
+<summary>blocked</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=1,
+    block_size=2,
+)
+
+x = np.array(
+    [
+        [
+            [[3, 89], [34, 200], [74, 59]],
+            [[5, 24], [24, 87], [32, 13]],
+            [[5, 12], [12, 33], [65, 42]],
+            [[245, 99], [4, 142], [121, 102]],
+        ],
+    ],
+    dtype=np.uint8,
+)
+
+x_scale = np.array(
+    [
+        [
+            [[3.0, 2.0], [4.0, 1.0], [2.0, 2.0]],
+            [[5.0, 2.0], [4.0, 3.0], [5.0, 2.0]],
+        ],
+    ],
+    dtype=np.float32,
+)
+x_zero_point = np.array(
+    [
+        [
+            [[1, 0], [0, 1], [2, 20]],
+            [[3, 2], [4, 3], [15, 2]],
+        ],
+    ],
+    dtype=np.uint8,
+)
+
+# x.shape = (1, 4, 3, 2)
+# x_scale.shape = (1, 2, 3, 2)
+assert x_scale.shape == x_zero_point.shape
+block_axis = 1
+# The block shape is [x.shape[i] // x_scale.shape[i] for i in range(len(x.shape))] = (1, 2, 1, 1)
+assert all(
+    x.shape[i] == x_scale.shape[i]
+    for i in range(len(x.shape))
+    if i != block_axis
+)
+assert x.shape[block_axis] % x_scale.shape[block_axis] == 0
+repeats = x.shape[block_axis] // x_scale.shape[block_axis]
+
+# Create element-wise scale and zero point
+x_scale_elementwise = np.repeat(x_scale, repeats=repeats, axis=block_axis)
+x_zero_point_elementwise = np.repeat(
+    x_zero_point, repeats=repeats, axis=block_axis
+)
+
+y = (
+    x.astype(np.float32) - x_zero_point_elementwise.astype(np.float32)
+) * x_scale_elementwise
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_blocked",
 )
 ```
 
@@ -12771,7 +12853,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float32)
 y = np.isinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf")
 ```
@@ -12789,7 +12871,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float16)
 y = np.isinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf_float16")
 ```
@@ -12805,7 +12887,7 @@ node = onnx.helper.make_node(
     "IsInf", inputs=["x"], outputs=["y"], detect_positive=0
 )
 
-x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.7, np.nan, np.inf, -3.6, -np.inf, np.inf], dtype=np.float32)
 y = np.isneginf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf_negative")
 ```
@@ -12821,7 +12903,7 @@ node = onnx.helper.make_node(
     "IsInf", inputs=["x"], outputs=["y"], detect_negative=0
 )
 
-x = np.array([-1.7, np.nan, np.inf, 3.6, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.7, np.nan, np.inf, 3.6, -np.inf, np.inf], dtype=np.float32)
 y = np.isposinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
 ```
@@ -12875,7 +12957,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float16)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float16)
 y = np.isnan(x)
 expect(node, inputs=[x], outputs=[y], name="test_isnan_float16")
 ```
@@ -12893,7 +12975,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float32)
 y = np.isnan(x)
 expect(node, inputs=[x], outputs=[y], name="test_isnan")
 ```
@@ -20154,16 +20236,31 @@ for quant_type_name in ["uint8", "int8"]:
 
 ### <a name="QuantizeLinear"></a><a name="quantizelinear">**QuantizeLinear**</a>
 
-  The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
-  The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-  The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
-  For saturation, it saturates according to:
-  uint8: [0, 255], int8: [-128, 127], uint16: [0, 65535], int16: [-32768, 32767], uint4: [0, 15], int4: [-8, 7]
-  For (x / y_scale), it's rounding to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
-  'y_zero_point' and 'y' must have same type.
-  'y_zero_point' is usually not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz,
-  but the quantization formula remains the same for consistency and
-  the type of the attribute 'y_zero_point' still determines the quantization type.
+  The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
+  low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
+  granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
+
+  Saturation is done according to:
+  - uint16: [0, 65535]
+  - int16: [-32768, 32767]
+  - uint8: [0, 255]
+  - int8: [-128, 127]
+  - uint4: [0, 15]
+  - int4: [-8, 7]
+
+  For `(x / y_scale)`, it rounds to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+
+  `y_zero_point` and `y` must have the same type. `y_zero_point` is usually not used for quantization to float8 types, but the quantization
+  formula remains the same for consistency, and the type of the attribute `y_zero_point` still determines the quantization type.
+
+  There are three supported quantization granularities, determined by the shape of `y_scale`.
+  In all cases, `y_zero_point` must have the same shape as `y_scale`.
+  - Per-tensor (per-layer) quantization: `y_scale` is a scalar.
+  - Per-axis quantization: The scale must be a 1-D tensor, with the length of the quantization axis. For an input shape
+   `(D0, ..., Di, ..., Dn)` and `axis=i`, `y_scale` is a 1-D tensor of length `Di`.
+  - Blocked quantization: The scale's shape is identical to the input's shape, except for one dimension, in which
+    blocking is performed. Given `x` shape `(D0, ..., Di, ..., Dn)`, `axis=i`, and block size `B`: `y_scale` shape is
+    `(D0, ..., ceil(Di/B), ..., Dn)`.
 
 #### Version
 
@@ -20175,7 +20272,9 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the quantization dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dt><tt>block_size</tt> : int (default is 0)</dt>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
 <dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>
@@ -20186,16 +20285,16 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D full precision Input tensor to be quantized.</dd>
 <dt><tt>y_scale</tt> : T1</dt>
-<dd>Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, or a 1-D Tensor for per-axis quantization.</dd>
+<dd>Scale for doing quantization to get `y`. For per-tensor/layer quantization the scale is a scalar, for per-axis quantization it is a 1-D Tensor and for blocked quantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
-<dd>Zero point for doing quantization to get 'y'. Shape must match y_scale. Default is uint8 with zero point of 0 if it's not specified.</dd>
+<dd>Zero point for doing quantization to get `y`. Shape must match `y_scale`.Default is uint8 with zero point of 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>y</tt> : T2</dt>
-<dd>N-D quantized output tensor. It has same shape as input 'x'.</dd>
+<dd>N-D quantized output tensor. It has same shape as input `x`.</dd>
 </dl>
 
 #### Type Constraints
@@ -20204,7 +20303,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
 <dd>The type of the input 'x'.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
-<dd>The type of the input 'y_zero_point' and the output 'y'.</dd>
+<dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
 
@@ -20241,6 +20340,74 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_axis",
+)
+```
+
+</details>
+
+
+<details>
+<summary>blocked</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=1,
+    block_size=2,
+)
+
+x = np.array(
+    [
+        [6.0, 12.0, 50.0, 5.0],
+        [1.0, 8.0, 4.0, 5.0],
+        [0.0, 20.0, 10.0, 4.0],
+    ],
+    dtype=np.float32,
+)
+y_scale = np.array(
+    [
+        [1.5, 2.5],
+        [3.0, 4.9],
+        [5.1, 6.9],
+    ],
+    dtype=np.float32,
+)
+y_zero_point = np.array(
+    [
+        [0, 1],
+        [1, 0],
+        [2, 3],
+    ],
+    dtype=np.uint8,
+)
+# x.shape = (3, 4)
+# y_scale.shape = (3, 2)
+assert y_scale.shape == y_zero_point.shape
+block_axis = 1
+# The block shape is [x.shape[i] // y_scale.shape[i] for i in range(len(x.shape))] = (1, 2)
+assert all(
+    x.shape[i] == y_scale.shape[i]
+    for i in range(len(x.shape))
+    if i != block_axis
+)
+assert x.shape[block_axis] % y_scale.shape[block_axis] == 0
+repeats = x.shape[block_axis] // y_scale.shape[block_axis]
+
+# Create element-wise scale and zero point
+y_scale_elementwise = np.repeat(y_scale, repeats=repeats, axis=block_axis)
+y_zero_point_elementwise = np.repeat(
+    y_zero_point, repeats=repeats, axis=block_axis
+)
+
+y = np.rint(x / y_scale_elementwise + y_zero_point_elementwise).astype(np.uint8)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_blocked",
 )
 ```
 

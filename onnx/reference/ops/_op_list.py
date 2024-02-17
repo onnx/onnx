@@ -82,7 +82,10 @@ from onnx.reference.ops.op_cosh import Cosh
 from onnx.reference.ops.op_cum_sum import CumSum
 from onnx.reference.ops.op_deform_conv import DeformConv
 from onnx.reference.ops.op_depth_to_space import DepthToSpace
-from onnx.reference.ops.op_dequantize_linear import DequantizeLinear
+from onnx.reference.ops.op_dequantize_linear import (
+    DequantizeLinear_19,
+    DequantizeLinear_21,
+)
 from onnx.reference.ops.op_det import Det
 from onnx.reference.ops.op_dft import DFT_17, DFT_20
 from onnx.reference.ops.op_div import Div
@@ -153,7 +156,11 @@ from onnx.reference.ops.op_pow import Pow
 from onnx.reference.ops.op_prelu import PRelu
 from onnx.reference.ops.op_qlinear_conv import QLinearConv
 from onnx.reference.ops.op_qlinear_matmul import QLinearMatMul
-from onnx.reference.ops.op_quantize_linear import QuantizeLinear_10, QuantizeLinear_19
+from onnx.reference.ops.op_quantize_linear import (
+    QuantizeLinear_10,
+    QuantizeLinear_19,
+    QuantizeLinear_21,
+)
 from onnx.reference.ops.op_random_normal import RandomNormal
 from onnx.reference.ops.op_random_normal_like import RandomNormalLike
 from onnx.reference.ops.op_random_uniform import RandomUniform

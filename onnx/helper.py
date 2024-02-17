@@ -75,6 +75,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.14.0", 9, 19, 3, 1),
     ("1.14.1", 9, 19, 3, 1),
     ("1.15.0", 9, 20, 4, 1),
+    ("1.16.0", 9, 20, 5, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -135,6 +136,7 @@ def make_node(
     name: Optional[str] = None,
     doc_string: Optional[str] = None,
     domain: Optional[str] = None,
+    overload: Optional[str] = None,
     **kwargs: Any,
 ) -> NodeProto:
     """Construct a NodeProto.
@@ -147,6 +149,8 @@ def make_node(
         doc_string (string, default None): optional documentation string for NodeProto
         domain (string, default None): optional domain for NodeProto.
             If it's None, we will just use default domain (which is empty)
+        overload (string, default None): optional field, used to
+            resolve calls to model-local functions
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
 
@@ -163,6 +167,8 @@ def make_node(
         node.doc_string = doc_string
     if domain is not None:
         node.domain = domain
+    if overload is not None:
+        node.overload = overload
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
@@ -258,11 +264,15 @@ def make_function(
     attributes: Optional[Sequence[str]] = None,
     attribute_protos: Optional[Sequence[AttributeProto]] = None,
     doc_string: Optional[str] = None,
+    overload: Optional[str] = None,
+    value_info: Optional[Sequence[ValueInfoProto]] = None,
 ) -> FunctionProto:
     if attributes is None:
         attributes = []
     if attribute_protos is None:
         attribute_protos = []
+    if value_info is None:
+        value_info = []
     f = FunctionProto()
     f.domain = domain
     f.name = fname
@@ -274,6 +284,9 @@ def make_function(
     f.attribute_proto.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
+    if overload is not None:
+        f.overload = overload
+    f.value_info.extend(value_info)
     return f
 
 
@@ -318,7 +331,7 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
     ir_version_field = "ir_version"
     if ir_version_field not in kwargs:
         opset_imports_field = "opset_imports"
-        imports = kwargs[opset_imports_field] if opset_imports_field in kwargs else []
+        imports = kwargs.get(opset_imports_field, [])
         kwargs[ir_version_field] = find_min_ir_version_for(imports)
     return make_model(graph, **kwargs)
 
