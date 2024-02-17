@@ -31,16 +31,23 @@ constexpr int OpSchema::kUninitializedSinceVersion;
 // By default if opset_version_to_load=0, it registers all opset schema for all opset versions
 // Otherwise, it only registers the latest schema according to opset_version_to_load
 void RegisterSchema(
+    const OpSchema& schema,
+    int opset_version_to_load,
+    bool fail_duplicate_schema,
+    bool fail_with_exception) {
+  RegisterSchema(OpSchema(schema), opset_version_to_load, fail_duplicate_schema, fail_with_exception);
+}
+void RegisterSchema(
     OpSchema&& schema,
     int opset_version_to_load,
     bool fail_duplicate_schema,
     bool fail_with_exception) {
   if (fail_with_exception) {
     OpSchemaRegistry::OpSchemaRegisterOnce::OpSchemaRegisterImpl(
-        std::forward<OpSchema>(schema), opset_version_to_load, fail_duplicate_schema);
+        std::move(schema), opset_version_to_load, fail_duplicate_schema);
   } else {
     OpSchemaRegistry::OpSchemaRegisterOnce::OpSchemaRegisterNoExcept(
-        std::forward<OpSchema>(schema), opset_version_to_load, fail_duplicate_schema);
+        std::move(schema), opset_version_to_load, fail_duplicate_schema);
   }
 }
 
