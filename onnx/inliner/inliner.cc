@@ -283,6 +283,8 @@ class InliningRenamer : private MutableVisitor {
     renamer.Bind<true>(*callee.mutable_output(), callnode.output());
 
     renamer.VisitFunction(&callee);
+    for (auto& v : *callee.mutable_value_info())
+      renamer.LookupOrRename(*v.mutable_name(), false);
   }
 };
 
@@ -457,6 +459,7 @@ void InlineFunctions(
 
 /** Shared utility function used for inlining into either a GraphProto or a FunctionProto.
  * @param nodes Mutable list of nodes (of function or graph)
+ * @param value_infos Mutable list of value_infos (of function or graph)
  * @param map Map from function-id to function for functions to be inlined
  * @param name_generator Name generator for generating unique names for inlined variables
  * @param model If non-null, the model being inlined into. Used for version conversion.
@@ -464,6 +467,7 @@ void InlineFunctions(
  */
 void InlineFunctions(
     NodeList& nodes,
+    ValueInfoList& value_infos,
     const FunctionMap& map,
     NameGenerator& name_generator,
     ModelProto* model,
@@ -492,6 +496,9 @@ void InlineFunctions(
             callee.name().c_str());
         ConvertVersion(*model, node, callee, target_version);
       }
+      // Append valueinfos of called function
+      for (auto& callee_vi : callee.value_info())
+        *value_infos.Add() = callee_vi;
       // Append nodes of called function
       for (auto& callee_node : *callee.mutable_node())
         append_node(callee_node);
@@ -531,7 +538,8 @@ void InlineFunctions(
     ModelProto* model,
     int& inline_count) {
   auto* nodes = graph.mutable_node();
-  InlineFunctions(*nodes, map, name_generator, model, inline_count);
+  auto* value_infos = graph.mutable_value_info();
+  InlineFunctions(*nodes, *value_infos, map, name_generator, model, inline_count);
 }
 
 /** Utility function used for inlining into a ModelProto.
@@ -543,7 +551,8 @@ void InlineFunctions(ModelProto& model, FunctionMap& map) {
   auto* graph = model.mutable_graph();
   NameGenerator name_generator(*graph);
   auto* nodes = graph->mutable_node();
-  InlineFunctions(*nodes, map, name_generator, &model, inline_count);
+  auto* value_infos = graph->mutable_value_info();
+  InlineFunctions(*nodes, *value_infos, map, name_generator, &model, inline_count);
 }
 
 /** Utility function used for inlining into a FunctionProto.
@@ -553,7 +562,7 @@ void InlineFunctions(ModelProto& model, FunctionMap& map) {
 void InlineFunctions(FunctionProto& function, FunctionMap& map) {
   int inline_count = 0;
   NameGenerator name_generator(function);
-  InlineFunctions(*function.mutable_node(), map, name_generator, nullptr, inline_count);
+  InlineFunctions(*function.mutable_node(), *function.mutable_value_info(), map, name_generator, nullptr, inline_count);
 }
 
 class VectorSet : public FunctionIdSet {
