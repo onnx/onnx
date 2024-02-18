@@ -536,7 +536,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "skip_opset_compatibility_check"_a = false);
 
   checker.def(
-      "resolve_external_data_location",
+      "_resolve_external_data_location",
       [](const std::string& base_dir, const std::string& file_path, const std::string& tensor_name) -> std::string {
         return checker::resolve_external_data_location(base_dir, file_path, tensor_name);
       });
