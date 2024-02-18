@@ -11,7 +11,6 @@
 #include "onnx/common/constants.h"
 #include "onnx/onnx_pb.h"
 
-
 namespace ONNX_NAMESPACE {
 
 // ONNX (model-local) function identifiers are a tuple (domain, op, overload).
