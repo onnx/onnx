@@ -16,6 +16,7 @@
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"
 #include "onnx/common/interned_strings.h"
+#include "onnx/common/proto_util.h"
 #include "onnx/common/visitor.h"
 #include "onnx/shape_inference/attribute_binder.h"
 #include "onnx/shape_inference/implementation.h"
@@ -27,23 +28,6 @@ namespace inliner {
 namespace { // internal/private API
 
 using namespace internal;
-
-// We use a string of the form "domain::name" as the key for a function id.
-using FunctionIdKey = std::string;
-
-FunctionIdKey GetFunctionId(const std::string& domain, const std::string& op, const std::string& overload) {
-  if (overload.empty())
-    return NormalizeDomain(domain) + "::" + op;
-  return NormalizeDomain(domain) + "::" + op + "::" + overload;
-}
-
-FunctionIdKey GetFunctionId(const FunctionProto& function) {
-  return GetFunctionId(function.domain(), function.name(), function.overload());
-}
-
-FunctionIdKey GetCalleeId(const NodeProto& node) {
-  return GetFunctionId(node.domain(), node.op_type(), node.overload());
-}
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 
@@ -439,7 +423,7 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
 }
 
 constexpr int64_t kNoConversion = -1;
-using FunctionMap = std::unordered_map<FunctionIdKey, std::pair<const FunctionProto*, int64_t>>;
+using FunctionMap = std::unordered_map<FunctionImplId, std::pair<const FunctionProto*, int64_t>>;
 
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
@@ -612,7 +596,7 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
       mismatches.erase(iter);
     }
     if (mismatches.empty()) {
-      map[GetFunctionId(function)] = std::pair<const FunctionProto*, int64_t>(&function, target_onnx_version);
+      map[GetFunctionImplId(function)] = std::pair<const FunctionProto*, int64_t>(&function, target_onnx_version);
     }
   }
 
@@ -622,7 +606,7 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
   // opset version. They need to be handled some other way, eg., using a version-adapter.
   auto* local_functions = model.mutable_functions();
   for (auto it = local_functions->begin(); it != local_functions->end();) {
-    if (map.count(GetFunctionId(*it)) > 0)
+    if (map.count(GetFunctionImplId(*it)) > 0)
       it = local_functions->erase(it);
     else
       ++it;
@@ -642,7 +626,7 @@ void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) 
     if (!model_imports.Add(function))
       ONNX_THROW("Model has functions with incompatible opset versions.");
     if (to_inline.Contains(function.domain(), function.name())) {
-      map[GetFunctionId(function)] = std::pair<const FunctionProto*, int64_t>(&function, kNoConversion);
+      map[GetFunctionImplId(function)] = std::pair<const FunctionProto*, int64_t>(&function, kNoConversion);
     } else {
       non_inlined_functions.push_back(&function);
     }
@@ -657,7 +641,7 @@ void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) 
   // Remove all inlined model-local functions.
   auto* local_functions = model.mutable_functions();
   for (auto it = local_functions->begin(); it != local_functions->end();) {
-    if (map.count(GetFunctionId(*it)) > 0)
+    if (map.count(GetFunctionImplId(*it)) > 0)
       it = local_functions->erase(it);
     else
       ++it;
