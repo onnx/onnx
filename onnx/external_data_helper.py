@@ -8,7 +8,7 @@ import uuid
 from itertools import chain
 from typing import Callable, Iterable, Optional
 
-import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
+import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
 
 
