@@ -142,7 +142,7 @@ jobs:
       - uses: actions/download-artifact@348754975ef0295bfa2c111cba996120cfdf8a5d
         with:
           name: wheels
-          path: dist
+          path: dist/
 
       - name: Publish wheels to pypi
         uses: pypa/gh-action-pypi-publish@2f6f737ca5f74c637829c0f5c3acd0e29ea5e8bf
