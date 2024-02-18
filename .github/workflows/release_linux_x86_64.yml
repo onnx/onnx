@@ -122,7 +122,8 @@ jobs:
         run: >-
           gh release create ''${{ github.ref_name }}' --repo '${{ github.repository }}' --notes ""
 
-      - name: Upload artifact signatures to GitHub Release # TODO: 1) don't upload wheels?
+      - name: Upload artifact signatures to GitHub Release # TODO: 1) don't upload wheels?, what is in dist/* ?  2) how is tar.gz/zip added?
+      
         env:
           GITHUB_TOKEN: ${{ github.token }}
         # Upload to GitHub Release using the `gh` CLI.
