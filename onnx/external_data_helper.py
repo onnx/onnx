@@ -39,7 +39,7 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
         base_dir: directory that contains the external data.
     """
     info = ExternalDataInfo(tensor)
-    external_data_file_path = C.resolve_external_data_location(  # type: ignore[attr-defined]
+    external_data_file_path = c_checker.resolve_external_data_location(  # type: ignore[attr-defined]
         base_dir, info.location, tensor.name
     )
     with open(external_data_file_path, "rb") as data_file:
