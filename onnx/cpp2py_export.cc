@@ -537,9 +537,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   checker.def(
       "_resolve_external_data_location",
-      [](const std::string& base_dir, const std::string& file_path, const std::string& tensor_name) -> std::string {
-        return checker::resolve_external_data_location(base_dir, file_path, tensor_name);
-      });
+      &checker::resolve_external_data_location);
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
