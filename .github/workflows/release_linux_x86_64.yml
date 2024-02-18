@@ -9,13 +9,15 @@ on:
   pull_request:
     branches: [main, rel-*]
   workflow_dispatch:
+  release:
+    types: [published]
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
 jobs:
   build:
-    #if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: ubuntu-latest
     strategy:
       matrix:
