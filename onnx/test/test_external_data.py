@@ -207,7 +207,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
 
     @parameterized.parameterized.expand(itertools.product((True, False), (True, False)))
     def test_save_external_invalid_single_file_data_and_check(
-        self, use_absolute_path, use_model_path
+        self, use_absolute_path: bool, use_model_path: bool
     ) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
 
