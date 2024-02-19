@@ -225,6 +225,9 @@ message NodeProto {
 
   // A human-readable documentation for this node. Markdown is allowed.
   string doc_string = 6;
+
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 9;
 }
 
 // Training information
@@ -483,6 +486,9 @@ message GraphProto {
   // which means, tensor 'a_scale' and tensor 'a_zero_point' are scale and zero point of tensor 'a' in the model.
   repeated TensorAnnotation quantization_annotation = 14;
 
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 16;
+
   reserved 3, 4, 6 to 9;
   reserved "ir_version", "producer_version", "producer_tag", "domain";
 }
@@ -531,8 +537,8 @@ message TensorProto {
     FLOAT8E5M2FNUZ = 20;  // follows IEEE 754, supports nan, not inf, mostly used for gradients, no negative zero
 
     // 4-bit data-types
-    UINT4 = 21;
-    INT4 = 22;
+    UINT4 = 21;  // Unsigned integer in range [0, 15]
+    INT4 = 22;   // Signed integer in range [-8, 7], using two's-complement representation
 
     // Future extensions go here.
   }
@@ -570,7 +576,8 @@ message TensorProto {
   // For int32, uint8, int8, uint16, int16, uint4, int4, bool, float8 and float16 values
   // float16 and float8 values must be bit-wise converted to an uint16_t prior
   // to writing to the buffer.
-  // uint4 and int4 values must be packed to 4bitx2 prior to writing to the buffer.
+  // uint4 and int4 values must be packed to 4bitx2 prior to writing to the buffer, the first element is stored in
+  // the 4 LSB and the second element is stored in the 4 MSB.
   // When this field is present, the data_type field MUST be
   // INT32, INT16, INT8, INT4, UINT16, UINT8, UINT4, BOOL, FLOAT16, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ
   repeated int32 int32_data = 5 [packed = true];
@@ -602,6 +609,7 @@ message TensorProto {
   // Complex64 elements must be written as two consecutive FLOAT values, real component first.
   // Complex128 elements must be written as two consecutive DOUBLE values, real component first.
   // Boolean type MUST be written one byte per tensor element (00000001 for true, 00000000 for false).
+  // uint4 and int4 values must be packed to 4bitx2, the first element is stored in the 4 LSB and the second element is stored in the 4 MSB.
   //
   // Note: the advantage of specific field rather than the raw_data field is
   // that in some cases (e.g. int data), protobuf does a better packing via
@@ -644,6 +652,9 @@ message TensorProto {
   // When this field is present, the data_type field MUST be
   // UINT32 or UINT64
   repeated uint64 uint64_data = 11 [packed = true];
+
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 16;
 }
 
 // A serialized sparse-tensor value
@@ -865,6 +876,9 @@ message FunctionProto {
   // outputs, and intermediate values). It is optional for a value to appear
   // in value_info list.
   repeated ValueInfoProto value_info = 12;
+
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 14;
 }
 
 // For using protobuf-lite
