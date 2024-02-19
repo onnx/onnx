@@ -535,9 +535,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "full_check"_a = false,
       "skip_opset_compatibility_check"_a = false);
 
-  checker.def(
-      "_resolve_external_data_location",
-      &checker::resolve_external_data_location);
+  checker.def("_resolve_external_data_location", &checker::resolve_external_data_location);
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
