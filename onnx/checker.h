@@ -177,7 +177,10 @@ void check_model(
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
     bool check_custom_domain = false);
-
+std::string resolve_external_data_location(
+    const std::string& base_dir,
+    const std::string& location,
+    const std::string& tensor_name);
 bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace checker
