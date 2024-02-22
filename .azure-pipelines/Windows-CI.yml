@@ -59,9 +59,9 @@ jobs:
   # cmake 3.28.3 failed to find protobuf installed from conda-forge
   # https://gitlab.kitware.com/cmake/cmake/-/issues/25704
   - script: |
-    choco install cmake --version 3.27.9 -y
-    cmake --version
-  displayName: Install specific version of CMake and check version
+      choco install cmake --version 3.27.9 -y
+      cmake --version
+    displayName: Install specific version of CMake and check version
 
   - script: |
       conda create --yes --quiet --name py$(python.version) python=$(python.version)
