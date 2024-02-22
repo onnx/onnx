@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         architecture: ['x64']
 
     steps:
@@ -32,13 +32,13 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Build manylinux2014_x86_64
-      uses: docker://quay.io/pypa/manylinux2014_x86_64:latest@sha256:085b7c2c1bcb45b936e5478fe24a5142b0519e242a0104142fd50d569d6cb922
+      uses: docker://quay.io/pypa/manylinux2014_x86_64:latest
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
+      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -75,18 +75,6 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-    - name: Verify ONNX with the minimum supported numpy
-      if: ${{ always() }}
-      run: |
-        if [[ "${{ matrix.python-version }}" == "3.8" || "${{ matrix.python-version }}" == "3.9" ]]; then
-          export minimum_numpy_version=1.16.6
-        else
-          export minimum_numpy_version=1.23.2
-        fi
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy==$minimum_numpy_version
-        python -m pip install dist/*manylinux2014_x86_64.whl
-        pytest
-
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
@@ -94,14 +82,15 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-    - name: Verify ONNX with the minimum supported protobuf (from requirements.txt)
+    - name: Verify ONNX with the minimumly supported packages
       if: ${{ always() }}
       run: |
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf==3.20.2
+        python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != '3.12'
       run: |
         python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime

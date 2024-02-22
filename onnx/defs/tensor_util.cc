@@ -58,4 +58,6 @@ DEFINE_PARSE_DATA(float, floats)
 DEFINE_PARSE_DATA(double, doubles)
 DEFINE_PARSE_DATA(uint64_t, uint64s)
 
+#undef DEFINE_PARSE_DATA
+
 } // namespace ONNX_NAMESPACE

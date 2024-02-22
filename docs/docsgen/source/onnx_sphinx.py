@@ -76,101 +76,115 @@ def _get_diff_template():
 
 def _get_ops_template():
     return jinja2.Template(
-        textwrap.dedent(
-            """
-        {% for sch in schemas %}
+        """\
+{% for sch in schemas %}
 
-        .. tag-diff-insert.
+.. tag-diff-insert.
 
-        (l-onnx-op{{sch.domain.lower().replace(".", "-")}}-{{sch.name.lower()}}-{{str(sch.since_version)}})=
+(l-onnx-op{{sch.domain.lower().replace(".", "-")}}-{{sch.name.lower()}}-{{str(sch.since_version)}})=
 
-        ## {{format_name_with_domain(sch)}}
+## {{format_name_with_domain(sch)}}
 
-        ### Version
+### Version
 
-        - **name**: [{{sch.name}} (GitHub)]({{build_doc_url(sch)}}{{sch.name}})
-        - **domain**: `{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}`
-        - **since_version**: `{{sch.since_version}}`
-        - **function**: `{{sch.has_function or sch.has_context_dependent_function}}`
-        - **support_level**: `{{sch.support_level}}`
-        - **shape inference**: `{{sch.has_type_and_shape_inference_function}}`
+- **name**: [{{sch.name}} (GitHub)]({{build_doc_url(sch)}}{{sch.name}})
+- **domain**: `{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}`
+- **since_version**: `{{sch.since_version}}`
+- **function**: `{{sch.has_function or sch.has_context_dependent_function}}`
+- **support_level**: `{{sch.support_level}}`
+- **shape inference**: `{{sch.has_type_and_shape_inference_function}}`
 
-        {% if sch.support_level == OpSchema.SupportType.EXPERIMENTAL %}
-        No versioning maintained for experimental ops.
-        {% else %}
-        This version of the operator has been {% if
-        sch.deprecated %}deprecated{% else %}available{% endif %}
-        **since version {{sch.since_version}}{% if
-        sch.domain %} of domain {{sch.domain}}{% endif %}**.
-        {% if len(sch.versions) > 1 %}
-        Other versions of this operator:
-        {% for v in sch.version[:-1] %} {{v}} {% endfor %}
-        {% endif %}
-        {% endif %}
+{% if sch.support_level == OpSchema.SupportType.EXPERIMENTAL %}
+No versioning maintained for experimental ops.
+{% else %}
+This version of the operator has been {% if
+sch.deprecated %}deprecated{% else %}available{% endif %}
+**since version {{sch.since_version}}{% if
+sch.domain %} of domain {{sch.domain}}{% endif %}**.
+{% if len(sch.versions) > 1 %}
+Other versions of this operator:
+{% for v in sch.version[:-1] %} {{v}} {% endfor %}
+{% endif %}
+{% endif %}
 
-        ### Summary
+### Summary
 
-        {{process_documentation(sch.doc)}}
-        {% if sch.attributes %}
+{{process_documentation(sch.doc)}}
 
-        ### Attributes
+{% if sch.has_function %}
 
-        {% for _, attr in sorted(sch.attributes.items())
-        %}* **{{attr.name}} - {{str(attr.type).split('.')[-1]}}**{%
-          if attr.required %} (required){% endif %} {%
-          if attr.default_value %}{{clean_default_value(attr)}}{%
-          endif %}: {{text_wrap(attr.description, 2)}}
-        {% endfor %}
-        {% endif %}
-        {% if sch.inputs %}
+#### Function Body
 
-        ### Inputs
+The function definition for this operator.
 
-        {% if sch.min_input != sch.max_input %}Between {{sch.min_input
-        }} and {{sch.max_input}} inputs.
-        {% endif %}
-        {% for ii, inp in enumerate(sch.inputs) %}
-        - **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.type_str}}**:
-        {{text_wrap(inp.description, 2)}}{% endfor %}
-        {% endif %}
-        {% if sch.outputs %}
+```
+{{get_function_body(sch)}}
+```
+{% endif %}
+{% if sch.attributes %}
 
-        ### Outputs
+### Attributes
 
-        {% if sch.min_output != sch.max_output %}Between {{sch.min_output
-        }} and {{sch.max_output}} outputs.
-        {% endif %}
-        {% for ii, out in enumerate(sch.outputs) %}
-        - **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.type_str}}**:
-        {{text_wrap(out.description, 2)}}{% endfor %}
-        {% endif %}
-        {% if sch.type_constraints %}
+{% for _, attr in sorted(sch.attributes.items())
+%}* **{{attr.name}} - {{str(attr.type).split('.')[-1]}}**{%
+  if attr.required %} (required){% endif %} {%
+  if attr.default_value %}{{clean_default_value(attr)}}{%
+  endif %}:
 
-        ### Type Constraints
+{{text_indent(attr.description, 2)}}
 
-        {% for ii, type_constraint in enumerate(sch.type_constraints)
-        %}* {{get_constraint(type_constraint, ii)}}:
-        {{text_wrap(type_constraint.description, 2)}}
-        {% endfor %}
-        {% endif %}
-        {% if examples and is_last_schema(sch): %}
+{% endfor %}
+{% endif %}
+{% if sch.inputs %}
 
-        ### Examples
+### Inputs
 
-        {% for example, code in examples.items(): %}
+{% if sch.min_input != sch.max_input %}Between {{sch.min_input
+}} and {{sch.max_input}} inputs.
+{% endif %}
+{% for ii, inp in enumerate(sch.inputs) %}
+- **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.type_str}}**:
 
-        #### {{ example }}
+{{text_indent(inp.description, 2)}}{% endfor %}
+{% endif %}
+{% if sch.outputs %}
 
-        ```python
-        {{ format_example(code) }}
-        ```
-        {% endfor %}
-        {% endif %}
-        {% endfor %}
-        """
-        ),
-        autoescape=False,
-    )
+### Outputs
+
+{% if sch.min_output != sch.max_output %}Between {{sch.min_output
+}} and {{sch.max_output}} outputs.
+{% endif %}
+{% for ii, out in enumerate(sch.outputs) %}
+- **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.type_str}}**:
+
+{{text_indent(out.description, 2)}}{% endfor %}
+{% endif %}
+{% if sch.type_constraints %}
+
+### Type Constraints
+
+{% for ii, type_constraint in enumerate(sch.type_constraints)
+%}* {{get_constraint(type_constraint, ii)}}:
+
+{{text_indent(type_constraint.description, 2)}}
+{% endfor %}
+{% endif %}
+{% if examples and is_last_schema(sch): %}
+
+### Examples
+
+{% for example, code in examples.items(): %}
+
+#### {{ example }}
+
+```python
+{{ format_example(code) }}
+```
+{% endfor %}
+{% endif %}
+{% endfor %}""",
+    autoescape=False,
+)
 
 
 def _get_main_template():
@@ -433,10 +447,12 @@ def get_markdown_doc(
             sval = format_default_value(default_value)
         return f"(default is `{sval!r}`)"
 
-    def text_wrap(text, indent):
+    def text_indent(text: str, indent: int) -> str:
         s = " " * indent
-        lines = textwrap.wrap(text, initial_indent=s, subsequent_indent=s)
-        return "\n".join(lines)
+        return textwrap.indent(text, s)
+
+    def get_function_body(schema: OpSchema) -> str:
+        return onnx.printer.to_text(schema.function_body)
 
     examples = get_onnx_example(op_name, domain) if example else {}
     docs = _template_operator.render(
@@ -452,12 +468,13 @@ def get_markdown_doc(
         format_name_with_domain=format_name_with_domain,
         process_documentation=process_documentation,
         build_doc_url=build_doc_url,
-        text_wrap=text_wrap,
+        text_indent=text_indent,
         str=str,
         clean_default_value=clean_default_value,
         examples=examples,
         format_example=format_example,
         is_last_schema=is_last_schema,
+        get_function_body=get_function_body,
     )
 
     d_links = {}

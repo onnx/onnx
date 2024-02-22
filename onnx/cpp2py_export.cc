@@ -233,34 +233,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
       .def_property_readonly("is_homogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
       .def_property_readonly("min_arity", &OpSchema::FormalParameter::GetMinArity)
-      .def_property_readonly("differentiation_category", &OpSchema::FormalParameter::GetDifferentiationCategory)
-      // Legacy camel cased names. We retain them for backward compatibility.
-      // TODO(#5074): Remove these before the 1.16 release.
-      .def_property_readonly(
-          "typeStr",
-          [](const OpSchema::FormalParameter& self) {
-            auto warnings = py::module::import("warnings");
-            warnings.attr("warn")(
-                "OpSchema.FormalParameter.typeStr is deprecated and will be removed in 1.16. "
-                "Use OpSchema.FormalParameter.type_str instead.");
-            return self.GetTypeStr();
-          })
-      .def_property_readonly(
-          "isHomogeneous",
-          [](const OpSchema::FormalParameter& self) {
-            auto warnings = py::module::import("warnings");
-            warnings.attr("warn")(
-                "OpSchema.FormalParameter.isHomogeneous is deprecated and will be removed in 1.16. "
-                "Use OpSchema.FormalParameter.is_homogeneous instead.");
-            return self.GetIsHomogeneous();
-          })
-      .def_property_readonly("differentiationCategory", [](const OpSchema::FormalParameter& self) {
-        auto warnings = py::module::import("warnings");
-        warnings.attr("warn")(
-            "OpSchema.FormalParameter.differentiationCategory is deprecated and will be removed in 1.16. "
-            "Use OpSchema.FormalParameter.differentiation_category instead.");
-        return self.GetDifferentiationCategory();
-      });
+      .def_property_readonly("differentiation_category", &OpSchema::FormalParameter::GetDifferentiationCategory);
 
   op_schema
       .def(
@@ -561,6 +534,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "path"_a,
       "full_check"_a = false,
       "skip_opset_compatibility_check"_a = false);
+
+  checker.def("_resolve_external_data_location", &checker::resolve_external_data_location);
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");

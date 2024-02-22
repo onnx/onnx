@@ -42,6 +42,7 @@ from onnx import (
     ValueInfoProto,
     defs,
     mapping,
+    subbyte,
 )
 
 VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
@@ -74,6 +75,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.14.0", 9, 19, 3, 1),
     ("1.14.1", 9, 19, 3, 1),
     ("1.15.0", 9, 20, 4, 1),
+    ("1.16.0", 9, 20, 5, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -134,6 +136,7 @@ def make_node(
     name: Optional[str] = None,
     doc_string: Optional[str] = None,
     domain: Optional[str] = None,
+    overload: Optional[str] = None,
     **kwargs: Any,
 ) -> NodeProto:
     """Construct a NodeProto.
@@ -146,6 +149,8 @@ def make_node(
         doc_string (string, default None): optional documentation string for NodeProto
         domain (string, default None): optional domain for NodeProto.
             If it's None, we will just use default domain (which is empty)
+        overload (string, default None): optional field, used to
+            resolve calls to model-local functions
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
 
@@ -162,6 +167,8 @@ def make_node(
         node.doc_string = doc_string
     if domain is not None:
         node.domain = domain
+    if overload is not None:
+        node.overload = overload
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
@@ -257,11 +264,15 @@ def make_function(
     attributes: Optional[Sequence[str]] = None,
     attribute_protos: Optional[Sequence[AttributeProto]] = None,
     doc_string: Optional[str] = None,
+    overload: Optional[str] = None,
+    value_info: Optional[Sequence[ValueInfoProto]] = None,
 ) -> FunctionProto:
     if attributes is None:
         attributes = []
     if attribute_protos is None:
         attribute_protos = []
+    if value_info is None:
+        value_info = []
     f = FunctionProto()
     f.domain = domain
     f.name = fname
@@ -273,6 +284,9 @@ def make_function(
     f.attribute_proto.extend(attribute_protos)
     if doc_string:
         f.doc_string = doc_string
+    if overload is not None:
+        f.overload = overload
+    f.value_info.extend(value_info)
     return f
 
 
@@ -317,18 +331,24 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
     ir_version_field = "ir_version"
     if ir_version_field not in kwargs:
         opset_imports_field = "opset_imports"
-        imports = kwargs[opset_imports_field] if opset_imports_field in kwargs else []
+        imports = kwargs.get(opset_imports_field, [])
         kwargs[ir_version_field] = find_min_ir_version_for(imports)
     return make_model(graph, **kwargs)
 
 
-def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
-    del model.metadata_props[:]
+def set_metadata_props(
+    proto: Union[ModelProto, GraphProto, FunctionProto, NodeProto, TensorProto],
+    dict_value: Dict[str, str],
+) -> None:
+    del proto.metadata_props[:]
     for k, v in dict_value.items():
-        entry = model.metadata_props.add()
+        entry = proto.metadata_props.add()
         entry.key = k
         entry.value = v
-        # model.metadata_properties.append(entry)
+
+
+def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
+    set_metadata_props(model, dict_value)
 
 
 def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
@@ -398,47 +418,45 @@ def float32_to_float8e4m3(  # noqa: PLR0911
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
 
-        if e != 0:
-            if e < 116:  # noqa: PLR2004
-                pass
-            elif e < 120:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 119
-                if ex >= -2:  # noqa: PLR2004
-                    ret |= 1 << (2 + ex)
-                    ret |= m >> (21 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (20 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
+        if e < 116:  # noqa: PLR2004
+            ret = 0
+        elif e < 120:  # noqa: PLR2004
+            # denormalized number
+            ex = e - 119
+            if ex >= -2:  # noqa: PLR2004
+                ret |= 1 << (2 + ex)
+                ret |= m >> (21 - ex)
+            elif m > 0:
+                ret |= 1
+            else:
+                ret = 0
+            mask = 1 << (20 - ex)
+            if m & mask and (
+                ret & 1
+                or m & (mask - 1) > 0
+                or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+            ):
+                # rounding
+                ret += 1
+        elif e < 135:  # noqa: PLR2004
+            # normalized number
+            ex = e - 119  # 127 - 8
+            if ex == 0:
+                ret |= 0x4
+                ret |= m >> 21
+            else:
+                ret |= ex << 3
+                ret |= m >> 20
+            if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
+                if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
                     # rounding
                     ret += 1
-            elif e < 135:  # noqa: PLR2004
-                # normalized number
-                ex = e - 119  # 127 - 8
-                if ex == 0:
-                    ret |= 0x4
-                    ret |= m >> 21
-                else:
-                    ret |= ex << 3
-                    ret |= m >> 20
-                if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
-                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif not saturate:
-                        return 0x80
-            elif saturate:
-                ret |= 0x7F  # 01111110
-            else:
-                ret = 0x80
-        elif m == 0:
-            # -0
-            ret = 0
+                elif not saturate:
+                    return 0x80
+        elif saturate:
+            ret |= 0x7F  # 01111110
+        else:
+            ret = 0x80
         return int(ret)
     else:
         if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
@@ -530,45 +548,43 @@ def float32_to_float8e5m2(  # noqa: PLR0911
         e = (b & 0x7F800000) >> 23  # exponent
         m = b & 0x007FFFFF  # mantissa
 
-        if e != 0:
-            if e < 109:  # noqa: PLR2004
-                pass
-            elif e < 112:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 111
-                if ex >= -1:
-                    ret |= 1 << (1 + ex)
-                    ret |= m >> (22 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (21 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
+        if e < 109:  # noqa: PLR2004
+            ret = 0
+        elif e < 112:  # noqa: PLR2004
+            # denormalized number
+            ex = e - 111
+            if ex >= -1:
+                ret |= 1 << (1 + ex)
+                ret |= m >> (22 - ex)
+            elif m > 0:
+                ret |= 1
+            else:
+                ret = 0
+            mask = 1 << (21 - ex)
+            if m & mask and (
+                ret & 1
+                or m & (mask - 1) > 0
+                or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
+            ):
+                # rounding
+                ret += 1
+        elif e < 143:  # noqa: PLR2004
+            # normalized number
+            ex = e - 111
+            ret |= ex << 2
+            ret |= m >> 21
+            if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
+                if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
                     # rounding
                     ret += 1
-            elif e < 143:  # noqa: PLR2004
-                # normalized number
-                ex = e - 111
-                ret |= ex << 2
-                ret |= m >> 21
-                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                    if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif not saturate:
-                        ret = 0x80
-            elif e == 255 and m == 0:  # inf  # noqa: PLR2004
-                ret = 0x80
-            elif saturate:
-                ret |= 0x7F  # last possible number
-            else:
-                ret = 0x80
-        elif m == 0:
-            # -0
-            ret = 0
+                elif not saturate:
+                    ret = 0x80
+        elif e == 255 and m == 0:  # inf  # noqa: PLR2004
+            ret = 0x80
+        elif saturate:
+            ret |= 0x7F  # last possible number
+        else:
+            ret = 0x80
         return int(ret)
     elif not fn and not uz:
         if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
@@ -621,6 +637,34 @@ def float32_to_float8e5m2(  # noqa: PLR0911
         raise NotImplementedError("fn and uz must be both False or True.")
 
 
+def pack_float32_to_4bit(
+    array: Union[np.ndarray, Sequence], signed: bool
+) -> np.ndarray:
+    """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
+    See :ref:`onnx-detail-int4` for technical details.
+
+    Args:
+        array: array of float to convert and pack
+        signed: Whether the 4 bit variant is signed or unsigned
+
+    Returns:
+        Packed array with size `ceil(farray.size/2)` (single dimension).
+    """
+    if not isinstance(array, np.ndarray):
+        array = np.asarray(array, dtype=np.float32)
+
+    array_flat = array.ravel()
+    is_odd_volume = np.prod(array.shape) % 2 == 1
+    if is_odd_volume:
+        array_flat = np.append(array_flat, np.array([0]))
+
+    single_func = lambda x, y: subbyte.float32x2_to_4bitx2(x, y, signed)  # noqa: E731
+    func = np.frompyfunc(single_func, 2, 1)
+
+    arr = func(array_flat[0::2], array_flat[1::2])
+    return arr.astype(np.uint8)  # type: ignore[no-any-return]
+
+
 def make_tensor(
     name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
@@ -653,8 +697,7 @@ def make_tensor(
     # Check number of vals specified equals tensor size
     expected_size = 1
     if raw:
-        # NumPy doesn't have BFLOAT16. TENSOR_TYPE_TO_NP_TYPE maps it to float32,
-        # which has the wrong itemsize.
+        # NumPy doesn't have BFLOAT16. TENSOR_TYPE_MAP maps it to float32, which has the wrong itemsize.
         if data_type == TensorProto.BFLOAT16:
             expected_size = 2
         elif data_type in (
@@ -664,6 +707,9 @@ def make_tensor(
             TensorProto.FLOAT8E5M2FNUZ,
         ):
             expected_size = 1
+        # NumPy doesn't have INT4. It is packed in couples to UINT8 buffers.
+        elif data_type in (TensorProto.UINT4, TensorProto.INT4):
+            expected_size = 0.5  # type: ignore[assignment]
         else:
             expected_size = np_dtype.itemsize
 
@@ -673,9 +719,14 @@ def make_tensor(
         expected_size *= d
 
     if len(vals) != expected_size:
-        raise ValueError(
-            f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
-        )
+        # padding of half a byte is acceptable for 4bit types
+        if not (
+            data_type in (TensorProto.UINT4, TensorProto.INT4)
+            and len(vals) == expected_size + 0.5
+        ):
+            raise ValueError(
+                f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
+            )
 
     if raw:
         tensor.raw_data = vals
@@ -711,6 +762,17 @@ def make_tensor(
                     fcast,
                     np.array(vals).astype(np_dtype).flatten().tolist(),
                 )
+            )
+        elif data_type in (
+            TensorProto.UINT4,
+            TensorProto.INT4,
+        ):
+            signed = data_type == TensorProto.INT4
+            vals = (
+                pack_float32_to_4bit(vals, signed=signed)
+                .astype(np_dtype)
+                .flatten()
+                .tolist()
             )
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)

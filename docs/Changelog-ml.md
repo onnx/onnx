@@ -1183,8 +1183,8 @@ This version of the operator has been available since version 4 of the 'ai.onnx.
 <dd>An integer.</dd>
 <dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string.</dd>
-<dt><tt>default_tensor</tt> : tensor (default is {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.)</dt>
-<dd>A default tensor.</dd>
+<dt><tt>default_tensor</tt> : tensor</dt>
+<dd>A default tensor. {"_Unused"} if values_* has string type, {-1} if values_* has integral type, and {-0.f} if values_* has float type.</dd>
 <dt><tt>keys_floats</tt> : list of floats</dt>
 <dd>A list of floats.</dd>
 <dt><tt>keys_int64s</tt> : list of ints</dt>
@@ -1225,4 +1225,125 @@ This version of the operator has been available since version 4 of the 'ai.onnx.
 <dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float), tensor(int32), tensor(int16), tensor(double)</dt>
 <dd>Output type is determined by the specified 'values_*' attribute.</dd>
 </dl>
+
+## Version 5 of the 'ai.onnx.ml' operator set
+### <a name="ai.onnx.ml.TreeEnsemble-5"></a>**ai.onnx.ml.TreeEnsemble-5**</a>
+
+  Tree Ensemble operator.  Returns the regressed values for each input in a batch.
+      Inputs have dimensions `[N, F]` where `N` is the input batch size and `F` is the number of input features.
+      Outputs have dimensions `[N, num_targets]` where `N` is the batch size and `num_targets` is the number of targets, which is a configurable attribute.
+
+      The encoding of this attribute is split along interior nodes and the leaves of the trees. Notably, attributes with the prefix `nodes_*` are associated with interior nodes, and attributes with the prefix `leaf_*` are associated with leaves.
+      The attributes `nodes_*` must all have the same length and encode a sequence of tuples, as defined by taking all the `nodes_*` fields at a given position.
+
+      All fields prefixed with `leaf_*` represent tree leaves, and similarly define tuples of leaves and must have identical length.
+
+      This operator can be used to implement both the previous `TreeEnsembleRegressor` and `TreeEnsembleClassifier` nodes.
+      The `TreeEnsembleRegressor` node maps directly to this node and requires changing how the nodes are represented.
+      The `TreeEnsembleClassifier` node can be implemented by adding a `ArgMax` node after this node to determine the top class.
+      To encode class labels, a `LabelEncoder` or `GatherND` operator may be used.
+
+#### Version
+
+This version of the operator has been available since version 5 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>aggregate_function</tt> : int (default is 1)</dt>
+<dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE' (0) 'SUM' (1) 'MIN' (2) 'MAX (3) defaults to 'SUM' (1)</dd>
+<dt><tt>leaf_targetids</tt> : list of ints (required)</dt>
+<dd>The index of the target that this leaf contributes to (this must be in range `[0, n_targets)`).</dd>
+<dt><tt>leaf_weights</tt> : tensor (required)</dt>
+<dd>The weight for each leaf.</dd>
+<dt><tt>membership_values</tt> : tensor</dt>
+<dd>Members to test membership of for each set membership node. List all of the members to test again in the order that the 'BRANCH_MEMBER' mode appears in `node_modes`, delimited by `NaN`s. Will have the same number of sets of values as nodes with mode 'BRANCH_MEMBER'. This may be omitted if the node doesn't contain any 'BRANCH_MEMBER' nodes.</dd>
+<dt><tt>n_targets</tt> : int</dt>
+<dd>The total number of targets.</dd>
+<dt><tt>nodes_falseleafs</tt> : list of ints (required)</dt>
+<dd>1 if false branch is leaf for each node and 0 if an interior node. To represent a tree that is a leaf (only has one node), one can do so by having a single `nodes_*` entry with true and false branches referencing the same `leaf_*` entry</dd>
+<dt><tt>nodes_falsenodeids</tt> : list of ints (required)</dt>
+<dd>If `nodes_falseleafs` is false at an entry, this represents the position of the false branch node. This position can be used to index into a `nodes_*` entry. If `nodes_falseleafs` is false, it is an index into the leaf_* attributes.</dd>
+<dt><tt>nodes_featureids</tt> : list of ints (required)</dt>
+<dd>Feature id for each node.</dd>
+<dt><tt>nodes_hitrates</tt> : tensor</dt>
+<dd>Popularity of each node, used for performance and may be omitted.</dd>
+<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
+<dd>For each node, define whether to follow the true branch (if attribute value is 1) or false branch (if attribute value is 0) in the presence of a NaN input feature. This attribute may be left undefined and the default value is false (0) for all nodes.</dd>
+<dt><tt>nodes_modes</tt> : tensor (required)</dt>
+<dd>The comparison operation performed by the node. This is encoded as an enumeration of 0 ('BRANCH_LEQ'), 1 ('BRANCH_LT'), 2 ('BRANCH_GTE'), 3 ('BRANCH_GT'), 4 ('BRANCH_EQ'), 5 ('BRANCH_NEQ'), and 6 ('BRANCH_MEMBER'). Note this is a tensor of type uint8.</dd>
+<dt><tt>nodes_splits</tt> : tensor (required)</dt>
+<dd>Thresholds to do the splitting on for each node with mode that is not 'BRANCH_MEMBER'.</dd>
+<dt><tt>nodes_trueleafs</tt> : list of ints (required)</dt>
+<dd>1 if true branch is leaf for each node and 0 an interior node. To represent a tree that is a leaf (only has one node), one can do so by having a single `nodes_*` entry with true and false branches referencing the same `leaf_*` entry</dd>
+<dt><tt>nodes_truenodeids</tt> : list of ints (required)</dt>
+<dd>If `nodes_trueleafs` is false at an entry, this represents the position of the true branch node. This position can be used to index into a `nodes_*` entry. If `nodes_trueleafs` is false, it is an index into the leaf_* attributes.</dd>
+<dt><tt>post_transform</tt> : int (default is 0)</dt>
+<dd>Indicates the transform to apply to the score. <br>One of 'NONE' (0), 'SOFTMAX' (1), 'LOGISTIC' (2), 'SOFTMAX_ZERO' (3) or 'PROBIT' (4), defaults to 'NONE' (0)</dd>
+<dt><tt>tree_roots</tt> : list of ints (required)</dt>
+<dd>Index into `nodes_*` for the root of each tree. The tree structure is derived from the branching of each node.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input of shape [Batch Size, Number of Features]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output of shape [Batch Size, Number of targets]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(float16)</dt>
+<dd>The input type must be a tensor of a numeric type.</dd>
+</dl>
+
+### <a name="ai.onnx.ml.TreeEnsembleClassifier-5"></a>**ai.onnx.ml.TreeEnsembleClassifier-5** (deprecated)</a>
+
+  This operator is DEPRECATED. Please use TreeEnsemble with provides similar functionality.
+      In order to determine the top class, the ArgMax node can be applied to the output of TreeEnsemble.
+      To encode class labels, use a LabelEncoder operator.
+      Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
+      The attributes named 'nodes_X' form a sequence of tuples, associated by
+      index into the sequences, which must all be of equal length. These tuples
+      define the nodes.<br>
+      Similarly, all fields prefixed with 'class_' are tuples of votes at the leaves.
+      A leaf may have multiple votes, where each vote is weighted by
+      the associated class_weights index.<br>
+      One and only one of classlabels_strings or classlabels_int64s
+      will be defined. The class_ids are indices into this list.
+      All fields ending with <i>_as_tensor</i> can be used instead of the
+      same parameter without the suffix if the element type is double and not float.
+
+#### Version
+
+This version of the operator has been deprecated since version 5 of the 'ai.onnx.ml' operator set.
+
+### <a name="ai.onnx.ml.TreeEnsembleRegressor-5"></a>**ai.onnx.ml.TreeEnsembleRegressor-5** (deprecated)</a>
+
+  This operator is DEPRECATED. Please use TreeEnsemble instead which provides the same
+      functionality.<br>
+      Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
+      All args with nodes_ are fields of a tuple of tree nodes, and
+      it is assumed they are the same length, and an index i will decode the
+      tuple across these inputs.  Each node id can appear only once
+      for each tree id.<br>
+      All fields prefixed with target_ are tuples of votes at the leaves.<br>
+      A leaf may have multiple votes, where each vote is weighted by
+      the associated target_weights index.<br>
+      All fields ending with <i>_as_tensor</i> can be used instead of the
+      same parameter without the suffix if the element type is double and not float.
+      All trees must have their node ids start at 0 and increment by 1.<br>
+      Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
+
+#### Version
+
+This version of the operator has been deprecated since version 5 of the 'ai.onnx.ml' operator set.
 

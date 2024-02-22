@@ -189,3 +189,118 @@ class DequantizeLinear(Base):
             outputs=[y],
             name="test_dequantizelinear_int16",
         )
+
+    @staticmethod
+    def export_uint4() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale", "x_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
+        x_scale = np.float32(2)
+        x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+        y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale, x_zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_uint4",
+        )
+
+    @staticmethod
+    def export_int4() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale", "x_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
+        x_scale = np.float32(2)
+        x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+        y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale, x_zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_int4",
+        )
+
+    @staticmethod
+    def export_blocked() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale", "x_zero_point"],
+            outputs=["y"],
+            axis=1,
+            block_size=2,
+        )
+
+        x = np.array(
+            [
+                [
+                    [[3, 89], [34, 200], [74, 59]],
+                    [[5, 24], [24, 87], [32, 13]],
+                    [[5, 12], [12, 33], [65, 42]],
+                    [[245, 99], [4, 142], [121, 102]],
+                ],
+            ],
+            dtype=np.uint8,
+        )
+
+        x_scale = np.array(
+            [
+                [
+                    [[3.0, 2.0], [4.0, 1.0], [2.0, 2.0]],
+                    [[5.0, 2.0], [4.0, 3.0], [5.0, 2.0]],
+                ],
+            ],
+            dtype=np.float32,
+        )
+        x_zero_point = np.array(
+            [
+                [
+                    [[1, 0], [0, 1], [2, 20]],
+                    [[3, 2], [4, 3], [15, 2]],
+                ],
+            ],
+            dtype=np.uint8,
+        )
+
+        # x.shape = (1, 4, 3, 2)
+        # x_scale.shape = (1, 2, 3, 2)
+        assert x_scale.shape == x_zero_point.shape
+        block_axis = 1
+        # The block shape is [x.shape[i] // x_scale.shape[i] for i in range(len(x.shape))] = (1, 2, 1, 1)
+        assert all(
+            x.shape[i] == x_scale.shape[i]
+            for i in range(len(x.shape))
+            if i != block_axis
+        )
+        assert x.shape[block_axis] % x_scale.shape[block_axis] == 0
+        repeats = x.shape[block_axis] // x_scale.shape[block_axis]
+
+        # Create element-wise scale and zero point
+        x_scale_elementwise = np.repeat(x_scale, repeats=repeats, axis=block_axis)
+        x_zero_point_elementwise = np.repeat(
+            x_zero_point, repeats=repeats, axis=block_axis
+        )
+
+        y = (
+            x.astype(np.float32) - x_zero_point_elementwise.astype(np.float32)
+        ) * x_scale_elementwise
+
+        expect(
+            node,
+            inputs=[x, x_scale, x_zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_blocked",
+        )
