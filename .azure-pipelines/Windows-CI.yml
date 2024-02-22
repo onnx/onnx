@@ -57,11 +57,11 @@ jobs:
     displayName: Add conda to PATH
 
   # cmake 3.28.3 failed to find protobuf installed from conda-forge
-  - name: Install specific version of CMake
-    run: choco install cmake --version 3.27.9 -y
+  - script: choco install cmake --version 3.27.9 -y
+    displayName: Install specific version of CMake
 
-  - name: Check CMake version
-    run: cmake --version
+  - script: cmake --version
+    displayName: Check CMake version
 
   - script: |
       conda create --yes --quiet --name py$(python.version) python=$(python.version)
