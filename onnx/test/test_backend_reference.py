@@ -4,10 +4,12 @@
 
 import os
 import platform
+import sys
 import unittest
 from typing import Any
 
 import numpy
+import version_utils
 
 import onnx.backend.base
 import onnx.backend.test
@@ -52,7 +54,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     @classmethod
-    def is_opset_supported(cls, model):  # pylint: disable=unused-argument
+    def is_opset_supported(cls, model):
         return True, ""
 
     @classmethod
@@ -118,12 +120,18 @@ backend_test.exclude(
     "|test_cast_FLOAT16_to_FLOAT8"
     "|test_castlike_FLOAT_to_FLOAT8"
     "|test_castlike_FLOAT16_to_FLOAT8"
+    "|test_cast_FLOAT_to_UINT4"
+    "|test_cast_FLOAT16_to_UINT4"
+    "|test_cast_FLOAT_to_INT4"
+    "|test_cast_FLOAT16_to_INT4"
     "|test_cast_no_saturate_FLOAT_to_FLOAT8"
     "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
     "|test_cast_BFLOAT16_to_FLOAT"
     "|test_castlike_BFLOAT16_to_FLOAT"
     "|test_quantizelinear_e4m3"
     "|test_quantizelinear_e5m2"
+    "|test_quantizelinear_uint4"
+    "|test_quantizelinear_int4"
     ")"
 )
 
@@ -171,6 +179,30 @@ backend_test.exclude("(test_eyelike_without_dtype)")
 
 # The following tests fail due to discrepancies (small but still higher than 1e-7).
 backend_test.exclude("test_adam_multiple")  # 1e-2
+
+# Currently google-re2/Pillow is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
+if sys.platform == "win32":
+    backend_test.exclude("test_regex_full_match_basic_cpu")
+    backend_test.exclude("test_regex_full_match_email_domain_cpu")
+    backend_test.exclude("test_regex_full_match_empty_cpu")
+    backend_test.exclude("test_image_decoder_decode_")
+
+if sys.platform == "darwin":
+    # FIXME: https://github.com/onnx/onnx/issues/5792
+    backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
+    backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
+
+# op_dft and op_stft requires numpy >= 1.21.5
+if version_utils.numpy_older_than("1.21.5"):
+    backend_test.exclude("test_stft")
+    backend_test.exclude("test_stft_with_window")
+    backend_test.exclude("test_stft_cpu")
+    backend_test.exclude("test_dft")
+    backend_test.exclude("test_dft_axis")
+    backend_test.exclude("test_dft_inverse")
+    backend_test.exclude("test_dft_opset19")
+    backend_test.exclude("test_dft_axis_opset19")
+    backend_test.exclude("test_dft_inverse_opset19")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

@@ -4,6 +4,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
 #include <climits>
 #include <limits>
 #include <tuple>
@@ -78,8 +79,11 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
   shape_inference::GraphInferenceContext graphInferenceContext(
       valueTypes.second, opsetImports, nullptr, {}, OpSchemaRegistry::Instance(), nullptr, irVersion);
   // Construct inference context and get results - may throw InferenceError
+  // TODO: if it is desirable for infer_node_outputs to provide check_type, strict_mode, data_prop,
+  // we can add them to the Python API. For now we just assume the default options.
+  ShapeInferenceOptions options{false, 0, false};
   shape_inference::InferenceContextImpl ctx(
-      node, valueTypes.second, inputData.second, inputSparseData.second, nullptr, &graphInferenceContext);
+      node, valueTypes.second, inputData.second, inputSparseData.second, options, nullptr, &graphInferenceContext);
   schema->GetTypeAndShapeInferenceFunction()(ctx);
   // Verify the inference succeeded - may also throw ValidationError
   // Note that input types were not validated until now (except that their count was correct)
@@ -229,34 +233,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
       .def_property_readonly("is_homogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
       .def_property_readonly("min_arity", &OpSchema::FormalParameter::GetMinArity)
-      .def_property_readonly("differentiation_category", &OpSchema::FormalParameter::GetDifferentiationCategory)
-      // Legacy camel cased names. We retain them for backward compatibility.
-      // TODO(#5074): Remove these before the 1.16 release.
-      .def_property_readonly(
-          "typeStr",
-          [](const OpSchema::FormalParameter& self) {
-            auto warnings = py::module::import("warnings");
-            warnings.attr("warn")(
-                "OpSchema.FormalParameter.typeStr is deprecated and will be removed in 1.16. "
-                "Use OpSchema.FormalParameter.type_str instead.");
-            return self.GetTypeStr();
-          })
-      .def_property_readonly(
-          "isHomogeneous",
-          [](const OpSchema::FormalParameter& self) {
-            auto warnings = py::module::import("warnings");
-            warnings.attr("warn")(
-                "OpSchema.FormalParameter.isHomogeneous is deprecated and will be removed in 1.16. "
-                "Use OpSchema.FormalParameter.is_homogeneous instead.");
-            return self.GetIsHomogeneous();
-          })
-      .def_property_readonly("differentiationCategory", [](const OpSchema::FormalParameter& self) {
-        auto warnings = py::module::import("warnings");
-        warnings.attr("warn")(
-            "OpSchema.FormalParameter.differentiationCategory is deprecated and will be removed in 1.16. "
-            "Use OpSchema.FormalParameter.differentiation_category instead.");
-        return self.GetDifferentiationCategory();
-      });
+      .def_property_readonly("differentiation_category", &OpSchema::FormalParameter::GetDifferentiationCategory);
 
   op_schema
       .def(
@@ -477,6 +454,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property(
           "opset_imports", &checker::CheckerContext::get_opset_imports, &checker::CheckerContext::set_opset_imports);
 
+  py::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
+  lexical_scope_context.def(py::init<>());
+
   py::register_exception<checker::ValidationError>(checker, "ValidationError");
 
   checker.def("check_value_info", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
@@ -497,31 +477,45 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     checker::check_sparse_tensor(proto, ctx);
   });
 
-  checker.def("check_attribute", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    AttributeProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::check_attribute(proto, ctx, checker::LexicalScopeContext());
-  });
+  checker.def(
+      "check_attribute",
+      [](const py::bytes& bytes,
+         const checker::CheckerContext& ctx,
+         const checker::LexicalScopeContext& lex_ctx) -> void {
+        AttributeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_attribute(proto, ctx, lex_ctx);
+      });
 
-  checker.def("check_node", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    NodeProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::LexicalScopeContext lex_ctx;
-    checker::check_node(proto, ctx, lex_ctx);
-  });
+  checker.def(
+      "check_node",
+      [](const py::bytes& bytes,
+         const checker::CheckerContext& ctx,
+         const checker::LexicalScopeContext& lex_ctx) -> void {
+        NodeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_node(proto, ctx, lex_ctx);
+      });
 
-  checker.def("check_function", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    FunctionProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::check_function(proto, ctx, checker::LexicalScopeContext());
-  });
+  checker.def(
+      "check_function",
+      [](const py::bytes& bytes,
+         const checker::CheckerContext& ctx,
+         const checker::LexicalScopeContext& lex_ctx) -> void {
+        FunctionProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_function(proto, ctx, lex_ctx);
+      });
 
-  checker.def("check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    GraphProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::LexicalScopeContext lex_ctx;
-    checker::check_graph(proto, ctx, lex_ctx);
-  });
+  checker.def(
+      "check_graph",
+      [](const py::bytes& bytes,
+         const checker::CheckerContext& ctx,
+         const checker::LexicalScopeContext& lex_ctx) -> void {
+        GraphProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_graph(proto, ctx, lex_ctx);
+      });
 
   checker.def(
       "check_model",
@@ -540,6 +534,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "path"_a,
       "full_check"_a = false,
       "skip_opset_compatibility_check"_a = false);
+
+  checker.def("_resolve_external_data_location", &checker::resolve_external_data_location);
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
@@ -568,6 +564,21 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     model.SerializeToString(&out);
     return py::bytes(out);
   });
+
+  // inline_selected_functions: Inlines all functions specified in function_ids, unless
+  // exclude is true, in which case it inlines all functions except those specified in
+  // function_ids.
+  inliner.def(
+      "inline_selected_functions",
+      [](const py::bytes& bytes, std::vector<std::pair<std::string, std::string>> function_ids, bool exclude) {
+        ModelProto model{};
+        ParseProtoFromPyBytes(&model, bytes);
+        auto function_id_set = inliner::FunctionIdSet::Create(std::move(function_ids), exclude);
+        inliner::InlineSelectedFunctions(model, *function_id_set);
+        std::string out;
+        model.SerializeToString(&out);
+        return py::bytes(out);
+      });
 
   // Submodule `shape_inference`
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");

@@ -4,8 +4,7 @@ Copyright (c) ONNX Project Contributors
 SPDX-License-Identifier: Apache-2.0
 -->
 
-Open Neural Network Exchange Intermediate Representation (ONNX IR) Specification
-=========
+# Open Neural Network Exchange Intermediate Representation (ONNX IR) Specification
 
 __Purpose__
 
@@ -194,6 +193,7 @@ A serialized function (a _FunctionProto_) has the following properties:
 |---|---|---|
 name|string|The name of the function
 domain|string|The domain to which this function belongs
+overload|string|Part of unique id of function (added in IR version 10)
 doc_string|string|Human-readable documentation for this function. Markdown is allowed.
 attribute|string[]|The attribute parameters of the function
 attribute_proto|Attribute[]| (IR version 9+) The attribute parameters with default values of the function. A function attribute shall be represented either as a string attribute or an Attribute, not both.
@@ -201,15 +201,22 @@ input|string[]|The input parameters of the function
 output|string[]|The output parameters of the function.
 node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
 |opset_import|OperatorSetId|A collection of operator set identifiers used by the function implementation.
+|value_info|ValueInfo[]| (IR version >= 10) Used to store the type and shape information of values used in the function.
+|metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
 
-The name and domain serve to identify the operator uniquely. An opset version is not explicitly
-identified in a FunctionProto, but it is implicitly determined by the opset version of the domain
-included in the model.
+The name and domain serve to identify the operator uniquely in IR versions upto 9. IR version 10 adds the
+field overload, and the triple (name, domain, overload) acts as a unique-id across functions stored in
+a model. This is intended to support cases where distinct function-bodies are required for distinct
+calls to the function within the model.
+An opset version is not explicitly identified in a FunctionProto, but it is implicitly determined by
+the opset version of the domain included in the model.
 
 The input, output, attribute, and attribute_proto (added in IR version 9) constitute the signature part of the operator. No type information
 is explicitly included in the signature. The attribute_proto field describes attribute parameters of the function along with their default-value (when not specified by an call-site node), while the attribute field lists attribute parameters without a default-value. The names in these two lists must be distinct. When an attribute-parameter of the function is used in a node within the function, it is replaced by the actual parameter value specified for the attribute at a call-site node (of the function) when such a attribute is specified, and it is replaced by the default-value if the attribute has a default-value specified, and it is omitted otherwise.
 
 The opset_import and node fields describe the implementation of the function.
+
+The value_info field (added in IR version 10) allows a model to store type and shape information about the values used in a function, including its inputs and outputs. Note that this is optional, and ONNX allows functions to be polymorphic.
 
 ### Graphs
 
@@ -229,6 +236,7 @@ doc_string|string|Human-readable documentation for this model. Markdown is allow
 input|ValueInfo[]|The input parameters of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo[]|Used to store the type and shape information of values that are not inputs or outputs.
+|metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
 
 ValueInfo has the following properties:
 
@@ -284,6 +292,8 @@ op_type|string|The symbolic identifier of the operator to invoke.
 domain|string|The domain of the operator set that contains the operator named by the op_type.
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
 doc_string|string|Human-readable documentation for this value. Markdown is allowed.
+overload|string|Part of unique id of function (added in IR version 10)
+|metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
 
 A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, a graph initializer, or as a node output is said to be a definition and the occurrence of a name as a node input or as a graph output is said to be a use.
 
@@ -412,8 +422,8 @@ It is common to represent a tensor as a nested list. This generally works fine, 
 |Group|Types|Description|
 |---|---|---|
 Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433) and [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915)
-Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for 8-64 bit widths.
-Unsigned Integer Types|uint8, uint16, uint32, uint64|Unsigned integers are supported for 8-64 bit widths.
+Signed Integer Types|int4, int8, int16, int32, int64|Signed integers are supported for 4-64 bit widths.
+Unsigned Integer Types|uint4, uint8, uint16, uint32, uint64|Unsigned integers are supported for 4-64 bit widths.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
 Other|string|Strings represent textual data. All strings are encoded using UTF-8.
 Other|bool|Boolean values represent data with only two values, typically true and false.
@@ -424,7 +434,7 @@ The following types are used to define the types of graph and node inputs and ou
 
 |Variant | Type | Description |
 |---|---|---|
-ONNX|dense tensors|Represents a Tensor. See definition above. 
+ONNX|dense tensors|Represents a Tensor. See definition above.
 ONNX|sequence|Sequences are dense, ordered, collections of elements that are of homogeneous types.
 ONNX|map|Maps are associative tables, defined by a key type and a value type.
 ONNX|optional|Optionals are wrappers that may contain an element of tensor, sequence, or map type, or may be empty (containing none). [Details](ONNXTypes.md)
@@ -483,6 +493,14 @@ _Historical Notes_: The following extensions were considered early on, but were 
 ### Attribute Types
 
 The type system used for attributes is related to but slightly different from that used for of inputs and outputs. Attribute values may be a dense tensor, sparse tensor, a scalar numerical value, a string, a graph, or repeated values of one of the above mentioned types.
+
+## Other Metadata
+
+The ModelProto structure, and in IR versions >= 10, various other structures (GraphProto, FunctionProto, NodeProto)
+contain a metadata_props field allowing users to store other metadata in the form of key-value pairs.
+It is recommended that users use key names qualified with a reverse-DNS name as prefix
+(such as "ai.onnxruntime.key1") to avoid conflicts between different uses.
+Unqualified names may be used in the future by the ONNX standard.
 
 ## Training Related Information
 

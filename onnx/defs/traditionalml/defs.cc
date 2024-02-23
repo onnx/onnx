@@ -3,6 +3,7 @@
  */
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/traditionalml/utils.h"
 
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
@@ -48,7 +49,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                   num_indices *= indices_shape.dim(i).dim_value();
                 } else if (indices_shape.dim(i).has_dim_param()) {
                   if (single_symbolic_dim.empty()) {
-                    // it is possible to set symbolic dimension param if the rest dim values are all value 1
+                    // it is possible to set symbolic dimension param if the rest dim values are all
+                    // value 1
                     single_symbolic_dim = indices_shape.dim(i).dim_param();
                   } else {
                     return;
@@ -111,12 +113,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The output is a 1-D tensor of string, float, or integer.")
         .Attr(
             "cast_to",
-            "A string indicating the desired element type of the output tensor, one of 'TO_FLOAT', 'TO_STRING', 'TO_INT64'.",
+            "A string indicating the desired element type of the output tensor, one of 'TO_FLOAT', 'TO_STRING', "
+            "'TO_INT64'.",
             AttributeProto::STRING,
             std::string("TO_FLOAT"))
         .Attr(
             "map_form",
-            "Indicates whether to only output as many values as are in the input (dense), or position the input based on using the key of the map as the index of the output (sparse).<br>One of 'DENSE', 'SPARSE'.",
+            "Indicates whether to only output as many values as are in the input (dense), or position the input based "
+            "on using the key of the map as the index of the output (sparse).<br>One of 'DENSE', 'SPARSE'.",
             AttributeProto::STRING,
             std::string("DENSE"))
         .Attr(
@@ -179,12 +183,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "default_string",
-            "A string to use when an input integer value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.",
+            "A string to use when an input integer value is not found in the map.<br>One and only one of the "
+            "'default_*' attributes must be defined.",
             AttributeProto::STRING,
             std::string("_Unused"))
         .Attr(
             "default_int64",
-            "An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.",
+            "An integer to use when an input string value is not found in the map.<br>One and only one of the "
+            "'default_*' attributes must be defined.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -230,11 +236,13 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "map(int64, double)",
              "map(string, float)",
              "map(string, double)"},
-            "The input must be a map from strings or integers to either strings or a numeric type. The key and value types cannot be the same.")
+            "The input must be a map from strings or integers to either strings or a numeric type. The key and value "
+            "types cannot be the same.")
         .TypeConstraint(
             "T2",
             {"tensor(int64)", "tensor(float)", "tensor(double)", "tensor(string)"},
-            "The output will be a tensor of the value type of the input map. It's shape will be [1,C], where C is the length of the input dictionary.")
+            "The output will be a tensor of the value type of the input map. It's shape will be [1,C], where C is the "
+            "length of the input dictionary.")
         .Attr(
             "string_vocabulary",
             "A string vocabulary array.<br>One and only one of the vocabularies must be defined.",
@@ -253,7 +261,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
 static const char* FeatureVectorizer_ver1_doc = R"DOC(
     Concatenates input tensors into one continuous output.<br>
-    All input shapes are 2-D and are concatenated along the second dimention. 1-D tensors are treated as [1,C].
+    All input shapes are 2-D and are concatenated along the second dimension. 1-D tensors are treated as [1,C].
     Inputs are copied to the output maintaining the order of the input arguments.<br>
     All inputs must be integers or floats, while the output will be all floating point values.
 )DOC";
@@ -292,125 +300,125 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-            "The input type must be a tensor of a numeric type, either [N,C] or [C]. The output type will be of the same tensor type and shape.")
+            "The input type must be a tensor of a numeric type, either [N,C] or [C]. The output type will be of the "
+            "same tensor type and shape.")
         .Attr("imputed_value_floats", "Value(s) to change to", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr("replaced_value_float", "A value that needs replacing.", AttributeProto::FLOAT, 0.f)
         .Attr("imputed_value_int64s", "Value(s) to change to.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("replaced_value_int64", "A value that needs replacing.", AttributeProto::INT, static_cast<int64_t>(0)));
 
-static const char* LabelEncoder_ver2_doc = R"DOC(
+static const char* LabelEncoder_ver4_doc = R"DOC(
     Maps each element in the input tensor to another value.<br>
     The mapping is determined by the two parallel attributes, 'keys_*' and
     'values_*' attribute. The i-th value in the specified 'keys_*' attribute
     would be mapped to the i-th value in the specified 'values_*' attribute. It
     implies that input's element type and the element type of the specified
     'keys_*' should be identical while the output type is identical to the
-    specified 'values_*' attribute. If an input element can not be found in the
+    specified 'values_*' attribute. Note that the 'keys_*' and 'values_*' attributes
+    must have the same length. If an input element can not be found in the
     specified 'keys_*' attribute, the 'default_*' that matches the specified
-    'values_*' attribute may be used as its output value.<br>
+    'values_*' attribute may be used as its output value. The type of the 'default_*'
+    attribute must match the 'values_*' attribute chosen. <br>
     Let's consider an example which maps a string tensor to an integer tensor.
     Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
     and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
     "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
     Since this operator is an one-to-one mapping, its input and output shapes
     are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
-    For key look-up, bit-wise comparison is used so even a float NaN can be
-    mapped to a value in 'values_*' attribute.<br>
+    Float keys with value 'NaN' match any input 'NaN' value regardless of bit
+    value. If a key is repeated, the last key takes precedence.
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     LabelEncoder,
-    2,
+    4,
     OpSchema()
-        .SetDoc(LabelEncoder_ver2_doc)
-        .Input(0, "X", "Input data. It can be either tensor or scalar.", "T1")
-        .Output(0, "Y", "Output data.", "T2")
+        .SetDoc(LabelEncoder_ver4_doc)
+        .Input(0, "X", "Input data. It must have the same element type as the keys_* attribute set.", "T1")
+        .Output(0, "Y", "Output data. This tensor's element type is based on the values_* attribute set.", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            {"tensor(string)", "tensor(int64)", "tensor(float)", "tensor(int32)", "tensor(int16)", "tensor(double)"},
             "The input type is a tensor of any shape.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            {"tensor(string)", "tensor(int64)", "tensor(float)", "tensor(int32)", "tensor(int16)", "tensor(double)"},
             "Output type is determined by the specified 'values_*' attribute.")
         .Attr(
-            "keys_strings",
-            "A list of strings. One and only one of 'keys_*'s should be set.",
-            AttributeProto::STRINGS,
+            "keys_tensor",
+            "Keys encoded as a 1D tensor. One and only one of 'keys_*'s should be set.",
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
+        .Attr("keys_strings", "A list of strings.", AttributeProto::STRINGS, OPTIONAL_VALUE)
         .Attr("keys_int64s", "A list of ints.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("keys_floats", "A list of floats.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr(
-            "values_strings",
-            "A list of strings. One and only one of 'value_*'s should be set.",
-            AttributeProto::STRINGS,
+            "values_tensor",
+            "Values encoded as a 1D tensor. One and only one of 'values_*'s should be set.",
+            AttributeProto::TENSOR,
             OPTIONAL_VALUE)
+        .Attr("values_strings", "A list of strings.", AttributeProto::STRINGS, OPTIONAL_VALUE)
         .Attr("values_int64s", "A list of ints.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("values_floats", "A list of floats.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr("default_string", "A string.", AttributeProto::STRING, std::string("_Unused"))
         .Attr("default_int64", "An integer.", AttributeProto::INT, static_cast<int64_t>(-1))
         .Attr("default_float", "A float.", AttributeProto::FLOAT, -0.f)
+        .Attr(
+            "default_tensor",
+            "A default tensor. {\"_Unused\"} if values_* has string type, {-1} if values_* has integral type, and "
+            "{-0.f} if values_* has float type.",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Label encoder is one-to-one mapping.
-          if (ctx.getNumInputs() != 1) {
-            fail_shape_inference("Label encoder has only one input.");
+          int key_length, key_type;
+          std::tie(key_type, key_length) =
+              getAttributeElementTypeAndLength(ctx, {"keys_tensor", "keys_strings", "keys_int64s", "keys_floats"});
+          if (key_type == TensorProto::UNDEFINED) {
+            fail_shape_inference("At least one of keys_tensor, keys_strings, keys_int64s, keys_floats must be set.");
           }
-          if (ctx.getNumOutputs() != 1) {
-            fail_shape_inference("Label encoder has only one output.");
-          }
-
-          // Load all key_* attributes.
-          std::vector<std::string> keys_strings;
-          bool keys_strings_result = getRepeatedAttribute(ctx, "keys_strings", keys_strings);
-          std::vector<int64_t> keys_int64s;
-          bool keys_int64s_result = getRepeatedAttribute(ctx, "keys_int64s", keys_int64s);
-          std::vector<float> keys_floats;
-          bool keys_floats_result = getRepeatedAttribute(ctx, "keys_floats", keys_floats);
-
-          // Check if only one keys_* attribute is set.
-          if (static_cast<int>(keys_strings_result) + static_cast<int>(keys_int64s_result) +
-                  static_cast<int>(keys_floats_result) !=
-              1) {
-            fail_shape_inference("Only one of keys_*'s can be set in label encoder.");
+          if (key_type != ctx.getInputType(0)->tensor_type().elem_type()) {
+            fail_shape_inference(
+                "The input type was ",
+                ctx.getInputType(0)->tensor_type().elem_type(),
+                " and the key type ",
+                key_type,
+                " are different, which is not permitted for LabelEncoders.");
           }
 
-          // Check if the specified keys_* matches input type.
-          auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
-          if (keys_strings_result && input_elem_type != TensorProto::STRING) {
-            fail_shape_inference("Input type is not string tensor but key_strings is set");
+          int value_length, value_type;
+          std::tie(value_type, value_length) = getAttributeElementTypeAndLength(
+              ctx, {"values_tensor", "values_strings", "values_int64s", "values_floats"});
+          if (value_type == TensorProto::UNDEFINED) {
+            fail_shape_inference(
+                "At least one of values_tensor, values_strings, values_int64s, values_floats must be set.");
           }
-          if (keys_int64s_result && input_elem_type != TensorProto::INT64) {
-            fail_shape_inference("Input type is not int64 tensor but keys_int64s is set");
-          }
-          if (keys_floats_result && input_elem_type != TensorProto::FLOAT) {
-            fail_shape_inference("Input type is not float tensor but keys_floats is set");
-          }
-
-          // Load all values_* attributes.
-          std::vector<std::string> values_strings;
-          bool values_strings_result = getRepeatedAttribute(ctx, "values_strings", values_strings);
-          std::vector<int64_t> values_int64s;
-          bool values_int64s_result = getRepeatedAttribute(ctx, "values_int64s", values_int64s);
-          std::vector<float> values_floats;
-          bool values_floats_result = getRepeatedAttribute(ctx, "values_floats", values_floats);
-
-          // Check if only one values_* attribute is set.
-          if (static_cast<int>(values_strings_result) + static_cast<int>(values_int64s_result) +
-                  static_cast<int>(values_floats_result) !=
-              1) {
-            fail_shape_inference("Only one of values_*'s can be set in label encoder.");
+          if (value_length != key_length) {
+            fail_shape_inference(
+                "The number of keys ",
+                key_length,
+                " and the number of values ",
+                value_length,
+                " must be the same in the LabelEncoder.");
           }
 
-          // Assign output type based on the specified values_*.
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
-          if (values_strings_result)
-            output_elem_type->set_elem_type(TensorProto::STRING);
-          if (values_int64s_result)
-            output_elem_type->set_elem_type(TensorProto::INT64);
-          if (values_floats_result)
-            output_elem_type->set_elem_type(TensorProto::FLOAT);
-
-          // Input and output shapes are the same.
+          auto default_attr = ctx.getAttribute("default_tensor");
+          if (nullptr != default_attr && default_attr->has_t() && default_attr->t().has_data_type() &&
+              default_attr->t().data_type() != TensorProto_DataType_UNDEFINED) {
+            auto default_tensor = default_attr->t();
+            if (default_tensor.data_type() != value_type) {
+              fail_shape_inference(
+                  "The default tensor type ",
+                  default_tensor.data_type(),
+                  " and the value type ",
+                  value_type,
+                  " must be the same in the LabelEncoder.");
+            }
+            if (1 != default_tensor.dims_size() || 1 != default_tensor.dims(0)) {
+              fail_shape_inference("The default tensor must be a singleton 1D tensor.");
+            }
+          }
+          // Propagate shape from input type and assign output type based on value type
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(value_type);
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
@@ -429,7 +437,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-            "The input must be a tensor of a numeric type, and of shape [N,C] or [C]. In the latter case, it will be treated as [1,C]")
+            "The input must be a tensor of a numeric type, and of shape [N,C] or [C]. In the latter case, it will be "
+            "treated as [1,C]")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
@@ -453,7 +462,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "post_transform",
-            "Indicates the transform to apply to the scores vector.<br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'",
+            "Indicates the transform to apply to the scores vector.<br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' "
+            "'SOFTMAX_ZERO,' or 'PROBIT'",
             AttributeProto::STRING,
             std::string("NONE"))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -531,7 +541,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input must be a tensor of a numeric type.")
         .Attr(
             "post_transform",
-            "Indicates the transform to apply to the regression output vector.<br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'",
+            "Indicates the transform to apply to the regression output vector.<br>One of 'NONE,' 'SOFTMAX,' "
+            "'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'",
             AttributeProto::STRING,
             std::string("NONE"))
         .Attr("coefficients", "Weights of the model(s).", AttributeProto::FLOATS, OPTIONAL_VALUE)
@@ -602,7 +613,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "zeros",
-            "If true and category is not present, will return all zeros; if false and a category if not found, the operator will fail.",
+            "If true and category is not present, will return all zeros; if false and a category if not found, the "
+            "operator will fail.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -639,12 +651,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input must be a tensor of a numeric type.")
         .Attr(
             "offset",
-            "First, offset by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it applies to all features, regardless of dimension count.",
+            "First, offset by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it "
+            "applies to all features, regardless of dimension count.",
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr(
             "scale",
-            "Second, multiply by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it applies to all features, regardless of dimension count.<br>Must be same length as 'offset'",
+            "Second, multiply by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it "
+            "applies to all features, regardless of dimension count.<br>Must be same length as 'offset'",
             AttributeProto::FLOATS,
             OPTIONAL_VALUE));
 
@@ -662,7 +676,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(
             1,
             "Z",
-            "Class scores (one per class per example), if prob_a and prob_b are provided they are probabilities for each class, otherwise they are raw scores.",
+            "Class scores (one per class per example), if prob_a and prob_b are provided they are probabilities for "
+            "each class, otherwise they are raw scores.",
             "tensor(float)")
         .TypeConstraint(
             "T1",
@@ -671,7 +686,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used. Its size will match the bactch size of the input.")
+            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* "
+            "attributes is used. Its size will match the bactch size of the input.")
         .Attr(
             "kernel_type",
             "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID'.",
@@ -688,23 +704,27 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("prob_a", "First set of probability coefficients.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr(
             "prob_b",
-            "Second set of probability coefficients. This array must be same size as prob_a.<br>If these are provided then output Z are probability estimates, otherwise they are raw scores.",
+            "Second set of probability coefficients. This array must be same size as prob_a.<br>If these are provided "
+            "then output Z are probability estimates, otherwise they are raw scores.",
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr("rho", "", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr(
             "post_transform",
-            "Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'",
+            "Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' "
+            "or 'PROBIT'",
             AttributeProto::STRING,
             std::string("NONE"))
         .Attr(
             "classlabels_strings",
-            "Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be defined.",
+            "Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be "
+            "defined.",
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
         .Attr(
             "classlabels_ints",
-            "Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be defined.",
+            "Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be "
+            "defined.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -754,12 +774,16 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("n_supports", "The number of support vectors.", AttributeProto::INT, static_cast<int64_t>(0))
         .Attr(
             "post_transform",
-            "Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'",
+            "Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' "
+            "or 'PROBIT.'",
             AttributeProto::STRING,
             std::string("NONE"))
         .Attr("rho", "", AttributeProto::FLOATS, OPTIONAL_VALUE));
 
-static const char* TreeEnsembleClassifier_ver3_doc = R"DOC(
+static const char* TreeEnsembleClassifier_ver5_doc = R"DOC(
+    This operator is DEPRECATED. Please use TreeEnsemble with provides similar functionality.
+    In order to determine the top class, the ArgMax node can be applied to the output of TreeEnsemble.
+    To encode class labels, use a LabelEncoder operator.
     Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
     The attributes named 'nodes_X' form a sequence of tuples, associated by
     index into the sequences, which must all be of equal length. These tuples
@@ -775,9 +799,10 @@ static const char* TreeEnsembleClassifier_ver3_doc = R"DOC(
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleClassifier,
-    3,
+    5,
     OpSchema()
-        .SetDoc(TreeEnsembleClassifier_ver3_doc)
+        .Deprecate()
+        .SetDoc(TreeEnsembleClassifier_ver5_doc)
         .Input(0, "X", "Input of shape [N,F]", "T1")
         .Output(0, "Y", "N, Top class for each point", "T2")
         .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
@@ -788,7 +813,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used.")
+            "The output type will be a tensor of strings or integers, depending on which of the classlabels_* "
+            "attributes is used.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_nodeids",
@@ -818,14 +844,17 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "nodes_modes",
-            "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
+            "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf "
+            "node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
         .Attr("nodes_truenodeids", "Child node if expression is true.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("nodes_falsenodeids", "Child node if expression is false.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_missing_value_tracks_true",
-            "For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.",
+            "For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the "
+            "'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and "
+            "the default value is false (0) for all nodes.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Attr("class_treeids", "The id of the tree that this node is in.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -839,85 +868,38 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "classlabels_strings",
-            "Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be defined.",
+            "Class labels if using string labels.<br>One and only one of the 'classlabels_*' attributes must be "
+            "defined.",
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
         .Attr(
             "classlabels_int64s",
-            "Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be defined.",
+            "Class labels if using integer labels.<br>One and only one of the 'classlabels_*' attributes must be "
+            "defined.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Attr(
             "post_transform",
-            "Indicates the transform to apply to the score. <br> One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'",
+            "Indicates the transform to apply to the score. <br> One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' "
+            "or 'PROBIT.'",
             AttributeProto::STRING,
             std::string("NONE"))
         .Attr(
             "base_values",
-            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            "Base values for classification, added to final class score; the size must be the same as the classes or "
+            "can be left unassigned (assumed 0)",
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr(
             "base_values_as_tensor",
-            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            "Base values for classification, added to final class score; the size must be the same as the classes or "
+            "can be left unassigned (assumed 0)",
             AttributeProto::TENSOR,
-            OPTIONAL_VALUE)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto* nodes_values = ctx.getAttribute("nodes_values");
-          auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
-          auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
-          auto* nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
-          auto* class_weights = ctx.getAttribute("class_weights");
-          auto* class_weights_as_tensor = ctx.getAttribute("class_weights_as_tensor");
-          auto* base_values = ctx.getAttribute("base_values");
-          auto* base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
+            OPTIONAL_VALUE));
 
-          if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
-            fail_shape_inference(
-                "Only one of the attributes 'nodes_values', 'nodes_values_as_tensor' should be specified.");
-          }
-          if (nullptr != nodes_hitrates && nullptr != nodes_hitrates_as_tensor) {
-            fail_shape_inference(
-                "Only one of the attributes 'nodes_hitrates', 'nodes_hitrates_as_tensor' should be specified.");
-          }
-          if (nullptr != class_weights && nullptr != class_weights_as_tensor) {
-            fail_shape_inference(
-                "Only one of the attributes 'class_weights', 'class_weights_as_tensor' should be specified.");
-          }
-          if (nullptr != base_values && nullptr != base_values_as_tensor) {
-            fail_shape_inference(
-                "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
-          }
-
-          std::vector<std::string> classlabels_strings;
-          auto result = getRepeatedAttribute(ctx, "classlabels_strings", classlabels_strings);
-          bool using_strings = (result && !classlabels_strings.empty());
-          if (using_strings) {
-            updateOutputElemType(ctx, 0, TensorProto::STRING);
-          } else {
-            updateOutputElemType(ctx, 0, TensorProto::INT64);
-          }
-          updateOutputElemType(ctx, 1, TensorProto::FLOAT);
-
-          checkInputRank(ctx, 0, 2);
-          Dim N, E;
-          unifyInputDim(ctx, 0, 0, N);
-
-          if (using_strings) {
-            unifyDim(E, classlabels_strings.size());
-          } else {
-            std::vector<int64_t> classlabels_int64s;
-            result = getRepeatedAttribute(ctx, "classlabels_int64s", classlabels_int64s);
-            if (!result || classlabels_int64s.empty()) {
-              fail_shape_inference("Non of classlabels_int64s or classlabels_strings is set.");
-            }
-            unifyDim(E, classlabels_int64s.size());
-          }
-          updateOutputShape(ctx, 0, {N});
-          updateOutputShape(ctx, 1, {N, E});
-        }));
-
-static const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
+static const char* TreeEnsembleRegressor_ver5_doc = R"DOC(
+    This operator is DEPRECATED. Please use TreeEnsemble instead which provides the same
+    functionality.<br>
     Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
     All args with nodes_ are fields of a tuple of tree nodes, and
     it is assumed they are the same length, and an index i will decode the
@@ -934,9 +916,10 @@ static const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsembleRegressor,
-    3,
+    5,
     OpSchema()
-        .SetDoc(TreeEnsembleRegressor_ver3_doc)
+        .Deprecate()
+        .SetDoc(TreeEnsembleRegressor_ver5_doc)
         .Input(0, "X", "Input of shape [N,F]", "T")
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
@@ -972,14 +955,17 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "nodes_modes",
-            "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
+            "The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf "
+            "node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
             AttributeProto::STRINGS,
             OPTIONAL_VALUE)
         .Attr("nodes_truenodeids", "Child node if expression is true", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("nodes_falsenodeids", "Child node if expression is false", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
             "nodes_missing_value_tracks_true",
-            "For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.",
+            "For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) "
+            "or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may "
+            "be left undefined and the default value is false (0) for all nodes.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
         .Attr("target_treeids", "The id of the tree that each node is in.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -990,7 +976,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("n_targets", "The total number of targets.", AttributeProto::INT, OPTIONAL_VALUE)
         .Attr(
             "post_transform",
-            "Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'",
+            "Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' "
+            "or 'PROBIT'",
             AttributeProto::STRING,
             std::string("NONE"))
         .Attr(
@@ -1000,48 +987,215 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             std::string("SUM"))
         .Attr(
             "base_values",
-            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            "Base values for regression, added to final prediction after applying aggregate_function; the size must be "
+            "the same as the classes or can be left unassigned (assumed 0)",
             AttributeProto::FLOATS,
             OPTIONAL_VALUE)
         .Attr(
             "base_values_as_tensor",
-            "Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)",
+            "Base values for regression, added to final prediction after applying aggregate_function; the size must be "
+            "the same as the classes or can be left unassigned (assumed 0)",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE));
+
+static const char* TreeEnsemble_ver5_doc = R"DOC(
+    Tree Ensemble operator.  Returns the regressed values for each input in a batch.
+    Inputs have dimensions `[N, F]` where `N` is the input batch size and `F` is the number of input features.
+    Outputs have dimensions `[N, num_targets]` where `N` is the batch size and `num_targets` is the number of targets, which is a configurable attribute.
+
+    The encoding of this attribute is split along interior nodes and the leaves of the trees. Notably, attributes with the prefix `nodes_*` are associated with interior nodes, and attributes with the prefix `leaf_*` are associated with leaves.
+    The attributes `nodes_*` must all have the same length and encode a sequence of tuples, as defined by taking all the `nodes_*` fields at a given position.
+
+    All fields prefixed with `leaf_*` represent tree leaves, and similarly define tuples of leaves and must have identical length.
+
+    This operator can be used to implement both the previous `TreeEnsembleRegressor` and `TreeEnsembleClassifier` nodes.
+    The `TreeEnsembleRegressor` node maps directly to this node and requires changing how the nodes are represented.
+    The `TreeEnsembleClassifier` node can be implemented by adding a `ArgMax` node after this node to determine the top class.
+    To encode class labels, a `LabelEncoder` or `GatherND` operator may be used.
+)DOC";
+
+ONNX_ML_OPERATOR_SET_SCHEMA(
+    TreeEnsemble,
+    5,
+    OpSchema()
+        .SetDoc(TreeEnsemble_ver5_doc)
+        .Input(0, "X", "Input of shape [Batch Size, Number of Features]", "T")
+        .Output(0, "Y", "Output of shape [Batch Size, Number of targets]", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float)", "tensor(double)", "tensor(float16)"},
+            "The input type must be a tensor of a numeric type.")
+        .Attr("nodes_featureids", "Feature id for each node.", AttributeProto::INTS, true)
+        .Attr(
+            "nodes_splits",
+            "Thresholds to do the splitting on for each node with mode that is not 'BRANCH_MEMBER'.",
+            AttributeProto::TENSOR,
+            true)
+        .Attr(
+            "nodes_hitrates",
+            "Popularity of each node, used for performance and may be omitted.",
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
+        .Attr(
+            "nodes_modes",
+            "The comparison operation performed by the node. This is encoded as an enumeration of 0 ('BRANCH_LEQ'), 1 "
+            "('BRANCH_LT'), 2 ('BRANCH_GTE'), 3 ('BRANCH_GT'), 4 ('BRANCH_EQ'), 5 ('BRANCH_NEQ'), and 6 "
+            "('BRANCH_MEMBER'). Note this is a tensor of type uint8.",
+            AttributeProto::TENSOR,
+            true)
+        .Attr(
+            "nodes_truenodeids",
+            "If `nodes_trueleafs` is false at an entry, this represents the position of the true branch node. This "
+            "position can be used to index into a `nodes_*` entry. If `nodes_trueleafs` is false, it is an index into "
+            "the leaf_* attributes.",
+            AttributeProto::INTS,
+            true)
+        .Attr(
+            "nodes_falsenodeids",
+            "If `nodes_falseleafs` is false at an entry, this represents the position of the false branch node. This "
+            "position can be used to index into a `nodes_*` entry. If `nodes_falseleafs` is false, it is an index into "
+            "the leaf_* attributes.",
+            AttributeProto::INTS,
+            true)
+        .Attr(
+            "nodes_trueleafs",
+            "1 if true branch is leaf for each node and 0 an interior node. To represent a tree that is a leaf (only "
+            "has one node), one can do so by having a single `nodes_*` entry with true and false branches referencing "
+            "the same `leaf_*` entry",
+            AttributeProto::INTS,
+            true)
+        .Attr(
+            "nodes_falseleafs",
+            "1 if false branch is leaf for each node and 0 if an interior node. To represent a tree that is a leaf "
+            "(only has one node), one can do so by having a single `nodes_*` entry with true and false branches "
+            "referencing the same `leaf_*` entry",
+            AttributeProto::INTS,
+            true)
+        .Attr(
+            "nodes_missing_value_tracks_true",
+            "For each node, define whether to follow the true branch (if attribute value is 1) or false branch (if "
+            "attribute value is 0) in the presence of a NaN input feature. This attribute may be left undefined and "
+            "the default value is false (0) for all nodes.",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr(
+            "tree_roots",
+            "Index into `nodes_*` for the root of each tree. The tree structure is derived from the branching of each "
+            "node.",
+            AttributeProto::INTS,
+            true)
+        .Attr(
+            "membership_values",
+            "Members to test membership of for each set membership node. List all of the members to test again in the "
+            "order that the 'BRANCH_MEMBER' mode appears in `node_modes`, delimited by `NaN`s. Will have the same "
+            "number "
+            "of sets of values as nodes with mode 'BRANCH_MEMBER'. This may be omitted if the node doesn't contain any "
+            "'BRANCH_MEMBER' nodes.",
+            AttributeProto::TENSOR,
+            OPTIONAL_VALUE)
+        .Attr(
+            "leaf_targetids",
+            "The index of the target that this leaf contributes to (this must be in range `[0, n_targets)`).",
+            AttributeProto::INTS,
+            true)
+        .Attr("leaf_weights", "The weight for each leaf.", AttributeProto::TENSOR, true)
+        .Attr("n_targets", "The total number of targets.", AttributeProto::INT, OPTIONAL_VALUE)
+        .Attr(
+            "post_transform",
+            "Indicates the transform to apply to the score. <br>One of 'NONE' (0), 'SOFTMAX' (1), 'LOGISTIC' (2), "
+            "'SOFTMAX_ZERO' (3) or 'PROBIT' (4), defaults to 'NONE' (0)",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "aggregate_function",
+            "Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE' (0) 'SUM' (1) 'MIN' (2) 'MAX "
+            "(3) defaults to 'SUM' (1)",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto* nodes_values = ctx.getAttribute("nodes_values");
-          auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
-          auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
-          auto* nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
-          auto* target_weights = ctx.getAttribute("target_weights");
-          auto* target_weights_as_tensor = ctx.getAttribute("target_weights_as_tensor");
-          auto* base_values = ctx.getAttribute("base_values");
-          auto* base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
+          checkInputRank(ctx, 0, 2);
+          auto* nodes_splits = ctx.getAttribute("nodes_splits");
+          if (nullptr == nodes_splits) {
+            fail_shape_inference("Attribute 'nodes_splits' is required.");
+          }
+          if (nodes_splits->t().dims_size() != 1) {
+            fail_shape_inference("Attribute 'nodes_splits' must be 1D.");
+          }
+          auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
+          // Check that input type is same as split type
+          if (input_type != nodes_splits->t().data_type()) {
+            fail_shape_inference(
+                "Attribute 'nodes_splits' must have same type as input. Input type is ",
+                input_type,
+                " and attribute type is ",
+                nodes_splits->t().data_type());
+          }
 
-          if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
+          // Expected nodes_* length
+          auto expected_length = nodes_splits->t().dims(0);
+          // Validate all nodes_* attributes that are set have the same length and are 1D.
+          AssertAttributeProtoTypeAndLength(
+              ctx.getAttribute("nodes_featureids"), expected_length, TensorProto_DataType_INT64, true);
+          AssertAttributeProtoTypeAndLength(
+              ctx.getAttribute("nodes_hitrates"), expected_length, TensorProto_DataType_FLOAT, false);
+          AssertAttributeProtoTypeAndLength(
+              ctx.getAttribute("nodes_modes"), expected_length, TensorProto_DataType_UINT8, true);
+          AssertAttributeProtoTypeAndLength(
+              ctx.getAttribute("nodes_truenodeids"), expected_length, TensorProto_DataType_INT64, true);
+          AssertAttributeProtoTypeAndLength(
+              ctx.getAttribute("nodes_falsenodeids"), expected_length, TensorProto_DataType_INT64, true);
+          AssertAttributeProtoTypeAndLength(
+              ctx.getAttribute("nodes_trueleafs"), expected_length, TensorProto_DataType_INT64, true);
+          AssertAttributeProtoTypeAndLength(
+              ctx.getAttribute("nodes_falseleafs"), expected_length, TensorProto_DataType_INT64, true);
+          AssertAttributeProtoTypeAndLength(
+              ctx.getAttribute("nodes_missing_value_tracks_true"), expected_length, TensorProto_DataType_INT64, false);
+
+          // The set membership values and the splits must have the same type as the input.
+          auto* membership_values = ctx.getAttribute("membership_values");
+          if (nullptr != membership_values && membership_values->t().data_type() != input_type) {
             fail_shape_inference(
-                "Only one of the attributes 'nodes_values', 'nodes_values_as_tensor' should be specified.");
+                "Attribute 'membership_values' must have same type as input. Input type is ",
+                input_type,
+                " and attribute type is ",
+                membership_values->t().data_type());
           }
-          if (nullptr != nodes_hitrates && nullptr != nodes_hitrates_as_tensor) {
-            fail_shape_inference(
-                "Only one of the attributes 'nodes_hitrates', 'nodes_hitrates_as_tensor' should be specified.");
+          AssertAttributeProtoTypeAndLength(
+              ctx.getAttribute("nodes_splits"), expected_length, static_cast<TensorProto_DataType>(input_type), true);
+
+          // Validate all leaf_* attributes that are set have the same length and are 1D.
+          auto* leaf_targetids = ctx.getAttribute("leaf_targetids");
+          auto* leaf_weights = ctx.getAttribute("leaf_weights");
+          if (nullptr != leaf_targetids && nullptr != leaf_weights) {
+            if (leaf_targetids->ints_size() != leaf_weights->t().dims(0)) {
+              fail_shape_inference(
+                  "Attribute 'leaf_targetids' must have same length as attribute 'leaf_weights'. 'leaf_targetids' "
+                  "length is ",
+                  leaf_targetids->ints_size(),
+                  " and 'leaf_weights' length is ",
+                  leaf_weights->t().dims(0));
+            }
+          } else {
+            fail_shape_inference("Attributes 'leaf_targetids' and 'leaf_weights' must both be set.");
           }
-          if (nullptr != target_weights && nullptr != target_weights_as_tensor) {
+
+          // Validate weights have same type as input.
+          if (leaf_weights->t().data_type() != input_type) {
             fail_shape_inference(
-                "Only one of the attributes 'target_weights', 'target_weights_as_tensor' should be specified.");
-          }
-          if (nullptr != base_values && nullptr != base_values_as_tensor) {
-            fail_shape_inference(
-                "Only one of the attributes 'base_values', 'base_values_as_tensor' should be specified.");
+                "Attribute 'leaf_weights' must have same type as input. Input type is ",
+                input_type,
+                " and attribute type is ",
+                leaf_weights->t().data_type());
           }
 
           checkInputRank(ctx, 0, 2);
+
           Dim N, E;
           unifyInputDim(ctx, 0, 0, N);
           if (nullptr != ctx.getAttribute("n_targets")) {
             unifyDim(E, ctx.getAttribute("n_targets")->i());
           }
-          updateOutputElemType(ctx, 0, TensorProto::FLOAT);
+          updateOutputElemType(ctx, 0, input_type);
           updateOutputShape(ctx, 0, {N, E});
         }));
 

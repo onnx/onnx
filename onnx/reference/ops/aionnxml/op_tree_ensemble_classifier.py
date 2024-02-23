@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0913,R0914,W0221
+
 
 import numpy as np
 
@@ -60,7 +60,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
             class_weights_as_tensor=class_weights_as_tensor,
         )
         # unused unless for debugging purposes
-        self._tree = tr  # pylint: disable=W0201
+        self._tree = tr
         if X.dtype not in (np.float32, np.float64):
             X = X.astype(np.float32)
         leaves_index = tr.leave_index_tree(X)
@@ -95,7 +95,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
             "PROBIT": probit,
         }
         if binary:
-            if res.shape[1] == 1 and len(classes) == 1:
+            if res.shape[1] == len(classes) == 1:
                 new_res = np.zeros((res.shape[0], 2), res.dtype)
                 new_res[:, 1] = res[:, 0]
                 res = new_res

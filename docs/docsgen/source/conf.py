@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable=W0622
+
 # type: ignore
 import os
 import sys
@@ -16,7 +16,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # -- Project information -----------------------------------------------------
 
 author = "ONNX"
-copyright = "2023"
+copyright = "2024"
 project = "ONNX"
 release = onnx.__version__
 version = onnx.__version__
@@ -28,9 +28,9 @@ max_opset = onnx.helper.VERSION_TABLE[-1][2]
 # define the latest opset to document for every opset
 _opsets = [t for t in onnx.helper.VERSION_TABLE if t[2] == max_opset][-1]
 max_opsets = {
-    '': max_opset,
-    'ai.onnx.ml': _opsets[3],
-    'ai.onnx.training': _opsets[4],
+    "": max_opset,
+    "ai.onnx.ml": _opsets[3],
+    "ai.onnx.training": _opsets[4],
 }
 
 # -- General configuration ---------------------------------------------------

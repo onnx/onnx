@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,R0914,W0221
+
 
 import numpy as np
 
@@ -20,8 +20,7 @@ class Loop(OpRun):
         self.K = len(self.body.output_names) - self.N - 1  # type: ignore
 
     def need_context(self) -> bool:
-        """
-        The operator Loop needs to know all results produced
+        """The operator Loop needs to know all results produced
         so far as the loop may silently access one of them.
         Some information are not always referred in the list of inputs
         (kind of static variables).
@@ -29,20 +28,20 @@ class Loop(OpRun):
         return True
 
     def _run(self, M, cond, *args, context=None, body=None, attributes=None):  # type: ignore
-        if len(args) > 0:
+        if args:
             v_initial = args[0]
             args = args[1:]
         else:
             v_initial = None
-        if not hasattr(M, "dtype"):
-            raise TypeError(f"M must be an array or a numpy number not {type(M)}.")
+        if M is not None and not hasattr(M, "dtype"):
+            raise TypeError(f"M must be empty or an array but its type is {type(M)}.")
         body = self.body  # type: ignore
         loop_inputs = body.input_names
         inputs = {name: None for name in loop_inputs}
         if v_initial is not None:
             inputs[loop_inputs[2]] = v_initial
         cond_name = body.output_names[0]
-        if len(args) > 0:
+        if args:
             begin = len(loop_inputs) - len(args)
             all_inputs = loop_inputs[begin:]
             for name, val in zip(all_inputs, args):
@@ -53,10 +52,10 @@ class Loop(OpRun):
 
         k_carried_away = [[] for i in range(self.K)]  # type: ignore
         it = 0
-        while cond and it < M:
+        while cond and (M is None or it < M):
             self._log("  -- loop> {%r}", context)
             if len(body.input_names) > 0 and body.input_names[0] is not None:
-                inputs[body.input_names[0]] = np.array(it, dtype=M.dtype)  # type: ignore
+                inputs[body.input_names[0]] = np.array(it, dtype=None if M is None else M.dtype)  # type: ignore
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
             outputs = self._run_body(inputs, attributes=attributes)  # type: ignore
@@ -75,15 +74,11 @@ class Loop(OpRun):
             self._log("  -- loop<")
 
         if it == 0:
-            outputs = []
-            for i in body.input_names[2:]:
-                outputs.append(inputs[i])
+            outputs = [inputs[i] for i in body.input_names[2:]]
         else:
             outputs = outputs[1 : 1 + self.N]
-        outputs.extend(k_carried_away)
+        outputs.extend([np.vstack(x) for x in k_carried_away])
         while len(outputs) < len(self.onnx_node.output):
             outputs.append(np.empty(shape=()))
         res = tuple(outputs)
-        # if self.K > 0:
-        #     res = res[:-self.K] + tuple(np.hstack(r) for r in res[-self.K:])
-        return res
+        return self._check_and_fix_outputs(res)

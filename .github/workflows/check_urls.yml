@@ -1,0 +1,49 @@
+name: Check URLs
+
+on:
+  push:
+    branches: [ 'rel-*' ]
+  schedule:
+    # Run every month
+    - cron:  '0 0 1 * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+    - name: urls-checker-code
+      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4 # v0.0.34
+      with:
+        subfolder: onnx
+        file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
+        print_all: false
+        timeout: 2
+        retry_count# : 2
+        exclude_urls: https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/,https://media.githubusercontent.com/media/,https://download.onnxruntime.ai/onnx/models
+        # exclude_patterns: https://...
+        force_pass: false
+
+    - name: urls-checker-docs
+      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4 # v0.0.34
+      with:
+        subfolder: docs
+        file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
+        print_all: false
+        timeout: 2
+        retry_count# : 2
+        exclude_urls: https://github.com/onnx/onnx/blob/main/docs/Operators,https://github.com/onnx/onnx/pull/436
+        force_pass: false
+
+    - name: urls-checker-community
+      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4 # v0.0.34
+      with:
+        subfolder: community
+        file_types: .md,.py,.rst
+        print_all: false
+        timeout: 2
+        retry_count# : 2
+        force_pass: false

@@ -9,6 +9,7 @@ import keyword
 import os
 import pathlib
 import re
+import shutil
 import sys
 import textwrap
 from typing import Any
@@ -20,6 +21,18 @@ from sphinx.util import logging
 import onnx
 from onnx.backend.test.case.base import _Exporter
 from onnx.defs import OpSchema
+
+REPO_DOCS_EXCLUDE = {
+    "Changelog-ml.md",
+    "Changelog.md",
+    "CIPipelines.md",
+    "CONTRIBUTING.md",
+    "Operators-ml.md",
+    "Operators.md",
+    "Relicensing.md",
+    "TestCoverage-ml.md",
+    "TestCoverage.md",
+}
 
 
 def _get_diff_template():
@@ -63,101 +76,115 @@ def _get_diff_template():
 
 def _get_ops_template():
     return jinja2.Template(
-        textwrap.dedent(
-            """
-        {% for sch in schemas %}
+        """\
+{% for sch in schemas %}
 
-        .. tag-diff-insert.
+.. tag-diff-insert.
 
-        (l-onnx-op{{sch.domain.lower().replace(".", "-")}}-{{sch.name.lower()}}-{{str(sch.since_version)}})=
+(l-onnx-op{{sch.domain.lower().replace(".", "-")}}-{{sch.name.lower()}}-{{str(sch.since_version)}})=
 
-        ## {{format_name_with_domain(sch)}}
+## {{format_name_with_domain(sch)}}
 
-        ### Version
+### Version
 
-        - **name**: [{{sch.name}} (GitHub)]({{build_doc_url(sch)}}{{sch.name}})
-        - **domain**: `{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}`
-        - **since_version**: `{{sch.since_version}}`
-        - **function**: `{{sch.has_function or sch.has_context_dependent_function}}`
-        - **support_level**: `{{sch.support_level}}`
-        - **shape inference**: `{{sch.has_type_and_shape_inference_function}}`
+- **name**: [{{sch.name}} (GitHub)]({{build_doc_url(sch)}}{{sch.name}})
+- **domain**: `{% if sch.domain == '' %}main{% else %}{{sch.domain}}{% endif %}`
+- **since_version**: `{{sch.since_version}}`
+- **function**: `{{sch.has_function or sch.has_context_dependent_function}}`
+- **support_level**: `{{sch.support_level}}`
+- **shape inference**: `{{sch.has_type_and_shape_inference_function}}`
 
-        {% if sch.support_level == OpSchema.SupportType.EXPERIMENTAL %}
-        No versioning maintained for experimental ops.
-        {% else %}
-        This version of the operator has been {% if
-        sch.deprecated %}deprecated{% else %}available{% endif %}
-        **since version {{sch.since_version}}{% if
-        sch.domain %} of domain {{sch.domain}}{% endif %}**.
-        {% if len(sch.versions) > 1 %}
-        Other versions of this operator:
-        {% for v in sch.version[:-1] %} {{v}} {% endfor %}
-        {% endif %}
-        {% endif %}
+{% if sch.support_level == OpSchema.SupportType.EXPERIMENTAL %}
+No versioning maintained for experimental ops.
+{% else %}
+This version of the operator has been {% if
+sch.deprecated %}deprecated{% else %}available{% endif %}
+**since version {{sch.since_version}}{% if
+sch.domain %} of domain {{sch.domain}}{% endif %}**.
+{% if len(sch.versions) > 1 %}
+Other versions of this operator:
+{% for v in sch.version[:-1] %} {{v}} {% endfor %}
+{% endif %}
+{% endif %}
 
-        ### Summary
+### Summary
 
-        {{process_documentation(sch.doc)}}
-        {% if sch.attributes %}
+{{process_documentation(sch.doc)}}
 
-        ### Attributes
+{% if sch.has_function %}
 
-        {% for _, attr in sorted(sch.attributes.items())
-        %}* **{{attr.name}} - {{str(attr.type).split('.')[-1]}}**{%
-          if attr.required %} (required){% endif %} {%
-          if attr.default_value %}{{clean_default_value(attr)}}{%
-          endif %}: {{text_wrap(attr.description, 2)}}
-        {% endfor %}
-        {% endif %}
-        {% if sch.inputs %}
+#### Function Body
 
-        ### Inputs
+The function definition for this operator.
 
-        {% if sch.min_input != sch.max_input %}Between {{sch.min_input
-        }} and {{sch.max_input}} inputs.
-        {% endif %}
-        {% for ii, inp in enumerate(sch.inputs) %}
-        - **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.type_str}}**:
-        {{text_wrap(inp.description, 2)}}{% endfor %}
-        {% endif %}
-        {% if sch.outputs %}
+```
+{{get_function_body(sch)}}
+```
+{% endif %}
+{% if sch.attributes %}
 
-        ### Outputs
+### Attributes
 
-        {% if sch.min_output != sch.max_output %}Between {{sch.min_output
-        }} and {{sch.max_output}} outputs.
-        {% endif %}
-        {% for ii, out in enumerate(sch.outputs) %}
-        - **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.type_str}}**:
-        {{text_wrap(out.description, 2)}}{% endfor %}
-        {% endif %}
-        {% if sch.type_constraints %}
+{% for _, attr in sorted(sch.attributes.items())
+%}* **{{attr.name}} - {{str(attr.type).split('.')[-1]}}**{%
+  if attr.required %} (required){% endif %} {%
+  if attr.default_value %}{{clean_default_value(attr)}}{%
+  endif %}:
 
-        ### Type Constraints
+{{text_indent(attr.description, 2)}}
 
-        {% for ii, type_constraint in enumerate(sch.type_constraints)
-        %}* {{get_constraint(type_constraint, ii)}}:
-        {{text_wrap(type_constraint.description, 2)}}
-        {% endfor %}
-        {% endif %}
-        {% if examples and is_last_schema(sch): %}
+{% endfor %}
+{% endif %}
+{% if sch.inputs %}
 
-        ### Examples
+### Inputs
 
-        {% for example, code in examples.items(): %}
+{% if sch.min_input != sch.max_input %}Between {{sch.min_input
+}} and {{sch.max_input}} inputs.
+{% endif %}
+{% for ii, inp in enumerate(sch.inputs) %}
+- **{{getname(inp, ii)}}**{{format_option(inp)}} - **{{inp.type_str}}**:
 
-        #### {{ example }}
+{{text_indent(inp.description, 2)}}{% endfor %}
+{% endif %}
+{% if sch.outputs %}
 
-        ```python
-        {{ format_example(code) }}
-        ```
-        {% endfor %}
-        {% endif %}
-        {% endfor %}
-        """
-        ),
-        autoescape=False,
-    )
+### Outputs
+
+{% if sch.min_output != sch.max_output %}Between {{sch.min_output
+}} and {{sch.max_output}} outputs.
+{% endif %}
+{% for ii, out in enumerate(sch.outputs) %}
+- **{{getname(out, ii)}}**{{format_option(out)}} - **{{out.type_str}}**:
+
+{{text_indent(out.description, 2)}}{% endfor %}
+{% endif %}
+{% if sch.type_constraints %}
+
+### Type Constraints
+
+{% for ii, type_constraint in enumerate(sch.type_constraints)
+%}* {{get_constraint(type_constraint, ii)}}:
+
+{{text_indent(type_constraint.description, 2)}}
+{% endfor %}
+{% endif %}
+{% if examples and is_last_schema(sch): %}
+
+### Examples
+
+{% for example, code in examples.items(): %}
+
+#### {{ example }}
+
+```python
+{{ format_example(code) }}
+```
+{% endfor %}
+{% endif %}
+{% endfor %}""",
+    autoescape=False,
+)
 
 
 def _get_main_template():
@@ -248,7 +275,7 @@ def _populate_all_schemas_with_history():
 
 
 def _get_all_schemas_with_history():
-    global _all_schemas_with_history  # pylint: disable=global-statement
+    global _all_schemas_with_history
     if _all_schemas_with_history is None:
         _all_schemas_with_history = _populate_all_schemas_with_history()
     return _all_schemas_with_history
@@ -420,10 +447,12 @@ def get_markdown_doc(
             sval = format_default_value(default_value)
         return f"(default is `{sval!r}`)"
 
-    def text_wrap(text, indent):
+    def text_indent(text: str, indent: int) -> str:
         s = " " * indent
-        lines = textwrap.wrap(text, initial_indent=s, subsequent_indent=s)
-        return "\n".join(lines)
+        return textwrap.indent(text, s)
+
+    def get_function_body(schema: OpSchema) -> str:
+        return onnx.printer.to_text(schema.function_body)
 
     examples = get_onnx_example(op_name, domain) if example else {}
     docs = _template_operator.render(
@@ -439,12 +468,13 @@ def get_markdown_doc(
         format_name_with_domain=format_name_with_domain,
         process_documentation=process_documentation,
         build_doc_url=build_doc_url,
-        text_wrap=text_wrap,
+        text_indent=text_indent,
         str=str,
         clean_default_value=clean_default_value,
         examples=examples,
         format_example=format_example,
         is_last_schema=is_last_schema,
+        get_function_body=get_function_body,
     )
 
     d_links = {}
@@ -664,7 +694,7 @@ def get_onnx_example(op_name, domain):
             found = textwrap.dedent(found)
             lines = found.split("\n")
             first = 0
-            for i in range(len(lines)):  # pylint: disable=C0200
+            for i in range(len(lines)):
                 if lines[i].startswith("def "):
                     first = i + 1
             found = textwrap.dedent("\n".join(lines[first:]))
@@ -748,7 +778,7 @@ def onnx_documentation_folder(
                 table_dom.append(f"      - {col2}")
             table_dom.append("")
             if indent != "":
-                for i in range(len(table_dom)):  # pylint: disable=C0200
+                for i in range(len(table_dom)):
                     table_dom[i] = indent + table_dom[i]
             res = "\n".join(table_dom)
             return res
@@ -845,6 +875,23 @@ def _generate_op_doc(app):
     onnx_documentation_folder(folder, flog=logger.info, max_opsets=max_opsets)
 
 
+def _copy_repo_docs(app):
+    logger = logging.getLogger(__name__)
+    dest_name = app.config.onnx_md_folder
+
+    docs_dir = pathlib.Path(__file__).parent.parent.parent  # docs
+    dest_folder = docs_dir / "docsgen" / "source" / dest_name
+    dest_folder.mkdir(parents=True, exist_ok=True)
+    # Copy all the markdown files from the folder except for the blocklisted ones
+
+    logger.info("Copying Markdown files from '%s' to '%s'", docs_dir, dest_folder)
+    for file in docs_dir.glob("*.md"):
+        if file.name in REPO_DOCS_EXCLUDE:
+            continue
+        shutil.copy(file, dest_folder)
+        logger.info("Copying '%s'", file.name)
+
+
 def setup(app):
     """
     Sphinx extension `onnx_sphinx` displays documentation
@@ -853,8 +900,11 @@ def setup(app):
     import sphinx
 
     app.add_config_value("onnx_doc_folder", "operators", "env")
+    # Folder for storing the Markdown documentation from the repository
+    app.add_config_value("onnx_md_folder", "repo-docs", "env")
     app.add_config_value("max_opsets", {}, "env")
     app.connect("builder-inited", _generate_op_doc)
+    app.connect("builder-inited", _copy_repo_docs)
     return {"version": sphinx.__display_version__, "parallel_read_safe": True}
 
 

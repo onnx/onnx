@@ -34,3 +34,22 @@
 #define ONNX_CATCH(x) catch (x)
 #define ONNX_HANDLE_EXCEPTION(func) func()
 #endif
+
+// Macros to disable the copy and/or assignment methods
+// These are usually placed in the private: declarations for a class.
+
+#define ONNX_DISALLOW_COPY(TypeName) TypeName(const TypeName&) = delete
+
+#define ONNX_DISALLOW_ASSIGNMENT(TypeName) TypeName& operator=(const TypeName&) = delete
+
+#define ONNX_DISALLOW_COPY_AND_ASSIGNMENT(TypeName) \
+  ONNX_DISALLOW_COPY(TypeName);                     \
+  ONNX_DISALLOW_ASSIGNMENT(TypeName)
+
+#define ONNX_DISALLOW_MOVE(TypeName) \
+  TypeName(TypeName&&) = delete;     \
+  TypeName& operator=(TypeName&&) = delete
+
+#define ONNX_DISALLOW_COPY_ASSIGNMENT_AND_MOVE(TypeName) \
+  ONNX_DISALLOW_COPY_AND_ASSIGNMENT(TypeName);           \
+  ONNX_DISALLOW_MOVE(TypeName)

@@ -34,17 +34,19 @@ get_all_schemas_with_history = C.get_all_schemas_with_history
 
 
 def onnx_opset_version() -> int:
-    """
-    Return current opset for domain `ai.onnx`.
-    """
-
+    """Return current opset for domain `ai.onnx`."""
     return C.schema_version_map()[ONNX_DOMAIN][1]
+
+
+def onnx_ml_opset_version() -> int:
+    """Return current opset for domain `ai.onnx.ml`."""
+    return C.schema_version_map()[ONNX_ML_DOMAIN][1]
 
 
 @property  # type: ignore
 def _function_proto(self):  # type: ignore
     func_proto = FunctionProto()
-    func_proto.ParseFromString(self._function_body)  # pylint: disable=protected-access
+    func_proto.ParseFromString(self._function_body)
     return func_proto
 
 
@@ -55,7 +57,7 @@ OpSchema.function_body = _function_proto  # type: ignore
 @property  # type: ignore
 def _attribute_default_value(self):  # type: ignore
     attr = AttributeProto()
-    attr.ParseFromString(self._default_value)  # pylint: disable=protected-access
+    attr.ParseFromString(self._default_value)
     return attr
 
 
@@ -112,10 +114,7 @@ OpSchema.Attribute.__repr__ = _op_schema_attribute_repr  # type: ignore
 
 
 def get_function_ops() -> List[OpSchema]:
-    """
-    Return operators defined as functions.
-    """
-
+    """Return operators defined as functions."""
     schemas = C.get_all_schemas()
     return [schema for schema in schemas if schema.has_function or schema.has_context_dependent_function]  # type: ignore
 

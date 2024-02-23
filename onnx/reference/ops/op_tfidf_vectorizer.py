@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0200,R0902,R0912,R0913,R0914,R0915,R1716,W0611,W0612,W0613,W0221
+
 
 from enum import IntEnum
 from typing import List
@@ -17,8 +17,8 @@ class IntMap(dict):  # type: ignore
         self.added_keys = []
 
     def emplace(self, key, value):
-        if not isinstance(key, int):
-            raise TypeError(f"key must be a NGramPart not {type(key)}.")
+        if not isinstance(key, (int, str)):
+            raise TypeError(f"key must be a int or str not {type(key)}.")
         if not isinstance(value, NgramPart):
             raise TypeError(f"value must be a NGramPart not {type(value)}.")
         if key not in self:
@@ -65,7 +65,7 @@ class NgramPart:
     def __repr__(self):
         if self.empty():
             return f"NgramPart({self.id_})"
-        return f"NgramPart({self.id_}, {repr(self.leafs_)})"
+        return f"NgramPart({self.id_}, {self.leafs_!r})"
 
     def empty(self):
         return self._leafs_ is None
@@ -147,11 +147,12 @@ class TfIdfVectorizer(OpRun):
         self.output_size_ = max(self.ngram_indexes_) + 1
         self.weights_ = self.weights  # type: ignore
         self.pool_int64s_ = self.pool_int64s  # type: ignore
+        self.pool_strings_ = self.pool_strings  # type: ignore
 
         self.int64_map_ = NgramPart(-10)
         self.int64_map_.init()
 
-        total_items = len(self.pool_int64s_)
+        total_items = len(self.pool_int64s_ or self.pool_strings_)
         ngram_id = 1  # start with 1, 0 - means no n-gram
         # Load into dictionary only required gram sizes
         ngram_size = 1
@@ -170,7 +171,7 @@ class TfIdfVectorizer(OpRun):
                     and ngram_size <= self.max_gram_length_
                 ):
                     ngram_id = populate_grams(
-                        self.pool_int64s_,
+                        self.pool_int64s_ or self.pool_strings_,
                         start_idx,
                         ngrams,
                         ngram_size,
@@ -207,10 +208,8 @@ class TfIdfVectorizer(OpRun):
 
         w = self.weights_
         if self.weighting_criteria_ == WeightingCriteria.TF:
-            i = 0
-            for f in frequencies:
+            for i, f in enumerate(frequencies):
                 Y[i] = f
-                i += 1
         elif self.weighting_criteria_ == WeightingCriteria.IDF:
             if len(w) > 0:
                 p = 0
@@ -359,7 +358,7 @@ class TfIdfVectorizer(OpRun):
             # TfidfVectorizer returns a zero tensor of shape
             # {b_dim, output_size} when b_dim is the number of received observations
             # and output_size the is the maximum value in ngram_indexes attribute plus 1.
-            return self.output_result(B, frequencies)  # type: ignore[arg-type]
+            return (self.output_result(B, frequencies),)  # type: ignore[arg-type]
 
         def fn(row_num):
             self.compute_impl(

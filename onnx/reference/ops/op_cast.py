@@ -1,10 +1,11 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=R0912,W0221
+
 
 import numpy as np
 
+from onnx import subbyte
 from onnx.helper import (
     float32_to_bfloat16,
     float32_to_float8e4m3,
@@ -23,11 +24,13 @@ from onnx.reference.custom_element_types import (
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
+    int4,
+    uint4,
 )
 from onnx.reference.op_run import OpRun
 
 
-def cast_to(x, to, saturate):
+def cast_to(x, to, saturate):  # noqa: PLR0911
     if x.dtype == bfloat16 and x.dtype.descr[0][0] == "bfloat16":
         if to == TensorProto.BFLOAT16:
             return x
@@ -73,6 +76,25 @@ def cast_to(x, to, saturate):
             el = float32_to_bfloat16(xf[i], truncate=True)  # type: ignore[assignment]
             y[i] = el
         return y.reshape(x.shape)
+
+    i4 = [
+        (uint4, "uint4", TensorProto.UINT4, False),
+        (int4, "int4", TensorProto.INT4, True),
+    ]
+    for np_type, np_desc, tensor_type, signed in i4:
+        if x.dtype == np_type and x.dtype.descr[0][0] == np_desc:
+            if to == tensor_type:
+                return x
+            to_type = tensor_dtype_to_np_dtype(to)
+            return x.astype(to_type)
+
+        if to == tensor_type:
+            xf = x.astype(np.float32).ravel()
+            y = np.empty(xf.shape, dtype=np_type).ravel()
+            for i in range(y.shape[0]):
+                el = subbyte.float32_to_4bit_unpacked(xf[i], signed=signed)
+                y[i] = el
+            return y.reshape(x.shape)
 
     f8back = {
         TensorProto.FLOAT8E4M3FN: (

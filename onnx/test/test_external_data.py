@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import itertools
 import os
 import pathlib
 import tempfile
@@ -34,9 +35,7 @@ class TestLoadExternalDataBase(unittest.TestCase):
     serialization_format: str = "protobuf"
 
     def setUp(self) -> None:
-        self._temp_dir_obj = (
-            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
-        )
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
         self.temp_dir: str = self._temp_dir_obj.name
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
@@ -53,7 +52,7 @@ class TestLoadExternalDataBase(unittest.TestCase):
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
-        tensor_filename = location if location else f"{tensor_name}.bin"
+        tensor_filename = location or f"{tensor_name}.bin"
         set_external_data(tensor, location=tensor_filename)
 
         with open(os.path.join(self.temp_dir, tensor_filename), "wb") as data_file:
@@ -206,6 +205,52 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         attribute_tensor = new_model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
+    @parameterized.parameterized.expand(itertools.product((True, False), (True, False)))
+    def test_save_external_invalid_single_file_data_and_check(
+        self, use_absolute_path: bool, use_model_path: bool
+    ) -> None:
+        model = onnx.load_model(self.model_filename, self.serialization_format)
+
+        model_dir = os.path.join(self.temp_dir, "save_copy")
+        os.mkdir(model_dir)
+
+        traversal_external_data_dir = os.path.join(
+            self.temp_dir, "invlid_external_data"
+        )
+        os.mkdir(traversal_external_data_dir)
+
+        if use_absolute_path:
+            traversal_external_data_location = os.path.join(
+                traversal_external_data_dir, "tensors.bin"
+            )
+        else:
+            traversal_external_data_location = "../invlid_external_data/tensors.bin"
+
+        external_data_dir = os.path.join(self.temp_dir, "external_data")
+        os.mkdir(external_data_dir)
+        new_model_filepath = os.path.join(model_dir, "model.onnx")
+
+        def convert_model_to_external_data_no_check(model: ModelProto, location: str):
+            for tensor in model.graph.initializer:
+                if tensor.HasField("raw_data"):
+                    set_external_data(tensor, location)
+
+        convert_model_to_external_data_no_check(
+            model,
+            location=traversal_external_data_location,
+        )
+
+        onnx.save_model(model, new_model_filepath, self.serialization_format)
+        if use_model_path:
+            with self.assertRaises(onnx.checker.ValidationError):
+                _ = onnx.load_model(new_model_filepath, self.serialization_format)
+        else:
+            onnx_model = onnx.load_model(
+                new_model_filepath, self.serialization_format, load_external_data=False
+            )
+            with self.assertRaises(onnx.checker.ValidationError):
+                load_external_data_for_model(onnx_model, external_data_dir)
+
 
 @parameterized.parameterized_class(
     [
@@ -217,9 +262,7 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
     serialization_format: str = "protobuf"
 
     def setUp(self) -> None:
-        self._temp_dir_obj = (
-            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
-        )
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
         self.temp_dir: str = self._temp_dir_obj.name
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
@@ -521,9 +564,7 @@ class TestExternalDataToArray(unittest.TestCase):
     serialization_format: str = "protobuf"
 
     def setUp(self) -> None:
-        self._temp_dir_obj = (
-            tempfile.TemporaryDirectory()  # pylint: disable=consider-using-with
-        )
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
         self.temp_dir: str = self._temp_dir_obj.name
         self._model_file_path: str = os.path.join(self.temp_dir, "model.onnx")
         self.large_data = np.random.rand(10, 60, 100).astype(np.float32)
@@ -680,14 +721,15 @@ class TestExternalDataToArray(unittest.TestCase):
 
 class TestNotAllowToLoadExternalDataOutsideModelDirectory(TestLoadExternalDataBase):
     """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
-    directory."""
+    directory.
+    """
 
     def create_external_data_tensor(
         self, value: list[Any], tensor_name: str, location: str = ""
     ) -> TensorProto:
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
-        tensor_filename = location if location else f"{tensor_name}.bin"
+        tensor_filename = location or f"{tensor_name}.bin"
 
         set_external_data(tensor, location=tensor_filename)
 
@@ -719,7 +761,8 @@ class TestNotAllowToLoadExternalDataOutsideModelDirectoryOnWindows(
     TestNotAllowToLoadExternalDataOutsideModelDirectory
 ):
     """Essential test to check that onnx (validate) C++ code will not allow to load external_data outside the model
-    directory."""
+    directory.
+    """
 
     def test_check_model(self) -> None:
         """We only test the model validation as onnxruntime uses this to load the model."""

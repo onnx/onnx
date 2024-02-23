@@ -3,7 +3,10 @@
  */
 
 #include "tensor_proto_util.h"
+
+#include <string>
 #include <vector>
+
 #include "onnx/common/platform_helpers.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/shape_inference.h"
@@ -132,5 +135,7 @@ DEFINE_PARSE_DATA(int32_t, int32_data, TensorProto_DataType_INT32)
 DEFINE_PARSE_DATA(int64_t, int64_data, TensorProto_DataType_INT64)
 DEFINE_PARSE_DATA(float, float_data, TensorProto_DataType_FLOAT)
 DEFINE_PARSE_DATA(double, double_data, TensorProto_DataType_DOUBLE)
+
+#undef DEFINE_PARSE_DATA
 
 } // namespace ONNX_NAMESPACE

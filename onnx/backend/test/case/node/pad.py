@@ -66,7 +66,7 @@ class Pad(Base):
 
     @staticmethod
     def export_reflection_edge_and_wrap_pad() -> None:
-        for mode in ["edge", "reflect", "wrap"]:
+        for mode in ("edge", "reflect", "wrap"):
             node = onnx.helper.make_node(
                 "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
             )

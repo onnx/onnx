@@ -1,20 +1,17 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0123,C3001,R0912,R0913,R0914,R1730,W0221,W0613
+from __future__ import annotations
 
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
 
 
-def _cartesian(
-    arrays: List[np.ndarray], out: Optional[np.ndarray] = None
-) -> np.ndarray:
-    """
-    From https://stackoverflow.com/a/1235363
+def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.ndarray:
+    """From https://stackoverflow.com/a/1235363
     Generate a cartesian product of input arrays.
     Parameters
     ----------
@@ -22,12 +19,14 @@ def _cartesian(
         1-D arrays to form the cartesian product of.
     out : ndarray
         Array to place the cartesian product in.
-    Returns
+
+    Returns:
     -------
     out : ndarray
         2-D array of shape (M, len(arrays)) containing cartesian products
         formed of input arrays.
-    Examples
+
+    Examples:
     --------
     >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
     array([[1, 4, 6],
@@ -43,7 +42,6 @@ def _cartesian(
            [3, 5, 6],
            [3, 5, 7]])
     """
-
     arrays = [np.asarray(x) for x in arrays]
     dtype = arrays[0].dtype
 
@@ -60,8 +58,10 @@ def _cartesian(
     return out
 
 
-def _nearest_coeffs(ratio: float, mode: str = "round_prefer_floor") -> np.ndarray:
-    if type(ratio) == int or ratio.is_integer():
+def _nearest_coeffs(
+    ratio: float | int | np.ndarray, mode: str = "round_prefer_floor"
+) -> np.ndarray:
+    if isinstance(ratio, int) or ratio.is_integer():
         return np.array([0, 1])
     if mode == "round_prefer_floor":
         return np.array([ratio <= 0.5, ratio > 0.5])
@@ -75,9 +75,9 @@ def _nearest_coeffs(ratio: float, mode: str = "round_prefer_floor") -> np.ndarra
 
 
 def _cubic_coeffs(
-    ratio: float, scale: Optional[float] = None, A: float = -0.75
+    ratio: float, scale: float | None = None, A: float = -0.75
 ) -> np.ndarray:
-    # scale is unused
+    del scale  # Unused
     coeffs = [
         ((A * (ratio + 1) - 5 * A) * (ratio + 1) + 8 * A) * (ratio + 1) - 4 * A,
         ((A + 2) * ratio - (A + 3)) * ratio * ratio + 1,
@@ -90,8 +90,8 @@ def _cubic_coeffs(
 
 
 def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.ndarray:
-    if scale > 1.0:  # Antialias is applied when downsampling
-        scale = 1.0
+    # Antialias is applied when downsampling
+    scale = min(scale, 1.0)
 
     def compute_coeff(x: float) -> float:
         x = abs(x)
@@ -110,14 +110,15 @@ def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.
     return np.array(coeffs) / sum(coeffs)
 
 
-def _linear_coeffs(ratio: float, scale: Optional[float] = None) -> np.ndarray:
-    # scale is unused
+def _linear_coeffs(ratio: float, scale: float | None = None) -> np.ndarray:
+    del scale  # unused
     return np.array([1 - ratio, ratio])
 
 
 def _linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
-    if scale > 1.0:  # Antialias is applied when downsampling
-        scale = 1.0
+    # Antialias is applied when downsampling
+    scale = min(scale, 1.0)
+
     start = int(np.floor(-1 / scale) + 1)
     footprint = 2 - 2 * start
     args = (np.arange(start, start + footprint) - ratio) * scale
@@ -126,8 +127,7 @@ def _linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
 
 
 def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
-    """
-    Return the n nearest indexes to x among `[0, limit)`,
+    """Return the n nearest indexes to x among `[0, limit)`,
     prefer the indexes smaller than x.
     As a result, the ratio must be in `(0, 1]`.
 
@@ -141,27 +141,32 @@ def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
         get_neighbor_idxes(4.4, 1, 10) == [4]
         get_neighbor_idxes(4.6, 1, 10) == [5]
 
-    :param x:
-    :param n: the number of the wanted indexes
-    :param limit: the maximum value of index
-    :return: An np.array containing n nearest indexes in ascending order
+    Args:
+        x: float.
+        n: the number of the wanted indexes.
+        limit: the maximum value of index.
+
+    Returns:
+        An np.array containing n nearest indexes in ascending order
     """
     idxes = sorted(range(limit), key=lambda idx: (abs(x - idx), idx))[:n]
     idxes = sorted(idxes)
     return np.array(idxes)
 
 
-def _get_neighbor(x: float, n: int, data: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Pad `data` in 'edge' mode, and get n nearest elements in the padded array
-    and their indexes in the original array.
+def _get_neighbor(x: float, n: int, data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Pad `data` in 'edge' mode, and get n nearest elements in the padded array and their indexes in the original array.
 
-    :param x: center index (in the unpadded coordinate system) of the found nearest elements.
-    :param n: the number of neighbors.
-    :param data: the array
-    :return: A tuple containing the indexes of neighbor elements
-        (the index can be smaller than 0 or higher than len(data))
-        and the value of these elements
+    Args:
+        x: Center index (in the unpadded coordinate system) of the found
+            nearest elements.
+        n: The number of neighbors.
+        data: The array.
+
+    Returns:
+        A tuple containing the indexes of neighbor elements (the index
+        can be smaller than 0 or higher than len(data)) and the value of
+        these elements.
     """
     pad_width = np.ceil(n / 2).astype(int)
     padded = np.pad(data, pad_width, mode="edge")
@@ -178,7 +183,7 @@ def _interpolate_1d_with_x(
     output_width_int: int,
     x: float,
     get_coeffs: Callable[[float, float], np.ndarray],
-    roi: Optional[np.ndarray] = None,
+    roi: np.ndarray | None = None,
     extrapolation_value: float = 0.0,
     coordinate_transformation_mode: str = "half_pixel",
     exclude_outside: bool = False,
@@ -247,11 +252,11 @@ def _interpolate_1d_with_x(
 def _interpolate_nd_with_x(
     data: np.ndarray,
     n: int,
-    scale_factors: List[float],
-    output_size: List[int],
-    x: List[float],
+    scale_factors: list[float],
+    output_size: list[int],
+    x: list[float],
     get_coeffs: Callable[[float, float], np.ndarray],
-    roi: Optional[np.ndarray] = None,
+    roi: np.ndarray | None = None,
     exclude_outside: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -303,11 +308,11 @@ def _get_all_coords(data: np.ndarray) -> np.ndarray:
 def _interpolate_nd(
     data: np.ndarray,
     get_coeffs: Callable[[float, float], np.ndarray],
-    output_size: Optional[List[int]] = None,
-    scale_factors: Optional[List[float]] = None,
-    axes: Optional[List[int]] = None,
-    roi: Optional[np.ndarray] = None,
-    keep_aspect_ratio_policy: Optional[str] = "stretch",
+    output_size: list[int] | None = None,
+    scale_factors: list[float] | None = None,
+    axes: list[int] | None = None,
+    roi: np.ndarray | None = None,
+    keep_aspect_ratio_policy: str | None = "stretch",
     exclude_outside: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -398,10 +403,10 @@ class Resize(OpRun):
         exclude_outside=None,
         extrapolation_value=None,
         keep_aspect_ratio_policy=None,
-        mode=None,
+        mode: str | None = None,
         nearest_mode=None,
     ):
-        if mode == "nearest":  # type: ignore
+        if mode == "nearest":
             if antialias:
                 raise RuntimeError(
                     f"antilias={antialias!r} is not supported for mode={mode!r}."
@@ -409,6 +414,7 @@ class Resize(OpRun):
             if nearest_mode is not None:
 
                 def fct(x, scale_factor):
+                    del scale_factor  # unused
                     return _nearest_coeffs(x, mode=nearest_mode)
 
             else:

@@ -8,7 +8,14 @@
 // Adventurous users should note that the APIs will probably change.
 
 #include "onnx/common/ir_pb_converter.h"
+
+#include <memory>
 #include <sstream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 
@@ -318,6 +325,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     }
     if (np.has_domain()) {
       n->setDomain(np.domain());
+    }
+    if (np.has_overload()) {
+      n->setOverload(np.overload());
     }
   }
 
@@ -630,6 +640,9 @@ void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
     }
     if (node->has_domain()) {
       p_n->set_domain(node->domain());
+    }
+    if (node->has_overload()) {
+      p_n->set_overload(node->overload());
     }
   }
 

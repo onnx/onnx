@@ -29,24 +29,24 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
 |<a href="#BitwiseOr">BitwiseOr</a>|<a href="Changelog.md#BitwiseOr-18">18</a>|
 |<a href="#BitwiseXor">BitwiseXor</a>|<a href="Changelog.md#BitwiseXor-18">18</a>|
-|<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
+|<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
 |<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
-|<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
-|<a href="#ConstantOfShape">ConstantOfShape</a>|<a href="Changelog.md#ConstantOfShape-9">9</a>|
+|<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-21">21</a>, <a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
+|<a href="#ConstantOfShape">ConstantOfShape</a>|<a href="Changelog.md#ConstantOfShape-21">21</a>, <a href="Changelog.md#ConstantOfShape-20">20</a>, <a href="Changelog.md#ConstantOfShape-9">9</a>|
 |<a href="#Conv">Conv</a>|<a href="Changelog.md#Conv-11">11</a>, <a href="Changelog.md#Conv-1">1</a>|
 |<a href="#ConvInteger">ConvInteger</a>|<a href="Changelog.md#ConvInteger-10">10</a>|
 |<a href="#ConvTranspose">ConvTranspose</a>|<a href="Changelog.md#ConvTranspose-11">11</a>, <a href="Changelog.md#ConvTranspose-1">1</a>|
 |<a href="#Cos">Cos</a>|<a href="Changelog.md#Cos-7">7</a>|
 |<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-9">9</a>|
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
-|<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-17">17</a>|
+|<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-19">19</a>|
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
-|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
+|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
 |<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
@@ -56,7 +56,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
 |<a href="#Expand">Expand</a>|<a href="Changelog.md#Expand-13">13</a>, <a href="Changelog.md#Expand-8">8</a>|
 |<a href="#EyeLike">EyeLike</a>|<a href="Changelog.md#EyeLike-9">9</a>|
-|<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
+|<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-21">21</a>, <a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
 |<a href="#Floor">Floor</a>|<a href="Changelog.md#Floor-13">13</a>, <a href="Changelog.md#Floor-6">6</a>, <a href="Changelog.md#Floor-1">1</a>|
 |<a href="#GRU">GRU</a>|<a href="Changelog.md#GRU-14">14</a>, <a href="Changelog.md#GRU-7">7</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-1">1</a>|
 |<a href="#Gather">Gather</a>|<a href="Changelog.md#Gather-13">13</a>, <a href="Changelog.md#Gather-11">11</a>, <a href="Changelog.md#Gather-1">1</a>|
@@ -69,16 +69,17 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
 |<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-20">20</a>, <a href="Changelog.md#GridSample-16">16</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
-|<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-19">19</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
-|<a href="#If">If</a>|<a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
+|<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-21">21</a>, <a href="Changelog.md#Identity-19">19</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
+|<a href="#If">If</a>|<a href="Changelog.md#If-21">21</a>, <a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
+|<a href="#ImageDecoder">ImageDecoder</a>|<a href="Changelog.md#ImageDecoder-20">20</a>|
 |<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
-|<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-10">10</a>|
-|<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
+|<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-20">20</a>, <a href="Changelog.md#IsInf-10">10</a>|
+|<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-20">20</a>, <a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
 |<a href="#LRN">LRN</a>|<a href="Changelog.md#LRN-13">13</a>, <a href="Changelog.md#LRN-1">1</a>|
 |<a href="#LSTM">LSTM</a>|<a href="Changelog.md#LSTM-14">14</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-1">1</a>|
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
 |<a href="#Log">Log</a>|<a href="Changelog.md#Log-13">13</a>, <a href="Changelog.md#Log-6">6</a>, <a href="Changelog.md#Log-1">1</a>|
-|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-19">19</a>, <a href="Changelog.md#Loop-16">16</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
+|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-21">21</a>, <a href="Changelog.md#Loop-19">19</a>, <a href="Changelog.md#Loop-16">16</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
 |<a href="#LpNormalization">LpNormalization</a>|<a href="Changelog.md#LpNormalization-1">1</a>|
 |<a href="#LpPool">LpPool</a>|<a href="Changelog.md#LpPool-18">18</a>, <a href="Changelog.md#LpPool-11">11</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-1">1</a>|
 |<a href="#MatMul">MatMul</a>|<a href="Changelog.md#MatMul-13">13</a>, <a href="Changelog.md#MatMul-9">9</a>, <a href="Changelog.md#MatMul-1">1</a>|
@@ -102,29 +103,30 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
-|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
+|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-21">21</a>, <a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
-|<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-10">10</a>|
-|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
+|<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-21">21</a>, <a href="Changelog.md#QLinearMatMul-10">10</a>|
+|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
 |<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-14">14</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
 |<a href="#RandomNormal">RandomNormal</a>|<a href="Changelog.md#RandomNormal-1">1</a>|
 |<a href="#RandomNormalLike">RandomNormalLike</a>|<a href="Changelog.md#RandomNormalLike-1">1</a>|
 |<a href="#RandomUniform">RandomUniform</a>|<a href="Changelog.md#RandomUniform-1">1</a>|
 |<a href="#RandomUniformLike">RandomUniformLike</a>|<a href="Changelog.md#RandomUniformLike-1">1</a>|
 |<a href="#Reciprocal">Reciprocal</a>|<a href="Changelog.md#Reciprocal-13">13</a>, <a href="Changelog.md#Reciprocal-6">6</a>, <a href="Changelog.md#Reciprocal-1">1</a>|
-|<a href="#ReduceMax">ReduceMax</a>|<a href="Changelog.md#ReduceMax-18">18</a>, <a href="Changelog.md#ReduceMax-13">13</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-1">1</a>|
+|<a href="#ReduceMax">ReduceMax</a>|<a href="Changelog.md#ReduceMax-20">20</a>, <a href="Changelog.md#ReduceMax-18">18</a>, <a href="Changelog.md#ReduceMax-13">13</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-1">1</a>|
 |<a href="#ReduceMean">ReduceMean</a>|<a href="Changelog.md#ReduceMean-18">18</a>, <a href="Changelog.md#ReduceMean-13">13</a>, <a href="Changelog.md#ReduceMean-11">11</a>, <a href="Changelog.md#ReduceMean-1">1</a>|
-|<a href="#ReduceMin">ReduceMin</a>|<a href="Changelog.md#ReduceMin-18">18</a>, <a href="Changelog.md#ReduceMin-13">13</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-1">1</a>|
+|<a href="#ReduceMin">ReduceMin</a>|<a href="Changelog.md#ReduceMin-20">20</a>, <a href="Changelog.md#ReduceMin-18">18</a>, <a href="Changelog.md#ReduceMin-13">13</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-1">1</a>|
 |<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-18">18</a>, <a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
 |<a href="#ReduceSum">ReduceSum</a>|<a href="Changelog.md#ReduceSum-13">13</a>, <a href="Changelog.md#ReduceSum-11">11</a>, <a href="Changelog.md#ReduceSum-1">1</a>|
-|<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-19">19</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
+|<a href="#RegexFullMatch">RegexFullMatch</a>|<a href="Changelog.md#RegexFullMatch-20">20</a>|
+|<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-21">21</a>, <a href="Changelog.md#Reshape-19">19</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
 |<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-19">19</a>, <a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
 |<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
 |<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
-|<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-19">19</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
+|<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-21">21</a>, <a href="Changelog.md#Scan-19">19</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
 |<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
 |<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-18">18</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
@@ -134,19 +136,21 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SequenceErase">SequenceErase</a>|<a href="Changelog.md#SequenceErase-11">11</a>|
 |<a href="#SequenceInsert">SequenceInsert</a>|<a href="Changelog.md#SequenceInsert-11">11</a>|
 |<a href="#SequenceLength">SequenceLength</a>|<a href="Changelog.md#SequenceLength-11">11</a>|
-|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-19">19</a>, <a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
+|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-21">21</a>, <a href="Changelog.md#Shape-19">19</a>, <a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
 |<a href="#Sigmoid">Sigmoid</a>|<a href="Changelog.md#Sigmoid-13">13</a>, <a href="Changelog.md#Sigmoid-6">6</a>, <a href="Changelog.md#Sigmoid-1">1</a>|
 |<a href="#Sign">Sign</a>|<a href="Changelog.md#Sign-13">13</a>, <a href="Changelog.md#Sign-9">9</a>|
 |<a href="#Sin">Sin</a>|<a href="Changelog.md#Sin-7">7</a>|
 |<a href="#Sinh">Sinh</a>|<a href="Changelog.md#Sinh-9">9</a>|
-|<a href="#Size">Size</a>|<a href="Changelog.md#Size-19">19</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
+|<a href="#Size">Size</a>|<a href="Changelog.md#Size-21">21</a>, <a href="Changelog.md#Size-19">19</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
 |<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
 |<a href="#Split">Split</a>|<a href="Changelog.md#Split-18">18</a>, <a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
 |<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
-|<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
+|<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-21">21</a>, <a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
+|<a href="#StringConcat">StringConcat</a>|<a href="Changelog.md#StringConcat-20">20</a>|
 |<a href="#StringNormalizer">StringNormalizer</a>|<a href="Changelog.md#StringNormalizer-10">10</a>|
+|<a href="#StringSplit">StringSplit</a>|<a href="Changelog.md#StringSplit-20">20</a>|
 |<a href="#Sub">Sub</a>|<a href="Changelog.md#Sub-14">14</a>, <a href="Changelog.md#Sub-13">13</a>, <a href="Changelog.md#Sub-7">7</a>, <a href="Changelog.md#Sub-6">6</a>, <a href="Changelog.md#Sub-1">1</a>|
 |<a href="#Sum">Sum</a>|<a href="Changelog.md#Sum-13">13</a>, <a href="Changelog.md#Sum-8">8</a>, <a href="Changelog.md#Sum-6">6</a>, <a href="Changelog.md#Sum-1">1</a>|
 |<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-7">7</a>|
@@ -154,24 +158,26 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#TfIdfVectorizer">TfIdfVectorizer</a>|<a href="Changelog.md#TfIdfVectorizer-9">9</a>|
 |<a href="#Tile">Tile</a>|<a href="Changelog.md#Tile-13">13</a>, <a href="Changelog.md#Tile-6">6</a>, <a href="Changelog.md#Tile-1">1</a>|
 |<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
-|<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
+|<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-21">21</a>, <a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
 |<a href="#Trilu">Trilu</a>|<a href="Changelog.md#Trilu-14">14</a>|
 |<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
-|<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
+|<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-21">21</a>, <a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
 |<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|**Function version**|
+|<a href="#AffineGrid">AffineGrid</a>|<a href="Changelog.md#AffineGrid-20">20</a>|20|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|15|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
-|<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|19|
+|<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|21|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|12|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
+|<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
-|<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-18">18</a>|18|
+|<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-21">21</a>, <a href="Changelog.md#GroupNormalization-18">18</a>|21|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|17|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|17|
 |<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|18|
@@ -275,7 +281,7 @@ expect(node, inputs=[x], outputs=[y], name="test_abs")
 import numpy as np
 
 
-def abs(input: np.ndarray) -> np.ndarray:
+def abs(input: np.ndarray) -> np.ndarray:  # noqa: A001
     return np.abs(input)  # type: ignore[no-any-return]
 
 ```
@@ -480,6 +486,139 @@ node = onnx.helper.make_node(
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
+```
+
+</details>
+
+
+### <a name="AffineGrid"></a><a name="affinegrid">**AffineGrid**</a>
+
+  Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
+  (https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
+  An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
+  ```
+  [r00, r01, r02, t0]   [x]   [x']
+  [r10, r11, r12, t1] * [y] = [y']
+  [r20, r21, r22, t2]   [z]   [z']
+  [0,   0,   0,   1 ]   [1]   [1 ]
+  ```
+  where `(x, y, z)` is the position in the original space, `(x', y', z')` is the position in the output space.
+  The last row is always `[0, 0, 0, 1]` and is not stored in the affine matrix. Therefore we have `theta` of shape `(N, 2, 3)` for 2D or `(N, 3, 4)` for 3D.
+
+  Input `size` is used to define grid of positions evenly spaced in the original 2D or 3D space, with dimensions ranging from `-1` to `1`.
+  The output `grid` contains positions in the output space.
+
+  When `align_corners=1`, consider `-1` and `1` to refer to the centers of the corner pixels (mark `v` in illustration).
+  ```
+  v            v            v            v
+  |-------------------|------------------|
+  -1                  0                  1
+  ```
+  When `align_corners=0`, consider `-1` and `1` to refer to the outer edge of the corner pixels.
+  ```
+      v        v         v         v
+  |------------------|-------------------|
+  -1                 0                   1
+  ```
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>align_corners</tt> : int (default is 0)</dt>
+<dd>if align_corners=1, consider -1 and 1 to refer to the centers of the corner pixels. if align_corners=0, consider -1 and 1 to refer to the outer edge the corner pixels.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>theta</tt> (non-differentiable) : T1</dt>
+<dd>input batch of affine matrices with shape (N, 2, 3) for 2D or (N, 3, 4) for 3D</dd>
+<dt><tt>size</tt> (non-differentiable) : T2</dt>
+<dd>the target output image size (N, C, H, W) for 2D or (N, C, D, H, W) for 3D</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>grid</tt> (differentiable) : T1</dt>
+<dd>output tensor of shape (N, H, W, 2) of 2D sample coordinates or (N, D, H, W, 3) of 3D sample coordinates.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain grid types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain size's type to int64 tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>2d_no_reference_evaluator</summary>
+
+```python
+theta_2d = create_theta_2d()
+N, C, H, W = len(theta_2d), 3, 5, 6
+data_size = (H, W)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_2d, original_grid)
+
+    test_name = "test_affine_grid_2d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_2d, np.array([N, C, H, W], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>3d_no_reference_evaluator</summary>
+
+```python
+theta_3d = create_theta_3d()
+N, C, D, H, W = len(theta_3d), 3, 4, 5, 6
+data_size = (D, H, W)
+for align_corners in (0, 1):
+    node = onnx.helper.make_node(
+        "AffineGrid",
+        inputs=["theta", "size"],
+        outputs=["grid"],
+        align_corners=align_corners,
+    )
+
+    original_grid = construct_original_grid(data_size, align_corners)
+    grid = apply_affine_transform(theta_3d, original_grid)
+
+    test_name = "test_affine_grid_3d"
+    if align_corners == 1:
+        test_name += "_align_corners"
+    expect(
+        node,
+        inputs=[theta_3d, np.array([N, C, D, H, W], dtype=np.int64)],
+        outputs=[grid],
+        name=test_name,
+    )
 ```
 
 </details>
@@ -1474,20 +1613,27 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
+   data into the output tensor Y for further processing. The output spatial shape is calculated differently
+   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -1549,8 +1695,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">1</a>, <a 
 <summary>averagepool_1d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32]
+"""input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -1561,11 +1706,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_1d_default")
 ```
@@ -1577,8 +1725,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_1d_default")
 <summary>averagepool_2d_ceil</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -1613,8 +1760,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_ceil")
 <summary>averagepool_2d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -1625,11 +1771,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_default")
 ```
@@ -1641,8 +1790,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_default")
 <summary>averagepool_2d_dilations</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -1681,8 +1829,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_dilations")
 <summary>averagepool_2d_pads</summary>
 
 ```python
-"""
-input_shape: [1, 3, 28, 28]
+"""input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -1701,17 +1848,17 @@ pad_bottom = 2
 pad_top = 2
 pad_right = 2
 pad_left = 2
-pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides, ceil_mode=False
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+    ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_pads")
 ```
@@ -1723,8 +1870,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_pads")
 <summary>averagepool_2d_pads_count_include_pad</summary>
 
 ```python
-"""
-input_shape: [1, 3, 28, 28]
+"""input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -1738,19 +1884,20 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 28, 28).astype(np.float32)
 x_shape = np.shape(x)
+dilations = (1, 1)
 kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = 2
 pad_top = 2
 pad_right = 2
 pad_left = 2
-pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode=False
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+    ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
     mode="constant",
     constant_values=0,
 )
@@ -1760,8 +1907,8 @@ y = pool(
     kernel_shape,
     strides,
     out_shape,
-    pad_shape,
     "AVG",
+    pads,
     count_include_pad=1,
 )
 
@@ -1780,8 +1927,7 @@ expect(
 <summary>averagepool_2d_precomputed_pads</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -1831,8 +1977,7 @@ expect(
 <summary>averagepool_2d_precomputed_pads_count_include_pad</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -1886,8 +2031,7 @@ expect(
 <summary>averagepool_2d_precomputed_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 3, 3]
 pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
 """
@@ -1931,8 +2075,7 @@ expect(
 <summary>averagepool_2d_precomputed_strides</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -1972,8 +2115,7 @@ expect(
 <summary>averagepool_2d_same_lower</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -1988,7 +2130,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_LOWER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_LOWER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_LOWER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -2002,7 +2146,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "AVG")
+pads = (pad_top, pad_left, pad_bottom, pad_right)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_lower")
 ```
@@ -2014,8 +2159,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_lower")
 <summary>averagepool_2d_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -2030,7 +2174,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_UPPER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_UPPER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_UPPER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -2044,7 +2190,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "AVG")
+pads = (pad_top, pad_left, pad_bottom, pad_right)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_upper")
 ```
@@ -2056,8 +2203,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_upper")
 <summary>averagepool_2d_strides</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -2071,9 +2217,11 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, pads = get_output_shape_explicit_padding(
+    None, x_shape[2:], kernel_shape, strides, ceil_mode=False
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_strides")
 ```
@@ -2085,8 +2233,7 @@ expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_strides")
 <summary>averagepool_3d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32, 32]
+"""input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -2097,13 +2244,140 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "AVG")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG")
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_3d_default")
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_3d_dilations</summary>
+
+```python
+"""input_shape: [1, 1, 4, 4]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2],
+    strides=[1, 1, 1],
+    dilations=[2, 2, 2],
+    ceil_mode=True,
+)
+
+# input shape: [1, 1, 4, 4, 4]
+x = np.array(
+    [
+        [
+            [
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+y = np.array([[[[[6, 7], [10, 11]], [[6, 7], [10, 11]]]]]).astype(np.float32)
+
+expect(
+    node, inputs=[x], outputs=[y], name="test_averagepool_3d_dilations_small"
+)
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_3d_dilations_large</summary>
+
+```python
+x_shape = (32, 32, 32)
+dilations = (2, 2, 2)
+kernel_shape = (5, 5, 5)
+strides = (3, 3, 3)
+count_include_pad = 0
+
+for count_include_pad in (0, 1):
+    for ceil_mode in (True, False):
+        node = onnx.helper.make_node(
+            "AveragePool",
+            inputs=["x"],
+            outputs=["y"],
+            kernel_shape=kernel_shape,
+            strides=strides,
+            dilations=dilations,
+            count_include_pad=count_include_pad,
+            ceil_mode=ceil_mode,
+        )
+
+        x = np.random.randn(1, 1, *x_shape).astype(np.float32)
+        out_shape, pads = get_output_shape_explicit_padding(
+            None,
+            x_shape,
+            kernel_shape,
+            strides,
+            dilations=dilations,
+            ceil_mode=ceil_mode,
+        )
+        padded = np.pad(
+            x,
+            (
+                (0, 0),
+                (0, 0),
+                (pads[0], pads[3]),
+                (pads[1], pads[4]),
+                (pads[2], pads[5]),
+            ),
+            mode="constant",
+            constant_values=0 if count_include_pad == 1 else np.nan,
+        )
+        y = pool(
+            padded,
+            (1, 1, *x_shape),
+            kernel_shape,
+            strides,
+            out_shape,
+            "AVG",
+            pads=pads,
+            dilations=dilations,
+            count_include_pad=count_include_pad,
+        )
+
+        test_name = f"test_averagepool_3d_dilations_large_count_include_pad_is_{count_include_pad}_ceil_mode_is_{ceil_mode}"
+        expect(node, inputs=[x], outputs=[y], name=test_name)
 ```
 
 </details>
@@ -2165,7 +2439,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 <dt><tt>training_mode</tt> : int (default is 0)</dt>
-<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1 and 2 are to be computed.</dd>
 </dl>
 
 #### Inputs
@@ -3007,8 +3281,8 @@ a0 = 0.42
 a1 = -0.5
 a2 = 0.08
 y = a0
-y += a1 * np.cos(2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
-y += a2 * np.cos(4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
+y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
 
 # Test symmetric window
@@ -3021,10 +3295,10 @@ a1 = -0.5
 a2 = 0.08
 y = a0
 y += a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 y += a2 * np.cos(
-    4 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 ```
@@ -3101,9 +3375,9 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-19">19</a>
 
 #### Attributes
 
@@ -3131,9 +3405,9 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain input types. Casting from complex is not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
@@ -3172,10 +3446,27 @@ test_cases = [
     ("FLOAT8E5M2", "FLOAT16"),
     ("FLOAT8E5M2FNUZ", "FLOAT"),
     ("FLOAT8E5M2FNUZ", "FLOAT16"),
+    ("FLOAT", "UINT4"),
+    ("FLOAT16", "UINT4"),
+    ("FLOAT", "INT4"),
+    ("FLOAT16", "INT4"),
+    ("UINT4", "FLOAT"),
+    ("UINT4", "FLOAT16"),
+    ("UINT4", "UINT8"),
+    ("INT4", "FLOAT"),
+    ("INT4", "FLOAT16"),
+    ("INT4", "INT8"),
 ]
 
 vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
 vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+vect_float32_to_uint4 = np.vectorize(
+    lambda x: subbyte.float32_to_4bit_unpacked(x, signed=False)
+)
+vect_float32_to_int4 = np.vectorize(
+    lambda x: subbyte.float32_to_4bit_unpacked(x, signed=True)
+)
+
 f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
 
 for from_type, to_type in test_cases:
@@ -3246,6 +3537,9 @@ for from_type, to_type in test_cases:
                 "INF",
                 "+INF",
                 "-INF",
+                "-0.0000001",
+                "0.0000001",
+                "-1000000",
             ],
             dtype=np.float32,
         )
@@ -3253,33 +3547,33 @@ for from_type, to_type in test_cases:
         if from_type == "FLOAT":
             input_values = np_fp32
             input = make_tensor(
-                "x", TensorProto.FLOAT, [3, 4], np_fp32.tolist()
+                "x", TensorProto.FLOAT, [3, 5], np_fp32.tolist()
             )
         elif from_type == "FLOAT16":
             input_values = np_fp32.astype(np.float16).astype(np.float32)
             input = make_tensor(
-                "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT16, [3, 5], input_values.tolist()
             )
         elif from_type == "FLOAT8E4M3FN":
             input_values = float8e4m3_to_float32(
                 vect_float32_to_float8e4m3(np_fp32)
             )
             input = make_tensor(
-                "x", TensorProto.FLOAT8E4M3FN, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E4M3FN, [3, 5], input_values.tolist()
             )
         elif from_type == "FLOAT8E4M3FNUZ":
             input_values = float8e4m3_to_float32(
                 vect_float32_to_float8e4m3(np_fp32, uz=True), uz=True
             )
             input = make_tensor(
-                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E4M3FNUZ, [3, 5], input_values.tolist()
             )
         elif from_type == "FLOAT8E5M2":
             input_values = float8e5m2_to_float32(
                 vect_float32_to_float8e5m2(np_fp32)
             )
             input = make_tensor(
-                "x", TensorProto.FLOAT8E5M2, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E5M2, [3, 5], input_values.tolist()
             )
         elif from_type == "FLOAT8E5M2FNUZ":
             input_values = float8e5m2_to_float32(
@@ -3288,7 +3582,7 @@ for from_type, to_type in test_cases:
                 uz=True,
             )
             input = make_tensor(
-                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 4], input_values.tolist()
+                "x", TensorProto.FLOAT8E5M2FNUZ, [3, 5], input_values.tolist()
             )
         else:
             raise ValueError(
@@ -3322,9 +3616,62 @@ for from_type, to_type in test_cases:
                 "Conversion from {from_type} to {to_type} is not tested."
             )
         expected_tensor = make_tensor(
-            "x", getattr(TensorProto, to_type), [3, 4], expected.tolist()
+            "x", getattr(TensorProto, to_type), [3, 5], expected.tolist()
         )
         output = expected_tensor
+    elif from_type in ("UINT4", "INT4") or to_type in ("UINT4", "INT4"):
+        np_fp32 = np.arange(-9, 16).astype(np.float32)
+        input_shape = (5, 5)
+        if from_type == "FLOAT":
+            input_values = np_fp32
+            input = make_tensor(
+                "x", TensorProto.FLOAT, input_shape, input_values.tolist()
+            )
+        elif from_type == "FLOAT16":
+            input_values = np_fp32.astype(np.float16)
+            input = make_tensor(
+                "x", TensorProto.FLOAT16, input_shape, input_values.tolist()
+            )
+        elif from_type == "UINT4":
+            input_values = vect_float32_to_uint4(np_fp32)
+            input = make_tensor(
+                "x", TensorProto.UINT4, input_shape, input_values.tolist()
+            )
+        elif from_type == "INT4":
+            input_values = vect_float32_to_int4(np_fp32)
+            input = make_tensor(
+                "x", TensorProto.INT4, input_shape, input_values.tolist()
+            )
+        else:
+            raise ValueError(
+                "Conversion from {from_type} to {to_type} is not tested."
+            )
+        if to_type == "UINT4":
+            expected = vect_float32_to_uint4(input_values).astype(custom.uint4)
+        elif to_type == "INT4":
+            expected = vect_float32_to_int4(input_values).astype(custom.int4)
+        elif to_type == "FLOAT16":
+            expected = input_values.astype(np.float16)
+        elif to_type == "FLOAT":
+            expected = input_values
+        elif to_type == "UINT8":
+            expected = input_values.astype(np.uint8)
+        elif to_type == "INT8":
+            expected = input_values.astype(np.int8)
+        else:
+            raise ValueError(
+                "Conversion from {from_type} to {to_type} is not tested."
+            )
+        expected_tensor = make_tensor(
+            "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
+        )
+        output = expected_tensor
+        input_type_proto = onnx.helper.make_tensor_type_proto(
+            getattr(TensorProto, from_type), input_shape
+        )
+        output_type_proto = onnx.helper.make_tensor_type_proto(
+            getattr(TensorProto, to_type), input_shape
+        )
 
     elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
@@ -3423,17 +3770,20 @@ for from_type, to_type in test_cases:
             "INF",
             "+INF",
             "-INF",
+            "-0.0000001",
+            "0.0000001",
+            "-1000000",
         ],
         dtype=np.float32,
     )
 
     if from_type == "FLOAT":
         input_values = np_fp32
-        input = make_tensor("x", TensorProto.FLOAT, [3, 4], np_fp32.tolist())
+        input = make_tensor("x", TensorProto.FLOAT, [3, 5], np_fp32.tolist())
     elif from_type == "FLOAT16":
         input_values = np_fp32.astype(np.float16).astype(np.float32)
         input = make_tensor(
-            "x", TensorProto.FLOAT16, [3, 4], input_values.tolist()
+            "x", TensorProto.FLOAT16, [3, 5], input_values.tolist()
         )
     else:
         raise ValueError(
@@ -3461,7 +3811,7 @@ for from_type, to_type in test_cases:
     tensor = TensorProto()
     tensor.data_type = getattr(TensorProto, to_type)
     tensor.name = "x"
-    tensor.dims.extend([3, 4])
+    tensor.dims.extend([3, 5])
     field = tensor_dtype_to_field(tensor.data_type)
     getattr(tensor, field).extend(ivals)
 
@@ -3493,9 +3843,9 @@ for from_type, to_type in test_cases:
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#CastLike-15">15</a>
+Other versions of this operator: <a href="Changelog.md#CastLike-15">15</a>, <a href="Changelog.md#CastLike-19">19</a>
 
 #### Attributes
 
@@ -3523,9 +3873,9 @@ Other versions of this operator: <a href="Changelog.md#CastLike-15">15</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain input types. Casting from complex is not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
@@ -5008,9 +5358,9 @@ This version of the operator has been available since version 11 of the default 
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Constant-1">1</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Constant-1">1</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-19">19</a>
 
 #### Attributes
 
@@ -5046,7 +5396,7 @@ Other versions of this operator: <a href="Changelog.md#Constant-1">1</a>, <a hre
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -5082,7 +5432,9 @@ expect(node, inputs=[], outputs=[values], name="test_constant")
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ConstantOfShape-9">9</a>, <a href="Changelog.md#ConstantOfShape-20">20</a>
 
 #### Attributes
 
@@ -5110,7 +5462,7 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain input types.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain output types to be numerics.</dd>
 </dl>
 
@@ -5670,7 +6022,7 @@ Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">1</a>
 <dt><tt>output_padding</tt> : list of ints</dt>
 <dd>Additional elements added to the side with higher coordinate indices in the output. Each padding value in "output_padding" must be less than the corresponding stride/dilation dimension. By default, this attribute is a zero vector. Note that this attribute doesn't directly affect the computed output values. It only controls the selection of the computed values, so changing this attribute only adds or removes output elements. If "output_shape" is explicitly provided, "output_padding" does not contribute additional size to "output_shape" but participates in the computation of the needed padding amount. This is also called adjs or adjustment in some frameworks.</dd>
 <dt><tt>output_shape</tt> : list of ints</dt>
-<dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads</dd>
+<dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified pads values are ignored. See doc for details for equations to generate pads. Note that the output_shape attribute value should not include dimensions for batch size and channels, which are automatically inferred.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each spatial axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
@@ -6427,46 +6779,64 @@ expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_negative_axis")
 
 ### <a name="DFT"></a><a name="dft">**DFT**</a>
 
-  Computes the discrete Fourier transform of input.
+  Computes the discrete Fourier Transform (DFT) of the input.
+
+  Assuming the input has shape `[M, N]`, where `N` is the dimension over which the
+  DFT is computed and `M` denotes the conceptual "all other dimensions,"
+  the DFT `y[m, k]` of shape `[M, N]` is defined as
+
+  $$y[m, k] = \sum_{n=0}^{N-1} e^{-2 \pi j \frac{k n}{N} } x[m, n] ,$$
+
+  and the inverse transform is defined as
+
+  $$x[m, n] = \frac{1}{N} \sum_{k=0}^{N-1} e^{2 \pi j \frac{k n}{N} } y[m, k] ,$$
+
+  where $j$ is the imaginary unit.
+
+  The actual shape of the output is specified in the "output" section.
+
+  Reference: https://docs.scipy.org/doc/scipy/tutorial/fft.html
 
 #### Version
 
-This version of the operator has been available since version 17 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#DFT-17">17</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>The axis on which to perform the DFT. By default this value is set to 1, which corresponds to the first dimension after the batch index.</dd>
 <dt><tt>inverse</tt> : int (default is 0)</dt>
-<dd>Whether to perform the inverse discrete fourier transform. By default this value is set to 0, which corresponds to false.</dd>
+<dd>Whether to perform the inverse discrete Fourier Transform. Default is 0, which corresponds to `false`.</dd>
 <dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. Note if the input or window tensors are complex, then onesided output is not possible. Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). When invoked with real or complex valued input, the default value is 0. Values can be 0 or 1.</dd>
+<dd>If `onesided` is `1` and input is real, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, where `m` denotes "all other dimensions" DFT was not applied on. If the input tensor is complex, onesided output is not possible. Value can be `0` or `1`. Default is `0`.</dd>
 </dl>
 
-#### Inputs (1 - 2)
+#### Inputs (1 - 3)
 
 <dl>
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
-<dd>For real input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][1]. For complex input, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. The first dimension is the batch dimension. The following N dimentions correspond to the signal's dimensions. The final dimension represents the real and imaginary parts of the value in that order.</dd>
+<dd>For real input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]`. For complex input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. The final dimension represents the real and imaginary parts of the value in that order.</dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>The length of the signal.If greater than the axis dimension, the signal will be zero-padded up to dft_length. If less than the axis dimension, only the first dft_length values will be used as the signal. It's an optional value. </dd>
+<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
+<dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-2]$ where `r = rank(input)`. The last dimension is for representing complex numbers and thus is an invalid axis.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector.If onesided is 0, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[signal_dimN][2]. If axis=1 and onesided is 1, the following shape is expected: [batch_idx][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]. If axis=2 and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][floor(signal_dim2/2)+1]...[signal_dimN][2]. If axis=N and onesided is 1, the following shape is expected: [batch_idx][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]. The signal_dim at the specified axis is equal to the dft_length.</dd>
+<dd>The Fourier Transform of the input vector. If `onesided` is `0`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=0` and `onesided` is `1`, the following shape is expected: `[floor(signal_dim0/2)+1][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=1` and `onesided` is `1`, the following shape is expected: `[signal_dim0][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]`. If `axis=N` and `onesided` is `1`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]`. The `signal_dim` at the specified `axis` is equal to the `dft_length`.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain scalar length types to int64_t.</dd>
+<dd>Constrain scalar length types to integers.</dd>
 </dl>
 
 
@@ -6476,13 +6846,56 @@ This version of the operator has been available since version 17 of the default 
 <summary>dft</summary>
 
 ```python
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.fft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft")
+
+node = onnx.helper.make_node("DFT", inputs=["x", "", "axis"], outputs=["y"])
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(2, dtype=np.int64)
+y = np.fft.fft(x, axis=1)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_axis")
+
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], inverse=1
+)
+x = np.arange(0, 100, dtype=np.complex64).reshape(10, 10)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.ifft(x, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_inverse")
+```
+
+</details>
+
+
+<details>
+<summary>opset19</summary>
+
+```python
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=1)
 x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
 y = np.fft.fft(x, axis=0)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node("DFT", inputs=["x"], outputs=["y"], axis=2)
 x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
@@ -6490,7 +6903,13 @@ y = np.fft.fft(x, axis=1)
 
 x = x.reshape(1, 10, 10, 1)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_axis")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_axis_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 
 node = onnx.helper.make_node(
     "DFT", inputs=["x"], outputs=["y"], inverse=1, axis=1
@@ -6503,7 +6922,13 @@ y = np.fft.ifft(x, axis=0)
 
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
-expect(node, inputs=[x], outputs=[y], name="test_dft_inverse")
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_inverse_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
 ```
 
 </details>
@@ -6909,25 +7334,30 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 ### <a name="DequantizeLinear"></a><a name="dequantizelinear">**DequantizeLinear**</a>
 
-  The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
-  The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
-  for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-  `x_zero_point` and `x` must have same type. `x` and `y` must have same shape. In the case of dequantizing int32,
-  there's no zero point (zero point is supposed to be 0).
-  `zero-point` is usually not used in the case of float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz quantization,
-  but the dequantization formula remains the same for consistency and 'x_scale' still determines the output type.
+  The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
+  full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
+  must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
+  a 1-D tensor for per-axis quantization, or have a rank identical to the input for blocked quantization.
+  See QuantizeLinear for details on quantization granularity.
+
+  `x_zero_point` and `x` must have the same type. `x` and `y` must have the same shape. In the case of dequantizing
+  `int32`, there's no zero point (zero point is supposed to be 0).
+  `zero-point` is usually not used in the case of float8 types quantization, but the dequantization formula remains the same
+  for consistency, and `x_scale` still determines the output type.
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>
+Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dt><tt>block_size</tt> : int (default is 0)</dt>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -6936,25 +7366,25 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D quantized input tensor to be de-quantized.</dd>
 <dt><tt>x_scale</tt> : T2</dt>
-<dd>Scale for input 'x'. It can be a scalar, which means a per-tensor/layer dequantization, or a 1-D tensor for per-axis dequantization.</dd>
+<dd>Scale for input `x`. For per-tensor/layer dequantization the scale is a scalar, for per per-axis dequantization it is a 1-D Tensor and for blocked dequantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
 <dt><tt>x_zero_point</tt> (optional) : T1</dt>
-<dd>Zero point for input 'x'. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
+<dd>Zero point for input `x`. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>y</tt> : T2</dt>
-<dd>N-D full precision output tensor. It has same shape as input 'x'.</dd>
+<dd>N-D full precision output tensor. It has same shape as input `x`.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'x_zero_point' and 'x' to 8-bit integer or float, or /32-bit integer tensor.</dd>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dd>The type of the inputs 'x_zero_point' and 'x'.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'y_scale' determines the output type.</dd>
+<dd>'x_scale' determines the output type.</dd>
 </dl>
 
 
@@ -6999,6 +7429,83 @@ expect(
 
 
 <details>
+<summary>blocked</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=1,
+    block_size=2,
+)
+
+x = np.array(
+    [
+        [
+            [[3, 89], [34, 200], [74, 59]],
+            [[5, 24], [24, 87], [32, 13]],
+            [[5, 12], [12, 33], [65, 42]],
+            [[245, 99], [4, 142], [121, 102]],
+        ],
+    ],
+    dtype=np.uint8,
+)
+
+x_scale = np.array(
+    [
+        [
+            [[3.0, 2.0], [4.0, 1.0], [2.0, 2.0]],
+            [[5.0, 2.0], [4.0, 3.0], [5.0, 2.0]],
+        ],
+    ],
+    dtype=np.float32,
+)
+x_zero_point = np.array(
+    [
+        [
+            [[1, 0], [0, 1], [2, 20]],
+            [[3, 2], [4, 3], [15, 2]],
+        ],
+    ],
+    dtype=np.uint8,
+)
+
+# x.shape = (1, 4, 3, 2)
+# x_scale.shape = (1, 2, 3, 2)
+assert x_scale.shape == x_zero_point.shape
+block_axis = 1
+# The block shape is [x.shape[i] // x_scale.shape[i] for i in range(len(x.shape))] = (1, 2, 1, 1)
+assert all(
+    x.shape[i] == x_scale.shape[i]
+    for i in range(len(x.shape))
+    if i != block_axis
+)
+assert x.shape[block_axis] % x_scale.shape[block_axis] == 0
+repeats = x.shape[block_axis] // x_scale.shape[block_axis]
+
+# Create element-wise scale and zero point
+x_scale_elementwise = np.repeat(x_scale, repeats=repeats, axis=block_axis)
+x_zero_point_elementwise = np.repeat(
+    x_zero_point, repeats=repeats, axis=block_axis
+)
+
+y = (
+    x.astype(np.float32) - x_zero_point_elementwise.astype(np.float32)
+) * x_scale_elementwise
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_blocked",
+)
+```
+
+</details>
+
+
+<details>
 <summary>dequantizelinear</summary>
 
 ```python
@@ -7033,18 +7540,74 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 104])
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
 x_scale = np.float32(2)
-y = np.array([0.0, 1.0, 2.0, 896.0, 208.0], dtype=np.float32)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
 
 expect(
     node,
     inputs=[x, x_scale],
     outputs=[y],
     name="test_dequantizelinear_e4m3fn",
+)
+```
+
+</details>
+
+
+<details>
+<summary>e4m3fn_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
+x_scale = np.float16(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float16)
+
+expect(
+    node,
+    inputs=[x, x_scale],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_float16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>e4m3fn_zero_point</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, -104])
+zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+x_scale = np.float32(2)
+y = np.array([0.0, 1.0, 2.0, 896.0, -208.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_e4m3fn_zero_point",
 )
 ```
 
@@ -7059,18 +7622,127 @@ node = onnx.helper.make_node(
     "DequantizeLinear",
     inputs=["x", "x_scale"],
     outputs=["y"],
+    axis=0,
 )
 
 # scalar zero point and scale
-x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
+x = make_tensor("x", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, -96])
 x_scale = np.float32(2)
-y = np.array([0.0, 1.0, 2.0, 98304.0, 192.0], dtype=np.float32)
+y = np.array([0.0, 1.0, 2.0, 98304.0, -192.0], dtype=np.float32)
 
 expect(
     node,
     inputs=[x, x_scale],
     outputs=[y],
     name="test_dequantizelinear_e5m2",
+)
+```
+
+</details>
+
+
+<details>
+<summary>int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([-300, -30, -1025, 1270]).astype(np.int16)
+x_scale = np.float32(2)
+x_zero_point = np.int16(-1024)
+y = np.array([1448.0, 1988.0, -2.0, 4588.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_int16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>int4</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
+x_scale = np.float32(2)
+x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_int4",
+)
+```
+
+</details>
+
+
+<details>
+<summary>uint16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array([30000, 31000, 32768, 33000]).astype(np.uint16)
+x_scale = np.float32(2)
+x_zero_point = np.uint16(32767)
+y = np.array([-5534.0, -3534.0, 2.0, 466.0], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_uint16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>uint4</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
+x_scale = np.float32(2)
+x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_uint4",
 )
 ```
 
@@ -7552,14 +8224,14 @@ expect(
 
 ### <a name="DynamicQuantizeLinear"></a><a name="dynamicquantizelinear">**DynamicQuantizeLinear**</a>
 
-  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit convertion of FP32 Input data.
+  A Function to fuse calculation for Scale, Zero Point and FP32->8Bit conversion of FP32 Input data.
   Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
   Scale is calculated as:
   ```
-  y_scale = (max(x) - min(x))/(qmax - qmin)
+  y_scale = (maximum(0, max(x)) - minimum(0, min(x))) / (qmax - qmin)
   ```
 
-  * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
+  * where qmax and qmin are max and min values for quantization range i.e. [0, 255] in case of uint8
   * data range is adjusted to include 0.
 
   Zero point is calculated as:
@@ -7683,7 +8355,7 @@ expect(
   An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
   ```
-  output[output-term] = reduce-sum( input1[term1] * input2[term] )
+  output[output-term] = reduce-sum( input1[term1] * input2[term2] )
   ```
 
   where the reduce-sum performs a summation over all the indices occurring in the input terms (term1, term2)
@@ -8369,9 +9041,9 @@ expect(node, inputs=[x], outputs=[y], name="test_eyelike_without_dtype")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Flatten-1">1</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Flatten-1">1</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-13">13</a>
 
 #### Attributes
 
@@ -8397,8 +9069,8 @@ Other versions of this operator: <a href="Changelog.md#Flatten-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output to all tensor types.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dd>Constrain input and output to all tensor types up to IRv10.</dd>
 </dl>
 
 
@@ -9240,57 +9912,50 @@ expect(
 
   This operator is the inverse of `ScatterND`.
 
-  `Example 1`
+  **Example 1**
 
-    batch_dims = 0
+  ```
+  batch_dims = 0
+  data    = [[0,1],[2,3]]   # data_shape    = [2, 2]
+  indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+  output  = [0,3]           # output_shape  = [2]
+  ```
 
-    data    = [[0,1],[2,3]]   # data_shape = [2, 2]
+  **Example 2**
 
-    indices = [[0,0],[1,1]]   # indices_shape = [2, 2]
+  ```
+  batch_dims = 0
+  data    = [[0,1],[2,3]]  # data_shape    = [2, 2]
+  indices = [[1],[0]]      # indices_shape = [2, 1]
+  output  = [[2,3],[0,1]]  # output_shape  = [2, 2]
+  ```
 
-    output  = [0,3]           # output_shape = [2]
+  **Example 3**
 
-  `Example 2`
+  ```
+  batch_dims = 0
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
+  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+  ```
 
-    batch_dims = 0
+  **Example 4**
 
-    data    = [[0,1],[2,3]]  # data_shape = [2, 2]
+  ```
+  batch_dims = 0
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
+  output  = [[[2,3]],[[4,5]]]             # output_shape  = [2, 1, 2]
+  ```
 
-    indices = [[1],[0]]      # indices_shape = [2, 1]
+  **Example 5**
 
-    output  = [[2,3],[0,1]]  # output_shape = [2, 2]
-
-  `Example 3`
-
-    batch_dims = 0
-
-    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-
-    indices = [[0,1],[1,0]]                 # indices_shape = [2, 2]
-
-    output  = [[2,3],[4,5]]                 # output_shape = [2, 2]
-
-  `Example 4`
-
-    batch_dims = 0
-
-    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-
-    indices = [[[0,1]],[[1,0]]]             # indices_shape = [2, 1, 2]
-
-    output  = [[[2,3]],[[4,5]]]             # output_shape = [2, 1, 2]
-
-  `Example 5`
-
-    batch_dims = 1
-
-    data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape = [2, 2, 2]
-
-    indices = [[1],[0]]             # indices_shape = [2, 1]
-
-    output  = [[2,3],[4,5]]             # output_shape = [2, 2]
-
-
+  ```
+  batch_dims = 1
+  data    = [[[0,1],[2,3]],[[4,5],[6,7]]] # data_shape    = [2, 2, 2]
+  indices = [[1],[0]]                     # indices_shape = [2, 1]
+  output  = [[2,3],[4,5]]                 # output_shape  = [2, 2]
+  ```
 
 #### Version
 
@@ -9405,6 +10070,101 @@ expect(
     outputs=[output],
     name="test_gathernd_example_int32_batch_dim1",
 )
+```
+
+</details>
+
+
+### <a name="Gelu"></a><a name="gelu">**Gelu**</a>
+
+  Gelu takes one input data (Tensor<T>) and produces one
+  output data (Tensor<T>) where the gaussian error linear units function,
+  $y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise.
+  If the attribute "approximate" is set to "tanh", the function estimation,
+  $y = 0.5 * x * (1 + Tanh(sqrt(2/\pi) * (x + 0.044715 * x^3)))$ is used and applied
+  to the tensor elementwise.
+
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>approximate</tt> : string (default is none)</dt>
+<dd>Gelu approximation algorithm: `"tanh"`, `"none"`(default).`"none"`: do not use approximation.`"tanh"`: use tanh approximation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>gelu_default</summary>
+
+```python
+node = onnx.helper.make_node("Gelu", inputs=["x"], outputs=["y"])
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+# expected output [-0.15865526, 0., 0.84134474]
+y = (0.5 * x * (1 + np.vectorize(math.erf)(x / np.sqrt(2)))).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_default_1")
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+# expected output [2.99595031, 3.99987331, 4.99999857]
+y = (0.5 * x * (1 + np.vectorize(math.erf)(x / np.sqrt(2)))).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_default_2")
+```
+
+</details>
+
+
+<details>
+<summary>gelu_tanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Gelu", inputs=["x"], outputs=["y"], approximate="tanh"
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+# expected output [-0.158808, 0., 0.841192]
+y = (
+    0.5
+    * x
+    * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * np.power(x, 3))))
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_tanh_1")
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+# expected output [2.9963627, 3.99993, 4.9999995]
+y = (
+    0.5
+    * x
+    * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * np.power(x, 3))))
+).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_gelu_tanh_2")
 ```
 
 </details>
@@ -10723,13 +11483,23 @@ expect(
   groups `num_groups` should be divisible by the number of channels so that there are
   an equal number of channels per group.
 
+  The overall computation has two stages: the first stage normalizes the elements to
+  have zero mean and unit variance for each instance in each group, and the second
+  stage scales and shifts the results of the first stage. The floating-point precision
+  used in the first stage is determined by the `stash_type` attribute. For example,
+  if `stash_type` is 1, the operator casts all input variables to 32-bit float,
+  performs the computation, and finally casts the normalized results back to the
+  original type of `X`. The second stage does not depend on `stash_type`.
+
   When the number of groups is the same as the number of channels, this operator is
   equivalent to InstanceNormalization. When there is only one group, this operator
   is equivalent to LayerNormalization.
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GroupNormalization-18">18</a>
 
 #### Attributes
 
@@ -10738,6 +11508,8 @@ This version of the operator has been available since version 18 of the default 
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>num_groups</tt> : int (required)</dt>
 <dd>The number of groups of channels. It should be a divisor of the number of channels `C`.</dd>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in stage one of the computation.</dd>
 </dl>
 
 #### Inputs
@@ -10746,9 +11518,9 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, `C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are in the form of `(N x C x D1 x D2 ... Dn)`.</dd>
 <dt><tt>scale</tt> (differentiable) : T</dt>
-<dd>Scale tensor of shape `(num_groups)`.</dd>
+<dd>Scale tensor of shape `(C)`.</dd>
 <dt><tt>bias</tt> (differentiable) : T</dt>
-<dd>Bias tensor of shape `(num_groups)`.</dd>
+<dd>Bias tensor of shape `(C)`.</dd>
 </dl>
 
 #### Outputs
@@ -10761,7 +11533,7 @@ This version of the operator has been available since version 18 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -10769,33 +11541,14 @@ This version of the operator has been available since version 18 of the default 
 #### Examples
 
 <details>
-<summary>groupnormalization</summary>
+<summary>epsilon</summary>
 
 ```python
-x = np.random.randn(3, 4, 2, 2).astype(np.float32)
+c = 4
 num_groups = 2
-scale = np.random.randn(num_groups).astype(np.float32)
-bias = np.random.randn(num_groups).astype(np.float32)
-y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
-
-node = onnx.helper.make_node(
-    "GroupNormalization",
-    inputs=["x", "scale", "bias"],
-    outputs=["y"],
-    num_groups=num_groups,
-)
-
-expect(
-    node,
-    inputs=[x, scale, bias],
-    outputs=[y],
-    name="test_group_normalization_example",
-)
-
-x = np.random.randn(3, 4, 2, 2).astype(np.float32)
-num_groups = 2
-scale = np.random.randn(num_groups).astype(np.float32)
-bias = np.random.randn(num_groups).astype(np.float32)
+x = np.random.randn(3, c, 2, 2).astype(np.float32)
+scale = np.random.randn(c).astype(np.float32)
+bias = np.random.randn(c).astype(np.float32)
 epsilon = 1e-2
 y = _group_normalization(x, num_groups, scale, bias, epsilon).astype(np.float32)
 
@@ -10812,6 +11565,35 @@ expect(
     inputs=[x, scale, bias],
     outputs=[y],
     name="test_group_normalization_epsilon",
+)
+```
+
+</details>
+
+
+<details>
+<summary>groupnormalization</summary>
+
+```python
+c = 4
+num_groups = 2
+x = np.random.randn(3, c, 2, 2).astype(np.float32)
+scale = np.random.randn(c).astype(np.float32)
+bias = np.random.randn(c).astype(np.float32)
+y = _group_normalization(x, num_groups, scale, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "GroupNormalization",
+    inputs=["x", "scale", "bias"],
+    outputs=["y"],
+    num_groups=num_groups,
+)
+
+expect(
+    node,
+    inputs=[x, scale, bias],
+    outputs=[y],
+    name="test_group_normalization_example",
 )
 ```
 
@@ -10874,9 +11656,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
 
 # Test symmetric window
@@ -10887,7 +11667,7 @@ size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
 ```
@@ -10951,9 +11731,7 @@ node = onnx.helper.make_node(
 size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
-y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / size
-)
+y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow")
 
 # Test symmetric window
@@ -10964,7 +11742,7 @@ size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
 y = a0 - a1 * np.cos(
-    2 * 3.1415 * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
+    2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
 expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
 ```
@@ -11250,9 +12028,9 @@ expect(node, inputs=[x], outputs=[y], name="test_hardmax_default_axis")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-16">16</a>
+Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-19">19</a>
 
 #### Inputs
 
@@ -11271,7 +12049,7 @@ Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a hre
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
 <dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
 </dl>
 
@@ -11383,9 +12161,9 @@ expect(node, inputs=[data], outputs=[data], name="test_identity_sequence")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-16">16</a>
+Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-19">19</a>
 
 #### Attributes
 
@@ -11400,7 +12178,7 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 
 <dl>
 <dt><tt>cond</tt> : B</dt>
-<dd>Condition for the if</dd>
+<dd>Condition for the if. The tensor must contain a single element.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -11413,8 +12191,8 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz))</dt>
-<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4))</dt>
+<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
 </dl>
@@ -11632,6 +12410,294 @@ expect(
 </details>
 
 
+### <a name="ImageDecoder"></a><a name="imagedecoder">**ImageDecoder**</a>
+
+  Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded
+  stream, invalid format, it will return an empty matrix).
+  The following image formats are supported:
+  * BMP
+  * JPEG (note: Lossless JPEG support is optional)
+  * JPEG2000
+  * TIFF
+  * PNG
+  * WebP
+  * Portable image format (PBM, PGM, PPM, PXM, PNM)
+  Decoded images follow a channel-last layout: (Height, Width, Channels).
+  **JPEG chroma upsampling method:**
+  When upsampling the chroma components by a factor of 2, the pixels are linearly interpolated so that the
+  centers of the output pixels are 1/4 and 3/4 of the way between input pixel centers.
+  When rounding, 0.5 is rounded down and up at alternative pixels locations to prevent bias towards
+  larger values (ordered dither pattern).
+  Considering adjacent input pixels A, B, and C, B is upsampled to pixels B0 and B1 so that
+  ```
+  B0 = round_half_down((1/4) * A + (3/4) * B)
+  B1 = round_half_up((3/4) * B + (1/4) * C)
+  ```
+  This method,  is the default chroma upsampling method in the well-established libjpeg-turbo library,
+  also referred as "smooth" or "fancy" upsampling.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>pixel_format</tt> : string (default is RGB)</dt>
+<dd>Pixel format. Can be one of "RGB", "BGR", or "Grayscale".</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>encoded_stream</tt> (non-differentiable) : T1</dt>
+<dd>Encoded stream</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>image</tt> (non-differentiable) : T2</dt>
+<dd>Decoded image</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8)</dt>
+<dd>Constrain input types to 8-bit unsigned integer tensor.</dd>
+<dt><tt>T2</tt> : tensor(uint8)</dt>
+<dd>Constrain output types to 8-bit unsigned integer tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>image_decoder_decode_bmp_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = _generate_test_data(
+    "bmp", _image_decoder_data.image_decoder_decode_bmp_rgb, "RGB"
+)
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_bmp_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_jpeg2k_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = _generate_test_data(
+    "jpeg2000", _image_decoder_data.image_decoder_decode_jpeg2k_rgb, "RGB"
+)
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg2k_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_jpeg_bgr</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="BGR",
+)
+
+data, output = _generate_test_data(
+    "jpeg", _image_decoder_data.image_decoder_decode_jpeg_bgr, "BGR"
+)
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg_bgr",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_jpeg_grayscale</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="Grayscale",
+)
+
+data, output = _generate_test_data(
+    "jpeg", _image_decoder_data.image_decoder_decode_jpeg_grayscale, "Grayscale"
+)
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg_grayscale",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_jpeg_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = _generate_test_data(
+    "jpeg", _image_decoder_data.image_decoder_decode_jpeg_rgb, "RGB"
+)
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_jpeg_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_png_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = _generate_test_data(
+    "png", _image_decoder_data.image_decoder_decode_png_rgb, "RGB"
+)
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_png_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_pnm_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = _generate_test_data(
+    "ppm", _image_decoder_data.image_decoder_decode_pnm_rgb, "RGB"
+)
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_pnm_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_tiff_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = _generate_test_data(
+    "tiff", _image_decoder_data.image_decoder_decode_tiff_rgb, "RGB"
+)
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_tiff_rgb",
+)
+```
+
+</details>
+
+
+<details>
+<summary>image_decoder_decode_webp_rgb</summary>
+
+```python
+node = onnx.helper.make_node(
+    "ImageDecoder",
+    inputs=["data"],
+    outputs=["output"],
+    pixel_format="RGB",
+)
+
+data, output = _generate_test_data(
+    "webp", _image_decoder_data.image_decoder_decode_webp_rgb, "RGB"
+)
+expect(
+    node,
+    inputs=[data],
+    outputs=[output],
+    name="test_image_decoder_decode_webp_rgb",
+)
+```
+
+</details>
+
+
 ### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
 
   Carries out instance normalization as described in the paper
@@ -11738,7 +12804,9 @@ expect(node, inputs=[x, s, bias], outputs=[y], name="test_instancenorm_epsilon")
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#IsInf-10">10</a>
 
 #### Attributes
 
@@ -11766,7 +12834,7 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output types to boolean tensors.</dd>
@@ -11785,9 +12853,27 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([-1.2, np.nan, np.inf, 2.8, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float32)
 y = np.isinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf")
+```
+
+</details>
+
+
+<details>
+<summary>infinity_float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsInf",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float16)
+y = np.isinf(x)
+expect(node, inputs=[x], outputs=[y], name="test_isinf_float16")
 ```
 
 </details>
@@ -11801,7 +12887,7 @@ node = onnx.helper.make_node(
     "IsInf", inputs=["x"], outputs=["y"], detect_positive=0
 )
 
-x = np.array([-1.7, np.nan, np.inf, -3.6, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.7, np.nan, np.inf, -3.6, -np.inf, np.inf], dtype=np.float32)
 y = np.isneginf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf_negative")
 ```
@@ -11817,7 +12903,7 @@ node = onnx.helper.make_node(
     "IsInf", inputs=["x"], outputs=["y"], detect_negative=0
 )
 
-x = np.array([-1.7, np.nan, np.inf, 3.6, np.NINF, np.inf], dtype=np.float32)
+x = np.array([-1.7, np.nan, np.inf, 3.6, -np.inf, np.inf], dtype=np.float32)
 y = np.isposinf(x)
 expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
 ```
@@ -11831,9 +12917,9 @@ expect(node, inputs=[x], outputs=[y], name="test_isinf_positive")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>
+Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>, <a href="Changelog.md#IsNaN-13">13</a>
 
 #### Inputs
 
@@ -11852,7 +12938,7 @@ Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output types to boolean tensors.</dd>
@@ -11860,6 +12946,24 @@ Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>
 
 
 #### Examples
+
+<details>
+<summary>float16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "IsNaN",
+    inputs=["x"],
+    outputs=["y"],
+)
+
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float16)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name="test_isnan_float16")
+```
+
+</details>
+
 
 <details>
 <summary>isnan</summary>
@@ -11871,7 +12975,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 
-x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+x = np.array([-1.2, np.nan, np.inf, 2.8, -np.inf, np.inf], dtype=np.float32)
 y = np.isnan(x)
 expect(node, inputs=[x], outputs=[y], name="test_isnan")
 ```
@@ -12341,7 +13445,9 @@ expect(
         Let `d[i]` indicate the i-th dimension of `X`.
         If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
         the shape of `Mean` and `InvStdDev` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
-        `Y` and `X` have the same shape.
+        `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+        (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
+        for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -12351,7 +13457,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r]. Negative value means counting dimensions from the back.</dd>
+<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). Negative value means counting dimensions from the back.</dd>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>stash_type</tt> : int (default is 1)</dt>
@@ -13096,9 +14202,9 @@ expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_default_axis")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-16">16</a>
+Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-16">16</a>, <a href="Changelog.md#Loop-19">19</a>
 
 #### Attributes
 
@@ -13128,8 +14234,8 @@ Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz))</dt>
-<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4))</dt>
+<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>tensor of int64, which should be a scalar.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
@@ -13712,8 +14818,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">1</a>, <a href=
 <summary>lppool_1d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32]
+"""input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 p = 3
@@ -13729,9 +14834,12 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+pads = None
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "LPPOOL", p=p)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_1d_default")
 ```
@@ -13743,8 +14851,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_1d_default")
 <summary>lppool_2d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 p = 4
@@ -13757,13 +14864,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
-padded = x
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_default")
 ```
@@ -13775,8 +14883,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_default")
 <summary>lppool_2d_dilations</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 p = 2
@@ -13823,8 +14930,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_dilations")
 <summary>lppool_2d_pads</summary>
 
 ```python
-"""
-input_shape: [1, 3, 28, 28]
+"""input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -13842,9 +14948,9 @@ x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
-pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -13852,9 +14958,7 @@ padded = np.pad(
     mode="constant",
     constant_values=0,
 )
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
-)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
 ```
@@ -13866,8 +14970,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
 <summary>lppool_2d_same_lower</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -13884,7 +14987,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_LOWER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_LOWER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_LOWER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -13898,9 +15003,8 @@ padded = np.pad(
     mode="constant",
     constant_values=0,
 )
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
-)
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
 ```
@@ -13912,8 +15016,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
 <summary>lppool_2d_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -13930,7 +15033,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_UPPER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_UPPER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_UPPER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -13944,9 +15049,8 @@ padded = np.pad(
     mode="constant",
     constant_values=0,
 )
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "LPPOOL", p=p
-)
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
 ```
@@ -13958,8 +15062,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
 <summary>lppool_2d_strides</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 p = 2
@@ -13973,13 +15076,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
-padded = x
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "LPPOOL", p=p
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_strides")
 ```
@@ -13991,8 +15095,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_strides")
 <summary>lppool_3d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32, 32]
+"""input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 p = 3
@@ -14005,13 +15108,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
-padded = x
-y = pool(
-    padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "LPPOOL", p=p
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_3d_default")
 ```
@@ -14291,20 +15395,27 @@ for op_dtype in all_numeric_dtypes:
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing. The output spatial shape will be following:
+   data into the output tensor Y for further processing. The output spatial shape is calculated differently
+   depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+   With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
    ```
-   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
    or
    ```
-   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i] + 1)
+   output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
-   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1) + 1) / strides_spatial_shape[i])
    SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - ((kernel_spatial_shape[i] - 1) * dilations[i] + 1)) / strides_spatial_shape[i]) + 1
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -14370,8 +15481,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href
 <summary>maxpool_1d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32]
+"""input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -14382,11 +15492,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2]
 strides = [1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], "MAX")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX")
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_1d_default")
 ```
@@ -14398,8 +15511,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_1d_default")
 <summary>maxpool_2d_ceil</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -14431,11 +15543,39 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_ceil")
 
 
 <details>
+<summary>maxpool_2d_ceil_output_size_reduce_by_one</summary>
+
+```python
+"""input_shape: [1, 1, 2, 2]
+output_shape: [1, 1, 1, 1]
+"""
+node = onnx.helper.make_node(
+    "MaxPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[1, 1],
+    strides=[2, 2],
+    ceil_mode=True,
+)
+x = np.array([[[[1, 2], [3, 4]]]]).astype(np.float32)
+y = np.array([[[[1]]]]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_maxpool_2d_ceil_output_size_reduce_by_one",
+)
+```
+
+</details>
+
+
+<details>
 <summary>maxpool_2d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -14446,11 +15586,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX")
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_default")
 ```
@@ -14462,8 +15605,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_default")
 <summary>maxpool_2d_dilations</summary>
 
 ```python
-"""
-input_shape: [1, 1, 4, 4]
+"""input_shape: [1, 1, 4, 4]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -14498,8 +15640,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_dilations")
 <summary>maxpool_2d_pads</summary>
 
 ```python
-"""
-input_shape: [1, 3, 28, 28]
+"""input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -14515,9 +15656,9 @@ x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
-pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-out_shape = get_output_shape(
-    "VALID", np.add(x_shape[2:], pad_shape), kernel_shape, strides
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
 )
 padded = np.pad(
     x,
@@ -14525,7 +15666,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "MAX")
+
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_pads")
 ```
@@ -14537,8 +15679,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_pads")
 <summary>maxpool_2d_precomputed_pads</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -14586,8 +15727,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_precomputed_pads")
 <summary>maxpool_2d_precomputed_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 3, 3]
 pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
 """
@@ -14626,8 +15766,7 @@ expect(
 <summary>maxpool_2d_precomputed_strides</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -14660,8 +15799,7 @@ expect(
 <summary>maxpool_2d_same_lower</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -14676,7 +15814,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_LOWER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_LOWER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_LOWER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -14690,7 +15830,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "MAX")
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_lower")
 ```
@@ -14702,8 +15843,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_lower")
 <summary>maxpool_2d_same_upper</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -14718,7 +15858,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (2, 2)
 strides = (1, 1)
-out_shape = get_output_shape("SAME_UPPER", x_shape[2:], kernel_shape, strides)
+out_shape = get_output_shape_auto_pad(
+    "SAME_UPPER", x_shape[2:], kernel_shape, strides
+)
 pad_shape = get_pad_shape(
     "SAME_UPPER", x_shape[2:], kernel_shape, strides, out_shape
 )
@@ -14732,7 +15874,8 @@ padded = np.pad(
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, "MAX")
+pads = [pad_top, pad_left, pad_bottom, pad_right]
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_upper")
 ```
@@ -14744,8 +15887,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_upper")
 <summary>maxpool_2d_strides</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32]
+"""input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -14753,11 +15895,14 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = (5, 5)
 strides = (3, 3)
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, pads = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), "MAX")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX")
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_strides")
 ```
@@ -14769,8 +15914,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_strides")
 <summary>maxpool_2d_uint8</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -14818,8 +15962,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_uint8")
 <summary>maxpool_3d_default</summary>
 
 ```python
-"""
-input_shape: [1, 3, 32, 32, 32]
+"""input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -14830,13 +15973,207 @@ node = onnx.helper.make_node(
 )
 x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
+pads = None
 kernel_shape = [2, 2, 2]
 strides = [1, 1, 1]
-out_shape = get_output_shape("VALID", x_shape[2:], kernel_shape, strides)
+out_shape, _ = get_output_shape_explicit_padding(
+    pads, x_shape[2:], kernel_shape, strides
+)
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], "MAX")
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX")
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_3d_default")
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_3d_dilations</summary>
+
+```python
+"""input_shape: [1, 1, 4, 4, 4]
+output_shape: [1, 1, 2, 2, 2]
+"""
+node = onnx.helper.make_node(
+    "MaxPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2],
+    strides=[1, 1, 1],
+    dilations=[2, 2, 2],
+)
+x = np.array(
+    [
+        [
+            [
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+            ]
+        ]
+    ]
+).astype(np.float32)
+y = np.array([[[[[11, 12], [15, 16]], [[11, 12], [15, 16]]]]]).astype(
+    np.float32
+)
+
+expect(node, inputs=[x], outputs=[y], name="test_maxpool_3d_dilations")
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_3d_dilations_use_ref_impl</summary>
+
+```python
+"""input_shape: [1, 1, 4, 4, 4]
+output_shape: [1, 1, 2, 2, 2]
+"""
+dilations = [2, 2, 2]
+kernel_shape = [2, 2, 2]
+strides = [1, 1, 1]
+ceil_mode = False
+node = onnx.helper.make_node(
+    "MaxPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2, 2],
+    strides=[1, 1, 1],
+    dilations=dilations,
+)
+x = np.array(
+    [
+        [
+            [
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+                [
+                    [1, 2, 3, 4],
+                    [5, 6, 7, 8],
+                    [9, 10, 11, 12],
+                    [13, 14, 15, 16],
+                ],
+            ]
+        ]
+    ]
+).astype(np.float32)
+
+x_shape = x.shape[2:]
+out_shape, pads = get_output_shape_explicit_padding(
+    None, x_shape, kernel_shape, strides, dilations, ceil_mode=ceil_mode
+)
+padded = x
+y = pool(
+    padded,
+    (1, 1, *x_shape),
+    kernel_shape,
+    strides,
+    out_shape,
+    "MAX",
+    pads,
+    dilations=dilations,
+)
+
+expect(
+    node, inputs=[x], outputs=[y], name="test_maxpool_3d_dilations_use_ref_impl"
+)
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_3d_dilations_use_ref_impl_large</summary>
+
+```python
+x_shape = (32, 32, 32)
+dilations = (2, 2, 2)
+kernel_shape = (5, 5, 5)
+strides = (3, 3, 3)
+ceil_mode = True
+
+node = onnx.helper.make_node(
+    "MaxPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=kernel_shape,
+    strides=strides,
+    dilations=dilations,
+    ceil_mode=ceil_mode,
+)
+
+x = np.random.randn(1, 1, *x_shape).astype(np.float32)
+out_shape, pads = get_output_shape_explicit_padding(
+    None, x_shape, kernel_shape, strides, dilations, ceil_mode=ceil_mode
+)
+padded = np.pad(
+    x,
+    (
+        (0, 0),
+        (0, 0),
+        (pads[0], pads[3]),
+        (pads[1], pads[4]),
+        (pads[2], pads[5]),
+    ),
+    mode="constant",
+    constant_values=0,
+)
+y = pool(
+    padded,
+    (1, 1, *x_shape),
+    kernel_shape,
+    strides,
+    out_shape,
+    "MAX",
+    pads,
+    dilations=dilations,
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_maxpool_3d_dilations_use_ref_impl_large",
+)
 ```
 
 </details>
@@ -14846,8 +16183,7 @@ expect(node, inputs=[x], outputs=[y], name="test_maxpool_3d_default")
 <summary>maxpool_with_argmax_2d_precomputed_pads</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 5, 5]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -14913,8 +16249,7 @@ expect(
 <summary>maxpool_with_argmax_2d_precomputed_strides</summary>
 
 ```python
-"""
-input_shape: [1, 1, 5, 5]
+"""input_shape: [1, 1, 5, 5]
 output_shape: [1, 1, 2, 2]
 """
 node = onnx.helper.make_node(
@@ -15000,7 +16335,7 @@ This version of the operator has been available since version 1 of the default O
   MaxUnpool essentially computes the partial inverse of the MaxPool op.
    The input information to this op is typically the output information from a MaxPool op. The first
    input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
-   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
+   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corresponding
    to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
    The third (optional) input is a tensor that specifies the output size of the unpooling operation.
 
@@ -15013,7 +16348,7 @@ This version of the operator has been available since version 1 of the default O
    known/predictable size.
 
   In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
-   which define the exact unpooling op. The attributes typically have the same values as the corrsponding
+   which define the exact unpooling op. The attributes typically have the same values as the corresponding
    pooling op that the unpooling op is trying to invert.
 
 #### Version
@@ -15222,7 +16557,7 @@ Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization
 
 <dl>
 <dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
-<dd>A list of integers, along which to reduce. The default is to caculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
 </dl>
 
 #### Inputs
@@ -18070,7 +19405,7 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">1</a>, <a href="
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> (differentiable) : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller than first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -18235,9 +19570,9 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-18">18</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-19">19</a>
 
 #### Attributes
 
@@ -18269,8 +19604,8 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dd>Constrain input and output types to all tensor types up to IRv10.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
 </dl>
@@ -18366,7 +19701,7 @@ expect(
 <summary>reflection_edge_and_wrap_pad</summary>
 
 ```python
-for mode in ["edge", "reflect", "wrap"]:
+for mode in ("edge", "reflect", "wrap"):
     node = onnx.helper.make_node(
         "Pad", inputs=["x", "pads"], outputs=["y"], mode=mode
     )
@@ -18700,24 +20035,26 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#QLinearMatMul-10">10</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>a</tt> (non-differentiable) : T1</dt>
 <dd>N-dimensional quantized matrix a</dd>
-<dt><tt>a_scale</tt> (non-differentiable) : tensor(float)</dt>
+<dt><tt>a_scale</tt> (non-differentiable) : TS</dt>
 <dd>scale of quantized input a</dd>
 <dt><tt>a_zero_point</tt> (non-differentiable) : T1</dt>
 <dd>zero point of quantized input a</dd>
 <dt><tt>b</tt> (non-differentiable) : T2</dt>
 <dd>N-dimensional quantized matrix b</dd>
-<dt><tt>b_scale</tt> (non-differentiable) : tensor(float)</dt>
+<dt><tt>b_scale</tt> (non-differentiable) : TS</dt>
 <dd>scale of quantized input b</dd>
 <dt><tt>b_zero_point</tt> (non-differentiable) : T2</dt>
 <dd>zero point of quantized input b</dd>
-<dt><tt>y_scale</tt> (non-differentiable) : tensor(float)</dt>
+<dt><tt>y_scale</tt> (non-differentiable) : TS</dt>
 <dd>scale of quantized output y</dd>
 <dt><tt>y_zero_point</tt> (non-differentiable) : T3</dt>
 <dd>zero point of quantized output y</dd>
@@ -18733,129 +20070,165 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
-<dd>Constrain input a and its zero point data type to 8-bit integer tensor.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
-<dd>Constrain input b and its zero point data type to 8-bit integer tensor.</dd>
-<dt><tt>T3</tt> : tensor(int8), tensor(uint8)</dt>
-<dd>Constrain output y and its zero point data type to 8-bit integer tensor.</dd>
+<dt><tt>TS</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain scales.</dd>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>The type of input a and its zeropoint.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>The type of input b and its zeropoint.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>The type of the output and its zeropoint.</dd>
 </dl>
 
 
 #### Examples
 
 <details>
-<summary>qlinearmatmul</summary>
+<summary>int</summary>
 
 ```python
-node = onnx.helper.make_node(
-    "QLinearMatMul",
-    inputs=[
-        "a",
-        "a_scale",
-        "a_zero_point",
-        "b",
-        "b_scale",
-        "b_zero_point",
-        "y_scale",
-        "y_zero_point",
-    ],
-    outputs=["y"],
-)
+for quant_type_name in ["uint8", "int8"]:
+    quant_type = getattr(np, quant_type_name)
+    for dtype_name in ["float32", "float16"]:
+        dtype = getattr(np, dtype_name)
+        node = onnx.helper.make_node(
+            "QLinearMatMul",
+            inputs=[
+                "a",
+                "a_scale",
+                "a_zero_point",
+                "b",
+                "b_scale",
+                "b_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ],
+            outputs=["y"],
+        )
 
-# 2D
-a = np.array(
-    [
-        [208, 236, 0, 238],
-        [3, 214, 255, 29],
-    ],
-    dtype=np.uint8,
-)
+        # 2D
+        a = np.array([[208, 236, 0, 238], [3, 214, 255, 29]])
+        if quant_type == np.int8:
+            a -= 127
+        a = a.astype(quant_type)
 
-a_scale = np.array([0.0066], dtype=np.float32)
-a_zero_point = np.array([113], dtype=np.uint8)
+        a_scale = np.array([0.0066], dtype=dtype)
+        a_zero_point = np.array(
+            [113 - 127] if quant_type == np.int8 else [113], dtype=quant_type
+        )
 
-b = np.array(
-    [[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]],
-    dtype=np.uint8,
-)
+        b = np.array(
+            [[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]]
+        )
+        if quant_type == np.int8:
+            b -= 127
+        b = b.astype(quant_type)
 
-b_scale = np.array([0.00705], dtype=np.float32)
-b_zero_point = np.array([114], dtype=np.uint8)
+        b_scale = np.array([0.00705], dtype=dtype)
+        b_zero_point = np.array(
+            [114 - 127] if quant_type == np.int8 else [114], dtype=quant_type
+        )
 
-y_scale = np.array([0.0107], dtype=np.float32)
-y_zero_point = np.array([118], dtype=np.uint8)
+        y_scale = np.array([0.0107], dtype=dtype)
+        y_zero_point = np.array(
+            [118 - 127] if quant_type == np.int8 else [118], dtype=quant_type
+        )
 
-output = np.array(
-    [
-        [168, 115, 255],
-        [1, 66, 151],
-    ],
-    dtype=np.uint8,
-)
+        if quant_type == np.int8:
+            output = np.array([[41, -12, -9], [1, -75, 20]])
+        else:
+            output = np.array([[168, 115, 255], [1, 66, 151]])
+        output = output.astype(quant_type)
 
-expect(
-    node,
-    inputs=[
-        a,
-        a_scale,
-        a_zero_point,
-        b,
-        b_scale,
-        b_zero_point,
-        y_scale,
-        y_zero_point,
-    ],
-    outputs=[output],
-    name="test_qlinearmatmul_2D",
-)
+        expect(
+            node,
+            inputs=[
+                a,
+                a_scale,
+                a_zero_point,
+                b,
+                b_scale,
+                b_zero_point,
+                y_scale,
+                y_zero_point,
+            ],
+            outputs=[output],
+            name=f"test_qlinearmatmul_2D_{quant_type_name}_{dtype_name}",
+        )
 
-# 3D
-a = np.array(
-    [
-        [[208, 236, 0, 238], [3, 214, 255, 29]],
-        [[208, 236, 0, 238], [3, 214, 255, 29]],
-    ],
-    dtype=np.uint8,
-)
+        # 3D
+        a = np.array(
+            [
+                [[208, 236, 0, 238], [3, 214, 255, 29]],
+                [[208, 236, 0, 238], [3, 214, 255, 29]],
+            ],
+        )
+        if quant_type == np.int8:
+            a -= 127
+        a = a.astype(quant_type)
 
-a_scale = np.array([0.0066], dtype=np.float32)
-a_zero_point = np.array([113], dtype=np.uint8)
+        a_scale = np.array([0.0066], dtype=dtype)
+        a_zero_point = np.array(
+            [113 - 127] if quant_type == np.int8 else [113], dtype=quant_type
+        )
 
-b = np.array(
-    [
-        [[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]],
-        [[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]],
-    ],
-    dtype=np.uint8,
-)
+        b = np.array(
+            [
+                [[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]],
+                [[152, 51, 244], [60, 26, 255], [0, 127, 246], [127, 254, 247]],
+            ],
+        )
+        if quant_type == np.int8:
+            b -= 127
+        b = b.astype(quant_type)
 
-b_scale = np.array([0.00705], dtype=np.float32)
-b_zero_point = np.array([114], dtype=np.uint8)
+        b_scale = np.array([0.00705], dtype=dtype)
+        b_zero_point = np.array([114], dtype=quant_type)
 
-y_scale = np.array([0.0107], dtype=np.float32)
-y_zero_point = np.array([118], dtype=np.uint8)
+        y_scale = np.array([0.0107], dtype=dtype)
+        y_zero_point = np.array(
+            [118 - 127] if quant_type == np.int8 else [118], dtype=quant_type
+        )
 
-output = np.array(
-    [[[168, 115, 255], [1, 66, 151]], [[168, 115, 255], [1, 66, 151]]],
-    dtype=np.uint8,
-)
+        if quant_type == np.int8:
+            if dtype == np.float32:
+                output = np.array(
+                    [
+                        [[-86, 117, 120], [115, 39, -121]],
+                        [[-86, 117, 120], [115, 39, -121]],
+                    ]
+                )
+            else:
+                output = np.array(
+                    [
+                        [[-86, 116, 119], [115, 39, -121]],
+                        [[-86, 116, 119], [115, 39, -121]],
+                    ]
+                )
+        else:
+            output = np.array(
+                [
+                    [[168, 115, 255], [1, 66, 151]],
+                    [[168, 115, 255], [1, 66, 151]],
+                ]
+            )
+        output = output.astype(quant_type)
 
-expect(
-    node,
-    inputs=[
-        a,
-        a_scale,
-        a_zero_point,
-        b,
-        b_scale,
-        b_zero_point,
-        y_scale,
-        y_zero_point,
-    ],
-    outputs=[output],
-    name="test_qlinearmatmul_3D",
-)
+        expect(
+            node,
+            inputs=[
+                a,
+                a_scale,
+                a_zero_point,
+                b,
+                b_scale,
+                b_zero_point,
+                y_scale,
+                y_zero_point,
+            ],
+            outputs=[output],
+            name=f"test_qlinearmatmul_3D_{quant_type_name}_{dtype_name}",
+        )
 ```
 
 </details>
@@ -18863,27 +20236,45 @@ expect(
 
 ### <a name="QuantizeLinear"></a><a name="quantizelinear">**QuantizeLinear**</a>
 
-  The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
-  The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
-  The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
-  For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
-  For (x / y_scale), it's rounding to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
-  'y_zero_point' and 'y' must have same type.
-  'y_zero_point' is usually not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz,
-  but the quantization formula remains the same for consistency and
-  the type of the attribute 'y_zero_point' still determines the quantization type.
+  The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
+  low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
+  granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
+
+  Saturation is done according to:
+  - uint16: [0, 65535]
+  - int16: [-32768, 32767]
+  - uint8: [0, 255]
+  - int8: [-128, 127]
+  - uint4: [0, 15]
+  - int4: [-8, 7]
+
+  For `(x / y_scale)`, it rounds to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
+
+  `y_zero_point` and `y` must have the same type. `y_zero_point` is usually not used for quantization to float8 types, but the quantization
+  formula remains the same for consistency, and the type of the attribute `y_zero_point` still determines the quantization type.
+
+  There are three supported quantization granularities, determined by the shape of `y_scale`.
+  In all cases, `y_zero_point` must have the same shape as `y_scale`.
+  - Per-tensor (per-layer) quantization: `y_scale` is a scalar.
+  - Per-axis quantization: The scale must be a 1-D tensor, with the length of the quantization axis. For an input shape
+   `(D0, ..., Di, ..., Dn)` and `axis=i`, `y_scale` is a 1-D tensor of length `Di`.
+  - Blocked quantization: The scale's shape is identical to the input's shape, except for one dimension, in which
+    blocking is performed. Given `x` shape `(D0, ..., Di, ..., Dn)`, `axis=i`, and block size `B`: `y_scale` shape is
+    `(D0, ..., ceil(Di/B), ..., Dn)`.
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>
+Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the quantization dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dt><tt>block_size</tt> : int (default is 0)</dt>
+<dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
 <dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>
@@ -18894,25 +20285,25 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D full precision Input tensor to be quantized.</dd>
 <dt><tt>y_scale</tt> : T1</dt>
-<dd>Scale for doing quantization to get 'y'. It can be a scalar, which means per-tensor/layer quantization, or a 1-D Tensor for per-axis quantization.</dd>
+<dd>Scale for doing quantization to get `y`. For per-tensor/layer quantization the scale is a scalar, for per-axis quantization it is a 1-D Tensor and for blocked quantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
 <dt><tt>y_zero_point</tt> (optional) : T2</dt>
-<dd>Zero point for doing quantization to get 'y'. Shape must match y_scale. Default is uint8 with zero point of 0 if it's not specified.</dd>
+<dd>Zero point for doing quantization to get `y`. Shape must match `y_scale`.Default is uint8 with zero point of 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>y</tt> : T2</dt>
-<dd>N-D quantized output tensor. It has same shape as input 'x'.</dd>
+<dd>N-D quantized output tensor. It has same shape as input `x`.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
-<dd>Constrain 'x' to float, float16, bfloat16 or int32 tensor.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>Constrain 'y_zero_point' and 'y' to 8-bit integer/float tensor.</dd>
+<dd>The type of the input 'x'.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
 
@@ -18956,6 +20347,74 @@ expect(
 
 
 <details>
+<summary>blocked</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=1,
+    block_size=2,
+)
+
+x = np.array(
+    [
+        [6.0, 12.0, 50.0, 5.0],
+        [1.0, 8.0, 4.0, 5.0],
+        [0.0, 20.0, 10.0, 4.0],
+    ],
+    dtype=np.float32,
+)
+y_scale = np.array(
+    [
+        [1.5, 2.5],
+        [3.0, 4.9],
+        [5.1, 6.9],
+    ],
+    dtype=np.float32,
+)
+y_zero_point = np.array(
+    [
+        [0, 1],
+        [1, 0],
+        [2, 3],
+    ],
+    dtype=np.uint8,
+)
+# x.shape = (3, 4)
+# y_scale.shape = (3, 2)
+assert y_scale.shape == y_zero_point.shape
+block_axis = 1
+# The block shape is [x.shape[i] // y_scale.shape[i] for i in range(len(x.shape))] = (1, 2)
+assert all(
+    x.shape[i] == y_scale.shape[i]
+    for i in range(len(x.shape))
+    if i != block_axis
+)
+assert x.shape[block_axis] % y_scale.shape[block_axis] == 0
+repeats = x.shape[block_axis] // y_scale.shape[block_axis]
+
+# Create element-wise scale and zero point
+y_scale_elementwise = np.repeat(y_scale, repeats=repeats, axis=block_axis)
+y_zero_point_elementwise = np.repeat(
+    y_zero_point, repeats=repeats, axis=block_axis
+)
+
+y = np.rint(x / y_scale_elementwise + y_zero_point_elementwise).astype(np.uint8)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_blocked",
+)
+```
+
+</details>
+
+
+<details>
 <summary>e4m3fn</summary>
 
 ```python
@@ -18968,9 +20427,7 @@ node = onnx.helper.make_node(
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
 y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
-y = make_tensor(
-    "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96]
-)
+y = make_tensor("y", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96])
 
 expect(
     node,
@@ -18996,15 +20453,115 @@ node = onnx.helper.make_node(
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
 y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
-y = make_tensor(
-    "zero_point", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96]
-)
+y = make_tensor("y", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
 
 expect(
     node,
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_e5m2",
+)
+```
+
+</details>
+
+
+<details>
+<summary>int16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array(
+    [
+        0.0,
+        -514.0,
+        3.0,
+        -3.0,
+        2.9,
+        -2.9,
+        3.1,
+        -3.1,
+        65022.0,
+        -66046.0,
+        65023.0,
+        -66047.0,
+        65024.0,
+        -66048.0,
+        70000.0,
+        -70000.0,
+    ]
+).astype(np.float32)
+y_scale = np.float32(2.0)
+y_zero_point = np.int16(256)
+y = np.array(
+    [
+        256,
+        -1,
+        258,
+        254,
+        257,
+        255,
+        258,
+        254,
+        32767,
+        -32767,
+        32767,
+        -32768,
+        32767,
+        -32768,
+        32767,
+        -32768,
+    ]
+).astype(np.int16)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_int16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>int4</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-30, -20, 6, 9],
+        [12, 15, 16, 40],
+    ]
+).astype(np.float32)
+
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
+)
+y = make_tensor(
+    "y", TensorProto.INT4, x.shape, [1, 2, 3, 5, -8, -6, 3, 4, 4, 5, 5, 7]
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_int4",
 )
 ```
 
@@ -19031,6 +20588,100 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear",
+)
+```
+
+</details>
+
+
+<details>
+<summary>uint16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+)
+
+x = np.array(
+    [
+        0.0,
+        -128.0,
+        3.0,
+        -3.0,
+        2.9,
+        -2.9,
+        3.1,
+        -3.1,
+        65536.0,
+        -65534.0,
+        70000.0,
+        -70000.0,
+    ]
+).astype(np.float32)
+y_scale = np.float32(2.0)
+y_zero_point = np.uint16(32767)
+y = np.array(
+    [
+        32767,
+        32703,
+        32769,
+        32765,
+        32768,
+        32766,
+        32769,
+        32765,
+        65535,
+        0,
+        65535,
+        0,
+    ]
+).astype(np.uint16)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_uint16",
+)
+```
+
+</details>
+
+
+<details>
+<summary>uint4</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-30, -20, 6, 9],
+        [12, 15, 16, 40],
+    ]
+).astype(np.float32)
+
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
+)
+y = make_tensor(
+    "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, -1, -1, 3, 4, 4, 5, 5, 11]
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_uint4",
 )
 ```
 
@@ -19668,12 +21319,13 @@ expect(node, inputs=[x], outputs=[y], name="test_reciprocal")
 ### <a name="ReduceL1"></a><a name="reducel1">**ReduceL1**</a>
 
   Computes the L1 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 0.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -19710,7 +21362,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -19797,6 +21449,36 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l1_do_not_keepdims_random",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceL1",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_l1_empty_set",
 )
 ```
 
@@ -19896,12 +21578,13 @@ expect(
 ### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
 
   Computes the L2 norm of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 0.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -19938,7 +21621,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -20031,6 +21714,36 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_l2_do_not_keepdims_random",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceL2",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_l2_empty_set",
 )
 ```
 
@@ -20142,12 +21855,13 @@ expect(
 ### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
 
   Computes the log sum of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -20184,11 +21898,42 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceLogSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = np.log(zero)  # -inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_empty_set",
+)
+```
+
+</details>
+
 
 <details>
 <summary>keepdims</summary>
@@ -20278,12 +22023,13 @@ expect(
 ### <a name="ReduceLogSumExp"></a><a name="reducelogsumexp">**ReduceLogSumExp**</a>
 
   Computes the log sum exponent of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or undefined otherwise.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -20320,7 +22066,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -20408,6 +22154,37 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_log_sum_exp_do_not_keepdims_random",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceLogSumExp",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = np.log(zero)  # -inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_log_sum_exp_empty_set",
 )
 ```
 
@@ -20509,18 +22286,21 @@ expect(
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
   Computes the max of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields minus infinity (if supported by the datatype) or the minimum value of the data type otherwise.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  If the input data type is Boolean, the comparison should consider `False < True`.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-13">13</a>, <a href="Changelog.md#ReduceMax-18">18</a>
 
 #### Attributes
 
@@ -20550,12 +22330,47 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
-<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8), tensor(bool)</dt>
+<dd>Constrain input and output types to numeric and Boolean tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>bool_inputs</summary>
+
+```python
+axes = np.array([1], dtype=np.int64)
+keepdims = 1
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array(
+    [[True, True], [True, False], [False, True], [False, False]],
+)
+reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=bool(keepdims))
+# print(reduced)
+# [[True],
+#  [True],
+#  [True],
+#  [False]]
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_max_bool_inputs",
+)
+```
+
+</details>
+
 
 <details>
 <summary>default_axes_keepdims</summary>
@@ -20579,6 +22394,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_max_default_axes_keepdim_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -20590,6 +22406,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_max_default_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -20626,6 +22443,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -20637,6 +22455,39 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_do_not_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMax",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+one = np.array(np.ones(reduced_shape, dtype=np.float32))
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = -(one / zero)  # -inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_min_empty_set",
 )
 ```
 
@@ -20673,6 +22524,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -20684,6 +22536,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -20720,6 +22573,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_negative_axes_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -20731,6 +22585,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_max_negative_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -20740,12 +22595,13 @@ expect(
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
 
   Computes the mean of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields undefined.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -20782,7 +22638,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -20977,18 +22833,21 @@ expect(
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
   Computes the min of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields plus infinity (if supported by the datatype) or the maximum value of the data type otherwise.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  If the input data type is Boolean, the comparison should consider `False < True`.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 20 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-13">13</a>
+Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a href="Changelog.md#ReduceMin-11">11</a>, <a href="Changelog.md#ReduceMin-12">12</a>, <a href="Changelog.md#ReduceMin-13">13</a>, <a href="Changelog.md#ReduceMin-18">18</a>
 
 #### Attributes
 
@@ -21018,12 +22877,47 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8)</dt>
-<dd>Constrain input and output types to high-precision and 8 bit numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(int8), tensor(bool)</dt>
+<dd>Constrain input and output types to numeric and Boolean tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>bool_inputs</summary>
+
+```python
+axes = np.array([1], dtype=np.int64)
+keepdims = 1
+
+node = onnx.helper.make_node(
+    "ReduceMin",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array(
+    [[True, True], [True, False], [False, True], [False, False]],
+)
+reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=bool(keepdims))
+# print(reduced)
+# [[ True],
+#  [False],
+#  [False],
+#  [False]]
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_min_bool_inputs",
+)
+```
+
+</details>
+
 
 <details>
 <summary>default_axes_keepdims</summary>
@@ -21050,6 +22944,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_min_default_axes_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -21061,6 +22956,7 @@ expect(
     inputs=[data],
     outputs=[reduced],
     name="test_reduce_min_default_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -21097,6 +22993,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_do_not_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -21108,6 +23005,39 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_do_not_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceMin",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+one = np.array(np.ones(reduced_shape, dtype=np.float32))
+zero = np.array(np.zeros(reduced_shape, dtype=np.float32))
+reduced = one / zero  # inf
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_min_empty_set",
 )
 ```
 
@@ -21144,6 +23074,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -21155,6 +23086,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -21191,6 +23123,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_negative_axes_keepdims_example",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 
 np.random.seed(0)
@@ -21202,6 +23135,7 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_min_negative_axes_keepdims_random",
+    opset_imports=[onnx.helper.make_opsetid("", 18)],
 )
 ```
 
@@ -21211,12 +23145,13 @@ expect(
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
 
   Computes the product of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 1.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21253,7 +23188,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a h
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -21338,6 +23273,36 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_prod_do_not_keepdims_random",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceProd",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.ones(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_prod_empty_set",
 )
 ```
 
@@ -21437,12 +23402,13 @@ expect(
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
   Computes the sum of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 0.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21479,7 +23445,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -21615,6 +23581,37 @@ expect(
 
 
 <details>
+<summary>empty_set</summary>
+
+```python
+"""Test case with the reduced-axis of size zero."""
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_sum_empty_set",
+)
+```
+
+</details>
+
+
+<details>
 <summary>keepdims</summary>
 
 ```python
@@ -21700,15 +23697,47 @@ expect(
 </details>
 
 
+<details>
+<summary>non_reduced_axis_zero</summary>
+
+```python
+"""Test case with the non-reduced-axis of size zero."""
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 0, 1]
+
+node = onnx.helper.make_node(
+    "ReduceSum",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([2], dtype=np.int64)
+reduced = np.array([], dtype=np.float32).reshape(reduced_shape)
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_sum_empty_set_non_reduced_axis_zero",
+)
+```
+
+</details>
+
+
 ### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
 
   Computes the sum square of the input tensor's elements along the provided axes. The resulting
-  tensor has the same rank as the input if keepdims equals 1. If keepdims equals 0, then
+  tensor has the same rank as the input if `keepdims` equals 1. If `keepdims` equals 0, then
   the resulting tensor has the reduced dimension pruned. Input tensors of rank zero are
-  valid.
+  valid. Reduction over an empty set of values yields 0.
 
-  The above behavior is similar to numpy, with the exception that numpy defaults keepdims to
-  False instead of True.
+
+  The above behavior is similar to numpy, with the exception that numpy defaults `keepdims`
+  to `False` instead of `True`.
 
 #### Version
 
@@ -21745,7 +23774,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -21835,6 +23864,36 @@ expect(
     inputs=[data, axes],
     outputs=[reduced],
     name="test_reduce_sum_square_do_not_keepdims_random",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_set</summary>
+
+```python
+shape = [2, 0, 4]
+keepdims = 1
+reduced_shape = [2, 1, 4]
+
+node = onnx.helper.make_node(
+    "ReduceSumSquare",
+    inputs=["data", "axes"],
+    outputs=["reduced"],
+    keepdims=keepdims,
+)
+
+data = np.array([], dtype=np.float32).reshape(shape)
+axes = np.array([1], dtype=np.int64)
+reduced = np.array(np.zeros(reduced_shape, dtype=np.float32))
+
+expect(
+    node,
+    inputs=[data, axes],
+    outputs=[reduced],
+    name="test_reduce_sum_square_empty_set",
 )
 ```
 
@@ -21933,6 +23992,121 @@ expect(
 </details>
 
 
+### <a name="RegexFullMatch"></a><a name="regexfullmatch">**RegexFullMatch**</a>
+
+  RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>pattern</tt> : string</dt>
+<dd>Regex pattern to match on. This must be valid RE2 syntax.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor with strings to match on.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Tensor of bools indicating if each input string fully matches the regex pattern specified.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>Inputs must be UTF-8 strings</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Outputs are bools and are True where there is a full regex match and False otherwise.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"www\.[\w.-]+\.\bcom\b",
+)
+
+x = np.array(["www.google.com", "www.facebook.com", "www.bbc.co.uk"]).astype(
+    object
+)
+result = np.array([True, True, False])
+expect(node, inputs=[x], outputs=[result], name="test_regex_full_match_basic")
+```
+
+</details>
+
+
+<details>
+<summary>match_email_domain</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+)
+
+x = np.array(
+    [
+        ["account@gmail.com", "account@hotmail.com"],
+        ["not email", "account2@yahoo.com"],
+    ]
+).astype(object)
+result = np.array([[True, False], [False, True]])
+expect(
+    node,
+    inputs=[x],
+    outputs=[result],
+    name="test_regex_full_match_email_domain",
+)
+```
+
+</details>
+
+
+<details>
+<summary>match_empty</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RegexFullMatch",
+    inputs=["X"],
+    outputs=["Y"],
+    pattern=r"(\W|^)[\w.\-]{0,25}@(yahoo|gmail)\.com(\W|$)",
+)
+
+x = np.array([[], []]).astype(object)
+result = np.array([[], []]).astype(bool)
+expect(
+    node,
+    inputs=[x],
+    outputs=[result],
+    name="test_regex_full_match_empty",
+)
+```
+
+</details>
+
+
 ### <a name="Relu"></a><a name="relu">**Relu**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
@@ -22005,9 +24179,9 @@ expect(node, inputs=[x], outputs=[y], name="test_relu")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Reshape-1">1</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-14">14</a>
+Other versions of this operator: <a href="Changelog.md#Reshape-1">1</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-19">19</a>
 
 #### Attributes
 
@@ -22035,7 +24209,7 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -24722,7 +26896,7 @@ expect(
 
   Round takes one input Tensor and rounds the values, element-wise, meaning
   it finds the nearest integer for each value.
-  In case of halfs, the rule is to round them to the nearest even integer.
+  In case of halves, the rule is to round them to the nearest even integer.
   If input x is integral, +0, -0, NaN,  or infinite, x itself is returned.
   The output tensor has the same shape and type as the input.
 
@@ -24903,7 +27077,7 @@ node = onnx.helper.make_node(
 a0 = 0.5
 a1 = 0.5
 window = a0 + a1 * np.cos(
-    2 * 3.1415 * np.arange(0, length, 1, dtype=np.float32) / length
+    2 * np.pi * np.arange(0, length, 1, dtype=np.float32) / length
 )
 nstfts = 1 + (signal.shape[1] - window.shape[0]) // step
 
@@ -25053,9 +27227,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-16">16</a>
+Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-19">19</a>
 
 #### Attributes
 
@@ -25091,8 +27265,8 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
-<dd>All Tensor types up to IRv9.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dd>All Tensor types up to IRv10.</dd>
 </dl>
 
 
@@ -25110,7 +27284,9 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="C
 sum_in = onnx.helper.make_tensor_value_info(
     "sum_in", onnx.TensorProto.FLOAT, [2]
 )
-next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info(  # noqa: A001
+    "next", onnx.TensorProto.FLOAT, [2]
+)
 sum_out = onnx.helper.make_tensor_value_info(
     "sum_out", onnx.TensorProto.FLOAT, [2]
 )
@@ -25167,7 +27343,9 @@ expect(
 sum_in = onnx.helper.make_tensor_value_info(
     "sum_in", onnx.TensorProto.FLOAT, [2]
 )
-next = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info(  # noqa: A001
+    "next", onnx.TensorProto.FLOAT, [2]
+)
 sum_out = onnx.helper.make_tensor_value_info(
     "sum_out", onnx.TensorProto.FLOAT, [2]
 )
@@ -25364,8 +27542,8 @@ expect(
   ```
   When `reduction` is set to some reduction function `f`, the update corresponding to the [i][j] entry is performed as below:
   ```
-  output[indices[i][j]][j] += f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
-  output[i][indices[i][j]] += f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
+  output[indices[i][j]][j] = f(output[indices[i][j]][j], updates[i][j]) if axis = 0,
+  output[i][indices[i][j]] = f(output[i][indices[i][j]], updates[i][j]) if axis = 1,
   ```
   where the `f` is `+`, `*`, `max` or `min` as specified.
 
@@ -26759,9 +28937,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-15">15</a>
+Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-19">19</a>
 
 #### Attributes
 
@@ -26789,7 +28967,7 @@ Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain output to int64 tensor.</dd>
@@ -27142,9 +29320,9 @@ expect(node, inputs=[x], outputs=[y], name="test_sinh")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Size-1">1</a>, <a href="Changelog.md#Size-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Size-1">1</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-19">19</a>
 
 #### Inputs
 
@@ -27163,7 +29341,7 @@ Other versions of this operator: <a href="Changelog.md#Size-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
@@ -27209,16 +29387,16 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
   Slice uses the `starts`, `ends`, `axes` and `steps` inputs to select a sub-tensor
   of its input `data` tensor.
 
-  An effective `start[i]`, `end[i]`, and `step[i]` must be computed for each `i`
+  An effective `starts[i]`, `ends[i]`, and `steps[i]` must be computed for each `i`
   in `[0, ... r-1]` where `r = rank(input)` as follows:
 
   If `axes` are omitted, they are set to `[0, ..., r-1]`.
   If `steps` are omitted, they are set to `[1, ..., 1]` of length `len(starts)`
 
-  The effective values are initialized as `start[i] = 0`, `end[i] = dims[i]` where
-  `dims` are the dimensions of `input` and `step[i] = `1.
+  The effective values are initialized as `start[i] = 0`, `ends[i] = dims[i]` where
+  `dims` are the dimensions of `input` and `steps[i] = 1`.
 
-  All negative elements of `axes` are made non-negatve by adding `r` to them, where
+  All negative elements of `axes` are made non-negative by adding `r` to them, where
   `r =rank(input)`.
 
   All negative values in `starts[i]` and `ends[i]` have `dims[axes[i]]` added to them,
@@ -27228,10 +29406,10 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
 
   The clamping for the adjusted `ends[i]` depends on the sign of `steps[i]` and must
   accommodate copying 0 through `dims[axes[i]]` elements, so for positive stepping
-  `end[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
+  `ends[axes[i]]` is clamped to `[0, dims[axes[i]]]`, while for negative stepping it
   is clamped to `[-1, dims[axes[i]]-1]`.
 
-  Finally, `step[axes[i]] = steps[i]`.
+  Finally, `steps[axes[i]] = steps[i]`.
 
   For slicing to the end of a dimension with unknown size, it is recommended to pass
   in `INT_MAX` when slicing forward and 'INT_MIN' when slicing backward.
@@ -27670,7 +29848,7 @@ expect(node, inputs=[x], outputs=[y], name="test_softmax_default_axis")
   * shape(labels): (N) where each value is 0 <= labels[i] <= C-1, or (N, D1, D2,..., Dk),
     with K >= 1 in case of K-dimensional loss.
 
-  The loss for one sample, l_i, can caculated as follows:
+  The loss for one sample, l_i, can calculated as follows:
   ```
   l[i][d1][d2]...[dk] = -y[i][c][d1][d2]..[dk], where i is the index of classes.
   ```
@@ -29916,9 +32094,9 @@ expect(node, inputs=[x], outputs=[y], name="test_sqrt")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href="Changelog.md#Squeeze-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-13">13</a>
 
 #### Inputs (1 - 2)
 
@@ -29939,8 +32117,8 @@ Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dd>Constrain input and output types to all tensor types up to IRv10.</dd>
 </dl>
 
 
@@ -29978,6 +32156,103 @@ x = np.random.randn(1, 3, 1, 5).astype(np.float32)
 axes = np.array([-2], dtype=np.int64)
 y = np.squeeze(x, axis=-2)
 expect(node, inputs=[x, axes], outputs=[y], name="test_squeeze_negative_axes")
+```
+
+</details>
+
+
+### <a name="StringConcat"></a><a name="stringconcat">**StringConcat**</a>
+
+  StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support)
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T</dt>
+<dd>Tensor to prepend in concatenation</dd>
+<dt><tt>Y</tt> (non-differentiable) : T</dt>
+<dd>Tensor to append in concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> (non-differentiable) : T</dt>
+<dd>Concatenated string tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>Inputs and outputs must be UTF-8 strings</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>stringconcat</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringConcat",
+    inputs=["x", "y"],
+    outputs=["result"],
+)
+x = np.array(["abc", "def"]).astype("object")
+y = np.array([".com", ".net"]).astype("object")
+result = np.array(["abc.com", "def.net"]).astype("object")
+
+expect(node, inputs=[x, y], outputs=[result], name="test_string_concat")
+
+x = np.array(["cat", "dog", "snake"]).astype("object")
+y = np.array(["s"]).astype("object")
+result = np.array(["cats", "dogs", "snakes"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_broadcasting",
+)
+
+x = np.array("cat").astype("object")
+y = np.array("s").astype("object")
+result = np.array("cats").astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_zero_dimensional",
+)
+
+x = np.array(["abc", ""]).astype("object")
+y = np.array(["", "abc"]).astype("object")
+result = np.array(["abc", "abc"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_empty_string",
+)
+
+x = np.array(["的", "中"]).astype("object")
+y = np.array(["的", "中"]).astype("object")
+result = np.array(["的的", "中中"]).astype("object")
+
+expect(
+    node,
+    inputs=[x, y],
+    outputs=[result],
+    name="test_string_concat_utf8",
+)
 ```
 
 </details>
@@ -30198,6 +32473,226 @@ expect(
     inputs=[input],
     outputs=[output],
     name="test_strnormalizer_nostopwords_nochangecase",
+)
+```
+
+</details>
+
+
+### <a name="StringSplit"></a><a name="stringsplit">**StringSplit**</a>
+
+  StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
+
+  The first output of this operator is a tensor of strings representing the substrings from splitting each input string on the `delimiter` substring. This tensor has one additional rank compared to the input tensor in order to store the substrings for each input element (where the input tensor is not empty). Note that, in order to ensure the same number of elements are present in the final dimension, this tensor will pad empty strings as illustrated in the examples below. Consecutive delimiters are not grouped together and are deemed to delimit empty strings, except if the `delimiter` is unspecified or is the empty string (""). In the case where the `delimiter` is unspecified or the empty string, consecutive whitespace characters are regarded as a single separator and leading or trailing whitespace is removed in the output.
+
+  The second output tensor represents the number of substrings generated. `maxsplit` can be used to limit the number of splits performed - after the `maxsplit`th split if the string is not fully split, the trailing suffix of input string after the final split point is also added. For elements where fewer splits are possible than specified in `maxsplit`, it has no effect.
+
+#### Version
+
+This version of the operator has been available since version 20 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>delimiter</tt> : string</dt>
+<dd>Delimiter to split on. If left unset or set to the empty string (""), the input is split on consecutive whitespace.</dd>
+<dt><tt>maxsplit</tt> : int</dt>
+<dd>Maximum number of splits (from left to right). If left unset (or if the number of possible splits are less than maxsplit), it will make as many splits as possible. Note that the maximum possible number of substrings returned with `maxsplit` specified is `maxsplit+1` since the remaining suffix after the `maxsplit`th split is included in the output.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dd>Tensor of strings to split.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dd>Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.</dd>
+<dt><tt>Z</tt> (non-differentiable) : T3</dt>
+<dd>The number of substrings generated for each input element.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string)</dt>
+<dd>The input must be a UTF-8 string tensor</dd>
+<dt><tt>T2</tt> : tensor(string)</dt>
+<dd>Tensor of substrings.</dd>
+<dt><tt>T3</tt> : tensor(int64)</dt>
+<dd>The number of substrings generated.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    delimiter=".",
+    maxsplit=None,
+)
+
+x = np.array(["abc.com", "def.net"]).astype(object)
+
+substrings = np.array([["abc", "com"], ["def", "net"]]).astype(object)
+
+length = np.array([2, 2], dtype=np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_basic",
+)
+```
+
+</details>
+
+
+<details>
+<summary>consecutive_delimiters</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    delimiter="-",
+    maxsplit=None,
+)
+
+x = np.array(["o-n-n--x-", "o-n----nx"]).astype(object)
+
+substrings = np.array(
+    [["o", "n", "n", "", "x", ""], ["o", "n", "", "", "", "nx"]]
+).astype(object)
+
+length = np.array([6, 6], dtype=np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_consecutive_delimiters",
+)
+```
+
+</details>
+
+
+<details>
+<summary>empty_string_delimiter</summary>
+
+```python
+for delimiter, test_name in (
+    ("", "test_string_split_empty_string_delimiter"),
+    (None, "test_string_split_no_delimiter"),
+):
+    node = onnx.helper.make_node(
+        "StringSplit",
+        inputs=["x"],
+        outputs=["substrings", "length"],
+        delimiter=delimiter,
+        maxsplit=None,
+    )
+
+    x = np.array(
+        ["hello world !", "  hello   world !", " hello world   ! "]
+    ).astype(object)
+
+    substrings = np.array(
+        [
+            ["hello", "world", "!"],
+            ["hello", "world", "!"],
+            ["hello", "world", "!"],
+        ]
+    ).astype(object)
+
+    length = np.array([3, 3, 3], dtype=np.int64)
+
+    expect(
+        node,
+        inputs=[x],
+        outputs=[substrings, length],
+        name=test_name,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>empty_string_split</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    delimiter=None,
+    maxsplit=None,
+)
+
+x = np.array([]).astype(object)
+
+substrings = np.array([]).astype(object).reshape(0, 0)
+
+length = np.array([], dtype=np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_empty_tensor",
+    output_type_protos=[
+        onnx.helper.make_tensor_type_proto(onnx.TensorProto.STRING, (0, None)),
+        None,
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>maxsplit</summary>
+
+```python
+node = onnx.helper.make_node(
+    "StringSplit",
+    inputs=["x"],
+    outputs=["substrings", "length"],
+    maxsplit=2,
+)
+
+x = np.array(
+    [["hello world", "def.net"], ["o n n x", "the quick brown fox"]]
+).astype(object)
+
+substrings = np.array(
+    [
+        [["hello", "world", ""], ["def.net", "", ""]],
+        [["o", "n", "n x"], ["the", "quick", "brown fox"]],
+    ]
+).astype(object)
+
+length = np.array([[2, 1], [3, 3]], np.int64)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[substrings, length],
+    name="test_string_split_maxsplit",
 )
 ```
 
@@ -31118,7 +33613,7 @@ expect(
 ```python
 axis = 1
 largest = 0
-sorted = 1
+sorted = 1  # noqa: A001
 k = 3
 
 node = onnx.helper.make_node(
@@ -31169,15 +33664,15 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>, <a href="Changelog.md#Transpose-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>perm</tt> : list of ints</dt>
-<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given.</dd>
+<dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given. Its length must be equal to the rank of the input.</dd>
 </dl>
 
 #### Inputs
@@ -31197,7 +33692,7 @@ Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -31849,8 +34344,8 @@ expect(node, inputs=[x, k], outputs=[y], name="test_triu_zero")
 
   This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
   The first output tensor 'Y' contains all unique values or subtensors of the input.
-  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurance in 'X'..
-  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'. ".
+  The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
+  The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
   The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
 
   Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
@@ -31968,7 +34463,7 @@ This version of the operator has been available since version 11 of the default 
 <dt><tt>Y</tt> (non-differentiable) : T</dt>
 <dd>A tensor of the same type as 'X' containing all the unique values or subtensors sliced along a provided 'axis' in 'X', either sorted or maintained in the same order they occur in input 'X'</dd>
 <dt><tt>indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurance in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
+<dd>A 1-D INT64 tensor containing indices of 'Y' elements' first occurrence in 'X'. When 'axis' is provided, it contains indices to subtensors in input 'X' on the 'axis'. When 'axis' is not provided, it contains indices to values in the flattened input tensor. </dd>
 <dt><tt>inverse_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D INT64 tensor containing, for elements of 'X', its corresponding indices in 'Y'. When 'axis' is provided, it contains indices to subtensors in output 'Y' on the 'axis'. When 'axis' is not provided, it contains indices to values in output 'Y'. </dd>
 <dt><tt>counts</tt> (optional, non-differentiable) : tensor(int64)</dt>
@@ -32201,9 +34696,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 21 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a href="Changelog.md#Unsqueeze-11">11</a>
+Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-13">13</a>
 
 #### Inputs
 
@@ -32224,8 +34719,8 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dd>Constrain input and output types to all tensor types up to IRv10.</dd>
 </dl>
 
 

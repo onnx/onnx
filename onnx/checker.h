@@ -5,8 +5,11 @@
 #pragma once
 
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/onnx-data_pb.h"
@@ -157,7 +160,10 @@ void check_model_local_functions(
 
 void check_model(const ModelProto& model, bool full_check = false, bool skip_opset_compatibility_check = false);
 void check_model(const std::string& model_path, bool full_check = false, bool skip_opset_compatibility_check = false);
-
+std::string resolve_external_data_location(
+    const std::string& base_dir,
+    const std::string& location,
+    const std::string& tensor_name);
 bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace checker

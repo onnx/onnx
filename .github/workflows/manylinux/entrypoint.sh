@@ -19,7 +19,7 @@ if [ "$(uname -m)" == "aarch64" ]; then
  PIP_INSTALL_COMMAND="$PY_VERSION -m pip install --no-cache-dir -q"
  PYTHON_COMMAND="$PY_VERSION"
 else
- declare -A python_map=( ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311")
+ declare -A python_map=( ["3.8"]="cp38-cp38" ["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312")
  PY_VER=${python_map[$PY_VERSION]}
  PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir -q"
  PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
@@ -42,9 +42,10 @@ $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python re
 
 # Build wheels
 if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
-    $PYTHON_COMMAND setup.py bdist_wheel --weekly_build || { echo "Building wheels failed."; exit 1; }
+    sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+    ONNX_PREVIEW_BUILD=1 $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
 else
-    $PYTHON_COMMAND setup.py bdist_wheel || { echo "Building wheels failed."; exit 1; }
+    $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
 fi
 
 # Bundle external shared libraries into the wheels

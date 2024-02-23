@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
@@ -163,25 +164,23 @@ void convPoolShapeInference(
       continue;
     }
     // how big is the input, including padding
-    int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
-    effective_input_size += pads[i];
-    effective_input_size += pads[i + kernel_shape_size];
+    int64_t input_size = input_shape.dim(2 + i).dim_value();
+    int64_t effective_input_size = input_size + pads[i] + pads[i + kernel_shape_size];
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
-    // how many times we can move the kernel from it's initial position, based
-    // on the stride
-    int64_t strided_kernel_positions;
+    int64_t output_size =
+        (effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
+    if (ceil_mode == 1 && (output_size - 1) * strides[i] >= (input_size + pads[i])) {
+      // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are
+      // ignored." (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d). this code follows the
+      // same logic as PyTorch's C++ implementation:
+      // https://github.com/pytorch/pytorch/blob/f1cdb39da3850c47d51ec6a5b1ae864c32b3accf/aten/src/ATen/native/Pool.h#L54C21-L54C21
+      --output_size;
+    }
 
-    if (ceil_mode == 1)
-      strided_kernel_positions =
-          (int64_t)(std::ceil((effective_input_size - effective_kernel_shape[i]) / float(strides[i])));
-    else
-      strided_kernel_positions = (effective_input_size - effective_kernel_shape[i]) / strides[i];
-
-    // add in the initial position
-    newdim->set_dim_value(1 + strided_kernel_positions);
+    newdim->set_dim_value(output_size);
   }
 
   if (ctx.getNumOutputs() > 1) {
@@ -212,20 +211,27 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
  subset of the input tensor according to the kernel size and downsampling the
- data into the output tensor Y for further processing. The output spatial shape will be following:
+ data into the output tensor Y for further processing. The output spatial shape is calculated differently
+ depending on whether explicit padding is used, where pads is employed, or auto padding is used, where auto_pad is utilized.
+ With explicit padding (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html?highlight=maxpool#torch.nn.MaxPool2d):
  ```
- output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+ output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
  ```
  or
  ```
- output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
+ output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
  ```
- if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+ if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
- `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+ `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
  ```
  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - {kernelSpatialShape} + 1) / strides_spatial_shape[i])
  SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+ ```
+ or when ceil_mode is disabled (https://www.tensorflow.org/api_docs/python/tf/keras/layers/AveragePooling2D):
+ ```
+ VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i]) + 1
+ SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor((input_spatial_shape[i] - 1) / strides_spatial_shape[i]) + 1
  ```
  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
  ```
@@ -448,11 +454,11 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 }
 
-static const char* MaxUnpool_ver9_doc = R"DOC(
+static const char* MaxUnpool_ver11_doc = R"DOC(
 MaxUnpool essentially computes the partial inverse of the MaxPool op.
  The input information to this op is typically the output information from a MaxPool op. The first
  input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
- from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
+ from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corresponding
  to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
  The third (optional) input is a tensor that specifies the output size of the unpooling operation.
 
@@ -465,7 +471,7 @@ MaxUnpool can produce the same output size for several input sizes, which makes 
  known/predictable size.
 
 In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
- which define the exact unpooling op. The attributes typically have the same values as the corrsponding
+ which define the exact unpooling op. The attributes typically have the same values as the corresponding
  pooling op that the unpooling op is trying to invert.
 )DOC";
 
@@ -473,7 +479,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
     11,
     OpSchema()
-        .SetDoc(MaxUnpool_ver9_doc)
+        .SetDoc(MaxUnpool_ver11_doc)
         .Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS)
         .Attr(
             "strides",
@@ -1328,7 +1334,8 @@ output_shape can also be explicitly specified in which case pads values are auto
     schema.Attr(
         "output_shape",
         "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
-        "pads values are ignored. See doc for details for equations to generate pads",
+        "pads values are ignored. See doc for details for equations to generate pads. Note that the output_shape attribute value "
+        "should not include dimensions for batch size and channels, which are automatically inferred.",
         AttributeProto::INTS,
         OPTIONAL_VALUE);
     schema.Attr(
@@ -1648,8 +1655,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             0.9f)
         .Attr(
             "training_mode",
-            "If set to true, it indicates BatchNormalization is being used for training, and outputs 1, "
-            "2, 3, and 4 would be populated.",
+            "If set to true, it indicates BatchNormalization is being used for training, and outputs 1 "
+            "and 2 are to be computed.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
@@ -1988,7 +1995,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* Flatten_ver13_doc = R"DOC(
+static const char* Flatten_ver11_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -1996,9 +2003,9 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    13,
+    21,
     OpSchema()
-        .SetDoc(Flatten_ver13_doc)
+        .SetDoc(Flatten_ver11_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -2012,7 +2019,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output to all tensor types.")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types_ir10(),
+            "Constrain input and output to all tensor types up to IRv10.")
         .Attr(
             "axis",
             "Indicate up to which input dimensions "
@@ -2223,75 +2233,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
-static const char* StringNormalizer_ver10_doc = R"DOC(
-StringNormalization performs string operations for basic cleaning.
-This operator has only one input (denoted by X) and only one output
-(denoted by Y). This operator first examines the elements in the X,
-and removes elements specified in "stopwords" attribute.
-After removing stop words, the intermediate result can be further lowercased,
-uppercased, or just returned depending the "case_change_action" attribute.
-This operator only accepts [C]- and [1, C]-tensor.
-If all elements in X are dropped, the output will be the empty value of string tensor with shape [1]
-if input shape is [C] and shape [1, 1] if input shape is [1, C].
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    StringNormalizer,
-    10,
-    OpSchema()
-        .Input(0, "X", "UTF-8 strings to normalize", "tensor(string)")
-        .Output(0, "Y", "UTF-8 Normalized strings", "tensor(string)")
-        .Attr(
-            std::string("case_change_action"),
-            std::string("string enum that cases output to be lowercased/uppercases/unchanged."
-                        " Valid values are \"LOWER\", \"UPPER\", \"NONE\". Default is \"NONE\""),
-            AttributeProto::STRING,
-            std::string("NONE"))
-        .Attr(
-            std::string("is_case_sensitive"),
-            std::string("Boolean. Whether the identification of stop words in X is case-sensitive. Default is false"),
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Attr(
-            "stopwords",
-            "List of stop words. If not set, no word would be removed from X.",
-            AttributeProto::STRINGS,
-            OPTIONAL_VALUE)
-        .Attr(
-            "locale",
-            "Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased."
-            "Default en_US or platform specific equivalent as decided by the implementation.",
-            AttributeProto::STRING,
-            OPTIONAL_VALUE)
-        .SetDoc(StringNormalizer_ver10_doc)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
-          output_elem_type->set_elem_type(TensorProto::STRING);
-          if (!hasInputShape(ctx, 0)) {
-            return;
-          }
-          TensorShapeProto output_shape;
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-          auto dim_size = input_shape.dim_size();
-          // Last axis dimension is unknown if we have stop-words since we do
-          // not know how many stop-words are dropped
-          if (dim_size == 1) {
-            // Unknown output dimension
-            output_shape.add_dim();
-          } else if (dim_size == 2) {
-            // Copy B-dim
-            auto& b_dim = input_shape.dim(0);
-            if (!b_dim.has_dim_value() || b_dim.dim_value() != 1) {
-              fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
-            }
-            *output_shape.add_dim() = b_dim;
-            output_shape.add_dim();
-          } else {
-            fail_shape_inference("Input shape must have either [C] or [1,C] dimensions where C > 0");
-          }
-          updateOutputShape(ctx, 0, output_shape);
-        }));
-
 static const char* mvn_ver13_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
       on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
@@ -2309,7 +2250,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axes",
             "A list of integers, along which to reduce. The default is to "
-            "caculate along axes [0,2,3] for calculating mean and variance "
+            "calculate along axes [0,2,3] for calculating mean and variance "
             "along each channel. Two variables with the same C-coordinate "
             "are associated with the same mean and variance.",
             AttributeProto::INTS,
@@ -2576,7 +2517,9 @@ static const char* LayerNormalization_ver17_doc = R"DOC(
       Let `d[i]` indicate the i-th dimension of `X`.
       If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
       the shape of `Mean` and `InvStdDev` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
-      `Y` and `X` have the same shape.
+      `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+      (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
+      for more details please check [the doc](Broadcasting.md).
 )DOC";
 
 bool BuildContextDependentFunctionBodyLayerNormalization(
@@ -2690,7 +2633,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(LayerNormalization_ver17_doc)
         .Attr(
             "axis",
-            "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r]. "
+            "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). "
             "Negative value means counting dimensions from the back.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
@@ -2765,7 +2708,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* GroupNormalization_ver18_doc = R"DOC(
+static const char* GroupNormalization_ver21_doc = R"DOC(
 A GroupNormalization function. Carries out group normalization as described in
 the paper https://arxiv.org/abs/1803.08494
 
@@ -2778,6 +2721,14 @@ where the mean and variance are computed per instance per group of channels, and
 groups `num_groups` should be divisible by the number of channels so that there are
 an equal number of channels per group.
 
+The overall computation has two stages: the first stage normalizes the elements to
+have zero mean and unit variance for each instance in each group, and the second
+stage scales and shifts the results of the first stage. The floating-point precision
+used in the first stage is determined by the `stash_type` attribute. For example,
+if `stash_type` is 1, the operator casts all input variables to 32-bit float,
+performs the computation, and finally casts the normalized results back to the
+original type of `X`. The second stage does not depend on `stash_type`.
+
 When the number of groups is the same as the number of channels, this operator is
 equivalent to InstanceNormalization. When there is only one group, this operator
 is equivalent to LayerNormalization.
@@ -2785,15 +2736,20 @@ is equivalent to LayerNormalization.
 
 ONNX_OPERATOR_SET_SCHEMA(
     GroupNormalization,
-    18,
+    21,
     OpSchema()
-        .SetDoc(GroupNormalization_ver18_doc)
+        .SetDoc(GroupNormalization_ver21_doc)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "num_groups",
             "The number of groups of channels. It should be a divisor of the number of channels `C`.",
             AttributeProto::INT,
             true)
+        .Attr(
+            "stash_type",
+            "The floating-point precision used in stage one of the computation.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
         .Input(
             0,
             "X",
@@ -2806,24 +2762,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .Input(
-            1,
-            "scale",
-            "Scale tensor of shape `(num_groups)`.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            2,
-            "bias",
-            "Bias tensor of shape `(num_groups)`.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
+        .Input(1, "scale", "Scale tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(2, "bias", "Bias tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
             "Y",
@@ -2833,17 +2773,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
-            "Constrain input and output types to float tensors.")
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
               auto* tp = ctx.getInputType(0);
               if ((tp == nullptr) || (!tp->has_tensor_type()))
                 return false;
-              int64_t T = tp->tensor_type().elem_type();
+              int64_t in_type = tp->tensor_type().elem_type();
 
               auto* epsilon_attr = ctx.getAttribute("epsilon");
               float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
@@ -2852,10 +2789,21 @@ ONNX_OPERATOR_SET_SCHEMA(
                 return false;
               int64_t num_groups = num_groups_attr->i();
 
+              auto stash_type_attr = ctx.getAttribute("stash_type");
+              int64_t stash_type = (stash_type_attr != nullptr)
+                  ? stash_type_attr->i()
+                  : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+              if ((stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+                return false; // Error
+
               FunctionBuilder builder(functionProto);
               builder.Const1D("FloatEpsilon", epsilon)
-                  .Add("Epsilon = Cast (FloatEpsilon)", "to", T)
-                  .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
+                  .Add("Epsilon = Cast (FloatEpsilon)", "to", stash_type)
+                  .Add("XU = Cast (X)", "to", stash_type)
+                  .Add("XShape = Shape (XU)") // shape of input tensor: 1D tensor
                   .Add("C = Shape <start = 1, end = 2> (X)")
                   .Const1D("NumGroups", num_groups)
                   .Add("GroupSize = Div (C, NumGroups)")
@@ -2864,11 +2812,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 
                   // NewShape = [N, num_groups, group_size, H, W, (...)]
                   .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, InstanceShape)")
-                  .Add("XReshaped = Reshape (X, NewShape)")
+                  .Add("XReshaped = Reshape (XU, NewShape)")
 
                   // Flatten into 3D tensor: [N, num_groups, group_size x H x W (x ...)]
                   .Add("Shape3D = Constant <value_ints = [0, 0, -1]> ()")
-                  .Add("X3D = Reshape(XReshaped, Shape3D)")
+                  .Add("X3D = Reshape (XReshaped, Shape3D)")
 
                   // Calculate statistics
                   .Const1D("Axes2", (int64_t)2)
@@ -2880,17 +2828,22 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("VarPlusEpsilon = Add (Var, Epsilon)")
                   .Add("StdDev = Sqrt (VarPlusEpsilon)")
                   .Add("Deviation = Sub (X3D, Mean)")
-                  .Add("Normalized = Div (Deviation, StdDev)")
+                  .Add("NormalizedU = Div (Deviation, StdDev)")
 
-                  // Reshape scale and bias for broadcasting
+                  // Reshape to [N, C, H x W (x ...)] and cast to original type
+                  .Add("NormalizedOriginalShape = Reshape (NormalizedU, XShape)")
+                  .Add("NormalizedNC = Reshape (NormalizedOriginalShape, Shape3D)")
+                  .Add("NormalizedT = Cast (NormalizedNC)", "to", in_type)
+
+                  // Reshape scale and bias to [1, C, 1] for broadcasting
                   .Add("ScaleShape = Constant <value_ints = [1, -1, 1]> ()")
-                  .Add("ScaleT = Cast (scale)", "to", T)
-                  .Add("BiasT = Cast (bias)", "to", T)
+                  .Add("ScaleT = Cast (scale)", "to", in_type)
+                  .Add("BiasT = Cast (bias)", "to", in_type)
                   .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
                   .Add("BiasReshaped = Reshape (BiasT, ScaleShape)")
 
                   // Calculate scaled and biased output
-                  .Add("Scaled = Mul (ScaleReshaped, Normalized)")
+                  .Add("Scaled = Mul (ScaleReshaped, NormalizedT)")
                   .Add("Biased = Add (Scaled, BiasReshaped)")
                   .Add("Y = Reshape (Biased, XShape)");
 

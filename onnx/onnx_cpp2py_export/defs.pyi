@@ -150,7 +150,7 @@ class OpSchema:
         def __init__(
             self,
             name: str,
-            type: OpSchema.AttrType,
+            type: OpSchema.AttrType,  # noqa: A002
             description: str = "",
             *,
             required: bool = True,

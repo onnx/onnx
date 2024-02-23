@@ -5,16 +5,17 @@
  */
 
 #include <assert.h>
+
 #include "onnx/defs/controlflow/utils.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
-static std::vector<std::string> control_flow_types_ir9() {
-  auto t = OpSchema::all_tensor_types_ir9();
-  auto s = OpSchema::all_tensor_sequence_types_ir9();
-  auto o = OpSchema::all_optional_types_ir9();
+static std::vector<std::string> control_flow_types_ir10() {
+  auto t = OpSchema::all_tensor_types_ir10();
+  auto s = OpSchema::all_tensor_sequence_types_ir10();
+  auto o = OpSchema::all_optional_types_ir10();
   t.insert(t.end(), s.begin(), s.end());
   t.insert(t.end(), o.begin(), o.end());
   return t;
@@ -22,10 +23,10 @@ static std::vector<std::string> control_flow_types_ir9() {
 
 ONNX_OPERATOR_SET_SCHEMA(
     If,
-    19,
+    21,
     OpSchema()
         .SetDoc("If conditional")
-        .Input(0, "cond", "Condition for the if", "B")
+        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
         .Output(
             0,
             "outputs",
@@ -62,12 +63,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint(
             "V",
-            control_flow_types_ir9(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9.")
+            control_flow_types_ir10(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* Loop_ver19_doc = R"DOC(
+static const char* Loop_ver16_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -207,9 +208,9 @@ The input/output of subgraph (produced by loop node) matching is based on order 
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
-    19,
+    21,
     OpSchema()
-        .SetDoc(Loop_ver19_doc)
+        .SetDoc(Loop_ver16_doc)
         .Input(
             0,
             "M",
@@ -252,13 +253,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint(
             "V",
-            control_flow_types_ir9(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv9.")
+            control_flow_types_ir10(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.")
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* scan_19_doc = R"DOC(
+static const char* scan_16_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip, and is intended to enable
@@ -384,9 +385,9 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
-    19,
+    21,
     OpSchema()
-        .SetDoc(scan_19_doc)
+        .SetDoc(scan_16_doc)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -447,7 +448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "range is [-r, r-1].",
             AttributeProto::INTS,
             false)
-        .TypeConstraint("V", OpSchema::all_tensor_types_ir9(), "All Tensor types up to IRv9.")
+        .TypeConstraint("V", OpSchema::all_tensor_types_ir10(), "All Tensor types up to IRv10.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 } // namespace ONNX_NAMESPACE

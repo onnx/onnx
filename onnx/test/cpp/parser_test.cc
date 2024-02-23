@@ -5,7 +5,6 @@
  */
 
 #include "gtest/gtest.h"
-
 #include "onnx/checker.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
@@ -187,6 +186,10 @@ TEST(ParserTest, AttributeTest) {
   EXPECT_EQ(attr.ref_attr_name(), "xyz");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
 
+  Parse(attr, "x : ints = []");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
+  EXPECT_EQ(attr.ints_size(), 0);
+
   Parse(attr, R"ONNX(
     body = somegraph (float[N] y, float[N] z) => (float[N] w)
       {
@@ -358,6 +361,86 @@ f (y, z) => (w)
   EXPECT_EQ(fp.node_size(), 2);
   EXPECT_EQ(fp.attribute_size(), 0);
   EXPECT_EQ(fp.opset_import_size(), 1);
+}
+
+TEST(ParserTest, FunctionValueInfoTest) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+f (float[N] y, float[N] z) => (float[N] w)
+{
+    x = Add(y, z)
+    w = Mul(x, y)
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
+
+  EXPECT_EQ(fp.input_size(), 2);
+  EXPECT_EQ(fp.output_size(), 1);
+  ASSERT_EQ(fp.value_info_size(), 3);
+  EXPECT_EQ(fp.value_info(0).name(), "y");
+  EXPECT_EQ(fp.value_info(1).name(), "z");
+  EXPECT_EQ(fp.value_info(2).name(), "w");
+}
+
+TEST(ParserTest, FunctionValueInfoTest2) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+f (float[N] y, float[N] z) => (float[N] w)
+<float[N] x>
+{
+    x = Add(y, z)
+    w = Mul(x, y)
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
+
+  EXPECT_EQ(fp.input_size(), 2);
+  EXPECT_EQ(fp.value_info_size(), 4);
+  ASSERT_EQ(fp.output_size(), 1);
+  EXPECT_EQ(fp.value_info(0).name(), "y");
+  EXPECT_EQ(fp.value_info(1).name(), "z");
+  EXPECT_EQ(fp.value_info(2).name(), "w");
+  EXPECT_EQ(fp.value_info(3).name(), "x");
+}
+
+TEST(ParserTest, FunctionValueInfoTest3) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+f (float[N] y, z) => (float[N] w)
+<float[N] x, float[N] t>
+{
+    x = Add(y, z)
+    t = Add(x, x)
+    w = Mul(t, y)
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
+
+  EXPECT_EQ(fp.input_size(), 2);
+  ASSERT_EQ(fp.value_info_size(), 4);
+  EXPECT_EQ(fp.output_size(), 1);
+  EXPECT_EQ(fp.value_info(0).name(), "y");
+  EXPECT_EQ(fp.value_info(1).name(), "w");
+  EXPECT_EQ(fp.value_info(2).name(), "x");
+  EXPECT_EQ(fp.value_info(3).name(), "t");
 }
 
 TEST(ParserTest, InitializerTest) {
@@ -552,6 +635,32 @@ TEST(ParserTest, TypesModelTest2) {
     }
 )ONNX";
   CheckModel(code);
+}
+
+TEST(ParserTest, ExternalDataTest) {
+  const char* code = R"ONNX(
+agraph (float y = {1.0}, float[N] z) => (w) <
+    float[3, 2] m1 = ["location": "weight_1.bin", "offset": "17"],
+    float[2, 1] m2 = {1.0, 2.0}
+>
+{
+    x = Add(y, z)
+    m = Mul(m1, m1)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.input_size(), 2);
+  EXPECT_EQ(graph.output_size(), 1);
+  EXPECT_EQ(graph.initializer_size(), 3); // m1, m2
+  EXPECT_EQ(graph.value_info_size(), 0); // x
+  EXPECT_EQ(graph.initializer().Get(1).data_location(), TensorProto_DataLocation::TensorProto_DataLocation_EXTERNAL);
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(0).key(), "location");
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(0).value(), "weight_1.bin");
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).key(), "offset");
+  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).value(), "17");
 }
 
 } // namespace Test

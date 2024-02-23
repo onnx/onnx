@@ -5,6 +5,7 @@
  */
 
 #include <iostream>
+
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
@@ -17,7 +18,7 @@
 namespace ONNX_NAMESPACE {
 namespace Test {
 
-static void InlineFunctions(ModelProto& model, const char* input) {
+static void InlineFunctions(ModelProto& model, const char* input, const inliner::FunctionIdSet* to_inline = nullptr) {
   OnnxParser parser(input);
   auto status = parser.Parse(model);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -27,13 +28,15 @@ static void InlineFunctions(ModelProto& model, const char* input) {
   shape_inference::InferShapes(model);
 
   // std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
-  inliner::InlineLocalFunctions(model, true);
+  if (to_inline != nullptr)
+    inliner::InlineSelectedFunctions(model, *to_inline);
+  else
+    inliner::InlineLocalFunctions(model, true);
   // std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
 
-  // The following will ensure basic sanity checks hold after inlining, including
+  // The following will ensure basic safety checks hold after inlining, including
   // absence of duplicate names (multiple assignments to same name).
   checker::check_model(model, true, true);
-  // shape_inference::InferShapes(model);
 }
 
 TEST(FunctionInliner, BasicTest) {
@@ -73,6 +76,46 @@ square (x) => (y) {
   InlineFunctions(model, code);
   auto num_nodes = model.graph().node_size();
   ASSERT_EQ(num_nodes, 4);
+  auto num_functions = model.functions_size();
+  ASSERT_EQ(num_functions, 0);
+}
+
+// Test that inlining processes subgraphs.
+TEST(FunctionInliner, SubgraphTest) {
+  const char* code = R"ONNX(
+<
+  ir_version: 8,
+  opset_import: [ "" : 10, "local" : 1 ]
+>
+agraph (bool cond, float[N] X) => (float[N] Y)
+{
+  Y = If (cond) <
+    then_branch = then_graph () => (y) {
+        y = local.square (X)
+    },
+    else_branch = else_graph () => (y) {
+        y = local.square (X)
+    }
+  >
+}
+
+<
+  opset_import: [ "" : 10 ],
+  domain: "local",
+  doc_string: "Function square."
+>
+square (x) => (y) {
+  y = Mul (x, x)
+}
+)ONNX";
+
+  ModelProto model;
+  InlineFunctions(model, code);
+  auto& if_node = model.graph().node(0);
+  auto& graph1 = if_node.attribute(0).g();
+  ASSERT_EQ(graph1.node(0).op_type(), "Mul");
+  auto& graph2 = if_node.attribute(1).g();
+  ASSERT_EQ(graph2.node(0).op_type(), "Mul");
   auto num_functions = model.functions_size();
   ASSERT_EQ(num_functions, 0);
 }
@@ -176,7 +219,7 @@ bar (x) => (y) {
 
   // The first node's call, to foo, must be inlined.
   auto& first_node = model.graph().node(0);
-  // Check that it is still a call to foo
+  // Check that it is a call to Add
   ASSERT_EQ(first_node.op_type(), "Add");
 
   // The second node's call, to bar, must be inlined.
@@ -185,6 +228,50 @@ bar (x) => (y) {
   ASSERT_EQ(second_node.op_type(), "Add");
 
   ASSERT_EQ(model.functions_size(), 0);
+}
+
+TEST(FunctionInliner, SelectiveInlining) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+agraph (float[N] X) => (float[N] Y)
+{
+  temp = local.foo (X)
+  Y = local.bar (temp)
+}
+
+<opset_import: [ "" : 17], domain: "local">
+foo (x) => (y) {
+  y = Add(x, x)
+}
+
+<opset_import: [ "" : 17, "local" : 1], domain: "local">
+bar (x) => (y) {
+  y = local.foo(x)
+}
+)ONNX";
+
+  ModelProto model;
+  inliner::FunctionIdVector to_inline = {{"local", "foo"}};
+  auto to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline));
+  InlineFunctions(model, code, to_inline_set.get());
+
+  // The first node's call, to foo, must be inlined.
+  auto& first_node = model.graph().node(0);
+  // Check that it is a call to Add
+  ASSERT_EQ(first_node.op_type(), "Add");
+
+  // The second node's call, to bar, must not be inlined.
+  auto& second_node = model.graph().node(1);
+  // Check that it is a call to bar
+  ASSERT_EQ(second_node.op_type(), "bar");
+
+  // foo will be removed, bar will remain, in model.functions()
+  ASSERT_EQ(model.functions_size(), 1);
+
+  auto& bar_node = model.functions(0).node(0);
+  // Check that it is a call to Add, due to inlining
+  // the call to foo in bar.
+  ASSERT_EQ(bar_node.op_type(), "Add");
 }
 
 TEST(FunctionInliner, VersionConversion) {

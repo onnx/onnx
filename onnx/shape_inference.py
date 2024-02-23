@@ -32,11 +32,11 @@ def infer_shapes(
     bug in shape inference), and the result is unspecified.
 
     Arguments:
-        model (Union[ModelProto, bytes], bool, bool, bool) -> ModelProto
-        check_type (bool): Checks the type-equality for input and output
-        strict_mode (bool): Stricter shape inference, it will throw errors if any;
-            Otherwise, simply stop if any error
-        data_prop (bool): Enables data propagation for limited operators to perform shape computation
+        model: ModelProto.
+        check_type: Checks the type-equality for input and output.
+        strict_mode: Stricter shape inference, it will throw errors if any;
+            Otherwise, simply stop if any error.
+        data_prop: Enables data propagation for limited operators to perform shape computation.
 
     Returns:
         (ModelProto) model with inferred shape information
@@ -65,9 +65,11 @@ def infer_shapes_path(
     strict_mode: bool = False,
     data_prop: bool = False,
 ) -> None:
-    """
-    Take model path for shape_inference same as infer_shape; it support >2GB models
-    Directly output the inferred model to the output_path; Default is the original model path
+    """Take model path for shape_inference.
+
+    This function is the same as :func:`infer_shape` but supports >2GB models.
+    The function outputs the inferred model to the `output_path`. The original model path
+    is used if not specified.
     """
     if isinstance(model_path, ModelProto):
         raise TypeError(
@@ -133,7 +135,7 @@ def infer_node_outputs(
         if key in input_sparse_data
     }
 
-    outputs = schema._infer_node_outputs(  # pylint: disable=protected-access
+    outputs = schema._infer_node_outputs(
         node.SerializeToString(),
         passed_input_types,
         passed_input_data,
@@ -149,8 +151,7 @@ def infer_function_output_types(
     input_types: Sequence[TypeProto],
     attributes: Sequence[AttributeProto],
 ) -> list[TypeProto]:
-    """
-    Apply type-and-shape-inference to given function body, with given input types
+    """Apply type-and-shape-inference to given function body, with given input types
     and given input attribute values.
     """
     result = C.infer_function_output_types(

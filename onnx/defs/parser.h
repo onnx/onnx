@@ -8,14 +8,14 @@
 #pragma once
 
 #include <ctype.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 
-#include "onnx/onnx_pb.h"
-
 #include "onnx/common/status.h"
+#include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -33,6 +33,8 @@ using ValueInfoList = google::protobuf::RepeatedPtrField<ValueInfoProto>;
 using TensorList = google::protobuf::RepeatedPtrField<TensorProto>;
 
 using OpsetIdList = google::protobuf::RepeatedPtrField<OperatorSetIdProto>;
+
+using StringStringList = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
 #define CHECK_PARSER_STATUS(status) \
   {                                 \
@@ -92,6 +94,8 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["float8e4m3fnuz"] = TensorProto_DataType_FLOAT8E4M3FNUZ;
     map_["float8e5m2"] = TensorProto_DataType_FLOAT8E5M2;
     map_["float8e5m2fnuz"] = TensorProto_DataType_FLOAT8E5M2FNUZ;
+    map_["uint4"] = TensorProto_DataType_UINT4;
+    map_["int4"] = TensorProto_DataType_INT4;
   }
 
   static bool IsTypeName(const std::string& dtype) {
@@ -134,7 +138,8 @@ class KeyWordMap {
     SEQ_TYPE,
     MAP_TYPE,
     OPTIONAL_TYPE,
-    SPARSE_TENSOR_TYPE
+    SPARSE_TENSOR_TYPE,
+    OVERLOAD_KW
   };
 
   KeyWordMap() {
@@ -150,6 +155,7 @@ class KeyWordMap {
     map_["map"] = KeyWord::MAP_TYPE;
     map_["optional"] = KeyWord::OPTIONAL_TYPE;
     map_["sparse_tensor"] = KeyWord::SPARSE_TENSOR_TYPE;
+    map_["overload"] = KeyWord::OVERLOAD_KW;
   }
 
   static const std::unordered_map<std::string, KeyWord>& Instance() {
@@ -376,6 +382,8 @@ class ParserBase {
   const char* next_;
   const char* end_;
   const char* saved_pos_;
+
+  bool NextIsValidFloatString();
 };
 
 class OnnxParser : public ParserBase {
@@ -385,6 +393,8 @@ class OnnxParser : public ParserBase {
   Status Parse(TensorShapeProto& shape);
 
   Status Parse(TypeProto& typeProto);
+
+  Status Parse(StringStringList& stringStringList);
 
   Status Parse(TensorProto& tensorProto);
 
@@ -421,11 +431,15 @@ class OnnxParser : public ParserBase {
 
   Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
 
-  Status ParseSingleAttributeValue(AttributeProto& attr);
+  Status ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected);
 
   Status Parse(ValueInfoProto& valueinfo);
 
-  Status Parse(ValueInfoList& vilist);
+  Status ParseGraphInputOutput(ValueInfoList& vilist);
+
+  Status ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilist);
+
+  Status Parse(char open, ValueInfoList& vilist, char close);
 
   Status ParseInput(ValueInfoList& vilist, TensorList& initializers);
 

@@ -2,15 +2,17 @@
 
 # SPDX-License-Identifier: Apache-2.0
 
-# pylint: disable=unnecessary-lambda
 
+import itertools
 import random
 import struct
 import unittest
 from typing import Any, List, Tuple
 
 import numpy as np
+import parameterized
 import pytest
+import version_utils
 
 from onnx import (
     AttributeProto,
@@ -25,6 +27,7 @@ from onnx import (
     helper,
     numpy_helper,
 )
+from onnx.reference.op_run import to_array_extended
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -218,6 +221,10 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(len(attr.strings), 0)
         self.assertRaises(ValueError, helper.make_attribute, "empty", [])
 
+    def test_attr_mismatch(self) -> None:
+        with self.assertRaisesRegex(TypeError, "Inferred attribute type 'FLOAT'"):
+            helper.make_attribute("test", 6.4, attr_type=AttributeProto.STRING)
+
     def test_is_attr_legal(self) -> None:
         # no name, no field
         attr = AttributeProto()
@@ -398,10 +405,12 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 17)], 8)
         test([("", 18)], 8)
         test([("", 19)], 9)
+        test([("", 20)], 9)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
         test([("ai.onnx.ml", 3)], 8)
+        test([("ai.onnx.ml", 4)], 9)
         test([("ai.onnx.training", 1)], 7)
         # helper should pick *max* IR version required from all opsets specified.
         test([("", 10), ("ai.onnx.ml", 2)], 6)
@@ -480,10 +489,13 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
     def test_make_float8e4m3fnuz_tensor(self) -> None:
         y = helper.make_tensor(
-            "zero_point", TensorProto.FLOAT8E4M3FNUZ, [5], [0, 0.5, 1, 50000, 10.1]
+            "zero_point",
+            TensorProto.FLOAT8E4M3FNUZ,
+            [7],
+            [0, 0.5, 1, 50000, 10.1, -0.00001, 0.00001],
         )
         ynp = numpy_helper.to_array(y)
-        expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
+        expected = np.array([0, 0.5, 1, 240, 10, 0, 0], dtype=np.float32)
         np.testing.assert_equal(expected, ynp)
 
     def test_make_float8e5m2_tensor(self) -> None:
@@ -496,10 +508,13 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
     def test_make_float8e5m2fnuz_tensor(self) -> None:
         y = helper.make_tensor(
-            "zero_point", TensorProto.FLOAT8E5M2FNUZ, [5], [0, 0.5, 1, 50000, 96]
+            "zero_point",
+            TensorProto.FLOAT8E5M2FNUZ,
+            [7],
+            [0, 0.5, 1, 50000, 96, -0.0000001, 0.0000001],
         )
         ynp = numpy_helper.to_array(y)
-        expected = np.array([0, 0.5, 1, 49152, 96], dtype=np.float32)
+        expected = np.array([0, 0.5, 1, 49152, 96, 0, 0], dtype=np.float32)
         np.testing.assert_equal(expected, ynp)
 
     def test_make_bfloat16_tensor_raw(self) -> None:
@@ -619,6 +634,51 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(expected, ynp)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT4, TensorProto.INT4),
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
+        )
+    )
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.22.0"),
+        "The test requires numpy 1.22.0 or later",
+    )
+    def test_make_4bit_tensor(self, dtype, dims) -> None:
+        type_range = {
+            TensorProto.UINT4: (0, 15),
+            TensorProto.INT4: (-8, 7),
+        }
+        data = np.random.randint(
+            type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
+        )
+        y = helper.make_tensor("y", dtype, data.shape, data)
+        ynp = to_array_extended(y)
+        np.testing.assert_equal(data, ynp)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT4, TensorProto.INT4), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
+        )
+    )
+    def test_make_4bit_raw_tensor(self, dtype, dims) -> None:
+        type_range = {
+            TensorProto.UINT4: (0, 15),
+            TensorProto.INT4: (-8, 7),
+        }
+        data = np.random.randint(
+            type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
+        )
+        packed_data = helper.pack_float32_to_4bit(
+            data, signed=(dtype == TensorProto.INT4)
+        )
+
+        y = helper.make_tensor(
+            "packed_int4", dtype, dims, packed_data.tobytes(), raw=True
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(data, ynp)
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
@@ -784,6 +844,23 @@ class TestPrintableGraph(unittest.TestCase):
             graph_str,
         )
 
+    def test_unknown_dimensions(self) -> None:
+        graph = helper.make_graph(
+            [helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [None])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [None])],  # outputs
+            [
+                helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])
+            ],  # initializers
+            doc_string=None,
+        )
+        model = helper.make_model(graph)
+        checker.check_model(model)
+
+        graph_str = helper.printable_graph(graph)
+        self.assertIn("X[FLOAT, ?]", graph_str)
+
 
 @pytest.mark.parametrize(
     "tensor_dtype",
@@ -797,6 +874,8 @@ class TestPrintableGraph(unittest.TestCase):
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
             TensorProto.STRING,
             TensorProto.COMPLEX64,
             TensorProto.COMPLEX128,
@@ -827,6 +906,8 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
         }
     ],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
@@ -881,6 +962,34 @@ class TestHelperMappingFunctions(unittest.TestCase):
         self.assertEqual(
             helper.tensor_dtype_to_field(TensorProto.BFLOAT16), "int32_data"
         )
+
+
+class TestAttrTypeToStr(unittest.TestCase):
+    @parameterized.parameterized.expand(
+        [
+            (AttributeProto.AttributeType.FLOAT, "FLOAT"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.INT, "INT"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.STRING, "STRING"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TENSOR, "TENSOR"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.GRAPH, "GRAPH"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.SPARSE_TENSOR, "SPARSE_TENSOR"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TYPE_PROTO, "TYPE_PROTO"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.FLOATS, "FLOATS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.INTS, "INTS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.STRINGS, "STRINGS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TENSORS, "TENSORS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.GRAPHS, "GRAPHS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.SPARSE_TENSORS, "SPARSE_TENSORS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.TYPE_PROTOS, "TYPE_PROTOS"),  # type: ignore[attr-defined]
+        ]
+    )
+    def test_attr_type_to_str(self, attr_type, expected_str):
+        result = helper._attr_type_to_str(attr_type)
+        self.assertEqual(result, expected_str)
+
+    def test_attr_type_to_str_undefined(self):
+        result = helper._attr_type_to_str(9999)
+        self.assertEqual(result, "UNDEFINED")
 
 
 if __name__ == "__main__":

@@ -26,6 +26,28 @@ class TestModelInference(unittest.TestCase):
             elem_type = tensor_type.elem_type
             self.assertEqual(elem_type, expected_elem_type)
 
+    def _check_inference_error(self, model_text: str):
+        """Check that the model inference raises an InferenceError."""
+        model = onnx.parser.parse_model(model_text)
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, True, True)
+
+    def test_unknown_op(self):
+        """Test that model inference handles unknown ops.
+        This special treatment is to support custom ops.
+        See comments in shape inference code for details.
+        """
+        model = """
+            <ir_version: 7, opset_import: [ "" : 17]>
+            agraph (float[N] x) => (y)
+            {
+                y = SomeUnknownOp (x)
+            }
+        """
+        # No output types are inferred for unknown ops.
+        # But ensure that the inference does not fail.
+        self._check(model)
+
     def test_mi_basic(self):
         """Test that model inference infers model output type."""
         model = """
@@ -221,6 +243,28 @@ class TestModelInference(unittest.TestCase):
             }
         """
         self._check(model, onnx.TensorProto.INT32, onnx.TensorProto.FLOAT)
+
+    def test_mi_overloaded_function(self):
+        """Test use of functions."""
+        model = """
+            <ir_version: 10, opset_import: [ "" : 17, "local" : 1]>
+            agraph (float[N] x) => (y, z)
+            {
+                y = local.cast:to_int32 (x)
+                z = local.cast:to_int64 (x)
+            }
+            <opset_import: [ "" : 17 ], domain: "local", overload: "to_int32">
+            cast (x) => (y)
+            {
+                y = Cast<to=6> (x)
+            }
+            <opset_import: [ "" : 17 ], domain: "local", overload: "to_int64">
+            cast (x) => (y)
+            {
+                y = Cast<to=7> (x)
+            }
+        """
+        self._check(model, onnx.TensorProto.INT32, onnx.TensorProto.INT64)
 
 
 if __name__ == "__main__":
