@@ -252,6 +252,7 @@ def load_op(
     node: Union[None, NodeProto] = None,
     input_types: Union[None, List[TypeProto]] = None,
     expand: bool = False,
+    evaluator_cls: TOptional[type] = None,
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -266,6 +267,7 @@ def load_op(
             operator defines a function which is context dependant
         expand: use the function implemented in the schema instead of
             its reference implementation
+        evaluator_cls: evaluator to use
 
     Returns:
         class
@@ -292,10 +294,11 @@ def load_op(
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             ) from None
         if schema.has_function:  # type: ignore
-            from onnx.reference import ReferenceEvaluator
-
             body = schema.function_body  # type: ignore
-            sess = ReferenceEvaluator(body)
+            assert (
+                evaluator_cls is not None
+            ), f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
+            sess = evaluator_cls(body)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         if schema.has_context_dependent_function:  # type: ignore
             if node is None or input_types is None:
@@ -304,14 +307,15 @@ def load_op(
                     f"and domain {domain!r}, the operator has a context dependent function. "
                     f"but argument node or input_types is not defined (input_types={input_types})."
                 )
-            from onnx.reference import ReferenceEvaluator
-
             body = schema.get_context_dependent_function(  # type: ignore
                 node.SerializeToString(), [it.SerializeToString() for it in input_types]
             )
             proto = FunctionProto()
             proto.ParseFromString(body)
-            sess = ReferenceEvaluator(proto)
+            assert (
+                evaluator_cls is not None
+            ), f"evaluator_cls must be specified to evaluate function {proto.name!r}"
+            sess = evaluator_cls(proto)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         found = False
     if not found:

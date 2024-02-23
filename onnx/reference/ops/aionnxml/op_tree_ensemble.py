@@ -175,18 +175,22 @@ class TreeEnsemble(OpRunAiOnnxMl):
                     nodes_modes[current_node_index],
                     set_members,
                     nodes_featureids[current_node_index],
-                    nodes_missing_value_tracks_true[current_node_index]
-                    if nodes_missing_value_tracks_true is not None
-                    else False,
+                    (
+                        nodes_missing_value_tracks_true[current_node_index]
+                        if nodes_missing_value_tracks_true is not None
+                        else False
+                    ),
                 )
             else:
                 node = Node(
                     nodes_modes[current_node_index],
                     nodes_splits[current_node_index],
                     nodes_featureids[current_node_index],
-                    nodes_missing_value_tracks_true[current_node_index]
-                    if nodes_missing_value_tracks_true is not None
-                    else False,
+                    (
+                        nodes_missing_value_tracks_true[current_node_index]
+                        if nodes_missing_value_tracks_true is not None
+                        else False
+                    ),
                 )
 
             # recurse true and false branches
