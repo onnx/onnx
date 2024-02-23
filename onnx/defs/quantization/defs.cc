@@ -104,10 +104,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The type of the input `y_zero_point` and the output `y`.")
         .SetDoc(QuantizeLinear_ver21_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          if (ctx.getAttribute("output_dtype") != nullptr) {
-            propagateElemTypeFromAttributeToOutput(ctx, "output_dtype", 0);
-          } else if (ctx.hasInput(2)) {
+          auto const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
+          auto const output_dtype = getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED);
+          if (zp_type != nullptr) {
+            const auto zp_elem_type = getTensorElementType(*zp_type);
+            if (output_dtype != TensorProto::UNDEFINED && output_dtype != zp_elem_type) {
+              fail_type_inference(
+                  "output_dtype ",
+                  ctx.getAttribute("output_dtype"),
+                  " does not match y_zero_point type ",
+                  zp_elem_type,
+                  " .");
+            }
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
+          } else if (output_dtype != TensorProto::UNDEFINED) {
+            propagateElemTypeFromAttributeToOutput(ctx, "output_dtype", 0);
           } else {
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
           }
