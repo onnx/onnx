@@ -1216,6 +1216,11 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       ONNX_TRY {
         op_schema.Finalize();
+
+        // Acquires lock to thread-guard schema map access
+        auto* registry = OpSchemaRegistry::Instance();
+        std::unique_lock<std::mutex> lock(registry->schema_map_mutex_);
+
         auto& m = GetMapWithoutEnsuringRegistration();
         auto& op_name = op_schema.Name();
         auto& op_domain = op_schema.domain();
@@ -1310,6 +1315,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // Deregister all ONNX opset schemas from domain
   // Domain with default value ONNX_DOMAIN means ONNX.
   static void OpSchemaDeregisterAll(const std::string& domain = ONNX_DOMAIN) {
+    std::unique_lock<std::mutex> lock(Instance()->schema_map_mutex_);
     auto& schema_map = GetMapWithoutEnsuringRegistration();
     // schema_map stores operator schemas in the format of
     // <OpName, <Domain, <OperatorSetVersion, OpSchema>>>
@@ -1384,6 +1390,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // within this class
   OpSchemaRegistry() = default;
 
+  // Allows OpSchemaRegisterOnce to use Instance()
+  friend OpSchemaRegisterOnce;
+
   /**
    * @brief Returns the underlying string to OpSchema map.
    *
@@ -1397,6 +1406,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
   static OpName_Domain_Version_Schema_Map& map();
   static int loaded_schema_version;
+
+  // To be accessed via singleton Instance()->schema_map_mutex_
+  // to thread-guard the schema map access
+  std::mutex schema_map_mutex_;
 
  public:
   static const std::vector<OpSchema> get_all_schemas_with_history() {
