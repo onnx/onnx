@@ -18,7 +18,9 @@ namespace version_conversion {
 
 static const std::vector<TensorProto_DataType> q_dq_20_unallowed_types = {
     TensorProto_DataType_UINT16,
-    TensorProto_DataType_INT16};
+    TensorProto_DataType_INT16,
+    TensorProto_DataType_UINT4,
+    TensorProto_DataType_INT4};
 
 class QuantizeLinear_21_20 final : public TypeRestriction {
  public:
@@ -31,6 +33,15 @@ class QuantizeLinear_21_20 final : public TypeRestriction {
         ONNX_ASSERTM(false, "Blocked quantization is not supported for Opset Version %d.", target_version().version())
       }
       node->removeAttribute(kblock_size);
+    }
+    if (node->hasAttribute(koutput_dtype)) {
+      if (node->i(koutput_dtype) != TensorProto_DataType_UINT8 && node->inputs().size() < 3) {
+        ONNX_ASSERTM(
+            false,
+            "Attribute output_dtype is not supported for Opset Version %d, supply a zero-point tensor instead",
+            target_version().version())
+      }
+      node->removeAttribute(koutput_dtype);
     }
   }
 

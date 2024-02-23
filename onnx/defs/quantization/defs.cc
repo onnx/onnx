@@ -78,6 +78,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[ceil(Di/Si), ceil(Di/(Si-1))-1]`",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr(
+            "output_dtype",
+            "(Optional) The output data type. If not supplied, the output data type is inferred from `y_zero_point` data type (`T2`). "
+            "If neither `output_dtype` nor `y_zero_point` are supplied, output data type is uint8. "
+            "If both `output_dtype` and `y_zero_point` are specified, `output_dtype` must be `T2`.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .TypeConstraint(
             "T1",
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)", "tensor(int32)"},
@@ -97,7 +104,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The type of the input `y_zero_point` and the output `y`.")
         .SetDoc(QuantizeLinear_ver21_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          if (ctx.hasInput(2)) {
+          if (ctx.getAttribute("output_dtype") != nullptr) {
+            propagateElemTypeFromAttributeToOutput(ctx, "output_dtype", 0);
+          } else if (ctx.hasInput(2)) {
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else {
             updateOutputElemType(ctx, 0, TensorProto::UINT8);
