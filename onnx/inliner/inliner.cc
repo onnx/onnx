@@ -480,9 +480,17 @@ void InlineFunctions(
             callee.name().c_str());
         ConvertVersion(*model, node, callee, target_version);
       }
+      std::unordered_set<std::string> actual_parameters;
+      for (const auto& x : node.input())
+        actual_parameters.insert(x);
+      for (const auto& x : node.output())
+        actual_parameters.insert(x);
       // Append valueinfos of called function
-      for (auto& callee_vi : callee.value_info())
-        *value_infos.Add() = callee_vi;
+      for (auto& callee_vi : callee.value_info()) {
+        if (actual_parameters.count(callee_vi.name()) == 0) {
+          *value_infos.Add() = callee_vi;
+        }
+      }
       // Append nodes of called function
       for (auto& callee_node : *callee.mutable_node())
         append_node(callee_node);
