@@ -111,10 +111,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (output_dtype != TensorProto::UNDEFINED && output_dtype != zp_elem_type) {
               fail_type_inference(
                   "output_dtype ",
-                  ctx.getAttribute("output_dtype"),
+                  TensorProto_DataType_Name(output_dtype),
                   " does not match y_zero_point type ",
-                  zp_elem_type,
-                  " .");
+                  TensorProto_DataType_Name(zp_elem_type),
+                  ".");
             }
             propagateElemTypeFromInputToOutput(ctx, 2, 0);
           } else if (output_dtype != TensorProto::UNDEFINED) {
