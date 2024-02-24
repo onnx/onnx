@@ -105,9 +105,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(QuantizeLinear_ver21_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
-          auto const output_dtype = getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED);
+          auto const output_dtype =
+              static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
           if (zp_type != nullptr) {
-            const auto zp_elem_type = getTensorElementType(*zp_type);
+            auto const zp_elem_type = static_cast<TensorProto_DataType>(getTensorElementType(*zp_type));
             if (output_dtype != TensorProto::UNDEFINED && output_dtype != zp_elem_type) {
               fail_type_inference(
                   "output_dtype ",
