@@ -137,6 +137,7 @@ def check_model(
     model: ModelProto | str | bytes | os.PathLike,
     full_check: bool = False,
     skip_opset_compatibility_check: bool = False,
+    check_custom_domain: bool = False,
 ) -> None:
     """Check the consistency of a model.
 
@@ -154,10 +155,17 @@ def check_model(
         full_check: If True, the function also runs shape inference check.
         skip_opset_compatibility_check: If True, the function skips the check for
             opset compatibility.
+        check_custom_domain: If True, the function will check all domains. Otherwise
+            only check built-in domains.
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):
-        C.check_model_path(os.fspath(model), full_check, skip_opset_compatibility_check)
+        C.check_model_path(
+            os.fspath(model),
+            full_check,
+            skip_opset_compatibility_check,
+            check_custom_domain,
+        )
     else:
         protobuf_string = (
             model if isinstance(model, bytes) else model.SerializeToString()
@@ -168,7 +176,12 @@ def check_model(
             raise ValueError(
                 "This protobuf of onnx model is too large (>2GB). Call check_model with model path instead."
             )
-        C.check_model(protobuf_string, full_check, skip_opset_compatibility_check)
+        C.check_model(
+            protobuf_string,
+            full_check,
+            skip_opset_compatibility_check,
+            check_custom_domain,
+        )
 
 
 ValidationError = C.ValidationError
