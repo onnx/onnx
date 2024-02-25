@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <optional>
 
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/function.h"
@@ -5152,8 +5153,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           // and 1 element vector for now. In future when version update for
           // this op is done we should only allow scalar or change the spec to
           // allow both.
+          std::optional<int64_t> depth_value;
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
+            if (const TensorProto *depth_data = ctx.getInputData(1)) {
+              depth_value = ParseData<int64_t>(depth_data)[0];
+            }
             if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
               fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
             }
@@ -5204,6 +5209,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 } else if (indices_shape.dim(i - 1).has_dim_param()) {
                   dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
                 }
+              } else if (depth_value) {
+                dim->set_dim_value(*depth_value);
               }
             }
           }
