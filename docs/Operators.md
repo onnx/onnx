@@ -20275,6 +20275,8 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dt><tt>output_dtype</tt> : int (default is 0)</dt>
+<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `y_zero_point` data type (`T2`). If neither `output_dtype` nor `y_zero_point` are supplied, output data type is uint8. If both `output_dtype` and `y_zero_point` are specified, `output_dtype` must be `T2`.</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
 <dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>
@@ -20347,7 +20349,7 @@ expect(
 
 
 <details>
-<summary>blocked</summary>
+<summary>blocked_asymmetric</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -20407,7 +20409,74 @@ expect(
     node,
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
-    name="test_quantizelinear_blocked",
+    name="test_quantizelinear_blocked_asymmetric",
+)
+```
+
+</details>
+
+
+<details>
+<summary>blocked_symmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale"],
+    outputs=["y"],
+    axis=1,
+    block_size=2,
+    output_dtype=TensorProto.INT16,
+)
+
+x = np.array(
+    [
+        [6.0, -8, -10, 5.0],
+        [1.0, 8.0, 4.0, 5.0],
+        [0.0, 20.0, 10.0, 4.0],
+    ],
+    dtype=np.float32,
+)
+
+y_scale = np.array(
+    [
+        [1.5, 2.5],
+        [3.0, 4.9],
+        [5.1, 6.9],
+    ],
+    dtype=np.float32,
+)
+
+# x.shape = (3, 4)
+# y_scale.shape = (3, 2)
+
+block_axis = 1
+# The block shape is [x.shape[i] // y_scale.shape[i] for i in range(len(x.shape))] = (1, 2)
+assert all(
+    x.shape[i] == y_scale.shape[i]
+    for i in range(len(x.shape))
+    if i != block_axis
+)
+assert x.shape[block_axis] % y_scale.shape[block_axis] == 0
+repeats = x.shape[block_axis] // y_scale.shape[block_axis]
+
+# Create element-wise scale and zero point
+y_scale_elementwise = np.repeat(y_scale, repeats=repeats, axis=block_axis)
+
+y_val = np.clip(
+    np.rint(x / y_scale_elementwise), a_min=-32768, a_max=32767
+).astype(np.int16)
+y = make_tensor(
+    "y",
+    TensorProto.INT16,
+    x.shape,
+    y_val,
+)
+expect(
+    node,
+    inputs=[x, y_scale],
+    outputs=[y],
+    name="test_quantizelinear_blocked_symmetric",
 )
 ```
 
