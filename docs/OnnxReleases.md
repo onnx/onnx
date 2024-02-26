@@ -19,14 +19,14 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Pick a release tag (v.1.X.X) for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
 * Create a release branch (please use rel-* as the branch name) from main.
     * Make sure all tests pass on that branch.
-    * Draft a Release based on the branch:
+    * Draft a release based on the branch:
         * https://github.com/onnx/onnx/releases/new
             * DO NOT click `Publish release`. Use `Save Draft` for now.
                 * Publishing will create a tag which we don't want yet as there maybe bug fixes added during validation
-        * git tag v.1.X.X
+        * git tag v1.X.X
         * Draft a new release statement listing out the new features and bug fixes, and potential changes being introduced in the release.
             * Use [pervious releases](https://github.com/onnx/onnx/releases) as a template
-            * Use information from [Release logistics wiki](https://github.com/onnx/onnx/wiki) which should have been created prior to branch cut. (ie https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.XX.0) 
+            * Use information from [Release logistics wiki](https://github.com/onnx/onnx/wiki) which should have been created prior to branch cut. (ie https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.XX.0)
 * After cutting a release branch, bump [VERSION_NUMBER file](/VERSION_NUMBER) (next version number for future ONNX) in the `main` branch.
 * Prepare a change log for the release –
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
