@@ -4603,7 +4603,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("OneHot", ["indices", "depth", "values"], "Y")],
             [],
-            initializer=[make_tensor("depth", TensorProto.INT64, (), (256, ))],
+            initializer=[make_tensor("depth", TensorProto.INT64, (), (256,))],
         )
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 2, 256))])  # type: ignore
 
@@ -4616,7 +4616,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [make_node("OneHot", ["indices", "depth", "values"], "Y", axis=1)],
             [],
-            initializer=[make_tensor("depth", TensorProto.INT64, (1,), (256, ))],
+            initializer=[make_tensor("depth", TensorProto.INT64, (1,), (256,))],
         )
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 256, 3, 5))])  # type: ignore
 
