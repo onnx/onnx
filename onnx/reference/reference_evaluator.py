@@ -284,7 +284,7 @@ class ReferenceEvaluator:
         if functions is not None:
             for f in functions:  # type: ignore
                 if isinstance(f, FunctionProto):
-                    self.functions_[f.domain, f.name] = ReferenceEvaluator(
+                    self.functions_[f.domain, f.name] = self.__class__(
                         f, verbose=verbose, functions=list(self.functions_.values())
                     )
                 elif isinstance(f, ReferenceEvaluator):
@@ -411,6 +411,7 @@ class ReferenceEvaluator:
             "verbose": self.verbose,
             "new_ops": self.new_ops_,
             "existing_functions": self.functions_.copy(),
+            "evaluator_cls": self.__class__,
         }
         if self.input_types_:
             all_types = {i.name: i.type for i in self.onnx_graph_.input}
@@ -477,7 +478,13 @@ class ReferenceEvaluator:
             from onnx.reference.ops import load_op
 
             try:
-                return load_op(node.domain, node.op_type, version, expand=expand)
+                return load_op(
+                    node.domain,
+                    node.op_type,
+                    version,
+                    expand=expand,
+                    evaluator_cls=self.__class__,
+                )
             except RuntimeContextError:
                 if input_types is None:
                     raise
@@ -488,6 +495,7 @@ class ReferenceEvaluator:
                     node=node,
                     input_types=input_types,  # type: ignore[arg-type]
                     expand=expand,
+                    evaluator_cls=self.__class__,
                 )
 
         if expand:
@@ -499,24 +507,36 @@ class ReferenceEvaluator:
         if node.domain == "ai.onnx.preview.training":
             from onnx.reference.ops.aionnx_preview_training import load_op as load_op_pt
 
-            return load_op_pt(node.domain, node.op_type, version)
+            return load_op_pt(
+                node.domain, node.op_type, version, evaluator_cls=self.__class__
+            )
 
         if node.domain == "experimental":
             from onnx.reference.ops.experimental import load_op as load_op_exp
 
-            return load_op_exp(node.domain, node.op_type, version)
+            return load_op_exp(
+                node.domain, node.op_type, version, evaluator_cls=self.__class__
+            )
 
         if node.domain == "ai.onnx.ml":
             from onnx.reference.ops.aionnxml import load_op as load_op_ml
 
-            return load_op_ml(node.domain, node.op_type, version)
+            return load_op_ml(
+                node.domain, node.op_type, version, evaluator_cls=self.__class__
+            )
 
         # It has to be a function.
         if key in self.functions_:
             from onnx.reference.ops import load_op
 
             impl = self.functions_[key]
-            return load_op(node.domain, node.op_type, version, custom=impl)
+            return load_op(
+                node.domain,
+                node.op_type,
+                version,
+                custom=impl,
+                evaluator_cls=self.__class__,
+            )
         raise NotImplementedError(
             f"Node type {node.op_type!r} from domain {node.domain!r} "
             f"is unknown, known functions: {sorted(self.functions_)}."

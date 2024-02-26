@@ -16,9 +16,6 @@ class OpRunUnary(OpRun):
     Checks that input and output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRun.__init__(self, onnx_node, run_params)
-
     def run(self, x):  # type: ignore
         """Calls method ``_run``, catches exceptions, displays a longer error message.
 
@@ -42,9 +39,6 @@ class OpRunUnaryNum(OpRunUnary):
     Checks that input and output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunUnary.__init__(self, onnx_node, run_params)
-
     def run(self, x):  # type: ignore
         """Calls method ``OpRunUnary.run``.
 
@@ -67,9 +61,6 @@ class OpRunBinary(OpRun):
 
     Checks that input and output types are the same.
     """
-
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRun.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore
         """Calls method ``_run``, catches exceptions, displays a longer error message.
@@ -101,8 +92,7 @@ class OpRunBinary(OpRun):
 class OpRunBinaryComparison(OpRunBinary):
     """Ancestor to all binary operators in this subfolder comparing tensors."""
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunBinary.__init__(self, onnx_node, run_params)
+    pass
 
 
 class OpRunBinaryNum(OpRunBinary):
@@ -110,9 +100,6 @@ class OpRunBinaryNum(OpRunBinary):
 
     Checks that input oud output types are the same.
     """
-
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunBinary.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore
         """Calls method ``OpRunBinary.run``, catches exceptions, displays a longer error message."""

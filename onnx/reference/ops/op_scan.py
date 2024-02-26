@@ -16,10 +16,12 @@ class Scan(OpRun):
                 f"Parameter 'body' must have a method 'run', type {type(self.body)}."  # type: ignore
             )
         self.input_directions_ = [
-            0
-            if self.scan_input_directions is None  # type: ignore
-            or i >= len(self.scan_input_directions)  # type: ignore
-            else self.scan_input_directions[i]  # type: ignore
+            (
+                0
+                if self.scan_input_directions is None  # type: ignore
+                or i >= len(self.scan_input_directions)  # type: ignore
+                else self.scan_input_directions[i]
+            )  # type: ignore
             for i in range(self.num_scan_inputs)  # type: ignore
         ]
         max_dir_in = max(self.input_directions_)
@@ -28,9 +30,11 @@ class Scan(OpRun):
                 "Scan is not implemented for other output input_direction than 0."
             )
         self.input_axes_ = [
-            0
-            if self.scan_input_axes is None or i >= len(self.scan_input_axes)  # type: ignore
-            else self.scan_input_axes[i]  # type: ignore
+            (
+                0
+                if self.scan_input_axes is None or i >= len(self.scan_input_axes)  # type: ignore
+                else self.scan_input_axes[i]
+            )  # type: ignore
             for i in range(self.num_scan_inputs)  # type: ignore
         ]
         max_axe_in = max(self.input_axes_)
@@ -44,10 +48,12 @@ class Scan(OpRun):
         num_scan_outputs = len(args) - num_loop_state_vars
 
         output_directions = [
-            0
-            if self.scan_output_directions is None  # type: ignore
-            or i >= len(self.scan_output_directions)  # type: ignore
-            else self.scan_output_directions[i]  # type: ignore
+            (
+                0
+                if self.scan_output_directions is None  # type: ignore
+                or i >= len(self.scan_output_directions)  # type: ignore
+                else self.scan_output_directions[i]
+            )  # type: ignore
             for i in range(num_scan_outputs)
         ]
         max_dir_out = max(output_directions)
@@ -56,9 +62,11 @@ class Scan(OpRun):
                 "Scan is not implemented for other output output_direction than 0."
             )
         output_axes = [
-            0
-            if self.scan_output_axes is None or i >= len(self.scan_output_axes)  # type: ignore
-            else self.scan_output_axes[i]  # type: ignore
+            (
+                0
+                if self.scan_output_axes is None or i >= len(self.scan_output_axes)  # type: ignore
+                else self.scan_output_axes[i]
+            )  # type: ignore
             for i in range(num_scan_outputs)
         ]
         max_axe_out = max(output_axes)

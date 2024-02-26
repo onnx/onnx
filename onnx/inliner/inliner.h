@@ -17,6 +17,7 @@ namespace inliner {
 // IR version 10 introduces overloaded function names. The following APIs to specify
 // functions to be inlined currently allow only specifying (domain, name). Thus,
 // either all overloads of a function are inlined or none.
+// The older-style ids are used below for backward compatibility.
 
 // A FunctionId is a pair of strings (domain, function name).
 using FunctionId = std::pair<std::string, std::string>;

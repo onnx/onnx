@@ -36,22 +36,30 @@ class CommonRNN(OpRun):
 
         self.f1 = self.choose_act(
             self.activations[0],  # type: ignore
-            self.activation_alpha[0]  # type: ignore
-            if self.activation_alpha is not None and len(self.activation_alpha) > 0  # type: ignore
-            else None,
-            self.activation_beta[0]  # type: ignore
-            if self.activation_beta is not None and len(self.activation_beta) > 0  # type: ignore
-            else None,
+            (
+                self.activation_alpha[0]  # type: ignore
+                if self.activation_alpha is not None and len(self.activation_alpha) > 0  # type: ignore
+                else None
+            ),
+            (
+                self.activation_beta[0]  # type: ignore
+                if self.activation_beta is not None and len(self.activation_beta) > 0  # type: ignore
+                else None
+            ),
         )
         if len(self.activations) > 1:  # type: ignore
             self.f2 = self.choose_act(
                 self.activations[1],  # type: ignore
-                self.activation_alpha[1]  # type: ignore
-                if self.activation_alpha is not None and len(self.activation_alpha) > 1  # type: ignore
-                else None,
-                self.activation_beta[1]  # type: ignore
-                if self.activation_beta is not None and len(self.activation_beta) > 1  # type: ignore
-                else None,
+                (
+                    self.activation_alpha[1]  # type: ignore
+                    if self.activation_alpha is not None and len(self.activation_alpha) > 1  # type: ignore
+                    else None
+                ),
+                (
+                    self.activation_beta[1]  # type: ignore
+                    if self.activation_beta is not None and len(self.activation_beta) > 1  # type: ignore
+                    else None
+                ),
             )
         self.n_outputs = len(onnx_node.output)
 

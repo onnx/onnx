@@ -37,7 +37,11 @@ def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRunAiOnn
 
 
 def load_op(
-    domain: str, op_type: str, version: Union[None, int], custom: Any = None
+    domain: str,
+    op_type: str,
+    version: Union[None, int],
+    custom: Any = None,
+    evaluator_cls: TOptional[type] = None,
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -46,6 +50,7 @@ def load_op(
         op_type: oprator type
         version: requested version
         custom: custom implementation (like a function)
+        evaluator_cls: unused
 
     Returns:
         class

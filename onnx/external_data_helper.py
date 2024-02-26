@@ -8,6 +8,7 @@ import uuid
 from itertools import chain
 from typing import Callable, Iterable, Optional
 
+import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
 
 
@@ -38,9 +39,9 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
         base_dir: directory that contains the external data.
     """
     info = ExternalDataInfo(tensor)
-    file_location = _sanitize_path(info.location)
-    external_data_file_path = os.path.join(base_dir, file_location)
-
+    external_data_file_path = c_checker._resolve_external_data_location(  # type: ignore[attr-defined]
+        base_dir, info.location, tensor.name
+    )
     with open(external_data_file_path, "rb") as data_file:
         if info.offset:
             data_file.seek(info.offset)
@@ -252,14 +253,6 @@ def _get_attribute_tensors_from_graph(
 def _get_attribute_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
     """Create an iterator of tensors from node attributes of an ONNX model."""
     yield from _get_attribute_tensors_from_graph(onnx_model_proto.graph)
-
-
-def _sanitize_path(path: str) -> str:
-    """Remove path components which would allow traversing up a directory tree from a base path.
-
-    Note: This method is currently very basic and should be expanded.
-    """
-    return path.lstrip("/.")
 
 
 def _is_valid_filename(filename: str) -> bool:

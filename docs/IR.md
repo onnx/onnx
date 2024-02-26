@@ -201,7 +201,8 @@ input|string[]|The input parameters of the function
 output|string[]|The output parameters of the function.
 node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
 |opset_import|OperatorSetId|A collection of operator set identifiers used by the function implementation.
-value_info|ValueInfo[]|Used to store the type and shape information of values used in the function.
+|value_info|ValueInfo[]| (IR version >= 10) Used to store the type and shape information of values used in the function.
+|metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
 
 The name and domain serve to identify the operator uniquely in IR versions upto 9. IR version 10 adds the
 field overload, and the triple (name, domain, overload) acts as a unique-id across functions stored in
@@ -235,6 +236,7 @@ doc_string|string|Human-readable documentation for this model. Markdown is allow
 input|ValueInfo[]|The input parameters of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo[]|Used to store the type and shape information of values that are not inputs or outputs.
+|metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
 
 ValueInfo has the following properties:
 
@@ -291,6 +293,7 @@ domain|string|The domain of the operator set that contains the operator named by
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
 doc_string|string|Human-readable documentation for this value. Markdown is allowed.
 overload|string|Part of unique id of function (added in IR version 10)
+|metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
 
 A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, a graph initializer, or as a node output is said to be a definition and the occurrence of a name as a node input or as a graph output is said to be a use.
 
@@ -490,6 +493,14 @@ _Historical Notes_: The following extensions were considered early on, but were 
 ### Attribute Types
 
 The type system used for attributes is related to but slightly different from that used for of inputs and outputs. Attribute values may be a dense tensor, sparse tensor, a scalar numerical value, a string, a graph, or repeated values of one of the above mentioned types.
+
+## Other Metadata
+
+The ModelProto structure, and in IR versions >= 10, various other structures (GraphProto, FunctionProto, NodeProto)
+contain a metadata_props field allowing users to store other metadata in the form of key-value pairs.
+It is recommended that users use key names qualified with a reverse-DNS name as prefix
+(such as "ai.onnxruntime.key1") to avoid conflicts between different uses.
+Unqualified names may be used in the future by the ONNX standard.
 
 ## Training Related Information
 

@@ -30,8 +30,31 @@ constexpr int OpSchema::kUninitializedSinceVersion;
 
 // By default if opset_version_to_load=0, it registers all opset schema for all opset versions
 // Otherwise, it only registers the latest schema according to opset_version_to_load
-void RegisterSchema(OpSchema schema, int opset_version_to_load, bool fail_duplicate_schema) {
-  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration(schema, opset_version_to_load, fail_duplicate_schema);
+void RegisterSchema(
+    const OpSchema& schema,
+    int opset_version_to_load,
+    bool fail_duplicate_schema,
+    bool fail_with_exception) {
+  RegisterSchema(OpSchema(schema), opset_version_to_load, fail_duplicate_schema, fail_with_exception);
+}
+void RegisterSchema(
+    OpSchema&& schema,
+    int opset_version_to_load,
+    bool fail_duplicate_schema,
+    bool fail_with_exception) {
+  if (fail_with_exception) {
+    OpSchemaRegistry::OpSchemaRegisterOnce::OpSchemaRegisterImpl(
+        std::move(schema), opset_version_to_load, fail_duplicate_schema);
+  } else {
+    OpSchemaRegistry::OpSchemaRegisterOnce::OpSchemaRegisterNoExcept(
+        std::move(schema), opset_version_to_load, fail_duplicate_schema);
+  }
+}
+
+// The (name, version, domain) must match the target exactly
+// Otherwise will raise an SchemaError
+void DeregisterSchema(const std::string& op_type, int version, const std::string& domain) {
+  OpSchemaRegistry::OpSchemaDeregister(op_type, version, domain);
 }
 
 #ifndef NDEBUG
@@ -918,6 +941,11 @@ void OpSchema::Finalize() {
   // "optional" but not trailing inputs>. <Max number of inputs> = <number of
   // all inputs or std::numeric_limits<int>::max() (if the last input is
   // variadic).
+
+  max_input_ = 0;
+  min_input_ = 0;
+  min_output_ = 0;
+  max_output_ = 0;
 
   // Flag indicates whether an optional input is trailing one (there's no single
   // or variadic input behind).

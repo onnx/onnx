@@ -1187,14 +1187,50 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     void
     AddDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
-      assert(map_.end() == map_.find(domain));
+      if (map_.count(domain) != 0) {
+        std::stringstream err;
+        err << "Trying to add a domain to DomainToVersion map, but the domain is already exist with version range ("
+            << map_.at(domain).first << ", " << map_.at(domain).second << "). domain: \"" << domain << "\""
+            << std::endl;
+        fail_schema(err.str());
+      }
+      if (last_release_version_map_.count(domain) != 0) {
+        std::stringstream err;
+        err << "Trying to add a domain to LastReleaseVersion map, but the domain is already exist with last version: "
+            << last_release_version_map_.at(domain) << ", domain: \"" << domain << "\"" << std::endl;
+        fail_schema(err.str());
+      }
       map_[domain] = std::make_pair(min_version, max_version);
       // If a last-release-version is not explicitly specified, use max as
       // last-release-version.
-      if (last_release_version == -1)
+      if (last_release_version == -1) {
         last_release_version = max_version;
-      assert(last_release_version_map_.end() == last_release_version_map_.find(domain));
+      }
       last_release_version_map_[domain] = last_release_version;
+    }
+
+    void
+    UpdateDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version = -1) {
+      std::lock_guard<std::mutex> lock(mutex_);
+      if (map_.count(domain) == 0) {
+        std::stringstream err;
+        err << "Trying to update a domain in DomainToVersion map, but the domain has not been add. domain: \"" << domain
+            << "\"" << std::endl;
+        fail_schema(err.str());
+      }
+      if (last_release_version_map_.count(domain) == 0) {
+        std::stringstream err;
+        err << "Trying to update a domain in LastReleaseVersion map, but the domain has not been add. domain: \""
+            << domain << "\"" << std::endl;
+        fail_schema(err.str());
+      }
+      map_.at(domain).first = min_version;
+      map_.at(domain).second = max_version;
+      // Correspond to `AddDomainToVersion`
+      if (last_release_version == -1) {
+        last_release_version = max_version;
+      }
+      last_release_version_map_.at(domain) = last_release_version;
     }
 
     static DomainToVersionRange& Instance();
@@ -1213,52 +1249,62 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    OpSchemaRegisterOnce(OpSchema& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+    // Export to cpp custom register macro
+    OpSchemaRegisterOnce(OpSchema op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+      OpSchemaRegisterNoExcept(std::move(op_schema), opset_version_to_load, fail_duplicate_schema);
+    }
+    static void
+    OpSchemaRegisterNoExcept(OpSchema&& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       ONNX_TRY {
-        op_schema.Finalize();
-        auto& m = GetMapWithoutEnsuringRegistration();
-        auto& op_name = op_schema.Name();
-        auto& op_domain = op_schema.domain();
-        auto& schema_ver_map = m[op_name][op_domain];
-        auto ver = op_schema.SinceVersion();
-        if (OpSchema::kUninitializedSinceVersion == ver) {
-          op_schema.SinceVersion(1);
-          ver = op_schema.SinceVersion();
-        }
-
-        // Stops because the exact opset_version is registered
-        if (schema_ver_map.count(ver)) {
-          if (fail_duplicate_schema) {
-            const auto& schema = schema_ver_map[ver];
-            std::stringstream err;
-            err << "Trying to register schema with name " << op_name << " (domain: " << op_domain << " version: " << ver
-                << ") from file " << op_schema.file() << " line " << op_schema.line()
-                << ", but it is already registered from file " << schema.file() << " line " << schema.line()
-                << std::endl;
-            fail_schema(err.str());
-          }
-          return;
-        }
-
-        if (opset_version_to_load != 0) {
-          // Stops because the opset_version is higher than opset_version_to_load
-          if (ver > opset_version_to_load)
-            return;
-
-          // Stops because a later version is registered within target opset version
-          if (!schema_ver_map.empty()) {
-            int max_registered_ver_le_target = GetMaxRegisteredVerWithinTarget(schema_ver_map, opset_version_to_load);
-            if (max_registered_ver_le_target >= ver)
-              return;
-          }
-        }
-
-        CheckDomainAndVersionToRegister(op_schema, op_name, op_domain);
-        schema_ver_map.insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
+        OpSchemaRegisterImpl(std::move(op_schema), opset_version_to_load, fail_duplicate_schema);
       }
       ONNX_CATCH(const std::exception& e) {
         ONNX_HANDLE_EXCEPTION([&]() { std::cerr << "Schema error: " << e.what() << std::endl; });
       }
+    }
+    static void
+    OpSchemaRegisterImpl(OpSchema&& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+      op_schema.Finalize();
+      auto& m = GetMapWithoutEnsuringRegistration();
+      auto& op_name = op_schema.Name();
+      auto& op_domain = op_schema.domain();
+      auto& schema_ver_map = m[op_name][op_domain];
+      auto ver = op_schema.SinceVersion();
+      if (OpSchema::kUninitializedSinceVersion == ver) {
+        op_schema.SinceVersion(1);
+        ver = op_schema.SinceVersion();
+      }
+
+      // Stops because the exact opset_version is registered
+      if (schema_ver_map.count(ver)) {
+        if (fail_duplicate_schema) {
+          const auto& schema = schema_ver_map[ver];
+          std::stringstream err;
+          err << "Trying to register schema with name " << op_name << " (domain: " << op_domain << " version: " << ver
+              << ") from file " << op_schema.file() << " line " << op_schema.line()
+              << ", but it is already registered from file " << schema.file() << " line " << schema.line() << std::endl;
+          fail_schema(err.str());
+        }
+        return;
+      }
+
+      if (opset_version_to_load != 0) {
+        // Stops because the opset_version is higher than opset_version_to_load
+        if (ver > opset_version_to_load) {
+          return;
+        }
+
+        // Stops because a later version is registered within target opset version
+        if (!schema_ver_map.empty()) {
+          int max_registered_ver_le_target = GetMaxRegisteredVerWithinTarget(schema_ver_map, opset_version_to_load);
+          if (max_registered_ver_le_target >= ver) {
+            return;
+          }
+        }
+      }
+
+      CheckDomainAndVersionToRegister(op_schema, op_name, op_domain);
+      schema_ver_map.insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
     }
 
    private:
@@ -1306,6 +1352,19 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       }
     }
   };
+
+  static void
+  OpSchemaDeregister(const std::string& op_type, const int version, const std::string& domain = ONNX_DOMAIN) {
+    auto& schema_map = GetMapWithoutEnsuringRegistration();
+    if (schema_map.count(op_type) && schema_map[op_type].count(domain) && schema_map[op_type][domain].count(version)) {
+      schema_map[op_type][domain].erase(version);
+    } else {
+      std::stringstream err;
+      err << "Attempting to deregister an unregistered schema with name: " << op_type << " domain: " << domain
+          << " version: " << version << std::endl;
+      fail_schema(err.str());
+    }
+  }
 
   // Deregister all ONNX opset schemas from domain
   // Domain with default value ONNX_DOMAIN means ONNX.
@@ -1416,21 +1475,33 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     for (auto& x : map()) {
       for (auto& y : x.second) {
         auto& version2schema = y.second;
-        r.emplace_back(version2schema.rbegin()->second);
+        if (!version2schema.empty()) {
+          r.emplace_back(version2schema.rbegin()->second);
+        }
       }
     }
     return r;
   }
 };
 
-void RegisterSchema(OpSchema schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true);
+void RegisterSchema(
+    const OpSchema& schema,
+    int opset_version_to_load = 0,
+    bool fail_duplicate_schema = true,
+    bool fail_with_exception = false);
+void RegisterSchema(
+    OpSchema&& schema,
+    int opset_version_to_load = 0,
+    bool fail_duplicate_schema = true,
+    bool fail_with_exception = false);
+void DeregisterSchema(const std::string& op_type, int version, const std::string& domain);
 
 // Registers the latest opset schema before opset_version_to_load
 // By default opset_version_to_load=0 means it will register all versions
 template <class T>
 void RegisterOpSetSchema(int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
   T::ForEachSchema([opset_version_to_load, fail_duplicate_schema](OpSchema&& schema) {
-    RegisterSchema(schema, opset_version_to_load, fail_duplicate_schema);
+    RegisterSchema(std::move(schema), opset_version_to_load, fail_duplicate_schema);
   });
 };
 
