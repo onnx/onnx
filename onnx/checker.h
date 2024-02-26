@@ -84,6 +84,14 @@ class CheckerContext final {
     skip_opset_compatibility_check_ = value;
   }
 
+  bool check_custom_domain() const {
+    return check_custom_domain_;
+  }
+
+  void set_check_custom_domain(bool value) {
+    check_custom_domain_ = value;
+  }
+
   explicit CheckerContext() : ir_version_(-1) {}
 
  private:
@@ -93,6 +101,7 @@ class CheckerContext final {
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
   std::string model_dir_;
   bool skip_opset_compatibility_check_ = false;
+  bool check_custom_domain_ = false;
 };
 
 class LexicalScopeContext final {
@@ -158,8 +167,16 @@ void check_model_local_functions(
     const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex);
 
-void check_model(const ModelProto& model, bool full_check = false, bool skip_opset_compatibility_check = false);
-void check_model(const std::string& model_path, bool full_check = false, bool skip_opset_compatibility_check = false);
+void check_model(
+    const ModelProto& model,
+    bool full_check = false,
+    bool skip_opset_compatibility_check = false,
+    bool check_custom_domain = false);
+void check_model(
+    const std::string& model_path,
+    bool full_check = false,
+    bool skip_opset_compatibility_check = false,
+    bool check_custom_domain = false);
 std::string resolve_external_data_location(
     const std::string& base_dir,
     const std::string& location,
