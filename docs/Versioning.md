@@ -94,10 +94,10 @@ Changes to the semantics of an operator or function MUST be introduced in a new 
 >    step (1).
 > 4. Register the new operator in the corresponding `operator_sets`
 >    header file.
-> 5. Add a version adapter to `convert.h` so that the version 
->    converter can upgrade the old version of the operator to the new 
+> 5. Add a version adapter to `convert.h` so that the version
+>    converter can upgrade the old version of the operator to the new
 >    one. This can be a `CompatibleAdapter` in case operators following
->    the old schema are still valid under the new one (which is usually 
+>    the old schema are still valid under the new one (which is usually
 >    true).
 > 6. A version adapter to downgrade the new operator to the older version
 >    can also be added to `convert.h` but it's not mandatory.
@@ -189,6 +189,7 @@ ONNX version|IR version|Opset version ai.onnx|Opset version ai.onnx.ml|Opset ver
 1.14.0|9|19|3|1
 1.14.1|9|19|3|1
 1.15.0|9|20|4|1
+1.16.0|10|21|5|1
 
 A programmatically accessible version of the above table is available [here](../onnx/helper.py). Limited version number
 information is also maintained in [version.h](../onnx/common/version.h) and [schema.h](../onnx/defs/schema.h).
