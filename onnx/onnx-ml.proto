@@ -196,6 +196,8 @@ message ValueInfoProto {
   optional TypeProto type = 2;
   // A human-readable documentation for this value. Markdown is allowed.
   optional string doc_string = 3;
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 4;
 }
 
 // Nodes

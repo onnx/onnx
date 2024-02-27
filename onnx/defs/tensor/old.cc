@@ -2654,11 +2654,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
-            return;
-          }
-
           if (!ctx.getInputType(0)->tensor_type().has_shape()) {
             return;
           }
@@ -2666,6 +2661,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
+          std::vector<int64_t> axes;
+          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+            for (int i = 0; i < input_ndim; ++i) {
+              if (!input_shape.dim(i).has_dim_value()) {
+                return;
+              }
+              if (input_shape.dim(i).dim_value() == 1) {
+                axes.push_back(i);
+              }
+            }
+          }
+
           std::transform(axes.begin(), axes.end(), axes.begin(), [&](int64_t axis) -> int64_t {
             return axis < 0 ? axis + input_ndim : axis;
           });
@@ -4510,9 +4517,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           auto is_negative = [](int64_t index) { return index < 0; };
-          if (std::any_of(starts.begin(), starts.end(), is_negative) ||
-              std::any_of(ends.begin(), ends.end(), is_negative) ||
-              std::any_of(axes.begin(), axes.end(), is_negative)) {
+          if (std::any_of(axes.begin(), axes.end(), is_negative)) {
             // Negative axes were not explicitly discussed in the spec before opset-10.
             // Hence, they are officially not part of the spec, but some models/runtimes may use them.
             // So we perform simple rank inference in this case.
@@ -4529,13 +4534,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
               // There's a lot of potential behaviors. For now just
               // handle some simple cases.
-              if (ctx.getInputType(0)->tensor_type().shape().dim((int)i).has_dim_value() && starts[j] >= 0 &&
-                  ends[j] >= 0) {
-                auto newval =
-                    std::min((int64_t)ctx.getInputType(0)->tensor_type().shape().dim((int)i).dim_value(), ends[j]) -
-                    starts[j];
-                if (newval >= 0) {
-                  newdim->set_dim_value(newval);
+              const auto& dim = ctx.getInputType(0)->tensor_type().shape().dim((int)i);
+              if (dim.has_dim_value()) {
+                auto dim_value = dim.dim_value();
+                if (starts[j] < 0) {
+                  starts[j] += dim_value;
+                }
+                if (ends[j] < 0) {
+                  ends[j] += dim_value;
+                }
+                if (starts[j] >= 0 && ends[j] >= 0) {
+                  auto newval = std::min(dim_value, ends[j]) - starts[j];
+                  if (newval >= 0) {
+                    newdim->set_dim_value(newval);
+                  }
                 }
               }
               ++j;
@@ -4981,17 +4993,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          std::vector<int64_t> axes;
-          if (!getRepeatedAttribute(ctx, "axes", axes)) {
-            return;
-          }
-
           if (!ctx.getInputType(0)->tensor_type().has_shape()) {
             return;
           }
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          const auto input_ndim = input_shape.dim_size();
+          std::vector<int64_t> axes;
+          if (!getRepeatedAttribute(ctx, "axes", axes)) {
+            for (int i = 0; i < input_ndim; ++i) {
+              if (!input_shape.dim(i).has_dim_value()) {
+                return;
+              }
+              if (input_shape.dim(i).dim_value() == 1) {
+                axes.push_back(i);
+              }
+            }
+          }
 
           for (int i = 0, j = 0; i < input_shape.dim_size(); ++i) {
             if (static_cast<size_t>(j) < axes.size() && axes[j] == i) {
