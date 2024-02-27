@@ -33533,11 +33533,11 @@ expect(node, inputs=[x, repeats], outputs=[z], name="test_tile_precomputed")
 ### <a name="TopK"></a><a name="topk">**TopK**</a>
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
-  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+  shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
 
-  * Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+  * Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
     which contains the values of the top k elements along the specified axis
-  * Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+  * Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
     contains the indices of the top k elements (original indices from the input
     tensor).
 
@@ -33569,7 +33569,7 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{n-1}]</dd>
 <dt><tt>K</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
 </dl>
@@ -33578,9 +33578,9 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 
 <dl>
 <dt><tt>Values</tt> (differentiable) : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing top K values from the input tensor</dd>
 <dt><tt>Indices</tt> (non-differentiable) : I</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
 #### Type Constraints
