@@ -43,8 +43,12 @@ onnx = [
     "**/*.h",
     "**/*.proto",
     "**/*.pyi",
-    "backend/test/data/**/*",
     "py.typed",
+]
+
+[tool.setuptools.exclude-package-data]
+onnx = [
+     "backend/test/data/**/*",
 ]
 
 [tool.pytest.ini_options]
