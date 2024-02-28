@@ -119,6 +119,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 #endif // ONNX_ML
   );
 
+  // Avoid Segmentation fault if we not free the python function in Custom Schema
+  onnx_cpp2py_export.add_object("_cleanup", py::capsule([] { OpSchemaRegistry::OpSchemaDeregisterAll(); }));
+
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
   defs.doc() = "Schema submodule";
