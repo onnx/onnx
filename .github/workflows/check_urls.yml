@@ -33,7 +33,7 @@ jobs:
         subfolder: docs
         file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
         print_all: false
-        timeout: 2
+        timeout: 10
         retry_count# : 2
         exclude_urls: https://github.com/onnx/onnx/blob/main/docs/Operators,https://github.com/onnx/onnx/pull/436
         force_pass: false
