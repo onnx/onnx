@@ -65,7 +65,7 @@ jobs:
       )
     displayName: Create Anaconda environment
 
-  - run: echo "CMAKE_PREFIX_PATH=${{ env.CONDA_BASE_PATH }}/envs/py${{ matrix.python-version }}/Library" >> $GITHUB_ENV
+  - powershell: echo "CMAKE_PREFIX_PATH=$env:CONDA/envs/py$(python.version)/Library" >> $env:GITHUB_ENV
     displayName: Set CMAKE_PREFIX_PATH
 
   - script: |
