@@ -65,7 +65,7 @@ jobs:
       )
     displayName: Create Anaconda environment
 
-  - powershell: echo "CMAKE_PREFIX_PATH=$env:CONDA/envs/py$(python.version)/Library" >> $env:GITHUB_ENV
+  - powershell: echo "##vso[task.setvariable variable=CMAKE_PREFIX_PATH]$env:CONDA/envs/py$(python.version)/Library"
     displayName: Set CMAKE_PREFIX_PATH
 
   - script: |
