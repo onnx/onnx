@@ -395,6 +395,19 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @parameterized.expand(all_versions_for("Cast"))
+    @unittest.skip(
+        "Issue #5960"
+    )  # FIXME(#5960) propagateElemTypeFromAttributeToOutput does not validate against output type constraints
+    def test_cast_to_complex(self, _, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("Cast", ["x"], ["y"], to=TensorProto.COMPLEX128)],
+            [],
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     @parameterized.expand(all_versions_for("CastLike"))
     def test_cast_like(self, _, version) -> None:
         graph = self._make_graph(
@@ -1650,6 +1663,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [make_tensor_value_info("y", TensorProto.BOOL, ())],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    def test_squeeze_no_axes_opset11(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 3, 1, 1, 2, 1)),
+            ],
+            [make_node("Squeeze", ["x"], "y")],
+            [],
+        )
+        operatorsetid = OperatorSetIdProto()
+        operatorsetid.domain = ""
+        operatorsetid.version = 11
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))]
         )
 
     def test_unsqueeze_regular(self) -> None:
@@ -5285,6 +5313,91 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("y", TensorProto.UINT8, (30, 4, 5))]
+        )
+
+    def test_quantizelinear_output_dtype(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5)), ("y_scale", TensorProto.FLOAT, ())],
+            [
+                make_node(
+                    "QuantizeLinear",
+                    ["x", "y_scale"],
+                    ["y"],
+                    output_dtype=TensorProto.UINT4,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.UINT4, (3, 4, 5))]
+        )
+
+    def test_quantizelinear_zp_output_dtype(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (3, 4, 5)),
+                ("y_scale", TensorProto.FLOAT, ()),
+                ("y_zero_point", TensorProto.UINT16, ()),
+            ],
+            [
+                make_node(
+                    "QuantizeLinear",
+                    ["x", "y_scale", "y_zero_point"],
+                    ["y"],
+                    output_dtype=TensorProto.UINT16,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.UINT16, (3, 4, 5))]
+        )
+
+    def test_quantizelinear_zp_output_dtype_conflicted(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (3, 4, 5)),
+                ("y_scale", TensorProto.FLOAT, ()),
+                ("y_zero_point", TensorProto.UINT16, ()),
+            ],
+            [
+                make_node(
+                    "QuantizeLinear",
+                    ["x", "y_scale", "y_zero_point"],
+                    ["y"],
+                    output_dtype=TensorProto.INT4,
+                )
+            ],
+            [],
+        )
+
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+        )
+
+    @unittest.skip(
+        "Issue #5960"
+    )  # FIXME(#5960) propagateElemTypeFromAttributeToOutput does not validate against output type constraints
+    def test_quantizelinear_invalid_output_dtype(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5)), ("y_scale", TensorProto.FLOAT, ())],
+            [
+                make_node(
+                    "QuantizeLinear",
+                    ["x", "y_scale"],
+                    ["y"],
+                    output_dtype=TensorProto.FLOAT16,
+                )
+            ],
+            [],
+        )
+
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
         )
 
     @parameterized.expand(

@@ -212,7 +212,7 @@ All other fields in the `metadata` field are optional for the client but provide
 The simplest way to add a model to the official `onnx/models` version model hub is to follow
 [these guidelines](https://github.com/onnx/models/blob/main/contribute.md) to contribute your model. Once contributed,
 ensure that your model has a markdown table in its `README.md`
-([Example](https://github.com/onnx/models/tree/main/vision/classification/mobilenet)). The model hub
+([Example](https://github.com/onnx/models/tree/main/validated/vision/classification/mobilenet)). The model hub
  manifest generator will pull information from these markdown tables. To run the generator:
 
  ```shell script

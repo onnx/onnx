@@ -194,6 +194,8 @@ message ValueInfoProto {
   TypeProto type = 2;
   // A human-readable documentation for this value. Markdown is allowed.
   string doc_string = 3;
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 4;
 }
 
 // Nodes
@@ -223,6 +225,9 @@ message NodeProto {
 
   // A human-readable documentation for this node. Markdown is allowed.
   string doc_string = 6;
+
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 9;
 }
 
 // Training information
@@ -481,6 +486,9 @@ message GraphProto {
   // which means, tensor 'a_scale' and tensor 'a_zero_point' are scale and zero point of tensor 'a' in the model.
   repeated TensorAnnotation quantization_annotation = 14;
 
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 16;
+
   reserved 3, 4, 6 to 9;
   reserved "ir_version", "producer_version", "producer_tag", "domain";
 }
@@ -644,6 +652,9 @@ message TensorProto {
   // When this field is present, the data_type field MUST be
   // UINT32 or UINT64
   repeated uint64 uint64_data = 11 [packed = true];
+
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 16;
 }
 
 // A serialized sparse-tensor value
@@ -851,6 +862,9 @@ message FunctionProto {
   // outputs, and intermediate values). It is optional for a value to appear
   // in value_info list.
   repeated ValueInfoProto value_info = 12;
+
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 14;
 }
 
 // For using protobuf-lite
