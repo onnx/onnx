@@ -108,10 +108,10 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   if (inputs_.empty() && ctx.getNumInputs() > 0) {
-    fail_check("Node with name: \"", Name(), "\" need empty inputs, but got ", ctx.getNumInputs(), " in graph");
+    fail_check("Node with type: \"", Name(), "\" need empty inputs, but got ", ctx.getNumInputs(), " in graph");
   }
   if (outputs_.empty() && ctx.getNumOutputs() > 0) {
-    fail_check("Node with name: \"", Name(), "\" need empty outputs, but got ", ctx.getNumInputs(), " in graph");
+    fail_check("Node with type: \"", Name(), "\" need empty outputs, but got ", ctx.getNumInputs(), " in graph");
   }
   // check all input types
   for (size_t in_idx = 0; in_idx < ctx.getNumInputs(); ++in_idx) {
