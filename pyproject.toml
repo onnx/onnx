@@ -57,6 +57,7 @@ addopts = "--nbval --nbval-current-env --tb=short --color=yes"
 testpaths = [
     "onnx/test",
     "onnx/examples",
+    "tests",
 ]
 
 [tool.mypy]

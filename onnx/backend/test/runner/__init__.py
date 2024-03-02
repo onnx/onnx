@@ -17,6 +17,7 @@ import unittest
 from collections import defaultdict
 from typing import Any, Callable, Iterable, Pattern, Sequence
 from urllib.request import urlretrieve
+from pathlib import Path
 
 import numpy as np
 
@@ -57,6 +58,7 @@ class Runner:
     def __init__(
         self,
         backend: type[Backend],
+        test_data_dir: Path,
         parent_module: str | None = None,
         test_kwargs: dict | None = None,
     ) -> None:
@@ -73,19 +75,19 @@ class Runner:
         # {category: {name: func}}
         self._test_items: dict[str, dict[str, TestItem]] = defaultdict(dict)
 
-        for rt in load_model_tests(kind="node"):
+        for rt in load_model_tests(data_dir=str(test_data_dir), kind="node"):
             self._add_model_test(rt, "Node")
 
-        for rt in load_model_tests(kind="real"):
+        for rt in load_model_tests(data_dir=str(test_data_dir), kind="real"):
             self._add_model_test(rt, "Real")
 
-        for rt in load_model_tests(kind="simple"):
+        for rt in load_model_tests(data_dir=str(test_data_dir), kind="simple"):
             self._add_model_test(rt, "Simple")
 
-        for ct in load_model_tests(kind="pytorch-converted"):
+        for ct in load_model_tests(data_dir=str(test_data_dir), kind="pytorch-converted"):
             self._add_model_test(ct, "PyTorchConverted")
 
-        for ot in load_model_tests(kind="pytorch-operator"):
+        for ot in load_model_tests(data_dir=str(test_data_dir), kind="pytorch-operator"):
             self._add_model_test(ot, "PyTorchOperator")
 
     def _get_test_case(self, name: str) -> type[unittest.TestCase]:

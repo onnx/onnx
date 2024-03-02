@@ -7,6 +7,7 @@ import os
 import platform
 import unittest
 from typing import Any, Optional, Sequence, Tuple
+from pathlib import Path
 
 import numpy
 
@@ -28,6 +29,8 @@ from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 #
 # We don't enable report in this test because the report collection logic itself
 # fails when models are mal-formed.
+
+TEST_DATA_DIR = Path(__file__).parent.parent.parent / "onnx/backend/test/data"
 
 
 class DummyBackend(onnx.backend.base.Backend):
@@ -111,7 +114,7 @@ test_kwargs = {
 }
 
 backend_test = onnx.backend.test.BackendTest(
-    DummyBackend, __name__, test_kwargs=test_kwargs
+    DummyBackend, test_data_dir=TEST_DATA_DIR, parent_module=__name__, test_kwargs=test_kwargs
 )
 if os.getenv("APPVEYOR"):
     backend_test.exclude(r"(test_vgg19|test_zfnet)")
