@@ -6,6 +6,7 @@
 from typing import Dict, List, MutableMapping, Optional, Set, Tuple
 
 from onnx import GraphProto, ModelProto, TensorProto, checker, helper, utils
+from onnx.onnx_ml_pb2 import AttributeProto
 
 
 def check_overlapping_names(
@@ -206,12 +207,22 @@ def merge_graphs(
     g.node.extend(g2.node)
     g2_nodes_end = len(g.node)
 
+    # Searching inputs of the subgraph recursively.
+    def connect_io(sub_graph: GraphProto, start, end):
+        for node_idx in range(start, end):
+            node = sub_graph.node[node_idx]
+            for attr in node.attribute:
+                if attr.type == AttributeProto.GRAPH:
+                    connect_io(attr.g, 0, len(attr.g.node))
+
+            for index, name_ in enumerate(node.input):
+                if name_ in reversed_io_map:
+                    node.input[index] = reversed_io_map[name_]
+
     # Connecting outputs of the first graph with the inputs of the second
-    for node_idx in range(g2_nodes_begin, g2_nodes_end):
-        node = g.node[node_idx]
-        for index, name_ in enumerate(node.input):
-            if name_ in reversed_io_map:
-                node.input[index] = reversed_io_map[name_]
+    # for node_idx in range(g2_nodes_begin, g2_nodes_end):
+    #     node = g.node[node_idx]
+    connect_io(g, g2_nodes_begin, g2_nodes_end)
 
     if inputs:
         input_set = set(inputs)
