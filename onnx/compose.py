@@ -5,9 +5,7 @@
 
 from typing import Dict, List, MutableMapping, Optional, Set, Tuple
 
-from onnx import GraphProto, ModelProto, TensorProto, checker, helper, utils
-from onnx.onnx_ml_pb2 import AttributeProto
-
+from onnx import GraphProto, ModelProto, TensorProto, AttributeProto, checker, helper, utils
 
 def check_overlapping_names(
     g1: GraphProto, g2: GraphProto, io_map: Optional[List[Tuple[str, str]]] = None
