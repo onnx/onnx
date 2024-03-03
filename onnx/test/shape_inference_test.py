@@ -9898,6 +9898,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         onnx.defs.register_schema(op_schema)
         with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, True)
+        onnx.defs.deregister_schema(op_schema.name, op_schema.since_version, op_schema.domain)
 
 
 if __name__ == "__main__":
