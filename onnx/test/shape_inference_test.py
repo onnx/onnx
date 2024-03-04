@@ -9875,6 +9875,33 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(graph, [make_tensor_value_info("output", TensorProto.INT64, (2, "N", 3, None))])  # type: ignore
 
+    def test_check_type_when_schema_has_empty_io(self):
+        input = """
+            <
+                ir_version: 7,
+                opset_import: ["" : 1]
+            >
+            agraph (X, Y) => (Z)
+            {
+                Z = CustomOp(X, Y)
+            }
+           """
+        model = onnx.parser.parse_model(input)
+
+        op_schema = defs.OpSchema(
+            "CustomOp",
+            "",
+            1,
+            inputs=[],
+            outputs=[],
+        )
+        onnx.defs.register_schema(op_schema)
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, True)
+        onnx.defs.deregister_schema(
+            op_schema.name, op_schema.since_version, op_schema.domain
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
