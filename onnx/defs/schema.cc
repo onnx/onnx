@@ -115,7 +115,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
         Name(),
         ":",
         since_version(),
-        ") need empty inputs, but got ",
+        ") takes zero inputs, but got ",
         ctx.getNumInputs(),
         " in graph");
   }
@@ -127,7 +127,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
         Name(),
         ":",
         since_version(),
-        ") need empty outputs, but got ",
+        ") yields zero outputs, but got ",
         ctx.getNumOutputs(),
         " in graph");
   }
