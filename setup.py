@@ -310,7 +310,9 @@ setuptools.setup(
     ext_modules=EXT_MODULES,
     cmdclass=CMD_CLASS,
     version=VERSION_INFO["version"],
-    options={"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
-    if ONNX_WHEEL_PLATFORM_NAME is not None
-    else {},
+    options=(
+        {"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
+        if ONNX_WHEEL_PLATFORM_NAME is not None
+        else {}
+    ),
 )
