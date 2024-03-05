@@ -190,7 +190,8 @@ namespace ONNX_NAMESPACE {
   _(end)                            \
   _(num_groups)                     \
   _(stash_type)                     \
-  _(block_size)
+  _(block_size)                     \
+  _(output_dtype)
 
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,

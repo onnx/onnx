@@ -363,6 +363,86 @@ f (y, z) => (w)
   EXPECT_EQ(fp.opset_import_size(), 1);
 }
 
+TEST(ParserTest, FunctionValueInfoTest) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+f (float[N] y, float[N] z) => (float[N] w)
+{
+    x = Add(y, z)
+    w = Mul(x, y)
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
+
+  EXPECT_EQ(fp.input_size(), 2);
+  EXPECT_EQ(fp.output_size(), 1);
+  ASSERT_EQ(fp.value_info_size(), 3);
+  EXPECT_EQ(fp.value_info(0).name(), "y");
+  EXPECT_EQ(fp.value_info(1).name(), "z");
+  EXPECT_EQ(fp.value_info(2).name(), "w");
+}
+
+TEST(ParserTest, FunctionValueInfoTest2) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+f (float[N] y, float[N] z) => (float[N] w)
+<float[N] x>
+{
+    x = Add(y, z)
+    w = Mul(x, y)
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
+
+  EXPECT_EQ(fp.input_size(), 2);
+  EXPECT_EQ(fp.value_info_size(), 4);
+  ASSERT_EQ(fp.output_size(), 1);
+  EXPECT_EQ(fp.value_info(0).name(), "y");
+  EXPECT_EQ(fp.value_info(1).name(), "z");
+  EXPECT_EQ(fp.value_info(2).name(), "w");
+  EXPECT_EQ(fp.value_info(3).name(), "x");
+}
+
+TEST(ParserTest, FunctionValueInfoTest3) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+f (float[N] y, z) => (float[N] w)
+<float[N] x, float[N] t>
+{
+    x = Add(y, z)
+    t = Add(x, x)
+    w = Mul(t, y)
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
+
+  EXPECT_EQ(fp.input_size(), 2);
+  ASSERT_EQ(fp.value_info_size(), 4);
+  EXPECT_EQ(fp.output_size(), 1);
+  EXPECT_EQ(fp.value_info(0).name(), "y");
+  EXPECT_EQ(fp.value_info(1).name(), "w");
+  EXPECT_EQ(fp.value_info(2).name(), "x");
+  EXPECT_EQ(fp.value_info(3).name(), "t");
+}
+
 TEST(ParserTest, InitializerTest) {
   const char* code = R"ONNX(
 agraph (float y = {1.0}, float[N] z) => (float[N] w)

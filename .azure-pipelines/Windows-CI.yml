@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 schedules:
 - cron: '0 0 * * *'
   displayName: Nightly Windows CI in main branch
@@ -60,6 +64,9 @@ jobs:
         conda install -n py$(python.version) -y -c conda-forge numpy
       )
     displayName: Create Anaconda environment
+
+  - powershell: echo "##vso[task.setvariable variable=CMAKE_PREFIX_PATH]$env:CONDA/envs/py$(python.version)/Library"
+    displayName: Set CMAKE_PREFIX_PATH
 
   - script: |
       call activate py$(python.version)

@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - name: REUSE Compliance Check
-      uses: fsfe/reuse-action@4f2804894b54004c8ed4b8a62b7c649e54a3aa4b # v2.0.0
+      uses: fsfe/reuse-action@a46482ca367aef4454a87620aa37c2be4b2f8106 # v3.0.0
