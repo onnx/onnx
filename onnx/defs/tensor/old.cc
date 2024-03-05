@@ -5157,7 +5157,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 1)) {
             auto& depth_shape = getInputShape(ctx, 1);
             if (const TensorProto* depth_data = ctx.getInputData(1)) {
-              depth_value = ParseData<int64_t>(depth_data)[0];
+              if (depth_data->data_type() == TensorProto::INT64) {
+                depth_value = ParseData<int64_t>(depth_data)[0];
+              } else if (depth_data->data_type() == TensorProto::INT32) {
+                depth_value = ParseData<int32_t>(depth_data)[0];
+              } else if (depth_data->data_type() == TensorProto::FLOAT) {
+                depth_value = static_cast<int64_t>(ParseData<float>(depth_data)[0]);
+              }
             }
             if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
               fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
