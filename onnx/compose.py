@@ -5,7 +5,16 @@
 
 from typing import Dict, List, MutableMapping, Optional, Set, Tuple
 
-from onnx import GraphProto, ModelProto, TensorProto, AttributeProto, checker, helper, utils
+from onnx import (
+    AttributeProto,
+    GraphProto,
+    ModelProto,
+    TensorProto,
+    checker,
+    helper,
+    utils,
+)
+
 
 def check_overlapping_names(
     g1: GraphProto, g2: GraphProto, io_map: Optional[List[Tuple[str, str]]] = None
@@ -218,8 +227,6 @@ def merge_graphs(
                     node.input[index] = reversed_io_map[name_]
 
     # Connecting outputs of the first graph with the inputs of the second
-    # for node_idx in range(g2_nodes_begin, g2_nodes_end):
-    #     node = g.node[node_idx]
     connect_io(g, g2_nodes_begin, g2_nodes_end)
 
     if inputs:
