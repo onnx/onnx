@@ -215,7 +215,7 @@ def merge_graphs(
     g2_nodes_end = len(g.node)
 
     # Search inputs of the subgraph recursively
-    def connect_io(sub_graph: GraphProto, start, end):
+    def connect_io(sub_graph: GraphProto, start: int, end: int) -> None:
         for node_idx in range(start, end):
             node = sub_graph.node[node_idx]
             for attr in node.attribute:
