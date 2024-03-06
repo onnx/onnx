@@ -19,14 +19,17 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Pick a release tag (v.1.X.X) for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
 * Create a release branch (please use rel-* as the branch name) from main.
     * Make sure all tests pass on that branch.
-    * create the release tag:
-        * git tag v.1.X.X
-        * or create the release tag when drafting a new release statement
-* After cutting a release branch, bump [VERSION_NUMBER file](/VERSION_NUMBER) (next version number for future ONNX) in the main branch.
+    * Draft a release based on the branch:
+        * https://github.com/onnx/onnx/releases/new
+            * DO NOT click `Publish release`. Use `Save Draft` for now.
+                * Publishing will create a tag which we don't want yet as there maybe bug fixes added during validation
+        * git tag v1.X.X
+        * Draft a new release statement listing out the new features and bug fixes, and potential changes being introduced in the release.
+            * Use [pervious releases](https://github.com/onnx/onnx/releases) as a template
+            * Use information from [Release logistics wiki](https://github.com/onnx/onnx/wiki) which should have been created prior to branch cut. (ie https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.XX.0)
+* After cutting a release branch, bump [VERSION_NUMBER file](/VERSION_NUMBER) (next version number for future ONNX) in the `main` branch.
 * Prepare a change log for the release –
     * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
-* Draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.
-    * when drafting the release, use the tag if it is already created, or create a new tag using the release branch from GitHub Release page.
 * Please use target VERSION_NUMBER with `rc` (e.g., `1.x.0rc1`) to test TestPyPI in advance before using target VERSION_NUMBER (e.g., `1.x.0`) for final release.
 * Create an issue in onnxruntime repo. See [a sample issue](https://github.com/microsoft/onnxruntime/issues/11108) for details. The issue is to request onnxruntime to update with the onnx release branch and to run all CI and packaging pipelines ([How_To_Update_ONNX_Dev_Notes](https://github.com/microsoft/onnxruntime/blob/main/docs/How_To_Update_ONNX_Dev_Notes.md)). It is possible that onnx bugs are detected with onnxruntime pipeline runs. In such case the bugs shall be fixed in the onnx main branch and cherry-picked into the release branch. Follow up with onnxruntime to ensure the issue is resolved in time before onnx release.
 

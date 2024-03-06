@@ -56,13 +56,6 @@ jobs:
   - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
     displayName: Add conda to PATH
 
-  # cmake 3.28.3 failed to find protobuf installed from conda-forge
-  # https://gitlab.kitware.com/cmake/cmake/-/issues/25704
-  - script: |
-      choco install cmake --version 3.27.9 -y
-      cmake --version
-    displayName: Install specific version of CMake and check version
-
   - script: |
       conda create --yes --quiet --name py$(python.version) python=$(python.version)
       if '$(protobuf_type)' == 'External' (
@@ -71,6 +64,9 @@ jobs:
         conda install -n py$(python.version) -y -c conda-forge numpy
       )
     displayName: Create Anaconda environment
+
+  - powershell: echo "##vso[task.setvariable variable=CMAKE_PREFIX_PATH]$env:CONDA/envs/py$(python.version)/Library"
+    displayName: Set CMAKE_PREFIX_PATH
 
   - script: |
       call activate py$(python.version)
