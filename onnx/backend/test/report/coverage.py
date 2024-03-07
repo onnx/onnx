@@ -246,9 +246,9 @@ class Coverage:
                 del existing_models["Summary"]
             if str(backend) in summaries:
                 del summaries[str(backend)]
-            summaries[
-                str(backend)
-            ] = f"{len(self.models['passed'])}/{num_models} model tests passed"
+            summaries[str(backend)] = (
+                f"{len(self.models['passed'])}/{num_models} model tests passed"
+            )
             summaries["Model"] = "Summary"
             for model in existing_models:  # type: ignore
                 existing_models[model]["Model"] = model
