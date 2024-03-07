@@ -444,6 +444,8 @@ struct Node : public Attributes<Node> {
   std::string domain_;
   bool has_doc_string_;
   std::string doc_string_;
+  bool has_overload_;
+  std::string overload_;
 
  protected:
   Node(Graph* graph_, NodeKind kind_); // defined after graph
@@ -468,6 +470,16 @@ struct Node : public Attributes<Node> {
   void setDomain(std::string domain) {
     has_domain_ = true;
     domain_ = std::move(domain);
+  }
+  bool has_overload() const {
+    return has_overload_;
+  }
+  const std::string& overload() const {
+    return overload_;
+  }
+  void setOverload(std::string overload) {
+    has_overload_ = true;
+    overload_ = std::move(overload);
   }
   bool has_doc_string() const {
     return has_doc_string_;
@@ -964,7 +976,7 @@ struct Graph final {
 
   void addInitializer(Tensor& initializer) {
     if (initializer.name().empty()) {
-      initializer.setName(ONNX_NAMESPACE::to_string(getNextUnique()));
+      initializer.setName(toVarName(getNextUnique()));
     }
     initializers_.push_back(initializer);
     initializer_names_.push_back(initializer.name());
@@ -1154,7 +1166,7 @@ struct Graph final {
   }
 
   Value* addInitializerAndInput(const Tensor& initializer) {
-    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(getNextUnique()));
+    return addInitializerAndInput(initializer, toVarName(getNextUnique()));
   }
 
   // Erases from graph initializer list, initializer names list, and as a graph input
@@ -1350,7 +1362,8 @@ inline Node::Node(Graph* graph_, NodeKind kind_)
       stage_(graph_->new_node_stage_),
       has_name_(false),
       has_domain_(false),
-      has_doc_string_(false) {
+      has_doc_string_(false),
+      has_overload_(false) {
   graph_->all_nodes.emplace(this);
 }
 

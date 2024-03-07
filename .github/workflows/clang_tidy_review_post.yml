@@ -20,7 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: ZedThree/clang-tidy-review/post@246fe91b9849a61f5db473ef7a9e1120e860fd68 # v0.14.0
+      - uses: ZedThree/clang-tidy-review/post@4923dc7cbb13a291cecc8507a89f70ed25ac9ce9 # v0.17.1
         with:
           lgtm_comment_body: ""
           # Use annotations instead of comments

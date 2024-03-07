@@ -233,34 +233,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
       .def_property_readonly("is_homogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
       .def_property_readonly("min_arity", &OpSchema::FormalParameter::GetMinArity)
-      .def_property_readonly("differentiation_category", &OpSchema::FormalParameter::GetDifferentiationCategory)
-      // Legacy camel cased names. We retain them for backward compatibility.
-      // TODO(#5074): Remove these before the 1.16 release.
-      .def_property_readonly(
-          "typeStr",
-          [](const OpSchema::FormalParameter& self) {
-            auto warnings = py::module::import("warnings");
-            warnings.attr("warn")(
-                "OpSchema.FormalParameter.typeStr is deprecated and will be removed in 1.16. "
-                "Use OpSchema.FormalParameter.type_str instead.");
-            return self.GetTypeStr();
-          })
-      .def_property_readonly(
-          "isHomogeneous",
-          [](const OpSchema::FormalParameter& self) {
-            auto warnings = py::module::import("warnings");
-            warnings.attr("warn")(
-                "OpSchema.FormalParameter.isHomogeneous is deprecated and will be removed in 1.16. "
-                "Use OpSchema.FormalParameter.is_homogeneous instead.");
-            return self.GetIsHomogeneous();
-          })
-      .def_property_readonly("differentiationCategory", [](const OpSchema::FormalParameter& self) {
-        auto warnings = py::module::import("warnings");
-        warnings.attr("warn")(
-            "OpSchema.FormalParameter.differentiationCategory is deprecated and will be removed in 1.16. "
-            "Use OpSchema.FormalParameter.differentiation_category instead.");
-        return self.GetDifferentiationCategory();
-      });
+      .def_property_readonly("differentiation_category", &OpSchema::FormalParameter::GetDifferentiationCategory);
 
   op_schema
       .def(
@@ -431,6 +404,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "op_type"_a,
           "domain"_a = ONNX_DOMAIN)
       .def(
+          "has_schema",
+          [](const std::string& op_type, int max_inclusive_version, const std::string& domain) -> bool {
+            return OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain) != nullptr;
+          },
+          "op_type"_a,
+          "max_inclusive_version"_a,
+          "domain"_a = ONNX_DOMAIN)
+      .def(
           "schema_version_map",
           []() -> std::unordered_map<std::string, std::pair<int, int>> {
             return OpSchemaRegistry::DomainToVersionRange::Instance().Map();
@@ -469,7 +450,34 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def(
           "get_all_schemas_with_history",
           []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
-          "Return the schema of all existing operators and all versions.");
+          "Return the schema of all existing operators and all versions.")
+      .def(
+          "set_domain_to_version",
+          [](const std::string& domain, int min_version, int max_version, int last_release_version) {
+            auto& obj = OpSchemaRegistry::DomainToVersionRange::Instance();
+            if (obj.Map().count(domain) == 0) {
+              obj.AddDomainToVersion(domain, min_version, max_version, last_release_version);
+            } else {
+              obj.UpdateDomainToVersion(domain, min_version, max_version, last_release_version);
+            }
+          },
+          "domain"_a,
+          "min_version"_a,
+          "max_version"_a,
+          "last_release_version"_a = -1,
+          "Set the version range and last release version of the specified domain.")
+      .def(
+          "register_schema",
+          [](OpSchema schema) { RegisterSchema(std::move(schema), 0, true, true); },
+          "schema"_a,
+          "Register a user provided OpSchema.")
+      .def(
+          "deregister_schema",
+          &DeregisterSchema,
+          "op_type"_a,
+          "version"_a,
+          "domain"_a,
+          "Deregister the specified OpSchema.");
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
@@ -546,21 +554,28 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   checker.def(
       "check_model",
-      [](const py::bytes& bytes, bool full_check, bool skip_opset_compatibility_check) -> void {
+      [](const py::bytes& bytes, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)
+          -> void {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
-        checker::check_model(proto, full_check, skip_opset_compatibility_check);
+        checker::check_model(proto, full_check, skip_opset_compatibility_check, check_custom_domain);
       },
       "bytes"_a,
       "full_check"_a = false,
-      "skip_opset_compatibility_check"_a = false);
+      "skip_opset_compatibility_check"_a = false,
+      "check_custom_domain"_a = false);
 
   checker.def(
       "check_model_path",
-      (void (*)(const std::string& path, bool full_check, bool skip_opset_compatibility_check)) & checker::check_model,
+      (void (*)(
+          const std::string& path, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)) &
+          checker::check_model,
       "path"_a,
       "full_check"_a = false,
-      "skip_opset_compatibility_check"_a = false);
+      "skip_opset_compatibility_check"_a = false,
+      "check_custom_domain"_a = false);
+
+  checker.def("_resolve_external_data_location", &checker::resolve_external_data_location);
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");

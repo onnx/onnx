@@ -90,7 +90,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             "defaults to float32.",
             "T2")
         .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
-        .TypeConstraint("T2", OpSchema::all_numeric_types_ir10(), "Constrain output types to be numerics.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(uint4)",
+             "tensor(int4)",
+             "tensor(bool)",
+             "tensor(bfloat16)",
+             "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)",
+             "tensor(float8e5m2)",
+             "tensor(float8e5m2fnuz)"},
+            "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
             propagateElemTypeFromDtypeToOutput(ctx, ctx.getAttribute("value"), 0);

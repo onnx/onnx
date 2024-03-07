@@ -249,16 +249,16 @@ class OpRun(abc.ABC):
     ) -> Any:
         """Converts an attribute value into a python value."""
         if att.type == AttributeProto.GRAPH:
-            from onnx.reference.reference_evaluator import (
-                ReferenceEvaluator,  # type: ignore
-            )
-
             new_ops = self.run_params.get("new_ops", None)
             if "existing_functions" in self.run_params:
                 functions = list(self.run_params["existing_functions"].values())
             else:
                 functions = None
-            return ReferenceEvaluator(
+            evaluator_cls = self.run_params.get("evaluator_cls", None)
+            assert (
+                evaluator_cls is not None
+            ), f"evaluator_cls must be specified to evaluate att={att}"
+            return evaluator_cls(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
@@ -622,7 +622,7 @@ class OpRun(abc.ABC):
         return cl
 
     @classmethod
-    def eval(  # noqa: A003
+    def eval(
         cls,
         *args: list[Any],
         n_outputs: int | None = None,
