@@ -335,6 +335,16 @@ class OpSchema final {
    */
   void Verify(const NodeProto& node) const;
 
+  /**
+   * @brief Verifies if the input number matches the pattern specified in the schema
+   */
+  void VerifyInputNum(int input_num, const std::string& node_info = "Node") const;
+
+  /**
+   * @brief Verifies if the output number matches the pattern specified in the schema
+   */
+  void VerifyOutputNum(int output_num, const std::string& node_info = "Node") const;
+
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.
 
