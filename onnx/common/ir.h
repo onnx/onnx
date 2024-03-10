@@ -976,7 +976,7 @@ struct Graph final {
 
   void addInitializer(Tensor& initializer) {
     if (initializer.name().empty()) {
-      initializer.setName(ONNX_NAMESPACE::to_string(getNextUnique()));
+      initializer.setName(toVarName(getNextUnique()));
     }
     initializers_.push_back(initializer);
     initializer_names_.push_back(initializer.name());
@@ -1166,7 +1166,7 @@ struct Graph final {
   }
 
   Value* addInitializerAndInput(const Tensor& initializer) {
-    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(getNextUnique()));
+    return addInitializerAndInput(initializer, toVarName(getNextUnique()));
   }
 
   // Erases from graph initializer list, initializer names list, and as a graph input

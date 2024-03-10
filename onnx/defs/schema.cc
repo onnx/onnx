@@ -113,6 +113,30 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     fail_check(domain(), "::", Name(), " output need empty but got ", ctx.getNumOutputs(), " in graph");
   }
   std::unordered_map<std::string, std::string> type_constraints;
+  if (inputs_.empty() && ctx.getNumInputs() > 0) {
+    fail_check(
+        "Node (",
+        domain(),
+        "::",
+        Name(),
+        ":",
+        since_version(),
+        ") takes zero inputs, but got ",
+        ctx.getNumInputs(),
+        " in graph");
+  }
+  if (outputs_.empty() && ctx.getNumOutputs() > 0) {
+    fail_check(
+        "Node (",
+        domain(),
+        "::",
+        Name(),
+        ":",
+        since_version(),
+        ") yields zero outputs, but got ",
+        ctx.getNumOutputs(),
+        " in graph");
+  }
   // check all input types
   for (size_t in_idx = 0; in_idx < ctx.getNumInputs(); ++in_idx) {
     // If the last input is Variadic by definition, checker still needs to check the rest of actual input's type
