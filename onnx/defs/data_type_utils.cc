@@ -46,7 +46,7 @@ class StringRange final {
  public:
   StringRange();
   StringRange(const char* data, size_t size);
-  StringRange(const std::string& str);
+  StringRange(std::string_view str);
   StringRange(const char* data);
   const char* Data() const;
   size_t Size() const;
@@ -54,7 +54,7 @@ class StringRange final {
   char operator[](size_t idx) const;
   void Reset();
   void Reset(const char* data, size_t size);
-  void Reset(const std::string& str);
+  void Reset(std::string_view str);
   bool StartsWith(const StringRange& str) const;
   bool EndsWith(const StringRange& str) const;
   bool LStrip();
@@ -105,7 +105,7 @@ DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
   return &(GetTypeStrToProtoMap().find(typeStr)->first);
 }
 
-DataType DataTypeUtils::ToType(const std::string& type_str) {
+DataType DataTypeUtils::ToType(std::string_view type_str) {
   TypeProto type;
   FromString(type_str, type);
   return ToType(type);
@@ -120,7 +120,7 @@ const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
   return it->second;
 }
 
-std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::string& left, const std::string& right) {
+std::string DataTypeUtils::ToString(const TypeProto& type_proto, std::string_view left, std::string_view right) {
   switch (type_proto.value_case()) {
     case TypeProto::ValueCase::kTensorType: {
       // Note: We do not distinguish tensors with zero rank (a shape consisting
@@ -172,7 +172,7 @@ std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   return iter->second;
 }
 
-void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_proto) {
+void DataTypeUtils::FromString(std::string_view type_str, TypeProto& type_proto) {
   StringRange s(type_str);
   type_proto.Clear();
   if (s.LStrip("seq")) {
@@ -233,13 +233,13 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
   }
 } // namespace Utils
 
-bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
+bool DataTypeUtils::IsValidDataTypeString(std::string_view type_str) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   const auto& allowedSet = t.GetAllowedDataTypes();
   return (allowedSet.find(type_str) != allowedSet.end());
 }
 
-void DataTypeUtils::FromDataTypeString(const std::string& type_str, int32_t& tensor_data_type) {
+void DataTypeUtils::FromDataTypeString(std::string_view type_str, int32_t& tensor_data_type) {
   if (!IsValidDataTypeString(type_str)) {
     ONNX_THROW_EX(std::invalid_argument(
         "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
@@ -256,7 +256,7 @@ StringRange::StringRange(const char* p_data, size_t p_size) : data_(p_data), siz
   LAndRStrip();
 }
 
-StringRange::StringRange(const std::string& p_str)
+StringRange::StringRange(std::string_view p_str)
     : data_(p_str.data()), size_(p_str.size()), start_(data_), end_(data_) {
   LAndRStrip();
 }
@@ -293,7 +293,7 @@ void StringRange::Reset(const char* data, size_t size) {
   start_ = end_ = data_;
 }
 
-void StringRange::Reset(const std::string& str) {
+void StringRange::Reset(std::string_view str) {
   data_ = str.data();
   size_ = str.size();
   start_ = end_ = data_;

@@ -202,7 +202,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def(
           py::init([](std::string name,
                       std::string type_str,
-                      const std::string& description,
+                      std::string_view description,
                       OpSchema::FormalParameterOption param_option,
                       bool is_homogeneous,
                       int min_arity,
@@ -284,10 +284,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               std::vector<std::string> /* constraints */,
               std::string /* description */>>{},
           py::arg("attributes") = std::vector<OpSchema::Attribute>{})
-      .def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
+      .def_property("name", &OpSchema::Name, [](OpSchema& self, std::string_view name) { self.SetName(name); })
       .def_property(
-          "domain", &OpSchema::domain, [](OpSchema& self, const std::string& domain) { self.SetDomain(domain); })
-      .def_property("doc", &OpSchema::doc, [](OpSchema& self, const std::string& doc) { self.SetDoc(doc); })
+          "domain", &OpSchema::domain, [](OpSchema& self, std::string_view domain) { self.SetDomain(domain); })
+      .def_property("doc", &OpSchema::doc, [](OpSchema& self, std::string_view doc) { self.SetDoc(doc); })
       .def_property_readonly("file", &OpSchema::file)
       .def_property_readonly("line", &OpSchema::line)
       .def_property_readonly("support_level", &OpSchema::support_level)
@@ -398,14 +398,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   defs.def(
           "has_schema",
-          [](const std::string& op_type, const std::string& domain) -> bool {
+          [](std::string_view op_type, std::string_view domain) -> bool {
             return OpSchemaRegistry::Schema(op_type, domain) != nullptr;
           },
           "op_type"_a,
           "domain"_a = ONNX_DOMAIN)
       .def(
           "has_schema",
-          [](const std::string& op_type, int max_inclusive_version, const std::string& domain) -> bool {
+          [](std::string_view op_type, int max_inclusive_version, std::string_view domain) -> bool {
             return OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain) != nullptr;
           },
           "op_type"_a,
@@ -418,7 +418,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           })
       .def(
           "get_schema",
-          [](const std::string& op_type, const int max_inclusive_version, const std::string& domain) -> OpSchema {
+          [](std::string_view op_type, const int max_inclusive_version, std::string_view domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
             if (!schema) {
               fail_schema(
@@ -433,7 +433,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "Return the schema of the operator *op_type* and for a specific version.")
       .def(
           "get_schema",
-          [](const std::string& op_type, const std::string& domain) -> OpSchema {
+          [](std::string_view op_type, std::string_view domain) -> OpSchema {
             const auto* schema = OpSchemaRegistry::Schema(op_type, domain);
             if (!schema) {
               fail_schema("No schema registered for '" + op_type + "' and domain '" + domain + "'!");
@@ -453,7 +453,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "Return the schema of all existing operators and all versions.")
       .def(
           "set_domain_to_version",
-          [](const std::string& domain, int min_version, int max_version, int last_release_version) {
+          [](std::string_view domain, int min_version, int max_version, int last_release_version) {
             auto& obj = OpSchemaRegistry::DomainToVersionRange::Instance();
             if (obj.Map().count(domain) == 0) {
               obj.AddDomainToVersion(domain, min_version, max_version, last_release_version);
@@ -568,7 +568,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   checker.def(
       "check_model_path",
       (void (*)(
-          const std::string& path, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)) &
+          std::string_view path, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)) &
           checker::check_model,
       "path"_a,
       "full_check"_a = false,
@@ -643,8 +643,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   shape_inference.def(
       "infer_shapes_path",
-      [](const std::string& model_path,
-         const std::string& output_path,
+      [](std::string_view model_path,
+         std::string_view output_path,
          bool check_type,
          bool strict_mode,
          bool data_prop) -> void {

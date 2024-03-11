@@ -19,7 +19,7 @@ namespace version_conversion {
 
 class BroadcastBackwardCompatibility final : public Adapter {
  public:
-  explicit BroadcastBackwardCompatibility(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
+  explicit BroadcastBackwardCompatibility(std::string_view op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
   void adapt_broadcast_backward_compatibility(std::shared_ptr<Graph>, Node* node) const {

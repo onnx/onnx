@@ -28,7 +28,7 @@ class ValidationError final : public std::runtime_error {
     }
     return std::runtime_error::what();
   }
-  void AppendContext(const std::string& context) {
+  void AppendContext(std::string_view context) {
     expanded_message_ = ONNX_NAMESPACE::MakeString(std::runtime_error::what(), "\n\n==> Context: ", context);
   }
 
@@ -68,7 +68,7 @@ class CheckerContext final {
     return schema_registry_;
   }
 
-  void set_model_dir(const std::string& model_dir) {
+  void set_model_dir(std::string_view model_dir) {
     model_dir_ = model_dir;
   }
 
@@ -120,15 +120,15 @@ class LexicalScopeContext final {
     return *this;
   }
 
-  void add(const std::string& name) {
+  void add(std::string_view name) {
     output_names.insert(name);
   }
 
-  bool this_graph_has(const std::string& name) const {
+  bool this_graph_has(std::string_view name) const {
     return output_names.find(name) != output_names.cend();
   }
 
-  bool this_or_ancestor_graph_has(const std::string& name) const {
+  bool this_or_ancestor_graph_has(std::string_view name) const {
     return this_graph_has(name) || (parent_context_ && parent_context_->this_or_ancestor_graph_has(name));
   }
 
@@ -173,14 +173,14 @@ void check_model(
     bool skip_opset_compatibility_check = false,
     bool check_custom_domain = false);
 void check_model(
-    const std::string& model_path,
+    std::string_view model_path,
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
     bool check_custom_domain = false);
 std::string resolve_external_data_location(
-    const std::string& base_dir,
-    const std::string& location,
-    const std::string& tensor_name);
+    std::string_view base_dir,
+    std::string_view location,
+    std::string_view tensor_name);
 bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace checker

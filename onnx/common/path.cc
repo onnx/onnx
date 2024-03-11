@@ -10,14 +10,14 @@ namespace ONNX_NAMESPACE {
 #ifdef _WIN32
 #else
 
-std::string path_join(const std::string& origin, const std::string& append) {
+std::string path_join(std::string_view origin, std::string_view append) {
   if (origin.find_last_of(k_preferred_path_separator) != origin.length() - 1) {
     return origin + k_preferred_path_separator + append;
   }
   return origin + append;
 }
 
-std::string clean_relative_path(const std::string& path) {
+std::string clean_relative_path(std::string_view path) {
   if (path.empty()) {
     return ".";
   }

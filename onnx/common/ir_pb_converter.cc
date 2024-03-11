@@ -217,7 +217,7 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
 
 void createDummyValue(
     std::unique_ptr<Graph>& g,
-    const std::string& name,
+    std::string_view name,
     std::unordered_map<std::string, Value*>& value_by_name_of) {
   auto* undef = g->create(kCaptured, 1);
   g->appendNode(undef);
@@ -467,7 +467,7 @@ void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
       break;
     }
     case ONNX_NAMESPACE::TensorProto_DataType_STRING: {
-      for (const std::string& x : tensor.strings()) {
+      for (std::string_view x : tensor.strings()) {
         p->add_string_data(x);
       }
       break;

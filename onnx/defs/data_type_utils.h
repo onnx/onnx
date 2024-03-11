@@ -39,7 +39,7 @@ class DataTypeUtils final {
  public:
   // If the DataType input is invalid, this function will throw std::invalid_argument exception.
   // If ONNX_NO_EXCEPTIONS is set it will abort.
-  static DataType ToType(const std::string& type_str);
+  static DataType ToType(std::string_view type_str);
 
   // If the DataType input is invalid, this function will throw std::invalid_argument exception.
   // If ONNX_NO_EXCEPTIONS is set it will abort.
@@ -51,16 +51,16 @@ class DataTypeUtils final {
   static std::string ToDataTypeString(int32_t tensor_data_type);
 
  private:
-  static void FromString(const std::string& type_str, TypeProto& type_proto);
+  static void FromString(std::string_view type_str, TypeProto& type_proto);
 
-  static void FromDataTypeString(const std::string& type_str, int32_t& tensor_data_type);
+  static void FromDataTypeString(std::string_view type_str, int32_t& tensor_data_type);
 
-  static std::string ToString(const TypeProto& type_proto, const std::string& left = "", const std::string& right = "");
+  static std::string ToString(const TypeProto& type_proto, std::string_view left = "", std::string_view right = "");
 
   // If int32_t input is invalid, this function will throw an exception.
   // If ONNX_NO_EXCEPTIONS is set it will abort.
 
-  static bool IsValidDataTypeString(const std::string& type_str);
+  static bool IsValidDataTypeString(std::string_view type_str);
 
   static std::unordered_map<std::string, TypeProto>& GetTypeStrToProtoMap();
 

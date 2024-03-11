@@ -73,7 +73,7 @@ class ProtoPrinter {
     output_ << prim;
   }
 
-  void printQuoted(const std::string& str) {
+  void printQuoted(std::string_view str) {
     output_ << "\"";
     for (const char* p = str.c_str(); *p; ++p) {
       if ((*p == '\\') || (*p == '"'))
@@ -91,7 +91,7 @@ class ProtoPrinter {
     print(val);
   }
 
-  inline void printKeyValuePair(KeyWordMap::KeyWord key, const std::string& val) {
+  inline void printKeyValuePair(KeyWordMap::KeyWord key, std::string_view val) {
     output_ << "," << std::endl;
     output_ << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     printQuoted(val);

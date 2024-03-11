@@ -19,7 +19,7 @@ namespace version_conversion {
 
 class AxesAttributeToInput : public Adapter {
  public:
-  explicit AxesAttributeToInput(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
+  explicit AxesAttributeToInput(std::string_view op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
   void attrToInput(std::shared_ptr<Graph> graph, Node* node, std::vector<int64_t> axes) const {

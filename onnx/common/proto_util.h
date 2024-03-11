@@ -26,7 +26,7 @@ using FunctionSpecId = std::string;
 // A single string representation of (domain, op, overload)
 using FunctionImplId = std::string;
 
-FunctionImplId GetFunctionImplId(const std::string& domain, const std::string& op, const std::string& overload) {
+FunctionImplId GetFunctionImplId(std::string_view domain, std::string_view op, std::string_view overload) {
   if (overload.empty())
     return NormalizeDomain(domain) + "::" + op;
   return NormalizeDomain(domain) + "::" + op + "::" + overload;

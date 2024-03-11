@@ -17,11 +17,11 @@ constexpr const char* AI_ONNX_PREVIEW_TRAINING_DOMAIN = "ai.onnx.preview.trainin
 constexpr const char* ONNX_DOMAIN = "";
 constexpr const char* AI_ONNX_DOMAIN = "ai.onnx";
 
-inline std::string NormalizeDomain(const std::string& domain) {
+inline std::string NormalizeDomain(std::string_view domain) {
   return (domain == AI_ONNX_DOMAIN) ? ONNX_DOMAIN : domain;
 }
 
-inline bool IsOnnxDomain(const std::string& domain) {
+inline bool IsOnnxDomain(std::string_view domain) {
   return (domain == AI_ONNX_DOMAIN) || ((domain == ONNX_DOMAIN));
 }
 

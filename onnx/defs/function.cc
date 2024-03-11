@@ -10,7 +10,7 @@
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
-std::string InteralTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
+std::string InteralTensorNameGenerator(std::string_view node_name, std::string_view internal_name) {
   std::string new_name = "Func_" + node_name + internal_name;
   return new_name;
 }
@@ -19,7 +19,7 @@ void FunctionExpandHelper(
     const NodeProto& node,
     const FunctionProto& func,
     GraphProto& g,
-    const std::string& node_prefix) {
+    std::string_view node_prefix) {
   // Create a temporary unique node prefix for tensor names
   std::string uniq_prefix = node_prefix;
   if (uniq_prefix.empty()) {

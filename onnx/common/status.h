@@ -31,7 +31,7 @@ class Status {
  public:
   Status() noexcept {}
 
-  Status(StatusCategory category, int code, const std::string& msg);
+  Status(StatusCategory category, int code, std::string_view msg);
 
   Status(StatusCategory category, int code);
 
@@ -59,7 +59,7 @@ class Status {
 
   StatusCategory Category() const noexcept;
 
-  const std::string& ErrorMessage() const;
+  std::string_view ErrorMessage() const;
 
   std::string ToString() const;
 
@@ -82,7 +82,7 @@ class Status {
     std::string msg;
   };
 
-  static const std::string& EmptyString();
+  static std::string_view EmptyString();
 
   // state_ == nullptr when if status code is OK.
   std::unique_ptr<State> state_;

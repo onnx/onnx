@@ -714,7 +714,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
 
 // Utilify function to get the imported version of domain from opset imports
 // Returns -1 if requested domain is not found in the opset_imports
-int get_version_for_domain(const std::string& domain, const std::unordered_map<std::string, int>& opset_imports) {
+int get_version_for_domain(std::string_view domain, const std::unordered_map<std::string, int>& opset_imports) {
   auto it = opset_imports.find(domain);
   if (it == opset_imports.end()) {
     return -1;
@@ -932,7 +932,7 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
 }
 
 void check_model(
-    const std::string& model_path,
+    std::string_view model_path,
     bool full_check,
     bool skip_opset_compatibility_check,
     bool check_custom_domain) {
@@ -975,9 +975,9 @@ void check_model(
 }
 
 std::string resolve_external_data_location(
-    const std::string& base_dir,
-    const std::string& location,
-    const std::string& tensor_name) {
+    std::string_view base_dir,
+    std::string_view location,
+    std::string_view tensor_name) {
 #ifdef _WIN32
   auto file_path = std::filesystem::path(utf8str_to_wstring(location));
   if (file_path.is_absolute()) {

@@ -203,7 +203,7 @@ enum BuiltinSymbol {
 struct Symbol {
   Symbol() {}
   /*implicit*/ Symbol(BuiltinSymbol value) : value(value) {}
-  explicit Symbol(const std::string& s);
+  explicit Symbol(std::string_view s);
   explicit Symbol(uint32_t value) : value(value) {}
 
   operator uint32_t() const {

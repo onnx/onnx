@@ -11,10 +11,10 @@
 namespace ONNX_NAMESPACE {
 
 Common::Status BuildNode(
-    const std::string& name,
-    const std::string& domain,
-    const std::string& doc_string,
-    const std::string& op_type,
+    std::string_view name,
+    std::string_view domain,
+    std::string_view doc_string,
+    std::string_view op_type,
     std::vector<std::string> const& inputs,
     std::vector<std::string> const& outputs,
     NodeProto* node) {

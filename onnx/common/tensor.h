@@ -174,7 +174,7 @@ struct Tensor final {
     return uint64_data_;
   }
 
-  const std::string& raw() const {
+  std::string_view raw() const {
     return raw_data_;
   }
 
@@ -211,7 +211,7 @@ struct Tensor final {
     return has_name_;
   }
 
-  const std::string& name() const {
+  std::string_view name() const {
     return name_;
   }
 

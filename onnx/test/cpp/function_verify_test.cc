@@ -124,7 +124,7 @@ struct FunctionOpAttributeMap {
     return domain + ":" + opname + ":" + std::to_string(opset_version);
   }
 
-  void addTestCase(const std::string& opname, int opset_version, std::initializer_list<const char*> attributes) {
+  void addTestCase(std::string_view opname, int opset_version, std::initializer_list<const char*> attributes) {
     auto& schema_test_cases = map[key("", opname, opset_version)];
     schema_test_cases.push_back(AttributeValues());
     auto& test_case = schema_test_cases.back();
@@ -198,7 +198,7 @@ struct FunctionTypeChecker {
 
   std::vector<std::string> errors;
 
-  void recordError(const std::string& error, AttributeValues attrs) {
+  void recordError(std::string_view error, AttributeValues attrs) {
     std::ostringstream ostr;
     ostr << "Type checking failed for instantiation " << schema.Name() << ":" << schema.SinceVersion() << " {";
     for (auto& pair : typeVarBindings) {
@@ -270,7 +270,7 @@ struct FunctionTypeChecker {
     if (attribute_cases->size() > 0)
       forTypeVar(0);
     std::string all_errors = "";
-    for (const std::string& error : errors)
+    for (std::string_view error : errors)
       all_errors += error;
     return all_errors;
   }

@@ -760,7 +760,7 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
   }
 }
 
-int handle_negative_axis_validate_opset9(const std::string& attrib, int axis, int rank) {
+int handle_negative_axis_validate_opset9(std::string_view attrib, int axis, int rank) {
   if (!(-rank <= axis && axis < rank)) {
     fail_shape_inference(attrib, " axis value ", axis, " is invalid for a tensor of rank ", rank);
   }

@@ -28,7 +28,7 @@ using FunctionIdVector = std::vector<FunctionId>;
 // Interface used to represent a set of function ids for the inliner.
 class FunctionIdSet {
  public:
-  virtual bool Contains(const std::string& function_domain, const std::string& function_name) const = 0;
+  virtual bool Contains(std::string_view function_domain, std::string_view function_name) const = 0;
   virtual ~FunctionIdSet() = default;
 
   // Factory methods for creating FunctionIdSet instances.

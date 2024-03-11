@@ -12,7 +12,7 @@
 namespace ONNX_NAMESPACE {
 
 #define ADD_BASIC_ATTR_IMPL(type, enumType, field)                                \
-  AttributeProto MakeAttribute(const std::string& attr_name, const type& value) { \
+  AttributeProto MakeAttribute(std::string_view attr_name, const type& value) { \
     AttributeProto a;                                                             \
     a.set_name(attr_name);                                                        \
     a.set_type(enumType);                                                         \
@@ -21,7 +21,7 @@ namespace ONNX_NAMESPACE {
   }
 
 #define ADD_ATTR_IMPL(type, enumType, field)                                      \
-  AttributeProto MakeAttribute(const std::string& attr_name, const type& value) { \
+  AttributeProto MakeAttribute(std::string_view attr_name, const type& value) { \
     AttributeProto a;                                                             \
     a.set_name(attr_name);                                                        \
     a.set_type(enumType);                                                         \
@@ -30,7 +30,7 @@ namespace ONNX_NAMESPACE {
   }
 
 #define ADD_LIST_ATTR_IMPL(type, enumType, field)                                               \
-  AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<type>& values) { \
+  AttributeProto MakeAttribute(std::string_view attr_name, const std::vector<type>& values) { \
     AttributeProto a;                                                                           \
     a.set_name(attr_name);                                                                      \
     a.set_type(enumType);                                                                       \
@@ -53,13 +53,13 @@ ADD_LIST_ATTR_IMPL(TensorProto, AttributeProto_AttributeType_TENSORS, tensors)
 ADD_LIST_ATTR_IMPL(GraphProto, AttributeProto_AttributeType_GRAPHS, graphs)
 ADD_LIST_ATTR_IMPL(TypeProto, AttributeProto_AttributeType_TYPE_PROTOS, type_protos)
 
-AttributeProto MakeRefAttribute(const std::string& attr_name, AttributeProto_AttributeType type) {
+AttributeProto MakeRefAttribute(std::string_view attr_name, AttributeProto_AttributeType type) {
   return MakeRefAttribute(attr_name, attr_name, type);
 }
 
 AttributeProto MakeRefAttribute(
-    const std::string& attr_name,
-    const std::string& referred_attr_name,
+    std::string_view attr_name,
+    std::string_view referred_attr_name,
     AttributeProto_AttributeType type) {
   AttributeProto a;
   a.set_name(attr_name);

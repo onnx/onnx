@@ -96,7 +96,7 @@ class NameGenerator : private Visitor {
 
   // Creates a new unique name, based on a suggested name, and adds it to the set
   // of existing names. Returns the newly created name.
-  std::string CreateNew(const std::string& suggested) {
+  std::string CreateNew(std::string_view suggested) {
     std::string name = suggested;
     while (existing_names_.count(name) > 0) {
       name = suggested + "_" + std::to_string(index_++);
@@ -105,7 +105,7 @@ class NameGenerator : private Visitor {
     return name;
   }
 
-  void Add(const std::string& name) {
+  void Add(std::string_view name) {
     // We don't bother to check for empty string names. Ok to add them.
     existing_names_.insert(name);
   }
@@ -133,10 +133,10 @@ class NameGenerator : private Visitor {
   bool ProcessNode(const NodeProto& node) override {
     // We use a single name-space for node names and variable names, to keep name-generation simple.
     Add(node.name());
-    for (const std::string& name : node.input()) {
+    for (std::string_view name : node.input()) {
       Add(name);
     }
-    for (const std::string& name : node.output()) {
+    for (std::string_view name : node.output()) {
       Add(name);
     }
     return true;
@@ -164,7 +164,7 @@ class InliningRenamer : private MutableVisitor {
   // and "temp__2" for the second inlined function-call. In addition, there is a subsequent
   // iterative check that ensures that this names does not clash with any pre-existing names,
   // and tries another counter-based suffix in the case of a clash, stopping when successful.
-  std::string MakeUnique(const std::string& name) {
+  std::string MakeUnique(std::string_view name) {
     return generator.CreateNew(name + suffix);
   }
 
@@ -290,7 +290,7 @@ class ComputeInputs : private Visitor {
     return namescopes.back();
   }
 
-  bool IsLocalVar(const std::string& name) const {
+  bool IsLocalVar(std::string_view name) const {
     for (auto& scope : namescopes) {
       if (scope.count(name) > 0) {
         return true;
@@ -561,7 +561,7 @@ class VectorSet : public FunctionIdSet {
  public:
   VectorSet(FunctionIdVector&& function_ids, bool invert) : function_ids_(std::move(function_ids)), invert_(invert) {}
 
-  bool Contains(const std::string& function_domain, const std::string& function_name) const override {
+  bool Contains(std::string_view function_domain, std::string_view function_name) const override {
     bool found =
         std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) !=
         function_ids_.end();

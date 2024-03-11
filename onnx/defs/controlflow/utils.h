@@ -12,7 +12,7 @@ namespace ONNX_NAMESPACE {
 
 void ClearShape(TypeProto& input_type);
 
-int handle_negative_axis_validate(const std::string& attrib, int axis, int rank);
+int handle_negative_axis_validate(std::string_view attrib, int axis, int rank);
 
 void IfInferenceFunction(InferenceContext& ctx);
 

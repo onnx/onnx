@@ -18,7 +18,7 @@ namespace version_conversion {
 
 class RemoveConsumedInputs : public Adapter {
  public:
-  explicit RemoveConsumedInputs(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
+  explicit RemoveConsumedInputs(std::string_view op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
   Node* adapt(std::shared_ptr<Graph>, Node* node) const override {

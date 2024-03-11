@@ -13,7 +13,7 @@
 namespace ONNX_NAMESPACE {
 namespace Common {
 
-Status::Status(StatusCategory category, int code, const std::string& msg) {
+Status::Status(StatusCategory category, int code, std::string_view msg) {
   assert(static_cast<int>(StatusCode::OK) != code);
   state_.reset(new State(category, code, msg));
 }
@@ -32,7 +32,7 @@ int Status::Code() const noexcept {
   return IsOK() ? static_cast<int>(StatusCode::OK) : state_->code;
 }
 
-const std::string& Status::ErrorMessage() const {
+std::string_view Status::ErrorMessage() const {
   return IsOK() ? EmptyString() : state_->msg;
 }
 
@@ -80,7 +80,7 @@ const Status& Status::OK() noexcept {
   return s_ok;
 }
 
-const std::string& Status::EmptyString() {
+std::string_view Status::EmptyString() {
   static std::string empty_str;
   return empty_str;
 }

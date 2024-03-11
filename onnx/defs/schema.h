@@ -28,7 +28,7 @@
 namespace ONNX_NAMESPACE {
 
 struct FunctionBodyBuildContext {
-  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
+  virtual const AttributeProto* getAttribute(std::string_view name) const = 0;
   virtual bool hasInput(int inputIndex) const = 0;
   virtual bool hasOutput(int inputIndex) const = 0;
   // getInputType(i) should return null for missing optional inputs, or if
@@ -50,7 +50,7 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
     }
   }
 
-  const AttributeProto* getAttribute(const std::string& name) const override {
+  const AttributeProto* getAttribute(std::string_view name) const override {
     auto iter = attributesByName_.find(name);
     if (iter == attributesByName_.end()) {
       return nullptr;
@@ -99,7 +99,7 @@ class SchemaError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
 
-  SchemaError(const std::string& message) : std::runtime_error(message) {}
+  SchemaError(std::string_view message) : std::runtime_error(message) {}
 
   const char* what() const noexcept override {
     if (!expanded_message_.empty()) {
@@ -108,7 +108,7 @@ class SchemaError final : public std::runtime_error {
     return std::runtime_error::what();
   }
 
-  void AppendContext(const std::string& context) {
+  void AppendContext(std::string_view context) {
     expanded_message_ = ONNX_NAMESPACE::MakeString(std::runtime_error::what(), "\n\n==> Context: ", context);
   }
 
@@ -186,7 +186,7 @@ class OpSchema final {
         std::string name,
         DataTypeSet allowed_type_set,
         std::string type_str,
-        const std::string& description,
+        std::string_view description,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
         int min_arity = 1,
@@ -208,7 +208,7 @@ class OpSchema final {
 
     explicit FormalParameter(
         std::string name,
-        const std::string& description,
+        std::string_view description,
         std::string type_str,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
@@ -229,16 +229,16 @@ class OpSchema final {
     }
 
     // Get formal parameter name.
-    const std::string& GetName() const;
+    std::string_view GetName() const;
 
     // Get allowed data types.
     const DataTypeSet& GetTypes() const;
 
     // Get formal parameter type string.
-    const std::string& GetTypeStr() const;
+    std::string_view GetTypeStr() const;
 
     // Get formal parameter description.
-    const std::string& GetDescription() const;
+    std::string_view GetDescription() const;
 
     // Get the parameter option, it could be Single, Optional or Variadic.
     FormalParameterOption GetOption() const;
@@ -301,7 +301,7 @@ class OpSchema final {
   /**
    * @brief Returns the file that the op schema is registered from.
    */
-  const std::string& file() const {
+  std::string_view file() const {
     return file_;
   }
 
@@ -393,7 +393,7 @@ class OpSchema final {
 
   // Functions to do documentation for the operator schema.
   // This may be disabled to save memory.
-  OpSchema& SetDoc(const char* doc) {
+  OpSchema& SetDoc(std::string_view doc) {
 #ifndef __ONNX_NO_DOC_STRINGS
     SetDoc(std::string(doc));
 #else
@@ -403,7 +403,7 @@ class OpSchema final {
     return *this;
   }
 
-  OpSchema& SetDoc(const std::string& doc) {
+  OpSchema& SetDoc(std::string_view doc) {
 #ifndef __ONNX_NO_DOC_STRINGS
     doc_ = doc;
 #else
@@ -533,7 +533,7 @@ class OpSchema final {
   OpSchema& Input(
       int n,
       std::string name,
-      const std::string& description,
+      std::string_view description,
       std::string type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
@@ -556,7 +556,7 @@ class OpSchema final {
   OpSchema& Output(
       int n,
       std::string name,
-      const std::string& description,
+      std::string_view description,
       std::string type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
@@ -947,7 +947,7 @@ class OpSchema final {
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
 
-  const std::string& domain() const {
+  std::string_view domain() const {
     return domain_;
   }
 
@@ -973,7 +973,7 @@ class OpSchema final {
     return type_constraints_;
   }
 
-  const std::string& Name() const {
+  std::string_view Name() const {
     return name_;
   }
 
@@ -1030,7 +1030,7 @@ class OpSchema final {
       const std::vector<OperatorSetIdProto>& opsets,
       int opset_version = kUninitializedSinceVersion);
 
-  OpSchema& FunctionBody(const char* func_body, int opset_version = kUninitializedSinceVersion);
+  OpSchema& FunctionBody(std::string_view func_body, int opset_version = kUninitializedSinceVersion);
 
   // since_version_ of an OpSchema tells the last opset version when an op is defined.
   // When the op's definition is changed, a new OpSchema (of the same op_type) is created
@@ -1137,7 +1137,7 @@ class ISchemaRegistry {
   virtual ~ISchemaRegistry() = default;
 
   virtual const OpSchema*
-  GetSchema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
+  GetSchema(std::string_view key, const int maxInclusiveVersion, std::string_view domain = ONNX_DOMAIN) const = 0;
 };
 
 /**
@@ -1185,7 +1185,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     // this as appropriate (that is, as relative to releases of custom-domain
     // as opposed to ONNX releases).
     void
-    AddDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version = -1) {
+    AddDomainToVersion(std::string_view domain, int min_version, int max_version, int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
       if (map_.count(domain) != 0) {
         std::stringstream err;
@@ -1210,7 +1210,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     }
 
     void
-    UpdateDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version = -1) {
+    UpdateDomainToVersion(std::string_view domain, int min_version, int max_version, int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
       if (map_.count(domain) == 0) {
         std::stringstream err;
@@ -1323,8 +1323,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
     static void CheckDomainAndVersionToRegister(
         const OpSchema& op_schema,
-        const std::string& op_name,
-        const std::string& op_domain) {
+        std::string_view op_name,
+        std::string_view op_domain) {
       auto ver_range_map = DomainToVersionRange::Instance().Map();
       auto ver_range_it = ver_range_map.find(op_domain);
       auto ver = op_schema.SinceVersion();
@@ -1354,7 +1354,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   };
 
   static void
-  OpSchemaDeregister(const std::string& op_type, const int version, const std::string& domain = ONNX_DOMAIN) {
+  OpSchemaDeregister(std::string_view op_type, const int version, std::string_view domain = ONNX_DOMAIN) {
     auto& schema_map = GetMapWithoutEnsuringRegistration();
     if (schema_map.count(op_type) && schema_map[op_type].count(domain) && schema_map[op_type][domain].count(version)) {
       schema_map[op_type][domain].erase(version);
@@ -1368,7 +1368,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   // Deregister all ONNX opset schemas from domain
   // Domain with default value ONNX_DOMAIN means ONNX.
-  static void OpSchemaDeregisterAll(const std::string& domain = ONNX_DOMAIN) {
+  static void OpSchemaDeregisterAll(std::string_view domain = ONNX_DOMAIN) {
     auto& schema_map = GetMapWithoutEnsuringRegistration();
     // schema_map stores operator schemas in the format of
     // <OpName, <Domain, <OperatorSetVersion, OpSchema>>>
@@ -1385,7 +1385,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   // Return the latest schema for an operator in specified domain.
   // Domain with default value ONNX_DOMAIN means ONNX.
-  static const OpSchema* Schema(const std::string& key, const std::string& domain = ONNX_DOMAIN) {
+  static const OpSchema* Schema(std::string_view key, std::string_view domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       const auto& schema_ver_map = m[key][domain];
@@ -1400,7 +1400,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // <maxInclusiveVersion> in specified domain. Domain with default value
   // ONNX_DOMAIN means ONNX.
   static const OpSchema*
-  Schema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) {
+  Schema(std::string_view key, const int maxInclusiveVersion, std::string_view domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       const auto& schema_ver_map = m[key][domain];
@@ -1426,9 +1426,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   static OpSchemaRegistry* Instance();
 
   const OpSchema* GetSchema(
-      const std::string& key,
+      std::string_view key,
       const int maxInclusiveVersion,
-      const std::string& domain = ONNX_DOMAIN) const override {
+      std::string_view domain = ONNX_DOMAIN) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
   static void SetLoadedSchemaVersion(int target_version) {
@@ -1494,7 +1494,7 @@ void RegisterSchema(
     int opset_version_to_load = 0,
     bool fail_duplicate_schema = true,
     bool fail_with_exception = false);
-void DeregisterSchema(const std::string& op_type, int version, const std::string& domain);
+void DeregisterSchema(std::string_view op_type, int version, std::string_view domain);
 
 // Registers the latest opset schema before opset_version_to_load
 // By default opset_version_to_load=0 means it will register all versions
@@ -1567,7 +1567,7 @@ class DbgOperatorSetTracker {
   ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxPreview, ver, name)
 
 // Helper function
-size_t ReplaceAll(std::string& s, const char* from, const char* to);
+size_t ReplaceAll(std::string& s, std::string_view from, std::string_view to);
 
 #ifdef __GNUC__
 #define ONNX_UNUSED __attribute__((__unused__))
@@ -1583,7 +1583,7 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
       OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
-size_t ReplaceAll(std::string& s, const char* from, const char* to);
+size_t ReplaceAll(std::string& s, std::string_view from, std::string_view to);
 
 inline std::string GenerateOptionalArgumentsDoc() {
   return "This operator has **optional** inputs/outputs. "
@@ -1599,7 +1599,7 @@ inline std::string GenerateBroadcastingDocMul() {
          " for more details please check [the doc](Broadcasting.md).";
 }
 
-inline std::string GenerateBroadcastingDocUni(const char* from, const char* to) {
+inline std::string GenerateBroadcastingDocUni(std::string_view from, std::string_view to) {
   std::string ret = "This operator supports **unidirectional broadcasting** (";
   ret = ret + from + " should be unidirectional broadcastable to " + to +
       ");"

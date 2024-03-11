@@ -20,7 +20,7 @@ namespace version_conversion {
 
 class AxesInputToAttribute : public Adapter {
  public:
-  explicit AxesInputToAttribute(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
+  explicit AxesInputToAttribute(std::string_view op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {

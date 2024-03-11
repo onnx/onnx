@@ -21,7 +21,7 @@ class ConvertError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
 
-  explicit ConvertError(const std::string& message) : std::runtime_error(message) {}
+  explicit ConvertError(std::string_view message) : std::runtime_error(message) {}
 
   const char* what() const noexcept override {
     if (!expanded_message_.empty()) {
@@ -30,7 +30,7 @@ class ConvertError final : public std::runtime_error {
     return std::runtime_error::what();
   }
 
-  void AppendContext(const std::string& context) {
+  void AppendContext(std::string_view context) {
     expanded_message_ = MakeString(std::runtime_error::what(), "\n\n==> Context: ", context);
   }
 

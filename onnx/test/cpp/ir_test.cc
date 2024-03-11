@@ -14,7 +14,7 @@
 namespace ONNX_NAMESPACE {
 namespace Test {
 
-static bool IsValidIdentifier(const std::string& name) {
+static bool IsValidIdentifier(std::string_view name) {
   if (name.empty()) {
     return false;
   }

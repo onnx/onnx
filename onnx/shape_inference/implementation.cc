@@ -66,7 +66,7 @@ std::string GetElemTypeString(const TypeProto_SparseTensor& type) {
   return ONNX_NAMESPACE::to_string(type.elem_type());
 }
 
-inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
+inline bool IsOnnxDomainOp(const NodeProto& node, std::string_view op_type) {
   return (IsOnnxDomain(node.domain()) && (node.op_type() == op_type));
 }
 
@@ -278,7 +278,7 @@ class InferredTypes {
  public:
   explicit InferredTypes(GraphProto* graph = nullptr) : graph_ptr(graph) {}
 
-  TypeProto* Add(const std::string& var_name, const TypeProto& type) {
+  TypeProto* Add(std::string_view var_name, const TypeProto& type) {
     if (graph_ptr != nullptr) {
       auto* p = graph_ptr->add_value_info();
       p->set_name(var_name);
@@ -311,8 +311,8 @@ void BindValuesOnCall(
     const FunctionProto& callee) {
   auto num_inputs = (std::min)(caller.input_size(), callee.input_size());
   for (int i = 0; i < num_inputs; ++i) {
-    const std::string& actual = caller.input(i);
-    const std::string& formal = callee.input(i);
+    std::string_view actual = caller.input(i);
+    std::string_view formal = callee.input(i);
     if (!actual.empty()) {
       auto it = caller_map.find(actual);
       if (it != caller_map.end()) {
@@ -330,8 +330,8 @@ void BindValuesOnReturn(
     const NodeProto& caller) {
   auto num_outputs = (std::min)(caller.output_size(), callee.output_size());
   for (int i = 0; i < num_outputs; ++i) {
-    const std::string& actual = caller.output(i);
-    const std::string& formal = callee.output(i);
+    std::string_view actual = caller.output(i);
+    std::string_view formal = callee.output(i);
     if (!actual.empty()) {
       auto it = callee_map.find(formal);
       if (it != callee_map.end()) {
@@ -343,7 +343,7 @@ void BindValuesOnReturn(
 
 class ShapeInferenceImplBase {
  public:
-  void UpdateType(const std::string& name, TypeProto* inferred_type) {
+  void UpdateType(std::string_view name, TypeProto* inferred_type) {
     if (inferred_type->value_case() == TypeProto::ValueCase::VALUE_NOT_SET) {
       return;
     }
@@ -378,14 +378,14 @@ class ShapeInferenceImplBase {
   }
 
   template <typename T>
-  void AddTemporaryConstant(const std::string& name, const T& vector) {
+  void AddTemporaryConstant(std::string_view name, const T& vector) {
     input_data_by_name_holder[name] = ToTensor(vector);
     input_data_by_name[name] = &input_data_by_name_holder[name];
   }
 
   void ProcessConstant(const NodeProto& n) {
     if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
-      const std::string& output_name = n.output(0);
+      std::string_view output_name = n.output(0);
       for (const auto& attr : n.attribute()) {
         if (attr.name() == "value") {
           if (attr.type() == AttributeProto::TENSOR && attr.has_t()) {
@@ -539,7 +539,7 @@ class ShapeInferenceImplBase {
   // TypeProto_Tensor or TypeProto_SparseTensor
   template <typename T>
   void ProcessInitializer(
-      const std::string& name,
+      std::string_view name,
       const T& tensorValue,
       TypeProto& initializer_type,
       std::unordered_map<std::string, const T*>& map) {
@@ -648,7 +648,7 @@ class ShapeInferenceImplBase {
     }
 
     for (auto& default_value : func_proto.attribute_proto()) {
-      const std::string& name = default_value.name();
+      std::string_view name = default_value.name();
       const AttributeProto* value = ctx.getAttribute(name);
       attr_map[name] = (value != nullptr) ? value : &default_value;
     }
@@ -659,7 +659,7 @@ class ShapeInferenceImplBase {
     }
 
     for (int i = 0; i < func_proto.output_size(); ++i) {
-      const std::string& output_name = func_proto.output().Get(i);
+      std::string_view output_name = func_proto.output().Get(i);
       // Skip if no type inferred for the tensor
       auto iter = value_types_by_name.find(output_name);
       if (iter != value_types_by_name.cend()) {
@@ -716,7 +716,7 @@ class ShapeInferenceImplBase {
     // TODO: Add a more granular way for exception handling.
     if (!errors.empty() && options.error_mode > 0) {
       std::string full_errors = "Inference error(s): ";
-      for (const std::string& error : inference_errors) {
+      for (std::string_view error : inference_errors) {
         full_errors += error + "\n";
       }
       fail_shape_inference(full_errors);
@@ -836,8 +836,8 @@ void InferShapes(
 }
 
 void InferShapes(
-    const std::string& model_path,
-    const std::string& save_path,
+    std::string_view model_path,
+    std::string_view save_path,
     const ISchemaRegistry* schema_registry,
     const ShapeInferenceOptions& options,
     DataValueMap* generated_shape_data_by_name) {
@@ -916,7 +916,7 @@ struct FunctionInferenceContext : public InferenceContext {
     }
   }
 
-  const AttributeProto* getAttribute(const std::string& name) const override {
+  const AttributeProto* getAttribute(std::string_view name) const override {
     auto iter = attributesByName_.find(name);
     if (iter == attributesByName_.end()) {
       return nullptr;
@@ -947,7 +947,7 @@ struct FunctionInferenceContext : public InferenceContext {
     return (index < output_types_.size()) ? &output_types_[index] : nullptr;
   }
 
-  GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override {
+  GraphInferencer* getGraphAttributeInferencer(std::string_view attribute_name) override {
     ONNX_UNUSED_PARAMETER(attribute_name); // This method is unused for function-type-inference.
     return nullptr;
   }

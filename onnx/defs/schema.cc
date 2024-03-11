@@ -53,7 +53,7 @@ void RegisterSchema(
 
 // The (name, version, domain) must match the target exactly
 // Otherwise will raise an SchemaError
-void DeregisterSchema(const std::string& op_type, int version, const std::string& domain) {
+void DeregisterSchema(std::string_view op_type, int version, std::string_view domain) {
   OpSchemaRegistry::OpSchemaDeregister(op_type, version, domain);
 }
 
@@ -64,7 +64,7 @@ DbgOperatorSetTracker& DbgOperatorSetTracker::Instance() {
 }
 #endif
 
-const std::string& OpSchema::FormalParameter::GetName() const {
+std::string_view OpSchema::FormalParameter::GetName() const {
   return name_;
 }
 
@@ -76,11 +76,11 @@ DataTypeSet& OpSchema::FormalParameter::MutableTypes() {
   return type_set_;
 }
 
-const std::string& OpSchema::FormalParameter::GetTypeStr() const {
+std::string_view OpSchema::FormalParameter::GetTypeStr() const {
   return type_str_;
 }
 
-const std::string& OpSchema::FormalParameter::GetDescription() const {
+std::string_view OpSchema::FormalParameter::GetDescription() const {
   return description_;
 }
 
@@ -284,7 +284,7 @@ void OpSchema::Verify(const NodeProto& node) const {
   // An internal symbol is defined as starting with two underscores. Attributes
   // with names meeting this condition are considered implementation details
   // and should be ignored for the purpose of schema checking.
-  auto isInternalSymbol = [](const std::string& sym) -> bool {
+  auto isInternalSymbol = [](std::string_view sym) -> bool {
     return sym.length() >= 2 && sym[0] == '_' && sym[1] == '_';
   };
 
@@ -457,7 +457,7 @@ OpSchema& OpSchema::SetName(std::string name) {
   return *this;
 }
 
-OpSchema& OpSchema::SetName(const char* name) {
+OpSchema& OpSchema::SetName(std::string_view name) {
   return SetName(std::string(name));
 }
 
@@ -595,7 +595,7 @@ OpSchema& OpSchema::Input(int n, FormalParameter formal_parameter) {
 OpSchema& OpSchema::Input(
     int n,
     std::string name,
-    const std::string& description,
+    std::string_view description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
@@ -619,9 +619,9 @@ OpSchema& OpSchema::Input(
 
 OpSchema& OpSchema::Input(
     int n,
-    const char* name,
-    const char* description,
-    const char* type_str,
+    std::string_view name,
+    std::string_view description,
+    std::string_view type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
     int min_arity,
@@ -652,7 +652,7 @@ OpSchema& OpSchema::Output(int n, FormalParameter formal_parameter) {
 OpSchema& OpSchema::Output(
     int n,
     std::string name,
-    const std::string& description,
+    std::string_view description,
     std::string type_str,
     OpSchema::FormalParameterOption param_option,
     bool is_homogeneous,
@@ -676,9 +676,9 @@ OpSchema& OpSchema::Output(
 
 OpSchema& OpSchema::Output(
     int n,
-    const char* name,
-    const char* description,
-    const char* type_str,
+    std::string_view name,
+    std::string_view description,
+    std::string_view type_str,
     FormalParameterOption param_option,
     bool is_homogeneous,
     int min_arity,
@@ -715,9 +715,9 @@ OpSchema::TypeConstraint(std::string type_str, std::vector<std::string> constrai
 }
 
 OpSchema& OpSchema::TypeConstraint(
-    const char* type_str,
-    std::initializer_list<const char*> constraints,
-    const char* description) {
+    std::string_view type_str,
+    std::initializer_list<std::string_view> constraints,
+    std::string_view description) {
   std::vector<std::string> constraints_vector;
   constraints_vector.reserve(constraints.size());
   for (auto iter = constraints.begin(); iter != constraints.end(); ++iter) {
@@ -805,7 +805,7 @@ void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_pro
   }
 }
 
-OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
+OpSchema& OpSchema::FunctionBody(std::string_view func_body, int opset_version) {
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
@@ -1148,7 +1148,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
   return map;
 }
 
-size_t ReplaceAll(std::string& s, const char* from, const char* to) {
+size_t ReplaceAll(std::string& s, std::string_view from, std::string_view to) {
   size_t numReplaced = 0;
   std::string::size_type lenFrom = std::strlen(from);
   std::string::size_type lenTo = std::strlen(to);

@@ -18,7 +18,7 @@ namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
 struct CompatibleAdapter final : public Adapter {
-  explicit CompatibleAdapter(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
+  explicit CompatibleAdapter(std::string_view op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
   Node* adapt(std::shared_ptr<Graph>, Node* node) const override {

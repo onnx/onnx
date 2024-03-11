@@ -191,7 +191,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
   }
 }
 
-int handle_negative_axis_validate(const std::string& attrib, int axis, int rank) {
+int handle_negative_axis_validate(std::string_view attrib, int axis, int rank) {
   if (!(-rank <= axis && axis < rank)) {
     fail_shape_inference(attrib, " axis value ", axis, " is invalid for a tensor of rank ", rank);
   }

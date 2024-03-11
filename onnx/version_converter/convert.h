@@ -77,7 +77,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
          (version_it->second.find(curr_version + step) != version_it->second.end() && up));
   }
 
-  void debug(const std::string& str) const {
+  void debug(std::string_view str) const {
     if (DEBUG)
       std::cerr << str << std::endl;
   }
@@ -90,7 +90,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         version_range.second);
   }
 
-  void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
+  void assertDefaultDomain(std::string_view initial_domain, std::string_view target_domain) const {
     ONNX_ASSERTM(
         (initial_domain == "" || initial_domain == "ai.onnx") && (target_domain == "" || target_domain == "ai.onnx"),
         "Warning: default onnx version converter can only convert "

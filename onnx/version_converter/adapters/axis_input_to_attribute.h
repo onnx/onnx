@@ -18,7 +18,7 @@ namespace version_conversion {
 class AxisInputToAttribute : public Adapter {
  public:
   explicit AxisInputToAttribute(
-      const std::string& op_name,
+      std::string_view op_name,
       const OpSetID& initial,
       const OpSetID& target,
       size_t axis_index,

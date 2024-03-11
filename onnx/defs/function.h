@@ -23,7 +23,7 @@ void FunctionExpandHelper(
     const NodeProto& node,
     const FunctionProto& func,
     GraphProto& g,
-    const std::string& node_prefix = "");
+    std::string_view node_prefix = "");
 
 class FunctionBodyHelper {
  public:
@@ -37,7 +37,7 @@ class FunctionBodyHelper {
     }
 
     template <typename T>
-    AttributeProtoWrapper(const std::string& attr_name, const T& value) {
+    AttributeProtoWrapper(std::string_view attr_name, const T& value) {
       proto = MakeAttribute(attr_name, value);
     }
   };
@@ -98,12 +98,12 @@ class FunctionBodyHelper {
       const std::vector<OperatorSetIdProto>& relied_opsets);
 
   template <typename T>
-  static NodeDef Const(const std::string& name, const T& value) {
+  static NodeDef Const(std::string_view name, const T& value) {
     return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(value)}}};
   }
 
   template <typename T>
-  static NodeDef Const(const std::string& name, const std::vector<T>& values) {
+  static NodeDef Const(std::string_view name, const std::vector<T>& values) {
     return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(values)}}};
   }
 };
@@ -112,7 +112,7 @@ class FunctionBuilder {
  public:
   FunctionBuilder(FunctionProto& funProto_) : funProto(funProto_) {}
 
-  FunctionBuilder& Add(const char* nodes_txt) {
+  FunctionBuilder& Add(std::string_view nodes_txt) {
     OnnxParser parser(nodes_txt);
     auto& nodes = *funProto.mutable_node();
 
@@ -125,7 +125,7 @@ class FunctionBuilder {
     return *this;
   }
 
-  FunctionBuilder& Add(const char* node_txt, const AttributeProto& attr) {
+  FunctionBuilder& Add(std::string_view node_txt, const AttributeProto& attr) {
     OnnxParser parser(node_txt);
     auto& node = *funProto.add_node();
     auto status = parser.Parse(node);
@@ -143,11 +143,11 @@ class FunctionBuilder {
   }
 
   template <typename T>
-  FunctionBuilder& Add(const char* node_txt, const std::string& attr_name, const T& attr_value) {
+  FunctionBuilder& Add(std::string_view node_txt, std::string_view attr_name, const T& attr_value) {
     return Add(node_txt, MakeAttribute(attr_name, attr_value));
   }
 
-  FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {
+  FunctionBuilder& Const(std::string_view name, const TensorProto& tensor) {
     std::string constant_op(name);
     constant_op += " = Constant()";
     return Add(constant_op.c_str(), MakeAttribute("value", tensor));
@@ -155,7 +155,7 @@ class FunctionBuilder {
 
   // Creates a scalar constant (a tensor of rank zero).
   template <typename T>
-  FunctionBuilder& Const(const std::string& name, T const_value) {
+  FunctionBuilder& Const(std::string_view name, T const_value) {
     std::string constant_op(name);
     constant_op += " = Constant()";
     return Add(constant_op.c_str(), MakeAttribute("value", ToTensor(const_value)));
@@ -163,7 +163,7 @@ class FunctionBuilder {
 
   // Creates a 1D tensor constant consisting of a single value.
   template <typename T>
-  FunctionBuilder& Const1D(const std::string& name, T const_value) {
+  FunctionBuilder& Const1D(std::string_view name, T const_value) {
     std::string constant_op(name);
     constant_op += " = Constant()";
     auto tensor = ToTensor(const_value);
@@ -173,7 +173,7 @@ class FunctionBuilder {
 
   // Creates a 1D tensor constant consisting of zero or more values.
   template <typename T>
-  FunctionBuilder& Const(const std::string& name, const std::vector<T>& values) {
+  FunctionBuilder& Const(std::string_view name, const std::vector<T>& values) {
     std::string constant_op(name);
     constant_op += " = Constant()";
     auto tensor = ToTensor(values);
@@ -182,7 +182,7 @@ class FunctionBuilder {
     return Add(constant_op.c_str(), MakeAttribute("value", tensor));
   }
 
-  FunctionBuilder& AddOpset(const char* domain, int version) {
+  FunctionBuilder& AddOpset(std::string_view domain, int version) {
     auto* opset = funProto.add_opset_import();
     opset->set_domain(domain);
     opset->set_version(version);

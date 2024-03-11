@@ -9,7 +9,7 @@
 using namespace ONNX_NAMESPACE;
 
 inline void
-createValueInfo4D(ValueInfoProto& value_info, const std::string& name, int64_t n, int64_t c, int64_t h, int64_t w) {
+createValueInfo4D(ValueInfoProto& value_info, std::string_view name, int64_t n, int64_t c, int64_t h, int64_t w) {
   value_info.set_name(name);
 
   TypeProto_Tensor* tensor_type = value_info.mutable_type()->mutable_tensor_type();
@@ -22,7 +22,7 @@ createValueInfo4D(ValueInfoProto& value_info, const std::string& name, int64_t n
   shape->add_dim()->set_dim_value(w);
 }
 
-inline void createValueInfo2D(ValueInfoProto& value_info, const std::string& name, int64_t h, int64_t w) {
+inline void createValueInfo2D(ValueInfoProto& value_info, std::string_view name, int64_t h, int64_t w) {
   value_info.set_name(name);
 
   TypeProto* type = value_info.mutable_type();
@@ -36,10 +36,10 @@ inline void createValueInfo2D(ValueInfoProto& value_info, const std::string& nam
 
 inline void createConv2D(
     NodeProto& node,
-    const std::string& input,
-    const std::string& weights,
-    const std::string& bias,
-    const std::string& output,
+    std::string_view input,
+    std::string_view weights,
+    std::string_view bias,
+    std::string_view output,
     uint32_t kernel_size) {
   node.set_op_type("Conv");
   node.add_input(input);

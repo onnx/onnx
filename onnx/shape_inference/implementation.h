@@ -40,7 +40,7 @@ class SymbolTableImpl : public SymbolTable {
   }
   // Creates a new unique symbol with the given prefix and adds it to the SymbolTable
   // Returns the newly created symbol
-  std::string createNew(const std::string& symbol_prefix) override {
+  std::string createNew(std::string_view symbol_prefix) override {
     std::string newSymbol;
     do {
       newSymbol = symbol_prefix + std::to_string(index_++);
@@ -197,7 +197,7 @@ struct InferenceContextImpl : public InferenceContext {
     allOutputTypes_.resize(n.output_size());
   }
 
-  const AttributeProto* getAttribute(const std::string& name) const override {
+  const AttributeProto* getAttribute(std::string_view name) const override {
     auto iter = attributesByName_.find(name);
     if (iter == attributesByName_.end()) {
       return nullptr;
@@ -250,7 +250,7 @@ struct InferenceContextImpl : public InferenceContext {
     return &allOutputTypes_[index];
   }
 
-  GraphInferencer* getGraphAttributeInferencer(const std::string& attr_name) override {
+  GraphInferencer* getGraphAttributeInferencer(std::string_view attr_name) override {
     if (!graphInferenceContext_) {
       fail_type_inference("GraphProto attribute inferencing is not enabled in this InferenceContextImpl instance.");
     }
@@ -330,7 +330,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     allOutputTypes_.resize(n.output_size());
   }
 
-  const AttributeProto* getAttribute(const std::string& name) const override {
+  const AttributeProto* getAttribute(std::string_view name) const override {
     auto iter = attributesByName_.find(name);
     if (iter == attributesByName_.end()) {
       return nullptr;
@@ -459,8 +459,8 @@ void InferShapes(
     DataValueMap* generated_shape_data_by_name = nullptr);
 
 void InferShapes(
-    const std::string& model_path,
-    const std::string& save_path = "",
+    std::string_view model_path,
+    std::string_view save_path = "",
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const ShapeInferenceOptions& options = {},
     DataValueMap* generated_shape_data_by_name = nullptr);

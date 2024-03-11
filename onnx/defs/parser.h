@@ -51,14 +51,14 @@ class StringIntMap {
     return instance.map_;
   }
 
-  static int32_t Lookup(const std::string& dtype) {
+  static int32_t Lookup(std::string_view dtype) {
     auto it = Instance().find(dtype);
     if (it != Instance().end())
       return it->second;
     return 0;
   }
 
-  static const std::string& ToString(int32_t dtype) {
+  static std::string_view ToString(int32_t dtype) {
     static std::string undefined("undefined");
     for (const auto& pair : Instance()) {
       if (pair.second == dtype)
@@ -98,7 +98,7 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["int4"] = TensorProto_DataType_INT4;
   }
 
-  static bool IsTypeName(const std::string& dtype) {
+  static bool IsTypeName(std::string_view dtype) {
     return Lookup(dtype) != 0;
   }
 };
@@ -163,14 +163,14 @@ class KeyWordMap {
     return instance.map_;
   }
 
-  static KeyWord Lookup(const std::string& id) {
+  static KeyWord Lookup(std::string_view id) {
     auto it = Instance().find(id);
     if (it != Instance().end())
       return it->second;
     return KeyWord::NONE;
   }
 
-  static const std::string& ToString(KeyWord kw) {
+  static std::string_view ToString(KeyWord kw) {
     static std::string undefined("undefined");
     for (const auto& pair : Instance()) {
       if (pair.second == kw)
@@ -185,7 +185,7 @@ class KeyWordMap {
 
 class ParserBase {
  public:
-  ParserBase(const std::string& str)
+  ParserBase(std::string_view str)
       : start_(str.data()), next_(str.data()), end_(str.data() + str.length()), saved_pos_(next_) {}
 
   ParserBase(const char* cstr) : start_(cstr), next_(cstr), end_(cstr + strlen(cstr)), saved_pos_(next_) {}

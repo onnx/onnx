@@ -17,7 +17,7 @@ std::string to_string(T value) {
   return os.str();
 }
 
-inline int stoi(const std::string& str) {
+inline int stoi(std::string_view str) {
   std::stringstream ss;
   int n = 0;
   ss << str;
@@ -52,7 +52,7 @@ std::string MakeString(const Args&... args) {
 
 // Specializations for already-a-string types.
 template <>
-inline std::string MakeString(const std::string& str) {
+inline std::string MakeString(std::string_view str) {
   return str;
 }
 inline std::string MakeString(const char* c_str) {

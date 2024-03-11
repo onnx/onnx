@@ -56,7 +56,7 @@ inline NodeTransformerFunction SetAttribute(Symbol attr, int64_t value) {
   };
 }
 
-inline NodeTransformerFunction SetAttribute(Symbol attr, const std::string& value) {
+inline NodeTransformerFunction SetAttribute(Symbol attr, std::string_view value) {
   return NODE_TRANSFORMER(node) {
     node->s_(attr, value);
     return node;
