@@ -2559,7 +2559,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-void einsumRankInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
+void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
   const size_t numInputs = ctx.getNumInputs();
   if (numInputs < 1 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
     return;
@@ -2586,13 +2586,42 @@ void einsumRankInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equa
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
+  std::map<char, size_t> label_maps;
+  std::set<char> repeated_labels;
+  ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
+  size_t num_labels = 0;
+  bool ellipsis_flag = true;
+
   while (!str.eof()) {
     std::getline(str, term, ',');
     auto ellipsis_index = term.find("...");
     if (numInputs <= num_operands) {
       fail_shape_inference("Number of input tensors does not match the operands in the equation.");
     }
-    size_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
+    const auto shape = ctx.getInputType(num_operands)->tensor_type().shape();
+    size_t rank = shape.dim_size();
+    size_t ellipsis_dims = 3;
+
+    for (size_t index = 0; index < term.size(); ++index) {
+      if (index == ellipsis_index) {
+        if (ellipsis_flag) {
+          ellipsis_flag = false;
+          size_t dims = rank - term.size() + 3;
+          for (size_t i = 0; i < dims; i++) {
+            *ellipsis_dims_value.add_dim() = shape.dim(index+i);
+          }
+        }
+        index += 3;
+      }
+      const auto [i, inserted] = label_maps.insert({term[index], num_labels});
+      if (inserted) {
+        *dims_value.add_dim() = shape.dim(index+ellipsis_dims-3);
+        ++num_labels;
+      } else {
+        repeated_labels.insert(term[index]);
+      }
+    }
+
     if (ellipsis_index != std::string::npos) {
       // If there is an ellipsis, the number of dimensions it represents
       // must be total dim - letter dimensions
@@ -2626,30 +2655,24 @@ void einsumRankInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equa
   if (mid_index != std::string::npos) {
     std::string right_equation = equation.substr(mid_index + 2);
     auto right_ellipsis_index = right_equation.find("...");
-    if (right_ellipsis_index != std::string::npos) { // Right-hand side contains ellipsis
-      for (size_t i = 0; i < num_ellipsis_indices; ++i) {
-        output_shape->add_dim();
+
+    for (size_t index = 0; index < right_equation.size(); ++index) {
+      if (index == right_ellipsis_index) {
+        for (size_t i = 0; i < num_ellipsis_indices; i++) {
+          *output_shape->add_dim() = ellipsis_dims_value.dim(i);
+        }
+        index += 3;
       }
-    }
-    for (char c : right_equation) { // Add a dimension per each character
-                                    // in right hand equation
-      if (c != '.') {
-        output_shape->add_dim();
-      }
+      *output_shape->add_dim() = dims_value.dim(label_maps[right_equation[index]]);
     }
   } else { // Infer the dimension for right-hand side
     // If there's an ellipsis, add it's corresponding dimensions
     for (size_t i = 0; i < num_ellipsis_indices; i++) {
-      output_shape->add_dim();
+      *output_shape->add_dim() = ellipsis_dims_value.dim(i);
     }
-    for (size_t i = 0; i < left_equation.size(); i++) { // Count chars that appear exactly once on left hand side
-      if ((left_equation.at(i) != ',') && (left_equation.at(i) != '.')) {
-        num_letter_occurrences[left_equation.at(i) - 'a']++;
-      }
-    }
-    for (size_t index = 0; index < number_of_letters; index++) {
-      if (num_letter_occurrences[index] == 1) {
-        output_shape->add_dim();
+    for (auto i : label_maps) {
+      if (repeated_labels.count(i.first) == 0) {
+        *output_shape->add_dim() = dims_value.dim(label_maps[i.second]);
       }
     }
   }
@@ -2702,7 +2725,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (equation.compare("") == 0) {
             return;
           }
-          einsumRankInference(ctx, equation);
+          einsumShapeInference(ctx, equation);
         }));
 
 const char* reduction_doc_sce =
