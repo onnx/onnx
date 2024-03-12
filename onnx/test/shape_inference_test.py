@@ -7026,7 +7026,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Einsum", ["x"], ["y"], equation="ij->ji")],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (None, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (4, 3))])  # type: ignore
 
     def test_einsum_dot(self) -> None:
         graph = self._make_graph(
@@ -7050,7 +7050,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Einsum", ["x", "y"], ["z"], equation="ij,ab->ijab")],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (None, None, None, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 5, 7, 9))])  # type: ignore
 
     def test_einsum_sum_along_dim(self) -> None:
         graph = self._make_graph(
@@ -7058,7 +7058,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Einsum", ["x"], ["y"], equation="i j->i ")],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (None,))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3,))])  # type: ignore
 
     def test_einsum_ellipsis(self) -> None:
         graph = self._make_graph(
@@ -7066,26 +7066,26 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Einsum", ["x"], ["y"], equation="... ii ->... i")],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (None, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 4))])  # type: ignore
 
     def test_einsum_ellipsis_2(self) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 2, 2)), ("y", TensorProto.FLOAT, (2, 2, 2))],
+            [("x", TensorProto.FLOAT, (2, 3, 4)), ("y", TensorProto.FLOAT, (2, 4, 5))],
             [make_node("Einsum", ["x", "y"], ["z"], equation="...ij,...jk->...ik")],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (None, None, None))]
+            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 5))]
         )  # type: ignore
 
     def test_einsum_ellipsis_3(self) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 2, 2)), ("y", TensorProto.FLOAT, (2, 2, 2))],
+            [("x", TensorProto.FLOAT, (2, 3, 4)), ("y", TensorProto.FLOAT, (2, 4, 5))],
             [make_node("Einsum", ["x", "y"], ["z"], equation="...ij,...jk")],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (None, None, None))]
+            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 5))]
         )  # type: ignore
 
     def test_einsum_contraction(self) -> None:
@@ -7101,7 +7101,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info(
-                    "z", TensorProto.FLOAT, (None, None, None, None, None)
+                    "z", TensorProto.FLOAT, (5, 6, 7, 9, 10)
                 )
             ],
         )  # type: ignore
@@ -7113,7 +7113,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (None, None))]
+            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (4, 5))]
         )  # type: ignore
 
     def test_einsum_batch_matmul(self) -> None:
@@ -7122,7 +7122,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Einsum", ["x", "y"], ["z"], equation="bij , b jk-> bik")],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (None, None, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (5, 2, 4))])  # type: ignore
 
     def test_einsum_left_hand_eqn(self) -> None:
         graph = self._make_graph(
@@ -7130,7 +7130,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Einsum", ["x", "y"], ["z"], equation="ij,kl")],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (None, None, None, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 3, 4))])  # type: ignore
 
     def test_einsum_incorrect_num_inputs(self) -> None:
         graph = self._make_graph(
