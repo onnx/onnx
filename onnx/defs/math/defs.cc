@@ -2560,6 +2560,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
+  // Only accept letters for indices
   auto isLetter = [](char c) {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
   };
@@ -2605,8 +2606,10 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
     size_t rank = shape.dim_size();
     size_t ellipsis_dims = 0;
     
-    size_t term_size = 0;
-    size_t num_illegal_char = 0;
+    size_t term_size = 0; // number of legal indices for the current term
+    size_t num_illegal_char = 0; // number of illegal char before the current 'index' in the current term
+
+    
     for (size_t index = 0; index < term.size(); ++index) {
       if (isLetter(term[index])) {
         term_size += 1;
@@ -2614,8 +2617,8 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
     }
 
     for (size_t index = 0; index < term.size(); ++index) {
-      
       if (index == ellipsis_index) {
+        // find ellipsis and record the dims represented by ellipsis
         ellipsis_dims = rank - term_size;
         if (ellipsis_flag) {
           ellipsis_flag = false;
@@ -2623,7 +2626,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
             *ellipsis_dims_value.add_dim() = shape.dim(index+i-num_illegal_char);
           }
         }
-        index += 2;
+        index += 2; // skip the rest of dots
         num_illegal_char += 3;
         continue;
         
@@ -2674,11 +2677,12 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
     auto right_ellipsis_index = right_equation.find("...");
 
     for (size_t index = 0; index < right_equation.size(); ++index) {
+      // If there's an ellipsis, add it's corresponding dimensions
       if (index == right_ellipsis_index) {
         for (size_t i = 0; i < num_ellipsis_indices; i++) {
           *output_shape.add_dim() = ellipsis_dims_value.dim(i);
         }
-        index += 2;
+        index += 2; // skip the rest of dots
         continue;
       }
       
@@ -2691,6 +2695,9 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
     for (size_t i = 0; i < num_ellipsis_indices; i++) {
       *output_shape.add_dim() = ellipsis_dims_value.dim(i);
     }
+    // If no explicit output was given, generate an implicit output by ordering all the
+    // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
+    // Exclude any labels that occurred more than once, as these cancel out.
     for (auto i : label_maps) {
       if (repeated_labels.count(i.first) == 0) {
         *output_shape.add_dim() = dims_value.dim(i.second);
