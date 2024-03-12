@@ -2706,7 +2706,6 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
   }
   
   updateOutputShape(ctx, 0, output_shape);
-  // *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = output_shape;
 }
 
 static const char* Einsum_ver12_doc = R"DOC(
