@@ -1185,7 +1185,6 @@ class OpSet_Onnx_ver21 {
   }
 };
 
-
 // Forward declarations for ai.onnx version 22
 
 // Iterate over schema from ai.onnx version 22
