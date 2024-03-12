@@ -1192,6 +1192,8 @@ class OpSet_Onnx_ver21 {
 class OpSet_Onnx_ver22 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    // TODO: Remove after introducing the first schema to opset 22
+    (void)fn;
   }
 };
 
