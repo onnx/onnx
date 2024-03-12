@@ -15,6 +15,7 @@
 #include <ostream>
 #include <set>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -393,19 +394,11 @@ class OpSchema final {
 
   // Functions to do documentation for the operator schema.
   // This may be disabled to save memory.
-  OpSchema& SetDoc(std::string_view doc) {
-#ifndef __ONNX_NO_DOC_STRINGS
-    SetDoc(std::string(doc));
-#else
-    ONNX_UNUSED_PARAMETER(doc);
-#endif
+  OpSchema& SetDoc(std::string_view doc){SetDoc(std::string(doc))}
 
-    return *this;
-  }
-
-  OpSchema& SetDoc(std::string_view doc) {
+  OpSchema& SetDoc(std::string doc) {
 #ifndef __ONNX_NO_DOC_STRINGS
-    doc_ = doc;
+    doc_ = std::move(doc);
 #else
     ONNX_UNUSED_PARAMETER(doc);
 #endif
@@ -413,17 +406,14 @@ class OpSchema final {
   }
 
   // Functions to specify name for the operator schema.
-  OpSchema& SetName(const char* name);
-  OpSchema& SetName(std::string name);
+  OpSchema& SetName(std::string_view name);
 
   // Functions to specify code location for the operator schema.
-  OpSchema& SetLocation(const char* file, int line);
-  OpSchema& SetLocation(std::string file, int line);
+  OpSchema& SetLocation(std::string_view file, int line);
 
   // Functions to specify domain for the operator schema.
   // Default domain value (ONNX_DOMAIN) means it's ONNX domain.
-  OpSchema& SetDomain(const char* domain);
-  OpSchema& SetDomain(std::string domain);
+  OpSchema& SetDomain(std::string_view domain);
 
   struct Attribute final {
     Attribute(std::string name_, std::string description_, AttributeProto::AttributeType type_, bool required_)
@@ -455,7 +445,10 @@ class OpSchema final {
       std::string name, std::string description, AttributeProto::AttributeType type, const TypeName& defaultValue); \
   /* non-STL wrapper to reduce binary size */                                                                       \
   OpSchema& Attr(                                                                                                   \
-      const char* name, const char* description, AttributeProto::AttributeType type, const TypeName& defaultValue); \
+      std::string_view name,                                                                                        \
+      std::string_view description,                                                                                 \
+      AttributeProto::AttributeType type,                                                                           \
+      const TypeName& defaultValue);                                                                                \
   OpSchema& Attr(                                                                                                   \
       std::string name,                                                                                             \
       std::string description,                                                                                      \
@@ -477,10 +470,6 @@ class OpSchema final {
 
   // Register "required" attribute without default value.
   OpSchema& Attr(std::string name, std::string description, AttributeProto::AttributeType type, bool required = true);
-
-  // Non-STL wrapper to reduce binary size
-  OpSchema& Attr(const char* name, const char* description, AttributeProto::AttributeType type, bool required = true);
-
   OpSchema& AllowUncheckedAttributes();
 
   // Type constraint.
@@ -532,20 +521,9 @@ class OpSchema final {
 
   OpSchema& Input(
       int n,
-      std::string name,
+      std::string_view name,
       std::string_view description,
-      std::string type_str,
-      FormalParameterOption param_option = Single,
-      bool is_homogeneous = true,
-      int min_arity = 1,
-      DifferentiationCategory differentiation_category = Unknown);
-
-  // Non-STL wrapper to reduce binary size
-  OpSchema& Input(
-      int n,
-      const char* name,
-      const char* description,
-      const char* type_str,
+      std::string_view type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
@@ -563,12 +541,11 @@ class OpSchema final {
       int min_arity = 1,
       DifferentiationCategory differentiation_category = Unknown);
 
-  // Non-STL wrapper to reduce binary size
   OpSchema& Output(
       int n,
-      const char* name,
-      const char* description,
-      const char* type_str,
+      std::string_view name,
+      std::string_view description,
+      std::string_view type_str,
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
@@ -576,9 +553,10 @@ class OpSchema final {
 
   OpSchema& TypeConstraint(std::string type_str, std::vector<std::string> constraints, std::string description);
 
-  // Non-STL wrapper to reduce binary size
-  OpSchema&
-  TypeConstraint(const char* type_str, std::initializer_list<const char*> constraints, const char* description);
+  OpSchema& TypeConstraint(
+      std::string_view type_str,
+      std::initializer_list<std::string_view> constraints,
+      std::string_view description);
 
   // Convenience members for types
 
@@ -1184,8 +1162,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     // standard ONNX domains as above). Custom-domains are free to interpret
     // this as appropriate (that is, as relative to releases of custom-domain
     // as opposed to ONNX releases).
-    void
-    AddDomainToVersion(std::string_view domain, int min_version, int max_version, int last_release_version = -1) {
+    void AddDomainToVersion(std::string_view domain, int min_version, int max_version, int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
       if (map_.count(domain) != 0) {
         std::stringstream err;
@@ -1321,10 +1298,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       return -1;
     }
 
-    static void CheckDomainAndVersionToRegister(
-        const OpSchema& op_schema,
-        std::string_view op_name,
-        std::string_view op_domain) {
+    static void
+    CheckDomainAndVersionToRegister(const OpSchema& op_schema, std::string_view op_name, std::string_view op_domain) {
       auto ver_range_map = DomainToVersionRange::Instance().Map();
       auto ver_range_it = ver_range_map.find(op_domain);
       auto ver = op_schema.SinceVersion();
@@ -1353,8 +1328,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     }
   };
 
-  static void
-  OpSchemaDeregister(std::string_view op_type, const int version, std::string_view domain = ONNX_DOMAIN) {
+  static void OpSchemaDeregister(std::string_view op_type, const int version, std::string_view domain = ONNX_DOMAIN) {
     auto& schema_map = GetMapWithoutEnsuringRegistration();
     if (schema_map.count(op_type) && schema_map[op_type].count(domain) && schema_map[op_type][domain].count(version)) {
       schema_map[op_type][domain].erase(version);
@@ -1425,10 +1399,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   static OpSchemaRegistry* Instance();
 
-  const OpSchema* GetSchema(
-      std::string_view key,
-      const int maxInclusiveVersion,
-      std::string_view domain = ONNX_DOMAIN) const override {
+  const OpSchema* GetSchema(std::string_view key, const int maxInclusiveVersion, std::string_view domain = ONNX_DOMAIN)
+      const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
   static void SetLoadedSchemaVersion(int target_version) {

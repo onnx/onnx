@@ -72,7 +72,7 @@ void assertNotParams(const std::vector<Dimension>& sizes) {
   }
 }
 
-void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uint64_t num_inputs) {
+void assertInputsAvailable(const ArrayRef<Value*>& inputs, std::string_view name, uint64_t num_inputs) {
   ONNX_ASSERTM(
       inputs.size() == num_inputs,
       "%s in opset version 6 can only broadcast"

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <string_view>
 #include <vector>
 
 #include "onnx/common/ir.h"
@@ -22,6 +23,6 @@ void assert_numpy_multibroadcastable(
 
 void assertNotParams(const std::vector<Dimension>& sizes);
 
-void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uint64_t num_inputs);
+void assertInputsAvailable(const ArrayRef<Value*>& inputs, std::string_view name, uint64_t num_inputs);
 } // namespace version_conversion
 } // namespace ONNX_NAMESPACE

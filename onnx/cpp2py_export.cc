@@ -7,6 +7,7 @@
 
 #include <climits>
 #include <limits>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 
@@ -25,7 +26,7 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 
 template <typename ProtoType>
-static std::tuple<bool, py::bytes, py::bytes> Parse(const char* cstr) {
+static std::tuple<bool, py::bytes, py::bytes> Parse(std::string_view cstr) {
   ProtoType proto{};
   OnnxParser parser(cstr);
   auto status = parser.Parse(proto);
@@ -643,11 +644,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   shape_inference.def(
       "infer_shapes_path",
-      [](std::string_view model_path,
-         std::string_view output_path,
-         bool check_type,
-         bool strict_mode,
-         bool data_prop) -> void {
+      [](std::string_view model_path, std::string_view output_path, bool check_type, bool strict_mode, bool data_prop)
+          -> void {
         ShapeInferenceOptions options{check_type, strict_mode == true ? 1 : 0, data_prop};
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
       });

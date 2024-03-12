@@ -52,7 +52,7 @@ std::string MakeString(const Args&... args) {
 
 // Specializations for already-a-string types.
 template <>
-inline std::string MakeString(std::string_view str) {
+inline std::string MakeString(std::string str) {
   return str;
 }
 inline std::string MakeString(const char* c_str) {

@@ -452,33 +452,22 @@ OpSchema& OpSchema::SetSupportLevel(SupportType support) {
 }
 
 // Functions to specify name for the operator schema.
-OpSchema& OpSchema::SetName(std::string name) {
-  name_ = std::move(name);
+OpSchema& OpSchema::SetName(std::string_view name) {
+  return SetName();
+  name_ = std::move(std::string(name));
   return *this;
 }
 
-OpSchema& OpSchema::SetName(std::string_view name) {
-  return SetName(std::string(name));
-}
-
 // Functions to specify code location for the operator schema.
-OpSchema& OpSchema::SetLocation(std::string file, int line) {
-  file_ = std::move(file);
+OpSchema& OpSchema::SetLocation(std::string_view file, int line) {
+  file_ = std::move(std::string(file));
   line_ = line;
   return *this;
 }
 
-OpSchema& OpSchema::SetLocation(const char* file, int line) {
-  return SetLocation(std::string(file), line);
-}
-
-OpSchema& OpSchema::SetDomain(std::string domain) {
-  domain_ = std::move(domain);
+OpSchema& OpSchema::SetDomain(std::string_view domain) {
+  domain_ = std::move(std::string(domain));
   return *this;
-}
-
-OpSchema& OpSchema::SetDomain(const char* domain) {
-  return SetDomain(std::string(domain));
 }
 
 OpSchema& OpSchema::Attr(Attribute attr) {
@@ -487,12 +476,8 @@ OpSchema& OpSchema::Attr(Attribute attr) {
   return *this;
 }
 
-OpSchema& OpSchema::Attr(std::string name, std::string description, AttributeProto::AttributeType type, bool required) {
-  Attr(Attribute{std::move(name), std::move(description), type, required});
-  return *this;
-}
-
-OpSchema& OpSchema::Attr(const char* name, const char* description, AttributeProto::AttributeType type, bool required) {
+OpSchema&
+OpSchema::Attr(std::string_view name, std::string_view description, AttributeProto::AttributeType type, bool required) {
   return Attr(std::string(name), std::string(description), type, required);
 }
 
@@ -510,7 +495,10 @@ OpSchema& OpSchema::Attr(const char* name, const char* description, AttributePro
     return *this;                                                                                                      \
   }                                                                                                                    \
   OpSchema& OpSchema::Attr(                                                                                            \
-      const char* name, const char* description, AttributeProto::AttributeType attr_type, const type& default_value) { \
+      std::string_view name,                                                                                           \
+      std::string_view description,                                                                                    \
+      AttributeProto::AttributeType attr_type,                                                                         \
+      const type& default_value) {                                                                                     \
     return Attr(std::string(name), std::string(description), attr_type, default_value);                                \
   }
 

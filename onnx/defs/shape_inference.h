@@ -164,8 +164,7 @@ inline int64_t getAttribute(DataPropagationContext& ctx, std::string_view attrib
   return defaultValue;
 }
 
-inline std::string
-getAttribute(InferenceContext& ctx, std::string_view attributeName, std::string_view defaultValue) {
+inline std::string getAttribute(InferenceContext& ctx, std::string_view attributeName, std::string_view defaultValue) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_s())
     return attr_proto->s();

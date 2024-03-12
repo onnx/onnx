@@ -35,9 +35,7 @@ AttributeProto MakeRefAttribute(std::string_view attr_name, AttributeProto_Attri
 // <referred_attr_name> specifies the referred attribute name of the function
 // node.
 // <type> specifies the attribute type.
-AttributeProto MakeRefAttribute(
-    std::string_view attr_name,
-    std::string_view referred_attr_name,
-    AttributeProto_AttributeType type);
+AttributeProto
+MakeRefAttribute(std::string_view attr_name, std::string_view referred_attr_name, AttributeProto_AttributeType type);
 
 } // namespace ONNX_NAMESPACE

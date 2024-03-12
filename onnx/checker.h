@@ -177,10 +177,8 @@ void check_model(
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
     bool check_custom_domain = false);
-std::string resolve_external_data_location(
-    std::string_view base_dir,
-    std::string_view location,
-    std::string_view tensor_name);
+std::string
+resolve_external_data_location(std::string_view base_dir, std::string_view location, std::string_view tensor_name);
 bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace checker

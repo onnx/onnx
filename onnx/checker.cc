@@ -974,10 +974,8 @@ void check_model(
   }
 }
 
-std::string resolve_external_data_location(
-    std::string_view base_dir,
-    std::string_view location,
-    std::string_view tensor_name) {
+std::string
+resolve_external_data_location(std::string_view base_dir, std::string_view location, std::string_view tensor_name) {
 #ifdef _WIN32
   auto file_path = std::filesystem::path(utf8str_to_wstring(location));
   if (file_path.is_absolute()) {

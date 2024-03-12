@@ -11,33 +11,33 @@
 
 namespace ONNX_NAMESPACE {
 
-#define ADD_BASIC_ATTR_IMPL(type, enumType, field)                                \
+#define ADD_BASIC_ATTR_IMPL(type, enumType, field)                              \
   AttributeProto MakeAttribute(std::string_view attr_name, const type& value) { \
-    AttributeProto a;                                                             \
-    a.set_name(attr_name);                                                        \
-    a.set_type(enumType);                                                         \
-    a.set_##field(value);                                                         \
-    return a;                                                                     \
+    AttributeProto a;                                                           \
+    a.set_name(attr_name);                                                      \
+    a.set_type(enumType);                                                       \
+    a.set_##field(value);                                                       \
+    return a;                                                                   \
   }
 
-#define ADD_ATTR_IMPL(type, enumType, field)                                      \
+#define ADD_ATTR_IMPL(type, enumType, field)                                    \
   AttributeProto MakeAttribute(std::string_view attr_name, const type& value) { \
-    AttributeProto a;                                                             \
-    a.set_name(attr_name);                                                        \
-    a.set_type(enumType);                                                         \
-    *(a.mutable_##field()) = value;                                               \
-    return a;                                                                     \
+    AttributeProto a;                                                           \
+    a.set_name(attr_name);                                                      \
+    a.set_type(enumType);                                                       \
+    *(a.mutable_##field()) = value;                                             \
+    return a;                                                                   \
   }
 
-#define ADD_LIST_ATTR_IMPL(type, enumType, field)                                               \
+#define ADD_LIST_ATTR_IMPL(type, enumType, field)                                             \
   AttributeProto MakeAttribute(std::string_view attr_name, const std::vector<type>& values) { \
-    AttributeProto a;                                                                           \
-    a.set_name(attr_name);                                                                      \
-    a.set_type(enumType);                                                                       \
-    for (const auto& val : values) {                                                            \
-      *(a.mutable_##field()->Add()) = val;                                                      \
-    }                                                                                           \
-    return a;                                                                                   \
+    AttributeProto a;                                                                         \
+    a.set_name(attr_name);                                                                    \
+    a.set_type(enumType);                                                                     \
+    for (const auto& val : values) {                                                          \
+      *(a.mutable_##field()->Add()) = val;                                                    \
+    }                                                                                         \
+    return a;                                                                                 \
   }
 
 ADD_BASIC_ATTR_IMPL(float, AttributeProto_AttributeType_FLOAT, f)
@@ -57,10 +57,8 @@ AttributeProto MakeRefAttribute(std::string_view attr_name, AttributeProto_Attri
   return MakeRefAttribute(attr_name, attr_name, type);
 }
 
-AttributeProto MakeRefAttribute(
-    std::string_view attr_name,
-    std::string_view referred_attr_name,
-    AttributeProto_AttributeType type) {
+AttributeProto
+MakeRefAttribute(std::string_view attr_name, std::string_view referred_attr_name, AttributeProto_AttributeType type) {
   AttributeProto a;
   a.set_name(attr_name);
   a.set_ref_attr_name(referred_attr_name);
