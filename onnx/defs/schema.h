@@ -335,16 +335,6 @@ class OpSchema final {
    */
   void Verify(const NodeProto& node) const;
 
-  /**
-   * @brief Verifies if the input number matches the pattern specified in the schema
-   */
-  void VerifyInputNum(int input_num, const std::string& node_info = "Node") const;
-
-  /**
-   * @brief Verifies if the output number matches the pattern specified in the schema
-   */
-  void VerifyOutputNum(int output_num, const std::string& node_info = "Node") const;
-
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.
 
@@ -1107,6 +1097,20 @@ class OpSchema final {
       int function_since_version,
       std::set<std::string>* updated_ops = nullptr) const;
   void UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const;
+
+  /**
+   * @brief Verifies if the input number matches the pattern specified in the schema
+   * @param input_num The number of inputs to be verified against the schema.
+   * @param node_info The prefix string used if the check fails.
+   */
+  void VerifyInputNum(int input_num, std::string_view node_info = "Node") const;
+
+  /**
+   * @brief Verifies if the output number matches the pattern specified in the schema
+   * @param output_num The number of outputs to be verified against the schema.
+   * @param node_info The prefix string used if the check fails.
+   */
+  void VerifyOutputNum(int output_num, std::string_view node_info = "Node") const;
 
   std::string name_;
   std::string file_;
