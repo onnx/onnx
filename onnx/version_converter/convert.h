@@ -45,6 +45,7 @@
 #include "onnx/version_converter/adapters/scatter_10_11.h"
 #include "onnx/version_converter/adapters/slice_9_10.h"
 #include "onnx/version_converter/adapters/softmax_12_13.h"
+#include "onnx/version_converter/adapters/split_11_13.h"
 #include "onnx/version_converter/adapters/split_12_13.h"
 #include "onnx/version_converter/adapters/split_13_12.h"
 #include "onnx/version_converter/adapters/split_17_18.h"
@@ -403,6 +404,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("MaxPool", OpSetID(12), OpSetID(11), maxpool_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("ReduceMax", OpSetID(12), OpSetID(11), maxpool_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("ReduceMin", OpSetID(12), OpSetID(11), maxpool_unallowed_types));
+
+    /******** 11 -> 13 ********/
+    registerAdapter(std::make_unique<Split_11_13>());
 
     /******** 12 -> 13 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Abs", OpSetID(12), OpSetID(13)));
