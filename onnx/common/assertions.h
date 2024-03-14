@@ -16,12 +16,12 @@ namespace ONNX_NAMESPACE {
 
 struct assert_error : public std::runtime_error {
  public:
-  explicit assert_error(std::string_view msg) : runtime_error(msg) {}
+  explicit assert_error(const std::string& msg) : runtime_error(msg) {}
 };
 
 struct tensor_error : public assert_error {
  public:
-  explicit tensor_error(std::string_view msg) : assert_error(msg) {}
+  explicit tensor_error(const std::string& msg) : assert_error(msg) {}
 };
 
 std::string barf(const char* fmt, ...);

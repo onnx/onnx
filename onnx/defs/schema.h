@@ -1162,7 +1162,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     // standard ONNX domains as above). Custom-domains are free to interpret
     // this as appropriate (that is, as relative to releases of custom-domain
     // as opposed to ONNX releases).
-    void AddDomainToVersion(std::string_view domain, int min_version, int max_version, int last_release_version = -1) {
+    void
+    AddDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
       if (map_.count(domain) != 0) {
         std::stringstream err;
@@ -1187,7 +1188,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     }
 
     void
-    UpdateDomainToVersion(std::string_view domain, int min_version, int max_version, int last_release_version = -1) {
+    UpdateDomainToVersion(const std::string& domain, int min_version, int max_version, int last_release_version = -1) {
       std::lock_guard<std::mutex> lock(mutex_);
       if (map_.count(domain) == 0) {
         std::stringstream err;
@@ -1298,8 +1299,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       return -1;
     }
 
-    static void
-    CheckDomainAndVersionToRegister(const OpSchema& op_schema, std::string_view op_name, std::string_view op_domain) {
+    static void CheckDomainAndVersionToRegister(
+        const OpSchema& op_schema,
+        const std::string& op_name,
+        const std::string& op_domain) {
       auto ver_range_map = DomainToVersionRange::Instance().Map();
       auto ver_range_it = ver_range_map.find(op_domain);
       auto ver = op_schema.SinceVersion();
@@ -1328,7 +1331,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     }
   };
 
-  static void OpSchemaDeregister(std::string_view op_type, const int version, std::string_view domain = ONNX_DOMAIN) {
+  static void
+  OpSchemaDeregister(const std::string& op_type, const int version, const std::string& domain = ONNX_DOMAIN) {
     auto& schema_map = GetMapWithoutEnsuringRegistration();
     if (schema_map.count(op_type) && schema_map[op_type].count(domain) && schema_map[op_type][domain].count(version)) {
       schema_map[op_type][domain].erase(version);
@@ -1342,7 +1346,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   // Deregister all ONNX opset schemas from domain
   // Domain with default value ONNX_DOMAIN means ONNX.
-  static void OpSchemaDeregisterAll(std::string_view domain = ONNX_DOMAIN) {
+  static void OpSchemaDeregisterAll(const std::string& domain = ONNX_DOMAIN) {
     auto& schema_map = GetMapWithoutEnsuringRegistration();
     // schema_map stores operator schemas in the format of
     // <OpName, <Domain, <OperatorSetVersion, OpSchema>>>
@@ -1359,7 +1363,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   // Return the latest schema for an operator in specified domain.
   // Domain with default value ONNX_DOMAIN means ONNX.
-  static const OpSchema* Schema(std::string_view key, std::string_view domain = ONNX_DOMAIN) {
+  static const OpSchema* Schema(std::string& key, std::string_view domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       const auto& schema_ver_map = m[key][domain];
@@ -1374,7 +1378,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // <maxInclusiveVersion> in specified domain. Domain with default value
   // ONNX_DOMAIN means ONNX.
   static const OpSchema*
-  Schema(std::string_view key, const int maxInclusiveVersion, std::string_view domain = ONNX_DOMAIN) {
+  Schema(std::string& key, const int maxInclusiveVersion, std::string_view domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       const auto& schema_ver_map = m[key][domain];
@@ -1399,8 +1403,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   static OpSchemaRegistry* Instance();
 
-  const OpSchema* GetSchema(std::string_view key, const int maxInclusiveVersion, std::string_view domain = ONNX_DOMAIN)
-      const override {
+  const OpSchema* GetSchema(
+      const std::string& key,
+      const int maxInclusiveVersion,
+      const std::string& domain = ONNX_DOMAIN) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
   static void SetLoadedSchemaVersion(int target_version) {
@@ -1466,7 +1472,7 @@ void RegisterSchema(
     int opset_version_to_load = 0,
     bool fail_duplicate_schema = true,
     bool fail_with_exception = false);
-void DeregisterSchema(std::string_view op_type, int version, std::string_view domain);
+void DeregisterSchema(const std::string& op_type, int version, const std::string& domain);
 
 // Registers the latest opset schema before opset_version_to_load
 // By default opset_version_to_load=0 means it will register all versions
@@ -1539,7 +1545,7 @@ class DbgOperatorSetTracker {
   ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxPreview, ver, name)
 
 // Helper function
-size_t ReplaceAll(std::string& s, std::string_view from, std::string_view to);
+size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
 #ifdef __GNUC__
 #define ONNX_UNUSED __attribute__((__unused__))
@@ -1571,7 +1577,7 @@ inline std::string GenerateBroadcastingDocMul() {
          " for more details please check [the doc](Broadcasting.md).";
 }
 
-inline std::string GenerateBroadcastingDocUni(std::string_view from, std::string_view to) {
+inline std::string GenerateBroadcastingDocUni(const char* from, const char* to) {
   std::string ret = "This operator supports **unidirectional broadcasting** (";
   ret = ret + from + " should be unidirectional broadcastable to " + to +
       ");"

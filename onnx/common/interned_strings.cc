@@ -28,7 +28,7 @@ struct InternedStrings {
     FORALL_BUILTIN_SYMBOLS(REGISTER_SYMBOL)
 #undef REGISTER_SYMBOL
   }
-  uint32_t symbol(std::string_view s) {
+  uint32_t symbol(const std::string& s) {
     std::lock_guard<std::mutex> guard(mutex_);
     auto it = string_to_sym_.find(s);
     if (it != string_to_sym_.end())
