@@ -65,6 +65,9 @@ jobs:
       )
     displayName: Create Anaconda environment
 
+  - powershell: echo "##vso[task.setvariable variable=CMAKE_PREFIX_PATH]$env:CONDA/envs/py$(python.version)/Library"
+    displayName: Set CMAKE_PREFIX_PATH
+
   - script: |
       call activate py$(python.version)
       python -m pip install --upgrade pip

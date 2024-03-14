@@ -5462,8 +5462,8 @@ Other versions of this operator: <a href="Changelog.md#ConstantOfShape-9">9</a>,
 <dl>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain input types.</dd>
-<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
-<dd>Constrain output types to be numerics.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(uint4), tensor(int4), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain output types to be numerics or boolean.</dd>
 </dl>
 
 
@@ -7002,12 +7002,12 @@ W = np.ones((1, 1, 2, 2), dtype=np.float32)
 
 # Convolution with padding
 offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
-offset_with_padding[
-    0, 0, 0, 0
-] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-offset_with_padding[
-    0, 5, 1, 2
-] = -0.1  # w-coord of [1, 0] element of kernel, at output position [1, 2]
+offset_with_padding[0, 0, 0, 0] = (
+    0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+)
+offset_with_padding[0, 5, 1, 2] = (
+    -0.1
+)  # w-coord of [1, 0] element of kernel, at output position [1, 2]
 
 node_with_padding = onnx.helper.make_node(
     "DeformConv",
@@ -7037,12 +7037,12 @@ expect(
 
 # Convolution without padding
 offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
-offset_without_padding[
-    0, 0, 0, 0
-] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-offset_without_padding[
-    0, 5, 0, 1
-] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+offset_without_padding[0, 0, 0, 0] = (
+    0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+)
+offset_without_padding[0, 5, 0, 1] = (
+    -0.1
+)  # w-coord of [1, 0] element of kernel, at output position [0, 1]
 
 node_without_padding = onnx.helper.make_node(
     "DeformConv",
@@ -7082,12 +7082,12 @@ W = np.ones((1, 1, 2, 2), dtype=np.float32)
 B = np.ones((1,), dtype=np.float32)
 
 offset = np.zeros((1, 8, 2, 2), dtype=np.float32)
-offset[
-    0, 0, 0, 0
-] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-offset[
-    0, 5, 0, 1
-] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+offset[0, 0, 0, 0] = (
+    0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+)
+offset[0, 5, 0, 1] = (
+    -0.1
+)  # w-coord of [1, 0] element of kernel, at output position [0, 1]
 
 mask = np.ones((1, 4, 2, 2), dtype=np.float32)
 mask[0, 2, 1, 1] = 0.2  # [1, 0] element of kernel at output position [1, 1]
@@ -7131,12 +7131,10 @@ X.shape = (1, 2, 3, 3)
 W = np.ones((1, 2, 2, 2), dtype=np.float32)
 
 offset = np.zeros((1, 16, 2, 2), dtype=np.float32)
-offset[
-    0, 0, 0, 0
-] = 0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
-offset[
-    0, 13, 0, 1
-] = (
+offset[0, 0, 0, 0] = (
+    0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
+)
+offset[0, 13, 0, 1] = (
     -0.1
 )  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
 
@@ -20275,6 +20273,8 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dt><tt>output_dtype</tt> : int (default is 0)</dt>
+<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `y_zero_point` data type (`T2`). If neither `output_dtype` nor `y_zero_point` are supplied, output data type is uint8. If both `output_dtype` and `y_zero_point` are specified, `output_dtype` must be `T2`.</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
 <dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>
@@ -20347,7 +20347,7 @@ expect(
 
 
 <details>
-<summary>blocked</summary>
+<summary>blocked_asymmetric</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -20407,7 +20407,74 @@ expect(
     node,
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
-    name="test_quantizelinear_blocked",
+    name="test_quantizelinear_blocked_asymmetric",
+)
+```
+
+</details>
+
+
+<details>
+<summary>blocked_symmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale"],
+    outputs=["y"],
+    axis=1,
+    block_size=2,
+    output_dtype=TensorProto.INT16,
+)
+
+x = np.array(
+    [
+        [6.0, -8, -10, 5.0],
+        [1.0, 8.0, 4.0, 5.0],
+        [0.0, 20.0, 10.0, 4.0],
+    ],
+    dtype=np.float32,
+)
+
+y_scale = np.array(
+    [
+        [1.5, 2.5],
+        [3.0, 4.9],
+        [5.1, 6.9],
+    ],
+    dtype=np.float32,
+)
+
+# x.shape = (3, 4)
+# y_scale.shape = (3, 2)
+
+block_axis = 1
+# The block shape is [x.shape[i] // y_scale.shape[i] for i in range(len(x.shape))] = (1, 2)
+assert all(
+    x.shape[i] == y_scale.shape[i]
+    for i in range(len(x.shape))
+    if i != block_axis
+)
+assert x.shape[block_axis] % y_scale.shape[block_axis] == 0
+repeats = x.shape[block_axis] // y_scale.shape[block_axis]
+
+# Create element-wise scale and zero point
+y_scale_elementwise = np.repeat(y_scale, repeats=repeats, axis=block_axis)
+
+y_val = np.clip(
+    np.rint(x / y_scale_elementwise), a_min=-32768, a_max=32767
+).astype(np.int16)
+y = make_tensor(
+    "y",
+    TensorProto.INT16,
+    x.shape,
+    y_val,
+)
+expect(
+    node,
+    inputs=[x, y_scale],
+    outputs=[y],
+    name="test_quantizelinear_blocked_symmetric",
 )
 ```
 
@@ -33464,11 +33531,11 @@ expect(node, inputs=[x, repeats], outputs=[z], name="test_tile_precomputed")
 ### <a name="TopK"></a><a name="topk">**TopK**</a>
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
-  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+  shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
 
-  * Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+  * Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
     which contains the values of the top k elements along the specified axis
-  * Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+  * Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
     contains the indices of the top k elements (original indices from the input
     tensor).
 
@@ -33500,7 +33567,7 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{n-1}]</dd>
 <dt><tt>K</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
 </dl>
@@ -33509,9 +33576,9 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 
 <dl>
 <dt><tt>Values</tt> (differentiable) : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing top K values from the input tensor</dd>
 <dt><tt>Indices</tt> (non-differentiable) : I</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
 #### Type Constraints

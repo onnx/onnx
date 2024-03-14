@@ -98,7 +98,7 @@ jobs:
         python -m pip install -q onnxruntime
         export ORT_MAX_IR_SUPPORTED_VERSION=9
         export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19
+        export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20
         pytest
 
 

@@ -75,7 +75,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.14.0", 9, 19, 3, 1),
     ("1.14.1", 9, 19, 3, 1),
     ("1.15.0", 9, 20, 4, 1),
-    ("1.16.0", 9, 20, 5, 1),
+    ("1.16.0", 10, 21, 5, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -336,13 +336,21 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
     return make_model(graph, **kwargs)
 
 
-def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
-    del model.metadata_props[:]
+def set_metadata_props(
+    proto: Union[
+        ModelProto, GraphProto, FunctionProto, NodeProto, TensorProto, ValueInfoProto
+    ],
+    dict_value: Dict[str, str],
+) -> None:
+    del proto.metadata_props[:]
     for k, v in dict_value.items():
-        entry = model.metadata_props.add()
+        entry = proto.metadata_props.add()
         entry.key = k
         entry.value = v
-        # model.metadata_properties.append(entry)
+
+
+def set_model_props(model: ModelProto, dict_value: Dict[str, str]) -> None:
+    set_metadata_props(model, dict_value)
 
 
 def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
