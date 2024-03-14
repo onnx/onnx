@@ -1363,7 +1363,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   // Return the latest schema for an operator in specified domain.
   // Domain with default value ONNX_DOMAIN means ONNX.
-  static const OpSchema* Schema(std::string& key, std::string_view domain = ONNX_DOMAIN) {
+  static const OpSchema* Schema(const std::string& key, const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       const auto& schema_ver_map = m[key][domain];

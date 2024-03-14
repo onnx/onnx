@@ -358,7 +358,7 @@ struct Value final {
       return unique_name_;
     return toVarName(unique());
   }
-  Value* setUniqueName(std::string_view name, bool rename_subgraph_captured_nodes = true);
+  Value* setUniqueName(const std::string& name, bool rename_subgraph_captured_nodes = true);
   Value* setStage(size_t s) {
     stage_ = s;
     return this;
@@ -454,7 +454,7 @@ struct Node : public Attributes<Node> {
   bool has_name() const {
     return has_name_;
   }
-  std::string_view name() const {
+  const std::string& name() const {
     return name_;
   }
   void setName(std::string name) {
@@ -464,7 +464,7 @@ struct Node : public Attributes<Node> {
   bool has_domain() const {
     return has_domain_;
   }
-  std::string_view domain() const {
+  const std::string& domain() const {
     return domain_;
   }
   void setDomain(std::string domain) {
@@ -474,7 +474,7 @@ struct Node : public Attributes<Node> {
   bool has_overload() const {
     return has_overload_;
   }
-  std::string_view overload() const {
+  const std::string& overload() const {
     return overload_;
   }
   void setOverload(std::string overload) {
@@ -484,7 +484,7 @@ struct Node : public Attributes<Node> {
   bool has_doc_string() const {
     return has_doc_string_;
   }
-  std::string_view docString() const {
+  const std::string& docString() const {
     return doc_string_;
   }
   void setDocString(std::string doc_string) {
@@ -869,7 +869,7 @@ class OpSetID final {
     return OpSetID("", 0);
   }
 
-  std::string_view domain() const {
+  const std::string& domain() const {
     return domain_;
   }
 
@@ -921,7 +921,7 @@ struct Graph final {
 
   std::vector<OpSetID> opset_versions_;
 
-  bool isNameUnique(std::string_view name) const {
+  bool isNameUnique(std::string name) const {
     if (std::find(initializer_names_.cbegin(), initializer_names_.cend(), name) != initializer_names_.cend()) {
       return false;
     }
@@ -966,7 +966,7 @@ struct Graph final {
   bool has_doc_string() const {
     return has_doc_string_;
   }
-  std::string_view docString() {
+  const std::string& docString() {
     return doc_string_;
   }
   void setDocString(std::string doc_string) {
@@ -1153,7 +1153,7 @@ struct Graph final {
   // Adds to graph initializer list, initializer names list, and as a graph input
   // Also syncs the initializer name, tensor name, and value name
   // Create an initializer whose value is stored in input
-  Value* addInitializerAndInput(const Tensor& initializer, std::string_view name) {
+  Value* addInitializerAndInput(const Tensor& initializer, const std::string& name) {
     Tensor initializerCopy = initializer;
     std::vector<Dimension> dim_sizes{initializerCopy.sizes().cbegin(), initializerCopy.sizes().cend()};
     Value* new_init = addInput();
@@ -1195,7 +1195,7 @@ struct Graph final {
     return has_name_;
   }
 
-  std::string_view name() const {
+  const std::string& name() const {
     return name_;
   }
 
@@ -1288,7 +1288,7 @@ inline const Graph* Value::owningGraph() const {
 // should also be updated.
 // Initializer names are also storaged in graph.initializer_names_, it should be
 // updated too.
-inline Value* Value::setUniqueName(std::string_view name, bool update_related_names) {
+inline Value* Value::setUniqueName(std::string name, bool update_related_names) {
   if (has_unique_name() && update_related_names) {
     auto* graph = owningGraph();
     auto old_name = unique_name_;
