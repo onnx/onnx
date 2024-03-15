@@ -404,7 +404,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("ReduceMax", OpSetID(12), OpSetID(11), maxpool_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("ReduceMin", OpSetID(12), OpSetID(11), maxpool_unallowed_types));
 
-
     /******** 12 -> 13 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Abs", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Add", OpSetID(12), OpSetID(13)));

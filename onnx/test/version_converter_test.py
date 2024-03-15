@@ -1458,7 +1458,6 @@ class TestVersionConverter(unittest.TestCase):
 
         assert len(converted_model.graph.node[0].output) == 2
 
-
     # Test Split Adapter: 12 -> 13
     def test_split_12_13(self) -> None:
         nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], split=[2, 3])]
