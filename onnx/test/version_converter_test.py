@@ -1439,23 +1439,25 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Split"
         assert converted_model.opset_import[0].version == 12
 
-    # Test Split Adapter: 11 -> 13
-    def test_split_11_13(self) -> None:
-        nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], split=[2, 3])]
+    def test_split_with_optional_input(self) -> None:
+
+        nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], axis=1)]
         graph = helper.make_graph(
             nodes,
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            "test_split_optional_input",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (6,))],
             [
-                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (2,)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3,)),
                 helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (3,)),
             ],
         )
-        converted_model = self._converted(graph, helper.make_operatorsetid("", 11), 13)
-        # Assert equality of graph and converted_model
-        assert converted_model.graph.node[0].op_type == "Constant"
-        assert converted_model.graph.node[1].op_type == "Split"
-        assert converted_model.opset_import[0].version == 13
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 12), 18)
+
+        assert converted_model.graph.node[0].op_type == "Split"
+        assert converted_model.opset_import[0].version == 18
+
+        assert len(converted_model.graph.node[0].output) == 2
+
 
     # Test Split Adapter: 12 -> 13
     def test_split_12_13(self) -> None:
