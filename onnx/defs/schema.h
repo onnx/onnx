@@ -1100,18 +1100,25 @@ class OpSchema final {
   void UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const;
 
   /**
-   * @brief Verifies if the input number matches the pattern specified in the schema
+   * @brief A common function to generate a prefix string for use in fail_check during the verify function.
+   * @param  node_name If empty, the returned string will not include the node name.
+   * @return std::string The prefix string.
+   */
+  std::string VerifyFailPrefix(std::string_view node_name) const;
+
+  /**
+   * @brief Verifies if the input number matches the pattern specified in the schema.
    * @param input_num The number of inputs to be verified against the schema.
    * @param node_info The prefix string used if the check fails.
    */
-  void VerifyInputNum(int input_num, std::string_view node_info = "Node") const;
+  void VerifyInputNum(int input_num, std::string_view node_name = "") const;
 
   /**
-   * @brief Verifies if the output number matches the pattern specified in the schema
+   * @brief Verifies if the output number matches the pattern specified in the schema.
    * @param output_num The number of outputs to be verified against the schema.
    * @param node_info The prefix string used if the check fails.
    */
-  void VerifyOutputNum(int output_num, std::string_view node_info = "Node") const;
+  void VerifyOutputNum(int output_num, std::string_view node_name = "") const;
 
   std::string name_;
   std::string file_;

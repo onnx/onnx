@@ -110,10 +110,8 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
   std::unordered_map<std::string, std::string> type_constraints;
   // Check the number of inputs / output.
-  std::string node_info =
-      std::string("Node with schema(") + domain() + "::" + Name() + ":" + std::to_string(since_version()) + ")";
-  VerifyInputNum(ctx.getNumInputs(), node_info);
-  VerifyOutputNum(ctx.getNumOutputs(), node_info);
+  VerifyInputNum(ctx.getNumInputs());
+  VerifyOutputNum(ctx.getNumOutputs());
 
   // check all input types
   for (size_t in_idx = 0; in_idx < ctx.getNumInputs(); ++in_idx) {
@@ -184,10 +182,8 @@ void OpSchema::Verify(const NodeProto& node) const {
     fail_check("Operator '", name_, "' has been deprecated since version ", since_version_);
   }
 
-  std::string node_info = std::string("Node (") + node.name() + ")";
-
-  VerifyInputNum(node.input_size(), node_info);
-  VerifyOutputNum(node.output_size(), node_info);
+  VerifyInputNum(node.input_size(), node.name());
+  VerifyOutputNum(node.output_size(), node.name());
 
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
@@ -334,24 +330,48 @@ void OpSchema::Verify(const NodeProto& node) const {
   // Phew. All verifications passed.
 }
 
-void OpSchema::VerifyInputNum(int input_num, std::string_view node_info) const {
+std::string OpSchema::VerifyFailPrefix(std::string_view node_name) const {
+  std::string str = "Node";
+  if (!node_name.empty()) {
+    str = str + "(" + std::string(node_name) + ")";
+  }
+  str = str + " with schema(" + domain() + "::" + Name() + ":" + std::to_string(since_version()) + ")";
+  return str;
+}
+
+void OpSchema::VerifyInputNum(int input_num, std::string_view node_name) const {
   if (input_num < min_input_ || input_num > max_input_) {
-    fail_check(node_info, " has input size ", input_num, " not in range [min=", min_input_, ", max=", max_input_, "].");
+    fail_check(
+        VerifyFailPrefix(node_name),
+        " has input size ",
+        input_num,
+        " not in range [min=",
+        min_input_,
+        ", max=",
+        max_input_,
+        "].");
   }
 
   if (!num_inputs_allowed_(input_num)) {
-    fail_check(node_info, " has input size ", input_num, " not in allowed input sizes.");
+    fail_check(VerifyFailPrefix(node_name), " has input size ", input_num, " not in allowed input sizes.");
   }
 }
 
-void OpSchema::VerifyOutputNum(int output_num, std::string_view node_info) const {
+void OpSchema::VerifyOutputNum(int output_num, std::string_view node_name) const {
   if (output_num < min_output_ || output_num > max_output_) {
     fail_check(
-        node_info, " has output size ", output_num, " not in range [min=", min_output_, ", max=", max_output_, "].");
+        VerifyFailPrefix(node_name),
+        " has output size ",
+        output_num,
+        " not in range [min=",
+        min_output_,
+        ", max=",
+        max_output_,
+        "].");
   }
 
   if (!num_outputs_allowed_(output_num)) {
-    fail_check(node_info, " has output size ", output_num, " not in allowed output sizes.");
+    fail_check(VerifyFailPrefix(node_name), " has output size ", output_num, " not in allowed output sizes.");
   }
 }
 
