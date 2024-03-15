@@ -7144,6 +7144,222 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
+    def test_einsum_view_A1(self) -> None: # returns a view of A1
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3,))],
+            [make_node("Einsum", ["x"], ["y"], equation="i")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3,))])  # type: ignore
+
+    def test_einsum_sum_A1(self) -> None: # sums the values of A1
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3,))],
+            [make_node("Einsum", ["x"], ["y"], equation="i->")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_einsum_element_wise_multiplication_A1_B1(self) -> None: # element-wise multiplication of A1 and B1
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3,)), ("y", TensorProto.FLOAT, (3,))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="i,i->i")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3,))])  # type: ignore
+
+    def test_einsum_inner_product_A1_B1(self) -> None: # inner product of A1 and B1
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3,)), ("y", TensorProto.FLOAT, (3,))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="i,i->")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_einsum_outer_product_A1_B1(self) -> None: # outer product of A1 and B1
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3,)), ("y", TensorProto.FLOAT, (3,))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="i,j->ij")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_view_A2(self) -> None: # returns a view of A2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x"], ["y"], equation="ij->ij")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 3))])  # type: ignore
+    
+    def test_einsum_view_A2_2(self) -> None: # returns a view of A2, another case
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x"], ["y"], equation="ij")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_transpose_A2(self) -> None: # view transpose of A2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x"], ["y"], equation="ji")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_transpose_A2_to_ij(self) -> None: # view transpose of A2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x"], ["y"], equation="ji->ij")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_diag_A2(self) -> None: # view main diagonal of A2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x"], ["y"], equation="ii->i")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3,))])  # type: ignore
+
+    def test_einsum_trace_A2(self) -> None: # sums main diagonal of A2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x"], ["y"], equation="ii->")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_einsum_sum_A2(self) -> None: # sums the values of A2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x"], ["y"], equation="ij->")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ())])  # type: ignore
+
+    def test_einsum_sum_columns_A2(self) -> None: # sum down the columns of A2 (across rows)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x"], ["y"], equation="ij->j")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3,))])  # type: ignore
+
+    def test_einsum_sum_rows_A2(self) -> None: # sum horizontally along the rows of A2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x"], ["y"], equation="ij->i")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3,))])  # type: ignore
+
+    def test_einsum_element_wise_multiplication_A2_B2(self) -> None: # element-wise multiplication of A2 and B2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ij,ij->ij")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_element_wise_multiplication_A2_B2_transpose(self) -> None: # element-wise multiplication of A2 and B2.T
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ij,ji->ij")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_matrix_multiplication_A2_B2(self) -> None: # matrix multiplication of A2 and B2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ij,jk")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_matrix_multiplication_A2_B2_to_ik(self) -> None: # matrix multiplication of A2 and B2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ij,jk->ik")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_matrix_multiplication_A3_B3(self) -> None: # matrix multiplication of A3 and B3 (a stack of 2D matrices)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3, 3)), ("y", TensorProto.FLOAT, (2, 3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="bij,bjk->bik")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 3))])  # type: ignore
+
+    def test_einsum_matrix_multiplication_A3_B3_transpose(self) -> None: # matrix multiplication of A3 and B3 (a stack of 2D matrices)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 3, 3)), ("y", TensorProto.FLOAT, (2, 3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="bij,bkj->bik")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 3))])  # type: ignore
+
+    def test_einsum_inner_product_A2_B2(self) -> None: # inner product of A2 and B2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ij,kj->ik")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_row_multiplication_A2_B2(self) -> None: # each row of A2 multiplied by B2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ij,kj->ikj")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3, 3))])  # type: ignore
+
+    def test_einsum_value_multiplication_A2_B2(self) -> None: # each value of A2 multiplied by B2
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ij,kl->ijkl")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3, 3, 3))])  # type: ignore
+
+    def test_einsum_scalar_times_array(self) -> None: # Scalar times array
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation=",ij->ij")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 3))])  # type: ignore
+
+    def test_einsum_matrix_vector_A2_B1(self) -> None: # Matrix and vector.
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3,))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ij,j->i")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3,))])  # type: ignore
+
+    def test_einsum_diag_multiplication_A2_B2(self) -> None: # diagonals multiplied by each other
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ii,ii->i")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3,))])  # type: ignore
+
+    def test_einsum_diag_dot_product_A2_B2(self) -> None: # dot product of diagonals
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 3)), ("y", TensorProto.FLOAT, (3, 3))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="ii,ii->")],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("z", TensorProto.FLOAT, ())])  # type: ignore
+
     def test_negative_log_likehood_shape_is_NCdd(self) -> None:
         N, C = 3, 4
         graph = self._make_graph(
