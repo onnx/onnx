@@ -644,6 +644,33 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* Swish_ver21_doc = R"DOC(
+Swish function takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape,
+where $Swish(x) = x * sigmoid(beta * x)$.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Swish,
+    21,
+    OpSchema()
+        .Attr("beta", "Value of beta.", AttributeProto::FLOAT, 1.0f)
+        .SetDoc(Swish_ver21_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+          "T",
+            {"tensor(float16)", "tensor(float)", "tensor(bfloat16)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            S_X = Sigmoid<beta = 1.0>(X)
+            Y = Mul (X, S_X)
+          }
+        )ONNX",
+            21));
+
 static const char* Exp_ver13_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
 )DOC";

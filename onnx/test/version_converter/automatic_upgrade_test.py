@@ -1196,6 +1196,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_Sign(self) -> None:
         self._test_op_upgrade("Sign", 9)
 
+    def test_Swish(self) -> None:
+        self._test_op_upgrade("Swish", 21)
+
     def test_Sinh(self) -> None:
         self._test_op_upgrade("Sinh", 9)
 
