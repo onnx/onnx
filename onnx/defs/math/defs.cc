@@ -2632,7 +2632,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
         continue;
       }
 
-      const auto [_, inserted] = label_maps.insert({term[index], num_labels});
+      const auto inserted = label_maps.insert({term[index], num_labels}).second;
       if (inserted) {
         *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
         ++num_labels;
