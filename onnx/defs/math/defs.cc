@@ -2559,19 +2559,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
+void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
   // Only accept letters for indices
-  auto isLetter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
+  auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
 
-  const size_t numInputs = ctx.getNumInputs();
-  if (numInputs < 1 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+  const size_t num_inputs = ctx.getNumInputs();
+  if (num_inputs < 1 || !hasNInputShapes(ctx, static_cast<int>(num_inputs))) {
     return;
   }
   ONNX_NAMESPACE::TensorShapeProto output_shape;
   std::string left_equation;
 
-  equation.erase(std::remove(equation.begin(), equation.end(), ' '),
-                 equation.end()); // Remove space char
   auto mid_index = equation.find("->");
   if (mid_index != std::string::npos) {
     // Separate right and left hand sides of the equation
@@ -2597,7 +2595,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
   while (!str.eof()) {
     std::getline(str, term, ',');
     auto ellipsis_index = term.find("...");
-    if (numInputs <= num_operands) {
+    if (num_inputs <= num_operands) {
       fail_shape_inference("Number of input tensors does not match the operands in the equation.");
     }
     const auto& shape = ctx.getInputType(num_operands)->tensor_type().shape();
@@ -2608,7 +2606,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
     size_t num_illegal_char = 0; // number of illegal char before the current 'index' in the current term
 
     for (size_t index = 0; index < term.size(); ++index) {
-      if (isLetter(term[index])) {
+      if (is_letter(term[index])) {
         term_size += 1;
       }
     }
@@ -2627,7 +2625,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
         num_illegal_char += 3;
         continue;
 
-      } else if (!isLetter(term[index])) {
+      } else if (!is_letter(term[index])) {
         num_illegal_char += 1;
         continue;
       }
@@ -2664,7 +2662,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
     num_operands++;
   }
 
-  if (numInputs != num_operands) {
+  if (num_inputs != num_operands) {
     fail_shape_inference("Number of input tensors does not match the operands in the equation.");
   }
 
@@ -2683,7 +2681,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equ
         continue;
       }
 
-      if (isLetter(right_equation[index])) {
+      if (is_letter(right_equation[index])) {
         *output_shape.add_dim() = dims_value.dim(label_maps[right_equation[index]]);
       }
     }
@@ -2752,6 +2750,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (equation.compare("") == 0) {
             return;
           }
+
+          equation.erase(std::remove(equation.begin(), equation.end(), ' '),
+                         equation.end()); // Remove space char
           einsumShapeInference(ctx, equation);
         }));
 
