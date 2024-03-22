@@ -7088,6 +7088,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (2, 3, 5))]
         )  # type: ignore
 
+    def test_einsum_ellipsis_broadcast(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (1, 3, 4)), ("y", TensorProto.FLOAT, (32, 4, 5))],
+            [make_node("Einsum", ["x", "y"], ["z"], equation="...ij,...jk->...ik")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (32, 3, 5))]
+        )  # type: ignore
+
     def test_einsum_contraction(self) -> None:
         graph = self._make_graph(
             [
