@@ -2561,7 +2561,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
   // Only accept letters for indices
-  auto is_lowercase_letter = [](char c) { return c >= 'a' && c <= 'z'; };
+  auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
 
   const size_t num_inputs = ctx.getNumInputs();
   if (num_inputs < 1 || !hasNInputShapes(ctx, static_cast<int>(num_inputs))) {
@@ -2606,7 +2606,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
     size_t num_illegal_char = 0; // number of illegal char before the current 'index' in the current term
 
     for (size_t index = 0; index < term.size(); ++index) {
-      if (is_lowercase_letter(term[index])) {
+      if (is_letter(term[index])) {
         term_size += 1;
       }
     }
@@ -2634,7 +2634,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
         num_illegal_char += 3;
         continue;
 
-      } else if (!is_lowercase_letter(term[index])) {
+      } else if (!is_letter(term[index])) {
         num_illegal_char += 1;
         continue;
       }
@@ -2690,7 +2690,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
         continue;
       }
 
-      if (is_lowercase_letter(right_equation[index])) {
+      if (is_letter(right_equation[index])) {
         *output_shape.add_dim() = dims_value.dim(label_maps[right_equation[index]]);
       }
     }
