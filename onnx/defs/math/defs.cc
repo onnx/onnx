@@ -2568,17 +2568,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-void einsumRankInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equation) {
-  const size_t numInputs = ctx.getNumInputs();
-  if (numInputs < 1 || !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
+  // Only accept letters for indices
+  auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
+
+  const size_t num_inputs = ctx.getNumInputs();
+  if (num_inputs < 1 || !hasNInputShapes(ctx, static_cast<int>(num_inputs))) {
     return;
   }
-
-  auto* output_shape = getOutputShape(ctx, 0);
+  ONNX_NAMESPACE::TensorShapeProto output_shape;
   std::string left_equation;
 
-  equation.erase(std::remove(equation.begin(), equation.end(), ' '),
-                 equation.end()); // Remove space char
   auto mid_index = equation.find("->");
   if (mid_index != std::string::npos) {
     // Separate right and left hand sides of the equation
@@ -2595,73 +2595,130 @@ void einsumRankInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string equa
 
   // Parse the left-hand side
   std::stringstream str(left_equation);
+  std::map<char, size_t> label_maps;
+  std::set<char> repeated_labels;
+  ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
+  size_t num_labels = 0;
+  bool ellipsis_flag = true;
+
   while (!str.eof()) {
     std::getline(str, term, ',');
     auto ellipsis_index = term.find("...");
-    if (numInputs <= num_operands) {
+    if (num_inputs <= num_operands) {
       fail_shape_inference("Number of input tensors does not match the operands in the equation.");
     }
-    size_t rank = ctx.getInputType(num_operands)->tensor_type().shape().dim_size();
+    const auto& shape = ctx.getInputType(num_operands)->tensor_type().shape();
+    size_t rank = shape.dim_size();
+    size_t ellipsis_dims = 0;
+
+    size_t term_size = 0; // number of legal indices for the current term
+    size_t num_illegal_char = 0; // number of illegal char before the current 'index' in the current term
+
+    for (size_t index = 0; index < term.size(); ++index) {
+      if (is_letter(term[index])) {
+        term_size += 1;
+      }
+    }
+
+    for (size_t index = 0; index < term.size(); ++index) {
+      if (index == ellipsis_index) {
+        // find ellipsis and record the dims represented by ellipsis
+        ellipsis_dims = rank - term_size;
+        if (ellipsis_flag) {
+          ellipsis_flag = false;
+          for (size_t i = 0; i < ellipsis_dims; i++) {
+            *ellipsis_dims_value.add_dim() = shape.dim(index + i - num_illegal_char);
+          }
+        } else {
+          for (size_t i = 0; i < ellipsis_dims; i++) {
+            const auto shape_dim = shape.dim(index + i - num_illegal_char);
+            const auto current_dim = ellipsis_dims_value.mutable_dim(i);
+            if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
+                shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
+              current_dim->set_dim_value(shape_dim.dim_value());
+            }
+          }
+        }
+        index += 2; // skip the rest of dots
+        num_illegal_char += 3;
+        continue;
+
+      } else if (!is_letter(term[index])) {
+        num_illegal_char += 1;
+        continue;
+      }
+
+      const auto inserted = label_maps.insert({term[index], num_labels}).second;
+      if (inserted) {
+        *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
+        ++num_labels;
+      } else {
+        repeated_labels.insert(term[index]);
+      }
+    }
+
     if (ellipsis_index != std::string::npos) {
       // If there is an ellipsis, the number of dimensions it represents
       // must be total dim - letter dimensions
       if (num_ellipsis == 0) {
-        if (rank + 3 < term.size()) {
+        if (rank < term_size) {
           fail_shape_inference("Ellipsis represents incompatible dimensions.");
         }
-        num_ellipsis_indices = rank - term.size() + 3;
+        num_ellipsis_indices = rank - term_size;
       } else { // ellipsis has been seen before. Check that if dimensions
                // are compatible
-        if (num_ellipsis_indices != rank - term.size() + 3) {
+        if (num_ellipsis_indices != rank - term_size) {
           fail_shape_inference("Ellipsis represents incompatible dimensions.");
         }
       }
       num_ellipsis++;
     } else {
-      if (rank != term.size()) {
+      if (rank != term_size) {
         fail_shape_inference("Rank of input ", num_operands, " does not match the equation indices.");
       }
     }
     num_operands++;
   }
 
-  if (numInputs != num_operands) {
+  if (num_inputs != num_operands) {
     fail_shape_inference("Number of input tensors does not match the operands in the equation.");
   }
 
-  const size_t number_of_letters = 26;
-  size_t num_letter_occurrences[number_of_letters] = {0};
   // Parse the provided right-hand side
   if (mid_index != std::string::npos) {
     std::string right_equation = equation.substr(mid_index + 2);
     auto right_ellipsis_index = right_equation.find("...");
-    if (right_ellipsis_index != std::string::npos) { // Right-hand side contains ellipsis
-      for (size_t i = 0; i < num_ellipsis_indices; ++i) {
-        output_shape->add_dim();
+
+    for (size_t index = 0; index < right_equation.size(); ++index) {
+      // If there's an ellipsis, add its corresponding dimensions
+      if (index == right_ellipsis_index) {
+        for (size_t i = 0; i < num_ellipsis_indices; i++) {
+          *output_shape.add_dim() = ellipsis_dims_value.dim(i);
+        }
+        index += 2; // skip the rest of dots
+        continue;
       }
-    }
-    for (char c : right_equation) { // Add a dimension per each character
-                                    // in right hand equation
-      if (c != '.') {
-        output_shape->add_dim();
+
+      if (is_letter(right_equation[index])) {
+        *output_shape.add_dim() = dims_value.dim(label_maps[right_equation[index]]);
       }
     }
   } else { // Infer the dimension for right-hand side
-    // If there's an ellipsis, add it's corresponding dimensions
+    // If there's an ellipsis, add its corresponding dimensions
     for (size_t i = 0; i < num_ellipsis_indices; i++) {
-      output_shape->add_dim();
+      *output_shape.add_dim() = ellipsis_dims_value.dim(i);
     }
-    for (size_t i = 0; i < left_equation.size(); i++) { // Count chars that appear exactly once on left hand side
-      if ((left_equation.at(i) != ',') && (left_equation.at(i) != '.')) {
-        num_letter_occurrences[left_equation.at(i) - 'a']++;
-      }
-    }
-    for (size_t index = 0; index < number_of_letters; index++) {
-      if (num_letter_occurrences[index] == 1) {
-        output_shape->add_dim();
+    // If no explicit output was given, generate an implicit output by ordering all the
+    // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
+    // Exclude any labels that occurred more than once, as these cancel out.
+    for (auto i : label_maps) {
+      if (repeated_labels.count(i.first) == 0) {
+        *output_shape.add_dim() = dims_value.dim(i.second);
       }
     }
   }
+
+  updateOutputShape(ctx, 0, output_shape);
 }
 
 static const char* Einsum_ver12_doc = R"DOC(
@@ -2711,7 +2768,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (equation.compare("") == 0) {
             return;
           }
-          einsumRankInference(ctx, equation);
+
+          equation.erase(std::remove(equation.begin(), equation.end(), ' '),
+                         equation.end()); // Remove space char
+          einsumShapeInference(ctx, equation);
         }));
 
 const char* reduction_doc_sce =
