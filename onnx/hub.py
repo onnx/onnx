@@ -253,9 +253,9 @@ def load(
     selected_model = get_model_info(model, repo, opset)
     local_model_path_arr = selected_model.model_path.split("/")
     if selected_model.model_sha is not None:
-        local_model_path_arr[
-            -1
-        ] = f"{selected_model.model_sha}_{local_model_path_arr[-1]}"
+        local_model_path_arr[-1] = (
+            f"{selected_model.model_sha}_{local_model_path_arr[-1]}"
+        )
     local_model_path = join(_ONNX_HUB_DIR, os.sep.join(local_model_path_arr))
 
     if force_reload or not os.path.exists(local_model_path):
@@ -324,9 +324,9 @@ def download_model_with_test_data(
     model_with_data_sha = selected_model.metadata["model_with_data_sha"]
 
     if model_with_data_sha is not None:
-        local_model_with_data_path_arr[
-            -1
-        ] = f"{model_with_data_sha}_{local_model_with_data_path_arr[-1]}"
+        local_model_with_data_path_arr[-1] = (
+            f"{model_with_data_sha}_{local_model_with_data_path_arr[-1]}"
+        )
     local_model_with_data_path = join(
         _ONNX_HUB_DIR, os.sep.join(local_model_with_data_path_arr)
     )
