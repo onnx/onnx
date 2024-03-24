@@ -31,16 +31,14 @@ class Imputer(OpRunAiOnnxMl):
         if len(x.shape) != 2:
             raise TypeError(f"x must be a matrix but shape is {x.shape}")
         if values.shape[0] not in (x.shape[1], 1):
-            raise TypeError(  # pragma: no cover
-                f"Dimension mismatch {values.shape[0]} != {x.shape[1]}"
-            )
+            raise TypeError(f"Dimension mismatch {values.shape[0]} != {x.shape[1]}")
         x = x.copy()
         if np.isnan(replace):
-            for i in range(0, x.shape[1]):
+            for i in range(x.shape[1]):
                 val = values[min(i, values.shape[0] - 1)]
                 x[np.isnan(x[:, i]), i] = val
         else:
-            for i in range(0, x.shape[1]):
+            for i in range(x.shape[1]):
                 val = values[min(i, values.shape[0] - 1)]
                 x[x[:, i] == replace, i] = val
 

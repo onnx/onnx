@@ -13,7 +13,7 @@ class _CommonRandom(OpRun):
     def __init__(self, onnx_node, run_params):  # type: ignore
         OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "shape") and len(self.shape) == 0:  # type: ignore
-            raise ValueError(  # pragma: no cover
+            raise ValueError(
                 f"shape cannot be empty for operator {self.__class__.__name__}."
             )
 

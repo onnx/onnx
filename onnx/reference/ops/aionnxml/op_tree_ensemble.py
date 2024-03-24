@@ -39,7 +39,7 @@ class Leaf:
         self.target_id = target_id
 
     # Produce the weight and target index
-    def predict(self, x: np.ndarray) -> np.ndarray:
+    def predict(self, x: np.ndarray) -> np.ndarray:  # noqa: ARG002
         return np.array([self.weight, self.target_id])
 
     def _print(self, prefix: list, indent: int = 0) -> None:
@@ -132,9 +132,9 @@ class TreeEnsemble(OpRunAiOnnxMl):
         leaf_targetids,
         leaf_weights,
         tree_roots,
-        post_transform=PostTransform.NONE,
+        post_transform=PostTransform.NONE,  # noqa: ARG002
         aggregate_function=AggregationFunction.SUM,
-        nodes_hitrates=None,
+        nodes_hitrates=None,  # noqa: ARG002
         nodes_missing_value_tracks_true=None,
         membership_values=None,
         n_targets=None,

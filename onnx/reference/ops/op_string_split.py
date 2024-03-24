@@ -1,9 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Union
+from __future__ import annotations
 
 import numpy as np
 
@@ -13,7 +11,7 @@ _acceptable_str_dtypes = ("U", "O")
 
 
 def pad_empty_string(
-    split_lists: Union[list, np.ndarray], padding_requirement: Union[list, int]
+    split_lists: list | np.ndarray, padding_requirement: list | int
 ) -> list:
     if isinstance(split_lists, list):
         return split_lists + ["" for _ in range(padding_requirement)]

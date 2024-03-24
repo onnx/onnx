@@ -21,9 +21,9 @@ class SVMAttributes:
         setattr(self, name, value)
 
     def __str__(self) -> str:
-        rows = ["Attributes"]
-        for name in self._names:
-            rows.append(f"  {name}={getattr(self, name)}")
+        rows = ["Attributes"] + [
+            f"  {name}={getattr(self, name)}" for name in self._names
+        ]
         return "\n".join(rows)
 
 

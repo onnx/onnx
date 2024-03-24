@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Copyright (c) ONNX Project Contributors
+from __future__ import annotations
 
 import unittest
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -36,18 +36,18 @@ RESHAPE_SCHEMA = max(
 
 
 def _to_tensor_types(
-    tensor_types: Dict[str, Tuple[int, Tuple[Union[int, str, None], ...]]]
-) -> Dict[str, TypeProto]:
+    tensor_types: dict[str, tuple[int, tuple[int | str | None, ...]]]
+) -> dict[str, TypeProto]:
     return {key: make_tensor_type_proto(*value) for key, value in tensor_types.items()}
 
 
 def _run_case(
     schema: OpSchema,
-    input_names: List[str],
-    output_names: List[str],
-    input_types: Dict[str, TypeProto],
-    input_data: Optional[Dict[str, np.ndarray]] = None,
-) -> Dict[str, TypeProto]:
+    input_names: list[str],
+    output_names: list[str],
+    input_types: dict[str, TypeProto],
+    input_data: dict[str, np.ndarray] | None = None,
+) -> dict[str, TypeProto]:
     if input_data is None:
         input_data = {}
     return infer_node_outputs(

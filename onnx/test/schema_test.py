@@ -1,9 +1,11 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 import contextlib
 import unittest
-from typing import List, Sequence
+from typing import Sequence
 
 import parameterized
 
@@ -282,7 +284,7 @@ class TestOpSchemaRegister(unittest.TestCase):
     op_version: int
     op_domain: str
     # register some fake schema to check behavior
-    trap_op_version: List[int]
+    trap_op_version: list[int]
 
     def setUp(self) -> None:
         # Ensure the schema is unregistered

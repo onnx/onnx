@@ -59,7 +59,7 @@ def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.nd
 
 
 def _nearest_coeffs(
-    ratio: float | int | np.ndarray, mode: str = "round_prefer_floor"
+    ratio: float | int | np.ndarray, mode: str = "round_prefer_floor"  # noqa: PYI041
 ) -> np.ndarray:
     if isinstance(ratio, int) or ratio.is_integer():
         return np.array([0, 1])

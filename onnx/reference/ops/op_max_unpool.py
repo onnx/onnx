@@ -28,7 +28,7 @@ class MaxUnpool(OpRun):
         inferred_shape[0] = X.shape[0]
         inferred_shape[1] = X.shape[1]
 
-        for dim in range(0, len(kernel_shape)):
+        for dim in range(len(kernel_shape)):
             inferred_shape[dim + 2] = (
                 (X.shape[dim + 2] - 1) * strides[dim]
                 - (pads[dim] + pads[len(kernel_shape) + dim])

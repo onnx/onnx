@@ -1,12 +1,13 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import itertools
 import os
 import platform
 import unittest
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Sequence
 
 import numpy
 
@@ -34,7 +35,7 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def prepare(
         cls, model: ModelProto, device: str = "CPU", **kwargs: Any
-    ) -> Optional[onnx.backend.base.BackendRep]:
+    ) -> onnx.backend.base.BackendRep | None:
         super().prepare(model, device, **kwargs)
 
         onnx.checker.check_model(model)
@@ -69,9 +70,9 @@ class DummyBackend(onnx.backend.base.Backend):
         node: NodeProto,
         inputs: Any,
         device: str = "CPU",
-        outputs_info: Optional[Sequence[Tuple[numpy.dtype, Tuple[int, ...]]]] = None,
-        **kwargs: Any,
-    ) -> Optional[Tuple[Any, ...]]:
+        outputs_info: Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None = None,
+        **kwargs: Any,  # noqa: ARG003
+    ) -> tuple[Any, ...] | None:
         super().run_node(node, inputs, device=device, outputs_info=outputs_info)
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker"

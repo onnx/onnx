@@ -1,10 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import itertools
-from typing import Optional, Tuple
 
 import numpy as np
 
@@ -14,11 +13,11 @@ from onnx.reference.ops._op_common_indices import _get_index, _get_indices
 
 def _get_pad_shape(
     auto_pad: str,
-    input_spatial_shape: Tuple[int],
-    kernel_spatial_shape: Tuple[int],
-    strides_spatial: Tuple[int],
-    output_spatial_shape: Tuple[int],
-) -> Tuple[int]:
+    input_spatial_shape: tuple[int],
+    kernel_spatial_shape: tuple[int],
+    strides_spatial: tuple[int],
+    output_spatial_shape: tuple[int],
+) -> tuple[int]:
     pad_shape = [0] * len(input_spatial_shape)
     if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
         for i in range(len(input_spatial_shape)):
@@ -41,10 +40,10 @@ def _get_pad_shape(
 
 def _get_output_shape_no_ceil(
     auto_pad: str,
-    input_spatial_shape: Tuple[int],
-    kernel_spatial_shape: Tuple[int],
-    strides_spatial: Tuple[int],
-) -> Tuple[int]:
+    input_spatial_shape: tuple[int],
+    kernel_spatial_shape: tuple[int],
+    strides_spatial: tuple[int],
+) -> tuple[int]:
     out_shape = [0] * len(input_spatial_shape)
     if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
         for i in range(len(input_spatial_shape)):
@@ -64,12 +63,12 @@ def _get_output_shape_no_ceil(
 
 def _get_output_shape(
     auto_pad: str,
-    input_spatial_shape: Tuple[int],
-    kernel_spatial_shape: Tuple[int],
-    strides_spatial: Tuple[int],
-    pad_shape: Optional[Tuple[int]] = None,
-    ceil_mode: Optional[int] = 0,
-) -> Tuple[int]:
+    input_spatial_shape: tuple[int],
+    kernel_spatial_shape: tuple[int],
+    strides_spatial: tuple[int],
+    pad_shape: tuple[int] | None = None,
+    ceil_mode: int | None = 0,
+) -> tuple[int]:
     if not ceil_mode:
         out_shape = _get_output_shape_no_ceil(
             auto_pad, input_spatial_shape, kernel_spatial_shape, strides_spatial
@@ -119,16 +118,16 @@ def _get_output_shape(
 
 def _pool(
     padded: np.ndarray,
-    x_shape: Tuple[int],
-    kernel_shape: Tuple[int],
-    strides_shape: Tuple[int],
-    out_shape: Tuple[int],
-    pad_shape: Tuple[int],
+    x_shape: tuple[int],
+    kernel_shape: tuple[int],
+    strides_shape: tuple[int],
+    out_shape: tuple[int],
+    pad_shape: tuple[int],
     pooling_type: str,
-    count_include_pad: Optional[int] = 0,
-    ceil_mode: Optional[int] = 0,
+    count_include_pad: int | None = 0,
+    ceil_mode: int | None = 0,
     indices: bool = False,
-    pads: Optional[np.ndarray] = None,
+    pads: np.ndarray | None = None,
 ) -> np.ndarray:
     if pooling_type == "AVG":
         fpool = np.average
@@ -172,7 +171,7 @@ def _pool(
         for i in listi2:
             try:
                 values.append(window[i])
-            except IndexError:
+            except IndexError:  # noqa: PERF203
                 continue
         window_vals = np.array(values)
 
@@ -210,7 +209,7 @@ class CommonPool(OpRun):
         dilations=None,
         kernel_shape=None,
         pads=None,
-        storage_order=None,
+        storage_order=None,  # noqa: ARG002
         strides=None,
     ):
         if pooling_type == "MAX" and dilations is None:
