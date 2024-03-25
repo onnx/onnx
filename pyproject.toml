@@ -120,19 +120,30 @@ disable = [
 target-version = "py38"
 select = [
     "A", # flake8-builtins
+    "ARG", # flake8-unused-arguments
     "B", # flake8-bugbear
+    "BLE", # flake8-blind-except
     "C4", # flake8-comprehensions
     "D", # pydocstyle
     "E", # pycodestyle
     "F", # Pyflakes
+    "FA", # flake8-future-annotations
+    "FBT", # flake8-boolean-trap
     "G", # flake8-logging-format
     "ISC", # flake8-implicit-str-concat
+    "LOG", # flake8-logging
     "N", # pep8-naming
     "NPY", # modern numpy
+    "PERF", # Perflint
+    "PIE", # flake8-pie
     "PL", # pylint
+    "PYI", # flake8-pyi
     "RUF", # Ruff-specific rules
     "SIM", # flake8-simplify
-    "TID252", # Relative imports
+    "SLOT", # flake8-slot
+    "T10", # flake8-debugger
+    "TID", # Disallow relative imports
+    "TRY", # flake8-try-except-raise
     "UP", # pyupgrade
     "W", # pycodestyle
     "YTT", # flake8-2020
@@ -154,8 +165,8 @@ ignore = [
     "PLR0915", # Too many statements
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "SIM102", # We don't perfer always combining if branches
-    "SIM108", # We don't encourage ternary operators
-    "SIM114", # Don't combine if branches for debugability
+    "SIM108", # We don't always encourage ternary operators
+    "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
 ]
 ignore-init-module-imports = true
