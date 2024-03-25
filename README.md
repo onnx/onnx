@@ -155,7 +155,7 @@ msbuild INSTALL.vcxproj /p:Configuration=Release
 Then it will be built as a static library and installed to <protobuf_install_dir>. Please add the bin directory(which contains protoc.exe) to your PATH.
 
 ```bat
-set CMAKE_PREFIX_PATH=<protobuf_install_dir>/bin;%CMAKE_PREFIX_PATH%
+set CMAKE_PREFIX_PATH=<protobuf_install_dir>;%CMAKE_PREFIX_PATH%
 ```
 
 Please note: if your protobuf_install_dir contains spaces, **do not** add quotation marks around it.
