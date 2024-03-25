@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Tuple, Union
+from __future__ import annotations
 
 import numpy as np
 
@@ -13,7 +13,7 @@ UINT4_MAX = 15
 
 
 def float32_to_4bit_unpacked(
-    x: Union[np.ndarray, np.dtype, float], signed: bool
+    x: np.ndarray | np.dtype | float, signed: bool
 ) -> np.ndarray:
     """Cast to 4bit via rounding and clipping (without packing).
 
@@ -52,8 +52,8 @@ def float32x2_to_4bitx2(
 
 
 def unpack_single_4bitx2(
-    x: Union[np.ndarray, np.dtype, float], signed: bool
-) -> Tuple[np.ndarray, np.ndarray]:
+    x: np.ndarray | np.dtype | float, signed: bool
+) -> tuple[np.ndarray, np.ndarray]:
     unpack_signed = lambda x: np.where((x >> 3) == 0, x, x | 0xF0)  # noqa: E731
     """Unpack a single byte 4bitx2 to two 4 bit elements
     Args:

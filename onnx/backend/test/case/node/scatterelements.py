@@ -28,10 +28,10 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
         return unpacked
 
     def make_indices_for_duplicate(idx):  # type: ignore
-        final_idx = []
-        for i in range(len(idx[0])):
-            final_idx.append(tuple(idx_element[i] for idx_element in idx))
-        return list(final_idx)
+        final_idx = [
+            tuple(idx_element[i] for idx_element in idx) for i in range(len(idx[0]))
+        ]
+        return final_idx
 
     # We use indices and axis parameters to create idx
     # idx is in a form that can be used as a NumPy advanced indices for scattering of updates param. in data

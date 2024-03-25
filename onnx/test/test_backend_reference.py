@@ -26,7 +26,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
     def __init__(self, session):
         self._session = session
 
-    def run(self, inputs, **kwargs):
+    def run(self, inputs, **kwargs):  # noqa: ARG002
         if isinstance(inputs, numpy.ndarray):
             inputs = [inputs]
         if isinstance(inputs, list):
@@ -54,7 +54,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     @classmethod
-    def is_opset_supported(cls, model):
+    def is_opset_supported(cls, model):  # noqa: ARG003
         return True, ""
 
     @classmethod

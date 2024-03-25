@@ -53,7 +53,7 @@ def get_available_versions(schema: OpSchema) -> set[int]:
             versions.add(
                 defs.get_schema(schema.name, version, schema.domain).since_version
             )
-        except SchemaError:
+        except SchemaError:  # noqa: PERF203
             break
     return versions
 
@@ -399,7 +399,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     @unittest.skip(
         "Issue #5960"
     )  # FIXME(#5960) propagateElemTypeFromAttributeToOutput does not validate against output type constraints
-    def test_cast_to_complex(self, _, version) -> None:
+    def test_cast_to_complex(self, _, version) -> None:  # noqa: ARG002
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
             [make_node("Cast", ["x"], ["y"], to=TensorProto.COMPLEX128)],

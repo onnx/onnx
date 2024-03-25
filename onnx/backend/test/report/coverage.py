@@ -1,12 +1,13 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import csv
 import datetime
 import os
 from collections import OrderedDict, defaultdict
-from typing import IO, Any, Dict, List, Optional, Set
+from typing import IO, Any
 
 from tabulate import tabulate
 
@@ -18,8 +19,8 @@ _all_schemas = defs.get_all_schemas()
 
 class AttrCoverage:
     def __init__(self) -> None:
-        self.name: Optional[str] = None
-        self.values: Set[str] = set()
+        self.name: str | None = None
+        self.values: set[str] = set()
 
     def add(self, attr: onnx.AttributeProto) -> None:
         assert self.name in {None, attr.name}
@@ -35,8 +36,8 @@ class AttrCoverage:
 
 class NodeCoverage:
     def __init__(self) -> None:
-        self.op_type: Optional[str] = None
-        self.attr_coverages: Dict[str, AttrCoverage] = defaultdict(AttrCoverage)
+        self.op_type: str | None = None
+        self.attr_coverages: dict[str, AttrCoverage] = defaultdict(AttrCoverage)
 
     def add(self, node: onnx.NodeProto) -> None:
         assert self.op_type in [None, node.op_type]
@@ -52,9 +53,9 @@ class NodeCoverage:
 
 class ModelCoverage:
     def __init__(self) -> None:
-        self.name: Optional[str] = None
-        self.graph: Optional[GraphProto] = None
-        self.node_coverages: Dict[str, NodeCoverage] = defaultdict(NodeCoverage)
+        self.name: str | None = None
+        self.graph: GraphProto | None = None
+        self.node_coverages: dict[str, NodeCoverage] = defaultdict(NodeCoverage)
 
     def add(self, model: onnx.ModelProto) -> None:
         assert self.name in [None, model.graph.name]
@@ -70,11 +71,11 @@ class ModelCoverage:
 
 class Coverage:
     def __init__(self) -> None:
-        self.buckets: Dict[str, Dict[str, NodeCoverage]] = {
+        self.buckets: dict[str, dict[str, NodeCoverage]] = {
             "loaded": defaultdict(NodeCoverage),
             "passed": defaultdict(NodeCoverage),
         }
-        self.models: Dict[str, Dict[str, ModelCoverage]] = {
+        self.models: dict[str, dict[str, ModelCoverage]] = {
             "loaded": defaultdict(ModelCoverage),
             "passed": defaultdict(ModelCoverage),
         }
@@ -105,8 +106,8 @@ class Coverage:
 
         rows = []
         passed = []
-        all_ops: List[str] = []
-        experimental: List[str] = []
+        all_ops: list[str] = []
+        experimental: list[str] = []
         for op_cov in self.buckets["passed"].values():
             covered_attrs = [
                 f"{attr_cov.name}: {len(attr_cov.values)}"
@@ -144,7 +145,7 @@ class Coverage:
     # backend with indications of whether the tests passed or failed for
     # each row.
     def report_csv(
-        self, all_ops: List[str], passed: List[Optional[str]], experimental: List[str]
+        self, all_ops: list[str], passed: list[str | None], experimental: list[str]
     ) -> None:
         for schema in _all_schemas:
             if schema.domain in {"", "ai.onnx"}:
@@ -158,9 +159,9 @@ class Coverage:
         models_path = os.path.join(
             str(os.environ.get("CSVDIR")), "models.csv"  # type: ignore
         )  # type: ignore
-        existing_nodes: OrderedDict[str, Dict[str, str]] = OrderedDict()
-        existing_models: OrderedDict[str, Dict[str, str]] = OrderedDict()
-        frameworks: List[str] = []
+        existing_nodes: OrderedDict[str, dict[str, str]] = OrderedDict()
+        existing_models: OrderedDict[str, dict[str, str]] = OrderedDict()
+        frameworks: list[str] = []
         if os.path.isfile(nodes_path):
             with open(nodes_path) as nodes_file:
                 reader = csv.DictReader(nodes_file)
@@ -201,7 +202,7 @@ class Coverage:
                     existing_nodes[node_name][str(backend)] = "Passed!"
                 else:
                     existing_nodes[node_name][str(backend)] = "Failed!"
-            summaries: Dict[Any, Any] = {}
+            summaries: dict[Any, Any] = {}
             if "Summary" in existing_nodes:
                 summaries = existing_nodes["Summary"]
                 del existing_nodes["Summary"]
@@ -246,9 +247,9 @@ class Coverage:
                 del existing_models["Summary"]
             if str(backend) in summaries:
                 del summaries[str(backend)]
-            summaries[str(backend)] = (
-                f"{len(self.models['passed'])}/{num_models} model tests passed"
-            )
+            summaries[
+                str(backend)
+            ] = f"{len(self.models['passed'])}/{num_models} model tests passed"
             summaries["Model"] = "Summary"
             for model in existing_models:  # type: ignore
                 existing_models[model]["Model"] = model

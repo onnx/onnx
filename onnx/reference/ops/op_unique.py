@@ -19,10 +19,12 @@ def _specify_int64(indices, inverse_indices, counts):  # type: ignore
 class Unique(OpRun):
     def _run(self, x, axis=None, sorted=None):  # type: ignore  # noqa: A002
         if axis is None or np.isnan(axis):
-            y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+            y, indices, inverse_indices, counts = np.unique(
+                x, return_index=True, return_inverse=True, return_counts=True
+            )
         else:
             y, indices, inverse_indices, counts = np.unique(
-                x, True, True, True, axis=axis
+                x, return_index=True, return_inverse=True, return_counts=True, axis=axis
             )
         if len(self.onnx_node.output) == 1:
             return (y,)

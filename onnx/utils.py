@@ -31,10 +31,10 @@ class Extractor:
 
         new_io_tensors = []
         for name in io_names_to_keep:
-            new_io_tensors.append(original_io_map[name])
+            new_io_tensors.append(original_io_map[name])  # noqa: PERF401
         for name in new_io_names_to_add:
             # activation become input or output
-            new_io_tensors.append(self.vimap[name])
+            new_io_tensors.append(self.vimap[name])  # noqa: PERF401
 
         # adjust sequence
         new_io_tensors_map = self._build_name2obj_dict(new_io_tensors)

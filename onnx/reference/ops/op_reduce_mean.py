@@ -30,8 +30,9 @@ class ReduceMean_18(OpRunReduceNumpy):
             if keepdims == 0 and not isinstance(res, np.ndarray):
                 # The runtime must return a numpy array of a single float.
                 res = np.array(res)
-            return (res,)  # type: ignore
         except TypeError as e:
             raise TypeError(
                 f"Unable to reduce shape {data.shape!r} with axes={axes!r} and keepdims={keepdims}."
             ) from e
+        else:
+            return (res,)  # type: ignore

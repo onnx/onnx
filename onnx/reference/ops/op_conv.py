@@ -124,9 +124,9 @@ def _conv_implementation(  # type: ignore
         if B is not None:
             res[:, :, :] += B.reshape((1, -1, 1))  # type: ignore
 
-        for n in range(0, sN):
+        for n in range(sN):
             for nw in range(W.shape[0]):
-                for c in range(0, sC):
+                for c in range(sC):
                     w = W[nw : nw + 1, c : c + 1]
                     for io in range(bh, eh, sth):
                         hr = (io - bh) // sth
@@ -171,9 +171,9 @@ def _conv_implementation(  # type: ignore
         if B is not None:
             res[:, :, :, :] = B.reshape((1, -1, 1, 1))  # type: ignore
 
-        for n in range(0, sN):
+        for n in range(sN):
             for nw in range(W.shape[0]):
-                for c in range(0, sC):
+                for c in range(sC):
                     w = W[nw : nw + 1, c : c + 1]
                     for io in range(bh, eh, sth):
                         hr = (io - bh) // sth
@@ -229,9 +229,9 @@ def _conv_implementation(  # type: ignore
         if B is not None:
             res[:, :, :, :, :] = B.reshape((1, -1, 1, 1, 1))  # type: ignore
 
-        for n in range(0, sN):
+        for n in range(sN):
             for nw in range(W.shape[0]):
-                for c in range(0, sC):
+                for c in range(sC):
                     w = W[nw : nw + 1, c : c + 1]
                     for io in range(bh, eh, sth):
                         hr = (io - bh) // sth

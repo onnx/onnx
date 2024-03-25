@@ -98,8 +98,6 @@ class TreeEnsemble:
             X = X.reshape((1, -1))
         outputs = []
         for row in X:
-            outs = []
-            for tree_id in self.tree_ids:
-                outs.append(self.leaf_index_tree(row, tree_id))
+            outs = [self.leaf_index_tree(row, tree_id) for tree_id in self.tree_ids]
             outputs.append(outs)
         return np.array(outputs)

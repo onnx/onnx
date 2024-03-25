@@ -50,7 +50,7 @@ class DictVectorizer(OpRunAiOnnxMl):
             keys = int64_vocabulary or string_vocabulary
             result = []
             for k in keys:
-                result.append(x.get(k, 0))
+                result.append(x.get(k, 0))  # noqa: PERF401
             return (np.array(result),)
 
         raise TypeError(f"x must be iterable not {type(x)}.")

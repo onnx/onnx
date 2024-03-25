@@ -654,11 +654,12 @@ class OpRunExpand(OpRun):
     def __init__(
         self, onnx_node: NodeProto, run_params: dict[str, Any], impl: Any = None
     ):
+        del onnx_node, run_params, impl  # Unused
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
 
-    def _run(self, *inputs, **kwargs):
+    def _run(self, *inputs, **kwargs):  # noqa: ARG002
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -735,7 +736,7 @@ class OpFunctionContextDependant(OpFunction):
         for t in inputs:
             try:
                 ttype = np_dtype_to_tensor_dtype(t.dtype)
-            except KeyError as e:
+            except KeyError:
                 if t.dtype == float8e4m3fn:
                     ttype = TensorProto.FLOAT8E4M3FN  # type: ignore[attr-defined]
                 elif t.dtype == float8e4m3fnuz:
@@ -751,7 +752,7 @@ class OpFunctionContextDependant(OpFunction):
                 elif t.dtype == int4:
                     ttype = TensorProto.INT4  # type: ignore[attr-defined]
                 else:
-                    raise e
+                    raise
             types.append(make_tensor_type_proto(ttype, t.shape))
         cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)

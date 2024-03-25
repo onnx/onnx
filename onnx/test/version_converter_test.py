@@ -1,11 +1,11 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import contextlib
 import struct
 import unittest
-from typing import Optional, Tuple
 
 import numpy as np
 import parameterized
@@ -1440,7 +1440,6 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 12
 
     def test_split_with_optional_input(self) -> None:
-
         nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], axis=1)]
         graph = helper.make_graph(
             nodes,
@@ -2076,12 +2075,12 @@ class TestVersionConverter(unittest.TestCase):
     def test_quantize_21_20(
         self,
         _: str,
-        x_shape: Tuple[int, ...],
-        scale_shape: Tuple[int, ...],
+        x_shape: tuple[int, ...],
+        scale_shape: tuple[int, ...],
         axis: int,
         block_size: int,
-        output_dtype: Optional[int],
-        zero_point_dtype: Optional[int],
+        output_dtype: int | None,
+        zero_point_dtype: int | None,
         compatible: bool,
     ) -> None:
         def test(
@@ -2135,8 +2134,8 @@ class TestVersionConverter(unittest.TestCase):
     def test_dequantize_21_20(
         self,
         _: str,
-        y_shape: Tuple[int, ...],
-        scale_shape: Tuple[int, ...],
+        y_shape: tuple[int, ...],
+        scale_shape: tuple[int, ...],
         axis: int,
         block_size: int,
         compatible: bool,

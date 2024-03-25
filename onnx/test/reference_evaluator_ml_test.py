@@ -53,7 +53,7 @@ def has_onnxruntime():
 
         del onnxruntime
 
-        return True
+        return True  # noqa: TRY300
     except ImportError:
         return False
 

@@ -10,6 +10,8 @@
     python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
 """
 
+from __future__ import annotations
+
 import itertools
 import math
 import sys
@@ -19,7 +21,7 @@ from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import numpy as np
 import parameterized
@@ -199,7 +201,7 @@ def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  
 
 def im2col(
     img: np.ndarray,
-    kernel_shape: Tuple[int, ...],
+    kernel_shape: tuple[int, ...],
     dilations: Sequence[int],
     pads: Sequence[int],
     strides: Sequence[int],
@@ -280,18 +282,24 @@ class TestReferenceEvaluator(unittest.TestCase):
                 graph = make_graph(
                     [node1, node2, node3], "lr", [X, A, B], [Y], initializer=initializer
                 )
-            f = lambda x, a, b: np.clip(a @ a + b, min_value, max_value)  # noqa: E731
+
+            def f(_, a, b):
+                return np.clip(a @ a + b, min_value, max_value)
+
         else:
             node2 = make_node("Add", ["XA", "B"], ["Y"])
             graph = make_graph([node1, node2], "lr", [X, A, B], [Y])
-            f = lambda x, a, b: a @ a + b  # noqa: E731
+
+            def f(_, a, b):
+                return a @ a + b
+
         if opset is None:
             onnx_model = make_model(graph)
         else:
             onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         try:
             check_model(onnx_model)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise AssertionError(f"checker fails for\n{onnx_model}") from e
         return onnx_model, f
 
@@ -1218,7 +1226,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
+            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
                 return tuple()
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1259,7 +1267,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
+            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
                 res = tuple([CustomType()])  # noqa: C409
                 assert isinstance(res, tuple)
                 assert isinstance(res[0], CustomType)
@@ -1609,8 +1617,8 @@ class TestReferenceEvaluator(unittest.TestCase):
                     got = sess2.run(None, feeds)[0]
                     try:
                         assert_allclose(expected, got)
-                    except AssertionError as e:
-                        raise e
+                    except AssertionError:  # noqa: TRY302
+                        raise
                 with self.subTest(w="3x3", i=i, j=j):
                     w = np.zeros((1, 1, 3, 3), dtype=np.uint8)
                     w[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 128)
@@ -5658,7 +5666,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         ref = ReferenceEvaluator(model)
-        data = np.array(range(0, 7), dtype=np.float32)
+        data = np.array(range(7), dtype=np.float32)
         cast_from_np = custom.uint4 if cast_from == TensorProto.UINT4 else custom.int4
         data = data.astype(cast_from_np)
         expected1 = np.array(

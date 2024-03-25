@@ -182,12 +182,12 @@ class MaxPool(CommonPool):
     def _max_pool_1d(  # type: ignore
         self,
         x,
-        auto_pad,
-        ceil_mode,
+        auto_pad,  # noqa: ARG002
+        ceil_mode,  # noqa: ARG002
         dilations,
         kernel_shape,
         new_pads,
-        storage_order,
+        storage_order,  # noqa: ARG002
         strides,
         output_spatial_shape,
     ):
@@ -238,8 +238,8 @@ class MaxPool(CommonPool):
     def _max_pool_2d(  # type: ignore
         self,
         x,
-        auto_pad,
-        ceil_mode,
+        auto_pad,  # noqa: ARG002
+        ceil_mode,  # noqa: ARG002
         dilations,
         kernel_shape,
         new_pads,
@@ -315,8 +315,8 @@ class MaxPool(CommonPool):
     def _max_pool_3d(  # type: ignore
         self,
         x,
-        auto_pad,
-        ceil_mode,
+        auto_pad,  # noqa: ARG002
+        ceil_mode,  # noqa: ARG002
         dilations,
         kernel_shape,
         new_pads,
