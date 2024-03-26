@@ -32,7 +32,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * After cutting the release branch:
     1. Create PR to set [VERSION_NUMBER](/VERSION_NUMBER) file in `main` to the next future releas, `X.Y+1.0`.
     1. Create PR to set `VERSION_NUMBER` file in the new release's branch to `X.Y.Zrc1`.
-        * For example the first release candidate for 1.16.0 woudl be `1.16.0rc1`
+        * For example the first release candidate for 1.16.0 would be `1.16.0rc1`
     1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
         * For example, this [demo PR](https://github.com/onnx/onnx/pull/6001).
 
@@ -42,7 +42,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * **WAIT** for PR to set the release branch's `VERSION_NUMBER` to merge and build before continuing.
 * To push files to TestPyPI or PyPI, install `twine` if you don't already have it: `pip install twine`
     * When prompted for a password by `twine` commands, use an API token. Your passowrd will not work.
-        * Note: TestPyPI and PyPI are seperate accounts so make sure you are using the correct one depending where you are uploading.
+        * Note: TestPyPI and PyPI are separate accounts so make sure you are using the correct one depending where you are uploading.
         * [Generate a TestPYI API token](https://test.pypi.org/manage/account/token/)
         * [Generate a PyPI API token](https://pypi.org/manage/account/token/)
 * Like PyPI, A release version can only be pushed to TestPyPI **ONCE**.
@@ -50,7 +50,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
     * To test push commands, you can use docker or podman to create a local pypi server
         1. Start server `docker run --rm -it --platform linux/amd64 -p 80:8080 pypiserver/pypiserver:latest run -a . -P .`
             * This starts a local pypiserver that does not require authentication (any user/password will work on it).
-            * The container does not save state. Stopping and starting it agian will let you push the same version multiple times.
+            * The container does not save state. Stopping and starting it again will let you push the same version multiple times.
         1. To push files:
             * wheels: `twine upload --repository-url http://127.0.0.1:80 --verbose -u fake -p fake *.whl`
             * source: `twine upload --repository-url http://127.0.0.1:80 --verbose -u fake -p fake dist/*`
@@ -152,7 +152,7 @@ Validation steps must be completed before this point! This is the point of new r
     * Target: The release branch that was just cut
     * Previous tag: Select the previous release.
     * Write:
-        * Use [pervious releases](https://github.com/onnx/onnx/releases) as a template
+        * Use [previous releases](https://github.com/onnx/onnx/releases) as a template
         * Use information from [Release logistics wiki](https://github.com/onnx/onnx/wiki) which should have been created prior to branch cut.
         * Add any additional commits that merged into the release in since wiki was written.
     * .tar.gz and .zip will be auto-generated after publishing the release.
@@ -161,7 +161,7 @@ Validation steps must be completed before this point! This is the point of new r
 ### NOTES:
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
   * Please make sure everything is good on TestPyPI before uploading to PyPI**
-* PyPI has seperate logins, passwords, and API tokens from TestPyPI but the process is the same. An ONNX PyPI owner will need to grant access, etc.
+* PyPI has separate logins, passwords, and API tokens from TestPyPI but the process is the same. An ONNX PyPI owner will need to grant access, etc.
 
 Follow the **Wheels** and **Source Distribution** steps in [Upload release candidate toTestPyPI](#Upload-release-candidate-to-TestPyPI) above with the following changes:
 * Create a new API token of onnx scope for uploading onnx wheel in your [PyPI account](https://pypi.org/manage/account) (**API tokens** section).
@@ -207,5 +207,5 @@ Conda builds of ONNX are done via [conda-forge/onnx-feedstock](https://github.co
 * Remove all [onnx-weekly packages](https://pypi.org/project/onnx-weekly/#history) from PyPI for the just released version to save space.
 * Steps:
     * Go to [PyPI onnx-weekly/releases](https://pypi.org/manage/project/onnx-weekly/releases/)
-        * This is a seperate project than the onnx releases so you may need to request access from an owner
+        * This is a separate project than the onnx releases so you may need to request access from an owner
     * Click target package -> Options -> Delete.
