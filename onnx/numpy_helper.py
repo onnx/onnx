@@ -637,7 +637,7 @@ def from_optional(
 
 
 def convert_endian(tensor: TensorProto) -> None:
-    """Call to convert endianess of raw data in tensor.
+    """Call to convert endianness of raw data in tensor.
 
     Args:
         tensor: TensorProto to be converted.
