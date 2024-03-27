@@ -74,13 +74,15 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
  * Test with onnxruntime package: To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model. For example, run the test script from [test_with_ort.py](/onnx/test/test_with_ort.py) with installed onnxruntime package.
 
- * Test with ONNX converters: Create GitHub issues in converters repos to provide them the package links and have them test the TestPyPI packages.
+ * Create GitHub issues concerning the imminent release in the repositories of partner projects. Provide them with package links and have them test the TestPyPI packages.
    * https://github.com/pytorch/pytorch
    * https://github.com/onnx/onnx-tensorflow (not actively maintained)
    * https://github.com/onnx/tensorflow-onnx
    * https://github.com/onnx/sklearn-onnx
    * https://github.com/onnx/onnxmltools
    * https://github.com/onnx/onnx-tensorrt
+   * https://github.com/Quantco/spox
+   * https://github.com/conda-forge/onnx-feedstock
 
 
 **Source distribution verification**

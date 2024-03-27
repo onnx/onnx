@@ -15,6 +15,7 @@
 #include <ostream>
 #include <set>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -1097,6 +1098,27 @@ class OpSchema final {
       int function_since_version,
       std::set<std::string>* updated_ops = nullptr) const;
   void UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const;
+
+  /**
+   * @brief A common function to generate a prefix string for use in fail_check during the verify function.
+   * @param  node_name If empty, the returned string will not include the node name.
+   * @return std::string The prefix string.
+   */
+  std::string VerifyFailPrefix(std::string_view node_name) const;
+
+  /**
+   * @brief Verifies if the input number matches the pattern specified in the schema.
+   * @param input_num The number of inputs to be verified against the schema.
+   * @param node_info The prefix string used if the check fails.
+   */
+  void VerifyInputNum(int input_num, std::string_view node_name = "") const;
+
+  /**
+   * @brief Verifies if the output number matches the pattern specified in the schema.
+   * @param output_num The number of outputs to be verified against the schema.
+   * @param node_info The prefix string used if the check fails.
+   */
+  void VerifyOutputNum(int output_num, std::string_view node_name = "") const;
 
   std::string name_;
   std::string file_;
