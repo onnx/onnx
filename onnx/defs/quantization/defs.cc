@@ -253,7 +253,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2")
         .TypeConstraint("T1", {"tensor(float)"}, "Constrain 'x' to float tensor.")
         .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
-        .FunctionBody(R"ONNX(
+        .FunctionBody(
+            R"ONNX(
         {
            Q_Min = Constant<value = float {0.0}>()
            Q_Max = Constant<value = float {255.0}>()
@@ -272,7 +273,8 @@ ONNX_OPERATOR_SET_SCHEMA(
            y_zero_point = Identity (Zeropoint)
            y = QuantizeLinear (x, Scale, Zeropoint)
         }
-        )ONNX")
+        )ONNX",
+            11)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::UINT8);
           updateOutputElemType(ctx, 1, TensorProto::FLOAT);
