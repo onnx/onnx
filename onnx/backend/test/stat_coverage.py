@@ -6,6 +6,7 @@
 
 import os
 from typing import IO, Any, Dict, List, Sequence
+from pathlib import Path
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
@@ -157,7 +158,7 @@ def gen_model_test_coverage(
     # Need to grab associated nodes
     attrs: Dict[str, Dict[str, List[Any]]] = {}
     model_paths: List[Any] = []
-    for rt in load_model_tests(kind="real"):
+    for rt in load_model_tests(data_dir=str(Path(__file__).parent / "data"), kind="real"):
         if rt.url.startswith("onnx/backend/test/data/light/"):
             # testing local files
             model_name = os.path.normpath(
