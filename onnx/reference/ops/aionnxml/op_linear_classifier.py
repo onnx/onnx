@@ -30,7 +30,7 @@ class LinearClassifier(OpRunAiOnnxMl):
         classlabels_strings=None,
         coefficients=None,
         intercepts=None,
-        multi_class=None,
+        multi_class=None,  # noqa: ARG002
         post_transform=None,
     ):
         # multi_class is unused

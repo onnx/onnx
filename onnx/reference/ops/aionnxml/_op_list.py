@@ -3,6 +3,7 @@
 # Operator ZipMap is not implemented. Its use should
 # be discouraged. It is just a different way to output
 # probabilites not consumed by any operator.
+from __future__ import annotations
 
 import textwrap
 from typing import Any, Dict
@@ -32,16 +33,16 @@ from onnx.reference.ops.aionnxml.op_tree_ensemble_classifier import (
 from onnx.reference.ops.aionnxml.op_tree_ensemble_regressor import TreeEnsembleRegressor
 
 
-def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]:
+def _build_registered_operators() -> dict[str, dict[int | None, OpRunAiOnnxMl]]:
     return build_registered_operators_any_domain(globals().copy())  # type: ignore[return-value]
 
 
 def load_op(
     domain: str,
     op_type: str,
-    version: Union[None, int],
+    version: None | int,
     custom: Any = None,
-    evaluator_cls: TOptional[type] = None,
+    evaluator_cls: type | None = None,  # noqa: ARG001
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -100,6 +101,4 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRunAiOnnxMl]]] = (
-    None
-)
+_registered_operators: dict[str, dict[int | None, OpRunAiOnnxMl]] | None = None

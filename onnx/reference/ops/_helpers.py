@@ -3,16 +3,17 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Dict, Union
+from typing import Any
 
 from onnx.reference.op_run import OpRun, _split_class_name
 
 
 def build_registered_operators_any_domain(
-    module_context: Dict[str, Any]
-) -> Dict[str, Dict[Union[int, None], OpRun]]:
-    reg_ops: Dict[str, Dict[Union[int, None], OpRun]] = {}
+    module_context: dict[str, Any]
+) -> dict[str, dict[int | None, OpRun]]:
+    reg_ops: dict[str, dict[int | None, OpRun]] = {}
     for class_name, class_type in module_context.items():
         if class_name.startswith("_") or class_name in {
             "Any",

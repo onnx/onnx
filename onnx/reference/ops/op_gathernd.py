@@ -1,9 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Tuple
+from __future__ import annotations
 
 import numpy as np
 
@@ -12,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 def _gather_nd_impl(
     data: np.ndarray, indices: np.ndarray, batch_dims: int
-) -> Tuple[np.ndarray]:
+) -> tuple[np.ndarray]:
     # Note the data rank - will be reused multiple times later
     data_rank = len(data.shape)
 

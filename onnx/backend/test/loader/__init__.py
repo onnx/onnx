@@ -1,10 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import json
 import os
-from typing import List, Optional
 
 from onnx.backend.test.case.test_case import TestCase
 
@@ -15,8 +15,8 @@ DATA_DIR = os.path.join(
 
 def load_model_tests(
     data_dir: str = DATA_DIR,
-    kind: Optional[str] = None,
-) -> List[TestCase]:
+    kind: str | None = None,
+) -> list[TestCase]:
     """Load model test cases from on-disk data files."""
     supported_kinds = os.listdir(data_dir)
     if kind not in supported_kinds:
@@ -35,7 +35,7 @@ def load_model_tests(
         if os.path.exists(os.path.join(case_dir, "model.onnx")):
             url = None
             model_name = test_name[len("test_")]
-            model_dir: Optional[str] = case_dir
+            model_dir: str | None = case_dir
         else:
             with open(os.path.join(case_dir, "data.json")) as f:
                 data = json.load(f)

@@ -1,8 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 
@@ -14,7 +13,7 @@ from onnx.backend.test.case.node import expect
 def gemm_reference_implementation(
     A: np.ndarray,
     B: np.ndarray,
-    C: Optional[np.ndarray] = None,
+    C: np.ndarray | None = None,
     alpha: float = 1.0,
     beta: float = 1.0,
     transA: int = 0,

@@ -1,8 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 
@@ -12,7 +11,7 @@ from onnx.backend.test.case.node import expect
 
 
 def optional_has_element_reference_implementation(
-    optional: Optional[np.ndarray],
+    optional: np.ndarray | None,
 ) -> np.ndarray:
     if optional is None:
         return np.array(False)

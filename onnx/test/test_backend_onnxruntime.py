@@ -69,7 +69,7 @@ def _create_inference_session(model: onnx.ModelProto, device: str):
         raise ValueError(f"Unexpected device {device!r}.")
     try:
         session = ort.InferenceSession(model.SerializeToString(), providers=providers)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         raise RuntimeError(
             f"Unable to create inference session. Model is:\n\n{onnx.printer.to_text(model)}"
         ) from e

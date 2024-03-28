@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import argparse
 import glob
@@ -8,7 +9,7 @@ import os
 import re
 import subprocess
 from textwrap import dedent
-from typing import Iterable, Optional
+from typing import Iterable
 
 autogen_header = """\
 //
@@ -121,7 +122,7 @@ def translate(source: str, proto: int, onnx_ml: bool, package_name: str) -> str:
     return "\n".join(lines)  # TODO: not Windows friendly
 
 
-def qualify(f: str, pardir: Optional[str] = None) -> str:
+def qualify(f: str, pardir: str | None = None) -> str:
     if pardir is None:
         pardir = os.path.realpath(os.path.dirname(__file__))
     return os.path.join(pardir, f)

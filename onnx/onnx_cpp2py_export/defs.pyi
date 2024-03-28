@@ -1,5 +1,4 @@
 """Submodule containing all the ONNX schema definitions."""
-from __future__ import annotations
 
 from typing import Sequence, overload
 
@@ -107,10 +106,10 @@ class OpSchema:
             type_str: str,
             description: str = "",
             *,
-            param_option: OpSchema.FormalParameterOption = OpSchema.FormalParameterOption.Single,  # noqa: F821
+            param_option: OpSchema.FormalParameterOption = ...,
             is_homogeneous: bool = True,
             min_arity: int = 1,
-            differentiation_category: OpSchema.DifferentiationCategory = OpSchema.DifferentiationCategory.Unknown,  # noqa: F821
+            differentiation_category: OpSchema.DifferentiationCategory = ...,
         ) -> None: ...
         @property
         def name(self) -> str: ...

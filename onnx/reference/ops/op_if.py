@@ -31,8 +31,8 @@ class If(OpRun):
         self,
         cond: np.ndarray | np.bool_,
         context=None,
-        else_branch=None,
-        then_branch=None,
+        else_branch=None,  # noqa: ARG002
+        then_branch=None,  # noqa: ARG002
         attributes=None,
     ):
         if cond.size != 1:

@@ -1,9 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 
@@ -14,8 +12,8 @@ def _slice(
     data: np.ndarray,
     starts: np.ndarray,
     ends: np.ndarray,
-    axes: Optional[np.ndarray] = None,
-    steps: Optional[np.ndarray] = None,
+    axes: np.ndarray | None = None,
+    steps: np.ndarray | None = None,
 ) -> np.ndarray:
     if isinstance(starts, list):
         starts = np.array(starts)
@@ -45,7 +43,7 @@ def _slice(
                 slices[a] = slice(s, e, d)
     try:
         return data[tuple(slices)]  # type: ignore
-    except TypeError as e:  # pragma: no cover
+    except TypeError as e:
         raise TypeError(
             f"Unable to extract slice {slices!r} for shape {data.shape!r}."
         ) from e

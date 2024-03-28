@@ -97,11 +97,11 @@ class CommonRNN(OpRun):
         B=None,
         sequence_lens=None,
         initial_h=None,
-        activation_alpha=None,
-        activation_beta=None,
-        activations=None,
-        clip=None,
-        direction=None,
+        activation_alpha=None,  # noqa: ARG002
+        activation_beta=None,  # noqa: ARG002
+        activations=None,  # noqa: ARG002
+        clip=None,  # noqa: ARG002
+        direction=None,  # noqa: ARG002
         hidden_size=None,
         layout=None,
     ):
