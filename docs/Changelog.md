@@ -25735,6 +25735,36 @@ This version of the operator has been available since version 21 of the default 
 <dd>Constrain output to int64 tensor.</dd>
 </dl>
 
+### <a name="Swish-21"></a>**Swish-21**</a>
+
+  Swish function, takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape, where $Swish(x) = x * sigmoid(beta * x)$.
+
+#### Version
+
+This version of the operator has been available since version 21 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Size-21"></a>**Size-21**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
