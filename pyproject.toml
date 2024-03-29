@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=64", "protobuf>=3.20.2", "cmake"]
+requires = ["setuptools>=64", "protobuf>=3.20.2", 'cmake; os_name != "nt"']
 build-backend = "setuptools.build_meta"
 
 [project]
