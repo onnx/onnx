@@ -314,6 +314,21 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = (x + y) * (y - z)
         assert_allclose(expected, res)
 
+    def test_reference_evaluator_no_attribute_intermediate(self):
+        m = TestReferenceEvaluator._load_model(TestReferenceEvaluator.m2_def)
+        checker.check_model(m)
+        sess = ReferenceEvaluator(m)
+        self.assertEqual(sess.input_names, ["B01", "B11", "B21"])
+        self.assertEqual(sess.output_names, ["D0"])
+        self.assertEqual(sess.opsets, {"": 10, "com.microsoft": 1})
+        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+        y = np.array([[4, 5], [6, 7]], dtype=np.float32)
+        z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
+        res = sess.run(None, {"B01": x, "B11": y, "B21": z}, intermediate=True)
+        self.assertIsInstance(res, dict)
+        expected = (x + y) * (y - z)
+        assert_allclose(expected, res["D0"])
+
     def test_reference_evaluator_no_attribute_bytes(self):
         m = TestReferenceEvaluator._load_model(TestReferenceEvaluator.m2_def)
         checker.check_model(m)
