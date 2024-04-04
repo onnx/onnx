@@ -108,7 +108,7 @@ class TestToolsFunctions(unittest.TestCase):
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
         y1[0, :] = 0.5
-        y2 = oinf2.run(None, {"X": x})[0]
+        y2 = oinf2.run(None, {"X": x})[0]  # type: ignore[index]
         assert_allclose(y1, y2)
 
     def test_replace_range(self):
