@@ -542,7 +542,13 @@ class ReferenceEvaluator:
             f"is unknown, known functions: {sorted(self.functions_)}."
         )
 
-    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Optional[Dict[str, Any]] = None):  # type: ignore
+    def run(
+        self,
+        output_names,
+        feed_inputs: Dict[str, Any],
+        attributes: Optional[Dict[str, Any]] = None,
+        intermediate: bool = False,
+    ) -> Union[Dict[str, Any], List[Any]]:  # type: ignore
         """Executes the onnx model.
 
         Args:
@@ -550,9 +556,13 @@ class ReferenceEvaluator:
             feed_inputs: dictionary `{ input name: input value }`
             attributes: attributes value if the instance runs a
                 FunctionProto
+            intermediate: if True, the function returns all the results,
+                final ones and intermediates one in a same dictionary,
+                if False, only the final results are returned in a list
 
         Returns:
-            list of requested outputs
+            list of requested outputs if intermediate is False,
+            named results in a dictionary otherwise
         """
         if output_names is None:
             output_names = self.output_names
@@ -591,6 +601,9 @@ class ReferenceEvaluator:
                 results[name] = value
 
         # return the results
+        if intermediate:
+            return results
+
         for name in output_names:
             if name not in results:
                 raise RuntimeError(
