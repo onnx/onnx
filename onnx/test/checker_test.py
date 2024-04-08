@@ -1084,9 +1084,31 @@ class TestChecker(unittest.TestCase):
             {
                 y = Add(x, x)
             }
+            # Error: z is not defined
         """
         )
-        self.assertRaises(checker.ValidationError, checker.check_model, model)     
+        self.assertRaises(checker.ValidationError, checker.check_model, model)
+
+    def test_graph_output_is_defined_within_sub_graph(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 17]>
+            agraph (float[N] x, bool cond) => (float[N] y)
+            {
+                sum = Add (x, x)
+                prod = Mul (x, x)
+                y = If (cond) <
+                    then_branch = then_graph () => (sum) {},
+                    else_branch = else_graph () => (prod) {}
+                >
+            }
+            # Error: sum/prod are accessible inside if-then-else branches, but cannot
+            # be used as outputs of the then/else branch implicitly.
+            # An explicit "Identity(sum)" must be used to return sum as output.
+        """
+        )
+        self.assertRaises(checker.ValidationError, checker.check_model, model)
+
 
 if __name__ == "__main__":
     unittest.main()
