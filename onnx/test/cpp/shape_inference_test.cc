@@ -649,11 +649,11 @@ agraph (float[256, 768, 3] x) => (z1, z2)
   auto& z2_value_info = model.graph().output(1);
   ASSERT_TRUE(z2_value_info.has_type());
   ASSERT_TRUE(z2_value_info.type().has_tensor_type());
-  EXPECT_TRUE(z2_value_info.type().tensor_type().elem_type() == TensorProto_DataType_FLOAT);
-  EXPECT_TRUE(z2_value_info.type().tensor_type().shape().dim_size() == 3);
-  EXPECT_TRUE(z2_value_info.type().tensor_type().shape().dim(0).dim_value() == 256);
-  EXPECT_TRUE(z2_value_info.type().tensor_type().shape().dim(1).dim_value() == 768);
-  EXPECT_TRUE(z2_value_info.type().tensor_type().shape().dim(2).dim_value() == 3);
+  EXPECT_EQ(z2_value_info.type().tensor_type().elem_type(), TensorProto_DataType_FLOAT);
+  EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim_size(), 3);
+  EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim(0).dim_value(), 256);
+  EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim(1).dim_value(), 768);
+  EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim(2).dim_value(), 3);
 }
 
 } // namespace Test
