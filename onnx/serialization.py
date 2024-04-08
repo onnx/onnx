@@ -171,7 +171,7 @@ class _TextualSerializer(ProtoSerializer):
     """Serialize and deserialize the ONNX textual representation."""
 
     supported_format = "onnxtxt"
-    file_extensions = frozenset({".onnxtxt"})
+    file_extensions = frozenset({".onnxtxt", ".onnxtext"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         text = onnx.printer.to_text(proto)  # type: ignore[arg-type]
