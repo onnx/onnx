@@ -797,7 +797,7 @@ class TestChecker(unittest.TestCase):
                             ],
                             outputs=[
                                 helper.make_tensor_value_info(
-                                    "cond___while_Identity_graph_outputs_Identity__3_0",
+                                    "cond___while_Less__13_0",
                                     TensorProto.BOOL,
                                     shape=[],
                                 ),
@@ -825,7 +825,7 @@ class TestChecker(unittest.TestCase):
                                     outputs=["cond___while_Less__13_0"],
                                     name="cond___while_Less__13",
                                     domain="",
-                                    to=TensorProto.FLOAT,
+                                    to=TensorProto.BOOL,
                                 ),
                             ],
                         ),
@@ -1076,6 +1076,17 @@ class TestChecker(unittest.TestCase):
             onnx.save(model, unicode_model_path)
             checker.check_model(unicode_model_path, full_check=True)
 
+    def test_graph_output_is_defined(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 17]>
+            agraph (float[N] x) => (float[N] y, float[N] z)
+            {
+                y = Add(x, x)
+            }
+        """
+        )
+        self.assertRaises(checker.ValidationError, checker.check_model, model)     
 
 if __name__ == "__main__":
     unittest.main()
