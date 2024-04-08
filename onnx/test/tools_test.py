@@ -74,14 +74,14 @@ class TestToolsFunctions(unittest.TestCase):
 
         x = np.array([1, 2, 4, 5, 5, 4]).astype(np.float32).reshape((3, 2))
         oinf1 = ReferenceEvaluator(model_def)
-        y1 = oinf1.run(None, {"X": x})[0]
+        y1 = oinf1.run(None, {"X": x})[0]  # type: ignore[index]
         repl = replace_initializer_by_constant_of_shape(model_def)
         node_types = {n.op_type for n in repl.graph.node}
         self.assertIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
         y1[0, :] = 0.5
-        y2 = oinf2.run(None, {"X": x})[0]
+        y2 = oinf2.run(None, {"X": x})[0]  # type: ignore[index]
         assert_allclose(y1, y2)
 
     def test_replace_constant(self):
@@ -101,14 +101,14 @@ class TestToolsFunctions(unittest.TestCase):
 
         x = np.array([1, 2, 4, 5, 5, 4]).astype(np.float32).reshape((3, 2))
         oinf1 = ReferenceEvaluator(model_def)
-        y1 = oinf1.run(None, {"X": x})[0]
+        y1 = oinf1.run(None, {"X": x})[0]  # type: ignore[index]
         repl = replace_initializer_by_constant_of_shape(model_def)
         node_types = {n.op_type for n in repl.graph.node}
         self.assertIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
         y1[0, :] = 0.5
-        y2 = oinf2.run(None, {"X": x})[0]
+        y2 = oinf2.run(None, {"X": x})[0]  # type: ignore[index]
         assert_allclose(y1, y2)
 
     def test_replace_range(self):
@@ -128,13 +128,13 @@ class TestToolsFunctions(unittest.TestCase):
 
         x = np.array([1, 2, 4, 5, 5, 4]).astype(np.float32).reshape((3, 2))
         oinf1 = ReferenceEvaluator(model_def)
-        y1 = oinf1.run(None, {"X": x})[0]
+        y1 = oinf1.run(None, {"X": x})[0]  # type: ignore[index]
         repl = replace_initializer_by_constant_of_shape(model_def, use_range=True)
         node_types = {n.op_type for n in repl.graph.node}
         self.assertIn("Range", node_types)
         self.assertNotIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)
-        y2 = oinf2.run(None, {"X": x})[0]
+        y2 = oinf2.run(None, {"X": x})[0]  # type: ignore[index]
         assert_allclose(y1.shape, y2.shape)
 
     def test_replace_constant_function(self):
@@ -171,14 +171,14 @@ class TestToolsFunctions(unittest.TestCase):
 
         x = np.array([1, 2, 4, 5, 5, 4]).astype(np.float32).reshape((3, 2))
         oinf1 = ReferenceEvaluator(model_def)
-        y1 = oinf1.run(None, {"X": x})[0]
+        y1 = oinf1.run(None, {"X": x})[0]  # type: ignore[index]
         repl = replace_initializer_by_constant_of_shape(model_def)
         node_types = {n.op_type for n in repl.functions[0].node}
         self.assertIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)
         y1[:, :] = 3.5
         y1[0, :] = 0.5
-        y2 = oinf2.run(None, {"X": x})[0]
+        y2 = oinf2.run(None, {"X": x})[0]  # type: ignore[index]
         assert_allclose(y1, y2)
 
     def test_replace_range_function(self):
@@ -215,13 +215,13 @@ class TestToolsFunctions(unittest.TestCase):
 
         x = np.array([1, 2, 4, 5, 5, 4]).astype(np.float32).reshape((3, 2))
         oinf1 = ReferenceEvaluator(model_def)
-        y1 = oinf1.run(None, {"X": x})[0]
+        y1 = oinf1.run(None, {"X": x})[0]  # type: ignore[index]
         repl = replace_initializer_by_constant_of_shape(model_def, use_range=True)
         node_types = {n.op_type for n in repl.functions[0].node}
         self.assertIn("Range", node_types)
         self.assertNotIn("ConstantOfShape", node_types)
         oinf2 = ReferenceEvaluator(repl)
-        y2 = oinf2.run(None, {"X": x})[0]
+        y2 = oinf2.run(None, {"X": x})[0]  # type: ignore[index]
         assert_allclose(y1.shape, y2.shape)
 
     def test_replace_constant_graph(self):
@@ -264,11 +264,11 @@ class TestToolsFunctions(unittest.TestCase):
 
         x = np.ones((3, 2), dtype=np.float32)
         oinf1 = ReferenceEvaluator(onnx_model)
-        y1 = oinf1.run(None, {"X": x})[0]
+        y1 = oinf1.run(None, {"X": x})[0]  # type: ignore[index]
         repl = replace_initializer_by_constant_of_shape(onnx_model)
         self.assertIn("ConstantOfShape", str(repl))
         oinf2 = ReferenceEvaluator(repl)
-        y2 = oinf2.run(None, {"X": x})[0]
+        y2 = oinf2.run(None, {"X": x})[0]  # type: ignore[index]
         y1 = y1.copy()
         y1[:] = 0.5
         assert_allclose(y1, y2)
@@ -313,12 +313,12 @@ class TestToolsFunctions(unittest.TestCase):
 
         x = np.ones((3, 2), dtype=np.float32)
         oinf1 = ReferenceEvaluator(onnx_model)
-        y1 = oinf1.run(None, {"X": x})[0]
+        y1 = oinf1.run(None, {"X": x})[0]  # type: ignore[index]
         repl = replace_initializer_by_constant_of_shape(onnx_model, use_range=True)
         self.assertNotIn("ConstantOfShape", str(repl))
         self.assertIn("Range", str(repl))
         oinf2 = ReferenceEvaluator(repl)
-        y2 = oinf2.run(None, {"X": x})[0]
+        y2 = oinf2.run(None, {"X": x})[0]  # type: ignore[index]
         assert_allclose(y1.shape, y2.shape)
 
 
