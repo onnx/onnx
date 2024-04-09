@@ -714,7 +714,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       fail_check(
           "Graph output '",
           value_info.name(),
-          "' is not output of any node in graph.");
+          "' is not an output of any node in graph.");
     }
   }
 
