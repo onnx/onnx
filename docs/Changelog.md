@@ -4413,9 +4413,13 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
 
-  Transpose the input tensor similar to numpy.transpose. For example, when
-  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-  will be (2, 1, 3).
+  Transpose the input tensor similar to numpy.transpose. The attribute `perm`
+  must be a permutation of the dimensions of the input tensor. Axis `i` of the
+  output tensor corresponds to the axis `perm[i]` of the input tensor.
+  For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 1, 3).
+  When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 3, 1).
 
 #### Version
 
@@ -18634,9 +18638,13 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="Transpose-13"></a>**Transpose-13**</a>
 
-  Transpose the input tensor similar to numpy.transpose. For example, when
-  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-  will be (2, 1, 3).
+  Transpose the input tensor similar to numpy.transpose. The attribute `perm`
+  must be a permutation of the dimensions of the input tensor. Axis `i` of the
+  output tensor corresponds to the axis `perm[i]` of the input tensor.
+  For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 1, 3).
+  When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 3, 1).
 
 #### Version
 
@@ -25802,9 +25810,13 @@ This version of the operator has been available since version 21 of the default 
 
 ### <a name="Transpose-21"></a>**Transpose-21**</a>
 
-  Transpose the input tensor similar to numpy.transpose. For example, when
-  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-  will be (2, 1, 3).
+  Transpose the input tensor similar to numpy.transpose. The attribute `perm`
+  must be a permutation of the dimensions of the input tensor. Axis `i` of the
+  output tensor corresponds to the axis `perm[i]` of the input tensor.
+  For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 1, 3).
+  When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+  the output shape will be (2, 3, 1).
 
 #### Version
 
