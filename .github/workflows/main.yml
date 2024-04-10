@@ -1,17 +1,16 @@
 name: CI
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
   push:
     branches:
       - main
   pull_request:
   merge_group:
+  workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.event_name == 'workflow_dispatch' }}
-  cancel-in-progress: false
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.event_name == 'workflow_dispatch' }}
+#   cancel-in-progress: true
 
 jobs:
   Test:
