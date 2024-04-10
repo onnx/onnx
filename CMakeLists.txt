@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.14)
 include(cmake/Utils.cmake)
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -742,7 +742,7 @@ if(ONNX_USE_UNITY_BUILD)
   # If ONNX_USE_UNITY_BUILD is set to ON, set onnx target to use Unity builds.
   #  We set Unity build to use groups, it allows us to set some specific files to be compiled individually
   set_target_properties(onnx
-    PROPERTIES 
+    PROPERTIES
       UNITY_BUILD ON
       UNITY_BUILD_MODE GROUP
   )
