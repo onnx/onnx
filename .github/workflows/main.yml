@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
+        onnx_ml: [1, 1, 0, 1, 0]
+        debug_build: [0, 1, 0, 1, 1]
+        documentation: [0, 0, 0, 1, 0]
+        protobuf_type: ['Internal', 'External', 'Internal', 'External', 'Internal']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+          architecture: 'x64'
+
+      - name: Install external protobuf
+        if: ${{ matrix.protobuf_type }} == 'External'
+        run: |
+          sudo apt-get install libprotobuf-dev protobuf-compiler
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-release.txt
+          python -m pip install protobuf==3.20.2
+          git submodule update --init --recursive
+          pip install -e ".[reference]" -v
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+
+      - name: Run Python tests
+        run: |
+          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
+      - name: Run C++ tests
+        run: |
+          export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+          ./.setuptools-cmake-build/onnx_gtests
+
+      - name: Upload coverage to codecov
+        if: always()
+        run: |
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov
+        continue-on-error: true
+
+      - name: Test backend test data
+        if: ${{ matrix.documentation }} == 1
+        run: |
+          python onnx/backend/test/cmd_tools.py generate-data --clean
+          git status
+          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+          if [ $? -ne 0 ]; then
+            echo "git diff for test generation returned failures. Please check updated node test files"
+            exit 1
+          fi
+          git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
+          if [ $? -ne 0 ]; then
+            echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
+            exit 1
+          fi
+          pip uninstall -y pillow
+          python onnx/backend/test/cmd_tools.py generate-data --clean
+          git status
+          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+          if [ $? -ne 0 ]; then
+            echo "git diff for test generation without pillow returned failures. Please check updated node test files"
+            exit 1
+          fi
+
+      - name: Test documentation
+        if: ${{ matrix.documentation }} == 1
+        run: |
+          pip install -r docs/docsgen/source/requirements.txt
+          cd docs/docsgen && make text
+        continue-on-error: true
