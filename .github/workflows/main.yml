@@ -63,6 +63,9 @@ jobs:
           python -m pip install -r requirements-release.txt
           python -m pip install protobuf==3.20.2
           git submodule update --init --recursive
+
+      - name: Build and install ONNX
+        run: |
           pip install -e ".[reference]" -v
         env:
           DEBUG: ${{ matrix.debug_build }}
