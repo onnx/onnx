@@ -38,11 +38,11 @@ jobs:
           #   debug_build: 1
           #   documentation: 1
           #   protobuf_type: 'External'
-          # - python_version: '3.8'
-          #   onnx_ml: 0
-          #   debug_build: 1
-          #   documentation: 0
-          #   protobuf_type: 'Internal'
+          - python_version: '3.8'
+            onnx_ml: 0
+            debug_build: 1
+            documentation: 0
+            protobuf_type: 'Internal'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
