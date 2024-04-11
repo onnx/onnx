@@ -4,25 +4,9 @@
 
 include (ExternalProject)
 
-set(googletest_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/include)
 set(googletest_URL https://github.com/google/googletest.git)
-set(googletest_BUILD ${CMAKE_CURRENT_BINARY_DIR}/googletest/)
 # https://github.com/google/googletest/commit/530d5c8c84abd2a46f38583ee817743c9b3a42b4
 set(googletest_TAG 530d5c8c84abd2a46f38583ee817743c9b3a42b4)
-
-if(WIN32 AND CMAKE_BUILD_TYPE MATCHES Debug)
-  set(googletest_STATIC_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/Debug/gtestd.lib)
-elseif(WIN32 AND NOT CMAKE_BUILD_TYPE MATCHES Debug)
-  set(googletest_STATIC_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/Release/gtest.lib)
-elseif(CMAKE_BUILD_TYPE MATCHES Debug)
-  set(googletest_STATIC_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtestd.a)
-else()
-  set(googletest_STATIC_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtest.a)
-endif()
 
 if(ONNX_USE_MSVC_STATIC_RUNTIME)
   set(ONNX_USE_MSVC_SHARED_RUNTIME OFF)
