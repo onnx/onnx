@@ -11,8 +11,9 @@ on:
 jobs:
   Test:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest,macos-latest]
         python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
         include:
           - python_version: '3.12'
@@ -68,12 +69,13 @@ jobs:
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
         run: |
-          # Add conda to PATH
-          $CONDA/bin/conda create --yes --quiet --name py${{ matrix.python_version }} python=${{ matrix.python_version }}
-          $CONDA/bin/conda install -n py${{ matrix.python_version }} -y -c conda-forge libprotobuf==3.21.5
-          export CMAKE_PREFIX_PATH=$CONDA/envs/py${{ matrix.python_version }}/Library
-          source $CONDA/etc/profile.d/conda.sh
-          conda activate py${{ matrix.python_version }}
+          # # Add conda to PATH
+          # $CONDA/bin/conda create --yes --quiet --name py${{ matrix.python_version }} python=${{ matrix.python_version }}
+          # $CONDA/bin/conda install -n py${{ matrix.python_version }} -y -c conda-forge libprotobuf==3.21.5
+          # export CMAKE_PREFIX_PATH=$CONDA/envs/py${{ matrix.python_version }}/Library
+          # source $CONDA/etc/profile.d/conda.sh
+          # conda activate py${{ matrix.python_version }}
+          workflow_scripts/protobuf/build_protobuf_win.ps1
 
       - name: Install dependencies
         run: |
