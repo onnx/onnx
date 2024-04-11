@@ -18,10 +18,10 @@ elseif(WIN32 AND NOT CMAKE_BUILD_TYPE MATCHES Debug)
       ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/Release/gtest.lib)
 elseif(CMAKE_BUILD_TYPE MATCHES Debug)
   set(googletest_STATIC_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtestd.a)
+      ${CMAKE_CURRENT_BINARY_DIR}/../lib/libgtest.a)
 else()
   set(googletest_STATIC_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtest.a)
+      ${CMAKE_CURRENT_BINARY_DIR}/../lib/libgtest.a)
 endif()
 
 if(ONNX_USE_MSVC_STATIC_RUNTIME)
