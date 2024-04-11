@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest,macos-latest]
         python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
         include:
           - python_version: '3.12'
@@ -92,18 +92,35 @@ jobs:
           python -m pip install protobuf==3.20.2
           git submodule update --init --recursive
 
-      - name: Build and install ONNX
+      - name: Build and install ONNX - Linux
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          if [ ${{ matrix.os }} == "ubuntu-latest" ]; then
-            # Enable address sanitizer in linux
-            export CMAKE_ARGS="$CMAKE_ARGS: -DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
-          fi
+          pip install -e ".[reference]" -v
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+
+      - name: Build and install ONNX - MacOS
+        if: matrix.os == 'macos-latest'
+        run: |
           pip install -e ".[reference]" -v
         env:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=ON"
+
+      - name: Build and install ONNX - Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          pip install -e ".[reference]" -v
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_LITE_PROTO=ON"
 
       - name: Run Python tests
         run: |
