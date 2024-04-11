@@ -50,6 +50,13 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
 
+      - name: Show versions
+        run: |
+          echo "Python version"
+          python --version
+          echo "cmake version"
+          cmake --version
+
       - name: Install external protobuf - Linux
         if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest'
         run: |
