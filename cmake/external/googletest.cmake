@@ -18,7 +18,7 @@ ExternalProject_Add(googletest
     GIT_REPOSITORY ${googletest_URL}
     GIT_TAG ${googletest_TAG}
     DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
-    SOURCE_DIR "${CMAKE_BINARY_DIR}/googletest/src/googletest"
+    SOURCE_DIR "${CMAKE_BINARY_DIR}/googletest/src"
     BINARY_DIR "${CMAKE_BINARY_DIR}/googletest/build"
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} --target gtest
     INSTALL_COMMAND ""
