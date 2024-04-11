@@ -4,9 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <gtest/gtest.h>
+
 #include <iostream>
 
-#include "gtest/gtest.h"
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/schema.h"
 

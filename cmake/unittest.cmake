@@ -25,6 +25,7 @@ function(AddTest)
   add_executable(${_UT_TARGET} ${_UT_SOURCES})
   add_dependencies(${_UT_TARGET} onnx onnx_proto)
   if(NOT GTest_FOUND)
+    list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
     add_dependencies(${_UT_TARGET} googletest)
   endif()
 
@@ -34,7 +35,7 @@ function(AddTest)
                                     ${PROTOBUF_INCLUDE_DIRS}
                                     ${ONNX_ROOT}
                                     ${CMAKE_CURRENT_BINARY_DIR})
-  target_link_libraries(${_UT_TARGET} ${_UT_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${_UT_TARGET} ${_UT_LIBS} ${CMAKE_THREAD_LIBS_INIT} GTest::gtest_main)
   if(TARGET protobuf::libprotobuf)
     target_link_libraries(${_UT_TARGET} protobuf::libprotobuf)
   else()
@@ -56,9 +57,9 @@ function(AddTest)
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
                                  /wd4244 # 'argument': conversion from 'google::
-                                         # protobuf::uint64' to 'int', possible 
+                                         # protobuf::uint64' to 'int', possible
                                          # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int', 
+                                 /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  /wd4996 # The second parameter is ignored.
                            )
