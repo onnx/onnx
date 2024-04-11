@@ -26,8 +26,7 @@ function(AddTest)
   add_dependencies(${_UT_TARGET} onnx onnx_proto)
 
   target_include_directories(${_UT_TARGET}
-                             PUBLIC ${googletest_INCLUDE_DIRS}
-                                    ${ONNX_INCLUDE_DIRS}
+                             PUBLIC ${ONNX_INCLUDE_DIRS}
                                     ${PROTOBUF_INCLUDE_DIRS}
                                     ${ONNX_ROOT}
                                     ${CMAKE_CURRENT_BINARY_DIR})
