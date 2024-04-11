@@ -13,27 +13,34 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - python_version: '3.12'
             onnx_ml: 1
+            debug_build: 1
+            documentation: 1
+            protobuf_type: 'Internal'
+          - python_version: '3.12'
+            onnx_ml: 0
             debug_build: 0
             documentation: 0
             protobuf_type: 'Internal'
-          # - python_version: '3.11'
-          #   onnx_ml: 1
-          #   debug_build: 1
-          #   documentation: 0
-          #   protobuf_type: 'External'
-          # - python_version: '3.10'
-          #   onnx_ml: 0
-          #   debug_build: 0
-          #   documentation: 0
-          #   protobuf_type: 'Internal'
-          # - python_version: '3.9'
-          #   onnx_ml: 1
-          #   debug_build: 1
-          #   documentation: 1
-          #   protobuf_type: 'External'
+            onnx_lite: 1
+          - python_version: '3.11'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 0
+            protobuf_type: 'External'
+          - python_version: '3.10'
+            onnx_ml: 0
+            debug_build: 0
+            documentation: 0
+            protobuf_type: 'Internal'
+          - python_version: '3.9'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 0
+            protobuf_type: 'External'
           - python_version: '3.8'
             onnx_ml: 0
             debug_build: 1
@@ -48,10 +55,21 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
 
-      - name: Install external protobuf
-        if: ${{ matrix.protobuf_type }} == 'External'
+      - name: Install external protobuf - Linux
+        if: ${{ matrix.protobuf_type }} == 'External' && matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get install libprotobuf-dev protobuf-compiler
+
+      - name: Install external protobuf - MacOS
+        if: ${{ matrix.protobuf_type }} == 'External' && matrix.os == 'macos-latest'
+        run: |
+          export NUM_CORES=`sysctl -n hw.logicalcpu`
+          source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
+
+      - name: Install external protobuf - Windows
+        if: ${{ matrix.protobuf_type }} == 'External' && matrix.os == 'windows-latest'
+        run: |
+          powershell workflow_scripts/protobuf/build_protobuf_win.ps1
 
       - name: Install dependencies
         run: |
