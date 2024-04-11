@@ -58,8 +58,7 @@ jobs:
       - name: Install external protobuf - MacOS
         if: matrix.protobuf_type == 'External' && matrix.os == 'macos-latest'
         run: |
-          export NUM_CORES=`sysctl -n hw.logicalcpu`
-          source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install $(build_type)
+          source workflow_scripts/protobuf/build_protobuf_unix.sh $(pwd)/protobuf/protobuf_install $(build_type)
 
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
