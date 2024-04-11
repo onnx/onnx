@@ -27,5 +27,4 @@ $protoc_lib_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_insta
 $protobuf_include_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\include"
 $Env:PATH="$protoc_path;$protoc_lib_path;$protobuf_include_path;$ENV:PATH"
 $($Env:PATH).Split(';')
-protoc
 cd ../../
