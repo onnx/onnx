@@ -96,7 +96,7 @@ jobs:
         run: |
           if [ ${{ matrix.os }} == "ubuntu-latest" ]; then
             # Enable address sanitizer in linux
-            export CMAKE_ARGS = "$CMAKE_ARGS: -DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+            export CMAKE_ARGS="$CMAKE_ARGS: -DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
           fi
           pip install -e ".[reference]" -v
         env:
