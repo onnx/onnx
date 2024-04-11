@@ -149,7 +149,7 @@ jobs:
           path: pytest.xml
 
       - name: Test backend test data
-        if: ${{ matrix.documentation }} == 1 && matrix.os == 'ubuntu-latest'
+        if: matrix.documentation == 1 && matrix.os == 'ubuntu-latest'
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status
