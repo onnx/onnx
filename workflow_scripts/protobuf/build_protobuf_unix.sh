@@ -23,9 +23,9 @@ fi
 # Build protobuf from source with -fPIC on Unix-like system
 ORIGINAL_PATH=$(pwd)
 cd ..
-wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
-tar -xvf protobuf-cpp-3.21.12.tar.gz
-cd protobuf-3.21.12
+wget https://github.com/protocolbuffers/protobuf/releases/download/v22.5/protobuf-22.5.tar.gz
+tar -xvf protobuf-22.5.tar.gz
+cd protobuf-22.5
 mkdir build_source && cd build_source
 cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALL_PROTOBUF_PATH -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 make -j$CORE_NUMBER
