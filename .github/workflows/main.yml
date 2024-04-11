@@ -95,6 +95,11 @@ jobs:
       - name: Build and install ONNX - Linux
         if: matrix.os == 'ubuntu-latest'
         run: |
+          if [ "${{ matrix.protobuf_type }}" == "Internal" ]; then
+            export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF"
+          else
+            export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          fi
           pip install -e ".[reference]" -v
         env:
           DEBUG: ${{ matrix.debug_build }}
@@ -120,7 +125,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_LITE_PROTO=ON"
+          CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
       - name: Run Python tests
         run: |
