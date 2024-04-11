@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
         include:
           - python_version: '3.12'
@@ -72,7 +72,7 @@ jobs:
           $CONDA/bin/conda create --yes --quiet --name py${{ matrix.python_version }} python=${{ matrix.python_version }}
           $CONDA/bin/conda install -n py${{ matrix.python_version }} -y -c conda-forge libprotobuf==3.21.5
           export CMAKE_PREFIX_PATH=$CONDA/envs/py${{ matrix.python_version }}/Library
-          souce $CONDA/etc/profile.d/conda.sh
+          source $CONDA/etc/profile.d/conda.sh
           conda activate py${{ matrix.python_version }}
 
       - name: Install dependencies
