@@ -11,9 +11,9 @@ param(
 )
 
 echo "Build protobuf from source on Windows."
-Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v22.5/protobuf-22.5.tar.gz -OutFile protobuf.tar.gz -Verbose
+Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz -OutFile protobuf.tar.gz -Verbose
 tar -xvf protobuf.tar.gz
-cd protobuf-22.5
+cd protobuf-3.21.12
 $protobuf_root_dir = Get-Location
 mkdir protobuf_install
 cd cmake
@@ -27,4 +27,5 @@ $protoc_lib_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_insta
 $protobuf_include_path = Join-Path -Path $protobuf_root_dir -ChildPath "protobuf_install\include"
 $Env:PATH="$protoc_path;$protoc_lib_path;$protobuf_include_path;$ENV:PATH"
 $($Env:PATH).Split(';')
+protoc
 cd ../../
