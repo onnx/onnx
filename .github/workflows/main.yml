@@ -10,10 +10,9 @@ on:
 
 jobs:
   Test:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
         include:
           - python_version: '3.12'
@@ -41,6 +40,7 @@ jobs:
             debug_build: 0
             documentation: 0
             protobuf_type: 'Internal'
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
