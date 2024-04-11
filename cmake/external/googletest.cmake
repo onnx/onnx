@@ -12,10 +12,13 @@ set(googletest_TAG 530d5c8c84abd2a46f38583ee817743c9b3a42b4)
 
 if(WIN32 AND CMAKE_BUILD_TYPE MATCHES Debug)
   set(googletest_STATIC_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/Debug/gtest.lib)
+      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/Debug/gtestd.lib)
 elseif(WIN32 AND NOT CMAKE_BUILD_TYPE MATCHES Debug)
   set(googletest_STATIC_LIBRARIES
       ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/Release/gtest.lib)
+elseif(CMAKE_BUILD_TYPE MATCHES Debug)
+  set(googletest_STATIC_LIBRARIES
+      ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtestd.a)
 else()
   set(googletest_STATIC_LIBRARIES
       ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtest.a)
