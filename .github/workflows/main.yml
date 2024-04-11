@@ -8,8 +8,16 @@ on:
   merge_group:
   workflow_dispatch:
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
 jobs:
-  Test:
+  test:
+    name: "Test"
     strategy:
       fail-fast: false
       matrix:
@@ -90,18 +98,24 @@ jobs:
       - name: Run Python tests
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
+
       - name: Run C++ tests
         run: |
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
 
-      - name: Upload coverage to codecov
+      - name: Upload coverage to Codecov
         if: always()
-        run: |
-          curl -Os https://uploader.codecov.io/latest/linux/codecov
-          chmod +x codecov
-          ./codecov
-        continue-on-error: true
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: Test Results (${{ matrix.name }}-${{ matrix.os }})
+          path: pytest.xml
 
       - name: Test backend test data
         if: ${{ matrix.documentation }} == 1
@@ -133,3 +147,23 @@ jobs:
           pip install -r docs/docsgen/source/requirements.txt
           cd docs/docsgen && make text
         continue-on-error: true
+
+  publish-test-results:
+    name: "Publish Test Results to Github"
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      # only needed unless run with comment_mode: off
+      pull-requests: write
+    if: always()
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "artifacts/**/*.xml"
