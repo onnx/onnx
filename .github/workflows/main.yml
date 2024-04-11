@@ -96,9 +96,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           if [ "${{ matrix.protobuf_type }}" == "Internal" ]; then
-            export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF"
-          else
             export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          else
+            export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF"
           fi
           pip install -e ".[reference]" -v
         env:
