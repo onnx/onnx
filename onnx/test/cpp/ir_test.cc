@@ -4,10 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gtest/gtest.h>
-
 #include <iostream>
 
+#include "gtest/gtest.h"
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/defs/printer.h"

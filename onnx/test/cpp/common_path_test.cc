@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gtest/gtest.h>
-
 #include <list>
 #include <utility>
 
+#include "gtest/gtest.h"
 #include "onnx/common/path.h"
 
 #ifdef _WIN32

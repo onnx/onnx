@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gtest/gtest.h>
-
 #include <iostream>
+
+#include "gtest/gtest.h"
 
 GTEST_API_ int main(int argc, char** argv) {
   std::cout << "Running main() from test_main.cc" << std::endl;
