@@ -72,7 +72,8 @@ jobs:
           $CONDA/bin/conda create --yes --quiet --name py${{ matrix.python_version }} python=${{ matrix.python_version }}
           $CONDA/bin/conda install -n py${{ matrix.python_version }} -y -c conda-forge libprotobuf==3.21.5
           export CMAKE_PREFIX_PATH=$CONDA/envs/py${{ matrix.python_version }}/Library
-          source $CONDA/Scripts/activate py${{ matrix.python_version }}
+          souce $CONDA/etc/profile.d/conda.sh
+          conda activate py${{ matrix.python_version }}
 
       - name: Install dependencies
         run: |
