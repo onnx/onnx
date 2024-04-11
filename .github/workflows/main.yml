@@ -72,7 +72,7 @@ jobs:
       - name: Install external protobuf - MacOS
         if: matrix.protobuf_type == 'External' && matrix.os == 'macos-latest'
         run: |
-          source workflow_scripts/protobuf/build_protobuf_unix.sh 3 $(pwd)/protobuf/protobuf_install $(build_type)
+          source workflow_scripts/protobuf/build_protobuf_unix.sh 3 $(pwd)/protobuf/protobuf_install
 
       - name: Set up MSBuild
         if: matrix.os == 'windows-latest'
