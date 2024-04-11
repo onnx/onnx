@@ -118,6 +118,17 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+if(ONNX_BUILD_TESTS)
+  find_package(GTest)
+  if(GTest_FOUND)
+    set(googletest_INCLUDE_DIRS)
+    set(googletest_STATIC_LIBRARIES GTest::gtest)
+  else()
+    list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
+    include(googletest)
+  endif()
+endif()
+
 if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
   # Sometimes we need to use protoc compiled for host architecture while linking
   # libprotobuf against target architecture. See https://github.com/caffe2/caffe

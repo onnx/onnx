@@ -8,15 +8,7 @@ include(CTest)
 
 find_package(Threads)
 
-find_package(GTest)
-if(GTest_FOUND)
-  set(googletest_INCLUDE_DIRS)
-else()
-  list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
-  include(googletest)
-endif()
-
-set(${UT_NAME}_libs GTest::gtest_main)
+set(${UT_NAME}_libs ${googletest_STATIC_LIBRARIES})
 
 list(APPEND ${UT_NAME}_libs onnx)
 list(APPEND ${UT_NAME}_libs onnx_proto)
@@ -33,7 +25,6 @@ function(AddTest)
   add_executable(${_UT_TARGET} ${_UT_SOURCES})
   add_dependencies(${_UT_TARGET} onnx onnx_proto)
   if(NOT GTest_FOUND)
-    list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
     add_dependencies(${_UT_TARGET} googletest)
   endif()
 
@@ -43,7 +34,7 @@ function(AddTest)
                                     ${PROTOBUF_INCLUDE_DIRS}
                                     ${ONNX_ROOT}
                                     ${CMAKE_CURRENT_BINARY_DIR})
-  target_link_libraries(${_UT_TARGET} ${_UT_LIBS} ${CMAKE_THREAD_LIBS_INIT} GTest::gtest_main)
+  target_link_libraries(${_UT_TARGET} ${_UT_LIBS} ${CMAKE_THREAD_LIBS_INIT})
   if(TARGET protobuf::libprotobuf)
     target_link_libraries(${_UT_TARGET} protobuf::libprotobuf)
   else()
