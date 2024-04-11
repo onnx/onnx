@@ -24,9 +24,6 @@ function(AddTest)
 
   add_executable(${_UT_TARGET} ${_UT_SOURCES})
   add_dependencies(${_UT_TARGET} onnx onnx_proto)
-  if(NOT GTest_FOUND)
-    add_dependencies(${_UT_TARGET} googletest)
-  endif()
 
   target_include_directories(${_UT_TARGET}
                              PUBLIC ${googletest_INCLUDE_DIRS}
