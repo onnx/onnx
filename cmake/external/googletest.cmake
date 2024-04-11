@@ -4,6 +4,7 @@
 
 include (ExternalProject)
 
+set(googletest_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/include)
 set(googletest_URL https://github.com/google/googletest.git)
 # https://github.com/google/googletest/commit/530d5c8c84abd2a46f38583ee817743c9b3a42b4
 set(googletest_TAG 530d5c8c84abd2a46f38583ee817743c9b3a42b4)
@@ -18,8 +19,8 @@ ExternalProject_Add(googletest
     GIT_REPOSITORY ${googletest_URL}
     GIT_TAG ${googletest_TAG}
     DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
-    SOURCE_DIR "${CMAKE_BINARY_DIR}/googletest/src"
-    BINARY_DIR "${CMAKE_BINARY_DIR}/googletest/build"
+    SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/googletest/src"
+    BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/googletest/build"
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} --target gtest
     INSTALL_COMMAND ""
     CMAKE_CACHE_ARGS
