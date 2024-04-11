@@ -8,7 +8,15 @@ include(CTest)
 
 find_package(Threads)
 
-set(${UT_NAME}_libs ${googletest_STATIC_LIBRARIES})
+find_package(GTest)
+if(GTest_FOUND)
+  set(googletest_INCLUDE_DIRS)
+else()
+  list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
+  include(googletest)
+endif()
+
+set(${UT_NAME}_libs GTest::gtest_main)
 
 list(APPEND ${UT_NAME}_libs onnx)
 list(APPEND ${UT_NAME}_libs onnx_proto)
