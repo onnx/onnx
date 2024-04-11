@@ -7,6 +7,16 @@ include (ExternalProject)
 set(googletest_URL https://github.com/google/googletest.git)
 # https://github.com/google/googletest/commit/530d5c8c84abd2a46f38583ee817743c9b3a42b4
 set(googletest_TAG 530d5c8c84abd2a46f38583ee817743c9b3a42b4)
+if(WIN32 AND CMAKE_BUILD_TYPE MATCHES Debug)
+  set(googletest_STATIC_LIBRARIES
+      ${CMAKE_BINARY_DIR}/googletest/build/googletest/Debug/gtest.lib)
+elseif(WIN32 AND NOT CMAKE_BUILD_TYPE MATCHES Debug)
+  set(googletest_STATIC_LIBRARIES
+      ${CMAKE_BINARY_DIR}/googletest/build/googletest/Release/gtest.lib)
+else()
+  set(googletest_STATIC_LIBRARIES
+      ${CMAKE_BINARY_DIR}/googletest/build/googletest/libgtest.a)
+endif()
 
 if(ONNX_USE_MSVC_STATIC_RUNTIME)
   set(ONNX_USE_MSVC_SHARED_RUNTIME OFF)
@@ -18,6 +28,8 @@ ExternalProject_Add(googletest
     GIT_REPOSITORY ${googletest_URL}
     GIT_TAG ${googletest_TAG}
     DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
+    SOURCE_DIR "${CMAKE_BINARY_DIR}/googletest/src/googletest"
+    BINARY_DIR "${CMAKE_BINARY_DIR}/googletest/build"
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE} --target gtest
     INSTALL_COMMAND ""
     CMAKE_CACHE_ARGS
