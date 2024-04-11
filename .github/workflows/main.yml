@@ -62,8 +62,9 @@ jobs:
 
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
-          powershell workflow_scripts/protobuf/build_protobuf_win.ps1
+          workflow_scripts/protobuf/build_protobuf_win.ps1
 
       - name: Install dependencies
         run: |
