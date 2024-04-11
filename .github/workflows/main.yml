@@ -67,12 +67,14 @@ jobs:
 
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
-        shell: pwsh
         run: |
-          workflow_scripts/protobuf/build_protobuf_win.ps1
+          $CONDA/bin/conda create --yes --quiet --name py${{ matrix.python_version }} python=${{ matrix.python_version }}
+          $CONDA/bin/conda install -n py${{ matrix.python_version }} -y -c conda-forge libprotobuf==3.21.5
+          export CMAKE_PREFIX_PATH=$CONDA/envs/py${{ matrix.python_version }}/Library
 
       - name: Install dependencies
         run: |
+          $CONDA/bin/conda activate py${{ matrix.python_version }}
           python -m pip install --upgrade pip
           python -m pip install -r requirements-release.txt
           python -m pip install protobuf==3.20.2
