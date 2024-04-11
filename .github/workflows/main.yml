@@ -68,6 +68,8 @@ jobs:
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
         run: |
+          # Add conda to PATH
+          export PATH="$CONDA/Scripts:$PATH"
           $CONDA/bin/conda create --yes --quiet --name py${{ matrix.python_version }} python=${{ matrix.python_version }}
           $CONDA/bin/conda install -n py${{ matrix.python_version }} -y -c conda-forge libprotobuf==3.21.5
           export CMAKE_PREFIX_PATH=$CONDA/envs/py${{ matrix.python_version }}/Library
