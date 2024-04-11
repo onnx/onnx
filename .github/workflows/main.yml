@@ -52,9 +52,7 @@ jobs:
 
       - name: Show versions
         run: |
-          echo "Python version"
           python --version
-          echo "cmake version"
           cmake --version
 
       - name: Install external protobuf - Linux
