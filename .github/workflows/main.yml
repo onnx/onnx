@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest,macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
         include:
           - python_version: '3.12'
@@ -94,12 +94,16 @@ jobs:
 
       - name: Build and install ONNX
         run: |
+          if [ ${{ matrix.os }} == "ubuntu-latest" ]; then
+            # Enable address sanitizer in linux
+            export CMAKE_ARGS = "$CMAKE_ARGS: -DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+          fi
           pip install -e ".[reference]" -v
         env:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+          CMAKE_ARGS: "-DONNX_WERROR=ON"
 
       - name: Run Python tests
         run: |
