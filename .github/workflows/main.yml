@@ -173,7 +173,7 @@ jobs:
           fi
 
       - name: Test documentation
-        if: ${{ matrix.documentation }} == 1
+        if: matrix.documentation == 1
         run: |
           pip install -r docs/docsgen/source/requirements.txt
           cd docs/docsgen && make text
