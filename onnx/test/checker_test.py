@@ -797,7 +797,7 @@ class TestChecker(unittest.TestCase):
                             ],
                             outputs=[
                                 helper.make_tensor_value_info(
-                                    "cond___while_Identity_graph_outputs_Identity__3_0",
+                                    "cond___while_Less__13_0",
                                     TensorProto.BOOL,
                                     shape=[],
                                 ),
@@ -825,7 +825,7 @@ class TestChecker(unittest.TestCase):
                                     outputs=["cond___while_Less__13_0"],
                                     name="cond___while_Less__13",
                                     domain="",
-                                    to=TensorProto.FLOAT,
+                                    to=TensorProto.BOOL,
                                 ),
                             ],
                         ),
@@ -1075,6 +1075,39 @@ class TestChecker(unittest.TestCase):
             unicode_model_path = os.path.join(temp_dir, "模型モデル모델✨.onnx")
             onnx.save(model, unicode_model_path)
             checker.check_model(unicode_model_path, full_check=True)
+
+    def test_graph_output_is_defined(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 17]>
+            agraph (float[N] x) => (float[N] y, float[N] z)
+            {
+                y = Add(x, x)
+            }
+            # Error: z is not defined
+        """
+        )
+        self.assertRaises(checker.ValidationError, checker.check_model, model)
+
+    def test_graph_output_is_defined_within_sub_graph(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 17]>
+            agraph (float[N] x, bool cond) => (float[N] y)
+            {
+                sum = Add (x, x)
+                prod = Mul (x, x)
+                y = If (cond) <
+                    then_branch = then_graph () => (sum) {},
+                    else_branch = else_graph () => (prod) {}
+                >
+            }
+            # Error: sum/prod are accessible inside if-then-else branches, but cannot
+            # be used as outputs of the then/else branch implicitly.
+            # An explicit "Identity(sum)" must be used to return sum as output.
+        """
+        )
+        self.assertRaises(checker.ValidationError, checker.check_model, model)
 
 
 if __name__ == "__main__":
