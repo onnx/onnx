@@ -1,0 +1,200 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: "Test"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest,macos-latest]
+        python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
+        include:
+          - python_version: '3.12'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 1
+            protobuf_type: 'Internal'
+          - python_version: '3.11'
+            onnx_ml: 1
+            debug_build: 0
+            documentation: 0
+            protobuf_type: 'External'
+          - python_version: '3.10'
+            onnx_ml: 0
+            debug_build: 0
+            documentation: 0
+            protobuf_type: 'Internal'
+          - python_version: '3.9'
+            onnx_ml: 1
+            debug_build: 0
+            documentation: 0
+            protobuf_type: 'External'
+          - python_version: '3.8'
+            onnx_ml: 0
+            debug_build: 0
+            documentation: 0
+            protobuf_type: 'Internal'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Show versions
+        run: |
+          python --version
+          cmake --version
+
+      - name: Install external protobuf - Linux
+        if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get install libprotobuf-dev protobuf-compiler
+
+      - name: Install external protobuf - MacOS
+        if: matrix.protobuf_type == 'External' && matrix.os == 'macos-latest'
+        run: |
+          source workflow_scripts/protobuf/build_protobuf_unix.sh 3 $(pwd)/protobuf/protobuf_install
+
+      - name: Set up MSBuild
+        if: matrix.os == 'windows-latest'
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
+        with:
+          msbuild-architecture: ${{ matrix.architecture }}
+
+      - name: Install external protobuf - Windows
+        if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
+        run: |
+          workflow_scripts/protobuf/build_protobuf_win.ps1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-release.txt
+          python -m pip install protobuf==3.20.2
+          git submodule update --init --recursive
+
+      - name: Build and install ONNX - Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          if [ "${{ matrix.protobuf_type }}" == "External" ]; then
+            export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          fi
+          pip install -e ".[reference]" -v
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+
+      - name: Build and install ONNX - MacOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          pip install -e ".[reference]" -v
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=ON"
+
+      - name: Build and install ONNX - Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          pip install -e ".[reference]" -v
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+
+      - name: Run Python tests
+        run: |
+          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
+
+      - name: Run C++ tests
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        run: |
+          export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+          ./.setuptools-cmake-build/onnx_gtests
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: Test Results (${{ matrix.os }}-{{ matrix.python_version }})
+          path: pytest.xml
+
+      - name: Test backend test data
+        if: matrix.documentation == 1 && matrix.os == 'ubuntu-latest'
+        run: |
+          python onnx/backend/test/cmd_tools.py generate-data --clean
+          git status
+          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+          if [ $? -ne 0 ]; then
+            echo "git diff for test generation returned failures. Please check updated node test files"
+            exit 1
+          fi
+          git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
+          if [ $? -ne 0 ]; then
+            echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
+            exit 1
+          fi
+          pip uninstall -y pillow
+          python onnx/backend/test/cmd_tools.py generate-data --clean
+          git status
+          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+          if [ $? -ne 0 ]; then
+            echo "git diff for test generation without pillow returned failures. Please check updated node test files"
+            exit 1
+          fi
+
+      - name: Test documentation
+        if: matrix.documentation == 1
+        run: |
+          pip install -r docs/docsgen/source/requirements.txt
+          cd docs/docsgen && make text
+        continue-on-error: true
+
+  publish-test-results:
+    name: "Publish Test Results to Github"
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      # only needed unless run with comment_mode: off
+      pull-requests: write
+    if: always()
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "artifacts/**/*.xml"

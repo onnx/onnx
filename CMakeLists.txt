@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.14)
 include(cmake/Utils.cmake)
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -119,13 +119,11 @@ endif()
 
 if(ONNX_BUILD_TESTS)
   find_package(GTest)
-  if(GTest_FOUND)
-    set(googletest_INCLUDE_DIRS)
-    set(googletest_STATIC_LIBRARIES GTest::gtest)
-  else()
+  if(NOT GTest_FOUND)
     list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
     include(googletest)
   endif()
+  set(googletest_STATIC_LIBRARIES GTest::gtest)
 endif()
 
 if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
