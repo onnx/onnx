@@ -16,7 +16,6 @@ cmake_policy(SET CMP0074 NEW)
 
 # Project
 project(onnx C CXX)
-option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag and Protobuf_USE_STATIC_LIBS. " OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
@@ -622,30 +621,6 @@ if(BUILD_ONNX_PYTHON)
   endif()
 endif()
 
-if(ONNX_BUILD_BENCHMARKS)
-  if(NOT TARGET benchmark)
-    # We will not need to test benchmark lib itself.
-    set(BENCHMARK_ENABLE_TESTING OFF
-        CACHE BOOL "Disable benchmark testing as we don't need it.")
-    # We will not need to install benchmark since we link it statically.
-    set(BENCHMARK_ENABLE_INSTALL OFF
-        CACHE BOOL
-              "Disable benchmark install to avoid overwriting vendor install.")
-    find_package(benchmark)
-    if(NOT benchmark_FOUND)
-      add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/benchmark)
-    endif()
-  endif()
-
-  add_executable(protobuf-bench tools/protobuf-bench.cc)
-  target_include_directories(protobuf-bench PUBLIC
-    $<BUILD_INTERFACE:${ONNX_ROOT}>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<INSTALL_INTERFACE:include>
-    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
-  target_link_libraries(protobuf-bench onnx_proto benchmark::benchmark)
-endif()
-
 # Export include directories
 set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
 get_directory_property(hasParent PARENT_DIRECTORY)
@@ -745,7 +720,7 @@ if(ONNX_USE_UNITY_BUILD)
   # If ONNX_USE_UNITY_BUILD is set to ON, set onnx target to use Unity builds.
   #  We set Unity build to use groups, it allows us to set some specific files to be compiled individually
   set_target_properties(onnx
-    PROPERTIES 
+    PROPERTIES
       UNITY_BUILD ON
       UNITY_BUILD_MODE GROUP
   )
