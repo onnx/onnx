@@ -709,6 +709,12 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       lex_ctx.add(output);
     }
   }
+  for (const auto& value_info : graph.output()) {
+    if (!lex_ctx.this_graph_has(value_info.name())) {
+      fail_check("Graph output '", value_info.name(), "' is not an output of any node in graph.");
+    }
+  }
+
   print_warning_if_has_experimental(used_experimental_ops);
 }
 
