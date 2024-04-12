@@ -357,7 +357,7 @@ def main(args: Args) -> None:
             if function_ops:
                 fout.write("|**Function**|**Since version**|**Function version**|\n")
                 for n, schema, versions, function_versions in function_ops:
-                    s = '|{}<a href="#{}">{}</a>|{}|{}|\n'.format(
+                    s = '|{}<a href="#{}">{}</a>|{}|{}|\n'.format(  # noqa: UP032
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),
