@@ -1,7 +1,7 @@
 # This file is auto updated by dependabot
 lintrunner-adapters>=0.12.3
 # RUFF
-ruff==0.3.0
+ruff==0.3.5
 # MYPY
 mypy==1.9.0
 types-protobuf==4.24.0.20240129

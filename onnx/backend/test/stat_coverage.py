@@ -98,7 +98,7 @@ def gen_node_test_coverage(
         f.write("Node tests have covered 0/0 (N/A) common operators. \n\n")
     if num_experimental:
         f.write(
-            "Node tests have covered {}/{} ({:.2f}%, {} generators excluded) "
+            "Node tests have covered {}/{} ({:.2f}%, {} generators excluded) "  # noqa: UP032
             "experimental operators.\n\n".format(
                 len(experimental_covered),
                 num_experimental,
