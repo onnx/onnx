@@ -15,6 +15,7 @@ import tempfile
 import time
 import unittest
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Callable, Iterable, Pattern, Sequence
 from urllib.request import urlretrieve
 
@@ -57,6 +58,7 @@ class Runner:
     def __init__(
         self,
         backend: type[Backend],
+        test_data_dir: Path,
         parent_module: str | None = None,
         test_kwargs: dict | None = None,
     ) -> None:
@@ -66,6 +68,7 @@ class Runner:
         self._exclude_patterns: set[Pattern[str]] = set()
         self._xfail_patterns: set[Pattern[str]] = set()
         self._test_kwargs: dict = test_kwargs or {}
+        self._test_data_dir = test_data_dir
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
@@ -73,19 +76,23 @@ class Runner:
         # {category: {name: func}}
         self._test_items: dict[str, dict[str, TestItem]] = defaultdict(dict)
 
-        for rt in load_model_tests(kind="node"):
+        for rt in load_model_tests(data_dir=str(test_data_dir), kind="node"):
             self._add_model_test(rt, "Node")
 
-        for rt in load_model_tests(kind="real"):
+        for rt in load_model_tests(data_dir=str(test_data_dir), kind="real"):
             self._add_model_test(rt, "Real")
 
-        for rt in load_model_tests(kind="simple"):
+        for rt in load_model_tests(data_dir=str(test_data_dir), kind="simple"):
             self._add_model_test(rt, "Simple")
 
-        for ct in load_model_tests(kind="pytorch-converted"):
+        for ct in load_model_tests(
+            data_dir=str(test_data_dir), kind="pytorch-converted"
+        ):
             self._add_model_test(ct, "PyTorchConverted")
 
-        for ot in load_model_tests(kind="pytorch-operator"):
+        for ot in load_model_tests(
+            data_dir=str(test_data_dir), kind="pytorch-operator"
+        ):
             self._add_model_test(ot, "PyTorchOperator")
 
     def _get_test_case(self, name: str) -> type[unittest.TestCase]:
@@ -345,17 +352,12 @@ class Runner:
             if model_test.url is not None and model_test.url.startswith(
                 "onnx/backend/test/data/light/"
             ):
+                # Get the root directory from the test data dir in a
+                # hacky way. This will break when moving the files
+                # elsewhere.
+                root = Path(self._test_data_dir).parent.parent.parent.parent
                 # testing local files
-                model_pb_path = os.path.normpath(
-                    os.path.join(
-                        os.path.dirname(__file__),
-                        "..",
-                        "..",
-                        "..",
-                        "..",
-                        model_test.url,
-                    )
-                )
+                model_pb_path = root / model_test.url
                 if not os.path.exists(model_pb_path):
                     raise FileNotFoundError(f"Unable to find model {model_pb_path!r}.")
                 onnx_home = os.path.expanduser(

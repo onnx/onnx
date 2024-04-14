@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+from pathlib import Path
 from typing import IO, Any, Dict, List, Sequence
 
 from onnx import AttributeProto, defs, load
@@ -98,13 +99,8 @@ def gen_node_test_coverage(
         f.write("Node tests have covered 0/0 (N/A) common operators. \n\n")
     if num_experimental:
         f.write(
-            "Node tests have covered {}/{} ({:.2f}%, {} generators excluded) "  # noqa: UP032
-            "experimental operators.\n\n".format(
-                len(experimental_covered),
-                num_experimental,
-                (len(experimental_covered) / float(num_experimental) * 100),
-                len(experimental_generator),
-            )
+            f"Node tests have covered {len(experimental_covered)}/{num_experimental} ({len(experimental_covered) / float(num_experimental) * 100:.2f}%, {len(experimental_generator)} generators excluded) "
+            "experimental operators.\n\n"
         )
     else:
         f.write("Node tests have covered 0/0 (N/A) experimental operators.\n\n")
@@ -157,7 +153,9 @@ def gen_model_test_coverage(
     # Need to grab associated nodes
     attrs: Dict[str, Dict[str, List[Any]]] = {}
     model_paths: List[Any] = []
-    for rt in load_model_tests(kind="real"):
+    for rt in load_model_tests(
+        data_dir=str(Path(__file__).parent / "data"), kind="real"
+    ):
         if rt.url.startswith("onnx/backend/test/data/light/"):
             # testing local files
             model_name = os.path.normpath(

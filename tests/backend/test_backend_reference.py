@@ -6,10 +6,10 @@ import os
 import platform
 import sys
 import unittest
+from pathlib import Path
 from typing import Any
 
 import numpy
-import version_utils
 
 import onnx.backend.base
 import onnx.backend.test
@@ -18,6 +18,9 @@ import onnx.version_converter
 from onnx import ModelProto
 from onnx.backend.base import Device, DeviceType
 from onnx.reference import ReferenceEvaluator
+from onnx.test import version_utils
+
+TEST_DATA_DIR = Path(__file__).parent.parent.parent / "onnx/backend/test/data"
 
 # The following just executes a backend based on ReferenceEvaluator through the backend test
 
@@ -89,7 +92,9 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
         raise NotImplementedError("Unable to run the model node by node.")
 
 
-backend_test = onnx.backend.test.BackendTest(ReferenceEvaluatorBackend, __name__)
+backend_test = onnx.backend.test.BackendTest(
+    ReferenceEvaluatorBackend, test_data_dir=TEST_DATA_DIR, parent_module=__name__
+)
 
 if os.getenv("APPVEYOR"):
     backend_test.exclude("(test_vgg19|test_zfnet)")
