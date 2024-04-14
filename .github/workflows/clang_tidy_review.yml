@@ -22,11 +22,11 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       # Pleaes note that it won't cause any failure here; it will only post comments in PRs
       - name: clang-tidy review
-        uses: ZedThree/clang-tidy-review@4923dc7cbb13a291cecc8507a89f70ed25ac9ce9 # v0.17.1
+        uses: ZedThree/clang-tidy-review@900895863e31d749b3a97e8d4de93f15927d235f # v0.18.0
         with:
           apt_packages: "libprotobuf-dev,protobuf-compiler"
           cmake_command: "cmake -S . -B .setuptools-cmake-build -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           build_dir: ".setuptools-cmake-build"
           exclude: "/third_party/*"
           split_workflow: true
-      - uses: ZedThree/clang-tidy-review/upload@4923dc7cbb13a291cecc8507a89f70ed25ac9ce9 # v0.17.1
+      - uses: ZedThree/clang-tidy-review/upload@900895863e31d749b3a97e8d4de93f15927d235f # v0.18.0
