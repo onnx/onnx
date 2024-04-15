@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  schedule:
+    - cron: '0 0 * * *'  # every day at midnight for reporting code coverage to codecov
   push:
     branches:
       - main
@@ -78,7 +80,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
         with:
-          msbuild-architecture: ${{ matrix.architecture }}
+          msbuild-architecture: x64
 
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
