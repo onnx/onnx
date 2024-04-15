@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-from pathlib import Path
 from typing import IO, Any, Dict, List, Sequence
+import pathlib
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
@@ -154,7 +154,7 @@ def gen_model_test_coverage(
     attrs: Dict[str, Dict[str, List[Any]]] = {}
     model_paths: List[Any] = []
     for rt in load_model_tests(
-        data_dir=str(Path(__file__).parent / "data"), kind="real"
+        data_dir=pathlib.Path(__file__).parent / "data", kind="real"
     ):
         if rt.url.startswith("onnx/backend/test/data/light/"):
             # testing local files

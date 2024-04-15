@@ -76,22 +76,22 @@ class Runner:
         # {category: {name: func}}
         self._test_items: dict[str, dict[str, TestItem]] = defaultdict(dict)
 
-        for rt in load_model_tests(data_dir=str(test_data_dir), kind="node"):
+        for rt in load_model_tests(data_dir=test_data_dir, kind="node"):
             self._add_model_test(rt, "Node")
 
-        for rt in load_model_tests(data_dir=str(test_data_dir), kind="real"):
+        for rt in load_model_tests(data_dir=test_data_dir, kind="real"):
             self._add_model_test(rt, "Real")
 
-        for rt in load_model_tests(data_dir=str(test_data_dir), kind="simple"):
+        for rt in load_model_tests(data_dir=test_data_dir, kind="simple"):
             self._add_model_test(rt, "Simple")
 
         for ct in load_model_tests(
-            data_dir=str(test_data_dir), kind="pytorch-converted"
+            data_dir=test_data_dir, kind="pytorch-converted"
         ):
             self._add_model_test(ct, "PyTorchConverted")
 
         for ot in load_model_tests(
-            data_dir=str(test_data_dir), kind="pytorch-operator"
+            data_dir=test_data_dir, kind="pytorch-operator"
         ):
             self._add_model_test(ot, "PyTorchOperator")
 

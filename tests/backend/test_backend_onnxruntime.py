@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import platform
 import unittest
-from pathlib import Path
+import pathlib
 from typing import Any
 
 import numpy
@@ -27,7 +27,7 @@ except ImportError:
     ort: Any = None  # type: ignore[no-redef]
     ort_version: Any = None  # type: ignore[no-redef]
 
-TEST_DATA_DIR = Path(__file__).parent.parent.parent / "onnx/backend/test/data"
+TEST_DATA_DIR = pathlib.Path(__file__).parent.parent.parent / "onnx/backend/test/data"
 
 # The following just executes a backend based on InferenceSession through the backend test
 
