@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-from typing import IO, Any, Dict, List, Sequence
 import pathlib
+from typing import IO, Any, Dict, List, Sequence
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets

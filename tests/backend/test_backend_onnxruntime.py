@@ -4,9 +4,9 @@
 
 from __future__ import annotations
 
+import pathlib
 import platform
 import unittest
-import pathlib
 from typing import Any
 
 import numpy

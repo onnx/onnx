@@ -85,14 +85,10 @@ class Runner:
         for rt in load_model_tests(data_dir=test_data_dir, kind="simple"):
             self._add_model_test(rt, "Simple")
 
-        for ct in load_model_tests(
-            data_dir=test_data_dir, kind="pytorch-converted"
-        ):
+        for ct in load_model_tests(data_dir=test_data_dir, kind="pytorch-converted"):
             self._add_model_test(ct, "PyTorchConverted")
 
-        for ot in load_model_tests(
-            data_dir=test_data_dir, kind="pytorch-operator"
-        ):
+        for ot in load_model_tests(data_dir=test_data_dir, kind="pytorch-operator"):
             self._add_model_test(ot, "PyTorchOperator")
 
     def _get_test_case(self, name: str) -> type[unittest.TestCase]:
