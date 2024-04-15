@@ -1075,13 +1075,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 const char* Transpose_doc = R"DOC(
-Transpose the input tensor similar to numpy.transpose. The attribute `perm`
-must be a permutation of the dimensions of the input tensor. Axis `i` of the
-output tensor corresponds to the axis `perm[i]` of the input tensor.
+Returns a transpose of the input tensor. (Similar to 1numpy.transpose1).
+The optional attribute `perm` must be a permutation of the dimensions of
+the input tensor. Axis `i` of the output tensor corresponds to the axis
+`perm[i]` of the input tensor.
 For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 1, 3).
 When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
-the output shape will be (2, 3, 1). 
+the output shape will be (2, 3, 1).
+If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
+where `n` is the rank of the input tensor.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
