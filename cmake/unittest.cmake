@@ -24,13 +24,9 @@ function(AddTest)
 
   add_executable(${_UT_TARGET} ${_UT_SOURCES})
   add_dependencies(${_UT_TARGET} onnx onnx_proto)
-  if(NOT GTest_FOUND)
-    add_dependencies(${_UT_TARGET} googletest)
-  endif()
 
   target_include_directories(${_UT_TARGET}
-                             PUBLIC ${googletest_INCLUDE_DIRS}
-                                    ${ONNX_INCLUDE_DIRS}
+                             PUBLIC ${ONNX_INCLUDE_DIRS}
                                     ${PROTOBUF_INCLUDE_DIRS}
                                     ${ONNX_ROOT}
                                     ${CMAKE_CURRENT_BINARY_DIR})
@@ -56,9 +52,9 @@ function(AddTest)
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
                                  /wd4244 # 'argument': conversion from 'google::
-                                         # protobuf::uint64' to 'int', possible 
+                                         # protobuf::uint64' to 'int', possible
                                          # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int', 
+                                 /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  /wd4996 # The second parameter is ignored.
                            )
