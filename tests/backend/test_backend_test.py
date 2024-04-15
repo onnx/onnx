@@ -4,9 +4,9 @@
 
 import itertools
 import os
+import pathlib
 import platform
 import unittest
-from pathlib import Path
 from typing import Any, Optional, Sequence, Tuple
 
 import numpy
@@ -30,7 +30,7 @@ from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 # We don't enable report in this test because the report collection logic itself
 # fails when models are mal-formed.
 
-TEST_DATA_DIR = Path(__file__).parent.parent.parent / "onnx/backend/test/data"
+_TEST_DATA_DIR = pathlib.Path(__file__).parent.parent.parent / "onnx/backend/test/data"
 
 
 class DummyBackend(onnx.backend.base.Backend):
@@ -115,7 +115,7 @@ test_kwargs = {
 
 backend_test = onnx.backend.test.BackendTest(
     DummyBackend,
-    test_data_dir=TEST_DATA_DIR,
+    test_data_dir=_TEST_DATA_DIR,
     parent_module=__name__,
     test_kwargs=test_kwargs,
 )

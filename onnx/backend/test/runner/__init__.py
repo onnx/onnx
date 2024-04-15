@@ -58,7 +58,7 @@ class Runner:
     def __init__(
         self,
         backend: type[Backend],
-        test_data_dir: Path,
+        test_data_dir: str | os.PathLike,
         parent_module: str | None = None,
         test_kwargs: dict | None = None,
     ) -> None:

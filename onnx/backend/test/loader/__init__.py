@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import json
 import os
@@ -10,7 +11,7 @@ from onnx.backend.test.case.test_case import TestCase
 
 
 def load_model_tests(
-    data_dir: str,
+    data_dir: str | os.PathLike,
     kind: Optional[str] = None,
 ) -> List[TestCase]:
     """Load model test cases from on-disk data files."""
