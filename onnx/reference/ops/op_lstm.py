@@ -1,9 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Tuple
+from __future__ import annotations
 
 import numpy as np
 
@@ -35,7 +33,7 @@ class CommonLSTM(OpRun):
         C_0: np.ndarray,
         P: np.ndarray,
         num_directions: int,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]

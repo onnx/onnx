@@ -9,6 +9,7 @@
 
     python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
 """
+from __future__ import annotations
 
 import itertools
 import math
@@ -19,7 +20,7 @@ from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import numpy as np
 import parameterized
@@ -199,7 +200,7 @@ def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  
 
 def im2col(
     img: np.ndarray,
-    kernel_shape: Tuple[int, ...],
+    kernel_shape: tuple[int, ...],
     dilations: Sequence[int],
     pads: Sequence[int],
     strides: Sequence[int],
@@ -1622,10 +1623,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                     }
                     expected = sess1.run(None, feeds)[0]
                     got = sess2.run(None, feeds)[0]
-                    try:
-                        assert_allclose(expected, got)
-                    except AssertionError as e:
-                        raise e
+                    assert_allclose(expected, got)
                 with self.subTest(w="3x3", i=i, j=j):
                     w = np.zeros((1, 1, 3, 3), dtype=np.uint8)
                     w[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 128)
@@ -5673,7 +5671,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         ref = ReferenceEvaluator(model)
-        data = np.array(range(0, 7), dtype=np.float32)
+        data = np.array(range(7), dtype=np.float32)
         cast_from_np = custom.uint4 if cast_from == TensorProto.UINT4 else custom.int4
         data = data.astype(cast_from_np)
         expected1 = np.array(

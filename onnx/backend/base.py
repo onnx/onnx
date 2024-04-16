@@ -1,10 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 from collections import namedtuple
-from typing import Any, Dict, NewType, Optional, Sequence, Tuple, Type
+from typing import Any, NewType, Sequence
 
 import numpy
 
@@ -37,7 +37,7 @@ class Device:
 
 def namedtupledict(
     typename: str, field_names: Sequence[str], *args: Any, **kwargs: Any
-) -> Type[Tuple[Any, ...]]:
+) -> type[tuple[Any, ...]]:
     field_names_map = {n: i for i, n in enumerate(field_names)}
     # Some output names are invalid python identifier, e.g. "0"
     kwargs.setdefault("rename", True)
@@ -58,7 +58,7 @@ class BackendRep:
     BackendRep to retrieve the corresponding results.
     """
 
-    def run(self, inputs: Any, **kwargs: Any) -> Tuple[Any, ...]:
+    def run(self, inputs: Any, **kwargs: Any) -> tuple[Any, ...]:
         """Abstract function."""
         return (None,)
 
@@ -84,7 +84,7 @@ class Backend:
     @classmethod
     def prepare(
         cls, model: ModelProto, device: str = "CPU", **kwargs: Any
-    ) -> Optional[BackendRep]:
+    ) -> BackendRep | None:
         # TODO Remove Optional from return type
         onnx.checker.check_model(model)
         return None
@@ -92,7 +92,7 @@ class Backend:
     @classmethod
     def run_model(
         cls, model: ModelProto, inputs: Any, device: str = "CPU", **kwargs: Any
-    ) -> Tuple[Any, ...]:
+    ) -> tuple[Any, ...]:
         backend = cls.prepare(model, device, **kwargs)
         assert backend is not None
         return backend.run(inputs)
@@ -103,9 +103,9 @@ class Backend:
         node: NodeProto,
         inputs: Any,
         device: str = "CPU",
-        outputs_info: Optional[Sequence[Tuple[numpy.dtype, Tuple[int, ...]]]] = None,
-        **kwargs: Dict[str, Any],
-    ) -> Optional[Tuple[Any, ...]]:
+        outputs_info: Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None = None,
+        **kwargs: dict[str, Any],
+    ) -> tuple[Any, ...] | None:
         """Simple run one operator and return the results.
 
         Args:

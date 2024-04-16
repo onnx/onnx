@@ -1,9 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Optional, Tuple
+from __future__ import annotations
 
 import numpy as np
 
@@ -18,8 +16,8 @@ class Shape_1(OpRun):
 class Shape_15(Shape_1):
     @staticmethod
     def _interval(
-        n: int, start: Optional[int], end: Optional[int]
-    ) -> Optional[Tuple[int, int]]:
+        n: int, start: int | None, end: int | None
+    ) -> tuple[int, int] | None:
         if start == 0:
             if end is None or np.isnan(end):
                 return None

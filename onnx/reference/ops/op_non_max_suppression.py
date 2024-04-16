@@ -1,10 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import dataclasses
-from typing import Optional, Tuple
 
 import numpy as np
 
@@ -13,13 +12,13 @@ from onnx.reference.op_run import OpRun
 
 @dataclasses.dataclass
 class PrepareContext:
-    boxes_data_: Optional[np.ndarray] = None
+    boxes_data_: np.ndarray | None = None
     boxes_size_: int = 0
-    scores_data_: Optional[np.ndarray] = None
+    scores_data_: np.ndarray | None = None
     scores_size_: int = 0
-    max_output_boxes_per_class_: Optional[np.ndarray] = None
-    score_threshold_: Optional[np.ndarray] = None
-    iou_threshold_: Optional[np.ndarray] = None
+    max_output_boxes_per_class_: np.ndarray | None = None
+    score_threshold_: np.ndarray | None = None
+    iou_threshold_: np.ndarray | None = None
     num_batches_: int = 0
     num_classes_: int = 0
     num_boxes_: int = 0
@@ -36,7 +35,7 @@ class SelectedIndex:
         self.box_index_ = box_index
 
 
-def max_min(lhs: float, rhs: float) -> Tuple[float, float]:
+def max_min(lhs: float, rhs: float) -> tuple[float, float]:
     if lhs >= rhs:
         return rhs, lhs
     return lhs, rhs
@@ -133,7 +132,7 @@ class NonMaxSuppression(OpRun):
         max_output_boxes_per_class: int,
         iou_threshold: float,
         score_threshold: float,
-    ) -> Tuple[int, float, float]:
+    ) -> tuple[int, float, float]:
         if pc.max_output_boxes_per_class_ is not None:
             max_output_boxes_per_class = max(pc.max_output_boxes_per_class_[0], 0)
 

@@ -130,6 +130,7 @@ lint.select = [
     "F", # Pyflakes
     "FA", # flake8-future-annotations
     "G", # flake8-logging-format
+    "I002", # isort: required imports
     "ISC", # flake8-implicit-str-concat
     "LOG", # flake8-logging
     "N", # pep8-naming
@@ -163,6 +164,7 @@ lint.ignore = [
     "PLR0912", # Too many branches
     "PLR0913", # Too many arguments to function call
     "PLR0915", # Too many statements
+    "PYI011", # Allow protobuf enums as defaults to function arguments
     "PYI021", # Allow docstrings in pyi files
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "SIM102", # We don't perfer always combining if branches
@@ -185,6 +187,9 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.

@@ -1,12 +1,13 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 import argparse
 import gc
 import os
 import sys
 import time
-from typing import List
 
 import config
 
@@ -16,7 +17,7 @@ from onnx import hub, version_converter
 MIN_SHAPE_INFERENCE_OPSET = 4
 
 
-def skip_model(error_message: str, skip_list: List[str], model_name: str):
+def skip_model(error_message: str, skip_list: list[str], model_name: str):
     print(error_message)
     skip_list.append(model_name)
 
@@ -38,7 +39,7 @@ def main():
     # run checker on each model
     failed_models = []
     failed_messages = []
-    skip_models: List[str] = []
+    skip_models: list[str] = []
     for m in model_list:
         start = time.time()
         model_name = m.model

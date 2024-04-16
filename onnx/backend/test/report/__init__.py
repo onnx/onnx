@@ -1,8 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Dict, Sequence
+from typing import Any, Sequence
 
 import _pytest
 import pytest
@@ -10,7 +11,7 @@ import pytest
 from onnx.backend.test.report.coverage import Coverage
 
 _coverage = Coverage()
-_marks: Dict[str, Sequence[Any]] = {}
+_marks: dict[str, Sequence[Any]] = {}
 
 
 def _add_mark(mark: Any, bucket: str) -> None:

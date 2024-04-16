@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -24,7 +24,7 @@ def multiclass_probability(k, R):
     P = np.empty((k,), dtype=R.dtype)
     eps = 0.005 / k
 
-    for t in range(0, k):
+    for t in range(k):
         P[t] = 1.0 / k
         Q[t, t] = (R[:t, t] ** 2).sum()
         Q[t, :t] = Q[:t, t]
@@ -38,7 +38,7 @@ def multiclass_probability(k, R):
         pQp = (P * Qp).sum()
 
         max_error = 0
-        for t in range(0, k):
+        for t in range(k):
             error = np.abs(Qp[t] - pQp)
             if error > max_error:
                 max_error = error

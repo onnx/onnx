@@ -3,9 +3,10 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import os
-from typing import IO, Any, Dict, List, Sequence
+from typing import IO, Any, Sequence
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
@@ -155,8 +156,8 @@ def gen_model_test_coverage(
         schema_dict[schema.name] = schema
     # Load models from each model test using Runner.prepare_model_data
     # Need to grab associated nodes
-    attrs: Dict[str, Dict[str, List[Any]]] = {}
-    model_paths: List[Any] = []
+    attrs: dict[str, dict[str, list[Any]]] = {}
+    model_paths: list[Any] = []
     for rt in load_model_tests(kind="real"):
         if rt.url.startswith("onnx/backend/test/data/light/"):
             # testing local files

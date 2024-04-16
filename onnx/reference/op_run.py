@@ -735,7 +735,7 @@ class OpFunctionContextDependant(OpFunction):
         for t in inputs:
             try:
                 ttype = np_dtype_to_tensor_dtype(t.dtype)
-            except KeyError as e:
+            except KeyError:
                 if t.dtype == float8e4m3fn:
                     ttype = TensorProto.FLOAT8E4M3FN  # type: ignore[attr-defined]
                 elif t.dtype == float8e4m3fnuz:
@@ -751,7 +751,7 @@ class OpFunctionContextDependant(OpFunction):
                 elif t.dtype == int4:
                     ttype = TensorProto.INT4  # type: ignore[attr-defined]
                 else:
-                    raise e
+                    raise
             types.append(make_tensor_type_proto(ttype, t.shape))
         cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)

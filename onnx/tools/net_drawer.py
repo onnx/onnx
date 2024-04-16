@@ -13,11 +13,12 @@
 # with the graphviz `dot` utility, like so:
 #
 #   $ dot -Tsvg my_output.dot -o my_output.svg
+from __future__ import annotations
 
 import argparse
 import json
 from collections import defaultdict
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable
 
 import pydot
 
@@ -70,16 +71,16 @@ def GetOpNodeProducer(  # noqa: N802
 
 def GetPydotGraph(  # noqa: N802
     graph: GraphProto,
-    name: Optional[str] = None,
+    name: str | None = None,
     rankdir: str = "LR",
-    node_producer: Optional[_NodeProducer] = None,
+    node_producer: _NodeProducer | None = None,
     embed_docstring: bool = False,
 ) -> pydot.Dot:
     if node_producer is None:
         node_producer = GetOpNodeProducer(embed_docstring=embed_docstring, **OP_STYLE)
     pydot_graph = pydot.Dot(name, rankdir=rankdir)
-    pydot_nodes: Dict[str, pydot.Node] = {}
-    pydot_node_counts: Dict[str, int] = defaultdict(int)
+    pydot_nodes: dict[str, pydot.Node] = {}
+    pydot_node_counts: dict[str, int] = defaultdict(int)
     for op_id, op in enumerate(graph.node):
         op_node = node_producer(op, op_id)
         pydot_graph.add_node(op_node)

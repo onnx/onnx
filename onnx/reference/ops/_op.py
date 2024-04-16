@@ -1,8 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 
@@ -92,8 +93,6 @@ class OpRunBinary(OpRun):
 class OpRunBinaryComparison(OpRunBinary):
     """Ancestor to all binary operators in this subfolder comparing tensors."""
 
-    pass
-
 
 class OpRunBinaryNum(OpRunBinary):
     """Ancestor to all binary operators in this subfolder.
@@ -119,7 +118,7 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
     """
 
     def __init__(
-        self, numpy_fct: Any, onnx_node: NodeProto, run_params: Dict[str, Any]
+        self, numpy_fct: Any, onnx_node: NodeProto, run_params: dict[str, Any]
     ):
         OpRunBinaryNum.__init__(self, onnx_node, run_params)
         self.numpy_fct = numpy_fct
@@ -134,7 +133,7 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
     It must have a parameter *axes*.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+    def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "axes"):
             if isinstance(self.axes, np.ndarray):  # type: ignore
