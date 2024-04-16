@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -28,10 +28,10 @@ def gather_numpy(self: np.ndarray, dim: int, index: np.ndarray) -> np.ndarray:
 
     try:
         gathered = np.choose(index_swaped, data_swaped, mode="wrap")
-    except ValueError as e:
+    except ValueError:
         if len(index_swaped.shape) == 2 and len(data_swaped.shape) == 2:
             return gather_numpy_2(self, index)
-        raise e  # pragma: no cover
+        raise  # pragma: no cover
 
     return np.swapaxes(gathered, 0, dim)
 

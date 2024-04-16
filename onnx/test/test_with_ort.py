@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # This file is for testing ONNX with ONNX Runtime
 # Create a general scenario to use ONNX Runtime with ONNX
+from __future__ import annotations
 
 import unittest
 

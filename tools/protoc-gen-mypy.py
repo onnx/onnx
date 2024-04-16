@@ -18,11 +18,12 @@
 
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
+from __future__ import annotations
 
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Generator, List, Optional, Set, cast
+from typing import Any, Callable, Generator, cast
 
 try:
     import google.protobuf.descriptor_pb2 as d_typed
@@ -46,10 +47,10 @@ class Descriptors:
     def __init__(self, request: plugin.CodeGeneratorRequest) -> None:
         files = {f.name: f for f in request.proto_file}
         to_generate = {n: files[n] for n in request.file_to_generate}
-        self.files: Dict[str, d.FileDescriptorProto] = files
-        self.to_generate: Dict[str, d.FileDescriptorProto] = to_generate
-        self.messages: Dict[str, d.DescriptorProto] = {}
-        self.message_to_fd: Dict[str, d.FileDescriptorProto] = {}
+        self.files: dict[str, d.FileDescriptorProto] = files
+        self.to_generate: dict[str, d.FileDescriptorProto] = to_generate
+        self.messages: dict[str, d.DescriptorProto] = {}
+        self.message_to_fd: dict[str, d.FileDescriptorProto] = {}
 
         def _add_enums(
             enums: d.EnumDescriptorProto, prefix: str, fd: d.FileDescriptorProto
@@ -79,14 +80,14 @@ class PkgWriter:
     def __init__(self, fd: d.FileDescriptorProto, descriptors: Descriptors) -> None:
         self.fd = fd
         self.descriptors = descriptors
-        self.lines: List[str] = []
+        self.lines: list[str] = []
         self.indent = ""
 
         # dictionary of x->y for `from {x} import {y}`
-        self.imports: Dict[str, Set[str]] = defaultdict(set)
-        self.locals: Set[str] = set()
+        self.imports: dict[str, set[str]] = defaultdict(set)
+        self.locals: set[str] = set()
 
-    def _import(self, path: str, name: str, import_as: Optional[str] = None) -> str:
+    def _import(self, path: str, name: str, import_as: str | None = None) -> str:
         """Imports a stdlib path and returns a handle to it
         eg. self._import("typing", "Optional") -> "Optional"
         """
@@ -139,7 +140,7 @@ class PkgWriter:
     def _write_line(self, line: str, *args: str) -> None:
         self.lines.append(self.indent + line.format(*args))
 
-    def write_enums(self, enums: List[d.EnumDescriptorProto]) -> None:
+    def write_enums(self, enums: list[d.EnumDescriptorProto]) -> None:
         line = self._write_line
         for enum in enums:
             line("class {}(int):", enum.name)
@@ -169,7 +170,7 @@ class PkgWriter:
                 )
             line("")
 
-    def write_messages(self, messages: List[d.DescriptorProto], prefix: str) -> None:
+    def write_messages(self, messages: list[d.DescriptorProto], prefix: str) -> None:
         line = self._write_line
         message_class = self._import("google.protobuf.message", "Message")
 
@@ -330,7 +331,7 @@ class PkgWriter:
                 )
 
     def python_type(self, field: d.FieldDescriptorProto) -> str:
-        mapping: Dict[int, Callable[[], str]] = {
+        mapping: dict[int, Callable[[], str]] = {
             d.FieldDescriptorProto.TYPE_DOUBLE: lambda: "float",
             d.FieldDescriptorProto.TYPE_FLOAT: lambda: "float",
             d.FieldDescriptorProto.TYPE_INT64: lambda: "int",
@@ -368,7 +369,7 @@ class PkgWriter:
             else:
                 imports.append(f"from {pkg} import (")
             for item in sorted(items):
-                imports.append(f"    {item},")
+                imports.append(f"    {item},")  # noqa: PERF401
             imports.append(")\n")
 
         return "\n".join(imports + self.lines)

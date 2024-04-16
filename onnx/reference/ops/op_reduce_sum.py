@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -28,7 +28,7 @@ class ReduceSum_13(OpRunReduceNumpy):
             if keepdims == 0 and not isinstance(res, np.ndarray):
                 # The runtime must return a numpy array of a single float.
                 res = np.array(res)
-            return (res,)  # type: ignore
+            return (res,)  # type: ignore  # noqa: TRY300
         except TypeError as e:
             raise TypeError(
                 f"Unable to reduce shape {x.shape!r} with axes={axes!r} and keepdims={keepdims}."

@@ -68,7 +68,7 @@ def reshape_input(
     if (
         shape[axis] != value.shape[axis]
     ):  # block_size does not divide x, handle the remainder block
-        value = value.take(indices=range(0, shape[axis]), axis=axis)
+        value = value.take(indices=range(shape[axis]), axis=axis)
     if value.shape != shape:
         raise ValueError(
             "Invalid shapes for Blocked Quantization. Input 2 shape should identical to Input 1 shape, except for one dimension, in which blocking is performed"

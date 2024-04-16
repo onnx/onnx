@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import warnings
 from typing import Any, Dict, NamedTuple, Union, cast
@@ -93,7 +94,7 @@ TENSOR_TYPE_MAP = {
 class DeprecatedWarningDict(dict):  # type: ignore
     def __init__(
         self,
-        dictionary: Dict[int, Union[int, str, np.dtype]],
+        dictionary: dict[int, int | str | np.dtype],
         original_function: str,
         future_function: str = "",
     ) -> None:
@@ -109,7 +110,7 @@ class DeprecatedWarningDict(dict):  # type: ignore
             and self._future_function == other._future_function
         )
 
-    def __getitem__(self, key: Union[int, str, np.dtype]) -> Any:
+    def __getitem__(self, key: int | str | np.dtype) -> Any:
         if not self._future_function:
             warnings.warn(
                 str(
