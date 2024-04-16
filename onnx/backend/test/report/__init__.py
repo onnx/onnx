@@ -1,8 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Dict, Sequence
+from typing import Any, Sequence
 
 import _pytest
 import pytest
@@ -10,7 +11,7 @@ import pytest
 from onnx.backend.test.report.coverage import Coverage
 
 _coverage = Coverage()
-_marks: Dict[str, Sequence[Any]] = {}
+_marks: dict[str, Sequence[Any]] = {}
 
 
 def _add_mark(mark: Any, bucket: str) -> None:
@@ -37,7 +38,7 @@ def pytest_runtest_logreport(report: Any) -> None:
 
 @pytest.hookimpl(trylast=True)  # type: ignore
 def pytest_terminal_summary(
-    terminalreporter: _pytest.terminal.TerminalReporter, exitstatus: int
+    terminalreporter: _pytest.terminal.TerminalReporter, exitstatus: int  # noqa: ARG001
 ) -> None:
     for mark in _marks.values():
         _add_mark(mark, "loaded")

@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -21,6 +21,6 @@ class _CommonWindow(OpRun):
         return ni, N_1
 
     @staticmethod
-    def _end(size, res, output_datatype):  # type: ignore
+    def _end(size, res, output_datatype):  # type: ignore  # noqa: ARG004
         dtype = tensor_dtype_to_np_dtype(output_datatype)
         return (res.astype(dtype),)

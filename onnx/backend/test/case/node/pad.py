@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -18,7 +19,7 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ign
     num_axes = len(axes)
 
     if num_axes * 2 != raw_pads.size:
-        raise Exception("The number of elements in raw_pads should be 2 * num_axes")
+        raise ValueError("The number of elements in raw_pads should be 2 * num_axes")
 
     pad_width = []
     for _ in range(input_rank):

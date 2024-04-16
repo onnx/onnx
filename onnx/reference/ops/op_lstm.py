@@ -1,9 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Tuple
+from __future__ import annotations
 
 import numpy as np
 
@@ -35,7 +33,7 @@ class CommonLSTM(OpRun):
         C_0: np.ndarray,
         P: np.ndarray,
         num_directions: int,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]
@@ -85,14 +83,14 @@ class CommonLSTM(OpRun):
         initial_h=None,
         initial_c=None,
         P=None,
-        activation_alpha=None,
-        activation_beta=None,
-        activations=None,
-        clip=None,
-        direction=None,
+        activation_alpha=None,  # noqa: ARG002
+        activation_beta=None,  # noqa: ARG002
+        activations=None,  # noqa: ARG002
+        clip=None,  # noqa: ARG002
+        direction=None,  # noqa: ARG002
         hidden_size=None,
-        input_forget=None,
-        layout=None,
+        input_forget=None,  # noqa: ARG002
+        layout=None,  # noqa: ARG002
     ):
         # TODO: support overridden attributes.
         n_gates = 4
