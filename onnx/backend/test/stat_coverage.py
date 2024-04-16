@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import os
 import pathlib
-from typing import IO, Any, Dict, List, Sequence
+from typing import IO, Any, Sequence
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
@@ -154,7 +154,7 @@ def gen_model_test_coverage(
     # Need to grab associated nodes
     attrs: dict[str, dict[str, list[Any]]] = {}
     model_paths: list[Any] = []
-    
+
     for rt in load_model_tests(
         data_dir=pathlib.Path(__file__).parent / "data", kind="real"
     ):
