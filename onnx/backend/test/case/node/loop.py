@@ -1,8 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 import numpy as np
 
@@ -250,7 +251,7 @@ class Loop(Base):
         )
 
         trip_count = np.array(5).astype(np.int64)
-        seq_empty: List[Any] = []
+        seq_empty: list[Any] = []
         seq_res = [x[: int(i)] for i in x]
         cond = np.array(1).astype(bool)
         expect(
@@ -441,7 +442,7 @@ class Loop(Base):
         trip_count = np.array(5).astype(np.int64)
         cond = np.array(1).astype(bool)
         seq_res = compute_loop_outputs(x, [x0], trip_count)
-        opt_seq_in: List[Any] = [x0]
+        opt_seq_in: list[Any] = [x0]
         expect(
             node,
             inputs=[trip_count, cond, opt_seq_in],

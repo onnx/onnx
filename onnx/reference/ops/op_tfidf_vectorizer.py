@@ -1,10 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 from enum import IntEnum
-from typing import List
 
 import numpy as np
 
@@ -183,7 +182,7 @@ class TfIdfVectorizer(OpRun):
             ngram_size += 1
 
     def increment_count(
-        self, ngram_id: int, row_num: int, frequencies: List[int]
+        self, ngram_id: int, row_num: int, frequencies: list[int]
     ) -> None:
         ngram_id -= 1
         # assert(ngram_id < ngram_indexes_.size());
@@ -191,8 +190,8 @@ class TfIdfVectorizer(OpRun):
         # assert(static_cast<size_t>(output_idx) < frequencies.size());
         frequencies[output_idx] += 1
 
-    def output_result(self, B: int, frequencies: List[int]) -> np.ndarray:
-        l_output_dims: List[int] = []
+    def output_result(self, B: int, frequencies: list[int]) -> np.ndarray:
+        l_output_dims: list[int] = []
         if B == 0:
             l_output_dims.append(self.output_size_)
             B = 1
@@ -243,16 +242,16 @@ class TfIdfVectorizer(OpRun):
         X: np.ndarray,
         row_num: int,
         row_size: int,
-        frequencies: List[int],
+        frequencies: list[int],
         max_gram_length=None,
         max_skip_count=None,
         min_gram_length=None,
-        mode=None,
-        ngram_counts=None,
-        ngram_indexes=None,
-        pool_int64s=None,
-        pool_strings=None,
-        weights=None,
+        mode=None,  # noqa: ARG002
+        ngram_counts=None,  # noqa: ARG002
+        ngram_indexes=None,  # noqa: ARG002
+        pool_int64s=None,  # noqa: ARG002
+        pool_strings=None,  # noqa: ARG002
+        weights=None,  # noqa: ARG002
     ) -> None:
         if len(X.shape) > 1:
             X_flat = X[row_num]

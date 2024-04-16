@@ -4,6 +4,7 @@
 
 # NOTE: Put all metadata in pyproject.toml.
 # Set the environment variable `ONNX_PREVIEW_BUILD=1` to build the dev preview release.
+from __future__ import annotations
 
 import contextlib
 import datetime

@@ -10,6 +10,8 @@ with `_`, it means the implementation is valid for every opset.
 The operator may have been updated to support more types but that
 did not change the implementation.
 """
+from __future__ import annotations
+
 import textwrap
 from typing import Any, Dict, List
 from typing import Optional as TOptional
@@ -240,19 +242,19 @@ from onnx.reference.ops.op_where import Where
 from onnx.reference.ops.op_xor import Xor
 
 
-def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRun]]:
+def _build_registered_operators() -> dict[str, dict[int | None, OpRun]]:
     return build_registered_operators_any_domain(globals().copy())
 
 
 def load_op(
     domain: str,
     op_type: str,
-    version: Union[None, int] = None,
+    version: None | int = None,
     custom: Any = None,
-    node: Union[None, NodeProto] = None,
-    input_types: Union[None, List[TypeProto]] = None,
+    node: None | NodeProto = None,
+    input_types: None | list[TypeProto] = None,
     expand: bool = False,
-    evaluator_cls: TOptional[type] = None,
+    evaluator_cls: type | None = None,
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -363,4 +365,4 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRun]]] = None
+_registered_operators: dict[str, dict[int | None, OpRun]] | None = None

@@ -1,14 +1,13 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
-from typing import Union
+from __future__ import annotations
 
 import onnx
 import onnx.onnx_cpp2py_export.printer as C  # noqa: N812
 
 
-def to_text(proto: Union[onnx.ModelProto, onnx.FunctionProto, onnx.GraphProto]) -> str:
+def to_text(proto: onnx.ModelProto | onnx.FunctionProto | onnx.GraphProto) -> str:
     if isinstance(proto, onnx.ModelProto):
         return C.model_to_text(proto.SerializeToString())
     if isinstance(proto, onnx.FunctionProto):

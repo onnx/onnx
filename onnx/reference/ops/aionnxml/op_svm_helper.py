@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 from typing import Any
 
@@ -23,7 +23,7 @@ class SVMAttributes:
     def __str__(self) -> str:
         rows = ["Attributes"]
         for name in self._names:
-            rows.append(f"  {name}={getattr(self, name)}")
+            rows.append(f"  {name}={getattr(self, name)}")  # noqa: PERF401
         return "\n".join(rows)
 
 

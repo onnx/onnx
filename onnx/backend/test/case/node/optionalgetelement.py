@@ -1,8 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -11,7 +12,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def optional_get_element_reference_implementation(optional: Optional[Any]) -> Any:
+def optional_get_element_reference_implementation(optional: Any | None) -> Any:
     assert optional is not None
     return optional
 
