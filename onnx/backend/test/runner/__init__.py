@@ -43,7 +43,7 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
             for i in range(1, times + 1):
                 try:
                     return func(*args, **kwargs)
-                except Exception:
+                except Exception:  # noqa: BLE001, PERF203
                     print(f"{i} times tried")
                     if i == times:
                         raise
@@ -200,7 +200,7 @@ class Runner:
         for i in range(len(outputs)):
             if isinstance(outputs[i], (list, tuple)):
                 if not isinstance(ref_outputs[i], (list, tuple)):
-                    raise AssertionError(
+                    raise AssertionError(  # noqa: TRY004
                         f"Unexpected type {type(outputs[i])} for outputs[{i}]. Expected "
                         f"type is {type(ref_outputs[i])} (known test={model_dir or '?'!r})."
                     )
@@ -228,7 +228,7 @@ class Runner:
     @classmethod
     @retry_execute(3)
     def download_model(
-        cls, model_test: TestCase, model_dir: str, models_dir: str
+        cls, model_test: TestCase, model_dir: str, models_dir: str  # noqa: ARG003
     ) -> None:
         # On Windows, NamedTemporaryFile can not be opened for a
         # second time
@@ -344,7 +344,7 @@ class Runner:
         # never loaded if the test skipped
         model_marker: list[ModelProto | NodeProto | None] = [None]
 
-        def run(test_self: Any, device: str, **kwargs) -> None:
+        def run(test_self: Any, device: str, **kwargs) -> None:  # noqa: ARG001
             if model_test.url is not None and model_test.url.startswith(
                 "onnx/backend/test/data/light/"
             ):

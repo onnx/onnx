@@ -1,12 +1,14 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import pathlib
 import subprocess
 import sys
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from pathlib import Path
+from typing import Any, Callable, Sequence
 
 import numpy as np
 
@@ -31,7 +33,7 @@ _DiffOpTypes = None
 def _rename_edges_helper(
     internal_node: NodeProto,
     rename_helper: Callable[[str], str],
-    attribute_map: Dict[str, AttributeProto],
+    attribute_map: dict[str, AttributeProto],
     prefix: str,
 ) -> NodeProto:
     new_node = NodeProto()
@@ -91,7 +93,7 @@ def _rename_edges_helper(
 # FIXME(TMVector): Any reason we can't get rid of this and use the C++ helper directly?
 def function_expand_helper(
     node: NodeProto, function_proto: FunctionProto, op_prefix: str
-) -> List[NodeProto]:
+) -> list[NodeProto]:
     io_names_map = {}
     attribute_map = {a.name: a for a in node.attribute}
 
@@ -125,8 +127,8 @@ def function_expand_helper(
 
 
 def function_testcase_helper(
-    node: NodeProto, input_types: List[TypeProto], name: str
-) -> Tuple[List[Tuple[List[NodeProto], Any]], int]:
+    node: NodeProto, input_types: list[TypeProto], name: str
+) -> tuple[list[tuple[list[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
     schema = onnx.defs.get_schema(test_op, domain=node.domain)
@@ -166,9 +168,9 @@ def function_testcase_helper(
 
 
 def _extract_value_info(
-    input: Union[List[Any], np.ndarray, None],
+    input: list[Any] | np.ndarray | None,
     name: str,
-    type_proto: Optional[TypeProto] = None,
+    type_proto: TypeProto | None = None,
 ) -> onnx.ValueInfoProto:
     if type_proto is None:
         if input is None:
@@ -232,8 +234,8 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # the latest opset vesion that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
-    inputs: Sequence[Union[np.ndarray, TensorProto]],
-    outputs: Sequence[Union[np.ndarray, TensorProto]],
+    inputs: Sequence[np.ndarray | TensorProto],
+    outputs: Sequence[np.ndarray | TensorProto],
     name: str,
     **kwargs: Any,
 ) -> None:
@@ -299,8 +301,8 @@ def expect(
     # Create list of types for node.input, filling a default TypeProto for missing inputs:
     # E.g. merge(["x", "", "y"], [x-value-info, y-value-info]) will return [x-type, default-type, y-type]
     def merge(
-        node_inputs: List[str], present_value_info: List[onnx.ValueInfoProto]
-    ) -> List[TypeProto]:
+        node_inputs: list[str], present_value_info: list[onnx.ValueInfoProto]
+    ) -> list[TypeProto]:
         if node_inputs:
             if node_inputs[0] != "":
                 return [
@@ -368,7 +370,7 @@ def expect(
         )
 
 
-def collect_testcases(op_type: str) -> List[TestCase]:
+def collect_testcases(op_type: str) -> list[TestCase]:
     """Collect node test cases"""
     # only keep those tests related to this operator
     global _TargetOpType  # noqa: PLW0603
@@ -378,7 +380,7 @@ def collect_testcases(op_type: str) -> List[TestCase]:
     return _NodeTestCases
 
 
-def collect_diff_testcases() -> List[TestCase]:
+def collect_diff_testcases() -> list[TestCase]:
     """Collect node test cases which are different from the main branch"""
     global _DiffOpTypes  # noqa: PLW0603
     _DiffOpTypes = get_diff_op_types()

@@ -3,6 +3,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import os
 import pathlib
@@ -151,8 +152,9 @@ def gen_model_test_coverage(
         schema_dict[schema.name] = schema
     # Load models from each model test using Runner.prepare_model_data
     # Need to grab associated nodes
-    attrs: Dict[str, Dict[str, List[Any]]] = {}
-    model_paths: List[Any] = []
+    attrs: dict[str, dict[str, list[Any]]] = {}
+    model_paths: list[Any] = []
+    
     for rt in load_model_tests(
         data_dir=pathlib.Path(__file__).parent / "data", kind="real"
     ):
@@ -249,7 +251,7 @@ def gen_model_test_coverage(
 
 
 def gen_overall_test_coverage(
-    schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool
+    schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool  # noqa: ARG001
 ) -> None:
     f.write("# Overall Test Coverage\n")
     f.write("## To be filled.\n")

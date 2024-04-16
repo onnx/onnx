@@ -1,9 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import sys
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 import numpy as np
 
@@ -18,7 +19,7 @@ def expect(
     model: ModelProto,
     inputs: Sequence[np.ndarray],
     outputs: Sequence[np.ndarray],
-    name: Optional[str] = None,
+    name: str | None = None,
 ) -> None:
     name = name or model.graph.name
     _SimpleModelTestCases.append(
@@ -40,7 +41,7 @@ def expect(
 BASE_URL = "onnx/backend/test/data/light/light_%s.onnx"
 
 
-def collect_testcases() -> List[TestCase]:
+def collect_testcases() -> list[TestCase]:
     """Collect model test cases defined in python/numpy code."""
     real_model_testcases = []
 

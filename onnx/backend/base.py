@@ -1,10 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 from collections import namedtuple
-from typing import Any, Dict, NewType, Optional, Sequence, Tuple, Type
+from typing import Any, NewType, Sequence
 
 import numpy
 
@@ -37,11 +37,11 @@ class Device:
 
 def namedtupledict(
     typename: str, field_names: Sequence[str], *args: Any, **kwargs: Any
-) -> Type[Tuple[Any, ...]]:
+) -> type[tuple[Any, ...]]:
     field_names_map = {n: i for i, n in enumerate(field_names)}
     # Some output names are invalid python identifier, e.g. "0"
     kwargs.setdefault("rename", True)
-    data = namedtuple(typename, field_names, *args, **kwargs)  # type: ignore
+    data = namedtuple(typename, field_names, *args, **kwargs)  # type: ignore  # noqa: PYI024
 
     def getitem(self: Any, key: Any) -> Any:
         if isinstance(key, str):
@@ -58,7 +58,7 @@ class BackendRep:
     BackendRep to retrieve the corresponding results.
     """
 
-    def run(self, inputs: Any, **kwargs: Any) -> Tuple[Any, ...]:
+    def run(self, inputs: Any, **kwargs: Any) -> tuple[Any, ...]:  # noqa: ARG002
         """Abstract function."""
         return (None,)
 
@@ -76,15 +76,15 @@ class Backend:
 
     @classmethod
     def is_compatible(
-        cls, model: ModelProto, device: str = "CPU", **kwargs: Any
+        cls, model: ModelProto, device: str = "CPU", **kwargs: Any  # noqa: ARG003
     ) -> bool:
         # Return whether the model is compatible with the backend.
         return True
 
     @classmethod
     def prepare(
-        cls, model: ModelProto, device: str = "CPU", **kwargs: Any
-    ) -> Optional[BackendRep]:
+        cls, model: ModelProto, device: str = "CPU", **kwargs: Any  # noqa: ARG003
+    ) -> BackendRep | None:
         # TODO Remove Optional from return type
         onnx.checker.check_model(model)
         return None
@@ -92,7 +92,7 @@ class Backend:
     @classmethod
     def run_model(
         cls, model: ModelProto, inputs: Any, device: str = "CPU", **kwargs: Any
-    ) -> Tuple[Any, ...]:
+    ) -> tuple[Any, ...]:
         backend = cls.prepare(model, device, **kwargs)
         assert backend is not None
         return backend.run(inputs)
@@ -101,11 +101,13 @@ class Backend:
     def run_node(
         cls,
         node: NodeProto,
-        inputs: Any,
-        device: str = "CPU",
-        outputs_info: Optional[Sequence[Tuple[numpy.dtype, Tuple[int, ...]]]] = None,
-        **kwargs: Dict[str, Any],
-    ) -> Optional[Tuple[Any, ...]]:
+        inputs: Any,  # noqa: ARG003
+        device: str = "CPU",  # noqa: ARG003
+        outputs_info: (  # noqa: ARG003
+            Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None
+        ) = None,
+        **kwargs: dict[str, Any],
+    ) -> tuple[Any, ...] | None:
         """Simple run one operator and return the results.
 
         Args:
@@ -130,7 +132,7 @@ class Backend:
         return None
 
     @classmethod
-    def supports_device(cls, device: str) -> bool:
+    def supports_device(cls, device: str) -> bool:  # noqa: ARG003
         """Checks whether the backend is compiled with particular device support.
         In particular it's used in the testing suite.
         """

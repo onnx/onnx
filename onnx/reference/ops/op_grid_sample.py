@@ -1,10 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numbers
-from typing import List
 
 import numpy as np
 
@@ -205,7 +204,7 @@ class GridSample(OpRun):
             return hi
         return val
 
-    def _pixel_at_ndarray(self, ndarray, x: List, border, padding_mode):  # type: ignore
+    def _pixel_at_ndarray(self, ndarray, x: list, border, padding_mode):  # type: ignore
         # boarder: [x_1_min, x_2_min, ..., x_1_max, x_2_max, ...]
         num_dims = ndarray.ndim
         assert num_dims == len(x) == int(len(border) / 2)

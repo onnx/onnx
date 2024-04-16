@@ -6,6 +6,7 @@
 This enables users to convert their models between different opsets within the
 default domain ("" or "ai.onnx").
 """
+from __future__ import annotations
 
 import onnx
 import onnx.onnx_cpp2py_export.version_converter as C  # noqa: N812
@@ -26,11 +27,11 @@ def convert_version(model: ModelProto, target_version: int) -> ModelProto:
         RuntimeError when some necessary conversion is not supported.
     """
     if not isinstance(model, ModelProto):
-        raise ValueError(
+        raise TypeError(
             f"VersionConverter only accepts ModelProto as model, incorrect type: {type(model)}"
         )
     if not isinstance(target_version, int):
-        raise ValueError(
+        raise TypeError(
             f"VersionConverter only accepts int as target_version, incorrect type: {type(target_version)}"
         )
     model_str = model.SerializeToString()

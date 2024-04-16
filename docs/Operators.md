@@ -277,6 +277,7 @@ expect(node, inputs=[x], outputs=[y], name="test_abs")
 
 ```python
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -5266,7 +5267,7 @@ Other versions of this operator: <a href="Changelog.md#Concat-1">1</a>, <a href=
 <summary>concat</summary>
 
 ```python
-test_cases: Dict[str, Sequence[Any]] = {
+test_cases: dict[str, Sequence[Any]] = {
     "1d": ([1, 2], [3, 4]),
     "2d": ([[1, 2], [3, 4]], [[5, 6], [7, 8]]),
     "3d": (
@@ -14481,7 +14482,7 @@ node = onnx.helper.make_node(
 )
 
 trip_count = np.array(5).astype(np.int64)
-seq_empty: List[Any] = []
+seq_empty: list[Any] = []
 seq_res = [x[: int(i)] for i in x]
 cond = np.array(1).astype(bool)
 expect(
@@ -14678,7 +14679,7 @@ node = onnx.helper.make_node(
 trip_count = np.array(5).astype(np.int64)
 cond = np.array(1).astype(bool)
 seq_res = compute_loop_outputs(x, [x0], trip_count)
-opt_seq_in: List[Any] = [x0]
+opt_seq_in: list[Any] = [x0]
 expect(
     node,
     inputs=[trip_count, cond, opt_seq_in],
