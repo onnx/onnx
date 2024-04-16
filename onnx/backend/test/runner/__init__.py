@@ -7,6 +7,7 @@ from __future__ import annotations
 import functools
 import glob
 import os
+import pathlib
 import re
 import shutil
 import sys
@@ -15,7 +16,6 @@ import tempfile
 import time
 import unittest
 from collections import defaultdict
-from pathlib import Path
 from typing import Any, Callable, Iterable, Pattern, Sequence
 from urllib.request import urlretrieve
 
@@ -351,7 +351,7 @@ class Runner:
                 # Get the root directory from the test data dir in a
                 # hacky way. This will break when moving the files
                 # elsewhere.
-                root = Path(self._test_data_dir).parent.parent.parent.parent
+                root = pathlib.Path(self._test_data_dir).parent.parent.parent.parent
                 # testing local files
                 model_pb_path = root / model_test.url
                 if not os.path.exists(model_pb_path):
