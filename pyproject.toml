@@ -193,6 +193,7 @@ convention = "google"
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
+"**/*.pyi" = ["I002"] # from __future__ import annotations` has no effect in stub files
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Prefer inline ignores with `noqa: xxx`.
 # Eventually this list should become empty.

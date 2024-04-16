@@ -135,7 +135,9 @@ class SVMClassifier(OpRunAiOnnxMl):
     ):
         evals = 0
 
-        kernels_list = [self._svm.kernel_dot(X, sv[j], kernel_type_) for j in range(vector_count_)]
+        kernels_list = [
+            self._svm.kernel_dot(X, sv[j], kernel_type_) for j in range(vector_count_)
+        ]
         kernels = np.array(kernels_list)
 
         votes = np.zeros((class_count_,), dtype=X.dtype)

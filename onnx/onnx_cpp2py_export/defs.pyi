@@ -1,6 +1,4 @@
 """Submodule containing all the ONNX schema definitions."""
-from __future__ import annotations
-
 from typing import Sequence, overload
 
 from onnx import AttributeProto, FunctionProto

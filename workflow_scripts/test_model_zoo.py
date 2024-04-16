@@ -90,7 +90,7 @@ def main():
                         model_name,
                     )
                 else:
-                    raise RuntimeError(
+                    raise RuntimeError(  # noqa: TRY301
                         f"{model_name} has unsupported opset_version {original_version}. "
                     )
 
@@ -98,7 +98,7 @@ def main():
             if os.path.exists(model_name):
                 os.remove(model_name)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             print(f"[FAIL]: {e}")
             failed_models.append(model_name)
             failed_messages.append((model_name, e))

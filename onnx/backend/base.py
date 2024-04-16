@@ -103,7 +103,9 @@ class Backend:
         node: NodeProto,
         inputs: Any,  # noqa: ARG003
         device: str = "CPU",  # noqa: ARG003
-        outputs_info: Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None = None,  # noqa: ARG003
+        outputs_info: (  # noqa: ARG003
+            Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None
+        ) = None,
         **kwargs: dict[str, Any],
     ) -> tuple[Any, ...] | None:
         """Simple run one operator and return the results.

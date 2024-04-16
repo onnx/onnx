@@ -369,7 +369,7 @@ class PkgWriter:
             else:
                 imports.append(f"from {pkg} import (")
             for item in sorted(items):
-                imports.append(f"    {item},")
+                imports.append(f"    {item},")  # noqa: PERF401
             imports.append(")\n")
 
         return "\n".join(imports + self.lines)
