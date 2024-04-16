@@ -69,7 +69,7 @@ def _replace_constant(
 
 
 def _replace_constant_of_shape_with_range(
-    onx: GraphProto | FunctionProto
+    onx: GraphProto | FunctionProto,
 ) -> GraphProto | FunctionProto:
     """Replaces all *ConstantOfShape* by node *Range* to avoid constant tensors.
 

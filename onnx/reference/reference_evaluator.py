@@ -245,7 +245,7 @@ class ReferenceEvaluator:
         elif isinstance(proto, GraphProto):
             self.onnx_graph_ = proto
             if not isinstance(opsets, dict):
-                raise ValueError("opsets must be a dictionary if proto is GraphProto.")
+                raise TypeError("opsets must be a dictionary if proto is GraphProto.")
             self.opsets_ = opsets
         elif isinstance(proto, FunctionProto):
             self.onnx_graph_ = None  # type: ignore

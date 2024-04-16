@@ -337,7 +337,14 @@ def make_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
 
 
 def set_metadata_props(
-    proto: ModelProto | GraphProto | FunctionProto | NodeProto | TensorProto | ValueInfoProto,
+    proto: (
+        ModelProto
+        | GraphProto
+        | FunctionProto
+        | NodeProto
+        | TensorProto
+        | ValueInfoProto
+    ),
     dict_value: dict[str, str],
 ) -> None:
     del proto.metadata_props[:]
@@ -637,9 +644,7 @@ def float32_to_float8e5m2(  # noqa: PLR0911
         raise NotImplementedError("fn and uz must be both False or True.")
 
 
-def pack_float32_to_4bit(
-    array: np.ndarray | Sequence, signed: bool
-) -> np.ndarray:
+def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
     """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
     See :ref:`onnx-detail-int4` for technical details.
 

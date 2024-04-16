@@ -52,10 +52,9 @@ def has_onnxruntime():
         import onnxruntime
 
         del onnxruntime
-
-        return True
     except ImportError:
         return False
+    return True
 
 
 def skip_if_no_onnxruntime(fn):

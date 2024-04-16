@@ -15,9 +15,7 @@ class Shape_1(OpRun):
 
 class Shape_15(Shape_1):
     @staticmethod
-    def _interval(
-        n: int, start: int | None, end: int | None
-    ) -> tuple[int, int] | None:
+    def _interval(n: int, start: int | None, end: int | None) -> tuple[int, int] | None:
         if start == 0:
             if end is None or np.isnan(end):
                 return None

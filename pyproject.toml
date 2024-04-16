@@ -166,6 +166,7 @@ lint.ignore = [
     "PLR0915", # Too many statements
     "PYI011", # Allow protobuf enums as defaults to function arguments
     "PYI021", # Allow docstrings in pyi files
+    "PYI041", # int | float is sometimes more clear than float
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "SIM102", # We don't perfer always combining if branches
     "SIM108", # We don't always encourage ternary operators

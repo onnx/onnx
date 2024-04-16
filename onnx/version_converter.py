@@ -27,11 +27,11 @@ def convert_version(model: ModelProto, target_version: int) -> ModelProto:
         RuntimeError when some necessary conversion is not supported.
     """
     if not isinstance(model, ModelProto):
-        raise ValueError(
+        raise TypeError(
             f"VersionConverter only accepts ModelProto as model, incorrect type: {type(model)}"
         )
     if not isinstance(target_version, int):
-        raise ValueError(
+        raise TypeError(
             f"VersionConverter only accepts int as target_version, incorrect type: {type(target_version)}"
         )
     model_str = model.SerializeToString()

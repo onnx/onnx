@@ -12,9 +12,7 @@ from onnx.reference.ops.experimental._op_run_experimental import OpRunExperiment
 from onnx.reference.ops.experimental.op_im2col import Im2Col  # noqa: F401
 
 
-def _build_registered_operators() -> (
-    dict[str, dict[int | None, OpRunExperimental]]
-):
+def _build_registered_operators() -> dict[str, dict[int | None, OpRunExperimental]]:
     return build_registered_operators_any_domain(globals().copy())  # type: ignore[return-value]
 
 
