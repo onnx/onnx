@@ -281,18 +281,18 @@ class TestReferenceEvaluator(unittest.TestCase):
                 graph = make_graph(
                     [node1, node2, node3], "lr", [X, A, B], [Y], initializer=initializer
                 )
-            f = lambda x, a, b: np.clip(a @ a + b, min_value, max_value)  # noqa: E731
+            f = lambda x, a, b: np.clip(a @ a + b, min_value, max_value)  # noqa: ARG005, E731
         else:
             node2 = make_node("Add", ["XA", "B"], ["Y"])
             graph = make_graph([node1, node2], "lr", [X, A, B], [Y])
-            f = lambda x, a, b: a @ a + b  # noqa: E731
+            f = lambda x, a, b: a @ a + b  # noqa: ARG005, E731
         if opset is None:
             onnx_model = make_model(graph)
         else:
             onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         try:
             check_model(onnx_model)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise AssertionError(f"checker fails for\n{onnx_model}") from e
         return onnx_model, f
 
@@ -1234,7 +1234,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
+            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
                 return tuple()
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1275,7 +1275,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
+            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
                 res = tuple([CustomType()])  # noqa: C409
                 assert isinstance(res, tuple)
                 assert isinstance(res[0], CustomType)

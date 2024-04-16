@@ -246,12 +246,12 @@ class TfIdfVectorizer(OpRun):
         max_gram_length=None,
         max_skip_count=None,
         min_gram_length=None,
-        mode=None,
-        ngram_counts=None,
-        ngram_indexes=None,
-        pool_int64s=None,
-        pool_strings=None,
-        weights=None,
+        mode=None,  # noqa: ARG002
+        ngram_counts=None,  # noqa: ARG002
+        ngram_indexes=None,  # noqa: ARG002
+        pool_int64s=None,  # noqa: ARG002
+        pool_strings=None,  # noqa: ARG002
+        weights=None,  # noqa: ARG002
     ) -> None:
         if len(X.shape) > 1:
             X_flat = X[row_num]

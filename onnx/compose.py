@@ -43,10 +43,10 @@ def check_overlapping_names(
         for n in graph.node:
             for i in n.input:
                 if i != "" and i not in exclude:
-                    edges.append(i)
+                    edges.append(i)  # noqa: PERF401
             for o in n.output:
                 if o != "" and o not in exclude:
-                    edges.append(o)
+                    edges.append(o)  # noqa: PERF401
         return edges
 
     result = []

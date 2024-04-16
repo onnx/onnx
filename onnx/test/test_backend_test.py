@@ -71,7 +71,7 @@ class DummyBackend(onnx.backend.base.Backend):
         inputs: Any,
         device: str = "CPU",
         outputs_info: Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None = None,
-        **kwargs: Any,
+        **kwargs: Any,  # noqa: ARG003
     ) -> tuple[Any, ...] | None:
         super().run_node(node, inputs, device=device, outputs_info=outputs_info)
         raise BackendIsNotSupposedToImplementIt(

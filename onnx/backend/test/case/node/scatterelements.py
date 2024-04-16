@@ -31,7 +31,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
     def make_indices_for_duplicate(idx):  # type: ignore
         final_idx = []
         for i in range(len(idx[0])):
-            final_idx.append(tuple(idx_element[i] for idx_element in idx))
+            final_idx.append(tuple(idx_element[i] for idx_element in idx))  # noqa: PERF401
         return list(final_idx)
 
     # We use indices and axis parameters to create idx

@@ -252,7 +252,7 @@ def gen_model_test_coverage(
 
 
 def gen_overall_test_coverage(
-    schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool
+    schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool  # noqa: ARG001
 ) -> None:
     f.write("# Overall Test Coverage\n")
     f.write("## To be filled.\n")

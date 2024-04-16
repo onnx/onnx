@@ -1447,7 +1447,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
             content.append(prefix + " ".join(header))
             header = []
             for line in in_strs:
-                content.append(prefix + "  " + line)
+                content.append(prefix + "  " + line)  # noqa: PERF401
         header.append(")")
 
         if in_with_init_strs:
@@ -1455,7 +1455,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
             content.append(prefix + " ".join(header))
             header = []
             for line in in_with_init_strs:
-                content.append(prefix + "  " + line)
+                content.append(prefix + "  " + line)  # noqa: PERF401
             header.append(")")
 
         # from IR 4 onwards an initializer is not required to have a matching graph input
@@ -1471,7 +1471,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
             content.append(prefix + " ".join(header))
             header = []
             for line in init_strs:
-                content.append(prefix + "  " + line)
+                content.append(prefix + "  " + line)  # noqa: PERF401
             header.append(")")
 
     header.append("{")
@@ -1492,7 +1492,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     # closing bracket
     content.append(prefix + "}")
     for g in graphs:
-        content.append("\n" + printable_graph(g))
+        content.append("\n" + printable_graph(g))  # noqa: PERF401
     return "\n".join(content)
 
 

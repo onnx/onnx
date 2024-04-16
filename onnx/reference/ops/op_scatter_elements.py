@@ -35,7 +35,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
 
     else:
 
-        def f(x, y):
+        def f(x, y):  # noqa: ARG001
             return y
 
     if axis < 0:

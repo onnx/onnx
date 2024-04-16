@@ -100,6 +100,6 @@ class TreeEnsemble:
         for row in X:
             outs = []
             for tree_id in self.tree_ids:
-                outs.append(self.leaf_index_tree(row, tree_id))
+                outs.append(self.leaf_index_tree(row, tree_id))  # noqa: PERF401
             outputs.append(outs)
         return np.array(outputs)

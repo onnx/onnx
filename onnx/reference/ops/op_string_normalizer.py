@@ -143,7 +143,7 @@ class StringNormalizer(OpRun):
             # If `s` is ASCII-compatible, then it does not contain any accented
             # characters and we can avoid an expensive list comprehension
             s.encode("ASCII", errors="strict")
-            return s
+            return s  # noqa: TRY300
         except UnicodeEncodeError:
             normalized = unicodedata.normalize("NFKD", s)
             s = "".join([c for c in normalized if not unicodedata.combining(c)])

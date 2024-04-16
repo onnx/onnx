@@ -99,13 +99,13 @@ class Scan(OpRun):
     def _run(  # type:ignore
         self,
         *args,
-        body=None,
-        num_scan_inputs=None,
-        scan_input_axes=None,
-        scan_input_directions=None,
-        scan_output_axes=None,
-        scan_output_directions=None,
-        attributes=None,
+        body=None,  # noqa: ARG002
+        num_scan_inputs=None,  # noqa: ARG002
+        scan_input_axes=None,  # noqa: ARG002
+        scan_input_directions=None,  # noqa: ARG002
+        scan_output_axes=None,  # noqa: ARG002
+        scan_output_directions=None,  # noqa: ARG002
+        attributes=None,  # noqa: ARG002
     ):
         # TODO: support overridden attributes.
         (

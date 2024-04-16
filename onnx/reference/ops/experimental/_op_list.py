@@ -21,7 +21,7 @@ def load_op(
     op_type: str,
     version: None | int,
     custom: Any = None,
-    evaluator_cls: type | None = None,
+    evaluator_cls: type | None = None,  # noqa: ARG001
 ) -> Any:
     """Loads the implemented for a specified operator.
 

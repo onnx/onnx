@@ -171,7 +171,7 @@ def _pool(
         for i in listi2:
             try:
                 values.append(window[i])
-            except IndexError:
+            except IndexError:  # noqa: PERF203
                 continue
         window_vals = np.array(values)
 
@@ -209,7 +209,7 @@ class CommonPool(OpRun):
         dilations=None,
         kernel_shape=None,
         pads=None,
-        storage_order=None,
+        storage_order=None,  # noqa: ARG002
         strides=None,
     ):
         if pooling_type == "MAX" and dilations is None:

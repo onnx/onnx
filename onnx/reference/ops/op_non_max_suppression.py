@@ -224,12 +224,12 @@ class NonMaxSuppression(OpRun):
                 if pc.score_threshold_ is not None:
                     for box_index in range(pc.num_boxes_):
                         if class_scores[box_index] > score_threshold:
-                            candidate_boxes.append(
+                            candidate_boxes.append(  # noqa: PERF401
                                 BoxInfo(class_scores[box_index], box_index)
                             )
                 else:
                     for box_index in range(pc.num_boxes_):
-                        candidate_boxes.append(
+                        candidate_boxes.append(  # noqa: PERF401
                             BoxInfo(class_scores[box_index], box_index)
                         )
 

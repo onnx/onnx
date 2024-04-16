@@ -78,7 +78,7 @@ def update_inputs_outputs_dims(
         elif isinstance(dim, str):
             dim_proto.dim_param = dim
         else:
-            raise ValueError(
+            raise ValueError(  # noqa: TRY004
                 f"Only int or str is accepted as dimension value, incorrect type: {type(dim)}"
             )
 
