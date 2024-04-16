@@ -21,6 +21,7 @@ def build_registered_operators_any_domain(
             "List",
             "TOptional",
             "Union",
+            "annotations",
             "cl",
             "class_name",
             "get_schema",
