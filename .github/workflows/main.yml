@@ -70,6 +70,8 @@ jobs:
         if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get install libprotobuf-dev protobuf-compiler
+       env:
+          CMAKE_ARGS: "-DONNX_GEN_PB_TYPE_STUBS=OFF"
 
       - name: Install external protobuf - MacOS
         if: matrix.protobuf_type == 'External' && matrix.os == 'macos-latest'
