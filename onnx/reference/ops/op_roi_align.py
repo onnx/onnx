@@ -1,9 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Tuple
+from __future__ import annotations
 
 import numpy as np
 
@@ -117,7 +115,7 @@ class RoiAlign(OpRun):
 
     @staticmethod
     def roi_align_forward(  # type: ignore
-        output_shape: Tuple[int, int, int, int],
+        output_shape: tuple[int, int, int, int],
         bottom_data,
         spatial_scale,
         height: int,

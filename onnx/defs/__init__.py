@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 __all__ = [
     "C",
@@ -19,7 +20,6 @@ __all__ = [
     "SchemaError",
 ]
 
-from typing import List
 
 import onnx.onnx_cpp2py_export.defs as C  # noqa: N812
 from onnx import AttributeProto, FunctionProto
@@ -116,7 +116,7 @@ def _op_schema_attribute_repr(self) -> str:
 OpSchema.Attribute.__repr__ = _op_schema_attribute_repr  # type: ignore
 
 
-def get_function_ops() -> List[OpSchema]:
+def get_function_ops() -> list[OpSchema]:
     """Return operators defined as functions."""
     schemas = C.get_all_schemas()
     return [schema for schema in schemas if schema.has_function or schema.has_context_dependent_function]  # type: ignore
