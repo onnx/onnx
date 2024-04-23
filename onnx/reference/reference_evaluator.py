@@ -1,9 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 
@@ -202,10 +203,10 @@ class ReferenceEvaluator:
     def __init__(  # type: ignore
         self,
         proto: Any,
-        opsets: Optional[Dict[str, int]] = None,
-        functions: Optional[List[Union["ReferenceEvaluator", FunctionProto]]] = None,  # type: ignore
+        opsets: dict[str, int] | None = None,
+        functions: list[ReferenceEvaluator | FunctionProto] | None = None,  # type: ignore
         verbose: int = 0,
-        new_ops: Optional[List[OpRun]] = None,
+        new_ops: list[OpRun] | None = None,
         optimized: bool = True,
     ):
         if optimized:
@@ -231,8 +232,8 @@ class ReferenceEvaluator:
         elif isinstance(proto, bytes):
             proto = load(BytesIO(proto))
         self.proto_ = proto
-        self.functions_: Dict[Tuple[str, str], ReferenceEvaluator] = {}
-        self.attributes_: List[str] = []
+        self.functions_: dict[tuple[str, str], ReferenceEvaluator] = {}
+        self.attributes_: list[str] = []
         if isinstance(proto, ModelProto):
             self.onnx_graph_ = proto.graph
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
@@ -244,7 +245,7 @@ class ReferenceEvaluator:
         elif isinstance(proto, GraphProto):
             self.onnx_graph_ = proto
             if not isinstance(opsets, dict):
-                raise ValueError("opsets must be a dictionary if proto is GraphProto.")
+                raise TypeError("opsets must be a dictionary if proto is GraphProto.")
             self.opsets_ = opsets
         elif isinstance(proto, FunctionProto):
             self.onnx_graph_ = None  # type: ignore
@@ -284,7 +285,7 @@ class ReferenceEvaluator:
         if functions is not None:
             for f in functions:  # type: ignore
                 if isinstance(f, FunctionProto):
-                    self.functions_[f.domain, f.name] = ReferenceEvaluator(
+                    self.functions_[f.domain, f.name] = self.__class__(
                         f, verbose=verbose, functions=list(self.functions_.values())
                     )
                 elif isinstance(f, ReferenceEvaluator):
@@ -293,7 +294,7 @@ class ReferenceEvaluator:
                 else:
                     raise TypeError(f"Unexpected type {type(f)!r} for a function.")
         self.verbose = verbose
-        self.new_ops_: Dict[Tuple[str, str], OpRun] = {}
+        self.new_ops_: dict[tuple[str, str], OpRun] = {}
         if new_ops is not None:
             for cl in new_ops:
                 if not hasattr(cl, "op_domain"):
@@ -342,7 +343,7 @@ class ReferenceEvaluator:
             return ", ".join(map(self._log_arg, a))
         return a
 
-    def _log(self, level: int, pattern: str, *args: List[Any]) -> None:
+    def _log(self, level: int, pattern: str, *args: list[Any]) -> None:
         if level < self.verbose:
             new_args = [self._log_arg(a) for a in args]
             print(pattern % tuple(new_args))
@@ -411,6 +412,7 @@ class ReferenceEvaluator:
             "verbose": self.verbose,
             "new_ops": self.new_ops_,
             "existing_functions": self.functions_.copy(),
+            "evaluator_cls": self.__class__,
         }
         if self.input_types_:
             all_types = {i.name: i.type for i in self.onnx_graph_.input}
@@ -452,7 +454,7 @@ class ReferenceEvaluator:
             self.rt_nodes_.append(inst)
 
     def _load_impl(  # noqa: PLR0911
-        self, node: NodeProto, input_types: Optional[TypeProto] = None
+        self, node: NodeProto, input_types: TypeProto | None = None
     ) -> Any:
         """Loads the implementation for a specified runtime."""
         if node.domain not in self.opsets:
@@ -477,7 +479,13 @@ class ReferenceEvaluator:
             from onnx.reference.ops import load_op
 
             try:
-                return load_op(node.domain, node.op_type, version, expand=expand)
+                return load_op(
+                    node.domain,
+                    node.op_type,
+                    version,
+                    expand=expand,
+                    evaluator_cls=self.__class__,
+                )
             except RuntimeContextError:
                 if input_types is None:
                     raise
@@ -488,6 +496,7 @@ class ReferenceEvaluator:
                     node=node,
                     input_types=input_types,  # type: ignore[arg-type]
                     expand=expand,
+                    evaluator_cls=self.__class__,
                 )
 
         if expand:
@@ -499,30 +508,48 @@ class ReferenceEvaluator:
         if node.domain == "ai.onnx.preview.training":
             from onnx.reference.ops.aionnx_preview_training import load_op as load_op_pt
 
-            return load_op_pt(node.domain, node.op_type, version)
+            return load_op_pt(
+                node.domain, node.op_type, version, evaluator_cls=self.__class__
+            )
 
         if node.domain == "experimental":
             from onnx.reference.ops.experimental import load_op as load_op_exp
 
-            return load_op_exp(node.domain, node.op_type, version)
+            return load_op_exp(
+                node.domain, node.op_type, version, evaluator_cls=self.__class__
+            )
 
         if node.domain == "ai.onnx.ml":
             from onnx.reference.ops.aionnxml import load_op as load_op_ml
 
-            return load_op_ml(node.domain, node.op_type, version)
+            return load_op_ml(
+                node.domain, node.op_type, version, evaluator_cls=self.__class__
+            )
 
         # It has to be a function.
         if key in self.functions_:
             from onnx.reference.ops import load_op
 
             impl = self.functions_[key]
-            return load_op(node.domain, node.op_type, version, custom=impl)
+            return load_op(
+                node.domain,
+                node.op_type,
+                version,
+                custom=impl,
+                evaluator_cls=self.__class__,
+            )
         raise NotImplementedError(
             f"Node type {node.op_type!r} from domain {node.domain!r} "
             f"is unknown, known functions: {sorted(self.functions_)}."
         )
 
-    def run(self, output_names, feed_inputs: Dict[str, Any], attributes: Optional[Dict[str, Any]] = None):  # type: ignore
+    def run(
+        self,
+        output_names,
+        feed_inputs: dict[str, Any],
+        attributes: dict[str, Any] | None = None,
+        intermediate: bool = False,
+    ) -> dict[str, Any] | list[Any]:  # type: ignore
         """Executes the onnx model.
 
         Args:
@@ -530,9 +557,13 @@ class ReferenceEvaluator:
             feed_inputs: dictionary `{ input name: input value }`
             attributes: attributes value if the instance runs a
                 FunctionProto
+            intermediate: if True, the function returns all the results,
+                final ones and intermediates one in a same dictionary,
+                if False, only the final results are returned in a list
 
         Returns:
-            list of requested outputs
+            list of requested outputs if intermediate is False,
+            named results in a dictionary otherwise
         """
         if output_names is None:
             output_names = self.output_names
@@ -571,6 +602,9 @@ class ReferenceEvaluator:
                 results[name] = value
 
         # return the results
+        if intermediate:
+            return results
+
         for name in output_names:
             if name not in results:
                 raise RuntimeError(

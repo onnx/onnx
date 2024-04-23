@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 __all__ = [
     "C",
@@ -8,6 +9,8 @@ __all__ = [
     "ONNX_ML_DOMAIN",
     "AI_ONNX_PREVIEW_TRAINING_DOMAIN",
     "has",
+    "register_schema",
+    "deregister_schema",
     "get_schema",
     "get_all_schemas",
     "get_all_schemas_with_history",
@@ -17,7 +20,6 @@ __all__ = [
     "SchemaError",
 ]
 
-from typing import List
 
 import onnx.onnx_cpp2py_export.defs as C  # noqa: N812
 from onnx import AttributeProto, FunctionProto
@@ -31,6 +33,7 @@ has = C.has_schema
 get_schema = C.get_schema
 get_all_schemas = C.get_all_schemas
 get_all_schemas_with_history = C.get_all_schemas_with_history
+deregister_schema = C.deregister_schema
 
 
 def onnx_opset_version() -> int:
@@ -113,10 +116,29 @@ def _op_schema_attribute_repr(self) -> str:
 OpSchema.Attribute.__repr__ = _op_schema_attribute_repr  # type: ignore
 
 
-def get_function_ops() -> List[OpSchema]:
+def get_function_ops() -> list[OpSchema]:
     """Return operators defined as functions."""
     schemas = C.get_all_schemas()
     return [schema for schema in schemas if schema.has_function or schema.has_context_dependent_function]  # type: ignore
 
 
 SchemaError = C.SchemaError
+
+
+def register_schema(schema: OpSchema) -> None:
+    """Register a user provided OpSchema.
+
+    The function extends available operator set versions for the provided domain if necessary.
+
+    Args:
+        schema: The OpSchema to register.
+    """
+    version_map = C.schema_version_map()
+    domain = schema.domain
+    version = schema.since_version
+    min_version, max_version = version_map.get(domain, (version, version))
+    if domain not in version_map or not (min_version <= version <= max_version):
+        min_version = min(min_version, version)
+        max_version = max(max_version, version)
+        C.set_domain_to_version(schema.domain, min_version, max_version)
+    C.register_schema(schema)

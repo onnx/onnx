@@ -249,16 +249,16 @@ class OpRun(abc.ABC):
     ) -> Any:
         """Converts an attribute value into a python value."""
         if att.type == AttributeProto.GRAPH:
-            from onnx.reference.reference_evaluator import (
-                ReferenceEvaluator,  # type: ignore
-            )
-
             new_ops = self.run_params.get("new_ops", None)
             if "existing_functions" in self.run_params:
                 functions = list(self.run_params["existing_functions"].values())
             else:
                 functions = None
-            return ReferenceEvaluator(
+            evaluator_cls = self.run_params.get("evaluator_cls", None)
+            assert (
+                evaluator_cls is not None
+            ), f"evaluator_cls must be specified to evaluate att={att}"
+            return evaluator_cls(
                 att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
@@ -652,13 +652,16 @@ class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
     def __init__(
-        self, onnx_node: NodeProto, run_params: dict[str, Any], impl: Any = None
+        self,
+        onnx_node: NodeProto,  # noqa: ARG002
+        run_params: dict[str, Any],  # noqa: ARG002
+        impl: Any = None,  # noqa: ARG002
     ):
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
 
-    def _run(self, *inputs, **kwargs):
+    def _run(self, *inputs, **kwargs):  # noqa: ARG002
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -735,7 +738,7 @@ class OpFunctionContextDependant(OpFunction):
         for t in inputs:
             try:
                 ttype = np_dtype_to_tensor_dtype(t.dtype)
-            except KeyError as e:
+            except KeyError:
                 if t.dtype == float8e4m3fn:
                     ttype = TensorProto.FLOAT8E4M3FN  # type: ignore[attr-defined]
                 elif t.dtype == float8e4m3fnuz:
@@ -751,7 +754,7 @@ class OpFunctionContextDependant(OpFunction):
                 elif t.dtype == int4:
                     ttype = TensorProto.INT4  # type: ignore[attr-defined]
                 else:
-                    raise e
+                    raise
             types.append(make_tensor_type_proto(ttype, t.shape))
         cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)

@@ -10,6 +10,8 @@ with `_`, it means the implementation is valid for every opset.
 The operator may have been updated to support more types but that
 did not change the implementation.
 """
+from __future__ import annotations
+
 import textwrap
 from typing import Any, Dict, List
 from typing import Optional as TOptional
@@ -240,18 +242,19 @@ from onnx.reference.ops.op_where import Where
 from onnx.reference.ops.op_xor import Xor
 
 
-def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRun]]:
+def _build_registered_operators() -> dict[str, dict[int | None, OpRun]]:
     return build_registered_operators_any_domain(globals().copy())
 
 
 def load_op(
     domain: str,
     op_type: str,
-    version: Union[None, int] = None,
+    version: None | int = None,
     custom: Any = None,
-    node: Union[None, NodeProto] = None,
-    input_types: Union[None, List[TypeProto]] = None,
+    node: None | NodeProto = None,
+    input_types: None | list[TypeProto] = None,
     expand: bool = False,
+    evaluator_cls: type | None = None,
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -266,6 +269,7 @@ def load_op(
             operator defines a function which is context dependant
         expand: use the function implemented in the schema instead of
             its reference implementation
+        evaluator_cls: evaluator to use
 
     Returns:
         class
@@ -292,10 +296,11 @@ def load_op(
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             ) from None
         if schema.has_function:  # type: ignore
-            from onnx.reference import ReferenceEvaluator
-
             body = schema.function_body  # type: ignore
-            sess = ReferenceEvaluator(body)
+            assert (
+                evaluator_cls is not None
+            ), f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
+            sess = evaluator_cls(body)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         if schema.has_context_dependent_function:  # type: ignore
             if node is None or input_types is None:
@@ -304,14 +309,15 @@ def load_op(
                     f"and domain {domain!r}, the operator has a context dependent function. "
                     f"but argument node or input_types is not defined (input_types={input_types})."
                 )
-            from onnx.reference import ReferenceEvaluator
-
             body = schema.get_context_dependent_function(  # type: ignore
                 node.SerializeToString(), [it.SerializeToString() for it in input_types]
             )
             proto = FunctionProto()
             proto.ParseFromString(body)
-            sess = ReferenceEvaluator(proto)
+            assert (
+                evaluator_cls is not None
+            ), f"evaluator_cls must be specified to evaluate function {proto.name!r}"
+            sess = evaluator_cls(proto)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         found = False
     if not found:
@@ -359,4 +365,4 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRun]]] = None
+_registered_operators: dict[str, dict[int | None, OpRun]] | None = None

@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -18,12 +19,12 @@ class DeformConv(Base):
 
         # Convolution with padding
         offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
-        offset_with_padding[
-            0, 0, 0, 0
-        ] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-        offset_with_padding[
-            0, 5, 1, 2
-        ] = -0.1  # w-coord of [1, 0] element of kernel, at output position [1, 2]
+        offset_with_padding[0, 0, 0, 0] = (
+            0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+        )
+        offset_with_padding[0, 5, 1, 2] = (
+            -0.1
+        )  # w-coord of [1, 0] element of kernel, at output position [1, 2]
 
         node_with_padding = onnx.helper.make_node(
             "DeformConv",
@@ -53,12 +54,12 @@ class DeformConv(Base):
 
         # Convolution without padding
         offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
-        offset_without_padding[
-            0, 0, 0, 0
-        ] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-        offset_without_padding[
-            0, 5, 0, 1
-        ] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+        offset_without_padding[0, 0, 0, 0] = (
+            0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+        )
+        offset_without_padding[0, 5, 0, 1] = (
+            -0.1
+        )  # w-coord of [1, 0] element of kernel, at output position [0, 1]
 
         node_without_padding = onnx.helper.make_node(
             "DeformConv",
@@ -92,12 +93,12 @@ class DeformConv(Base):
         B = np.ones((1,), dtype=np.float32)
 
         offset = np.zeros((1, 8, 2, 2), dtype=np.float32)
-        offset[
-            0, 0, 0, 0
-        ] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-        offset[
-            0, 5, 0, 1
-        ] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+        offset[0, 0, 0, 0] = (
+            0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
+        )
+        offset[0, 5, 0, 1] = (
+            -0.1
+        )  # w-coord of [1, 0] element of kernel, at output position [0, 1]
 
         mask = np.ones((1, 4, 2, 2), dtype=np.float32)
         mask[0, 2, 1, 1] = 0.2  # [1, 0] element of kernel at output position [1, 1]
@@ -135,12 +136,10 @@ class DeformConv(Base):
         W = np.ones((1, 2, 2, 2), dtype=np.float32)
 
         offset = np.zeros((1, 16, 2, 2), dtype=np.float32)
-        offset[
-            0, 0, 0, 0
-        ] = 0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
-        offset[
-            0, 13, 0, 1
-        ] = (
+        offset[0, 0, 0, 0] = (
+            0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
+        )
+        offset[0, 13, 0, 1] = (
             -0.1
         )  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
 

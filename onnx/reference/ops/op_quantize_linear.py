@@ -68,7 +68,7 @@ def reshape_input(
     if (
         shape[axis] != value.shape[axis]
     ):  # block_size does not divide x, handle the remainder block
-        value = value.take(indices=range(0, shape[axis]), axis=axis)
+        value = value.take(indices=range(shape[axis]), axis=axis)
     if value.shape != shape:
         raise ValueError(
             "Invalid shapes for Blocked Quantization. Input 2 shape should identical to Input 1 shape, except for one dimension, in which blocking is performed"
@@ -86,6 +86,18 @@ class _CommonQuantizeLinear(OpRun):
         TensorProto.UINT16: (0, 65535),
         TensorProto.INT16: (-32768, 32767),
     }
+    quant_types = (
+        TensorProto.UINT8,
+        TensorProto.INT8,
+        TensorProto.UINT16,
+        TensorProto.INT16,
+        TensorProto.UINT4,
+        TensorProto.INT4,
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+    )
 
     def get_zero_point_type(self, zero_point: np.ndarray) -> int:
         zero_point_type = None
@@ -114,7 +126,7 @@ class _CommonQuantizeLinear(OpRun):
             zero_point_type = np_dtype_to_tensor_dtype(zero_point.dtype)
         return zero_point_type
 
-    def _run(  # noqa: PLR0911
+    def _run(
         self,
         x: np.ndarray,
         y_scale: np.ndarray,
@@ -122,60 +134,74 @@ class _CommonQuantizeLinear(OpRun):
         axis: int = 1,
         saturate: bool = True,
         block_size: int | None = None,
+        output_dtype: np.dtype | None = None,
     ) -> tuple[np.ndarray]:
         y_scale = reshape_input(y_scale, x.shape, axis, block_size)
-        # compute
-        x = x / y_scale
 
+        # Determine output data type
+        tensor_type = output_dtype
         if zero_point is not None:
-            tensor_type = self.get_zero_point_type(zero_point)
-
-            if tensor_type in _CommonQuantizeLinear.quant_integer_ranges:
-                xi = np.rint(x).astype(np.int32)
-                zero_point = reshape_input(zero_point, x.shape, axis, block_size)
-                xi += zero_point
-                dtype = tensor_dtype_to_np_dtype(tensor_type)
-                quant_range = _CommonQuantizeLinear.quant_integer_ranges[tensor_type]
-                return (np.clip(xi, quant_range[0], quant_range[1]).astype(dtype),)
-
-            if tensor_type == TensorProto.FLOAT8E4M3FN:
-                f8 = _CommonQuantizeLinear.float32_to_float8e4m3(x, saturate=saturate)
-                return (f8.astype(float8e4m3fn),)  # type: ignore[attr-defined]
-
-            if tensor_type == TensorProto.FLOAT8E4M3FNUZ:
-                f8 = _CommonQuantizeLinear.float32_to_float8e4m3(
-                    x, uz=True, saturate=saturate
+            zero_point_type = self.get_zero_point_type(zero_point)
+            if output_dtype and output_dtype != zero_point_type:
+                raise ValueError(
+                    f"Mismatched output data-types: output_dtype={output_dtype}, zero_point type={zero_point_type}"
                 )
-                return (f8.astype(float8e4m3fnuz),)  # type: ignore[attr-defined]
+            tensor_type = zero_point_type
+        tensor_type = tensor_type or TensorProto.UINT8
 
-            if tensor_type == TensorProto.FLOAT8E5M2:
-                f8 = _CommonQuantizeLinear.float32_to_float8e5m2(x, saturate=saturate)
-                return (f8.astype(float8e5m2),)  # type: ignore[attr-defined]
-
-            if tensor_type == TensorProto.FLOAT8E5M2FNUZ:
-                f8 = _CommonQuantizeLinear.float32_to_float8e5m2(
-                    x, fn=True, uz=True, saturate=saturate
-                )
-                return (f8.astype(float8e5m2fnuz),)  # type: ignore[attr-defined]
-
-            if tensor_type in (TensorProto.UINT4, TensorProto.INT4):
-                xi = np.rint(x).astype(np.int32)
-                zero_point = reshape_input(zero_point, x.shape, axis, block_size)
-                single_func = lambda x: subbyte.float32_to_4bit_unpacked(  # noqa: E731
-                    x, signed=(tensor_type == TensorProto.INT4)
-                )
-                func = np.vectorize(single_func)
-                i4 = func(xi)
-                return (i4,)  # type: ignore[attr-defined]
-
+        if tensor_type not in _CommonQuantizeLinear.quant_types:
             raise ValueError(
-                f"Unexpected tensor_type for input 2: tensor_type={tensor_type}, "
-                f"zero_point.dtype={zero_point.dtype}."
+                f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."
             )
 
-        dtype = np.uint8  # type: ignore[assignment]
-        xi = np.rint(x).astype(np.int32)
-        return (np.clip(xi, 0, 255).astype(dtype),)
+        # Compute
+        zero_point = (
+            reshape_input(zero_point, x.shape, axis, block_size)
+            if zero_point is not None
+            else 0
+        )
+        x = x / y_scale
+
+        if tensor_type in _CommonQuantizeLinear.quant_integer_ranges:
+            xi = np.rint(x).astype(np.int32)
+            xi += zero_point
+            dtype = tensor_dtype_to_np_dtype(tensor_type)
+            quant_range = _CommonQuantizeLinear.quant_integer_ranges[tensor_type]
+            return (np.clip(xi, quant_range[0], quant_range[1]).astype(dtype),)
+
+        if tensor_type == TensorProto.FLOAT8E4M3FN:
+            f8 = _CommonQuantizeLinear.float32_to_float8e4m3(x, saturate=saturate)
+            return (f8.astype(float8e4m3fn),)  # type: ignore[attr-defined]
+
+        if tensor_type == TensorProto.FLOAT8E4M3FNUZ:
+            f8 = _CommonQuantizeLinear.float32_to_float8e4m3(
+                x, uz=True, saturate=saturate
+            )
+            return (f8.astype(float8e4m3fnuz),)  # type: ignore[attr-defined]
+
+        if tensor_type == TensorProto.FLOAT8E5M2:
+            f8 = _CommonQuantizeLinear.float32_to_float8e5m2(x, saturate=saturate)
+            return (f8.astype(float8e5m2),)  # type: ignore[attr-defined]
+
+        if tensor_type == TensorProto.FLOAT8E5M2FNUZ:
+            f8 = _CommonQuantizeLinear.float32_to_float8e5m2(
+                x, fn=True, uz=True, saturate=saturate
+            )
+            return (f8.astype(float8e5m2fnuz),)  # type: ignore[attr-defined]
+
+        if tensor_type in (TensorProto.UINT4, TensorProto.INT4):
+            xi = np.rint(x).astype(np.int32)
+            xi += zero_point
+            single_func = lambda x: subbyte.float32_to_4bit_unpacked(  # noqa: E731
+                x, signed=(tensor_type == TensorProto.INT4)
+            )
+            func = np.vectorize(single_func)
+            i4 = func(xi)
+            return (i4,)  # type: ignore[attr-defined]
+
+        raise ValueError(
+            f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."
+        )
 
 
 class QuantizeLinear_10(_CommonQuantizeLinear):
@@ -193,6 +219,6 @@ class QuantizeLinear_19(_CommonQuantizeLinear):
 
 
 class QuantizeLinear_21(_CommonQuantizeLinear):
-    def _run(self, *args, axis=None, saturate=None, block_size=None):  # type: ignore
+    def _run(self, *args, axis=None, saturate=None, block_size=None, output_dtype=None):  # type: ignore
         # args: x, y_scale, zero_point
-        return super()._run(*args, axis=axis, saturate=saturate, block_size=block_size)  # type: ignore
+        return super()._run(*args, axis=axis, saturate=saturate, block_size=block_size, output_dtype=output_dtype)  # type: ignore

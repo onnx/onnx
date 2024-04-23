@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -276,7 +277,7 @@ class QuantizeLinear(Base):
         )
 
     @staticmethod
-    def export_blocked() -> None:
+    def export_blocked_asymmetric() -> None:
         node = onnx.helper.make_node(
             "QuantizeLinear",
             inputs=["x", "y_scale", "y_zero_point"],
@@ -334,5 +335,66 @@ class QuantizeLinear(Base):
             node,
             inputs=[x, y_scale, y_zero_point],
             outputs=[y],
-            name="test_quantizelinear_blocked",
+            name="test_quantizelinear_blocked_asymmetric",
+        )
+
+    @staticmethod
+    def export_blocked_symmetric() -> None:
+        node = onnx.helper.make_node(
+            "QuantizeLinear",
+            inputs=["x", "y_scale"],
+            outputs=["y"],
+            axis=1,
+            block_size=2,
+            output_dtype=TensorProto.INT16,
+        )
+
+        x = np.array(
+            [
+                [6.0, -8, -10, 5.0],
+                [1.0, 8.0, 4.0, 5.0],
+                [0.0, 20.0, 10.0, 4.0],
+            ],
+            dtype=np.float32,
+        )
+
+        y_scale = np.array(
+            [
+                [1.5, 2.5],
+                [3.0, 4.9],
+                [5.1, 6.9],
+            ],
+            dtype=np.float32,
+        )
+
+        # x.shape = (3, 4)
+        # y_scale.shape = (3, 2)
+
+        block_axis = 1
+        # The block shape is [x.shape[i] // y_scale.shape[i] for i in range(len(x.shape))] = (1, 2)
+        assert all(
+            x.shape[i] == y_scale.shape[i]
+            for i in range(len(x.shape))
+            if i != block_axis
+        )
+        assert x.shape[block_axis] % y_scale.shape[block_axis] == 0
+        repeats = x.shape[block_axis] // y_scale.shape[block_axis]
+
+        # Create element-wise scale and zero point
+        y_scale_elementwise = np.repeat(y_scale, repeats=repeats, axis=block_axis)
+
+        y_val = np.clip(
+            np.rint(x / y_scale_elementwise), a_min=-32768, a_max=32767
+        ).astype(np.int16)
+        y = make_tensor(
+            "y",
+            TensorProto.INT16,
+            x.shape,
+            y_val,
+        )
+        expect(
+            node,
+            inputs=[x, y_scale],
+            outputs=[y],
+            name="test_quantizelinear_blocked_symmetric",
         )

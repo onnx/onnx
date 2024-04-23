@@ -1,8 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 
@@ -15,9 +16,6 @@ class OpRunUnary(OpRun):
 
     Checks that input and output types are the same.
     """
-
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRun.__init__(self, onnx_node, run_params)
 
     def run(self, x):  # type: ignore
         """Calls method ``_run``, catches exceptions, displays a longer error message.
@@ -42,9 +40,6 @@ class OpRunUnaryNum(OpRunUnary):
     Checks that input and output types are the same.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunUnary.__init__(self, onnx_node, run_params)
-
     def run(self, x):  # type: ignore
         """Calls method ``OpRunUnary.run``.
 
@@ -67,9 +62,6 @@ class OpRunBinary(OpRun):
 
     Checks that input and output types are the same.
     """
-
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRun.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore
         """Calls method ``_run``, catches exceptions, displays a longer error message.
@@ -101,18 +93,12 @@ class OpRunBinary(OpRun):
 class OpRunBinaryComparison(OpRunBinary):
     """Ancestor to all binary operators in this subfolder comparing tensors."""
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunBinary.__init__(self, onnx_node, run_params)
-
 
 class OpRunBinaryNum(OpRunBinary):
     """Ancestor to all binary operators in this subfolder.
 
     Checks that input oud output types are the same.
     """
-
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
-        OpRunBinary.__init__(self, onnx_node, run_params)
 
     def run(self, x, y):  # type: ignore
         """Calls method ``OpRunBinary.run``, catches exceptions, displays a longer error message."""
@@ -132,7 +118,7 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
     """
 
     def __init__(
-        self, numpy_fct: Any, onnx_node: NodeProto, run_params: Dict[str, Any]
+        self, numpy_fct: Any, onnx_node: NodeProto, run_params: dict[str, Any]
     ):
         OpRunBinaryNum.__init__(self, onnx_node, run_params)
         self.numpy_fct = numpy_fct
@@ -147,7 +133,7 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
     It must have a parameter *axes*.
     """
 
-    def __init__(self, onnx_node: NodeProto, run_params: Dict[str, Any]):
+    def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "axes"):
             if isinstance(self.axes, np.ndarray):  # type: ignore

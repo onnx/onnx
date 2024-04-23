@@ -1,9 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 
@@ -45,9 +43,9 @@ class _CommonDequantizeLinear(OpRun):
         self,
         x: np.ndarray,
         x_scale: np.ndarray,
-        x_zero_point: Optional[np.ndarray] = None,
-        axis: Optional[int] = None,
-        block_size: Optional[int] = None,
+        x_zero_point: np.ndarray | None = None,
+        axis: int | None = None,
+        block_size: int | None = None,
     ):  # type: ignore
         x_type = self.get_x_type(x)
         fp8_type = x_type in {

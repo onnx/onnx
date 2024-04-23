@@ -13,6 +13,10 @@ on:
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
@@ -121,6 +125,6 @@ jobs:
           python -m pip install -q onnxruntime && \
           export ORT_MAX_IR_SUPPORTED_VERSION=9 \
           export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3 \
-          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=19 \
+          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20 \
           pytest && \
           deactivate'

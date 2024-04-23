@@ -1,10 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -12,13 +12,13 @@ from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, su
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 
 
-def combine_pairs_to_complex(fa: Sequence[int]) -> List[complex]:
+def combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
 def bfloat16_to_float32(
-    data: Union[np.int16, np.int32, np.ndarray],
-    dims: Optional[Union[int, Sequence[int]]] = None,
+    data: np.int16 | np.int32 | np.ndarray,
+    dims: int | Sequence[int] | None = None,
 ) -> np.ndarray:
     """Converts ndarray of bf16 (as uint32) to f32 (as uint32).
 
@@ -86,8 +86,8 @@ _float8e4m3_to_float32 = np.vectorize(
 
 
 def float8e4m3_to_float32(
-    data: Union[np.int16, np.int32, np.ndarray],
-    dims: Optional[Union[int, Sequence[int]]] = None,
+    data: np.int16 | np.int32 | np.ndarray,
+    dims: int | Sequence[int] | None = None,
     fn: bool = True,
     uz: bool = False,
 ) -> np.ndarray:
@@ -160,8 +160,8 @@ _float8e5m2_to_float32 = np.vectorize(
 
 
 def float8e5m2_to_float32(
-    data: Union[np.int16, np.int32, np.ndarray],
-    dims: Optional[Union[int, Sequence[int]]] = None,
+    data: np.int16 | np.int32 | np.ndarray,
+    dims: int | Sequence[int] | None = None,
     fn: bool = False,
     uz: bool = False,
 ) -> np.ndarray:
@@ -186,8 +186,8 @@ def float8e5m2_to_float32(
 
 
 def unpack_int4(
-    data: Union[np.int32, np.ndarray],
-    dims: Union[int, Sequence[int]],
+    data: np.int32 | np.ndarray,
+    dims: int | Sequence[int],
     signed: bool,
 ) -> np.ndarray:
     """Converts ndarray of int4 (as packed uint8) to f32
@@ -332,7 +332,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
-def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
+def from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
     Args:
@@ -397,7 +397,7 @@ def from_array(arr: np.ndarray, name: Optional[str] = None) -> TensorProto:
     return tensor
 
 
-def to_list(sequence: SequenceProto) -> List[Any]:
+def to_list(sequence: SequenceProto) -> list[Any]:
     """Converts a sequence def to a Python list.
 
     Args:
@@ -419,7 +419,7 @@ def to_list(sequence: SequenceProto) -> List[Any]:
 
 
 def from_list(
-    lst: List[Any], name: Optional[str] = None, dtype: Optional[int] = None
+    lst: list[Any], name: str | None = None, dtype: int | None = None
 ) -> SequenceProto:
     """Converts a list into a sequence def.
 
@@ -475,7 +475,7 @@ def from_list(
     return sequence
 
 
-def to_dict(map_proto: MapProto) -> Dict[Any, Any]:
+def to_dict(map_proto: MapProto) -> dict[Any, Any]:
     """Converts a map def to a Python dictionary.
 
     Args:
@@ -484,7 +484,7 @@ def to_dict(map_proto: MapProto) -> Dict[Any, Any]:
     Returns:
         The converted dictionary.
     """
-    key_list: List[Any] = []
+    key_list: list[Any] = []
     if map_proto.key_type == TensorProto.STRING:
         key_list = list(map_proto.string_keys)
     else:
@@ -501,7 +501,7 @@ def to_dict(map_proto: MapProto) -> Dict[Any, Any]:
     return dictionary
 
 
-def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
+def from_dict(dict_: dict[Any, Any], name: str | None = None) -> MapProto:
     """Converts a Python dictionary into a map def.
 
     Args:
@@ -559,7 +559,7 @@ def from_dict(dict_: Dict[Any, Any], name: Optional[str] = None) -> MapProto:
     return map_proto
 
 
-def to_optional(optional: OptionalProto) -> Optional[Any]:
+def to_optional(optional: OptionalProto) -> Any | None:
     """Converts an optional def to a Python optional.
 
     Args:
@@ -585,7 +585,7 @@ def to_optional(optional: OptionalProto) -> Optional[Any]:
 
 
 def from_optional(
-    opt: Optional[Any], name: Optional[str] = None, dtype: Optional[int] = None
+    opt: Any | None, name: str | None = None, dtype: int | None = None
 ) -> OptionalProto:
     """Converts an optional value into a Optional def.
 
@@ -637,7 +637,7 @@ def from_optional(
 
 
 def convert_endian(tensor: TensorProto) -> None:
-    """Call to convert endianess of raw data in tensor.
+    """Call to convert endianness of raw data in tensor.
 
     Args:
         tensor: TensorProto to be converted.
@@ -650,7 +650,7 @@ def convert_endian(tensor: TensorProto) -> None:
 
 
 def create_random_int(
-    input_shape: Tuple[int], dtype: np.dtype, seed: int = 1
+    input_shape: tuple[int], dtype: np.dtype, seed: int = 1
 ) -> np.ndarray:
     """Create random integer array for backend/test/case/node.
 

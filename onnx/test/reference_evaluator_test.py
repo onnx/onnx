@@ -9,6 +9,7 @@
 
     python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
 """
+from __future__ import annotations
 
 import itertools
 import math
@@ -19,7 +20,7 @@ from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import numpy as np
 import parameterized
@@ -199,7 +200,7 @@ def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  
 
 def im2col(
     img: np.ndarray,
-    kernel_shape: Tuple[int, ...],
+    kernel_shape: tuple[int, ...],
     dilations: Sequence[int],
     pads: Sequence[int],
     strides: Sequence[int],
@@ -280,18 +281,21 @@ class TestReferenceEvaluator(unittest.TestCase):
                 graph = make_graph(
                     [node1, node2, node3], "lr", [X, A, B], [Y], initializer=initializer
                 )
-            f = lambda x, a, b: np.clip(a @ a + b, min_value, max_value)  # noqa: E731
+
+            def f(x, a, b):  # noqa: ARG001
+                return np.clip(a @ a + b, min_value, max_value)
+
         else:
             node2 = make_node("Add", ["XA", "B"], ["Y"])
             graph = make_graph([node1, node2], "lr", [X, A, B], [Y])
-            f = lambda x, a, b: a @ a + b  # noqa: E731
+            f = lambda x, a, b: a @ a + b  # noqa: ARG005, E731
         if opset is None:
             onnx_model = make_model(graph)
         else:
             onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         try:
             check_model(onnx_model)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             raise AssertionError(f"checker fails for\n{onnx_model}") from e
         return onnx_model, f
 
@@ -313,6 +317,21 @@ class TestReferenceEvaluator(unittest.TestCase):
         res = sess.run(None, {"B01": x, "B11": y, "B21": z})[0]
         expected = (x + y) * (y - z)
         assert_allclose(expected, res)
+
+    def test_reference_evaluator_no_attribute_intermediate(self):
+        m = TestReferenceEvaluator._load_model(TestReferenceEvaluator.m2_def)
+        checker.check_model(m)
+        sess = ReferenceEvaluator(m)
+        self.assertEqual(sess.input_names, ["B01", "B11", "B21"])
+        self.assertEqual(sess.output_names, ["D0"])
+        self.assertEqual(sess.opsets, {"": 10, "com.microsoft": 1})
+        x = np.array([[0, 1], [2, 3]], dtype=np.float32)
+        y = np.array([[4, 5], [6, 7]], dtype=np.float32)
+        z = np.array([[-4, -5], [-6, -7]], dtype=np.float32)
+        res = sess.run(None, {"B01": x, "B11": y, "B21": z}, intermediate=True)
+        self.assertIsInstance(res, dict)
+        expected = (x + y) * (y - z)
+        assert_allclose(expected, res["D0"])
 
     def test_reference_evaluator_no_attribute_bytes(self):
         m = TestReferenceEvaluator._load_model(TestReferenceEvaluator.m2_def)
@@ -1218,7 +1237,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
+            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
                 return tuple()
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1259,7 +1278,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
+            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
                 res = tuple([CustomType()])  # noqa: C409
                 assert isinstance(res, tuple)
                 assert isinstance(res[0], CustomType)
@@ -1607,10 +1626,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                     }
                     expected = sess1.run(None, feeds)[0]
                     got = sess2.run(None, feeds)[0]
-                    try:
-                        assert_allclose(expected, got)
-                    except AssertionError as e:
-                        raise e
+                    assert_allclose(expected, got)
                 with self.subTest(w="3x3", i=i, j=j):
                     w = np.zeros((1, 1, 3, 3), dtype=np.uint8)
                     w[0, 0, :, :] = np.minimum(2 ** np.arange(9).reshape((3, -1)), 128)
@@ -5658,7 +5674,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         ref = ReferenceEvaluator(model)
-        data = np.array(range(0, 7), dtype=np.float32)
+        data = np.array(range(7), dtype=np.float32)
         cast_from_np = custom.uint4 if cast_from == TensorProto.UINT4 else custom.int4
         data = data.astype(cast_from_np)
         expected1 = np.array(
@@ -5823,6 +5839,81 @@ class TestReferenceEvaluator(unittest.TestCase):
         # goti = oinf.run(None, feeds)
         # self.assertEqual(expected[0].tolist(), goti[0].tolist())
         self.assertEqual(expected[0], np.array([-3], dtype=np.float32))
+
+    def test_overload_reference_implementation(self):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])
+        output = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
+        Z = make_tensor_value_info("output", TensorProto.FLOAT, ["N"])
+
+        func_def_add = make_function(
+            "this",
+            "fctadd",
+            ["input2"],
+            ["output"],
+            [
+                make_node("Constant", [], ["one"], value_floats=[1.0], name="CC0"),
+                make_node("Add", ["input2", "one"], ["output"], name="A1"),
+            ],
+            opset_imports=[make_operatorsetid("", 15)],
+        )
+
+        func_def = make_function(
+            "this",
+            "fct",
+            ["input"],
+            ["output"],
+            [
+                make_node("Constant", [], ["one"], value_floats=[1.0], name="CC"),
+                make_node("Greater", ["input", "one"], ["cond"]),
+                make_node(
+                    "If",
+                    ["cond"],
+                    ["output"],
+                    then_branch=make_graph(
+                        [make_node("fctadd", ["input"], ["output"], domain="this")],
+                        "gthen",
+                        [],
+                        [output],
+                    ),
+                    else_branch=make_graph(
+                        [make_node("Add", ["input", "one"], ["output"], domain="")],
+                        "gelse",
+                        [],
+                        [output],
+                    ),
+                    name=":IF",
+                ),
+            ],
+            opset_imports=[
+                make_operatorsetid("", 15),
+                make_operatorsetid("this", 1),
+            ],
+        )
+
+        model_def = make_model(
+            make_graph(
+                [
+                    make_node("fct", ["X"], ["ztmp"], domain="this"),
+                    make_node("fct", ["ztmp"], ["output"], domain="this"),
+                ],
+                "test",
+                [X],
+                [Z],
+            ),
+            ir_version=7,
+            opset_imports=[
+                make_operatorsetid("", 15),
+                make_operatorsetid("this", 1),
+            ],
+            functions=[func_def_add, func_def],
+        )
+
+        class MyReferenceEvaluator(ReferenceEvaluator):
+            pass
+
+        oinf = MyReferenceEvaluator(model_def)
+        for v in oinf.functions_.values():
+            self.assertIsInstance(v, MyReferenceEvaluator)
 
 
 if __name__ == "__main__":

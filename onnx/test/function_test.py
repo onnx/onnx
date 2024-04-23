@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Copyright (c) ONNX Project Contributors
+from __future__ import annotations
 
 import unittest
 

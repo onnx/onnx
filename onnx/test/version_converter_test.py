@@ -1,11 +1,11 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import contextlib
 import struct
 import unittest
-from typing import Tuple
 
 import numpy as np
 import parameterized
@@ -1439,6 +1439,25 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Split"
         assert converted_model.opset_import[0].version == 12
 
+    def test_split_with_optional_input(self) -> None:
+
+        nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], axis=1)]
+        graph = helper.make_graph(
+            nodes,
+            "test_split_optional_input",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (6,))],
+            [
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3,)),
+                helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (3,)),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 12), 18)
+
+        assert converted_model.graph.node[0].op_type == "Split"
+        assert converted_model.opset_import[0].version == 18
+
+        assert len(converted_model.graph.node[0].output) == 2
+
     # Test Split Adapter: 12 -> 13
     def test_split_12_13(self) -> None:
         nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], split=[2, 3])]
@@ -1989,43 +2008,110 @@ class TestVersionConverter(unittest.TestCase):
 
     @parameterized.parameterized.expand(
         [
-            ("per_tensor", (16, 3), (1,), None, None, True),
-            ("per_axis_none_block_shape", (16, 3), (16,), 1, None, True),
-            ("per_axis_zero_block_shape", (16, 3), (16,), 1, 0, True),
-            ("per_tensor_positive_block_shape", (16, 3), (1,), 1, 2, False),
-            ("per_axis_positive_block_shape", (16, 3), (16,), 1, 2, False),
-            ("blocked_2d", (16, 3), (4, 3), 0, 4, False),
-            ("blocked_3d", (4, 3, 32), (4, 3, 8), 2, 4, False),
+            ("per_tensor", (16, 3), (1,), None, None, None, TensorProto.INT8, True),
+            (
+                "per_axis_none_block_shape",
+                (16, 3),
+                (16,),
+                1,
+                None,
+                None,
+                TensorProto.INT8,
+                True,
+            ),
+            (
+                "per_axis_zero_block_shape",
+                (16, 3),
+                (16,),
+                1,
+                0,
+                None,
+                TensorProto.INT8,
+                True,
+            ),
+            (
+                "per_tensor_positive_block_shape",
+                (16, 3),
+                (1,),
+                1,
+                2,
+                None,
+                TensorProto.INT8,
+                False,
+            ),
+            (
+                "per_axis_positive_block_shape",
+                (16, 3),
+                (16,),
+                1,
+                2,
+                None,
+                TensorProto.INT8,
+                False,
+            ),
+            ("blocked_2d", (16, 3), (4, 3), 0, 4, None, TensorProto.INT8, False),
+            ("blocked_3d", (4, 3, 32), (4, 3, 8), 2, 4, None, TensorProto.INT8, False),
+            (
+                "per_axis_output_dtype",
+                (16, 3),
+                (16,),
+                1,
+                None,
+                TensorProto.FLOAT8E4M3FN,
+                None,
+                False,
+            ),
+            (
+                "per_axis_unsupported_type",
+                (16, 3),
+                (16,),
+                1,
+                None,
+                None,
+                TensorProto.UINT16,
+                False,
+            ),
         ]
     )
     def test_quantize_21_20(
         self,
         _: str,
-        x_shape: Tuple[int, ...],
-        scale_shape: Tuple[int, ...],
+        x_shape: tuple[int, ...],
+        scale_shape: tuple[int, ...],
         axis: int,
         block_size: int,
+        output_dtype: int | None,
+        zero_point_dtype: int | None,
         compatible: bool,
     ) -> None:
-        def test(input_shape, scale_shape, axis, block_size) -> None:
+        def test(
+            input_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype
+        ) -> None:
             nodes = [
                 helper.make_node(
                     "QuantizeLinear",
-                    ["X", "S", "ZP"],
+                    ["X", "S"],
                     ["Y"],
                     axis=axis,
                     block_size=block_size,
+                    output_dtype=output_dtype,
                 )
             ]
+            inputs = [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, input_shape),
+                helper.make_tensor_value_info("S", TensorProto.FLOAT, scale_shape),
+            ]
+            if zero_point_dtype:
+                inputs.append(
+                    helper.make_tensor_value_info("ZP", zero_point_dtype, scale_shape)
+                )
+                nodes[0].input.append("ZP")
+            output_type_ = output_dtype or zero_point_dtype
             graph = helper.make_graph(
                 nodes,
                 "test",
-                [
-                    helper.make_tensor_value_info("X", TensorProto.FLOAT, input_shape),
-                    helper.make_tensor_value_info("S", TensorProto.FLOAT, scale_shape),
-                    helper.make_tensor_value_info("ZP", TensorProto.INT8, scale_shape),
-                ],
-                [helper.make_tensor_value_info("Y", TensorProto.INT8, input_shape)],
+                inputs,
+                [helper.make_tensor_value_info("Y", output_type_, input_shape)],
             )
             _ = self._converted(graph, helper.make_operatorsetid("", 21), 20)
 
@@ -2033,7 +2119,7 @@ class TestVersionConverter(unittest.TestCase):
             contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
         )
         with context_manager:  # type: ignore[attr-defined]
-            test(x_shape, scale_shape, axis, block_size)
+            test(x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype)
 
     @parameterized.parameterized.expand(
         [
@@ -2049,8 +2135,8 @@ class TestVersionConverter(unittest.TestCase):
     def test_dequantize_21_20(
         self,
         _: str,
-        y_shape: Tuple[int, ...],
-        scale_shape: Tuple[int, ...],
+        y_shape: tuple[int, ...],
+        scale_shape: tuple[int, ...],
         axis: int,
         block_size: int,
         compatible: bool,

@@ -4,6 +4,7 @@
 
 # NOTE: Put all metadata in pyproject.toml.
 # Set the environment variable `ONNX_PREVIEW_BUILD=1` to build the dev preview release.
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -214,18 +215,6 @@ class CmakeBuild(setuptools.Command):
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."
                 )
-            if (
-                "PYTHONPATH" in os.environ
-                and "pip-build-env" in os.environ["PYTHONPATH"]
-            ):
-                # When the users use `pip install -e .` to install onnx and
-                # the cmake executable is a python entry script, there will be
-                # `Fix ModuleNotFoundError: No module named 'cmake'` from the cmake script.
-                # This is caused by the additional PYTHONPATH environment variable added by pip,
-                # which makes cmake python entry script not able to find correct python cmake packages.
-                # Actually, sys.path is well enough for `pip install -e .`.
-                # Therefore, we delete the PYTHONPATH variable.
-                del os.environ["PYTHONPATH"]
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, "--build", os.curdir]
@@ -322,7 +311,9 @@ setuptools.setup(
     ext_modules=EXT_MODULES,
     cmdclass=CMD_CLASS,
     version=VERSION_INFO["version"],
-    options={"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
-    if ONNX_WHEEL_PLATFORM_NAME is not None
-    else {},
+    options=(
+        {"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
+        if ONNX_WHEEL_PLATFORM_NAME is not None
+        else {}
+    ),
 )

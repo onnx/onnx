@@ -3,9 +3,10 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import os
-from typing import IO, Any, Dict, List, Sequence
+from typing import IO, Any, Sequence
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
@@ -98,7 +99,7 @@ def gen_node_test_coverage(
         f.write("Node tests have covered 0/0 (N/A) common operators. \n\n")
     if num_experimental:
         f.write(
-            "Node tests have covered {}/{} ({:.2f}%, {} generators excluded) "
+            "Node tests have covered {}/{} ({:.2f}%, {} generators excluded) "  # noqa: UP032
             "experimental operators.\n\n".format(
                 len(experimental_covered),
                 num_experimental,
@@ -155,8 +156,8 @@ def gen_model_test_coverage(
         schema_dict[schema.name] = schema
     # Load models from each model test using Runner.prepare_model_data
     # Need to grab associated nodes
-    attrs: Dict[str, Dict[str, List[Any]]] = {}
-    model_paths: List[Any] = []
+    attrs: dict[str, dict[str, list[Any]]] = {}
+    model_paths: list[Any] = []
     for rt in load_model_tests(kind="real"):
         if rt.url.startswith("onnx/backend/test/data/light/"):
             # testing local files
@@ -251,7 +252,7 @@ def gen_model_test_coverage(
 
 
 def gen_overall_test_coverage(
-    schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool
+    schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool  # noqa: ARG001
 ) -> None:
     f.write("# Overall Test Coverage\n")
     f.write("## To be filled.\n")

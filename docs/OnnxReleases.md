@@ -9,115 +9,203 @@ SPDX-License-Identifier: Apache-2.0
 The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
 ## Preparation
-* Install Twine, a utility tool to interact with PyPI. Do  - ``pip install twine``
-* Get hold of the username and password for the ‘onnx’ PyPI account. Release manager should get onnx pypi account credentials from steering committee or from previous release manager.
-* Bump the LAST_RELEASE_VERSION in [version.h](/onnx/common/version.h). Make sure that the IR version number and opset version numbers are up-to-date in
-[ONNX proto files](/onnx/onnx.in.proto),
-[Versioning.md](Versioning.md),
-[schema.h](/onnx/defs/schema.h),
-[helper.py](/onnx/helper.py) and [helper_test.py](/onnx/test/helper_test.py). Please note that this also needs to be happened in the main branch before creating the release branch.
-* Pick a release tag (v.1.X.X) for the new release through mutual consent – Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
-* Create a release branch (please use rel-* as the branch name) from main.
-    * Make sure all tests pass on that branch.
-    * create the release tag:
-        * git tag v.1.X.X
-        * or create the release tag when drafting a new release statement
-* After cutting a release branch, bump [VERSION_NUMBER file](/VERSION_NUMBER) (next version number for future ONNX) in the main branch.
-* Prepare a change log for the release –
-    * ``git log --pretty=format:"%h - %s" <tag of the previous release>...<new tag>``
-* Draft a new release statement - https://github.com/onnx/onnx/releases listing out the new features and bug fixes, and potential changes being introduced in the release.
-    * when drafting the release, use the tag if it is already created, or create a new tag using the release branch from GitHub Release page.
-* Please use target VERSION_NUMBER with `rc` (e.g., `1.x.0rc1`) to test TestPyPI in advance before using target VERSION_NUMBER (e.g., `1.x.0`) for final release.
-* Create an issue in onnxruntime repo. See [a sample issue](https://github.com/microsoft/onnxruntime/issues/11108) for details. The issue is to request onnxruntime to update with the onnx release branch and to run all CI and packaging pipelines ([How_To_Update_ONNX_Dev_Notes](https://github.com/microsoft/onnxruntime/blob/main/docs/How_To_Update_ONNX_Dev_Notes.md)). It is possible that onnx bugs are detected with onnxruntime pipeline runs. In such case the bugs shall be fixed in the onnx main branch and cherry-picked into the release branch. Follow up with onnxruntime to ensure the issue is resolved in time before onnx release.
+* Determine version (X.Y.Z) for the new release
+    * Discuss in Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
+    * For (v.X.Y.Z), if release is to be 1.16.0,
+        * X=1, Y=16, Z=0
+        * The new branch will be `rel-1.16.0`
+            * Branch protections rules are automatically applied to branches following this format.
+        * The new tag will be `v1.16.0`
+* Create new page for the release in [Release logistics wiki](https://github.com/onnx/onnx/wiki)
 
-## Upload to TestPyPI
-**Wheels**
-* In release branch update the version number in file [VERSION_NUMBER] to something like `1.x.0rc1` as release candidate for verification before finally using the targeted version number for this release.
-* Windows
-  * Use GitHub Action (`.github/workflows/release_win.yml`) under onnx repo to produce wheels for Windows.
+## Create Release Branch
+* In `main` branch, before creating the release branch:
+    1.  Bump the `LAST_RELEASE_VERSION` in [version.h](/onnx/common/version.h).
+        * Set to X.Y.Z, which is same as the release branch you are currently creating.
+        * After the release branch is cut, `VERSION_NUMBER` in `main` will be increased to the next future version.
+    1.  Make sure the release version, IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/onnx/test/helper_test.py).
 
-* Linux
-  * Use GitHub Action (`.github/workflows/release_linux_x86_64.yml`) and (`.github/workflows/release_linux_aarch64.yml`) under onnx repo to produce x64/aarch64 wheels for Linux.
+* Create a release branch
+    1. Click "New branch" from [branches](https://github.com/onnx/onnx/branches) and choose `main` as Source.
+    1. Make sure all tests pass on the new branch.
 
-* Mac
-  * Use GitHub Action (`.github/workflows/release_mac.yml`) under onnx repo to produce wheels for Mac.
+* After cutting the release branch:
+    1. Create PR to set [VERSION_NUMBER](/VERSION_NUMBER) file in `main` to the next future releas, `X.Y+1.0`.
+    1. Create PR to set `VERSION_NUMBER` file in the new release's branch to `X.Y.Zrc1`.
+        * For example the first release candidate for 1.16.0 would be `1.16.0rc1`
+    1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
+        * For example, this [demo PR](https://github.com/onnx/onnx/pull/6001).
 
-* After success, upload the produced wheels manually to TestPyPI: `twine upload --verbose *.whl --repository-url https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`.
+## Upload release candidate to TestPyPI
 
+**Important**
+* **WAIT** for PR to set the release branch's `VERSION_NUMBER` to merge and build before continuing.
+* To push files to TestPyPI or PyPI, install `twine` if you don't already have it: `pip install twine`
+    * When prompted for a password by `twine` commands, use an API token. Your passowrd will not work.
+        * Note: TestPyPI and PyPI are separate accounts so make sure you are using the correct one depending where you are uploading.
+        * [Generate a TestPYI API token](https://test.pypi.org/manage/account/token/)
+        * [Generate a PyPI API token](https://pypi.org/manage/account/token/)
+* Like PyPI, A release version can only be pushed to TestPyPI **ONCE**.
+    * To update an already pushed file, you must increase the `VERSION_NUMBER`, rebuild, and push a new X.Y.Zrc2, etc.
+    * To test push commands, you can use docker or podman to create a local pypi server
+        1. Start server `docker run --rm -it --platform linux/amd64 -p 80:8080 pypiserver/pypiserver:latest run -a . -P .`
+            * This starts a local pypiserver that does not require authentication (any user/password will work on it).
+            * The container does not save state. Stopping and starting it again will let you push the same version multiple times.
+        1. To push files:
+            * wheels: `twine upload --repository-url http://127.0.0.1:80 --verbose -u fake -p fake *.whl`
+            * source: `twine upload --repository-url http://127.0.0.1:80 --verbose -u fake -p fake dist/*`
+        1. To pull and install from your test server:
+            * `pip uninstall -y onnx && pip install --index-url http://127.0.0.1:80/simple/ --pre onnx`
+
+**Push Wheels**
+1. Gather the wheel files from the ONNX Github Actions for the release candidate.
+    * For each ONNX GitHub Action:
+        * ONNX GitHub Action
+            * [LinuxRelease_x86_64](https://github.com/onnx/onnx/actions/workflows/release_linux_x86_64.yml)
+            * [LinuxRelease_aarch64](https://github.com/onnx/onnx/actions/workflows/release_linux_aarch64.yml)
+            * [MacRelease](https://github.com/onnx/onnx/actions/workflows/release_mac.yml)
+            * [WindowsRelease](https://github.com/onnx/onnx/actions/workflows/release_win.yml)
+
+        * Find the run for the release branch
+            * Or start a run by clicking "Run workflow", pick the release branch, Click "Run Workflow"
+        * Click the completed run, scroll to the "Artifacts" section (bottom), and click "wheels" to download the files
+        * Extract the wheels.zip files and combine their contents into a single folder
+
+2. Upload the produced wheels manually to TestPyPI: `twine upload --repository testpypi --verbose -u <YOUR_TESTPYPI_USER> <extracted_wheel.zip_folder>/*.whl`.
+    * A current owner of the ONNX project will need to give you access to the project before you can push files.
+    * The project name and version built into the files.
 
 **Source Distribution**
-* Make sure all the git submodules are updated
+1. Make sure all the git submodules are updated
     * ``git submodule update --init``
-* Make sure the git checkout is clean –
-    * Do ``git clean -nxd`` and make sure that none of the auto-generated header files *like* the following are not present.
-        * onnx/onnx-operators.pb.cc
-        * onnx/onnx-operator.pb.h
-        * onnx/onnx.pb.cc
-        * onnx/onnx.pb.h
-    * If they are present run ``git clean -ixd`` and remove those files from your local branch
-* Do ``python -m build --sdist`` to generate the source distribution.
-* Do ``twine upload dist/* --repository-url https://test.pypi.org/legacy/ -u PYPI_USERNAME -p PYPI_PASSWORD`` to upload it to the test instance of PyPI.
+1. Make sure the git checkout is clean –
+    * Run ``git clean -nxd``
+        * Make sure that none of the auto-generated header files such as the following are present.
+            * onnx/onnx-operators.pb.cc
+            * onnx/onnx-operator.pb.h
+            * onnx/onnx.pb.cc
+            * onnx/onnx.pb.h
+        * If they are present run ``git clean -ixd`` and remove those files from your local branch
+1. Generate the source distribution file: ``python -m build --sdist``
+    * Run `pip install build` if you don't already have the `build` package.
+1. Upload source distribution file to TestPyPI: ``twine upload --repository testpypi --verbose -u <YOUR_TESTPYPI_USER> dist/*``
+    * Notes:
+        * A current owner of the ONNX project will need to give you access to the project before you can push files.
+        * The project name and version built into the files.
+1. Confirm TestPyPI package can be installed:
+    * Wheel install: `pip uninstall -y onnx && pip install -i https://test.pypi.org/simple/ --pre onnx`
+       * Assumes pre-built while is available for your environment, if not a source install will start.
+    * Source install: `pip uninstall -y onnx && pip install -i https://test.pypi.org/simple --no-binary onnx --pre onnx`
 
-## TestPyPI package verification
+## Package verification
 **Test ONNX itself**
 * Test the PyPI package installation with different combinations of various Python versions, Protobuf versions and platforms.
+  * After installing the TestPyPI package, run `pytest` in the release branch.
   * Python versions : Applicable python versions for the release.
   * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
 
-
-* After installing the PyPI package, run `pytest` in the release branch.
-
 **Partner Validation**
 
- * Test with onnxruntime package: To test the interaction with onnxruntime, use ONNX functions like `load`, `checker.check_model`, `shape_inference.infer_shapes`, `save` with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model. For example, run the test script from [test_with_ort.py](/onnx/test/test_with_ort.py) with installed onnxruntime package.
+ * Test with onnxruntime package:
+     * Run the test script from [test_with_ort.py](/onnx/test/test_with_ort.py) with installed onnxruntime package.
+        * The scripts tests ONNX functions like `load`, `checker.check_model`, and `shape_inference.infer_shapes`, with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model.
 
- * Test with ONNX converters: Create GitHub issues in converters repos to provide them the package links and have them test the TestPyPI packages.
-   * https://github.com/pytorch/pytorch
-   * https://github.com/onnx/onnx-tensorflow (not actively maintained)
-   * https://github.com/onnx/tensorflow-onnx
-   * https://github.com/onnx/sklearn-onnx
-   * https://github.com/onnx/onnxmltools
-   * https://github.com/onnx/onnx-tensorrt
+ * Open Issues for external repos:
+     * Create GitHub issues in converters' repos to provide them the package links and oppuruntity to test the release before it goes public.
+        * https://github.com/microsoft/onnxruntime
+            * Example: https://github.com/microsoft/onnxruntime/issues/19783
+            * Note: [How_To_Update_ONNX_Dev_Notes](https://github.com/microsoft/onnxruntime/blob/main/docs/How_To_Update_ONNX_Dev_Notes.md) exists in their repo documenting how to pull in new ONNX releases.
+        * https://github.com/pytorch/pytorch
+            * Example: https://github.com/pytorch/pytorch/issues/121258
+        * https://github.com/onnx/tensorflow-onnx
+            * Example: https://github.com/onnx/tensorflow-onnx/issues/2310
+        * https://github.com/onnx/onnx-tensorrt
+            * Example: https://github.com/onnx/onnx-tensorrt/issues/956
+        * https://github.com/onnx/sklearn-onnx
+            * Example: https://github.com/onnx/sklearn-onnx/issues/1079
+        * https://github.com/microsoft/onnxconverter-common
+            * Example: https://github.com/microsoft/onnxconverter-common/issues/277
+        * https://github.com/onnx/onnxmltools
+            * Example: https://github.com/onnx/onnxmltools/issues/685
+        * https://github.com/Quantco/spox
+        * https://github.com/conda-forge/onnx-feedstock
 
+ * If issues are found, the bugs are to be fixed in the onnx `main` branch and then cherry-picked into the release branch.
+    * Follow up with reporter to ensure issues are resolved (and validated in a new rc) or deferred to a new release.
 
-**Source distribution verification**
-* Test the source distribution by doing ``pip install --index-url https://test.pypi.org/simple --no-binary onnx onnx`` in a new environment.
+# Official Release
 
-## Upload to official PyPI
-**NOTE: Once the packages are uploaded to PyPI, you cannot overwrite it on the same PyPI instance. Please make sure everything is good on TestPyPI before uploading to PyPI**
+Validation steps must be completed before this point! This is the point of new return.
 
-**Wheels**
-* Windows/Linux_x86_64/Linux_aarch64/Mac
-  * Create a new API token of onnx scope for uploading onnx wheel in https://pypi.org/manage/account (section of API tokens). Remove the created token after the release.
-  * Similar to TestPyPI, use `twine upload --verbose *.whl --repository-url https://upload.pypi.org/legacy/ -u __token__ -p PYPI_API_TOKEN` instead.
+* git tags should not be changed once published
+* Once pushed to PyPI there is no way to update the release. A new release must be made instead
 
-**Source Distribution**
-* Follow the same process in TestPyPI to produce the source distribution.
-* Use ``twine upload --verbose dist/* --repository-url https://upload.pypi.org/legacy/`` instead to upload to the official PyPI.
-* Test with ``pip install --use-deprecated=legacy-resolver --no-binary onnx onnx``
+## Set final version number
+* Create PR to remove "`rcX`" suffix from `VERSION_NUMBER` file in the new release's branch.
+
+## Create release tag
+* [Draft a release](https://github.com/onnx/onnx/releases/new) based on the release branch:
+    * DO NOT click `Publish release` until you are sure no more changes are needed.
+        * Use `Save Draft` if need to save and update more later.
+        * Publishing will create the new git tag
+    * Tag: See top of [Preparation](#Preparation) for tag to create.
+    * Target: The release branch that was just cut
+    * Previous tag: Select the previous release.
+    * Write:
+        * Use [previous releases](https://github.com/onnx/onnx/releases) as a template
+        * Use information from [Release logistics wiki](https://github.com/onnx/onnx/wiki) which should have been created prior to branch cut.
+        * Add any additional commits that merged into the release in since wiki was written.
+    * .tar.gz and .zip will be auto-generated after publishing the release.
+
+## Upload to Official PyPI
+### NOTES:
+* Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
+  * Please make sure everything is good on TestPyPI before uploading to PyPI**
+* PyPI has separate logins, passwords, and API tokens from TestPyPI but the process is the same. An ONNX PyPI owner will need to grant access, etc.
+
+Follow the **Wheels** and **Source Distribution** steps in [Upload release candidate toTestPyPI](#Upload-release-candidate-to-TestPyPI) above with the following changes:
+* Create a new API token of onnx scope for uploading onnx wheel in your [PyPI account](https://pypi.org/manage/account) (**API tokens** section).
+    * Remove the created token after pushing the wheels and source for the release.
+* When uploading, remove `--repository testpypi` from twine commands.
+* When verifying upload, remove `-i https://test.pypi.org/simple/` and `--pre` from pip commands.
 
 ## After PyPI Release
 
-**Release summary**
-* Create release summary in github with the right tag and upload the release summary along with .tar.gz and .zip (these compressed files will be auto-generated after publishing the release summary).
-
 **Announce**
-* Announce in slack, for instance, `onnx-general` channel.
-* Notify ONNX partners like converter team and runtime team.
-* Create a news by updating `js/news.json` to announce ONNX release under [onnx/onnx.github.io](https://github.com/onnx/onnx.github.io) repo. For instance: https://github.com/onnx/onnx.github.io/pull/83.
+* Slack:
+    * Post in the [onnx-release](https://lfaifoundation.slack.com/archives/C018VGGJUGK) and [onnx-general](https://lfaifoundation.slack.com/archives/C016UBNDBL2) channels.
+* Notify ONNX partners via email lists:
+    * onnxdiscussions@service.microsoft.com
+    * onnxconverterteam@service.microsoft.com
+    * onnxruntimeteam@microsoft.com
+* [ONNX News](https://onnx.ai/news.html) Post
+    * Update [news.json](https://github.com/onnx/onnx.github.io/blob/main/js/news.json), see [example news.json PR](https://github.com/onnx/onnx.github.io/pull/197)
 
 **Update conda-forge package with the new ONNX version**
-* Conda builds of ONNX are done via conda-forge, which runs infrastructure for building packages and uploading them to conda-forge. If it does not happen automatically, you need to submit a PR to https://github.com/conda-forge/onnx-feedstock (see https://github.com/conda-forge/onnx-feedstock/pull/1/files or https://github.com/conda-forge/onnx-feedstock/pull/50/files for example PRs) You will need to have uploaded to PyPI already, and update the version number and tarball hash of the PyPI uploaded tarball.
+
+Conda builds of ONNX are done via [conda-forge/onnx-feedstock](https://github.com/conda-forge/onnx-feedstock), which runs infrastructure for building packages and uploading them to conda-forge.
+
+* A PR should be created automatically by `regro-cf-autotick-bot` a few hours after the release is available at https://github.com/onnx/onnx/releases.
+
+* If the automatic PR has build failures:
+    1. Make a personal fork of conda-forge/onnx-feedstock
+    1. Create a personal branch based on the automated PR branch
+    1. Resolve the build issue
+    1. Submit a replacement PR based on your branch
+
+    * Example: https://github.com/conda-forge/onnx-feedstock/pull/116
+
+* If the automatic PR is not created, you need to submit a PR manually
+    * Example: https://github.com/conda-forge/onnx-feedstock/pull/50
+    * Note: Use the sha256 hash (`sha256sum onnx-X.Y.Z.tar.gz`) of the release's tar.gz file from https://github.com/onnx/onnx/releases.
 
 **Merge into main branch**
-* After everything above is done, merge the release branch into the main branch to make it consistent. This step is needed only when there are urgent changes that are made directly into the release branch. The main branch does not have these needed changes. In all other circumstances, the merge PR shall show as empty so nothing needs to be merged.
+* If urgent changes were made directly into the release branch, merge the release branch back into main branch.
+* If all PRs merged into the release branch (after it was cut) were cherry-picks from main, the merge PR will show as empty and this step is not needed.
 
 **Remove old onnx-weekly packages on PyPI**
-* Once ONNX has been released on PyPI, remove all previous versions of [onnx-weekly package](https://pypi.org/project/onnx-weekly/#history) on PyPI to save space.
-* Steps: Login and go [here](https://pypi.org/manage/project/onnx-weekly/releases/) -> Choose target package -> Options -> Delete.
-
-**Bump opset version for ai.onnx**
-* Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes. For example, this [demo PR](https://github.com/onnx/onnx/pull/4134/files).
-
-**Update IR TBD date if there is an IR bump in the release**
-* Update the latest IR TBD date in https://github.com/onnx/onnx/blob/main/onnx/onnx.in.proto and regenerate corresponding proto files in the main branch if there is an IR bump in the release.
+* Remove all [onnx-weekly packages](https://pypi.org/project/onnx-weekly/#history) from PyPI for the just released version to save space.
+* Steps:
+    * Go to [PyPI onnx-weekly/releases](https://pypi.org/manage/project/onnx-weekly/releases/)
+        * This is a separate project than the onnx releases so you may need to request access from an owner
+    * Click target package -> Options -> Delete.

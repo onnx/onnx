@@ -4364,10 +4364,10 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="TopK-1"></a>**TopK-1**</a>
 
   Retrieve the top-K elements along a specified axis. Given an input tensor of
-  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
-    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+  shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
+    -Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
       which contains the values of the top k elements along the specified axis
-    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+    -Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
      contains the indices of the top k elements (original indices from the input
      tensor).
   Given two equivalent values, this operator uses the indices along the axis  as
@@ -4390,16 +4390,16 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{n-1}]</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Values</tt> : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing top K values from the input tensor</dd>
 <dt><tt>Indices</tt> : I</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
 #### Type Constraints
@@ -10239,10 +10239,10 @@ This version of the operator has been available since version 10 of the default 
 ### <a name="TopK-10"></a>**TopK-10**</a>
 
   Retrieve the top-K elements along a specified axis. Given an input tensor of
-  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
-    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+  shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
+    -Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
       which contains the values of the top k elements along the specified axis
-    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+    -Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
      contains the indices of the top k elements (original indices from the input
      tensor).
 
@@ -10264,7 +10264,7 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{n-1}]</dd>
 <dt><tt>K</tt> : tensor(int64)</dt>
 <dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
 </dl>
@@ -10273,9 +10273,9 @@ This version of the operator has been available since version 10 of the default 
 
 <dl>
 <dt><tt>Values</tt> : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing top K values from the input tensor</dd>
 <dt><tt>Indices</tt> : I</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
 #### Type Constraints
@@ -13672,11 +13672,11 @@ This version of the operator has been available since version 11 of the default 
 ### <a name="TopK-11"></a>**TopK-11**</a>
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
-  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+  shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
 
-  * Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+  * Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
     which contains the values of the top k elements along the specified axis
-  * Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+  * Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
     contains the indices of the top k elements (original indices from the input
     tensor).
 
@@ -13706,7 +13706,7 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{n-1}]</dd>
 <dt><tt>K</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
 </dl>
@@ -13715,9 +13715,9 @@ This version of the operator has been available since version 11 of the default 
 
 <dl>
 <dt><tt>Values</tt> (differentiable) : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing top K values from the input tensor</dd>
 <dt><tt>Indices</tt> (non-differentiable) : I</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
 #### Type Constraints
@@ -24760,8 +24760,8 @@ This version of the operator has been available since version 21 of the default 
 <dl>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain input types.</dd>
-<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
-<dd>Constrain output types to be numerics.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(uint4), tensor(int4), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
+<dd>Constrain output types to be numerics or boolean.</dd>
 </dl>
 
 ### <a name="DequantizeLinear-21"></a>**DequantizeLinear-21**</a>
@@ -25409,6 +25409,8 @@ This version of the operator has been available since version 21 of the default 
 <dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dt><tt>output_dtype</tt> : int (default is 0)</dt>
+<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `y_zero_point` data type (`T2`). If neither `output_dtype` nor `y_zero_point` are supplied, output data type is uint8. If both `output_dtype` and `y_zero_point` are specified, `output_dtype` must be `T2`.</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
 <dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>

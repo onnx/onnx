@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import os
 import tempfile
@@ -96,7 +97,7 @@ class TestLargeOnnxReferenceEvaluator(unittest.TestCase):
             ],
             dtype=np.float32,
         )
-        npt.assert_allclose(expected, got[0])
+        npt.assert_allclose(expected, got[0])  # type: ignore[index]
 
     def test_large_onnx_no_large_initializer(self):
         model_proto = _linear_regression()

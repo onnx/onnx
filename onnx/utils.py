@@ -29,12 +29,9 @@ class Extractor:
         io_names_to_keep = s_io_names_to_extract & original_io_names
         new_io_names_to_add = s_io_names_to_extract - original_io_names
 
-        new_io_tensors = []
-        for name in io_names_to_keep:
-            new_io_tensors.append(original_io_map[name])
-        for name in new_io_names_to_add:
-            # activation become input or output
-            new_io_tensors.append(self.vimap[name])
+        new_io_tensors = [original_io_map[name] for name in io_names_to_keep]
+        # activation become input or output
+        new_io_tensors.extend(self.vimap[name] for name in new_io_names_to_add)
 
         # adjust sequence
         new_io_tensors_map = self._build_name2obj_dict(new_io_tensors)

@@ -3,10 +3,11 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import os
 from collections import defaultdict
-from typing import Any, Dict, List, NamedTuple, Sequence, Set, Tuple
+from typing import Any, NamedTuple, Sequence
 
 import numpy as np
 
@@ -75,7 +76,7 @@ def display_version_link(name: str, version: int, changelog: str) -> str:
 
 
 def generate_formal_parameter_tags(formal_parameter: OpSchema.FormalParameter) -> str:
-    tags: List[str] = []
+    tags: list[str] = []
     if OpSchema.FormalParameterOption.Optional == formal_parameter.option:
         tags = ["optional"]
     elif OpSchema.FormalParameterOption.Variadic == formal_parameter.option:
@@ -256,7 +257,7 @@ def main(args: Args) -> None:
         )
 
         # domain -> version -> [schema]
-        dv_index: Dict[str, Dict[int, List[OpSchema]]] = defaultdict(
+        dv_index: dict[str, dict[int, list[OpSchema]]] = defaultdict(
             lambda: defaultdict(list)
         )
         for schema in defs.get_all_schemas_with_history():
@@ -300,7 +301,7 @@ def main(args: Args) -> None:
         )
 
         # domain -> support level -> name -> [schema]
-        index: Dict[str, Dict[int, Dict[str, List[OpSchema]]]] = defaultdict(
+        index: dict[str, dict[int, dict[str, list[OpSchema]]]] = defaultdict(
             lambda: defaultdict(lambda: defaultdict(list))
         )
         for schema in defs.get_all_schemas_with_history():
@@ -310,10 +311,10 @@ def main(args: Args) -> None:
 
         # Preprocess the Operator Schemas
         # [(domain, [(support_level, [(schema name, current schema, all versions schemas)])])]
-        operator_schemas: List[
-            Tuple[str, List[Tuple[int, List[Tuple[str, OpSchema, List[OpSchema]]]]]]
+        operator_schemas: list[
+            tuple[str, list[tuple[int, list[tuple[str, OpSchema, list[OpSchema]]]]]]
         ] = []
-        existing_ops: Set[str] = set()
+        existing_ops: set[str] = set()
         for domain, _supportmap in sorted(index.items()):
             if not should_render_domain(domain, args.output):
                 continue
@@ -357,7 +358,7 @@ def main(args: Args) -> None:
             if function_ops:
                 fout.write("|**Function**|**Since version**|**Function version**|\n")
                 for n, schema, versions, function_versions in function_ops:
-                    s = '|{}<a href="#{}">{}</a>|{}|{}|\n'.format(
+                    s = '|{}<a href="#{}">{}</a>|{}|{}|\n'.format(  # noqa: UP032
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, n),
                         format_name_with_domain(domain, n),

@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import textwrap
 from typing import Any, Dict
@@ -16,12 +16,16 @@ from onnx.reference.ops.aionnx_preview_training.op_adam import Adam
 from onnx.reference.ops.aionnx_preview_training.op_momentum import Momentum
 
 
-def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRunTraining]]:
+def _build_registered_operators() -> dict[str, dict[int | None, OpRunTraining]]:
     return build_registered_operators_any_domain(globals().copy())  # type: ignore[return-value]
 
 
 def load_op(
-    domain: str, op_type: str, version: Union[None, int], custom: Any = None
+    domain: str,
+    op_type: str,
+    version: None | int,
+    custom: Any = None,
+    evaluator_cls: type | None = None,  # noqa: ARG001
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -30,6 +34,7 @@ def load_op(
         op_type: oprator type
         version: requested version
         custom: custom implementation (like a function)
+        evaluator_cls: unused
 
     Returns:
         class
@@ -79,6 +84,4 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[
-    Dict[str, Dict[Union[int, None], OpRunTraining]]
-] = None
+_registered_operators: dict[str, dict[int | None, OpRunTraining]] | None = None
