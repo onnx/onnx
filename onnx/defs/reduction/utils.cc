@@ -93,9 +93,9 @@ to `False` instead of `True`.)DOC";
         supports_boolean_datatype ? "Constrain input and output types to numeric and Boolean tensors."
                                   : "Constrain input and output types to numeric tensors.");
     if (func_body) {
-      schema.FunctionBody(func_body);
+      schema.FunctionBody(func_body, schema.since_version());
     } else if (function_builder) {
-      schema.SetContextDependentFunctionBodyBuilder(function_builder);
+      schema.SetContextDependentFunctionBodyBuilder(function_builder, schema.SinceVersion());
     }
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
