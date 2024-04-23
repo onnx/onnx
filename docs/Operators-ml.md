@@ -26,7 +26,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ai.onnx.ml.SVMClassifier">ai.onnx.ml.SVMClassifier</a>|<a href="Changelog-ml.md#ai.onnx.ml.SVMClassifier-1">1</a>|
 |<a href="#ai.onnx.ml.SVMRegressor">ai.onnx.ml.SVMRegressor</a>|<a href="Changelog-ml.md#ai.onnx.ml.SVMRegressor-1">1</a>|
 |<a href="#ai.onnx.ml.Scaler">ai.onnx.ml.Scaler</a>|<a href="Changelog-ml.md#ai.onnx.ml.Scaler-1">1</a>|
-|<a href="#ai.onnx.ml.TreeEnsemble">ai.onnx.ml.TreeEnsemble</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsemble-5">5</a>|
+|<a href="#ai.onnx.ml.TreeEnsemble">ai.onnx.ml.TreeEnsemble</a>|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsemble-6">6</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsemble-5">5</a>|
 |<a href="#ai.onnx.ml.TreeEnsembleClassifier">ai.onnx.ml.TreeEnsembleClassifier</a> (deprecated)|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-5">5</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-3">3</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleClassifier-1">1</a>|
 |<a href="#ai.onnx.ml.TreeEnsembleRegressor">ai.onnx.ml.TreeEnsembleRegressor</a> (deprecated)|<a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-5">5</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-3">3</a>, <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsembleRegressor-1">1</a>|
 |<a href="#ai.onnx.ml.ZipMap">ai.onnx.ml.ZipMap</a>|<a href="Changelog-ml.md#ai.onnx.ml.ZipMap-1">1</a>|
@@ -937,7 +937,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 #### Version
 
-This version of the operator has been available since version 5 of the 'ai.onnx.ml' operator set.
+This version of the operator has been available since version 6 of the 'ai.onnx.ml' operator set.
+
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.TreeEnsemble-5">5</a>
 
 #### Attributes
 
@@ -993,7 +995,7 @@ This version of the operator has been available since version 5 of the 'ai.onnx.
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(float16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
 
