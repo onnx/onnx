@@ -10,7 +10,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Gradient_ver1_doc = R"DOC(
+static const char* Gradient_ver2_doc = R"DOC(
 Gradient operator computes the partial derivatives of a specific tensor w.r.t.
 some other tensors. This operator is widely used in gradient-based training
 algorithms. To illustrate its use, let's consider a computation graph,
@@ -138,9 +138,9 @@ auto-differentiation.
 
 ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
     Gradient,
-    1,
+    2,
     OpSchema()
-        .SetDoc(Gradient_ver1_doc)
+        .SetDoc(Gradient_ver2_doc)
         .Input(
             0,
             "Inputs",
@@ -187,10 +187,10 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "\"zs\" are the minimal independent variable set that determines "
             "the value of \"y\".",
             AttributeProto::STRING)
-        .TypeConstraint("T1", OpSchema::all_tensor_types(), "Allow outputs to be any kind of tensor.")
+        .TypeConstraint("T1", OpSchema::all_tensor_types_ir4(), "Allow outputs to be any kind of tensor.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            OpSchema::all_float_types_ir4(),
             "Allow inputs to be any kind of floating-point tensor."));
 
 static const char* Adagrad_ver1_doc = R"DOC(

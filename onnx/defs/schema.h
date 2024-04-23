@@ -1181,14 +1181,14 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // ONNX's preview domain contains operators subject to change, so
       // versining is not meaningful and that domain should have only one
       // version.
-      map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
+      map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 2);
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
       last_release_version_map_[ONNX_DOMAIN] = 21;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 5;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
-      last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
+      last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 2;
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
