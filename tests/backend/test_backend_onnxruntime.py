@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import pathlib
 import platform
 import unittest
 from typing import Any
@@ -26,6 +27,7 @@ except ImportError:
     ort: Any = None  # type: ignore[no-redef]
     ort_version: Any = None  # type: ignore[no-redef]
 
+TEST_DATA_DIR = pathlib.Path(__file__).parent.parent.parent / "onnx/backend/test/data"
 
 # The following just executes a backend based on InferenceSession through the backend test
 
@@ -108,7 +110,9 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
 
 
 if ort is not None:
-    backend_test = onnx.backend.test.BackendTest(InferenceSessionBackend, __name__)
+    backend_test = onnx.backend.test.BackendTest(
+        InferenceSessionBackend, test_data_dir=TEST_DATA_DIR, parent_module=__name__
+    )
 
     if platform.architecture()[0] == "32bit":
         backend_test.exclude("(test_vgg19|test_zfnet|test_bvlc_alexnet)")

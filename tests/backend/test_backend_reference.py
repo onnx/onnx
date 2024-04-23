@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import platform
 import sys
 import unittest
 from typing import Any
 
 import numpy
-import version_utils
+import packaging
 
 import onnx.backend.base
 import onnx.backend.test
@@ -19,6 +20,8 @@ import onnx.version_converter
 from onnx import ModelProto
 from onnx.backend.base import Device, DeviceType
 from onnx.reference import ReferenceEvaluator
+
+_TEST_DATA_DIR = pathlib.Path(__file__).parent.parent.parent / "onnx/backend/test/data"
 
 # The following just executes a backend based on ReferenceEvaluator through the backend test
 
@@ -90,7 +93,9 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
         raise NotImplementedError("Unable to run the model node by node.")
 
 
-backend_test = onnx.backend.test.BackendTest(ReferenceEvaluatorBackend, __name__)
+backend_test = onnx.backend.test.BackendTest(
+    ReferenceEvaluatorBackend, test_data_dir=_TEST_DATA_DIR, parent_module=__name__
+)
 
 if os.getenv("APPVEYOR"):
     backend_test.exclude("(test_vgg19|test_zfnet)")
@@ -194,7 +199,7 @@ if sys.platform == "darwin":
     backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
 
 # op_dft and op_stft requires numpy >= 1.21.5
-if version_utils.numpy_older_than("1.21.5"):
+if packaging.version.parse(numpy.__version__) < packaging.version.parse("1.21.5"):
     backend_test.exclude("test_stft")
     backend_test.exclude("test_stft_with_window")
     backend_test.exclude("test_stft_cpu")

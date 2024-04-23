@@ -8,13 +8,9 @@ import os
 
 from onnx.backend.test.case.test_case import TestCase
 
-DATA_DIR = os.path.join(
-    os.path.dirname(os.path.realpath(os.path.dirname(__file__))), "data"
-)
-
 
 def load_model_tests(
-    data_dir: str = DATA_DIR,
+    data_dir: str | os.PathLike,
     kind: str | None = None,
 ) -> list[TestCase]:
     """Load model test cases from on-disk data files."""

@@ -3,10 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import pathlib
 import subprocess
 import sys
 from copy import deepcopy
-from pathlib import Path
 from typing import Any, Callable, Sequence
 
 import numpy as np
@@ -389,7 +389,7 @@ def collect_diff_testcases() -> list[TestCase]:
 
 
 def get_diff_op_types():
-    cwd_path = Path.cwd()
+    cwd_path = pathlib.Path.cwd()
     # git fetch first for git diff on GitHub Action
     subprocess.run(
         ["git", "fetch", "origin", "main:main"],
