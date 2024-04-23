@@ -130,6 +130,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(DequantizeLinear_ver19_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 1, 0);
+          if (!hasInputShape(ctx, 0)) {
+            return;
+          }
           auto& input_shape = getInputShape(ctx, 0);
           updateOutputShape(ctx, 0, input_shape);
         }));
@@ -181,7 +184,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasInputShape(ctx, 0)) {
             return;
           }
-
           auto& input_shape = getInputShape(ctx, 0);
           updateOutputShape(ctx, 0, input_shape);
         }));
