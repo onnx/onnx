@@ -998,7 +998,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE));
 
-static const char* TreeEnsemble_ver6_doc = R"DOC(
+static const char* TreeEnsemble_ver5_doc = R"DOC(
     Tree Ensemble operator.  Returns the regressed values for each input in a batch.
     Inputs have dimensions `[N, F]` where `N` is the input batch size and `F` is the number of input features.
     Outputs have dimensions `[N, num_targets]` where `N` is the batch size and `num_targets` is the number of targets, which is a configurable attribute.
@@ -1016,12 +1016,15 @@ static const char* TreeEnsemble_ver6_doc = R"DOC(
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     TreeEnsemble,
-    6,
+    5,
     OpSchema()
-        .SetDoc(TreeEnsemble_ver6_doc)
+        .SetDoc(TreeEnsemble_ver5_doc)
         .Input(0, "X", "Input of shape [Batch Size, Number of Features]", "T")
         .Output(0, "Y", "Output of shape [Batch Size, Number of targets]", "T")
-        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "The input type must be a tensor of a numeric type.")
+        .TypeConstraint(
+            "T",
+            {"tensor(float)", "tensor(double)", "tensor(float16)"},
+            "The input type must be a tensor of a numeric type.")
         .Attr("nodes_featureids", "Feature id for each node.", AttributeProto::INTS, true)
         .Attr(
             "nodes_splits",
