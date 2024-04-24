@@ -2,7 +2,7 @@ name: CI
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # every day at midnight for reporting code coverage to codecov
+    - cron: "0 0 * * *" # every day at midnight for reporting code coverage to codecov
   push:
     branches:
       - main
@@ -10,7 +10,7 @@ on:
   merge_group:
   workflow_dispatch:
 
-permissions:  # set top-level default permissions as security best practice
+permissions: # set top-level default permissions as security best practice
   contents: read
 
 concurrency:
@@ -23,34 +23,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest,macos-latest]
-        python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python_version: ["3.12", "3.11", "3.10", "3.9", "3.8"]
         include:
-          - python_version: '3.12'
+          - python_version: "3.12"
             onnx_ml: 1
             debug_build: 1
             documentation: 1
-            protobuf_type: 'Internal'
-          - python_version: '3.11'
+            protobuf_type: "Internal"
+          - python_version: "3.11"
             onnx_ml: 1
             debug_build: 0
             documentation: 0
-            protobuf_type: 'External'
-          - python_version: '3.10'
+            protobuf_type: "External"
+          - python_version: "3.10"
             onnx_ml: 0
             debug_build: 0
             documentation: 0
-            protobuf_type: 'Internal'
-          - python_version: '3.9'
+            protobuf_type: "Internal"
+          - python_version: "3.9"
             onnx_ml: 1
             debug_build: 0
             documentation: 0
-            protobuf_type: 'External'
-          - python_version: '3.8'
+            protobuf_type: "External"
+          - python_version: "3.8"
             onnx_ml: 0
             debug_build: 0
             documentation: 0
-            protobuf_type: 'Internal'
+            protobuf_type: "Internal"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -70,7 +70,7 @@ jobs:
         if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get install libprotobuf-dev protobuf-compiler
-       env:
+        env:
           CMAKE_ARGS: "-DONNX_GEN_PB_TYPE_STUBS=OFF"
 
       - name: Install external protobuf - MacOS
