@@ -126,7 +126,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* EyeLike_ver9_doc = R"DOC(
+static const char* EyeLike_ver22_doc = R"DOC(
 Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
 tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
 same as the input tensor. The data type can be specified by the 'dtype' argument. If
@@ -138,9 +138,9 @@ TensorProto message and be valid as an output type.
 
 ONNX_OPERATOR_SET_SCHEMA(
     EyeLike,
-    9,
+    22,
     OpSchema()
-        .SetDoc(EyeLike_ver9_doc)
+        .SetDoc(EyeLike_ver22_doc)
         .Attr(
             "k",
             "(Optional) Index of the diagonal to be populated with ones. Default is 0."
@@ -159,33 +159,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Output tensor, same shape as input tensor T1.", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(bool)"},
+            OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
             "Constrain input types. Strings and complex are not supported.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(bool)"},
+            OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
             "Constrain output types. Strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr) {
@@ -202,7 +180,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* RandomUniform_ver1_doc = R"DOC(
+static const char* RandomUniform_ver22_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. The shape
 of the tensor is specified by the `shape` argument and the range by `low` and `high`.
 
@@ -213,9 +191,9 @@ TensorProto message.
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniform,
-    1,
+    22,
     OpSchema()
-        .SetDoc(RandomUniform_ver1_doc)
+        .SetDoc(RandomUniform_ver22_doc)
         .Attr("low", "Lower boundary of the output values.", AttributeProto::FLOAT, 0.0f)
         .Attr("high", "Upper boundary of the output values.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -230,16 +208,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(TensorProto::FLOAT))
         .Attr("shape", "The shape of the output tensor.", AttributeProto::INTS)
         .Output(0, "output", "Output tensor of random values drawn from uniform distribution", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* RandomNormal_ver1_doc = R"DOC(
+static const char* RandomNormal_ver22_doc = R"DOC(
 Generate a tensor with random values drawn from a normal distribution. The shape
 of the tensor is specified by the `shape` argument and the parameter of the normal distribution
 specified by `mean` and `scale`.
@@ -251,9 +226,9 @@ TensorProto message.
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormal,
-    1,
+    22,
     OpSchema()
-        .SetDoc(RandomNormal_ver1_doc)
+        .SetDoc(RandomNormal_ver22_doc)
         .Attr("mean", "The mean of the normal distribution.", AttributeProto::FLOAT, 0.0f)
         .Attr("scale", "The standard deviation of the normal distribution.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -268,16 +243,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(TensorProto::FLOAT))
         .Attr("shape", "The shape of the output tensor.", AttributeProto::INTS)
         .Output(0, "output", "Output tensor of random values drawn from normal distribution", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* RandomUniformLike_ver1_doc = R"DOC(
+static const char* RandomUniformLike_ver22_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution.
 The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the uniform distribution are specified by `low` and `high`.
@@ -289,9 +261,9 @@ TensorProto message and be valid as an output type.
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniformLike,
-    1,
+    22,
     OpSchema()
-        .SetDoc(RandomUniformLike_ver1_doc)
+        .SetDoc(RandomUniformLike_ver22_doc)
         .Attr("low", "Lower boundary of the output values.", AttributeProto::FLOAT, 0.0f)
         .Attr("high", "Upper boundary of the output values.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -309,12 +281,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Output tensor of random values drawn from uniform distribution", "T2")
         .TypeConstraint(
             "T1",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_ir4(),
             "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+        .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr)
             propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
@@ -326,7 +295,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* RandomNormalLike_ver1_doc = R"DOC(
+static const char* RandomNormalLike_ver22_doc = R"DOC(
 Generate a tensor with random values drawn from a normal distribution.
 The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the normal distribution are specified by `mean` and `scale`.
@@ -338,9 +307,9 @@ TensorProto message, and be valid as an output type.
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormalLike,
-    1,
+    22,
     OpSchema()
-        .SetDoc(RandomNormalLike_ver1_doc)
+        .SetDoc(RandomNormalLike_ver22_doc)
         .Attr("mean", "The mean of the normal distribution.", AttributeProto::FLOAT, 0.0f)
         .Attr("scale", "The standard deviation of the normal distribution.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -358,12 +327,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Output tensor of random values drawn from normal distribution", "T2")
         .TypeConstraint(
             "T1",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_ir4(),
             "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+        .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr)
             propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
@@ -375,16 +341,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* Multinomial_ver7_doc = R"DOC(
+static const char* Multinomial_ver22_doc = R"DOC(
 Generate a tensor of samples from a multinomial distribution according to the probabilities
 of each of the possible outcomes.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Multinomial,
-    7,
+    22,
     OpSchema()
-        .SetDoc(Multinomial_ver7_doc)
+        .SetDoc(Multinomial_ver22_doc)
         .Attr("sample_size", "Number of times to sample.", AttributeProto::INT, static_cast<int64_t>(1))
         .Attr(
             "seed",
@@ -406,10 +372,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "output",
             "Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. Each value along the axis zero represents the outcome of the corresponding sample in a batch.",
             "T2")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
+        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain input types to float tensors.")
         .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "Constrain output types to integral tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto dtype = ctx.getAttribute("dtype");
@@ -562,7 +525,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Bernoulli_ver15_doc = R"DOC(
+static const char* Bernoulli_ver22_doc = R"DOC(
 Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
 containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
 where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
@@ -573,9 +536,9 @@ implementations (even if a seed is specified).
 
 ONNX_OPERATOR_SET_SCHEMA(
     Bernoulli,
-    15,
+    22,
     OpSchema()
-        .SetDoc(Bernoulli_ver15_doc)
+        .SetDoc(Bernoulli_ver22_doc)
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -589,25 +552,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Input(0, "input", "All values in input have to be in the range:[0, 1].", "T1")
         .Output(0, "output", "The returned output tensor only has values 0 or 1, same shape as input tensor.", "T2")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
+        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain input types to float tensors.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(bfloat16)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(bool)"},
+            OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
             "Constrain output types to all numeric tensors and bool tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr)

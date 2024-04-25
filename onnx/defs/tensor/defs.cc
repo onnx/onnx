@@ -136,7 +136,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* CastLike_ver19_doc = R"DOC(
+static const char* CastLike_ver21_doc = R"DOC(
 The operator casts the elements of a given input tensor (the first input) to
 the same data type as the elements of the second input tensor.
 See documentation of the Cast operator for further details.
@@ -146,7 +146,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     21,
     OpSchema()
-        .SetDoc(CastLike_ver19_doc)
+        .SetDoc(CastLike_ver21_doc)
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
@@ -176,19 +176,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",    "tensor(float)",          "tensor(double)",       "tensor(int8)",
-             "tensor(int16)",      "tensor(int32)",          "tensor(int64)",        "tensor(uint8)",
-             "tensor(uint16)",     "tensor(uint32)",         "tensor(uint64)",       "tensor(bool)",
-             "tensor(string)",     "tensor(bfloat16)",       "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",        "tensor(int4)"},
+            OpSchema::all_non_complex_tensor_types_ir10(),
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",    "tensor(float)",          "tensor(double)",       "tensor(int8)",
-             "tensor(int16)",      "tensor(int32)",          "tensor(int64)",        "tensor(uint8)",
-             "tensor(uint16)",     "tensor(uint32)",         "tensor(uint64)",       "tensor(bool)",
-             "tensor(string)",     "tensor(bfloat16)",       "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",        "tensor(int4)"},
+            OpSchema::all_non_complex_tensor_types_ir10(),
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 1, 0);
@@ -2331,7 +2323,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Resize_ver19_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
 
-static const char* GridSample_ver20_doc = R"DOC(
+static const char* GridSample_ver22_doc = R"DOC(
 Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.
 For spatial input `X` with shape (N, C, H, W), the `grid` will have shape (N, H_out, W_out, 2),
 the output `Y` will have shape (N, C, H_out, W_out). For volumetric input `X` with shape (N, C, D, H, W),
@@ -2354,7 +2346,7 @@ See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/stable/ge
 
 ONNX_OPERATOR_SET_SCHEMA(
     GridSample,
-    20,
+    22,
     OpSchema()
         .Attr(
             "mode",
@@ -2420,13 +2412,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
-            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types_ir4(),
             "Constrain input `X` and output `Y` types to all tensor types.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain grid types to float tensors.")
-        .SetDoc(GridSample_ver20_doc)
+        .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain grid types to float tensors.")
+        .SetDoc(GridSample_ver22_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
 static const char* AffineGrid_ver20_doc = R"DOC(
