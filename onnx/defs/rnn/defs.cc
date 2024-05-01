@@ -167,16 +167,13 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         true,
         1,
         OpSchema::Differentiable);
-    schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+    schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference);
   };
 }
 
-static const char* RNN_ver14_doc = R"DOC(
+static const char* RNN_ver22_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -220,9 +217,9 @@ Equations (Default: f=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
-    14,
+    22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(RNN_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(RNN_ver22_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -266,7 +263,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
-static const char* GRU_ver14_doc = R"DOC(
+static const char* GRU_ver22_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -317,9 +314,9 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
-    14,
+    22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(GRU_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(GRU_ver22_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -371,7 +368,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
-static const char* LSTM_ver14_doc = R"DOC(
+static const char* LSTM_ver22_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -425,9 +422,9 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
-    14,
+    22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(LSTM_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(LSTM_ver22_doc) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "

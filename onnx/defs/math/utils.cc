@@ -11,6 +11,17 @@ namespace defs {
 namespace math {
 namespace utils {
 
+int MathOpTwoIntegers(std::string op_type, int a, int b) {
+  if (op_type == "Add") {
+    return a + b;
+  } else if (op_type == "Sub") {
+    return a - b;
+  } else if (op_type == "Mul") {
+    return a * b;
+  }
+  fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
+}
+
 void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx) {
   if (!hasInputShape(ctx, input1Idx) || !hasInputShape(ctx, input2Idx)) {
     return;
