@@ -28,8 +28,6 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-        host-architecture: ['x64']
-        target-architecture: ['x86_64', 'universal2']
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -43,7 +41,21 @@ jobs:
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: ${{ matrix.python-version }}
-        architecture: ${{ matrix.host-architecture }}
+
+    - name: override python 3.8 install
+      if: matrix.python-version == '3.8'
+      run: |
+        # the universal2 installer used by setup-python can't target macos 10.15 (minimum target is 11.0)
+        # let's override with the x86_64 only installer
+        curl -fsSLO https://www.python.org/ftp/python/3.8.10/python-3.8.10-macosx10.9.pkg
+        sudo installer -pkg python-3.8.10-macosx10.9.pkg -target /
+        rm python-3.8.10-macosx10.9.pkg
+        sh "/Applications/Python 3.8/Install Certificates.command"
+        # the x86_64 only installer comes with its own quirks when building universal2
+        echo "_PYTHON_HOST_PLATFORM=macosx-10.9-universal2" >> "$GITHUB_ENV"
+        echo "ARCHFLAGS=-arch arm64 -arch x86_64" >> "$GITHUB_ENV"
+        # workaround https://github.com/pypa/pip/issues/11789
+        echo "SYSTEM_VERSION_COMPAT=0" >> "$GITHUB_ENV"
 
     - name: Install Python dependencies
       run: |
@@ -55,12 +67,7 @@ jobs:
         CC: "clang"
         CXX: "clang++"
         ONNX_ML: 1
-        CMAKE_OSX_ARCHITECTURES: ${{ matrix.target-architecture == 'x86_64' && 'x86_64' || 'arm64;x86_64' }}
-        # Currently GitHub Action agent is using macos-11, we rename the wheels
-        # to use the MACOSX_DEPLOYMENT_TARGET
-        # Rename e.g. onnx-1.15.0-cp38-cp38-macosx_11_0_x86_64.whl
-        # to onnx-1.15.0-cp38-cp38-macosx_10_15_universal2.whl
-        ONNX_WHEEL_PLATFORM_NAME: macosx_10_15_${{ matrix.target-architecture }}
+        CMAKE_OSX_ARCHITECTURES: "arm64;x86_64"
         CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
       run: |
         # Install Protobuf from source
@@ -72,47 +79,73 @@ jobs:
         fi
         python -m build --wheel
 
-        for file in dist/*.whl; do
-          python -m pip install --upgrade $file;
-        done
-    - name: Test the installed wheel
-      run: |
-        pytest
-
-    - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+    - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
       with:
-        name: wheels
+        name: macos-wheel-${{ matrix.python-version }}
         path: dist
 
+  test:
+    needs: build
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        target-architecture: ['x86_64', 'arm64']
+
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python dependencies
+      run: |
+        arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
+        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release.txt
+
+    - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+      with:
+        name: macos-wheel-${{ matrix.python-version }}
+        path: dist
+
+    - name: Test the wheel
+      run: |
+        arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
+        arch -${{ matrix.target-architecture }} pytest
+
     - name: Upload wheel to PyPI weekly
-      if: github.event_name == 'schedule' # Only triggered by weekly event
+      if: github.event_name == 'schedule' && matrix.target-architecture == 'arm64'  # Only triggered by weekly event
       run: |
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy
-        for file in dist/*.whl; do python -m pip install --upgrade $file; done
-        pytest
+        arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
+        arch -${{ matrix.target-architecture }} python -m pip install numpy
+        arch -${{ matrix.target-architecture }}  python -m pip install --upgrade dist/*.whl
+        arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
-        for file in dist/*.whl; do python -m pip install --upgrade $file; done
-        pytest
+        arch -${{ matrix.target-architecture }} python -m pip uninstall -y protobuf onnx
+        arch -${{ matrix.target-architecture }} python -m pip install protobuf
+        arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
+        arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: ${{ always() }}
+      if: always() && (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.8' && matrix.python-version != '3.9'))
       run: |
-        python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
-        for file in dist/*.whl; do python -m pip install --upgrade $file; done
-        pytest
+        arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
+        arch -${{ matrix.target-architecture }}  python -m pip install -r requirements-min.txt
+        arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
+        arch -${{ matrix.target-architecture }} pytest
 
     # Only triggered by weekly event on certain CI
     - name: Build and upload source distribution to PyPI weekly
-      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'x86_64'
+      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
       run: |
         # Build and upload source distribution to PyPI
         git clean -xdf
@@ -129,9 +162,10 @@ jobs:
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != '3.12'
       run: |
-        python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
-        python -m pip install -q onnxruntime
+        arch -${{ matrix.target-architecture }} python -m pip uninstall -y protobuf numpy
+        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release.txt
+        arch -${{ matrix.target-architecture }} python -m pip install -q onnxruntime
         export ORT_MAX_IR_SUPPORTED_VERSION=9
         export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
         export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20
-        pytest
+        arch -${{ matrix.target-architecture }} pytest
