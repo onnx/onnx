@@ -10,9 +10,9 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:
 
-# Use MACOSX_DEPLOYMENT_TARGET=10.15 to produce compatible wheel
+# Use MACOSX_DEPLOYMENT_TARGET=11.0 to produce compatible wheel
 env:
-  MACOSX_DEPLOYMENT_TARGET: 10.15
+  MACOSX_DEPLOYMENT_TARGET: 11.0
 
 permissions:
   contents: read
@@ -41,21 +41,6 @@ jobs:
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: ${{ matrix.python-version }}
-
-    - name: override python 3.8 install
-      if: matrix.python-version == '3.8'
-      run: |
-        # the universal2 installer used by setup-python can't target macos 10.15 (minimum target is 11.0)
-        # let's override with the x86_64 only installer
-        curl -fsSLO https://www.python.org/ftp/python/3.8.10/python-3.8.10-macosx10.9.pkg
-        sudo installer -pkg python-3.8.10-macosx10.9.pkg -target /
-        rm python-3.8.10-macosx10.9.pkg
-        sh "/Applications/Python 3.8/Install Certificates.command"
-        # the x86_64 only installer comes with its own quirks when building universal2
-        echo "_PYTHON_HOST_PLATFORM=macosx-10.9-universal2" >> "$GITHUB_ENV"
-        echo "ARCHFLAGS=-arch arm64 -arch x86_64" >> "$GITHUB_ENV"
-        # workaround https://github.com/pypa/pip/issues/11789
-        echo "SYSTEM_VERSION_COMPAT=0" >> "$GITHUB_ENV"
 
     - name: Install Python dependencies
       run: |
