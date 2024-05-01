@@ -295,7 +295,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
         try:
             check_model(onnx_model)
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             raise AssertionError(f"checker fails for\n{onnx_model}") from e
         return onnx_model, f
 
