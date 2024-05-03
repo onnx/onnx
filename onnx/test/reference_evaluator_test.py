@@ -738,7 +738,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         x = np.arange(60).reshape((3, 4, 5)).astype(np.float32)
         sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(x, got)
+        assert_allclose(x * x, got)
 
     def test_greater(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
