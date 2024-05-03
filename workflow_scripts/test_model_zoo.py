@@ -6,9 +6,9 @@ from __future__ import annotations
 import argparse
 import gc
 import os
+import shutil
 import sys
 import time
-import shutil
 import config
 
 import onnx
