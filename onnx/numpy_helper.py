@@ -105,7 +105,7 @@ def float8e4m3_to_float32(
 
     # Construct the float32 value
     # First move the sign bit to the correct position
-    result[finite_mask] = signs << 24
+    result[finite_mask] = signs[finite_mask] << 24
     # Subnormal number
     # if mantissa > 0:
     #     exponent = 127 - exponent_bias
@@ -225,7 +225,7 @@ def float8e5m2_to_float32(
 
     # Construct the float32 value
     # First move the sign bit to the correct position
-    result[finite_mask] = signs << 24
+    result[finite_mask] = signs[finite_mask] << 24
     # if exponent == 0:
     #     # Subnormal number
     #     if mantissa > 0:
