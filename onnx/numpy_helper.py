@@ -148,8 +148,8 @@ def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
         fn: Finite. No infinite values.
         uz: Unique zero. No negative zero or negative inf.
     """
-    range_min = 0b0_0000_000  # 0x00, 0
-    range_max = 0b1_1111_111  # 0xFF, 255
+    range_min = 0b0_00000_00  # 0x00, 0
+    range_max = 0b1_11111_11  # 0xFF, 255
     if ival < range_min or ival > range_max:
         raise ValueError(
             f"{ival} is not a float8 value because its binary representation is out of range [0, 255]."
