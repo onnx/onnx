@@ -61,8 +61,13 @@ def float8e4m3_to_float32(
     """
     if not fn:
         raise NotImplementedError(
-            "float32_to_float8e4m3 not implemented with fn=False."
+            "float8e4m3_to_float32 not implemented with fn=False."
         )
+    if not isinstance(array, np.ndarray):
+        array = np.array(array, dtype=np.uint8)
+    is_scalar = array.ndim == 0
+    if is_scalar:
+        array = np.reshape(array, (1,))
 
     range_min = 0b0_0000_000  # 0x00, 0
     range_max = 0b1_1111_111  # 0xFF, 255
@@ -116,13 +121,13 @@ def float8e4m3_to_float32(
     subnormal_exponents = np.full_like(result, 127 - exponent_bias, dtype=np.uint32)
     subnormal_mantissas = mantissas & subnormal_mask
 
-    subnormal_mantissa_selector = [subnormal_mantissas & 0b100 == 0]
+    subnormal_mantissa_selector = (subnormal_mantissas & 0b100) == 0
     subnormal_mantissas[subnormal_mantissa_selector] = (
         subnormal_mantissas[subnormal_mantissa_selector] & 0b011
     ) << 1
     subnormal_exponents[subnormal_mantissa_selector] -= 1
 
-    subnormal_mantissa_selector = [subnormal_mantissas & 0b100 == 0]
+    subnormal_mantissa_selector = (subnormal_mantissas & 0b100) == 0
     subnormal_mantissas[subnormal_mantissa_selector] = (
         subnormal_mantissas & 0b011
     ) << 1
@@ -144,7 +149,10 @@ def float8e4m3_to_float32(
     result[normal_mask] |= mantissas[normal_mask] << 20
     exponents[normal_mask] += 127 - exponent_bias
     result[normal_mask] |= exponents[normal_mask] << 23
-    return result.view(np.float32)
+    result = result.view(np.float32)
+    if is_scalar:
+        return result[0]
+    return result
 
 
 def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
