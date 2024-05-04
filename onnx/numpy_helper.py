@@ -210,8 +210,7 @@ def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
         result |= mantissa << 21
         exponent += 127 - exponent_bias
         result |= exponent << 23
-    f = np.uint32(result).view(np.float32)
-    return f
+    return np.uint32(result).view(np.float32)
 
 
 _float8e5m2_to_float32 = np.vectorize(
