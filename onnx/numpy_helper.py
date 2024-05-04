@@ -41,7 +41,7 @@ def bfloat16_to_float32(
     Returns:
         A numpy array of float32 with the same dimension.
     """
-    return _left_shift_16_bits(data).view(np.float32)
+    return _left_shift_16_bits(data.astype(np.uint32)).view(np.float32)
 
 
 def float8e4m3_to_float32(

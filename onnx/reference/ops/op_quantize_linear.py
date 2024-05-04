@@ -192,11 +192,10 @@ class _CommonQuantizeLinear(OpRun):
         if tensor_type in (TensorProto.UINT4, TensorProto.INT4):
             xi = np.rint(x).astype(np.int32)
             xi += zero_point
-            single_func = lambda x: subbyte.float32_to_4bit_unpacked(  # noqa: E731
-                x, signed=(tensor_type == TensorProto.INT4)
-            )
-            func = np.vectorize(single_func)
-            i4 = func(xi)
+            if tensor_type == TensorProto.INT4:
+                i4 = subbyte.cast_int4(xi)
+            else:
+                i4 = subbyte.cast_uint4(xi)
             return (i4,)  # type: ignore[attr-defined]
 
         raise ValueError(

@@ -90,11 +90,9 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
 
         if to == tensor_type:
             xf = x.astype(np.float32).ravel()
-            y = np.empty(xf.shape, dtype=np_type).ravel()
-            for i in range(y.shape[0]):
-                el = subbyte.float32_to_4bit_unpacked(xf[i], signed=signed)
-                y[i] = el
-            return y.reshape(x.shape)
+            if signed:
+                return subbyte.cast_int4(xf).view(np_type)
+            return subbyte.cast_uint4(xf).view(np_type)
 
     f8back = {
         TensorProto.FLOAT8E4M3FN: (
