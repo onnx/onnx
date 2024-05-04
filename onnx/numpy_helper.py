@@ -215,12 +215,12 @@ def float8e5m2_to_float32(
         raise NotImplementedError("fn and uz must be both False or True.")
 
     # Mask out the sign, exponent and mantissa parts
-    sign_mask = 0b1_0000_000  # First bit is the sign bit
+    sign_mask = 0b1_00000_00  # First bit is the sign bit
     signs = array & sign_mask
-    exponent_mask = 0b0_1111_000  # The next 4 bits are the exponent
+    exponent_mask = 0b0_11111_00  # The next 5 bits are the exponent
 
-    exponents = (array & exponent_mask) >> 3
-    mantissa_mask = 0b0_0000_111  # The last 3 bits are the mantissa
+    exponents = (array & exponent_mask) >> 2
+    mantissa_mask = 0b0_00000_11  # The last 2 bits are the mantissa
     mantissas = array & mantissa_mask
 
     # Construct the float32 value
@@ -246,7 +246,7 @@ def float8e5m2_to_float32(
     ) << 1
     subnormal_exponents[subnormal_mantissa_selector] -= 1
 
-    result[subnormal_mask] |= (subnormal_mantissas & 0b011)[subnormal_mask] << 22
+    result[subnormal_mask] |= (subnormal_mantissas & 0b01)[subnormal_mask] << 22
     result[subnormal_mask] |= subnormal_exponents[subnormal_mask] << 23
 
     # Normal number
