@@ -8,10 +8,10 @@ from typing import Any, ClassVar, Iterable
 
 import numpy as np
 
-from onnx import TensorProto
+from onnx import TensorProto, subbyte
 from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
 from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
-from onnx.numpy_helper import to_array, unpack_int4
+from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 from onnx.reference.custom_element_types import (
     bfloat16,
@@ -126,12 +126,13 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
     """
     elem_type = tensor.data_type
     if elem_type == TensorProto.BFLOAT16:
-        data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        y = np.empty(shape, dtype=bfloat16).ravel()
-        for i, d in enumerate(data):
-            y[i] = d
-        return y.reshape(shape)
+        if tensor.HasField("raw_data"):
+            data = np.frombuffer(
+                tensor.raw_data, dtype=np.dtype(np.uint16).newbyteorder("<")
+            )
+        else:
+            data = np.array(tensor.int32_data, dtype=np.uint16).view(bfloat16)
+        return data.reshape(tensor.dims)
 
     if elem_type in (
         TensorProto.FLOAT8E4M3FN,
@@ -139,7 +140,7 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
         TensorProto.FLOAT8E5M2,
         TensorProto.FLOAT8E5M2FNUZ,
     ):
-        m = {
+        dtype_mapping = {
             TensorProto.FLOAT8E4M3FN: float8e4m3fn,
             TensorProto.FLOAT8E4M3FNUZ: float8e4m3fnuz,
             TensorProto.FLOAT8E5M2: float8e5m2,
@@ -147,29 +148,26 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
         }
 
         if tensor.HasField("raw_data"):
-            data = tensor.raw_data  # type: ignore[assignment]
+            data = np.frombuffer(
+                tensor.raw_data, dtype=np.dtype(np.uint8).newbyteorder("<")
+            )
         else:
-            data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
-        for i, d in enumerate(data):
-            y[i] = d
-        return y.reshape(shape)
+            data = np.array(tensor.int32_data, dtype=np.uint8)
+        data = data.view(dtype_mapping[elem_type])
+        return data.reshape(tensor.dims)
+
     if elem_type in (TensorProto.UINT4, TensorProto.INT4):
         if tensor.HasField("raw_data"):
-            data = tensor.raw_data  # type: ignore[assignment]
+            data = np.frombuffer(
+                tensor.raw_data, dtype=np.dtype(np.uint8).newbyteorder("<")
+            )
         else:
-            data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        m = {TensorProto.INT4: int4, TensorProto.UINT4: uint4}
-        dtype = m[elem_type]  # type: ignore[index]
+            data = np.array(tensor.int32_data, dtype=np.uint8)
         signed = elem_type == TensorProto.INT4
-        y = np.empty(len(data), dtype=dtype).ravel()
-        for i, d in enumerate(data):
-            y[i] = d
+        dtype_mapping = {TensorProto.INT4: int4, TensorProto.UINT4: uint4}
+        dtype = dtype_mapping[elem_type]
+        return subbyte.unpack_int4(data, dims=tensor.dims, signed=signed).view(dtype)
 
-        unpacked_data = unpack_int4(y, dims=shape, signed=signed)
-        return unpacked_data.astype(dtype)
     return to_array(tensor)
 
 
