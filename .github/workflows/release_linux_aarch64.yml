@@ -50,7 +50,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '${{ env.py }} -m pip install -q virtualenv && ${{ env.py }} -m venv .env && \
           source .env/bin/activate && \
-          ${{ env.py }} -m pip install -q -r requirements-release.txt && \
+          ${{ env.py }} -m pip install --only-binary :all: -q -r requirements-release.txt && \
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 
@@ -74,7 +74,7 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
-          python -m pip install -q -r requirements-release.txt && \
+          python -m pip install --only-binary :all: -q -r requirements-release.txt && \
           pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
