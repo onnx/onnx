@@ -4,14 +4,14 @@
 from __future__ import annotations
 
 import sys
+import typing
 from typing import Any, Sequence
 
 import numpy as np
 
 import onnx
-from onnx import helper, subbyte
 import onnx.external_data_helper
-import typing
+from onnx import helper, subbyte
 
 if typing.TYPE_CHECKING:
     import numpy.typing as npt
@@ -22,12 +22,16 @@ def combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def _left_shift_16_bits(data: npt.NDArray[np.uint16 | np.uint32]) -> npt.NDArray[np.uint32]:
+def _left_shift_16_bits(
+    data: npt.NDArray[np.uint16 | np.uint32],
+) -> npt.NDArray[np.uint32]:
     # The left shifted result is always int64, so we need to convert it back to uint32
     return (data << 16).astype(np.uint32)
 
 
-def bfloat16_to_float32(data: npt.NDArray[np.uint16 | np.uint32]) -> npt.NDArray[np.float32]:
+def bfloat16_to_float32(
+    data: npt.NDArray[np.uint16 | np.uint32],
+) -> npt.NDArray[np.float32]:
     """Converts ndarray of bf16 (as uint16 / uint32) to f32.
 
     Args:
@@ -52,7 +56,9 @@ def _float8e4m3fn_to_float32_scalar(ival: np.integer, uz: bool) -> np.float32:
     fn_uz_nan = 0b1_0000_000  # 0x80, 128
     fn_nan = 0b0_1111_111  # 0x7F, 127
     if ival < range_min or ival > range_max:
-        raise ValueError(f"{ival} is not a float8 value because its binary representation is out of range [0, 255].")
+        raise ValueError(
+            f"{ival} is not a float8 value because its binary representation is out of range [0, 255]."
+        )
     if uz:
         exponent_bias = 8
         # Only positive NaN is defined
@@ -145,7 +151,9 @@ def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
     range_min = 0b0_0000_000  # 0x00, 0
     range_max = 0b1_1111_111  # 0xFF, 255
     if ival < range_min or ival > range_max:
-        raise ValueError(f"{ival} is not a float8 value because its binary representation is out of range [0, 255].")
+        raise ValueError(
+            f"{ival} is not a float8 value because its binary representation is out of range [0, 255]."
+        )
     if fn and uz:
         fn_uz_nan = 0b1_00000_00  # 0x80, 128
         if ival == fn_uz_nan:
@@ -231,40 +239,9 @@ def float8e5m2_to_float32(
     return _float8e5m2_to_float32(data, fn=fn, uz=uz)
 
 
-def unpack_int4(
-    data: np.int32 | np.ndarray,
-    dims: int | Sequence[int],
-    signed: bool,
-) -> np.ndarray:
-    """Converts ndarray of int4 (as packed uint8) to f32
-    See :ref:`onnx-detail-int4` for technical details.
-
-    Args:
-        data: A numpy array, empty dimensions are allowed if dims is
-            None.
-        dims: The dimensions are used to reshape the unpacked buffer
-        signed: Whether the 4 bit integer is signed or unsigned
-
-    Returns:
-        A numpy array of float32 reshaped to dims.
-    """
-    single_func = lambda x: subbyte.unpack_single_4bitx2(x, signed)  # noqa: E731
-    func = np.frompyfunc(single_func, 1, 2)
-
-    res_high, res_low = func(data.ravel())
-    res = np.empty((res_high.size + res_low.size,), dtype=np.float32)
-    res[0::2] = res_high
-    res[1::2] = res_low
-
-    if (
-        res.size == np.prod(dims) + 1
-    ):  # handle single-element padding due to odd number of elements
-        res = res.ravel()[:-1]
-    res = res.reshape(dims)
-    return res
-
-
-def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
+def to_array(
+    tensor: onnx.TensorProto, base_dir: str = ""
+) -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
 
     Args:
