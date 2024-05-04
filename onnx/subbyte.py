@@ -16,8 +16,6 @@ INT4_MAX = 7
 UINT4_MIN = 0
 UINT4_MAX = 15
 
-T8Bit = typing.TypeVar("T8Bit", np.int8, np.uint8)
-
 
 def cast_int4(
     x: np.ndarray | np.integer | np.floating,
@@ -77,8 +75,8 @@ def _int4_to_int8(x: npt.NDArray[np.uint8]) -> npt.NDArray[np.int8]:
 
 
 def unpack_int4(
-    data: npt.NDArray[T8Bit], dims: Sequence[int], signed: bool
-) -> npt.NDArray[T8Bit]:
+    data: npt.NDArray[np.uint8], dims: Sequence[int], signed: bool
+) -> npt.NDArray[np.uint8]:
     """Convert a packed int4/uint4 array to unpacked int4/uint4 array represented as int8/uint8.
 
     See :ref:`onnx-detail-int4` for technical details.
@@ -91,7 +89,7 @@ def unpack_int4(
     Returns:
         A numpy array of int8/uint8 reshaped to dims.
     """
-    if data.dtype not in (np.int8, np.uint8):
+    if data.dtype != np.uint8:
         raise TypeError("Input array must be of type int8/uint8.")
     result = np.empty([data.size * 2], dtype=data.dtype)
     array_low = data & np.uint8(0x0F)

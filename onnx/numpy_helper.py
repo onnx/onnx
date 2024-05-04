@@ -23,14 +23,14 @@ def combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
 
 
 def _left_shift_16_bits(
-    data: npt.NDArray[np.uint16 | np.uint32],
+    data: npt.NDArray[np.uint16 | np.int32],
 ) -> npt.NDArray[np.uint32]:
     # The left shifted result is always int64, so we need to convert it back to uint32
     return (data << 16).astype(np.uint32)
 
 
 def bfloat16_to_float32(
-    data: npt.NDArray[np.uint16 | np.uint32],
+    data: npt.NDArray[np.uint16 | np.int32],
 ) -> npt.NDArray[np.float32]:
     """Converts ndarray of bf16 (as uint16 / uint32) to f32.
 
@@ -117,7 +117,7 @@ _float8e4m3fn_to_float32 = np.vectorize(
 
 
 def float8e4m3_to_float32(
-    data: np.int16 | np.int32 | np.ndarray,
+    data: int | np.int16 | np.int32 | np.ndarray,
     fn: bool = True,
     uz: bool = False,
 ) -> np.ndarray:
@@ -220,7 +220,7 @@ _float8e5m2_to_float32 = np.vectorize(
 
 
 def float8e5m2_to_float32(
-    data: np.int16 | np.int32 | np.ndarray,
+    data: int | np.int16 | np.int32 | np.ndarray,
     fn: bool = False,
     uz: bool = False,
 ) -> np.ndarray:
@@ -239,9 +239,18 @@ def float8e5m2_to_float32(
     return _float8e5m2_to_float32(data, fn=fn, uz=uz)
 
 
-def to_array(
+def _small_endian_dtype(dtype) -> np.dtype:
+    """Create a small endian dtype on all platforms.
+
+    This is useful because ONNX always stores raw_data in small endian. On big
+    endian platforms, we still need to interpret the raw_data in small endian.
+    """
+    return np.dtype(dtype).newbyteorder("<")
+
+
+def to_array(  # noqa: PLR0911
     tensor: onnx.TensorProto, base_dir: str = ""
-) -> np.ndarray:  # noqa: PLR0911
+) -> np.ndarray:
     """Converts a tensor def object to a numpy array.
 
     Args:
@@ -266,8 +275,11 @@ def to_array(
 
     if tensor.data_type == onnx.TensorProto.STRING:
         utf8_strings = getattr(tensor, storage_field)
-        ss = [s.decode("utf-8") for s in utf8_strings]
-        return np.asarray(ss).astype(np_dtype).reshape(dims)
+        return (
+            np.asarray([s.decode("utf-8") for s in utf8_strings])
+            .astype(np_dtype)
+            .reshape(dims)
+        )
 
     # Load raw data from external tensor if it exists
     if onnx.external_data_helper.uses_external_data(tensor):
@@ -276,41 +288,39 @@ def to_array(
     if tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
         raw_data = tensor.raw_data
-        if sys.byteorder == "big":
-            # Convert endian from little to big
-            raw_data = np.frombuffer(raw_data, dtype=np_dtype).byteswap().tobytes()
 
         # manually convert bf16 since there's no numpy support
         if tensor_dtype == onnx.TensorProto.BFLOAT16:
-            data = np.frombuffer(raw_data, dtype=np.uint16)
-            return bfloat16_to_float32(data, dims)
+            data = np.frombuffer(raw_data, dtype=_small_endian_dtype(np.uint16))
+            return bfloat16_to_float32(data).reshape(dims)
 
         if tensor_dtype == onnx.TensorProto.FLOAT8E4M3FN:
-            data = np.frombuffer(raw_data, dtype=np.uint8)
-            return float8e4m3_to_float32(data, dims)
+            data = np.frombuffer(raw_data, dtype=_small_endian_dtype(np.uint8))
+            return float8e4m3_to_float32(data).reshape(dims)
 
         if tensor_dtype == onnx.TensorProto.FLOAT8E4M3FNUZ:
-            data = np.frombuffer(raw_data, dtype=np.uint8)
-            return float8e4m3_to_float32(data, dims, uz=True)
+            data = np.frombuffer(raw_data, dtype=_small_endian_dtype(np.uint8))
+            return float8e4m3_to_float32(data, uz=True).reshape(dims)
 
         if tensor_dtype == onnx.TensorProto.FLOAT8E5M2:
-            data = np.frombuffer(raw_data, dtype=np.uint8)
-            return float8e5m2_to_float32(data, dims)
+            data = np.frombuffer(raw_data, dtype=_small_endian_dtype(np.uint8))
+            return float8e5m2_to_float32(data).reshape(dims)
 
         if tensor_dtype == onnx.TensorProto.FLOAT8E5M2FNUZ:
-            data = np.frombuffer(raw_data, dtype=np.uint8)
-            return float8e5m2_to_float32(data, dims, fn=True, uz=True)
+            data = np.frombuffer(raw_data, dtype=_small_endian_dtype(np.uint8))
+            return float8e5m2_to_float32(data, fn=True, uz=True).reshape(dims)
 
         if tensor_dtype == onnx.TensorProto.UINT4:
-            data = np.frombuffer(raw_data, dtype=np.uint8)
-            return unpack_int4(data, dims, signed=False)
+            data = np.frombuffer(raw_data, dtype=_small_endian_dtype(np.uint8))
+            return subbyte.unpack_int4(data, dims, signed=False)
 
         if tensor_dtype == onnx.TensorProto.INT4:
-            data = np.frombuffer(raw_data, dtype=np.int8)
-            return unpack_int4(data, dims, signed=True)
+            data = np.frombuffer(raw_data, dtype=_small_endian_dtype(np.uint8))
+            return subbyte.unpack_int4(data, dims, signed=True)
 
-        return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
+        return np.frombuffer(raw_data, dtype=_small_endian_dtype(np_dtype)).reshape(dims)  # type: ignore[no-any-return]
 
+    # Load data from the sequential data fields
     # float16 is stored as int32 (uint16 type); Need view to get the original value
     if tensor_dtype == onnx.TensorProto.FLOAT16:
         return (
@@ -322,41 +332,42 @@ def to_array(
     # bfloat16 is stored as int32 (uint16 type); no numpy support for bf16
     if tensor_dtype == onnx.TensorProto.BFLOAT16:
         data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return bfloat16_to_float32(data, dims)
+        return bfloat16_to_float32(data).reshape(dims)
 
     if tensor_dtype == onnx.TensorProto.FLOAT8E4M3FN:
         data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e4m3_to_float32(data, dims)
+        return float8e4m3_to_float32(data).reshape(dims)
 
     if tensor_dtype == onnx.TensorProto.FLOAT8E4M3FNUZ:
         data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e4m3_to_float32(data, dims, uz=True)
+        return float8e4m3_to_float32(data, uz=True).reshape(dims)
 
     if tensor_dtype == onnx.TensorProto.FLOAT8E5M2:
         data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e5m2_to_float32(data, dims)
+        return float8e5m2_to_float32(data).reshape(dims)
 
     if tensor_dtype == onnx.TensorProto.FLOAT8E5M2FNUZ:
         data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e5m2_to_float32(data, dims, fn=True, uz=True)
+        return float8e5m2_to_float32(data, fn=True, uz=True).reshape(dims)
 
     if tensor_dtype == onnx.TensorProto.UINT4:
-        data = np.asarray(tensor.int32_data, dtype=storage_np_dtype)
-        return unpack_int4(data, dims, signed=False)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return subbyte.unpack_int4(data, dims, signed=False)
 
     if tensor_dtype == onnx.TensorProto.INT4:
-        data = np.asarray(tensor.int32_data, dtype=storage_np_dtype)
-        return unpack_int4(data, dims, signed=True)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return subbyte.unpack_int4(data, dims, signed=True)
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (onnx.TensorProto.COMPLEX64, onnx.TensorProto.COMPLEX128):
-        data = combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
-        return np.asarray(data).astype(np_dtype).reshape(dims)
+        return np.asarray(combine_pairs_to_complex(data)).astype(np_dtype).reshape(dims)
 
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
-def from_array(arr: np.ndarray, name: str | None = None) -> onnx.TensorProto:
+def from_array(
+    arr: np.ndarray | np.generic, name: str | None = None
+) -> onnx.TensorProto:
     """Converts a numpy array to a tensor def.
 
     Args:
@@ -365,6 +376,9 @@ def from_array(arr: np.ndarray, name: str | None = None) -> onnx.TensorProto:
 
     Returns:
         TensorProto: the converted tensor def.
+
+    Raises:
+        TypeError: if the input is not a numpy array or np.generic.
     """
     if not isinstance(arr, (np.ndarray, np.generic)):
         raise TypeError(
@@ -413,11 +427,12 @@ def from_array(arr: np.ndarray, name: str | None = None) -> onnx.TensorProto:
     except KeyError as e:
         raise RuntimeError(f"Numpy data type not understood yet: {arr.dtype!r}") from e
     tensor.data_type = dtype
-    tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
+
     if sys.byteorder == "big":
         # Convert endian from big to little
-        convert_endian(tensor)
+        arr = arr.astype(arr.dtype.newbyteorder("<"))
 
+    tensor.raw_data = arr.tobytes()
     return tensor
 
 
@@ -449,9 +464,9 @@ def from_list(
 
     Args:
         lst: a Python list
-        name: (optional) the name of the sequence.
-        dtype: (optional) type of element in the input list, used for specifying
-                          sequence values when converting an empty list.
+        name: The name of the sequence.
+        dtype: Type of element in the input list, used for specifying
+            sequence values when converting an empty list.
 
     Returns:
         SequenceProto: the converted sequence def.
@@ -615,10 +630,10 @@ def from_optional(
 
     Args:
         opt: a Python optional
-        name: (optional) the name of the optional.
-        dtype: (optional) type of element in the input, used for specifying
-                          optional values when converting empty none. dtype must
-                          be a valid OptionalProto.DataType value
+        name: The name of the optional.
+        dtype: Type of element in the input, used for specifying
+            optional values when converting empty none. dtype must
+            be a valid OptionalProto.DataType value
 
     Returns:
         optional: the converted optional def.
@@ -660,19 +675,6 @@ def from_optional(
     return optional
 
 
-def convert_endian(tensor: onnx.TensorProto) -> None:
-    """Call to convert endianness of raw data in tensor.
-
-    Args:
-        tensor: TensorProto to be converted.
-    """
-    tensor_dtype = tensor.data_type
-    np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    tensor.raw_data = (
-        np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
-    )
-
-
 def create_random_int(
     input_shape: tuple[int], dtype: np.dtype, seed: int = 1
 ) -> np.ndarray:
@@ -684,7 +686,7 @@ def create_random_int(
         seed: The seed for np.random.
 
     Returns:
-        np.ndarray: Random integer array.
+        Random integer array.
     """
     np.random.seed(seed)
     if dtype in (
