@@ -64,7 +64,9 @@ def float8e4m3_to_float32(
             "float8e4m3_to_float32 not implemented with fn=False."
         )
     if not isinstance(array, np.ndarray):
-        array = np.array(array, dtype=np.uint8)
+        array = np.array(array, dtype=np.uint32)
+    else:
+        array = array.astype(np.uint32)
     is_scalar = array.ndim == 0
     if is_scalar:
         array = np.reshape(array, (1,))
@@ -77,7 +79,7 @@ def float8e4m3_to_float32(
         raise ValueError(
             f"{array} is not a float8 value because its binary representation is out of range [0, 255]."
         )
-    result = np.empty_like(array, dtype=np.uint32)
+    result = np.zeros_like(array, dtype=np.uint32)
     if uz:
         exponent_bias = 8
         # Only positive NaN is defined
