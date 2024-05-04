@@ -105,7 +105,7 @@ def float8e4m3_to_float32(
 
     # Construct the float32 value
     # First move the sign bit to the correct position
-    result[finite_mask] = signs[finite_mask] << 24
+    np.putmask(result, finite_mask, signs << 24)
     # Subnormal number
     # if mantissa > 0:
     #     exponent = 127 - exponent_bias
@@ -124,19 +124,23 @@ def float8e4m3_to_float32(
     subnormal_mantissas = mantissas * subnormal_mask
 
     subnormal_mantissa_selector = (subnormal_mantissas & 0b100) == 0
-    subnormal_mantissas[subnormal_mantissa_selector] = (
-        subnormal_mantissas[subnormal_mantissa_selector] & 0b011
-    ) << 1
+    np.putmask(
+        subnormal_mantissas,
+        subnormal_mantissa_selector,
+        (subnormal_mantissas & 0b011) << 1,
+    )
     subnormal_exponents[subnormal_mantissa_selector] -= 1
 
     subnormal_mantissa_selector = (subnormal_mantissas & 0b100) == 0
-    subnormal_mantissas[subnormal_mantissa_selector] = (
-        subnormal_mantissas & 0b011
-    ) << 1
+    np.putmask(
+        subnormal_mantissas,
+        subnormal_mantissa_selector,
+        (subnormal_mantissas & 0b011) << 1,
+    )
     subnormal_exponents[subnormal_mantissa_selector] -= 1
 
-    result[subnormal_mask] |= (subnormal_mantissas & 0b011)[subnormal_mask] << 21
-    result[subnormal_mask] |= subnormal_exponents[subnormal_mask] << 23
+    np.putmask(result, subnormal_mask, (subnormal_mantissas & 0b011) << 21)
+    np.putmask(result, subnormal_mask, subnormal_exponents << 23)
 
     # Normal number
     # float32: e8m23
@@ -148,9 +152,8 @@ def float8e4m3_to_float32(
     # exponent += 127 - exponent_bias
     # result |= exponent << 23
     normal_mask = finite_mask & (exponents > 0)
-    result[normal_mask] |= mantissas[normal_mask] << 20
-    exponents[normal_mask] += 127 - exponent_bias
-    result[normal_mask] |= exponents[normal_mask] << 23
+    np.putmask(result, normal_mask, mantissas << 20)
+    np.putmask(result, normal_mask, (exponents + 127 - exponent_bias) << 23)
     result = result.view(np.float32)
     if is_scalar:
         return result[0]
@@ -225,7 +228,7 @@ def float8e5m2_to_float32(
 
     # Construct the float32 value
     # First move the sign bit to the correct position
-    result[finite_mask] = signs[finite_mask] << 24
+    np.putmask(result, finite_mask, signs << 24)
     # if exponent == 0:
     #     # Subnormal number
     #     if mantissa > 0:
@@ -241,13 +244,15 @@ def float8e5m2_to_float32(
     subnormal_mantissas = mantissas * subnormal_mask
 
     subnormal_mantissa_selector = (subnormal_mantissas & 0b10) == 0
-    subnormal_mantissas[subnormal_mantissa_selector] = (
-        subnormal_mantissas[subnormal_mantissa_selector] & 0b01
-    ) << 1
+    np.putmask(
+        subnormal_mantissas,
+        subnormal_mantissa_selector,
+        (subnormal_mantissas & 0b01) << 1,
+    )
     subnormal_exponents[subnormal_mantissa_selector] -= 1
 
-    result[subnormal_mask] |= (subnormal_mantissas & 0b01)[subnormal_mask] << 22
-    result[subnormal_mask] |= subnormal_exponents[subnormal_mask] << 23
+    np.putmask(result, subnormal_mask, (subnormal_mantissas & 0b01) << 22)
+    np.putmask(result, subnormal_mask, subnormal_exponents << 23)
 
     # Normal number
     # float32: e8m23
@@ -259,9 +264,8 @@ def float8e5m2_to_float32(
     # exponent += 127 - exponent_bias
     # result |= exponent << 23
     normal_mask = finite_mask & (exponents > 0)
-    result[normal_mask] |= mantissas[normal_mask] << 21
-    exponents[normal_mask] += 127 - exponent_bias
-    result[normal_mask] |= exponents[normal_mask] << 23
+    np.putmask(result, normal_mask, mantissas << 21)
+    np.putmask(result, normal_mask, (exponents + 127 - exponent_bias) << 23)
     result = result.view(np.float32)
     if is_scalar:
         return result[0]
