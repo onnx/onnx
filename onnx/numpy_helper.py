@@ -115,15 +115,19 @@ def float8e4m3_to_float32(
     subnormal_mask = finite_mask & (exponents == 0) & (mantissas > 0)
     subnormal_exponents = np.full_like(result, 127 - exponent_bias, dtype=np.uint32)
     subnormal_mantissas = mantissas & subnormal_mask
-    # TODO: Does this work?
-    subnormal_mantissas[subnormal_mantissas & 0b100 == 0] = (
+
+    subnormal_mantissa_selector = [subnormal_mantissas & 0b100 == 0]
+    subnormal_mantissas[subnormal_mantissa_selector] = (
+        subnormal_mantissas[subnormal_mantissa_selector] & 0b011
+    ) << 1
+    subnormal_exponents[subnormal_mantissa_selector] -= 1
+
+    subnormal_mantissa_selector = [subnormal_mantissas & 0b100 == 0]
+    subnormal_mantissas[subnormal_mantissa_selector] = (
         subnormal_mantissas & 0b011
     ) << 1
-    subnormal_exponents[subnormal_mantissas & 0b100 == 0] -= 1
-    subnormal_mantissas[subnormal_mantissas & 0b100 == 0] = (
-        subnormal_mantissas & 0b011
-    ) << 1
-    subnormal_exponents[subnormal_mantissas & 0b100 == 0] -= 1
+    subnormal_exponents[subnormal_mantissa_selector] -= 1
+
     result[subnormal_mask] |= (subnormal_mantissas & 0b011)[subnormal_mask] << 21
     result[subnormal_mask] |= subnormal_exponents[subnormal_mask] << 23
 
@@ -137,7 +141,7 @@ def float8e4m3_to_float32(
     # exponent += 127 - exponent_bias
     # result |= exponent << 23
     normal_mask = finite_mask & (exponents > 0)
-    result[normal_mask] |= mantissas << 20
+    result[normal_mask] |= mantissas[normal_mask] << 20
     exponents[normal_mask] += 127 - exponent_bias
     result[normal_mask] |= exponents[normal_mask] << 23
     return result.view(np.float32)
