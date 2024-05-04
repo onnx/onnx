@@ -44,89 +44,15 @@ def bfloat16_to_float32(
     return _left_shift_16_bits(data).view(np.float32)
 
 
-def _float8e4m3fn_to_float32_scalar(ival: np.integer, uz: bool) -> np.float32:
-    """Converts a single float8e4m3 value to float.
-
-    Args:
-        ival: The binary representation of the float8e4m3 value, as int.
-        uz: Unique zero. No negative zero or negative inf.
-    """
-    range_min = 0b0_0000_000  # 0x00, 0
-    range_max = 0b1_1111_111  # 0xFF, 255
-    fn_uz_nan = 0b1_0000_000  # 0x80, 128
-    fn_nan = 0b0_1111_111  # 0x7F, 127
-    if ival < range_min or ival > range_max:
-        raise ValueError(
-            f"{ival} is not a float8 value because its binary representation is out of range [0, 255]."
-        )
-    if uz:
-        exponent_bias = 8
-        # Only positive NaN is defined
-        if ival == fn_uz_nan:
-            return np.float32(np.nan)
-    else:
-        exponent_bias = 7
-        # Both positive and negative NaN are defined
-        if ival == range_max:
-            return np.float32(-np.nan)
-        if ival == fn_nan:
-            return np.float32(np.nan)
-
-    # Mask out the sign, exponent and mantissa parts
-    sign_mask = 0b1_0000_000  # First bit is the sign bit
-    sign = ival & sign_mask
-    exponent_mask = 0b0_1111_000  # The next 4 bits are the exponent
-
-    exponent = (ival & exponent_mask) >> 3
-    mantissa_mask = 0b0_0000_111  # The last 3 bits are the mantissa
-    mantissa = ival & mantissa_mask
-
-    # Construct the float32 value
-    # First move the sign bit to the correct position
-    result = sign << 24
-    if exponent == 0:
-        # Subnormal number
-        if mantissa > 0:
-            # TODO: Explain this process
-            exponent = 127 - exponent_bias
-            if mantissa & 0b100 == 0:
-                mantissa &= 0b011
-                mantissa <<= 1
-                exponent -= 1
-            if mantissa & 0b100 == 0:
-                mantissa &= 0b011
-                mantissa <<= 1
-                exponent -= 1
-            result |= (mantissa & 0b011) << 21
-            result |= exponent << 23
-    else:
-        # Normal number
-        # float32: e8m23
-        # []_[][][][][][][][]_[][][][][][][][][][][][][][][][][][][][][][][]
-        # 31   29  27  25  23 22  20  18  16  14  12  10 9 8 7 6 5 4 3 2 1 0
-        # S   0 0 0 0 E E E E  M M M 0 ....................................0
-        result |= mantissa << 20
-        exponent += 127 - exponent_bias
-        result |= exponent << 23
-    return np.uint32(result).view(np.float32)
-
-
-_float8e4m3fn_to_float32 = np.vectorize(
-    _float8e4m3fn_to_float32_scalar, excluded=("uz",)
-)
-
-
 def float8e4m3_to_float32(
-    data: int | np.int16 | np.int32 | np.ndarray,
-    fn: bool = True,
-    uz: bool = False,
-) -> np.ndarray:
+    array: npt.NDArray[np.uint8], fn: bool = True, uz: bool = False
+) -> npt.NDArray[np.float32]:
     """Converts ndarray of float8e4m3 (as uint) to float32.
 
     See :ref:`onnx-detail-float8` for technical details.
 
     Args:
-        data: A numpy array, empty dimensions are allowed if dims is None.
+        array: A numpy array, empty dimensions are allowed if dims is None.
         fn: Finite. No infinite values.
         uz: Unique zero. No negative zero or negative inf.
 
@@ -137,7 +63,84 @@ def float8e4m3_to_float32(
         raise NotImplementedError(
             "float32_to_float8e4m3 not implemented with fn=False."
         )
-    return _float8e4m3fn_to_float32(data, fn=fn, uz=uz)
+
+    range_min = 0b0_0000_000  # 0x00, 0
+    range_max = 0b1_1111_111  # 0xFF, 255
+    fn_uz_nan = 0b1_0000_000  # 0x80, 128
+    fn_nan = 0b0_1111_111  # 0x7F, 127
+    if np.any(array < range_min) or np.any(array > range_max):
+        raise ValueError(
+            f"{array} is not a float8 value because its binary representation is out of range [0, 255]."
+        )
+    result = np.empty_like(array, dtype=np.uint32)
+    if uz:
+        exponent_bias = 8
+        # Only positive NaN is defined
+        result[result == fn_uz_nan] = np.float32(np.nan).view(np.uint32)
+        # Locations of the finite values
+        finite_mask = array != fn_uz_nan
+    else:
+        exponent_bias = 7
+        # Both positive and negative NaN are defined
+        result[result == fn_nan] = np.float32(np.nan).view(np.uint32)
+        result[result == range_max] = np.float32(-np.nan).view(np.uint32)
+        # Locations of the finite values
+        finite_mask = (array != fn_nan) & (array != range_max)
+
+    # Mask out the sign, exponent and mantissa parts
+    sign_mask = 0b1_0000_000  # First bit is the sign bit
+    signs = array & sign_mask
+    exponent_mask = 0b0_1111_000  # The next 4 bits are the exponent
+
+    exponents = (array & exponent_mask) >> 3
+    mantissa_mask = 0b0_0000_111  # The last 3 bits are the mantissa
+    mantissas = array & mantissa_mask
+
+    # Construct the float32 value
+    # First move the sign bit to the correct position
+    result[finite_mask] = signs << 24
+    # Subnormal number
+    # if mantissa > 0:
+    #     exponent = 127 - exponent_bias
+    #     if mantissa & 0b100 == 0:
+    #         mantissa &= 0b011
+    #         mantissa <<= 1
+    #         exponent -= 1
+    #     if mantissa & 0b100 == 0:
+    #         mantissa &= 0b011
+    #         mantissa <<= 1
+    #         exponent -= 1
+    #     result |= (mantissa & 0b011) << 21
+    #     result |= exponent << 23
+    subnormal_mask = finite_mask & (exponents == 0) & (mantissas > 0)
+    subnormal_exponents = np.full_like(result, 127 - exponent_bias, dtype=np.uint32)
+    subnormal_mantissas = mantissas & subnormal_mask
+    # TODO: Does this work?
+    subnormal_mantissas[subnormal_mantissas & 0b100 == 0] = (
+        subnormal_mantissas & 0b011
+    ) << 1
+    subnormal_exponents[subnormal_mantissas & 0b100 == 0] -= 1
+    subnormal_mantissas[subnormal_mantissas & 0b100 == 0] = (
+        subnormal_mantissas & 0b011
+    ) << 1
+    subnormal_exponents[subnormal_mantissas & 0b100 == 0] -= 1
+    result[subnormal_mask] |= (subnormal_mantissas & 0b011)[subnormal_mask] << 21
+    result[subnormal_mask] |= subnormal_exponents[subnormal_mask] << 23
+
+    # Normal number
+    # float32: e8m23
+    # []_[][][][][][][][]_[][][][][][][][][][][][][][][][][][][][][][][]
+    # 31   29  27  25  23 22  20  18  16  14  12  10 9 8 7 6 5 4 3 2 1 0
+    # S   0 0 0 0 E E E E  M M M 0 ....................................0
+    #
+    # result |= mantissa << 20
+    # exponent += 127 - exponent_bias
+    # result |= exponent << 23
+    normal_mask = finite_mask & (exponents > 0)
+    result[normal_mask] |= mantissas << 20
+    exponents[normal_mask] += 127 - exponent_bias
+    result[normal_mask] |= exponents[normal_mask] << 23
+    return result.view(np.float32)
 
 
 def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
