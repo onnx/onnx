@@ -45,7 +45,7 @@ def bfloat16_to_float32(
 
 
 def float8e4m3_to_float32(
-    array: npt.NDArray[np.uint8], fn: bool = True, uz: bool = False
+    array: npt.NDArray[np.uint8] | int, fn: bool = True, uz: bool = False
 ) -> npt.NDArray[np.float32]:
     """Converts ndarray of float8e4m3 (as uint) to float32.
 
@@ -64,44 +64,44 @@ def float8e4m3_to_float32(
             "float8e4m3_to_float32 not implemented with fn=False."
         )
     if not isinstance(array, np.ndarray):
-        array = np.array(array, dtype=np.uint32)
+        array_uint32 = np.array(array, dtype=np.uint32)
     else:
-        array = array.astype(np.uint32)
-    is_scalar = array.ndim == 0
+        array_uint32 = array.astype(np.uint32)
+    is_scalar = array_uint32.ndim == 0
     if is_scalar:
-        array = np.reshape(array, (1,))
+        array_uint32 = np.reshape(array_uint32, (1,))
 
     range_min = 0b0_0000_000  # 0x00, 0
     range_max = 0b1_1111_111  # 0xFF, 255
     fn_uz_nan = 0b1_0000_000  # 0x80, 128
     fn_nan = 0b0_1111_111  # 0x7F, 127
-    if np.any(array < range_min) or np.any(array > range_max):
+    if np.any(array_uint32 < range_min) or np.any(array_uint32 > range_max):
         raise ValueError(
-            f"{array} is not a float8 value because its binary representation is out of range [0, 255]."
+            f"{array_uint32} is not a float8 value because its binary representation is out of range [0, 255]."
         )
-    result = np.zeros_like(array, dtype=np.uint32)
+    result = np.zeros_like(array_uint32, dtype=np.uint32)
     if uz:
         exponent_bias = 8
         # Only positive NaN is defined
-        result[result == fn_uz_nan] = np.float32(np.nan).view(np.uint32)
+        result[array_uint32 == fn_uz_nan] = np.float32(np.nan).view(np.uint32)
         # Locations of the finite values
-        finite_mask = array != fn_uz_nan
+        finite_mask = array_uint32 != fn_uz_nan
     else:
         exponent_bias = 7
         # Both positive and negative NaN are defined
-        result[result == fn_nan] = np.float32(np.nan).view(np.uint32)
-        result[result == range_max] = np.float32(-np.nan).view(np.uint32)
+        result[array_uint32 == fn_nan] = np.float32(np.nan).view(np.uint32)
+        result[array_uint32 == range_max] = np.float32(-np.nan).view(np.uint32)
         # Locations of the finite values
-        finite_mask = (array != fn_nan) & (array != range_max)
+        finite_mask = (array_uint32 != fn_nan) & (array_uint32 != range_max)
 
     # Mask out the sign, exponent and mantissa parts
     sign_mask = 0b1_0000_000  # First bit is the sign bit
-    signs = array & sign_mask
+    signs = array_uint32 & sign_mask
     exponent_mask = 0b0_1111_000  # The next 4 bits are the exponent
 
-    exponents = (array & exponent_mask) >> 3
+    exponents = (array_uint32 & exponent_mask) >> 3
     mantissa_mask = 0b0_0000_111  # The last 3 bits are the mantissa
-    mantissas = array & mantissa_mask
+    mantissas = array_uint32 & mantissa_mask
 
     # Construct the float32 value
     # First move the sign bit to the correct position
@@ -121,7 +121,7 @@ def float8e4m3_to_float32(
     #     result |= exponent << 23
     subnormal_mask = finite_mask & (exponents == 0) & (mantissas > 0)
     subnormal_exponents = np.full_like(result, 127 - exponent_bias, dtype=np.uint32)
-    subnormal_mantissas = mantissas & subnormal_mask
+    subnormal_mantissas = mantissas * subnormal_mask
 
     subnormal_mantissa_selector = (subnormal_mantissas & 0b100) == 0
     subnormal_mantissas[subnormal_mantissa_selector] = (

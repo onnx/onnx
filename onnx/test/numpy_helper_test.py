@@ -170,12 +170,10 @@ class TestNumpyHelper(unittest.TestCase):
             self.assertEqual(f32, f32_2)
 
     def test_float8e4m3_to_float32(self):
-        self.assertEqual(numpy_helper.float8e4m3_to_float32(int("1111110", 2)), 448)
-        self.assertEqual(numpy_helper.float8e4m3_to_float32(int("1000", 2)), 2 ** (-6))
-        self.assertEqual(numpy_helper.float8e4m3_to_float32(int("1", 2)), 2 ** (-9))
-        self.assertEqual(
-            numpy_helper.float8e4m3_to_float32(int("111", 2)), 0.875 * 2 ** (-6)
-        )
+        self.assertEqual(numpy_helper.float8e4m3_to_float32(0b1111110), 448)
+        self.assertEqual(numpy_helper.float8e4m3_to_float32(0b1000), 2 ** (-6))
+        self.assertEqual(numpy_helper.float8e4m3_to_float32(0b1), 2 ** (-9))
+        self.assertEqual(numpy_helper.float8e4m3_to_float32(0b111), 0.875 * 2 ** (-6))
         for f in [
             0,
             1,
@@ -228,28 +226,18 @@ class TestNumpyHelper(unittest.TestCase):
         self.assertEqual(f32, expected)
 
     def test_float8e5m2_to_float32(self):
-        self.assertEqual(numpy_helper.float8e5m2_to_float32(int("1111011", 2)), 57344)
-        self.assertEqual(numpy_helper.float8e5m2_to_float32(int("100", 2)), 2 ** (-14))
-        self.assertEqual(
-            numpy_helper.float8e5m2_to_float32(int("11", 2)), 0.75 * 2 ** (-14)
-        )
-        self.assertEqual(numpy_helper.float8e5m2_to_float32(int("1", 2)), 2 ** (-16))
-        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(int("1111101", 2))))
-        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(int("1111110", 2))))
-        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(int("1111111", 2))))
-        self.assertTrue(
-            np.isnan(numpy_helper.float8e5m2_to_float32(int("11111101", 2)))
-        )
-        self.assertTrue(
-            np.isnan(numpy_helper.float8e5m2_to_float32(int("11111110", 2)))
-        )
-        self.assertTrue(
-            np.isnan(numpy_helper.float8e5m2_to_float32(int("11111111", 2)))
-        )
-        self.assertEqual(numpy_helper.float8e5m2_to_float32(int("1111100", 2)), np.inf)
-        self.assertEqual(
-            numpy_helper.float8e5m2_to_float32(int("11111100", 2)), -np.inf
-        )
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(0b1111011), 57344)
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(0b100), 2 ** (-14))
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(0b11), 0.75 * 2 ** (-14))
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(0b1), 2 ** (-16))
+        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(0b1111101)))
+        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(0b1111110)))
+        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(0b1111111)))
+        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(0b11111101)))
+        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(0b11111110)))
+        self.assertTrue(np.isnan(numpy_helper.float8e5m2_to_float32(0b11111111)))
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(0b1111100), np.inf)
+        self.assertEqual(numpy_helper.float8e5m2_to_float32(0b11111100), -np.inf)
         for f in [
             0,
             0.0017089844,
