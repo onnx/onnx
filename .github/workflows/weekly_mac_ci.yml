@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Weekly ci workflow for model zoo.
 # Runs model checker/shape_inference/version_converter for all models
 name: Weekly CI with the latest ONNX and ONNX Model Zoo
