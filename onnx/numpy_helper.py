@@ -53,8 +53,8 @@ def float8e4m3_to_float32(
 
     Args:
         data: A numpy array, empty dimensions are allowed if dims is None.
-        fn: Finite. No infinite values.
-        uz: Unique zero. No negative zero or negative inf.
+        fn: Finite, special NaN encoding. No infinite values.
+        uz: Unsigned zero. No negative zero.
 
     Returns:
         A numpy array of converted float32.
@@ -169,8 +169,8 @@ def float8e5m2_to_float32(
 
     Args:
         data: A numpy array, empty dimensions are allowed if dims is None.
-        fn: Finite. No infinite values.
-        uz: Unique zero. No negative zero or negative inf.
+        fn: Finite, special NaN encoding. No infinite values.
+        uz: Unsigned zero. No negative zero.
 
     Returns:
         A numpy array of converted float32.
