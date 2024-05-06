@@ -110,7 +110,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "y", "N-D full precision output tensor. It has same shape as input 'x'.", "T2")
         .Attr(
             "axis",
-            "(Optional) The axis of the dequantizing dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
+            "(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis quantization. "
+            "Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` "
+            "where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, "
+            "rendering the axis unnecessary in this scenario.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .TypeConstraint(
