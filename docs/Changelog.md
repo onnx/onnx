@@ -22963,7 +22963,7 @@ This version of the operator has been available since version 19 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Ignored for per-tensor quantization. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, rendering the axis unnecessary in this scenario.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -25414,7 +25414,7 @@ This version of the operator has been available since version 21 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, rendering the axis unnecessary in this scenario.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 <dt><tt>output_dtype</tt> : int (default is 0)</dt>
