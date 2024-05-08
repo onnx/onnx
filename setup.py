@@ -51,8 +51,8 @@ USE_MSVC_STATIC_RUNTIME = os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1"
 DEBUG = os.getenv("DEBUG", "0") == "1"
 COVERAGE = os.getenv("COVERAGE", "0") == "1"
 
-# Customize the wheel plat-name, usually needed for MacOS builds.
-# See usage in .github/workflows/release_mac.yml
+# Customize the wheel plat-name; sometimes useful for MacOS builds.
+# See https://github.com/onnx/onnx/pull/6117
 ONNX_WHEEL_PLATFORM_NAME = os.getenv("ONNX_WHEEL_PLATFORM_NAME")
 
 ################################################################################

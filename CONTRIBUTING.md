@@ -1,8 +1,8 @@
 <!--
 Copyright (c) ONNX Project Contributors
--->
 
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+SPDX-License-Identifier: Apache-2.0
+-->
 
 # ONNX Community Involvement and Contribution Guidelines
 
