@@ -13,6 +13,10 @@ on:
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
@@ -46,7 +50,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '${{ env.py }} -m pip install -q virtualenv && ${{ env.py }} -m venv .env && \
           source .env/bin/activate && \
-          ${{ env.py }} -m pip install -q -r requirements-release.txt && \
+          ${{ env.py }} -m pip install -q --only-binary google-re2 -r requirements-release.txt && \
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 
@@ -70,7 +74,7 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
-          python -m pip install -q -r requirements-release.txt && \
+          python -m pip install -q --only-binary google-re2 -r requirements-release.txt && \
           pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'

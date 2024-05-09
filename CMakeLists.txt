@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.14)
 include(cmake/Utils.cmake)
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -120,13 +120,11 @@ endif()
 
 if(ONNX_BUILD_TESTS)
   find_package(GTest)
-  if(GTest_FOUND)
-    set(googletest_INCLUDE_DIRS)
-    set(googletest_STATIC_LIBRARIES GTest::gtest)
-  else()
+  if(NOT GTest_FOUND)
     list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
     include(googletest)
   endif()
+  set(googletest_STATIC_LIBRARIES GTest::gtest)
 endif()
 
 if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
@@ -590,6 +588,11 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export
                           PRIVATE "-Wl,--whole-archive" $<TARGET_FILE:onnx>
                                   "-Wl,--no-whole-archive")
+    # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv" 
+    # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
+    if (CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+      target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
+    endif()
     set_target_properties(onnx_cpp2py_export
                           PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
   endif()
