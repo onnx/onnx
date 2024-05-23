@@ -77,7 +77,7 @@ class TestModelHub(unittest.TestCase):
             AssertionError,
             lambda: hub.load(self.name, "onnx/models:unknown", silent=True),
         )
-
+    
     def test_verify_repo_ref(self) -> None:
         # Not trusted repo:
         verified = hub._verify_repo_ref("mhamilton723/models")
@@ -105,6 +105,11 @@ class TestModelHub(unittest.TestCase):
         self.assertIn(member="model.onnx", container=files, msg="Onnx model not found")
         self.assertIn(
             member="test_data_set_0", container=files, msg="Test data not found"
+        )
+
+    def test_download_model_with_test_data_tarball_extraction(self) -> None:
+        self.assertRaisesRegex(
+            AssertionError, "The tarball file in downloading model contains .*harmful payload.$", lambda: hub.download_model_with_test_data("mnist",repo="sunriseXu/onnx",force_reload=True, silent=True)
         )
 
     def test_model_with_preprocessing(self) -> None:
