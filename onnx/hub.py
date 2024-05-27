@@ -363,10 +363,13 @@ def download_model_with_test_data(
                 "download the model from the model hub."
             )
 
-    def members_filter1(tarfile):
+    def members_filter(tarfile, base):
         result = []
         for member in tarfile:
-            if '../' in member.name or member.name.startswith('/'):
+            member_path = os.path.join(base, member.name)
+            abs_base = os.path.abspath(base)
+            abs_member = os.path.abspath(member_path)
+            if not abs_member.startswith(abs_base):
                 raise AssertionError("The tarball file in downloading model contains directory traversal sequence which may contain harmful payload.")
             elif member.issym() or member.islnk():
                 raise AssertionError("The tarball file in downloading model contains symbolic links which may contain harmful payload.")
@@ -377,9 +380,8 @@ def download_model_with_test_data(
         local_model_with_data_dir_path = local_model_with_data_path[
             0 : len(local_model_with_data_path) - 7
         ]
-        #model_with_data_zipped.extractall(local_model_with_data_dir_path)
         # FIX tarball directory traversal 
-        model_with_data_zipped.extractall(path=local_model_with_data_dir_path, members=members_filter1(model_with_data_zipped))
+        model_with_data_zipped.extractall(path=local_model_with_data_dir_path, members=members_filter(model_with_data_zipped, local_model_with_data_dir_path))
     model_with_data_path = (
         local_model_with_data_dir_path
         + "/"
