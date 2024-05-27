@@ -77,7 +77,7 @@ class TestModelHub(unittest.TestCase):
             AssertionError,
             lambda: hub.load(self.name, "onnx/models:unknown", silent=True),
         )
-    
+
     def test_verify_repo_ref(self) -> None:
         # Not trusted repo:
         verified = hub._verify_repo_ref("mhamilton723/models")
