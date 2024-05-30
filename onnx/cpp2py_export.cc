@@ -642,13 +642,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   py::class_<InferenceContext> inference_ctx(shape_inference, "InferenceContext", "Inference context");
 
-  inference_ctx.def("__get_attribute", [](InferenceContext* ctx, std::string name) {
+  inference_ctx.def("__get_attribute", [](InferenceContext* ctx, std::string name) -> py::object {
     if (ctx == nullptr) {
       fail_shape_inference("Internal error: `ctx` is nullptr in `__get_attribute`");
     }
     auto attr = ctx->getAttribute(name);
     if (attr == nullptr) {
-      fail_shape_inference("Internal error: `attr` is nullptr in `__get_attribute`");
+      return py::none();
     }
     std::string data;
     attr->SerializeToString(&data);
@@ -656,49 +656,49 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
   inference_ctx.def("get_num_inputs", &InferenceContext::getNumInputs);
   inference_ctx.def("has_input", &InferenceContext::hasInput);
-  inference_ctx.def("__get_input_type", [](InferenceContext* ctx, size_t index) {
+  inference_ctx.def("__get_input_type", [](InferenceContext* ctx, size_t index) -> py::object {
     if (ctx == nullptr) {
       fail_shape_inference("Internal error: `ctx` is nullptr in `__get_input_type`");
     }
     auto type = ctx->getInputType(index);
     if (type == nullptr) {
-      fail_shape_inference("Internal error: `type` is nullptr in `__get_input_type`");
+      return py::none();
     }
     std::string data;
     type->SerializeToString(&data);
     return py::bytes(data);
   });
-  inference_ctx.def("__get_input_data", [](InferenceContext* ctx, size_t index) {
+  inference_ctx.def("__get_input_data", [](InferenceContext* ctx, size_t index) -> py::object {
     if (ctx == nullptr) {
       fail_shape_inference("Internal error: `ctx` is nullptr in `__get_input_data`");
     }
     auto tensor = ctx->getInputData(index);
     if (tensor == nullptr) {
-      fail_shape_inference("Internal error: `tensor` is nullptr in `__get_input_data`");
+      return py::none();
     }
     std::string data;
     tensor->SerializeToString(&data);
     return py::bytes(data);
   });
-  inference_ctx.def("__get_input_sparse_data", [](InferenceContext* ctx, size_t index) {
+  inference_ctx.def("__get_input_sparse_data", [](InferenceContext* ctx, size_t index) -> py::object {
     if (ctx == nullptr) {
       fail_shape_inference("Internal error: `ctx` is nullptr in `__get_input_sparse_data`");
     }
     auto stensor = ctx->getInputSparseData(index);
     if (stensor == nullptr) {
-      fail_shape_inference("Internal error: `stensor` is nullptr in `__get_input_sparse_data`");
+      return py::none();
     }
     std::string data;
     stensor->SerializeToString(&data);
     return py::bytes(data);
   });
-  inference_ctx.def("__get_symbolic_input", [](InferenceContext* ctx, size_t index) {
+  inference_ctx.def("__get_symbolic_input", [](InferenceContext* ctx, size_t index) -> py::object {
     if (ctx == nullptr) {
       fail_shape_inference("Internal error: `ctx` is nullptr in `__get_symbolic_input`");
     }
     auto shape = ctx->getSymbolicInput(index);
     if (shape == nullptr) {
-      fail_shape_inference("Internal error: `shape` is nullptr in `__get_symbolic_input`");
+      return py::none();
     }
     std::string data;
     shape->SerializeToString(&data);
@@ -706,13 +706,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
   inference_ctx.def("__get_graph_attribute_inferencer", &InferenceContext::getGraphAttributeInferencer);
   inference_ctx.def("get_num_outputs", &InferenceContext::getNumOutputs);
-  inference_ctx.def("__get_output_type", [](InferenceContext* ctx, size_t index) {
+  inference_ctx.def("__get_output_type", [](InferenceContext* ctx, size_t index) -> py::object {
     if (ctx == nullptr) {
       fail_shape_inference("Internal error: `ctx` is nullptr in `__get_output_type`");
     }
     auto type = ctx->getOutputType(index);
     if (type == nullptr) {
-      fail_shape_inference("Internal error: `type` is nullptr in `__get_output_type`");
+      return py::none();
     }
     std::string data;
     type->SerializeToString(&data);
@@ -724,7 +724,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     }
     auto type = ctx->getOutputType(index);
     if (type == nullptr) {
-      fail_shape_inference("Internal error: `type` is nullptr in `__set_output_type`");
+      fail_shape_inference("Output index out of bounds. index: ", index, ", output number: ", ctx->getNumOutputs());
     }
     ParseProtoFromPyBytes(type, bytes);
   });

@@ -42,7 +42,7 @@ GraphInferencer.do_inferencing = _do_inferencing  # type: ignore
 def _parse_to_proto(attr, proto_type):
     def impl(self, *args, **kwargs):
         data = getattr(self, attr)(*args, **kwargs)
-        return proto_type.FromString(data)
+        return data if data is None else proto_type.FromString(data)
 
     return impl
 
