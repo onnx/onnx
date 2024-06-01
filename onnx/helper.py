@@ -779,7 +779,7 @@ def make_tensor(
             # Therefore, pack_float32_to_4bit() sets the dtype of the output vals
             # to uint8 regardless of the value of 'signed'. Using int8 would cause
             # the size of int4 tensors to increase ~5x if the tensor contains negative values (due to
-            # the way negative values are encoded into int32_data).
+            # the way negative values are serialized by protobuf).
             vals = (
                 pack_float32_to_4bit(vals, signed=signed)
                 .flatten()
