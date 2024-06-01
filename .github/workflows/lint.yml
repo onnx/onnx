@@ -42,7 +42,7 @@ jobs:
           level: info
           filter_mode: diff_context
       - name: cpplint # Static check C++ code
-        uses: reviewdog/action-cpplint@f4595711c17503b596166b81782d83774541c2d8 # v1.2.0
+        uses: reviewdog/action-cpplint@61869daa530674de5aec805f3eac22e6fdcf7dfe # v1.3.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
