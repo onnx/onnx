@@ -780,11 +780,7 @@ def make_tensor(
             # to uint8 regardless of the value of 'signed'. Using int8 would cause
             # the size of int4 tensors to increase ~5x if the tensor contains negative values (due to
             # the way negative values are serialized by protobuf).
-            vals = (
-                pack_float32_to_4bit(vals, signed=signed)
-                .flatten()
-                .tolist()
-            )
+            vals = pack_float32_to_4bit(vals, signed=signed).flatten().tolist()
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)
         elif data_type == TensorProto.STRING:
