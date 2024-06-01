@@ -774,6 +774,12 @@ def make_tensor(
             TensorProto.INT4,
         ):
             signed = data_type == TensorProto.INT4
+
+            # Two packed 4-bit values must be represented as a single uint8 value.
+            # Therefore, pack_float32_to_4bit() sets the dtype of the output vals
+            # to uint8 regardless of the value of 'signed'. Using int8 would cause
+            # the size of int4 tensors to increase ~5x if the tensor contains negative values (due to
+            # the way negative values are encoded into int32_data).
             vals = (
                 pack_float32_to_4bit(vals, signed=signed)
                 .flatten()
