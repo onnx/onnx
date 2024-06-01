@@ -776,7 +776,6 @@ def make_tensor(
             signed = data_type == TensorProto.INT4
             vals = (
                 pack_float32_to_4bit(vals, signed=signed)
-                .astype(np_dtype)
                 .flatten()
                 .tolist()
             )
