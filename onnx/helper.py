@@ -386,7 +386,7 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
 
 
 def float32_to_float8e4m3(  # noqa: PLR0911
-    fval: float,
+    fval: float | np.float32,
     scale: float = 1.0,
     fn: bool = True,
     uz: bool = False,
@@ -520,7 +520,7 @@ def float32_to_float8e4m3(  # noqa: PLR0911
 
 
 def float32_to_float8e5m2(  # noqa: PLR0911
-    fval: float,
+    fval: float | np.float32,
     scale: float = 1.0,
     fn: bool = False,
     uz: bool = False,

@@ -5647,12 +5647,12 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2.4, 2.6, 4, 10], dtype=np.float32)
-        signed = cast_to == TensorProto.INT4
-        expected1 = np.array(
-            [subbyte.float32_to_4bit_unpacked(x, signed=signed) for x in data]
-        )
+        if cast_to == TensorProto.INT4:
+            expected = subbyte.cast_int4(data)
+        else:
+            expected = subbyte.cast_uint4(data)
         got = ref.run(None, {"X": data})
-        self.assertEqual(expected1.tolist(), got[0].tolist())
+        self.assertEqual(expected.tolist(), got[0].tolist())
 
     @parameterized.parameterized.expand(
         itertools.product(
@@ -5675,13 +5675,12 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array(range(7), dtype=np.float32)
-        cast_from_np = custom.uint4 if cast_from == TensorProto.UINT4 else custom.int4
-        data = data.astype(cast_from_np)
-        expected1 = np.array(
-            [subbyte.float32_to_4bit_unpacked(x, cast_from_np) for x in data]
+        cast_from_dtype = (
+            custom.uint4 if cast_from == TensorProto.UINT4 else custom.int4
         )
-        got = ref.run(None, {"X": data})
-        self.assertEqual(expected1.tolist(), got[0].tolist())
+        expected = data
+        got = ref.run(None, {"X": data.astype(cast_from_dtype)})
+        self.assertEqual(expected.tolist(), got[0].tolist())
 
     def test_a_function_calling_a_function_once(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, ["N"])

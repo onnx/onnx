@@ -66,13 +66,6 @@ class Cast(Base):
 
         vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
         vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
-        vect_float32_to_uint4 = np.vectorize(
-            lambda x: subbyte.float32_to_4bit_unpacked(x, signed=False)
-        )
-        vect_float32_to_int4 = np.vectorize(
-            lambda x: subbyte.float32_to_4bit_unpacked(x, signed=True)
-        )
-
         f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
 
         for from_type, to_type in test_cases:
@@ -239,12 +232,12 @@ class Cast(Base):
                         "x", TensorProto.FLOAT16, input_shape, input_values.tolist()
                     )
                 elif from_type == "UINT4":
-                    input_values = vect_float32_to_uint4(np_fp32)
+                    input_values = subbyte.cast_uint4(np_fp32)
                     input = make_tensor(
                         "x", TensorProto.UINT4, input_shape, input_values.tolist()
                     )
                 elif from_type == "INT4":
-                    input_values = vect_float32_to_int4(np_fp32)
+                    input_values = subbyte.cast_int4(np_fp32)
                     input = make_tensor(
                         "x", TensorProto.INT4, input_shape, input_values.tolist()
                     )
@@ -253,9 +246,9 @@ class Cast(Base):
                         "Conversion from {from_type} to {to_type} is not tested."
                     )
                 if to_type == "UINT4":
-                    expected = vect_float32_to_uint4(input_values).astype(custom.uint4)
+                    expected = subbyte.cast_uint4(input_values).astype(custom.uint4)
                 elif to_type == "INT4":
-                    expected = vect_float32_to_int4(input_values).astype(custom.int4)
+                    expected = subbyte.cast_int4(input_values).astype(custom.int4)
                 elif to_type == "FLOAT16":
                     expected = input_values.astype(np.float16)
                 elif to_type == "FLOAT":
