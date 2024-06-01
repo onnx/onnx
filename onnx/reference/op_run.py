@@ -166,7 +166,7 @@ def to_array_extended(tensor: TensorProto) -> np.ndarray:
         signed = elem_type == TensorProto.INT4
         # 2 packed int4 elements must be represented as a single uint8 value.
         # Therefore, y is np.uint8 (not the dtype to which the int4 maps)
-        y = np.empty(len(data), dtype=np.uint8).ravel()
+        y = np.empty(len(data), dtype=np.uint8).ravel()  # type: ignore[assignment]
         for i, d in enumerate(data):
             y[i] = d
 
