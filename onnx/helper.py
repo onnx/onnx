@@ -774,12 +774,13 @@ def make_tensor(
             TensorProto.INT4,
         ):
             signed = data_type == TensorProto.INT4
-            vals = (
-                pack_float32_to_4bit(vals, signed=signed)
-                .astype(np_dtype)
-                .flatten()
-                .tolist()
-            )
+
+            # Two packed 4-bit values must be represented as a single uint8 value.
+            # Therefore, pack_float32_to_4bit() sets the dtype of the output vals
+            # to uint8 regardless of the value of 'signed'. Using int8 would cause
+            # the size of int4 tensors to increase ~5x if the tensor contains negative values (due to
+            # the way negative values are serialized by protobuf).
+            vals = pack_float32_to_4bit(vals, signed=signed).flatten().tolist()
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)
         elif data_type == TensorProto.STRING:
