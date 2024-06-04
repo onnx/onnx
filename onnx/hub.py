@@ -327,6 +327,7 @@ def download_model_with_test_data(
     silent: bool = False,
 ) -> str | None:
     """Downloads a model along with test data by name from the onnx model hub and returns the directory to which the files have been extracted.
+    Users are responsible for making sure the model comes from a trusted source, and the data is safe to be extracted.
 
     Args:
         model: The name of the onnx model in the manifest. This field is
@@ -397,7 +398,7 @@ def download_model_with_test_data(
         local_model_with_data_dir_path = local_model_with_data_path[
             0 : len(local_model_with_data_path) - 7
         ]
-        # FIX tarball directory traversal
+        # Mitigate tarball directory traversal risks
         if hasattr(tarfile, "data_filter"):
             model_with_data_zipped.extractall(
                 path=local_model_with_data_dir_path, filter="data"
