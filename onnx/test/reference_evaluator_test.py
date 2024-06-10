@@ -124,6 +124,20 @@ def skip_if_no_torchvision(fn):
     return wrapper
 
 
+def skip_if_no_ml_dtypes(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            import ml_dtypes
+
+            del ml_dtypes
+        except ImportError:
+            raise unittest.SkipTest("ml-dtypes not installed") from None
+        fn(*args, **kwargs)
+
+    return wrapper
+
+
 def make_sequence_value_info(name, elem_type, shape):
     if isinstance(elem_type, int):
         return make_tensor_sequence_value_info(name, elem_type, shape)
@@ -5930,6 +5944,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             ("UINT4", 0.5),
         ]
     )
+    @skip_if_no_ml_dtypes
     def test_add_custom_dtype(self, stype, atol):
         itype = getattr(TensorProto, stype)
         model = make_model(
@@ -5976,6 +5991,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             # ("UINT4", ),
         ]
     )
+    @skip_if_no_ml_dtypes
     def test_cmp_custom_dtype(self, stype):
         itype = getattr(TensorProto, stype)
         model = make_model(
