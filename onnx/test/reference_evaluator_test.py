@@ -9,6 +9,7 @@
 
     python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
 """
+
 from __future__ import annotations
 
 import itertools
@@ -25,7 +26,7 @@ from typing import Sequence
 import numpy as np
 import parameterized
 import version_utils
-from numpy.testing import assert_allclose
+from numpy.testing import assert_almost_equal, assert_allclose
 
 import onnx.reference.custom_element_types as custom
 from onnx import (
@@ -5914,6 +5915,96 @@ class TestReferenceEvaluator(unittest.TestCase):
         oinf = MyReferenceEvaluator(model_def)
         for v in oinf.functions_.values():
             self.assertIsInstance(v, MyReferenceEvaluator)
+
+    @parameterized.parameterized.expand(
+        [
+            ("DOUBLE", 0),
+            ("FLOAT", 0),
+            ("FLOAT16", 1e-3),
+            ("BFLOAT16", 1e-2),
+            ("FLOAT8E4M3FN", 1),
+            ("FLOAT8E4M3FNUZ", 0.9),
+            ("FLOAT8E5M2", 0.85),
+            ("FLOAT8E5M2FNUZ", 0.85),
+            ("INT4", 0.5),
+            ("UINT4", 0.5),
+        ]
+    )
+    def test_add_custom_dtype(self, stype, atol):
+        itype = getattr(TensorProto, stype)
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Xc"], to=itype),
+                    make_node("Cast", ["Y"], ["Yc"], to=itype),
+                    make_node("Neg", ["Yc"], ["Ycn"]),
+                    make_node("Add", ["Xc", "Ycn"], ["Zc"]),
+                    make_node("Cast", ["Zc"], ["Z"], to=TensorProto.FLOAT),
+                ],
+                "nd",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None]),
+                    make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None]),
+                ],
+                [make_tensor_value_info("Z", TensorProto.FLOAT, [None, None, None])],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+            ir_version=9,
+        )
+
+        ref = ReferenceEvaluator(model)
+
+        x = (np.arange(18) / 18).reshape((2, 3, 3)).astype(np.float32)
+        y = (np.arange(18) / 180).reshape((2, 3, 3)).astype(np.float32)
+        feeds = dict(X=x, Y=y)
+        expected = x - y
+        got = ref.run(None, feeds)[0]
+        assert_allclose(expected, got, atol=atol)
+
+    @parameterized.parameterized.expand(
+        [
+            ("DOUBLE",),
+            ("FLOAT",),
+            ("FLOAT16",),
+            ("BFLOAT16",),
+            # Comparison fails with ml_dtypes
+            # ("FLOAT8E4M3FN", ),
+            # ("FLOAT8E4M3FNUZ", ),
+            # ("FLOAT8E5M2", ),
+            # ("FLOAT8E5M2FNUZ", ),
+            # ("INT4", ),
+            # ("UINT4", ),
+        ]
+    )
+    def test_cmp_custom_dtype(self, stype):
+        itype = getattr(TensorProto, stype)
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Xc"], to=itype),
+                    make_node("Cast", ["Y"], ["Yc"], to=itype),
+                    make_node("Greater", ["Xc", "Yc"], ["Zc"]),
+                    make_node("Cast", ["Zc"], ["Z"], to=TensorProto.BOOL),
+                ],
+                "nd",
+                [
+                    make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None]),
+                    make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None]),
+                ],
+                [make_tensor_value_info("Z", TensorProto.FLOAT, [None, None, None])],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+            ir_version=9,
+        )
+
+        ref = ReferenceEvaluator(model)
+
+        x = (np.arange(18) / 18).reshape((2, 3, 3)).astype(np.float32)
+        y = ((np.arange(18) - 9) / 18).reshape((2, 3, 3)).astype(np.float32)
+        feeds = dict(X=x, Y=y)
+        expected = x >= y
+        got = ref.run(None, feeds)[0]
+        assert_almost_equal(expected, got)
 
 
 if __name__ == "__main__":
