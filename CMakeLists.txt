@@ -233,8 +233,8 @@ else()
     include(FetchContent)
     message("Loading Dependencies URLs ...")
     # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.3
-    set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.tar.gz)
-    set(AbseilSHA1 e21faa0de5afbbf8ee96398ef0ef812daf416ad8)
+    set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20240116.1.tar.gz)
+    set(AbseilSHA1 7ca26cb46ee2f1e43ce9ccc86bbfaa515d1c6020)
     FetchContent_Declare(
       Abseil
       URL ${AbseilURL}
@@ -251,8 +251,8 @@ else()
     # ABSL_ROOT_DIR is required by Protobuf.
     set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
     message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
-    set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.26.0.tar.gz)
+    set(ProtobufSHA1 e84b47cc21b5f7a848a1d87cf648dbcbea54b08d)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
