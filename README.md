@@ -133,7 +133,7 @@ The ON/OFF depends on what kind of protobuf library you have. Shared libraries a
 
 ### Windows
 
-If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.21.12.
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.25.2.
 
 The instructions in this README assume you are using Visual Studio.  It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
 
@@ -240,9 +240,9 @@ pip install -e .
 export NUM_CORES=`sysctl -n hw.ncpu`
 brew update
 brew install autoconf && brew install automake
-wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
-tar -xvf protobuf-cpp-3.21.12.tar.gz
-cd protobuf-3.21.12
+wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.25.2.tar.gz
+tar -xvf protobuf-cpp-3.25.2.tar.gz
+cd protobuf-3.25.2
 mkdir build_source && cd build_source
 cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
 make -j${NUM_CORES}
