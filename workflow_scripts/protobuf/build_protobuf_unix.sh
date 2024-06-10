@@ -27,7 +27,7 @@ wget https://github.com/protocolbuffers/protobuf/archive/refs/tags/v3.25.2.tar.g
 tar -xvf v3.25.2.tar.gz
 cd protobuf-3.25.2
 mkdir build_source && cd build_source
-cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALL_PROTOBUF_PATH -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+cmake .. -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALL_PROTOBUF_PATH -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 make -j$CORE_NUMBER
 if [ "$INSTALL_PROTOBUF_PATH" == "/usr" ]; then
     # install protobuf on default system path so it needs sudo permission
