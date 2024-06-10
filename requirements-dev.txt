@@ -1,6 +1,6 @@
 build
 jupyter
-ml-dtypes
+ml-dtypes; python_version >= '3.9'
 nbval
 numpy
 parameterized
