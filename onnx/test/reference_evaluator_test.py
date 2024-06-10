@@ -26,7 +26,7 @@ from typing import Sequence
 import numpy as np
 import parameterized
 import version_utils
-from numpy.testing import assert_almost_equal, assert_allclose
+from numpy.testing import assert_allclose, assert_almost_equal
 
 import onnx.reference.custom_element_types as custom
 from onnx import (
