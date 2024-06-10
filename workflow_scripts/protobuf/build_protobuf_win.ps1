@@ -11,7 +11,7 @@ param(
 )
 
 echo "Build protobuf from source on Windows."
-Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.25.2.tar.gz -OutFile protobuf.tar.gz -Verbose
+Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/archive/refs/tags/v3.25.2.tar.gz -OutFile protobuf.tar.gz -Verbose
 tar -xvf protobuf.tar.gz
 cd protobuf-3.25.2
 $protobuf_root_dir = Get-Location
