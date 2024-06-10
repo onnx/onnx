@@ -8,7 +8,7 @@ import numpy as np
 try:
     import ml_dtypes
 except ImportError:
-    ml_dtypes = None
+    ml_dtypes = None  # type: ignore[assignment]
 
 bfloat16 = np.dtype((np.uint16, {"bfloat16": (np.uint16, 0)}))
 float8e4m3fn = np.dtype((np.uint8, {"e4m3fn": (np.uint8, 0)}))
