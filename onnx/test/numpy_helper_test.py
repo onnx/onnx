@@ -620,7 +620,7 @@ class TestNumpyHelper(unittest.TestCase):
 
     def test_to_array_from_array(self):
         for att in dir(onnx.TensorProto):
-            if att in {"INT4", "UINT4", "STRING"}:
+            if att in {"INT4", "UINT4", "STRING", "UNDEFINED"}:
                 continue
             if att[0] < "A" or att[0] > "Z":
                 continue
