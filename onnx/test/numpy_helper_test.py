@@ -616,6 +616,12 @@ class TestNumpyHelper(unittest.TestCase):
         if check_dtype:
             self.assertEqual(start[0].dtype, back.dtype)
         again = numpy_helper.from_array(back, name="check")
+        self.assertEqual(tp.data_type, again.data_type)
+        self.assertEqual(tp.name, again.name)
+        self.assertEqual(len(tp.raw_data), len(again.raw_data))
+        self.assertEqual(list(tp.raw_data), list(again.raw_data))
+        self.assertEqual(tp.raw_data, again.raw_data)
+        self.assertEqual(tuple(tp.dims), tuple(again.dims))
         self.assertEqual(tp.SerializeToString(), again.SerializeToString())
 
     def test_to_array_from_array(self):

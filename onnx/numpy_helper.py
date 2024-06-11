@@ -483,6 +483,7 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
     """
     if not isinstance(tensor, np.ndarray):
         return _from_array(tensor, name)
+
     dt = tensor.dtype
     if dt == custom_np_types.float8e4m3fn and dt.descr[0][0] == "e4m3fn":
         to = TensorProto.FLOAT8E4M3FN
@@ -499,8 +500,27 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
     elif dt == custom_np_types.bfloat16 and dt.descr[0][0] == "bfloat16":
         to = TensorProto.BFLOAT16
         dt_to = np.uint16  # type: ignore[assignment]
+    elif dt == custom_np_types.int4 and dt.descr[0][0] == "int4":
+        to = TensorProto.INT4
+        dt_to = np.int8
+    elif dt == custom_np_types.uint4 and dt.descr[0][0] == "uint4":
+        to = TensorProto.UINT4
+        dt_to = np.uint8
     else:
         return _from_array(tensor, name)
+
+    if to in (TensorProto.UINT4, TensorProto.INT4):
+        value = tensor.astype(dt_to).ravel()
+        buffer = np.zeros(value.size // 2, dtype=dt_to)
+        buffer = (value[::2] & 0x0F) + (value[1::2] << 4)
+
+        pb = TensorProto()
+        pb.dims.extend(tensor.shape)
+        if name:
+            pb.name = name
+        pb.raw_data = buffer.tobytes()
+        pb.data_type = to
+        return pb
 
     t = _from_array(tensor.astype(dt_to), name)
     t.data_type = to

@@ -94,6 +94,7 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
             for i in range(y.shape[0]):
                 el = subbyte.float32_to_4bit_unpacked(xf[i], signed=signed)
                 y[i] = el
+            # This operator preduces a tensor with the same shape for INT4.
             return y.reshape(x.shape)
 
     f8back = {
