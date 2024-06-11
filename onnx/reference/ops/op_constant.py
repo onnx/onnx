@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from onnx.reference.custom_element_types import (
+from onnx.custom_element_types import (
     bfloat16,
     float8e4m3fn,
     float8e4m3fnuz,

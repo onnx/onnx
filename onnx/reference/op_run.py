@@ -13,7 +13,7 @@ from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_versi
 from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
 from onnx.numpy_helper import to_array, unpack_int4
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
-from onnx.reference.custom_element_types import (
+from onnx.custom_element_types import (
     bfloat16,
     float8e4m3fn,
     float8e4m3fnuz,

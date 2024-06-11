@@ -16,7 +16,7 @@ from onnx.helper import (
     np_dtype_to_tensor_dtype,
     tensor_dtype_to_np_dtype,
 )
-from onnx.reference.custom_element_types import (
+from onnx.custom_element_types import (
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,

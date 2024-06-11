@@ -18,7 +18,7 @@ from onnx.numpy_helper import (
     float8e5m2_to_float32,
 )
 from onnx.onnx_pb import TensorProto
-from onnx.reference.custom_element_types import (
+from onnx.custom_element_types import (
     bfloat16,
     float8e4m3fn,
     float8e4m3fnuz,

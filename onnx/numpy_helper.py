@@ -10,6 +10,7 @@ import numpy as np
 
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
+import onnx.custom_element_types as custom_np_types
 
 
 def combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
@@ -218,7 +219,7 @@ def unpack_int4(
     return res
 
 
-def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
+def _to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
 
     Args:
@@ -332,7 +333,76 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
-def from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
+def to_array(tensor: TensorProto) -> np.ndarray:
+    """Converts a tensor def object to a numpy array.
+    Supports types defined in :mod:`onnx.custom_element_types`.
+
+    Args:
+        tensor: a TensorProto object.
+        base_dir: if external tensor exists, base_dir can help to find the path to it
+
+    Returns:
+        arr: the converted array.
+    """
+    elem_type = tensor.data_type
+    if elem_type == TensorProto.BFLOAT16:
+        data = tensor.int32_data
+        shape = tuple(tensor.dims)
+        y = np.empty(shape, dtype=custom_np_types.bfloat16).ravel()
+        for i, d in enumerate(data):
+            y[i] = d
+        return y.reshape(shape)
+
+    if elem_type in (
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+    ):
+        m = {
+            TensorProto.FLOAT8E4M3FN: custom_np_types.float8e4m3fn,
+            TensorProto.FLOAT8E4M3FNUZ: custom_np_types.float8e4m3fnuz,
+            TensorProto.FLOAT8E5M2: custom_np_types.float8e5m2,
+            TensorProto.FLOAT8E5M2FNUZ: custom_np_types.float8e5m2fnuz,
+        }
+
+        if tensor.HasField("raw_data"):
+            data = tensor.raw_data  # type: ignore[assignment]
+        else:
+            data = tensor.int32_data
+        shape = tuple(tensor.dims)
+        y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
+        for i, d in enumerate(data):
+            y[i] = d
+        return y.reshape(shape)
+    if elem_type in (TensorProto.UINT4, TensorProto.INT4):
+        if tensor.HasField("raw_data"):
+            data = tensor.raw_data  # type: ignore[assignment]
+            unpack = False
+        else:
+            data = tensor.int32_data
+            unpack = True
+        shape = tuple(tensor.dims)
+        m = {
+            TensorProto.INT4: custom_np_types.int4,
+            TensorProto.UINT4: custom_np_types.uint4,
+        }
+        dtype = m[elem_type]  # type: ignore[index]
+        signed = elem_type == TensorProto.INT4
+        # 2 packed int4 elements must be represented as a single uint8 value.
+        # Therefore, y is np.uint8 (not the dtype to which the int4 maps)
+        y = np.empty(len(data), dtype=np.uint8).ravel()  # type: ignore[assignment]
+        for i, d in enumerate(data):
+            y[i] = d
+        if unpack:
+            unpacked_data = unpack_int4(y, dims=shape, signed=signed)
+            return unpacked_data.astype(dtype)
+        return np.frombuffer(y.tobytes(), dtype=dtype)
+
+    return _to_array(tensor)
+
+
+def _from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
     """Converts a numpy array to a tensor def.
 
     Args:
@@ -352,7 +422,7 @@ def from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
     if name:
         tensor.name = name
 
-    if arr.dtype == object:
+    if arr.dtype == object or np.issubdtype(arr.dtype, np.str_):
         # Special care for strings.
         tensor.data_type = helper.np_dtype_to_tensor_dtype(arr.dtype)
         # TODO: Introduce full string support.
@@ -395,6 +465,41 @@ def from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
         convert_endian(tensor)
 
     return tensor
+
+
+def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
+    """Converts an array into a TensorProto including
+    supported type defined in :mod:`onnx.custom_element_types`.
+
+    Args:
+        tensor: a numpy array.
+        name: (optional) the name of the tensor.
+
+    Returns:
+        TensorProto: the converted tensor def.
+    """
+    dt = tensor.dtype
+    if dt == custom_np_types.float8e4m3fn and dt.descr[0][0] == "e4m3fn":
+        to = TensorProto.FLOAT8E4M3FN
+        dt_to = np.uint8  # type: ignore[assignment]
+    elif dt == custom_np_types.float8e4m3fnuz and dt.descr[0][0] == "e4m3fnuz":
+        to = TensorProto.FLOAT8E4M3FNUZ
+        dt_to = np.uint8  # type: ignore[assignment]
+    elif dt == custom_np_types.float8e5m2 and dt.descr[0][0] == "e5m2":
+        to = TensorProto.FLOAT8E5M2
+        dt_to = np.uint8  # type: ignore[assignment]
+    elif dt == custom_np_types.float8e5m2fnuz and dt.descr[0][0] == "e5m2fnuz":
+        to = TensorProto.FLOAT8E5M2FNUZ
+        dt_to = np.uint8  # type: ignore[assignment]
+    elif dt == custom_np_types.bfloat16 and dt.descr[0][0] == "bfloat16":
+        to = TensorProto.BFLOAT16
+        dt_to = np.uint16  # type: ignore[assignment]
+    else:
+        return _from_array(tensor, name)
+
+    t = _from_array(tensor.astype(dt_to), name)
+    t.data_type = to
+    return t
 
 
 def to_list(sequence: SequenceProto) -> list[Any]:

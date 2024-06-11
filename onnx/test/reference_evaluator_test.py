@@ -27,7 +27,7 @@ import parameterized
 import version_utils
 from numpy.testing import assert_allclose
 
-import onnx.reference.custom_element_types as custom
+import onnx.custom_element_types as custom
 from onnx import (
     AttributeProto,
     FunctionProto,

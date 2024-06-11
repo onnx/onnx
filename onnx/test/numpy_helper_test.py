@@ -11,6 +11,7 @@ import parameterized
 
 import onnx
 from onnx import helper, numpy_helper
+import onnx.reference
 
 
 def bfloat16_to_float32(ival: int) -> Any:
@@ -597,6 +598,48 @@ class TestNumpyHelper(unittest.TestCase):
             # Differing value types should raise a TypeError
             numpy_helper.from_dict({0: np.array(1), 1: np.array(0.9)})
 
+    def _to_array_from_array(self, value: int, check_dtype: bool = True):
+        onnx_model = helper.make_model(
+            helper.make_graph(
+                [helper.make_node("Cast", ["X"], ["Y"], to=value)],
+                "test",
+                [helper.make_tensor_value_info("X", onnx.TensorProto.FLOAT, [4])],
+                [helper.make_tensor_value_info("Y", value, [4])],
+            )
+        )
+        ref = onnx.reference.ReferenceEvaluator(onnx_model)
+        start = ref.run(None, {"X": np.array([0, 1, -2, 3], dtype=np.float32)})
+        tp = numpy_helper.from_array(start[0], name="check")
+        self.assertEqual(tp.data_type, value)
+        back = numpy_helper.to_array(tp)
+        self.assertEqual(start[0].shape, back.shape)
+        if check_dtype:
+            self.assertEqual(start[0].dtype, back.dtype)
+        again = numpy_helper.from_array(back, name="check")
+        self.assertEqual(tp.SerializeToString(), again.SerializeToString())
+
+    def test_to_array_from_array(self):
+        for att in dir(onnx.TensorProto):
+            if att in {"INT4", "UINT4", "STRING"}:
+                continue
+            if att[0] < "A" or att[0] > "Z":
+                continue
+            value = getattr(onnx.TensorProto, att)
+            if not isinstance(value, int):
+                continue
+
+            with self.subTest(att=att):
+                self._to_array_from_array(value)
+
+    def test_to_array_from_array_subtype(self):
+        with self.subTest(att="INT4"):
+            self._to_array_from_array(onnx.TensorProto.INT4)
+        with self.subTest(att="UINT4"):
+            self._to_array_from_array(onnx.TensorProto.UINT4)
+
+    def test_to_array_from_array_string(self):
+        self._to_array_from_array(onnx.TensorProto.STRING, False)
+
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)
