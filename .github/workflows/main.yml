@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   test:
-    name: "Test"
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, onnx_ml=${{ matrix.onnx_ml }}, doc=${{ matrix.documentation }}
     strategy:
       fail-fast: false
       matrix:
