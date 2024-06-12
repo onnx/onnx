@@ -288,6 +288,35 @@ def load(
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
 
 
+def _tar_members_filter(tar: tarfile.TarFile, base: str) -> list[tarfile.TarInfo]:
+    """Check that the content of ``tar`` will be extracted safely
+
+    Args:
+        tar: The tarball file
+        base: The directory where the tarball will be extracted
+
+    Returns:
+        list of tarball members
+    """
+    result = []
+    for member in tar:
+        member_path = os.path.join(base, member.name)
+        abs_base = os.path.abspath(base)
+        abs_member = os.path.abspath(member_path)
+        if not abs_member.startswith(abs_base):
+            raise RuntimeError(
+                f"The tarball member {member_path} in downloading model contains "
+                f"directory traversal sequence which may contain harmful payload."
+            )
+        elif member.issym() or member.islnk():
+            raise RuntimeError(
+                f"The tarball member {member_path} in downloading model contains "
+                f"symbolic links which may contain harmful payload."
+            )
+        result.append(member)
+    return result
+
+
 def download_model_with_test_data(
     model: str,
     repo: str = "onnx/models:main",
@@ -296,6 +325,7 @@ def download_model_with_test_data(
     silent: bool = False,
 ) -> Optional[str]:
     """Downloads a model along with test data by name from the onnx model hub and returns the directory to which the files have been extracted.
+    Users are responsible for making sure the model comes from a trusted source, and the data is safe to be extracted.
 
     Args:
         model: The name of the onnx model in the manifest. This field is
@@ -366,7 +396,18 @@ def download_model_with_test_data(
         local_model_with_data_dir_path = local_model_with_data_path[
             0 : len(local_model_with_data_path) - 7
         ]
-        model_with_data_zipped.extractall(local_model_with_data_dir_path)
+        # Mitigate tarball directory traversal risks
+        if hasattr(tarfile, "data_filter"):
+            model_with_data_zipped.extractall(
+                path=local_model_with_data_dir_path, filter="data"
+            )
+        else:
+            model_with_data_zipped.extractall(
+                path=local_model_with_data_dir_path,
+                members=_tar_members_filter(
+                    model_with_data_zipped, local_model_with_data_dir_path
+                ),
+            )
     model_with_data_path = (
         local_model_with_data_dir_path
         + "/"
