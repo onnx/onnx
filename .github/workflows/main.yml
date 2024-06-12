@@ -124,7 +124,9 @@ jobs:
       - name: Build and install ONNX - Windows
         if: matrix.os == 'windows-latest'
         run: |
-          pip install -e ".[reference]" -v
+          # pip install -e ".[reference]" -v
+          python setup.py build_ext --inplace
+          python setup.py install
         env:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
