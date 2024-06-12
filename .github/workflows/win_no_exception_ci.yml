@@ -67,6 +67,7 @@ jobs:
 
         cd ..
         git clean -xdf
+        set ONNX_BUILD_TESTS=1
         echo "Build ONNX with non-static registration for testing selective ONNX schema loading"
         cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -DONNX_DISABLE_STATIC_REGISTRATION=ON -S . -B .setuptools-cmake-build\
 
