@@ -575,9 +575,10 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(
+        np.testing.assert_allclose(
             Cast.eval(np_results, to=TensorProto.BFLOAT16),  # type: ignore[arg-type]
             numpy_helper.to_array(tensor),
+            rtol=1e-4  # truncate is not nearest even rounding
         )
 
     def test_make_float8e4m3fn_tensor_raw(self) -> None:

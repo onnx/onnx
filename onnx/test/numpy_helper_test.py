@@ -624,24 +624,21 @@ class TestNumpyHelper(unittest.TestCase):
         self.assertEqual(tuple(tp.dims), tuple(again.dims))
         self.assertEqual(tp.SerializeToString(), again.SerializeToString())
 
-    def test_to_array_from_array(self):
-        for att in dir(onnx.TensorProto):
-            if att in {"INT4", "UINT4", "STRING", "UNDEFINED"}:
-                continue
-            if att[0] < "A" or att[0] > "Z":
-                continue
-            value = getattr(onnx.TensorProto, att)
-            if not isinstance(value, int):
-                continue
+    @parameterized.parameterized.expand([(att,) for att in dir(onnx.TensorProto)])
+    def test_to_array_from_array(self, att):
+        if att in {"INT4", "UINT4", "STRING", "UNDEFINED"}:
+            return
+        if att[0] < "A" or att[0] > "Z":
+            return
+        value = getattr(onnx.TensorProto, att)
+        if not isinstance(value, int):
+            return
 
-            with self.subTest(att=att):
-                self._to_array_from_array(value)
+        self._to_array_from_array(value)
 
     def test_to_array_from_array_subtype(self):
-        with self.subTest(att="INT4"):
-            self._to_array_from_array(onnx.TensorProto.INT4)
-        with self.subTest(att="UINT4"):
-            self._to_array_from_array(onnx.TensorProto.UINT4)
+        self._to_array_from_array(onnx.TensorProto.INT4)
+        self._to_array_from_array(onnx.TensorProto.UINT4)
 
     def test_to_array_from_array_string(self):
         self._to_array_from_array(onnx.TensorProto.STRING, False)
