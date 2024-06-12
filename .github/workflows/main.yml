@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   test:
-    name: "Test"
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, onnx_ml=${{ matrix.onnx_ml }}, documentation=${{ matrix.documentation }}
     strategy:
       fail-fast: false
       matrix:
@@ -124,7 +124,8 @@ jobs:
       - name: Build and install ONNX - Windows
         if: matrix.os == 'windows-latest'
         run: |
-          pip install -e ".[reference]" -v
+          # pip install -e ".[reference]" -v
+          python setup.py build_ext --inplace
         env:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}

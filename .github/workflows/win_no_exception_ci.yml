@@ -72,6 +72,8 @@ jobs:
 
         cd .setuptools-cmake-build\
         msbuild onnx.sln /m /p:Configuration=Release
+        echo "--Try again--"
+        msbuild onnx.sln /m /p:Configuration=Release
 
         echo "Only test selective ONNX schema loading"
         Release\onnx_gtests.exe --gtest_filter="SchemaRegistrationTest*"
