@@ -52,9 +52,9 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
 
-    - name: Install protobuf in the GitHub Action environment for testing the wheel
-      run: |
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
+    #- name: Install protobuf in the GitHub Action environment for testing the wheel
+    #  run: |
+    #    source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |

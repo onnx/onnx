@@ -50,11 +50,6 @@ jobs:
             debug_build: 0
             documentation: 0
             protobuf_type: 'External'
-          - python_version: '3.8'
-            onnx_ml: 0
-            debug_build: 0
-            documentation: 0
-            protobuf_type: 'Internal'
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository

@@ -57,7 +57,7 @@ jobs:
       run: |
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
+        # source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         if [ '${{ github.event_name }}' == 'schedule' ]; then
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1

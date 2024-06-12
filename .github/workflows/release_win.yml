@@ -70,7 +70,7 @@ jobs:
           $arch = 'Win32'
         }
 
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        # rem . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
 
         echo "Install ONNX"
