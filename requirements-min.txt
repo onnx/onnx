@@ -1,6 +1,6 @@
 # Minimum package versions that ONNX supports
-protobuf==3.20.2; python_version<"3.12"
-protobuf==4.25.1; python_version>="3.12"
+protobuf==3.20.2; python_version<"3.10"
+protobuf==5.27.1; python_version>="3.10"
 numpy==1.20.3; python_version<"3.10"
 numpy==1.23.2; python_version=="3.10"
 numpy==1.23.2; python_version=="3.11"

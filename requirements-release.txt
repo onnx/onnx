@@ -4,8 +4,8 @@ nbval
 numpy==1.24.3; python_version<"3.12"
 numpy==1.26.0; python_version>="3.12"
 parameterized
-protobuf==4.21.12; python_version<"3.12"
-protobuf==4.25.1; python_version>="3.12"
+protobuf==4.21.12; python_version<"3.10"
+protobuf==5.27.1; python_version>="3.10"
 pytest
 pytest-cov
 pytest-xdist

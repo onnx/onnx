@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
         architecture: ['x64']
 
     steps:
@@ -52,9 +52,9 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
 
-    - name: Install protobuf in the GitHub Action environment for testing the wheel
-      run: |
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
+    #- name: Install protobuf in the GitHub Action environment for testing the wheel
+    #  run: |
+    #    source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
     - name: Test wheel with Python ${{ matrix.python-version }}
       run: |

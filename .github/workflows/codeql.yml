@@ -70,7 +70,7 @@ jobs:
     # Install onnx so that it is found by the linters
     - name: Install ONNX
       run: |
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
+        # source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
         python -m pip install --quiet -r requirements-release.txt
         git submodule update --init --recursive
         export ONNX_ML=1

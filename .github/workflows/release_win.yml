@@ -27,7 +27,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
@@ -70,7 +70,7 @@ jobs:
           $arch = 'Win32'
         }
 
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        # rem . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
         cd onnx
 
         echo "Install ONNX"
