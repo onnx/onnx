@@ -10,8 +10,8 @@ import numpy as np
 import parameterized
 
 import onnx
-from onnx import helper, numpy_helper
 import onnx.reference
+from onnx import helper, numpy_helper
 
 
 def bfloat16_to_float32(ival: int) -> Any:
@@ -626,7 +626,14 @@ class TestNumpyHelper(unittest.TestCase):
 
     @parameterized.parameterized.expand([(att,) for att in dir(onnx.TensorProto)])
     def test_to_array_from_array(self, att):
-        if att in {"INT4", "UINT4", "STRING", "UNDEFINED", "DEFAULT", "NAME_FIELD_NUMBER"}:
+        if att in {
+            "INT4",
+            "UINT4",
+            "STRING",
+            "UNDEFINED",
+            "DEFAULT",
+            "NAME_FIELD_NUMBER",
+        }:
             return
         if att[0] < "A" or att[0] > "Z":
             return
