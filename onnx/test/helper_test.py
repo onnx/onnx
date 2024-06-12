@@ -482,7 +482,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(tensor.name, "test")
         np.testing.assert_equal(
-            Cast.eval(np_results, to=TensorProto.BFLOAT16),
+            Cast.eval(np_results, to=TensorProto.BFLOAT16),  # type: ignore[arg-type]
             numpy_helper.to_array(tensor),
         )
 
