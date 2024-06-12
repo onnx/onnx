@@ -502,16 +502,15 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
         dt_to = np.uint16  # type: ignore[assignment]
     elif dt == custom_np_types.int4 and dt.descr[0][0] == "int4":
         to = TensorProto.INT4
-        dt_to = np.int8
+        dt_to = np.int8  # type: ignore[assignment]
     elif dt == custom_np_types.uint4 and dt.descr[0][0] == "uint4":
         to = TensorProto.UINT4
-        dt_to = np.uint8
+        dt_to = np.uint8  # type: ignore[assignment]
     else:
         return _from_array(tensor, name)
 
     if to in (TensorProto.UINT4, TensorProto.INT4):
         value = tensor.astype(dt_to).ravel()
-        buffer = np.zeros(value.size // 2, dtype=dt_to)
         buffer = (value[::2] & 0x0F) + (value[1::2] << 4)
 
         pb = TensorProto()

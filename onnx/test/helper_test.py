@@ -492,7 +492,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         ynp = numpy_helper.to_array(y)
         expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
-        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E4M3FN), ynp)
+        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E4M3FN), ynp)  # type: ignore[arg-type]
 
     def test_make_float8e4m3fnuz_tensor(self) -> None:
         y = helper.make_tensor(
@@ -503,7 +503,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         ynp = numpy_helper.to_array(y)
         expected = np.array([0, 0.5, 1, 240, 10, 0, 0], dtype=np.float32)
-        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E4M3FNUZ), ynp)
+        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E4M3FNUZ), ynp)  # type: ignore[arg-type]
 
     def test_make_float8e5m2_tensor(self) -> None:
         y = helper.make_tensor(
@@ -511,7 +511,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         ynp = numpy_helper.to_array(y)
         expected = np.array([0, 0.5, 1, 49152, 96], dtype=np.float32)
-        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E5M2), ynp)
+        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E5M2), ynp)  # type: ignore[arg-type]
 
     def test_make_float8e5m2fnuz_tensor(self) -> None:
         y = helper.make_tensor(
@@ -522,7 +522,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         ynp = numpy_helper.to_array(y)
         expected = np.array([0, 0.5, 1, 49152, 96, 0, 0], dtype=np.float32)
-        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E5M2FNUZ), ynp)
+        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E5M2FNUZ), ynp)  # type: ignore[arg-type]
 
     def test_make_bfloat16_tensor_raw(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
@@ -576,7 +576,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(tensor.name, "test")
         np.testing.assert_equal(
-            Cast.eval(np_results, to=TensorProto.BFLOAT16),
+            Cast.eval(np_results, to=TensorProto.BFLOAT16),  # type: ignore[arg-type]
             numpy_helper.to_array(tensor),
         )
 
@@ -594,7 +594,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E4M3FN), ynp)
+        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E4M3FN), ynp)  # type: ignore[arg-type]
 
     def test_make_float8e4m3fnuz_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
@@ -610,7 +610,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E4M3FNUZ), ynp)
+        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E4M3FNUZ), ynp)  # type: ignore[arg-type]
 
     def test_make_float8e5m2_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
@@ -626,7 +626,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E5M2), ynp)
+        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E5M2), ynp)  # type: ignore[arg-type]
 
     def test_make_float8e5m2fnuz_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
@@ -643,7 +643,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E5M2FNUZ), ynp)
+        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E5M2FNUZ), ynp)  # type: ignore[arg-type]
 
     @parameterized.parameterized.expand(
         itertools.product(
