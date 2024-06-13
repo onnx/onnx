@@ -1040,7 +1040,7 @@ class TestAttrTypeToStr(unittest.TestCase):
                 return getattr(custom_element_types, name)
             raise AttributeError(f"Unknown name {name!r}")
 
-        for k, v in custom_element_types._mapping_name_to_data_type.items():
+        for k, v in custom_element_types.mapping_name_to_data_type.items():
             self.assertEqual(helper.np_dtype_to_tensor_dtype(_get(k)), v)
 
 

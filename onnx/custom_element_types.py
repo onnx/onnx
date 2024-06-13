@@ -49,7 +49,7 @@ uint4 = np.dtype((np.uint8, {"uint4": (np.uint8, 0)}))
 #: than its onnx size.
 int4 = np.dtype((np.int8, {"int4": (np.int8, 0)}))
 
-_mapping_name_to_data_type = {
+mapping_name_to_data_type = {
     "bfloat16": onnx.TensorProto.BFLOAT16,
     "e4m3fn": onnx.TensorProto.FLOAT8E4M3FN,
     "e4m3fnuz": onnx.TensorProto.FLOAT8E4M3FNUZ,
