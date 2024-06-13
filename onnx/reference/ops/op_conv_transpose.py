@@ -24,8 +24,6 @@ class ConvTranspose(OpRun):
         pads=None,
         strides=None,
     ):
-        if group != 1:
-            raise RuntimeError(f"group={group} != 1 is not implemented yet.")
         if dilations is None:
             dilations = [1 for s in X.shape[2:]]
         if kernel_shape is None:
