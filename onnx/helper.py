@@ -1438,7 +1438,9 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     if len(graph.input):
         header.append("(")
         in_strs = []  # required inputs
-        in_with_init_strs = []  # optional inputs with initializer providing default value
+        in_with_init_strs = (
+            []
+        )  # optional inputs with initializer providing default value
         for inp in graph.input:
             if inp.name not in initializers:
                 in_strs.append(printable_value_info(inp))
@@ -1616,7 +1618,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
         custom_np_types.int4,
         custom_np_types.uint4,
     }:
-        return custom_np_types._local_mapping[np_dtype.descr[0][0]]
+        return custom_np_types._mapping_name_to_data_type[np_dtype.descr[0][0]]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."
