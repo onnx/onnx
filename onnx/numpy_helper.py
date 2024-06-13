@@ -8,9 +8,9 @@ from typing import Any, Sequence
 
 import numpy as np
 
+import onnx.custom_element_types as custom_np_types
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
-import onnx.custom_element_types as custom_np_types
 
 
 def combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
