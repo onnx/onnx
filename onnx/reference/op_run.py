@@ -9,10 +9,6 @@ from typing import Any, ClassVar, Iterable
 import numpy as np
 
 from onnx import TensorProto
-from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
-from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
-from onnx.numpy_helper import to_array
-from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 from onnx.custom_element_types import (
     bfloat16,
     float8e4m3fn,
@@ -22,6 +18,10 @@ from onnx.custom_element_types import (
     int4,
     uint4,
 )
+from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
+from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
+from onnx.numpy_helper import to_array
+from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 
 
 def _split_class_name(name):  # type: ignore

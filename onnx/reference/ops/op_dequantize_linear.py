@@ -6,8 +6,6 @@ from __future__ import annotations
 import numpy as np
 
 from onnx import TensorProto
-from onnx.helper import np_dtype_to_tensor_dtype
-from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32
 from onnx.custom_element_types import (
     float8e4m3fn,
     float8e4m3fnuz,
@@ -16,6 +14,8 @@ from onnx.custom_element_types import (
     int4,
     uint4,
 )
+from onnx.helper import np_dtype_to_tensor_dtype
+from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_quantize_linear import reshape_input
 

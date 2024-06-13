@@ -6,6 +6,15 @@ from __future__ import annotations
 import numpy as np
 
 from onnx import subbyte
+from onnx.custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+    int4,
+    uint4,
+)
 from onnx.helper import (
     float32_to_bfloat16,
     float32_to_float8e4m3,
@@ -18,15 +27,6 @@ from onnx.numpy_helper import (
     float8e5m2_to_float32,
 )
 from onnx.onnx_pb import TensorProto
-from onnx.custom_element_types import (
-    bfloat16,
-    float8e4m3fn,
-    float8e4m3fnuz,
-    float8e5m2,
-    float8e5m2fnuz,
-    int4,
-    uint4,
-)
 from onnx.reference.op_run import OpRun
 
 

@@ -10,12 +10,6 @@ from typing import ClassVar
 import numpy as np
 
 from onnx import TensorProto, subbyte
-from onnx.helper import (
-    float32_to_float8e4m3,
-    float32_to_float8e5m2,
-    np_dtype_to_tensor_dtype,
-    tensor_dtype_to_np_dtype,
-)
 from onnx.custom_element_types import (
     float8e4m3fn,
     float8e4m3fnuz,
@@ -23,6 +17,12 @@ from onnx.custom_element_types import (
     float8e5m2fnuz,
     int4,
     uint4,
+)
+from onnx.helper import (
+    float32_to_float8e4m3,
+    float32_to_float8e5m2,
+    np_dtype_to_tensor_dtype,
+    tensor_dtype_to_np_dtype,
 )
 from onnx.reference.op_run import OpRun
 
