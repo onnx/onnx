@@ -19,7 +19,7 @@ uint4 = np.dtype((np.uint8, {"uint4": (np.uint8, 0)}))
 int4 = np.dtype((np.int8, {"int4": (np.int8, 0)}))
 
 
-def convert_from_ml_dtypes(tensor: np.ndarray) -> np.ndarray:
+def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
     """If package *ml_dtypes* is installed,
     this function detects the type and changes into one of the custom type
     defined in this module.
