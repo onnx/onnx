@@ -301,11 +301,16 @@ class TestBasicFunctions(unittest.TestCase):
              opset_import: [ "" : 19]
            >
            agraph (float[N] X) => (__STYPE__[N] C)
+           <
+             __STYPE__[1] weight = {0}
+           >
            {
               C = Cast<to=__ITYPE__>(X)
            }
            """
         text_graph = cast.replace("__ITYPE__", str(itype)).replace("__STYPE__", name)
+        if itype == TensorProto.STRING:
+            text_graph = text_graph.replace("{0}", '{"0"}')
         graph = onnx.parser.parse_model(text_graph)
         self.assertEqual(len(graph.graph.node), 1)
 
