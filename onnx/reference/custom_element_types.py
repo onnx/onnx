@@ -22,7 +22,7 @@ int4 = np.dtype((np.int8, {"int4": (np.int8, 0)}))
 def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
     """Detects the type and changes into one of the ONNX
     defined custom types when ``ml_dtypes`` is installed.
-    
+
     Args:
         array: Numpy array with a dtype from ml_dtypes.
 
@@ -45,7 +45,7 @@ def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
 def convert_to_ml_dtypes(array: np.ndarray) -> np.ndarray:
     """Detects the type and changes into one of the type
     defined in ``ml_dtypes`` if installed.
-    
+
     Args:
         array: array
 
