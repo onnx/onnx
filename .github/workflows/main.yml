@@ -122,7 +122,7 @@ jobs:
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
       - name: Build and install ONNX - Windows
-        if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.8'
+        if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.8' && matrix.python_version != '3.12'
         run: |
           python setup.py build_ext --inplace
           python setup.py install
@@ -133,7 +133,7 @@ jobs:
           CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
       - name: Build and install ONNX - Windows
-        if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.8')
+        if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.8' || matrix.python_version == '3.12')
         run: |
           pip install -e . -v
         env:
