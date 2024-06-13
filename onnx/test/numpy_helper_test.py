@@ -623,6 +623,7 @@ class TestNumpyHelper(unittest.TestCase):
         self.assertEqual(tp.raw_data, again.raw_data)
         self.assertEqual(tuple(tp.dims), tuple(again.dims))
         self.assertEqual(tp.SerializeToString(), again.SerializeToString())
+        self.assertEqual(tp.data_type, helper.np_dtype_to_tensor_dtype(back.dtype))
 
     @parameterized.parameterized.expand([(att,) for att in dir(onnx.TensorProto)])
     def test_to_array_from_array(self, att):

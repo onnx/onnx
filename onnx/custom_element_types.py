@@ -1,8 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-"""
-This module defines custom dtypes not supported by numpy.
+"""This module defines custom dtypes not supported by numpy.
 Function :func:`onnx.numpy_helper.from_array`
 and :func:`onnx.numpy_helper.to_array` are using them
 to convert arrays from/to these types.
@@ -18,9 +17,12 @@ something like the following:
 
     tensor_bfloat16 = Cast.eval(np.array([0, 1], dtype=np.float32), to=TensorProto.BFLOAT16)
 """
+
 from __future__ import annotations
 
 import numpy as np
+
+import onnx
 
 #: Defines a bfloat16 as a uint16.
 bfloat16 = np.dtype((np.uint16, {"bfloat16": (np.uint16, 0)}))
@@ -46,3 +48,13 @@ uint4 = np.dtype((np.uint8, {"uint4": (np.uint8, 0)}))
 #: Do note that one integer is stored using a byte and therefore is twice bigger
 #: than its onnx size.
 int4 = np.dtype((np.int8, {"int4": (np.int8, 0)}))
+
+_local_mapping = {
+    "bfloat16": onnx.TensorProto.BFLOAT16,
+    "e4m3fn": onnx.TensorProto.FLOAT8E4M3FN,
+    "e4m3fnuz": onnx.TensorProto.FLOAT8E4M3FNUZ,
+    "e5m2": onnx.TensorProto.FLOAT8E5M2,
+    "e5m2fnuz": onnx.TensorProto.FLOAT8E5M2FNUZ,
+    "int4": onnx.TensorProto.INT4,
+    "uint4": onnx.TensorProto.UINT4,
+}

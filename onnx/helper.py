@@ -1438,9 +1438,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     if len(graph.input):
         header.append("(")
         in_strs = []  # required inputs
-        in_with_init_strs = (
-            []
-        )  # optional inputs with initializer providing default value
+        in_with_init_strs = []  # optional inputs with initializer providing default value
         for inp in graph.input:
             if inp.name not in initializers:
                 in_strs.append(printable_value_info(inp))
@@ -1609,26 +1607,16 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     if np.issubdtype(np_dtype, np.str_):
         return TensorProto.STRING
 
-    if np_dtype == custom_np_types.float8e4m3fn and np_dtype.descr[0][0] == "e4m3fn":
-        return TensorProto.FLOAT8E4M3FN
-    if (
-        np_dtype == custom_np_types.float8e4m3fnuz
-        and np_dtype.descr[0][0] == "e4m3fnuz"
-    ):
-        return TensorProto.FLOAT8E4M3FNUZ
-    if np_dtype == custom_np_types.float8e5m2 and np_dtype.descr[0][0] == "e5m2":
-        return TensorProto.FLOAT8E5M2
-    if (
-        np_dtype == custom_np_types.float8e5m2fnuz
-        and np_dtype.descr[0][0] == "e5m2fnuz"
-    ):
-        return TensorProto.FLOAT8E5M2FNUZ
-    if np_dtype == custom_np_types.bfloat16 and np_dtype.descr[0][0] == "bfloat16":
-        return TensorProto.BFLOAT16
-    if np_dtype == custom_np_types.int4 and np_dtype.descr[0][0] == "int4":
-        return TensorProto.INT4
-    if np_dtype == custom_np_types.uint4 and np_dtype.descr[0][0] == "uint4":
-        return TensorProto.UINT4
+    if np_dtype in {
+        custom_np_types.bfloat16,
+        custom_np_types.float8e4m3fn,
+        custom_np_types.float8e4m3fnuz,
+        custom_np_types.float8e5m2,
+        custom_np_types.float8e5m2fnuz,
+        custom_np_types.int4,
+        custom_np_types.uint4,
+    }:
+        return custom_np_types._local_mapping[np_dtype.descr[0][0]]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."
