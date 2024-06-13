@@ -9,6 +9,7 @@
 
     python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
 """
+
 from __future__ import annotations
 
 import itertools
@@ -5946,6 +5947,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         got = ref.run(None, {"data": data, "indices": indices, "updates": updates})
         assert_allclose(y, got[0])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
