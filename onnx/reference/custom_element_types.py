@@ -27,7 +27,7 @@ def convert_from_ml_dtypes(tensor: np.ndarray) -> np.ndarray:
     raises an exception if ml_dtypes is not installed.
 
     Args:
-        tensor: numpy array with a dtype from ml_dtypes
+        tensor: Numpy array with a dtype from ml_dtypes.
 
     Returns:
         numpy array
