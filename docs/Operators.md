@@ -7700,7 +7700,7 @@ node = onnx.helper.make_node(
 # scalar zero point and scale
 x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
 x_scale = np.float32(2)
-x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+x_zero_point = make_tensor("x_zero_point", TensorProto.INT4, (1,), [1])
 y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
 
 expect(
@@ -7754,7 +7754,7 @@ node = onnx.helper.make_node(
 # scalar zero point and scale
 x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
 x_scale = np.float32(2)
-x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+x_zero_point = make_tensor("x_zero_point", TensorProto.UINT4, (1,), [1])
 y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
 
 expect(
@@ -20309,7 +20309,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, rendering the axis unnecessary in this scenario.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 <dt><tt>output_dtype</tt> : int (default is 0)</dt>
@@ -20532,7 +20532,7 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+y_zero_point = make_tensor("y_zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
 y = make_tensor("y", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96])
 
 expect(
@@ -20558,7 +20558,7 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
+y_zero_point = make_tensor("y_zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
 y = make_tensor("y", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
 
 expect(
@@ -20657,7 +20657,7 @@ x = np.array(
 
 y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
 y_zero_point = make_tensor(
-    "zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
+    "y_zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
 )
 y = make_tensor(
     "y", TensorProto.INT4, x.shape, [1, 2, 3, 5, -8, -6, 3, 4, 4, 5, 5, 7]
@@ -20777,7 +20777,7 @@ x = np.array(
 
 y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
 y_zero_point = make_tensor(
-    "zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
+    "y_zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
 )
 y = make_tensor(
     "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, -1, -1, 3, 4, 4, 5, 5, 11]

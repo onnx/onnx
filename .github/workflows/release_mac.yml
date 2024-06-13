@@ -149,7 +149,7 @@ jobs:
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y protobuf numpy
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release.txt
-        arch -${{ matrix.target-architecture }} python -m pip install -q onnxruntime
+        arch -${{ matrix.target-architecture }} python -m pip install -q onnxruntime==1.17.3
         export ORT_MAX_IR_SUPPORTED_VERSION=9
         export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
         export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20

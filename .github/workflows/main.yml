@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: CI
 
 on:
@@ -19,7 +23,7 @@ concurrency:
 
 jobs:
   test:
-    name: "Test"
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, onnx_ml=${{ matrix.onnx_ml }}, doc=${{ matrix.documentation }}
     strategy:
       fail-fast: false
       matrix:
@@ -118,9 +122,20 @@ jobs:
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
       - name: Build and install ONNX - Windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.8'
         run: |
-          pip install -e ".[reference]" -v
+          python setup.py build_ext --inplace
+          python setup.py install
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+
+      - name: Build and install ONNX - Windows
+        if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.8')
+        run: |
+          pip install -e . -v
         env:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
