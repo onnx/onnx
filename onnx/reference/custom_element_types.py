@@ -21,7 +21,7 @@ int4 = np.dtype((np.int8, {"int4": (np.int8, 0)}))
 
 def convert_from_ml_dtypes(tensor: np.ndarray) -> np.ndarray:
     """If package *ml_dtypes* is installed,
-    this fonction detects the type and changes into one of the custom type
+    this function detects the type and changes into one of the custom type
     defined in this module.
     The function returns tensor if numpy supports the type,
     raises an exception if ml_dtypes is not installed.
