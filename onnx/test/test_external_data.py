@@ -7,6 +7,7 @@ import itertools
 import os
 import pathlib
 import tempfile
+import sys
 import unittest
 import uuid
 from typing import Any
@@ -24,6 +25,10 @@ from onnx.external_data_helper import (
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
+
+
+def convert(data: np.ndarray) -> np.ndarray:
+    return data.byteswap() if sys.byteorder == 'big' else data
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
@@ -584,7 +589,7 @@ class TestExternalDataToArray(unittest.TestCase):
             name="X",
             data_type=TensorProto.FLOAT,
             dims=self.large_data.shape,
-            vals=self.large_data.tobytes(),
+            vals=convert(self.large_data).tobytes(),
             raw=True,
         )
 
@@ -593,7 +598,7 @@ class TestExternalDataToArray(unittest.TestCase):
             name="Shape",
             data_type=TensorProto.INT64,
             dims=shape_data.shape,
-            vals=shape_data.tobytes(),
+            vals=convert(shape_data).tobytes(),
             raw=True,
         )
         C = helper.make_tensor_value_info("C", TensorProto.INT64, self.small_data)
