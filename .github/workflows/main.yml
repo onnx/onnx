@@ -1,6 +1,12 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: CI
 
 on:
+  schedule:
+    - cron: '0 0 * * *'  # every day at midnight for reporting code coverage to codecov
   push:
     branches:
       - main
@@ -17,7 +23,7 @@ concurrency:
 
 jobs:
   test:
-    name: "Test"
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, onnx_ml=${{ matrix.onnx_ml }}, doc=${{ matrix.documentation }}
     strategy:
       fail-fast: false
       matrix:
@@ -78,7 +84,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
         with:
-          msbuild-architecture: ${{ matrix.architecture }}
+          msbuild-architecture: x64
 
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
@@ -116,9 +122,20 @@ jobs:
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
       - name: Build and install ONNX - Windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.8' && matrix.python_version != '3.12'
         run: |
-          pip install -e ".[reference]" -v
+          python setup.py build_ext --inplace
+          python setup.py install
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+
+      - name: Build and install ONNX - Windows
+        if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.8' || matrix.python_version == '3.12')
+        run: |
+          pip install -e . -v
         env:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
@@ -190,7 +207,7 @@ jobs:
     if: always()
     steps:
       - name: Download Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 

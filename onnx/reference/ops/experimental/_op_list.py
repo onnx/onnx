@@ -1,12 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import textwrap
-from typing import Any, Dict
-from typing import Optional as TOptional
-from typing import Union
+from typing import Any
 
 from onnx.reference.op_run import OpFunction
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
@@ -14,18 +12,16 @@ from onnx.reference.ops.experimental._op_run_experimental import OpRunExperiment
 from onnx.reference.ops.experimental.op_im2col import Im2Col  # noqa: F401
 
 
-def _build_registered_operators() -> (
-    Dict[str, Dict[Union[int, None], OpRunExperimental]]
-):
+def _build_registered_operators() -> dict[str, dict[int | None, OpRunExperimental]]:
     return build_registered_operators_any_domain(globals().copy())  # type: ignore[return-value]
 
 
 def load_op(
     domain: str,
     op_type: str,
-    version: Union[None, int],
+    version: None | int,
     custom: Any = None,
-    evaluator_cls: TOptional[type] = None,
+    evaluator_cls: type | None = None,  # noqa: ARG001
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -84,6 +80,4 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[
-    Dict[str, Dict[Union[int, None], OpRunExperimental]]
-] = None
+_registered_operators: dict[str, dict[int | None, OpRunExperimental]] | None = None

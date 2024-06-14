@@ -671,6 +671,113 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
     registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(21), OpSetID(20), ir10_types_not_in_ir4));
+
+    /******** 21 -> 22 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("EyeLike", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RandomUniform", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RandomNormal", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RandomUniformLike", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RandomNormalLike", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Multinomial", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Bernoulli", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ThresholdedRelu", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Selu", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Elu", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Mish", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("HardSigmoid", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("HardSwish", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Softsign", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Softplus", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Sin", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cos", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Tan", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Asin", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Acos", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Atan", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Sinh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cosh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Asinh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Acosh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Atanh", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Round", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Det", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("NegativeLogLikelihoodLoss", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("AveragePool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("MaxPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("MaxUnpool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("LpPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("MaxRoiPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Conv", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConvTranspose", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DeformConv", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GlobalAveragePool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GlobalMaxPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GlobalLpPool", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("InstanceNormalization", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("LpNormalization", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Dropout", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RoiAlign", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("RNN", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GRU", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("LSTM", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("GridSample", OpSetID(21), OpSetID(22)));
+
+    /******** 22 -> 21 ********/
+    const std::vector<TensorProto_DataType> bfloat16_not_allowed = {TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<TypeRestriction>("EyeLike", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("AveragePool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("MaxPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("RandomUniform", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("RandomNormal", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("RandomNormalLike", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("RandomUniformLike", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Multinomial", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Bernoulli", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ThresholdedRelu", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Selu", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Elu", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Mish", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("HardSigmoid", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("HardSwish", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Softsign", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Softplus", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Sin", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Cos", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Tan", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Asin", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Acos", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Atan", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Sinh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Cosh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Asinh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Acosh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Atanh", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Round", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Det", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("NegativeLogLikelihoodLoss", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("MaxUnpool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LpPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("MaxRoiPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Conv", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("ConvTranspose", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("DeformConv", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("GlobalAveragePool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("GlobalLpPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("InstanceNormalization", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("LpNormalization", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Dropout", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("RoiAlign", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("RNN", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("GRU", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LSTM", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("GridSample", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

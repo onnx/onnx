@@ -42,7 +42,7 @@ jobs:
           level: info
           filter_mode: diff_context
       - name: cpplint # Static check C++ code
-        uses: reviewdog/action-cpplint@b6c13159b10435813edfddea9e1cd02157544f45 # v1.1.0
+        uses: reviewdog/action-cpplint@f4595711c17503b596166b81782d83774541c2d8 # v1.2.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
@@ -99,7 +99,7 @@ jobs:
         # To toggle linter comments in the files page, press `i` on the keyboard
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@cdcdbb579706841c47f7063dda365e292e5cad7a # v2.13.4
+        uses: github/codeql-action/upload-sarif@f079b8493333aace61c81488f8bd40919487bd9f # v3.25.7
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif
