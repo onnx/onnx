@@ -3773,7 +3773,7 @@ There are 1 test cases, listed as following:
 <summary>concat</summary>
 
 ```python
-test_cases: Dict[str, Sequence[Any]] = {
+test_cases: dict[str, Sequence[Any]] = {
     "1d": ([1, 2], [3, 4]),
     "2d": ([[1, 2], [3, 4]], [[5, 6], [7, 8]]),
     "3d": (
@@ -5449,7 +5449,7 @@ node = onnx.helper.make_node(
 # scalar zero point and scale
 x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
 x_scale = np.float32(2)
-x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+x_zero_point = make_tensor("x_zero_point", TensorProto.INT4, (1,), [1])
 y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
 
 expect(
@@ -5499,7 +5499,7 @@ node = onnx.helper.make_node(
 # scalar zero point and scale
 x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
 x_scale = np.float32(2)
-x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+x_zero_point = make_tensor("x_zero_point", TensorProto.UINT4, (1,), [1])
 y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
 
 expect(
@@ -9665,7 +9665,7 @@ node = onnx.helper.make_node(
 )
 
 trip_count = np.array(5).astype(np.int64)
-seq_empty: List[Any] = []
+seq_empty: list[Any] = []
 seq_res = [x[: int(i)] for i in x]
 cond = np.array(1).astype(bool)
 expect(
@@ -9860,7 +9860,7 @@ node = onnx.helper.make_node(
 trip_count = np.array(5).astype(np.int64)
 cond = np.array(1).astype(bool)
 seq_res = compute_loop_outputs(x, [x0], trip_count)
-opt_seq_in: List[Any] = [x0]
+opt_seq_in: list[Any] = [x0]
 expect(
     node,
     inputs=[trip_count, cond, opt_seq_in],
@@ -13955,7 +13955,7 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+y_zero_point = make_tensor("y_zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
 y = make_tensor("y", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96])
 
 expect(
@@ -13979,7 +13979,7 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
+y_zero_point = make_tensor("y_zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
 y = make_tensor("y", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
 
 expect(
@@ -14074,7 +14074,7 @@ x = np.array(
 
 y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
 y_zero_point = make_tensor(
-    "zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
+    "y_zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
 )
 y = make_tensor(
     "y", TensorProto.INT4, x.shape, [1, 2, 3, 5, -8, -6, 3, 4, 4, 5, 5, 7]
@@ -14188,7 +14188,7 @@ x = np.array(
 
 y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
 y_zero_point = make_tensor(
-    "zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
+    "y_zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
 )
 y = make_tensor(
     "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, -1, -1, 3, 4, 4, 5, 5, 11]

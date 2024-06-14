@@ -1,8 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -62,7 +63,7 @@ class RNNHelper:
     def f(self, x: np.ndarray) -> np.ndarray:
         return np.tanh(x)
 
-    def step(self) -> Tuple[np.ndarray, np.ndarray]:
+    def step(self) -> tuple[np.ndarray, np.ndarray]:
         seq_length = self.X.shape[0]
         hidden_size = self.H_0.shape[-1]
         batch_size = self.X.shape[1]

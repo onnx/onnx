@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -202,7 +203,7 @@ class DequantizeLinear(Base):
         # scalar zero point and scale
         x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
         x_scale = np.float32(2)
-        x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+        x_zero_point = make_tensor("x_zero_point", TensorProto.UINT4, (1,), [1])
         y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
 
         expect(
@@ -224,7 +225,7 @@ class DequantizeLinear(Base):
         # scalar zero point and scale
         x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
         x_scale = np.float32(2)
-        x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+        x_zero_point = make_tensor("x_zero_point", TensorProto.INT4, (1,), [1])
         y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
 
         expect(

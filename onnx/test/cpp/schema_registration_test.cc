@@ -73,11 +73,11 @@ TEST(SchemaRegistrationTest, RegisterAndDeregisterAllOpsetSchemaVersion) {
   // Acos-7
   // Add-1,6,7,13,14
   // Trilu-14
-  auto schema = OpSchemaRegistry::Schema("Acos");
+  auto schema = OpSchemaRegistry::Schema("Acos", 7);
   EXPECT_NE(nullptr, schema);
   EXPECT_EQ(schema->SinceVersion(), 7);
 
-  schema = OpSchemaRegistry::Schema("Add");
+  schema = OpSchemaRegistry::Schema("Add", 14);
   EXPECT_NE(nullptr, schema);
   EXPECT_EQ(schema->SinceVersion(), 14);
 
@@ -121,7 +121,7 @@ TEST(SchemaRegistrationTest, RegisterSpecifiedOpsetSchemaVersion) {
   EXPECT_EQ(nullptr, opSchema);
 
   // Acos-7 is the latest Acos before specified 13
-  opSchema = OpSchemaRegistry::Schema("Acos");
+  opSchema = OpSchemaRegistry::Schema("Acos", 13);
   EXPECT_NE(nullptr, opSchema);
   EXPECT_EQ(opSchema->SinceVersion(), 7);
 #endif

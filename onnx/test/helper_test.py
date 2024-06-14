@@ -1,13 +1,14 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import itertools
+import math
 import random
 import struct
 import unittest
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 import parameterized
@@ -253,7 +254,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         def _extend(
             attr: AttributeProto,
             type_: AttributeProto.AttributeType,
-            var: List[Any],
+            var: list[Any],
             value: Any,
         ) -> None:
             var.extend(value)
@@ -382,14 +383,14 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
     def test_model_irversion(self) -> None:
-        def mk_model(opset_versions: List[Tuple[str, int]]) -> ModelProto:
+        def mk_model(opset_versions: list[tuple[str, int]]) -> ModelProto:
             graph = helper.make_graph([], "my graph", [], [])
             return helper.make_model_gen_version(
                 graph,
                 opset_imports=[helper.make_opsetid(*pair) for pair in opset_versions],
             )
 
-        def test(opset_versions: List[Tuple[str, int]], ir_version: int) -> None:
+        def test(opset_versions: list[tuple[str, int]], ir_version: int) -> None:
             model = mk_model(opset_versions)
             self.assertEqual(model.ir_version, ir_version)
 
@@ -656,8 +657,36 @@ class TestHelperTensorFunctions(unittest.TestCase):
             type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
         )
         y = helper.make_tensor("y", dtype, data.shape, data)
+
+        # Check the expected size of int32_data in bytes
+        expected_data_size = math.ceil(np.prod(data.shape) / 2.0)
+        actual_data_size = len(bytes(y.int32_data))
+        np.testing.assert_equal(actual_data_size, expected_data_size)
+
+        # Check the expected data values.
         ynp = to_array_extended(y)
         np.testing.assert_equal(data, ynp)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
+        )
+    )
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.22.0"),
+        "The test requires numpy 1.22.0 or later",
+    )
+    def test_4bit_tensor_size(self, dims) -> None:
+        # A bug caused negative int4 values to inflate tensor size.
+        # So, test negative values here.
+        num_elems = np.prod(dims)
+        data = np.array([-4] * num_elems, dtype=np.int8).reshape(dims)
+        y = helper.make_tensor("y", TensorProto.INT4, data.shape, data)
+
+        # Check the expected size of int32_data in bytes
+        expected_data_size = math.ceil(num_elems / 2.0)
+        actual_data_size = len(bytes(y.int32_data))
+        np.testing.assert_equal(actual_data_size, expected_data_size)
 
     @parameterized.parameterized.expand(
         itertools.product(
