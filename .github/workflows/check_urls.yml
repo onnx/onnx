@@ -12,6 +12,9 @@ on:
     - cron:  '0 0 1 * *'
   workflow_dispatch:
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,7 +29,7 @@ jobs:
         file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
         print_all: false
         timeout: 2
-        retry_count# : 2
+        retry_count : 2
         exclude_urls: https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/,https://media.githubusercontent.com/media/,https://download.onnxruntime.ai/onnx/models
         # exclude_patterns: https://...
         force_pass: false
@@ -38,7 +41,7 @@ jobs:
         file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
         print_all: false
         timeout: 10
-        retry_count# : 2
+        retry_count : 2
         exclude_urls: https://github.com/onnx/onnx/blob/main/docs/Operators,https://github.com/onnx/onnx/pull/436
         force_pass: false
 
@@ -49,5 +52,5 @@ jobs:
         file_types: .md,.py,.rst
         print_all: false
         timeout: 2
-        retry_count# : 2
+        retry_count : 2
         force_pass: false
