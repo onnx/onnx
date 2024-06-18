@@ -31,12 +31,10 @@ jobs:
          path: ./onnx
 
     - name: Checkout ONNX submodules
-      shell: bash
       run: |
-         cd onnx
-         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-         git submodule sync --recursive
-         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+        cd onnx
+        git submodule sync --recursive
+        git submodule update --init --force --recursive --depth=1
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
@@ -48,6 +46,11 @@ jobs:
       uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
       with:
         msbuild-architecture: ${{ matrix.architecture }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install cmake
 
     - name: Build and test ONNX binaries
       run: |
@@ -79,3 +82,8 @@ jobs:
         if($lastexitcode -ne 0) {
           EXIT 1
         }
+
+    - name: Clean Workspace
+      if: always()
+      run: |
+        Get-ChildItem -Recurse | Remove-Item -Recurse -Force
