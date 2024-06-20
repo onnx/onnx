@@ -277,7 +277,7 @@ struct InferenceContextImpl : public InferenceContext {
     return inferencer;
   }
 
-  std::string getDisplayName() const {
+  std::string getDisplayName() const override {
     if (node_ == nullptr)
       return "";
     if (node_->domain().empty()) {

@@ -971,7 +971,7 @@ struct FunctionInferenceContext : public InferenceContext {
     return std::move(output_types_);
   }
 
-  std::string getDisplayName() const {
+  std::string getDisplayName() const override {
     if (func_proto_ == nullptr)
       return "";
     if (func_proto_->domain().empty()) {

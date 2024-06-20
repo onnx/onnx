@@ -9332,10 +9332,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                         ),
                     ),
                     make_node(
-                        "DFT",
-                        ["input", "dft_length", ""],
-                        ["output"],
-                        **attributes,  # type: ignore[arg-type]
+                        "DFT", ["input", "dft_length", ""], ["output"], **attributes,
                     ),
                 ]
                 value_infos = [
