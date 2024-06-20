@@ -9,6 +9,7 @@
 
     python onnx/test/reference_evaluator_test.py TestReferenceEvaluator.test_function_attribute_nested_graph
 """
+
 from __future__ import annotations
 
 import itertools
@@ -5914,6 +5915,38 @@ class TestReferenceEvaluator(unittest.TestCase):
         oinf = MyReferenceEvaluator(model_def)
         for v in oinf.functions_.values():
             self.assertIsInstance(v, MyReferenceEvaluator)
+
+    def test_scatter_elements_4d(self):
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "ScatterElements",
+                        ["data", "indices", "updates"],
+                        ["Z"],
+                        axis=3,
+                        reduction="add",
+                    )
+                ],
+                "name",
+                [
+                    make_tensor_value_info("data", TensorProto.FLOAT, None),
+                    make_tensor_value_info("indices", TensorProto.INT64, None),
+                    make_tensor_value_info("updates", TensorProto.FLOAT, None),
+                ],
+                [make_tensor_value_info("Z", TensorProto.FLOAT, None)],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        data = np.zeros(2**4, dtype=np.float32).reshape((2, 2, 2, 2))
+        indices = np.array([[[[0]]]], dtype=np.int64)
+        updates = np.array([[[[1]]]], dtype=np.float32)
+        y = np.array(
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32
+        ).reshape((2, 2, 2, 2))
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"data": data, "indices": indices, "updates": updates})
+        assert_allclose(y, got[0])
 
 
 if __name__ == "__main__":
