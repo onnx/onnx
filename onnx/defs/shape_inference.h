@@ -105,6 +105,8 @@ struct InferenceContext {
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
   // Gets the shape inputs computed by partial data propagation.
   virtual const TensorShapeProto* getSymbolicInput(size_t index) const = 0;
+  // To display a name the user can use to narrow its search.
+  virtual std::string getDisplayName() const = 0;
 };
 
 // We use data propagation to perform partial evaluation of the model, to compute statically
@@ -263,7 +265,15 @@ inline void propagateElemTypeFromDtypeToOutput(
   } else {
     // This is not expected to happen
     fail_type_inference(
-        "Output ", outputIndex, " expected to have: ", expected_value_case, " or UNDEFINED. Got: ", output_value_case);
+        "Output ",
+        outputIndex,
+        " expected to have: ",
+        expected_value_case,
+        " or UNDEFINED. Got: ",
+        output_value_case,
+        " in ",
+        ctx.getDisplayName(),
+        ".");
   }
 }
 
@@ -277,18 +287,18 @@ inline void propagateElemTypeFromDtypeToOutput(InferenceContext& ctx, const Attr
   const auto attr_type = attr->type();
   if (attr_type == AttributeProto::TENSOR) {
     if (attr->t().dims().size() != 1) {
-      fail_type_inference("Attribute expected to have a one-dim tensor");
+      fail_type_inference("Attribute expected to have a one-dim tensor in ", ctx.getDisplayName(), ".");
     }
     data_type = attr->t().data_type();
     expected_value_case = TypeProto::kTensorType;
   } else if (attr_type == AttributeProto::SPARSE_TENSOR) {
     if (attr->sparse_tensor().dims().size() != 1) {
-      fail_type_inference("Attribute expected to have a one-dim sparse tensor");
+      fail_type_inference("Attribute expected to have a one-dim sparse tensor in ", ctx.getDisplayName(), ".");
     }
     data_type = attr->sparse_tensor().values().data_type();
     expected_value_case = TypeProto::kSparseTensorType;
   } else {
-    fail_type_inference("Attribute expected to have tensor or sparse tensor type");
+    fail_type_inference("Attribute expected to have tensor or sparse tensor type in ", ctx.getDisplayName(), ".");
   }
 
   propagateElemTypeFromDtypeToOutput(ctx, data_type, outputIndex, expected_value_case);
@@ -326,7 +336,10 @@ inline const TensorShapeProto& getInputShape(const InferenceContext& ctx, size_t
   const auto* input_type = ctx.getInputType(n);
   const auto value_case = input_type->value_case();
   if (value_case != TypeProto::kTensorType && value_case != TypeProto::kSparseTensorType) {
-    fail_type_inference("Attribute expected to have tensor or sparse tensor type");
+    fail_type_inference("Input ", n, "expected to be a tensor or a sparse tensor type in ", ctx.getDisplayName(), ".");
+  }
+  if (!hasShape(*input_type)) {
+    fail_shape_inference("Input ", n, " must have a non null shape in ", ctx.getDisplayName(), ".");
   }
   if (value_case == TypeProto::kTensorType) {
     return input_type->tensor_type().shape();
@@ -344,7 +357,7 @@ inline const TensorShapeProto* getOptionalInputShape(InferenceContext& ctx, size
 
   const auto value_case = input_type->value_case();
   if (value_case != TypeProto::kTensorType && value_case != TypeProto::kSparseTensorType) {
-    fail_type_inference("Attribute expected to have tensor or sparse tensor type");
+    fail_type_inference("Input ", n, "expected to be a tensor or a sparse tensor type in ", ctx.getDisplayName(), ".");
   }
   if (value_case == TypeProto::kTensorType) {
     return &input_type->tensor_type().shape();
@@ -372,7 +385,10 @@ inline void appendSingleDimCopiedFromInputTypeToOutputType(
         " does not match type of output: ",
         outputIndex,
         "type: ",
-        output_value_case);
+        output_value_case,
+        " in ",
+        ctx.getDisplayName(),
+        ".");
   }
   if (TypeProto::kTensorType == input_value_case) {
     auto* dim = output_type->mutable_tensor_type()->mutable_shape()->add_dim();
@@ -382,7 +398,13 @@ inline void appendSingleDimCopiedFromInputTypeToOutputType(
     *dim = input_type->sparse_tensor_type().shape().dim(static_cast<int>(fromDimIndex));
   } else {
     fail_type_inference(
-        "Input ", inputIndex, " and Output ", outputIndex, " expected to have tensor or sparse tensor type");
+        "Input ",
+        inputIndex,
+        " and Output ",
+        outputIndex,
+        " expected to have tensor or sparse tensor type in ",
+        ctx.getDisplayName(),
+        ".");
   }
 }
 
@@ -440,7 +462,14 @@ updateOutputElemType(InferenceContext& ctx, size_t outputIndex, int32_t elemType
     setTensorElementType(elemType, expected_type, *output_type);
   } else {
     // This is not expected to happen
-    fail_type_inference("Output ", outputIndex, " expected to have tensor or sparse tensor type: ", expected_type);
+    fail_type_inference(
+        "Output ",
+        outputIndex,
+        " expected to have tensor or sparse tensor type: ",
+        expected_type,
+        " in ",
+        ctx.getDisplayName(),
+        ".");
   }
 }
 
@@ -462,16 +491,17 @@ inline void propagateElemTypeFromAttributeToOutput(
       updateOutputElemType(ctx, outputIndex, default_value, expected_type);
       return;
     } else {
-      fail_type_inference("Value of attribute ", attributeName, " not specified");
+      fail_type_inference("Value of attribute ", attributeName, " not specified in ", ctx.getDisplayName(), ".");
     }
   }
   if (!attr_proto->has_i()) {
-    fail_type_inference("Attribute ", attributeName, " should be of integer type and specify a type.");
+    fail_type_inference(
+        "Attribute ", attributeName, " should be of integer type and specify a type in ", ctx.getDisplayName(), ".");
   }
   auto attr_value = attr_proto->i();
   auto elem_type = static_cast<TensorProto_DataType>(attr_value);
   if (!TensorProto_DataType_IsValid(elem_type)) {
-    fail_type_inference("Attribute ", attributeName, " does not specify a valid type.");
+    fail_type_inference("Attribute ", attributeName, " does not specify a valid type in ", ctx.getDisplayName(), ".");
   }
   updateOutputElemType(ctx, outputIndex, elem_type, expected_type);
 }
@@ -497,7 +527,7 @@ inline TensorShapeProto*
 getOutputShape(InferenceContext& ctx, size_t n, TypeProto::ValueCase default_type = TypeProto::kTensorType) {
   auto output_type = ctx.getOutputType(n);
   if (output_type == nullptr) {
-    fail_type_inference("Output ", n, " expected to have tensor or sparse type");
+    fail_type_inference("Output ", n, " expected to have tensor or sparse type in ", ctx.getDisplayName(), ".");
   }
   const auto output_value_case = output_type->value_case();
   if (output_value_case == TypeProto::kTensorType || output_value_case == TypeProto::kSparseTensorType) {
@@ -505,7 +535,7 @@ getOutputShape(InferenceContext& ctx, size_t n, TypeProto::ValueCase default_typ
   } else if (output_value_case == TypeProto::VALUE_NOT_SET) {
     return getTensorMutableShape(default_type, *output_type);
   } else {
-    fail_type_inference("Output ", n, " expected to have tensor type");
+    fail_type_inference("Output ", n, " expected to have tensor type in ", ctx.getDisplayName(), ".");
   }
 }
 
@@ -562,13 +592,13 @@ inline void propagateShapeFromAttributeToOutput(
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr == attr_proto) || (!attr_proto->has_type()) ||
       (attr_proto->type() != AttributeProto_AttributeType_INTS)) {
-    fail_shape_inference("Attribute ", attributeName, " should specify a shape");
+    fail_shape_inference("Attribute ", attributeName, " should specify a shape in ", ctx.getDisplayName(), ".");
   }
   auto& int_list = attr_proto->ints();
   TensorShapeProto shape;
   for (auto dim_size : int_list) {
     if (dim_size < 0) {
-      fail_shape_inference("Negative values are not allowed in a shape specification");
+      fail_shape_inference("Negative values are not allowed in a shape specification in ", ctx.getDisplayName(), ".");
     }
     shape.add_dim()->set_dim_value(dim_size);
   }
@@ -745,7 +775,16 @@ inline void checkInputRank(InferenceContext& ctx, size_t input_index, int expect
   if (hasInputShape(ctx, input_index)) {
     auto rank = getInputShape(ctx, input_index).dim_size();
     if (rank != expected_rank) {
-      fail_shape_inference("Input ", input_index, " expected to have rank ", expected_rank, " but has rank ", rank);
+      fail_shape_inference(
+          "Input ",
+          input_index,
+          " expected to have rank ",
+          expected_rank,
+          " but has rank ",
+          rank,
+          " in ",
+          ctx.getDisplayName(),
+          ".");
     }
   }
 }
@@ -798,7 +837,15 @@ inline void unifyInputDim(InferenceContext& ctx, size_t input_index, int dim_ind
     // This shape is expected to have rank > dim_index:
     if (input_shape.dim_size() <= dim_index) {
       fail_shape_inference(
-          "Input ", input_index, " expected to have rank >", dim_index, " but has rank ", input_shape.dim_size());
+          "Input ",
+          input_index,
+          " expected to have rank >",
+          dim_index,
+          " but has rank ",
+          input_shape.dim_size(),
+          " in ",
+          ctx.getDisplayName(),
+          ".");
     }
     const Dim& input_dim = input_shape.dim(dim_index);
     // Now, unify dim and input_dim:

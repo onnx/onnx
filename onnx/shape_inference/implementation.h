@@ -146,7 +146,7 @@ struct InferenceContextImpl : public InferenceContext {
       const ShapeInferenceOptions& options,
       DataValueMap* generatedShapeData = nullptr,
       GraphInferenceContext* graphInferenceContext = nullptr)
-      : graphInferenceContext_{graphInferenceContext}, options_(options) {
+      : graphInferenceContext_{graphInferenceContext}, options_(options), node_(&n) {
     for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
       if (attr.has_g()) {
@@ -277,6 +277,19 @@ struct InferenceContextImpl : public InferenceContext {
     return inferencer;
   }
 
+  std::string getDisplayName() const {
+    if (node_ == nullptr)
+      return "";
+    if (node_->domain().empty()) {
+      if (node_->name().empty())
+        return MakeString("node ", node_->op_type());
+      return MakeString("node ", node_->op_type(), " (", node_->name(), ")");
+    }
+    if (node_->name().empty())
+      return MakeString("node ", node_->op_type(), "[", node_->domain(), "]");
+    return MakeString("node ", node_->op_type(), "[", node_->domain(), "]", " (", node_->name(), ")");
+  }
+
   std::vector<const TensorProto*> allInputData_;
   std::vector<const SparseTensorProto*> allInputSparseData_;
   std::vector<const TensorShapeProto*> allShapeInputData_;
@@ -289,6 +302,7 @@ struct InferenceContextImpl : public InferenceContext {
   // mutable as internal cache of GraphInferencer instances
   mutable std::unordered_map<std::string, std::unique_ptr<GraphInferencer>> graphAttributeInferencers_;
   ShapeInferenceOptions options_;
+  NodeProto* node_;
 };
 
 struct DataPropagationContextImpl : public DataPropagationContext {
