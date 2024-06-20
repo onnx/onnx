@@ -227,5 +227,5 @@ class ReduceMax(Base):
             node,
             inputs=[data, axes],
             outputs=[reduced],
-            name="test_reduce_min_empty_set",
+            name="test_reduce_max_empty_set",
         )
