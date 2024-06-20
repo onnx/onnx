@@ -31,14 +31,8 @@ def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
     """
     if not ml_dtypes:
         return array
-    dt = array.dtype
-    new_dt = None
-    if dt == ml_dtypes.bfloat16:
-        new_dt = bfloat16
-
-    if new_dt:
-        return array.view(dtype=new_dt).reshape(array.shape)
-
+    if array.dtype == ml_dtypes.bfloat16:
+        return array.view(dtype=bfloat16)
     return array
 
 
