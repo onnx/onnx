@@ -6449,6 +6449,152 @@ expect(node, inputs=[x, W], outputs=[y], name="test_convtranspose_dilations")
 
 
 <details>
+<summary>convtranspose_group_2</summary>
+
+```python
+x = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ]
+    ]
+).astype(np.float32)
+W = np.array(
+    [
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=2)
+
+y = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 3.0, 2.0],
+                [3.0, 8.0, 15.0, 12.0, 7.0],
+                [9.0, 21.0, 36.0, 27.0, 15.0],
+                [9.0, 20.0, 33.0, 24.0, 13.0],
+                [6.0, 13.0, 21.0, 15.0, 8.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name="test_convtranspose_group_2")
+```
+
+</details>
+
+
+<details>
+<summary>convtranspose_group_2_image_3</summary>
+
+```python
+x = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ],
+        [
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0], [24.0, 25.0, 26.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ],
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ],
+    ]
+).astype(np.float32)
+W = np.array(
+    [
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=2)
+
+y = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 3.0, 2.0],
+                [3.0, 8.0, 15.0, 12.0, 7.0],
+                [9.0, 21.0, 36.0, 27.0, 15.0],
+                [9.0, 20.0, 33.0, 24.0, 13.0],
+                [6.0, 13.0, 21.0, 15.0, 8.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ],
+        [
+            [
+                [18.0, 37.0, 57.0, 39.0, 20.0],
+                [39.0, 80.0, 123.0, 84.0, 43.0],
+                [63.0, 129.0, 198.0, 135.0, 69.0],
+                [45.0, 92.0, 141.0, 96.0, 49.0],
+                [24.0, 49.0, 75.0, 51.0, 26.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ],
+        [
+            [
+                [0.0, 1.0, 3.0, 3.0, 2.0],
+                [3.0, 8.0, 15.0, 12.0, 7.0],
+                [9.0, 21.0, 36.0, 27.0, 15.0],
+                [9.0, 20.0, 33.0, 24.0, 13.0],
+                [6.0, 13.0, 21.0, 15.0, 8.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ],
+    ]
+).astype(np.float32)
+
+expect(
+    node, inputs=[x, W], outputs=[y], name="test_convtranspose_group_2_image_3"
+)
+```
+
+</details>
+
+
+<details>
 <summary>convtranspose_pads</summary>
 
 ```python
@@ -7700,7 +7846,7 @@ node = onnx.helper.make_node(
 # scalar zero point and scale
 x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
 x_scale = np.float32(2)
-x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+x_zero_point = make_tensor("x_zero_point", TensorProto.INT4, (1,), [1])
 y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
 
 expect(
@@ -7754,7 +7900,7 @@ node = onnx.helper.make_node(
 # scalar zero point and scale
 x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
 x_scale = np.float32(2)
-x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+x_zero_point = make_tensor("x_zero_point", TensorProto.UINT4, (1,), [1])
 y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
 
 expect(
@@ -20309,7 +20455,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, rendering the axis unnecessary in this scenario.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 <dt><tt>output_dtype</tt> : int (default is 0)</dt>
@@ -20532,7 +20678,7 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+y_zero_point = make_tensor("y_zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
 y = make_tensor("y", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96])
 
 expect(
@@ -20558,7 +20704,7 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
+y_zero_point = make_tensor("y_zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
 y = make_tensor("y", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
 
 expect(
@@ -20657,7 +20803,7 @@ x = np.array(
 
 y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
 y_zero_point = make_tensor(
-    "zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
+    "y_zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
 )
 y = make_tensor(
     "y", TensorProto.INT4, x.shape, [1, 2, 3, 5, -8, -6, 3, 4, 4, 5, 5, 7]
@@ -20777,7 +20923,7 @@ x = np.array(
 
 y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
 y_zero_point = make_tensor(
-    "zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
+    "y_zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
 )
 y = make_tensor(
     "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, -1, -1, 3, 4, 4, 5, 5, 11]

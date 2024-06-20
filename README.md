@@ -1,8 +1,8 @@
 <!--
 Copyright (c) ONNX Project Contributors
--->
 
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+SPDX-License-Identifier: Apache-2.0
+-->
 
 <p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/onnx-horizontal-color.png" /></p>
 
