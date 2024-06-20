@@ -245,7 +245,9 @@ def expect(
     if _DiffOpTypes is not None and node_op.op_type.lower() not in _DiffOpTypes:
         return
     if name in _existing_names:
-        raise ValueError(f"Name {name!r} is already using by one test case for node type {node_op.op_type!r}.")
+        raise ValueError(
+            f"Name {name!r} is already using by one test case for node type {node_op.op_type!r}."
+        )
     _existing_names[name] = node_op
 
     # in case node_op is modified
