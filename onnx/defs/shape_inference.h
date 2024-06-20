@@ -106,7 +106,9 @@ struct InferenceContext {
   // Gets the shape inputs computed by partial data propagation.
   virtual const TensorShapeProto* getSymbolicInput(size_t index) const = 0;
   // To display a name the user can use to narrow its search.
-  virtual std::string getDisplayName() const = 0;
+  virtual std::string getDisplayName() const {
+    return "";
+  }
 };
 
 // We use data propagation to perform partial evaluation of the model, to compute statically
