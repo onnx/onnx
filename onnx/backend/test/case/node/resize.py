@@ -809,7 +809,7 @@ class Resize(Base):
             node,
             inputs=[data, roi, sizes],
             outputs=[output],
-            name="export_resize_tf_crop_and_resize",
+            name="test_resize_tf_crop_and_resize",
         )
 
     @staticmethod
@@ -857,7 +857,7 @@ class Resize(Base):
             node,
             inputs=[data, roi, sizes],
             outputs=[output],
-            name="export_resize_tf_crop_and_resize_extrapolation_value",
+            name="test_resize_tf_crop_and_resize_extrapolation_value",
         )
 
     @staticmethod
@@ -1417,7 +1417,7 @@ class Resize(Base):
             node,
             inputs=[data, roi, sizes],
             outputs=[output],
-            name="export_resize_tf_crop_and_resize_axes_2_3",
+            name="test_resize_tf_crop_and_resize_axes_2_3",
         )
 
     @staticmethod
@@ -1466,7 +1466,7 @@ class Resize(Base):
             node,
             inputs=[data, roi, sizes],
             outputs=[output],
-            name="export_resize_tf_crop_and_resize_axes_3_2",
+            name="test_resize_tf_crop_and_resize_axes_3_2",
         )
 
     @staticmethod
@@ -1515,7 +1515,7 @@ class Resize(Base):
             node,
             inputs=[data, sizes],
             outputs=[output],
-            name="export_resize_upsample_sizes_nearest_not_larger",
+            name="test_resize_upsample_sizes_nearest_not_larger",
         )
 
     @staticmethod
@@ -1564,7 +1564,7 @@ class Resize(Base):
             node,
             inputs=[data, sizes],
             outputs=[output],
-            name="export_resize_upsample_sizes_nearest_not_smaller",
+            name="test_resize_upsample_sizes_nearest_not_smaller",
         )
 
     @staticmethod

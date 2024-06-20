@@ -25449,7 +25449,7 @@ expect(
     node,
     inputs=[data, roi, sizes],
     outputs=[output],
-    name="export_resize_tf_crop_and_resize",
+    name="test_resize_tf_crop_and_resize",
 )
 ```
 
@@ -25504,7 +25504,7 @@ expect(
     node,
     inputs=[data, roi, sizes],
     outputs=[output],
-    name="export_resize_tf_crop_and_resize_axes_2_3",
+    name="test_resize_tf_crop_and_resize_axes_2_3",
 )
 ```
 
@@ -25559,7 +25559,7 @@ expect(
     node,
     inputs=[data, roi, sizes],
     outputs=[output],
-    name="export_resize_tf_crop_and_resize_axes_3_2",
+    name="test_resize_tf_crop_and_resize_axes_3_2",
 )
 ```
 
@@ -25613,7 +25613,7 @@ expect(
     node,
     inputs=[data, roi, sizes],
     outputs=[output],
-    name="export_resize_tf_crop_and_resize_extrapolation_value",
+    name="test_resize_tf_crop_and_resize_extrapolation_value",
 )
 ```
 
@@ -26490,7 +26490,7 @@ expect(
     node,
     inputs=[data, sizes],
     outputs=[output],
-    name="export_resize_upsample_sizes_nearest_not_larger",
+    name="test_resize_upsample_sizes_nearest_not_larger",
 )
 ```
 
@@ -26545,7 +26545,7 @@ expect(
     node,
     inputs=[data, sizes],
     outputs=[output],
-    name="export_resize_upsample_sizes_nearest_not_smaller",
+    name="test_resize_upsample_sizes_nearest_not_smaller",
 )
 ```
 
