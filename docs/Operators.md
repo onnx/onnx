@@ -22747,7 +22747,7 @@ expect(
     node,
     inputs=[data, axes],
     outputs=[reduced],
-    name="test_reduce_min_empty_set",
+    name="test_reduce_max_empty_set",
 )
 ```
 
@@ -23833,7 +23833,7 @@ expect(
     node,
     inputs=[data, axes],
     outputs=[reduced],
-    name="test_reduce_sum_negative_axes_keepdims_random",
+    name="test_reduce_sum_empty_axes_input_noop",
 )
 ```
 
@@ -25613,7 +25613,7 @@ expect(
     node,
     inputs=[data, roi, sizes],
     outputs=[output],
-    name="test_resize_tf_crop_and_resize",
+    name="test_resize_tf_crop_and_resize_extrapolation_value",
 )
 ```
 
@@ -26545,7 +26545,7 @@ expect(
     node,
     inputs=[data, sizes],
     outputs=[output],
-    name="test_resize_upsample_sizes_nearest_not_larger",
+    name="test_resize_upsample_sizes_nearest_not_smaller",
 )
 ```
 
