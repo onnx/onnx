@@ -126,7 +126,7 @@ void convPoolShapeInference(
             residual -= stride;
           }
         }
-        if (i >= effective_kernel_shape.size()) {
+        if (i >= static_cast<int>(effective_kernel_shape.size())) {
           fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
         }
         int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
