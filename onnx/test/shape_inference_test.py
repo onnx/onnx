@@ -9332,8 +9332,11 @@ class TestShapeInference(TestShapeInferenceHelper):
                         ),
                     ),
                     make_node(
-                        "DFT", ["input", "dft_length", ""], ["output"], **attributes
-                    ),  # type: ignore[arg-type]
+                        "DFT",
+                        ["input", "dft_length", ""],
+                        ["output"],
+                        **attributes,  # type: ignore[arg-type]
+                    ),
                 ]
                 value_infos = [
                     make_tensor_value_info("dft_length", TensorProto.INT64, ())
