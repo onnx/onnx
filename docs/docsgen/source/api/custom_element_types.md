@@ -1,7 +1,7 @@
-# onnx.custom_element_types
+# onnx._custom_element_types
 
 ```{eval-rst}
-.. automodule:: onnx.custom_element_types
+.. automodule:: onnx._custom_element_types
     :members:
     :undoc-members:
 ```

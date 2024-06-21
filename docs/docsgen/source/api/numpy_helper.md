@@ -34,7 +34,7 @@
 ```
 
 As numpy does not support all the types defined in ONNX (float 8 types, blofat16, int4, uint4),
-these two functions use a custom dtype defined in :mod:`onnx.custom_element_types`.
+these two functions use a custom dtype defined in :mod:`onnx._custom_element_types`.
 
 ## sequence
 
