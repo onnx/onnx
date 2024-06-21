@@ -29,12 +29,7 @@ jobs:
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
          path: ./onnx
-
-    - name: Checkout ONNX submodules
-      run: |
-        cd onnx
-        git submodule sync --recursive
-        git submodule update --init --force --recursive --depth=1
+         submodules: 'recursive'
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
