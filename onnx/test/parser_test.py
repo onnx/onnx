@@ -295,22 +295,20 @@ class TestBasicFunctions(unittest.TestCase):
         ]
     )
     def test_parse_graph_types(self, name, itype) -> None:
-        cast = """
+        w = '{"0"}' if itype == TensorProto.STRING else "{0}"
+        text_graph = f"""
            <
              ir_version: 10,
              opset_import: [ "" : 19]
            >
-           agraph (float[N] X) => (__STYPE__[N] C)
+           agraph (float[N] X) => ({name}[N] C)
            <
-             __STYPE__[1] weight = {0}
+             {name}[1] weight = {w}
            >
-           {
-              C = Cast<to=__ITYPE__>(X)
-           }
+           {{
+              C = Cast<to={itype}>(X)
+           }}
            """
-        text_graph = cast.replace("__ITYPE__", str(itype)).replace("__STYPE__", name)
-        if itype == TensorProto.STRING:
-            text_graph = text_graph.replace("{0}", '{"0"}')
         graph = onnx.parser.parse_model(text_graph)
         self.assertEqual(len(graph.graph.node), 1)
 

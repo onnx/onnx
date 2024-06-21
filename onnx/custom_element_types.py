@@ -16,6 +16,9 @@ something like the following:
     from onnx.reference.ops.op_cast import Cast_19 as Cast
 
     tensor_bfloat16 = Cast.eval(np.array([0, 1], dtype=np.float32), to=TensorProto.BFLOAT16)
+
+These custom dtypes may evolve in the future as other package such as ml-dtypes
+provide other implementation.
 """
 
 from __future__ import annotations
