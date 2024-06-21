@@ -27346,6 +27346,7 @@ for i in range(nstfts):
     complex_out = np.fft.fft(signal[0, start:stop, 0])[0:onesided_length]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 
+output = output.astype(signal.dtype)
 expect(node, inputs=[signal, step, length], outputs=[output], name="test_stft")
 
 node = onnx.helper.make_node(
@@ -27371,6 +27372,8 @@ for i in range(nstfts):
         0:onesided_length
     ]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
+window = window.astype(signal.dtype)
+output = output.astype(signal.dtype)
 expect(
     node,
     inputs=[signal, step, window],

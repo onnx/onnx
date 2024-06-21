@@ -71,7 +71,7 @@ def _rename_edges_helper(
                 for sparse_init_desc in new_graph.sparse_initializer:
                     sg_rename[sparse_init_desc.indices.name] = (
                         sparse_init_desc.indices.name
-                    ) = prefix + sparse_init_desc.indices.name
+                    ) = (prefix + sparse_init_desc.indices.name)
 
                 def subgraph_rename_helper(name: str) -> Any:
                     if name in sg_rename:  # noqa: B023
@@ -195,7 +195,11 @@ def _extract_value_info(
 
 
 def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
-    (latest_onnx_version, latest_ml_version, latest_training_version) = (
+    (
+        latest_onnx_version,
+        latest_ml_version,
+        latest_training_version,
+    ) = (
         onnx.helper.VERSION_TABLE[-1][2:5]
     )  # type: ignore
     if "opset_imports" in kwargs:
