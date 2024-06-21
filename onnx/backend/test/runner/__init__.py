@@ -225,7 +225,10 @@ class Runner:
     @classmethod
     @retry_execute(3)
     def download_model(
-        cls, model_test: TestCase, model_dir: str, models_dir: str  # noqa: ARG003
+        cls,
+        model_test: TestCase,
+        model_dir: str,
+        models_dir: str,  # noqa: ARG003
     ) -> None:
         # On Windows, NamedTemporaryFile can not be opened for a
         # second time
@@ -459,8 +462,8 @@ class Runner:
                     self.assert_similar_outputs(
                         ref_outputs,
                         outputs,
-                        rtol=model_test.rtol,
-                        atol=model_test.atol,
+                        rtol=kwargs.get("rtol", model_test.rtol),
+                        atol=kwargs.get("atol", model_test.atol),
                         model_dir=model_dir,
                     )
 
@@ -483,8 +486,8 @@ class Runner:
                 self.assert_similar_outputs(
                     ref_outputs,
                     outputs,
-                    rtol=model_test.rtol,
-                    atol=model_test.atol,
+                    rtol=kwargs.get("rtol", model_test.rtol),
+                    atol=kwargs.get("atol", model_test.atol),
                     model_dir=model_dir,
                 )
 
