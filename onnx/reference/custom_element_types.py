@@ -21,11 +21,11 @@ warnings.warn(
 
 
 __all__ = [
-    bfloat16,
-    float8e4m3fn,
-    float8e4m3fnuz,
-    float8e5m2,
-    float8e5m2fnuz,
-    int4,
-    uint4,
+    "bfloat16",
+    "float8e4m3fn",
+    "float8e4m3fnuz",
+    "float8e5m2",
+    "float8e5m2fnuz",
+    "int4",
+    "uint4",
 ]
