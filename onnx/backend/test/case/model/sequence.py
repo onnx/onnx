@@ -64,7 +64,9 @@ def SplitToSequenceImpl(
             results = np.array_split(tensor, split_indices, axis)
             return [np.squeeze(res, axis) for res in results]
     if np.isscalar(split):
-        split_indices = [i * split + 1 for i in range(dim_size) if i * split + 1 < dim_size]  # type: ignore
+        split_indices = [
+            i * split + 1 for i in range(dim_size) if i * split + 1 < dim_size
+        ]  # type: ignore
     else:
         split_indices = np.cumsum(split) + 1
     return np.array_split(tensor, split_indices, axis)  # type: ignore

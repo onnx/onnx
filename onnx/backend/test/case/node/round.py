@@ -38,6 +38,8 @@ class Round(Base):
                 -2.8,
             ]
         ).astype(np.float32)
+
+        # expected output
         y = np.array(
             [
                 0.0,
@@ -56,5 +58,5 @@ class Round(Base):
                 -2.0,
                 -3.0,
             ]
-        ).astype(np.float32)  # expected output
+        ).astype(np.float32)
         expect(node, inputs=[x], outputs=[y], name="test_round")
