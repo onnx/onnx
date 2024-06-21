@@ -21,13 +21,13 @@ from onnx._custom_element_types import (
 )
 
 _supported_types = [
-    (bfloat16, "bfloat16"),
-    (float8e4m3fn, "float8e4m3fn"),
-    (float8e4m3fnuz, "float8e4m3fnuz"),
-    (float8e5m2, "float8e5m2"),
-    (float8e5m2fnuz, "float8e5m2fnuz"),
-    (int4, "int4"),
-    (uint4, "uint4"),
+    (bfloat16, "bfloat16", "bfloat16"),
+    (float8e4m3fn, "float8e4m3fn", "float8_e4m3fn"),
+    (float8e4m3fnuz, "float8e4m3fnuz", "float8_e4m3fnuz"),
+    (float8e5m2, "float8e5m2", "float8_e5m2"),
+    (float8e5m2fnuz, "float8e5m2fnuz", "float8_e5m2fnuz"),
+    (int4, "int4", "int4"),
+    (uint4, "uint4", "uint4"),
 ]
 
 
@@ -43,8 +43,8 @@ def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
     """
     if not ml_dtypes:
         return array
-    for dtype, name in _supported_types:
-        if array.dtype == getattr(ml_dtypes, name):
+    for dtype, _, ml_name in _supported_types:
+        if array.dtype == getattr(ml_dtypes, ml_name):
             return array.view(dtype=dtype)
     return array
 
@@ -59,19 +59,18 @@ def convert_to_ml_dtypes(array: np.ndarray) -> np.ndarray:
     Returns:
         numpy Numpy array with a dtype from ml_dtypes.
     """
-    dt = array.dtype
     new_dt = None
 
-    for dtype, name in _supported_types:
-        if dt == dtype and array.dtype.descr[0][0] == name:
+    for dtype, name, ml_name in _supported_types:
+        if array.dtype == dtype and array.dtype.descr[0][0] == name:
             assert ml_dtypes, (
                 f"ml_dtypes is not installed and the tensor cannot "
                 f"be converted into ml_dtypes.{array.dtype.descr[0][0]}"
             )
-        new_dt = getattr(ml_dtypes, name)
-        break
+            new_dt = getattr(ml_dtypes, ml_name)
+            break
 
     if new_dt:
-        return array.view(dtype=new_dt).reshape(array.shape)
+        return array.view(dtype=new_dt)
 
     return array
