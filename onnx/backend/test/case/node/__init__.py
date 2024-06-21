@@ -67,7 +67,7 @@ def _rename_edges_helper(
                 for sparse_init_desc in new_graph.sparse_initializer:
                     sg_rename[sparse_init_desc.values.name] = (
                         sparse_init_desc.values.name
-                    ) = prefix + sparse_init_desc.values.name
+                    ) = (prefix + sparse_init_desc.values.name)
                 for sparse_init_desc in new_graph.sparse_initializer:
                     sg_rename[sparse_init_desc.indices.name] = (
                         sparse_init_desc.indices.name
@@ -199,9 +199,9 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
         latest_onnx_version,
         latest_ml_version,
         latest_training_version,
-    ) = (
-        onnx.helper.VERSION_TABLE[-1][2:5]
-    )  # type: ignore
+    ) = onnx.helper.VERSION_TABLE[-1][
+            2:5
+    ]  # type: ignore
     if "opset_imports" in kwargs:
         for opset in kwargs["opset_imports"]:
             # If the test model uses an unreleased opset version (latest_version+1),
