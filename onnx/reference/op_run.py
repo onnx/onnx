@@ -9,7 +9,7 @@ from typing import Any, ClassVar, Iterable
 import numpy as np
 
 from onnx import TensorProto
-from onnx.custom_element_types import (
+from onnx._custom_element_types import (
     bfloat16,
     float8e4m3fn,
     float8e4m3fnuz,
@@ -254,7 +254,9 @@ class OpRun(abc.ABC):
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, value=value, attributes=None: OpRun._evaluate_subgraph(
+                    lambda context,
+                    value=value,
+                    attributes=None: OpRun._evaluate_subgraph(
                         context, value, attributes
                     ),
                 )

@@ -6,7 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 from onnx import TensorProto
-from onnx.custom_element_types import (
+from onnx._custom_element_types import (
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,

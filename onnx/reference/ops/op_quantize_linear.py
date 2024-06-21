@@ -10,7 +10,7 @@ from typing import ClassVar
 import numpy as np
 
 from onnx import TensorProto, subbyte
-from onnx.custom_element_types import (
+from onnx._custom_element_types import (
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
@@ -221,4 +221,10 @@ class QuantizeLinear_19(_CommonQuantizeLinear):
 class QuantizeLinear_21(_CommonQuantizeLinear):
     def _run(self, *args, axis=None, saturate=None, block_size=None, output_dtype=None):  # type: ignore
         # args: x, y_scale, zero_point
-        return super()._run(*args, axis=axis, saturate=saturate, block_size=block_size, output_dtype=output_dtype)  # type: ignore
+        return super()._run(
+            *args,
+            axis=axis,
+            saturate=saturate,
+            block_size=block_size,
+            output_dtype=output_dtype,
+        )  # type: ignore

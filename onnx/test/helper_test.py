@@ -24,7 +24,7 @@ from onnx import (
     TensorProto,
     TypeProto,
     checker,
-    custom_element_types,
+    _custom_element_types,
     defs,
     helper,
     numpy_helper,
@@ -1033,14 +1033,14 @@ class TestAttrTypeToStr(unittest.TestCase):
 
     def test_custom_types(self):
         def _get(name):
-            if hasattr(custom_element_types, name):
-                return getattr(custom_element_types, name)
+            if hasattr(_custom_element_types, name):
+                return getattr(_custom_element_types, name)
             name = f"float8{name}"
-            if hasattr(custom_element_types, name):
-                return getattr(custom_element_types, name)
+            if hasattr(_custom_element_types, name):
+                return getattr(_custom_element_types, name)
             raise AttributeError(f"Unknown name {name!r}")
 
-        for k, v in custom_element_types.mapping_name_to_data_type.items():
+        for k, v in _custom_element_types.mapping_name_to_data_type.items():
             self.assertEqual(helper.np_dtype_to_tensor_dtype(_get(k)), v)
 
 

@@ -51,7 +51,18 @@ def _batchnorm_training_mode(
 
 
 class BatchNormalization_6(OpRun):
-    def _run(self, x, scale, bias, mean, var, epsilon=None, is_test=None, momentum=None, spatial=None):  # type: ignore  # noqa: ARG002
+    def _run(
+        self,
+        x,
+        scale,
+        bias,
+        mean,
+        var,
+        epsilon=None,
+        is_test=None,
+        momentum=None,
+        spatial=None,
+    ):  # type: ignore  # noqa: ARG002
         if is_test:
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
         else:

@@ -23,7 +23,7 @@ from typing import (
 import google.protobuf.message
 import numpy as np
 
-import onnx.custom_element_types as custom_np_types
+import onnx._custom_element_types as custom_np_types
 from onnx import (
     IR_VERSION,
     AttributeProto,

@@ -17,8 +17,8 @@ something like the following:
 
     tensor_bfloat16 = Cast.eval(np.array([0, 1], dtype=np.float32), to=TensorProto.BFLOAT16)
 
-These custom dtypes may evolve in the future as other package such as ml-dtypes
-provide other implementation.
+The numpy representation dtypes used below are meant for internal use. They may change in the
+future based on the industry standardization of these numpy types.
 """
 
 from __future__ import annotations

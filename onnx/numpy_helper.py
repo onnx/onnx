@@ -8,7 +8,7 @@ from typing import Any, Sequence
 
 import numpy as np
 
-import onnx.custom_element_types as custom_np_types
+import onnx._custom_element_types as custom_np_types
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 
@@ -335,7 +335,7 @@ def _to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: P
 
 def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     """Converts a tensor def object to a numpy array.
-    Supports types defined in :mod:`onnx.custom_element_types`.
+    Supports types defined in :mod:`onnx._custom_element_types`.
 
     Args:
         tensor: a TensorProto object.
@@ -472,7 +472,7 @@ def _from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
 
 def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
     """Converts an array into a TensorProto including
-    supported type defined in :mod:`onnx.custom_element_types`.
+    supported type defined in :mod:`onnx._custom_element_types`.
 
     Args:
         tensor: a numpy array.

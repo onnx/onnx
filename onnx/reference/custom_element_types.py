@@ -3,29 +3,75 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import warnings
+import numpy as np
 
-from onnx.custom_element_types import bfloat16
-from onnx.custom_element_types import float8e4m3fn
-from onnx.custom_element_types import float8e4m3fnuz
-from onnx.custom_element_types import float8e5m2
-from onnx.custom_element_types import float8e5m2fnuz
-from onnx.custom_element_types import int4
-from onnx.custom_element_types import uint4
+try:
+    import ml_dtypes
+except ImportError:
+    ml_dtypes = None  # type: ignore[assignment]
 
-warnings.warn(
-    "This file was moved to onnx.custom_element_types. Importing this module will fail in onnx>=1.19.0.",
-    category=PendingDeprecationWarning,
-    stacklevel=1,
+from onnx._custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+    int4,
+    uint4,
 )
 
-
-__all__ = [
-    "bfloat16",
-    "float8e4m3fn",
-    "float8e4m3fnuz",
-    "float8e5m2",
-    "float8e5m2fnuz",
-    "int4",
-    "uint4",
+_supported_types = [
+    (bfloat16, "bfloat16"),
+    (float8e4m3fn, "float8e4m3fn"),
+    (float8e4m3fnuz, "float8e4m3fnuz"),
+    (float8e5m2, "float8e5m2"),
+    (float8e5m2fnuz, "float8e5m2fnuz"),
+    (int4, "int4"),
+    (uint4, "uint4"),
 ]
+
+
+def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
+    """Detects the type and changes into one of the ONNX
+    defined custom types when ``ml_dtypes`` is installed.
+
+    Args:
+        array: Numpy array with a dtype from ml_dtypes.
+
+    Returns:
+        numpy array
+    """
+    if not ml_dtypes:
+        return array
+    for dtype, name in _supported_types:
+        if array.dtype == getattr(ml_dtypes, name):
+            return array.view(dtype=dtype)
+    return array
+
+
+def convert_to_ml_dtypes(array: np.ndarray) -> np.ndarray:
+    """Detects the type and changes into one of the type
+    defined in ``ml_dtypes`` if installed.
+
+    Args:
+        array: array
+
+    Returns:
+        numpy Numpy array with a dtype from ml_dtypes.
+    """
+    dt = array.dtype
+    new_dt = None
+
+    for dtype, name in _supported_types:
+        if dt == dtype and array.dtype.descr[0][0] == name:
+            assert ml_dtypes, (
+                f"ml_dtypes is not installed and the tensor cannot "
+                f"be converted into ml_dtypes.{array.dtype.descr[0][0]}"
+            )
+        new_dt = getattr(ml_dtypes, name)
+        break
+
+    if new_dt:
+        return array.view(dtype=new_dt).reshape(array.shape)
+
+    return array
