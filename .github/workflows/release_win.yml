@@ -137,8 +137,3 @@ jobs:
         $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
         $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20
         pytest
-
-    - name: Clean Workspace
-      if: always()
-      run: |
-        Get-ChildItem -Recurse | Remove-Item -Recurse -Force

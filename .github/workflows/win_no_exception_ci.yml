@@ -82,8 +82,3 @@ jobs:
         if($lastexitcode -ne 0) {
           EXIT 1
         }
-
-    - name: Clean Workspace
-      if: always()
-      run: |
-        Get-ChildItem -Recurse | Remove-Item -Recurse -Force
