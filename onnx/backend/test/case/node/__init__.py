@@ -200,7 +200,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
         latest_ml_version,
         latest_training_version,
     ) = onnx.helper.VERSION_TABLE[-1][
-            2:5
+        2:5
     ]  # type: ignore
     if "opset_imports" in kwargs:
         for opset in kwargs["opset_imports"]:
