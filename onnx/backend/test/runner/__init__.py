@@ -232,6 +232,7 @@ class Runner:
     ) -> None:
         # On Windows, NamedTemporaryFile can not be opened for a
         # second time
+        del model_dir
         download_file = tempfile.NamedTemporaryFile(delete=False)
         try:
             download_file.close()

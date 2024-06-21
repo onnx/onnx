@@ -23,7 +23,9 @@ class HannWindow(Base):
         a0 = 0.5
         a1 = 0.5
         y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-        expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hannwindow")
+        expect(
+            node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hannwindow"
+        )
 
         # Test symmetric window
         node = onnx.helper.make_node(
@@ -35,4 +37,9 @@ class HannWindow(Base):
         y = a0 - a1 * np.cos(
             2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
         )
-        expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hannwindow_symmetric")
+        expect(
+            node,
+            inputs=[size],
+            outputs=[y.astype(np.float32)],
+            name="test_hannwindow_symmetric",
+        )

@@ -56,7 +56,5 @@ class Round(Base):
                 -2.0,
                 -3.0,
             ]
-        ).astype(
-            np.float32
-        )  # expected output
+        ).astype(np.float32)  # expected output
         expect(node, inputs=[x], outputs=[y], name="test_round")
