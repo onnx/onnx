@@ -34,7 +34,7 @@ jobs:
         python -m pip install -r requirements-release.txt
         git submodule update --init --recursive
         export ONNX_ML=1
-        pip install -e .
+        pip install -e . -v
 
         python onnx/defs/gen_doc.py
         python onnx/gen_proto.py -l

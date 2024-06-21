@@ -2262,7 +2262,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="MatMul-1"></a>**MatMul-1**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
 #### Version
 

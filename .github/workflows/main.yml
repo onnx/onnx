@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest,macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
         include:
           - python_version: '3.12'
@@ -142,6 +142,10 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
+      - name: pip freeze
+        run: |
+          pip freeze
+
       - name: Run Python tests
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
@@ -195,6 +199,12 @@ jobs:
           pip install -r docs/docsgen/source/requirements.txt
           cd docs/docsgen && make text
         continue-on-error: true
+
+      - name: Run Python tests with numpy<2.0
+        if: matrix.python_version == '3.11' || matrix.python_version == '3.12'
+        run: |
+          pip install "numpy<2.0"
+          pytest -sv
 
   publish-test-results:
     name: "Publish Test Results to Github"
