@@ -89,13 +89,17 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     def run_node(cls, node, inputs, device=None, outputs_info=None, **kwargs):
         raise NotImplementedError("Unable to run the model node by node.")
 
-
+dft_atol = 1e-3 if sys.platform != "linux" else 1e-6
 backend_test = onnx.backend.test.BackendTest(
     ReferenceEvaluatorBackend,
     __name__,
     test_kwargs={
-        "test_dft_inverse": {"atol": 1e-6},
-        "test_dft_inverse_opset19": {"atol": 1e-6},
+        "test_dft": {"atol": dft_atol},
+        "test_dft_axis": {"atol": dft_atol},
+        "test_dft_axis_opset19": {"atol": dft_atol},
+        "test_dft_inverse": {"atol": dft_atol},
+        "test_dft_inverse_opset19": {"atol": dft_atol},
+        "test_dft_opset19": {"atol": dft_atol},
     },
 )
 

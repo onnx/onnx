@@ -2273,7 +2273,7 @@ a2 = 0.08
 y = a0
 y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_blackmanwindow")
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -2290,7 +2290,7 @@ y += a1 * np.cos(
 y += a2 * np.cos(
     4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_blackmanwindow_symmetric")
 ```
 
 </details>
@@ -8117,7 +8117,7 @@ size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
 y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hammingwindow")
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -8129,7 +8129,7 @@ a1 = 1 - a0
 y = a0 - a1 * np.cos(
     2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hammingwindow_symmetric")
 ```
 
 </details>
@@ -8151,7 +8151,7 @@ size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
 y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_hannwindow")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hannwindow")
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -8163,7 +8163,7 @@ a1 = 0.5
 y = a0 - a1 * np.cos(
     2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hannwindow_symmetric")
 ```
 
 </details>

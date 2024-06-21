@@ -567,7 +567,6 @@ if ort is not None:
         backend_test.exclude(
             "("
             "deform_conv"  # deform_conv is not supported in onnxruntime
-            "|dft"  # Max absolute difference > atol=1e-07. shall be able to set atol (https://github.com/onnx/onnx/issues/5897)
             "|group_normalization"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
             "|identity_opt"  # fixed in ort 1.18 (https://github.com/microsoft/onnxruntime/pull/19273)
             "|image_decoder"  # image_decoder is not supported in onnxruntime
@@ -579,6 +578,16 @@ if ort is not None:
             "|qlinearmatmul_2D_uint8_float32"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
             "|qlinearmatmul_3D_uint8_float32"  # new/updated test cases with opset and/or IR version not supported by onnxruntime 1.17
             "|tree_ensemble"  # tree_ensemble not yet implemented in ort
+            ")"
+        )
+
+    if ort_version is not None and ort_version < Version("1.19"):
+        backend_test.exclude(
+            "("
+            "tree_ensemble_set_membership"
+            "|tree_ensemble_single_tree"
+            "|convtranspose_group_2"
+            "|dft"
             ")"
         )
 

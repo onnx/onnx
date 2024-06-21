@@ -148,7 +148,7 @@ jobs:
 
       - name: Run Python tests
         run: |
-          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
+          pytest -s --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
 
       - name: Run C++ tests
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
@@ -169,6 +169,8 @@ jobs:
           name: Test Results (${{ matrix.os }}-{{ matrix.python_version }})
           path: pytest.xml
 
+      # Note that the test data should be generated with numpy>=2.0.
+      # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
         if: matrix.documentation == 1 && matrix.os == 'ubuntu-latest'
         run: |
@@ -204,7 +206,7 @@ jobs:
         if: matrix.python_version == '3.11' || matrix.python_version == '3.12'
         run: |
           pip install "numpy<2.0"
-          pytest -sv
+          pytest -s
 
   publish-test-results:
     name: "Publish Test Results to Github"

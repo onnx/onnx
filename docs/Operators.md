@@ -3298,7 +3298,7 @@ a2 = 0.08
 y = a0
 y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_blackmanwindow")
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -3315,7 +3315,7 @@ y += a1 * np.cos(
 y += a2 * np.cos(
     4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_blackmanwindow_symmetric")
 ```
 
 </details>
@@ -11830,7 +11830,7 @@ size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
 y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hammingwindow")
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -11842,7 +11842,7 @@ a1 = 1 - a0
 y = a0 - a1 * np.cos(
     2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hammingwindow_symmetric")
 ```
 
 </details>
@@ -11905,7 +11905,7 @@ size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
 y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_hannwindow")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hannwindow")
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -11917,7 +11917,7 @@ a1 = 0.5
 y = a0 - a1 * np.cos(
     2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
+expect(node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hannwindow_symmetric")
 ```
 
 </details>
@@ -15302,7 +15302,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_3d_default")
 
 ### <a name="MatMul"></a><a name="matmul">**MatMul**</a>
 
-  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 
 #### Version
 
@@ -15370,7 +15370,7 @@ expect(node, inputs=[a, b], outputs=[c], name="test_matmul_4d")
 
 ### <a name="MatMulInteger"></a><a name="matmulinteger">**MatMulInteger**</a>
 
-  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
   The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 
 #### Version
@@ -20204,7 +20204,7 @@ expect(
 
 ### <a name="QLinearMatMul"></a><a name="qlinearmatmul">**QLinearMatMul**</a>
 
-  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
   It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
   and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
   For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.

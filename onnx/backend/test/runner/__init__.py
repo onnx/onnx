@@ -228,7 +228,7 @@ class Runner:
         cls,
         model_test: TestCase,
         model_dir: str,
-        models_dir: str,  # noqa: ARG003
+        models_dir: str,
     ) -> None:
         # On Windows, NamedTemporaryFile can not be opened for a
         # second time
