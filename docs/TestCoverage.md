@@ -24133,6 +24133,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behaviour changed with numpy >= 2.0
+inverse_indices = inverse_indices.squeeze()
 # print(y)
 # [[1. 0. 0.]
 #  [2. 3. 4.]]
@@ -24175,6 +24177,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behaviour changed with numpy >= 2.0
+inverse_indices = inverse_indices.squeeze()
 # print(y)
 # [[[0. 1.]
 #  [1. 1.]
@@ -24214,6 +24218,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behaviour changed with numpy >= 2.0
+inverse_indices = inverse_indices.squeeze()
 # print(y)
 # [[0. 1.]
 #  [0. 1.]

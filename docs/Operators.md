@@ -15370,7 +15370,7 @@ expect(node, inputs=[a, b], outputs=[c], name="test_matmul_4d")
 
 ### <a name="MatMulInteger"></a><a name="matmulinteger">**MatMulInteger**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 
 #### Version
@@ -34822,6 +34822,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behaviour changed with numpy >= 2.0
+inverse_indices = inverse_indices.squeeze()
 # print(y)
 # [[1. 0. 0.]
 #  [2. 3. 4.]]
@@ -34866,6 +34868,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behaviour changed with numpy >= 2.0
+inverse_indices = inverse_indices.squeeze()
 # print(y)
 # [[[0. 1.]
 #  [1. 1.]
@@ -34907,6 +34911,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behaviour changed with numpy >= 2.0
+inverse_indices = inverse_indices.squeeze()
 # print(y)
 # [[0. 1.]
 #  [0. 1.]

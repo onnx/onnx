@@ -117,7 +117,7 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
 
 const char* QLinearMatMulDoc() {
   static const char* QLinearMatMul_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
 and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
 For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.

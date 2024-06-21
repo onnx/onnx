@@ -8522,7 +8522,7 @@ This version of the operator has been available since version 9 of the default O
 
 ### <a name="MatMul-9"></a>**MatMul-9**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
 #### Version
 
@@ -9526,7 +9526,7 @@ This version of the operator has been available since version 10 of the default 
 
 ### <a name="MatMulInteger-10"></a>**MatMulInteger-10**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 
 #### Version
@@ -9816,7 +9816,7 @@ This version of the operator has been available since version 10 of the default 
 
 ### <a name="QLinearMatMul-10"></a>**QLinearMatMul-10**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
   and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
   For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
@@ -16554,7 +16554,7 @@ This version of the operator has been available since version 13 of the default 
 
 ### <a name="MatMul-13"></a>**MatMul-13**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
 #### Version
 
@@ -25313,7 +25313,7 @@ This version of the operator has been available since version 21 of the default 
 
 ### <a name="QLinearMatMul-21"></a>**QLinearMatMul-21**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
   and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
   For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
