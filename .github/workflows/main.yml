@@ -148,7 +148,7 @@ jobs:
 
       - name: Run Python tests
         run: |
-          pytest -s --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
+          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
 
       - name: Run C++ tests
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
