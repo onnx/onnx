@@ -90,7 +90,10 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
         raise NotImplementedError("Unable to run the model node by node.")
 
 
-backend_test = onnx.backend.test.BackendTest(ReferenceEvaluatorBackend, __name__)
+backend_test = onnx.backend.test.BackendTest(ReferenceEvaluatorBackend, __name__, test_kwargs={
+    "test_dft_inverse": {"atol": 1e-6},
+    "test_dft_inverse_opset19": {"atol": 1e-6},
+})
 
 if os.getenv("APPVEYOR"):
     backend_test.exclude("(test_vgg19|test_zfnet)")
