@@ -55,6 +55,7 @@ def _float8e4m3_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
         if ival == 127:  # noqa: PLR2004
             return np.float32(np.nan)
 
+    ival = np.uint32(ival)
     expo = (ival & 0x78) >> 3
     mant = ival & 0x07
     sign = ival & 0x80
@@ -133,6 +134,7 @@ def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
     else:
         raise NotImplementedError("fn and uz must be both False or True.")
 
+    ival = np.uint32(ival)
     expo = (ival & 0x7C) >> 2
     mant = ival & 0x03
     sign = ival & 0x80
