@@ -7,6 +7,7 @@ import itertools
 import math
 import random
 import struct
+import sys
 import unittest
 from typing import Any
 
@@ -29,6 +30,10 @@ from onnx import (
     numpy_helper,
 )
 from onnx.reference.op_run import to_array_extended
+
+
+def convert(data: np.ndarray) -> np.ndarray:
+    return data.byteswap() if sys.byteorder == 'big' else data
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -562,7 +567,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             return x >> 16
 
         values_as_ints = np_array.astype(np.float32).view(np.uint32).flatten()
-        packed_values = truncate(values_as_ints).astype(np.uint16).tobytes()
+        packed_values = convert(truncate(values_as_ints).astype(np.uint16)).tobytes()
         tensor = helper.make_tensor(
             name="test",
             data_type=TensorProto.BFLOAT16,
@@ -951,7 +956,7 @@ def test_make_tensor_raw(tensor_dtype: int) -> None:
         name="test",
         data_type=tensor_dtype,
         dims=np_array.shape,
-        vals=np_array.tobytes(),
+        vals=convert(np_array).tobytes(),
         raw=True,
     )
     np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))

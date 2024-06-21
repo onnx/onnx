@@ -13,6 +13,7 @@ from onnx import OptionalProto, SequenceProto, TensorProto
 
 class TensorDtypeMap(NamedTuple):
     np_dtype: np.dtype
+    storage_np_dtype: np.dtype
     storage_dtype: int
     name: str
 
@@ -20,73 +21,74 @@ class TensorDtypeMap(NamedTuple):
 # tensor_dtype: (numpy type, storage type, string name)
 TENSOR_TYPE_MAP = {
     int(TensorProto.FLOAT): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.FLOAT), "TensorProto.FLOAT"
+        np.dtype("float32"), np.dtype("float32"), int(TensorProto.FLOAT), "TensorProto.FLOAT"
     ),
     int(TensorProto.UINT8): TensorDtypeMap(
-        np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.UINT8"
+        np.dtype("uint8"), np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.UINT8"
     ),
     int(TensorProto.INT8): TensorDtypeMap(
-        np.dtype("int8"), int(TensorProto.INT32), "TensorProto.INT8"
+        np.dtype("int8"), np.dtype("int8"), int(TensorProto.INT32), "TensorProto.INT8"
     ),
     int(TensorProto.UINT16): TensorDtypeMap(
-        np.dtype("uint16"), int(TensorProto.INT32), "TensorProto.UINT16"
+        np.dtype("uint16"), np.dtype("uint16"), int(TensorProto.INT32), "TensorProto.UINT16"
     ),
     int(TensorProto.INT16): TensorDtypeMap(
-        np.dtype("int16"), int(TensorProto.INT32), "TensorProto.INT16"
+        np.dtype("int16"), np.dtype("int16"), int(TensorProto.INT32), "TensorProto.INT16"
     ),
     int(TensorProto.INT32): TensorDtypeMap(
-        np.dtype("int32"), int(TensorProto.INT32), "TensorProto.INT32"
+        np.dtype("int32"), np.dtype("int32"), int(TensorProto.INT32), "TensorProto.INT32"
     ),
     int(TensorProto.INT64): TensorDtypeMap(
-        np.dtype("int64"), int(TensorProto.INT64), "TensorProto.INT64"
+        np.dtype("int64"), np.dtype("int64"), int(TensorProto.INT64), "TensorProto.INT64"
     ),
     int(TensorProto.BOOL): TensorDtypeMap(
-        np.dtype("bool"), int(TensorProto.INT32), "TensorProto.BOOL"
+        np.dtype("bool"), np.dtype("bool"), int(TensorProto.INT32), "TensorProto.BOOL"
     ),
     int(TensorProto.FLOAT16): TensorDtypeMap(
-        np.dtype("float16"), int(TensorProto.UINT16), "TensorProto.FLOAT16"
+        np.dtype("float16"), np.dtype("float16"), int(TensorProto.UINT16), "TensorProto.FLOAT16"
     ),
-    # Native numpy does not support bfloat16 so now use float32.
+    # Native numpy does not support bfloat16 so now use float32. It is saved as a uin16 field.
     int(TensorProto.BFLOAT16): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT16), "TensorProto.BFLOAT16"
+        np.dtype("float32"), np.dtype("uint16"), int(TensorProto.UINT16), "TensorProto.BFLOAT16"
     ),
     int(TensorProto.DOUBLE): TensorDtypeMap(
-        np.dtype("float64"), int(TensorProto.DOUBLE), "TensorProto.DOUBLE"
+        np.dtype("float64"), np.dtype("float64"), int(TensorProto.DOUBLE), "TensorProto.DOUBLE"
     ),
     int(TensorProto.COMPLEX64): TensorDtypeMap(
-        np.dtype("complex64"), int(TensorProto.FLOAT), "TensorProto.COMPLEX64"
+        np.dtype("complex64"), np.dtype("complex64"), int(TensorProto.FLOAT), "TensorProto.COMPLEX64"
     ),
     int(TensorProto.COMPLEX128): TensorDtypeMap(
-        np.dtype("complex128"), int(TensorProto.DOUBLE), "TensorProto.COMPLEX128"
+        np.dtype("complex128"), np.dtype("complex128"), int(TensorProto.DOUBLE), "TensorProto.COMPLEX128"
     ),
     int(TensorProto.UINT32): TensorDtypeMap(
-        np.dtype("uint32"), int(TensorProto.UINT32), "TensorProto.UINT32"
+        np.dtype("uint32"), np.dtype("uint32"), int(TensorProto.UINT32), "TensorProto.UINT32"
     ),
     int(TensorProto.UINT64): TensorDtypeMap(
-        np.dtype("uint64"), int(TensorProto.UINT64), "TensorProto.UINT64"
+        np.dtype("uint64"), np.dtype("uint64"), int(TensorProto.UINT64), "TensorProto.UINT64"
     ),
     int(TensorProto.STRING): TensorDtypeMap(
-        np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"
+        np.dtype("object"), np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"
     ),
     # Native numpy does not support float8 types, so now use float32 for these types.
+    # As raw data, it is viewed as a collection of bytes.
     int(TensorProto.FLOAT8E4M3FN): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FN"
+        np.dtype("float32"), np.dtype("uint8"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FN"
     ),
     int(TensorProto.FLOAT8E4M3FNUZ): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FNUZ"
+        np.dtype("float32"), np.dtype("uint8"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FNUZ"
     ),
     int(TensorProto.FLOAT8E5M2): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2"
+        np.dtype("float32"), np.dtype("uint8"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2"
     ),
     int(TensorProto.FLOAT8E5M2FNUZ): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2FNUZ"
+        np.dtype("float32"), np.dtype("uint8"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2FNUZ"
     ),
     # Native numpy does not support uint4/int4 so now use uint8/int8 for these types.
     int(TensorProto.UINT4): TensorDtypeMap(
-        np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.UINT4"
+        np.dtype("uint8"), np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.UINT4"
     ),
     int(TensorProto.INT4): TensorDtypeMap(
-        np.dtype("int8"), int(TensorProto.INT32), "TensorProto.INT4"
+        np.dtype("int8"), np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.INT4"
     ),
 }
 

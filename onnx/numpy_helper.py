@@ -235,9 +235,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
 
     tensor_dtype = tensor.data_type
     np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    storage_np_dtype = helper.tensor_dtype_to_np_dtype(
-        helper.tensor_dtype_to_storage_tensor_dtype(tensor_dtype)
-    )
+
     storage_field = helper.tensor_dtype_to_field(tensor_dtype)
     dims = tensor.dims
 
@@ -251,11 +249,12 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
         load_external_data_for_tensor(tensor, base_dir)
 
     if tensor.HasField("raw_data"):
+        storage_np_dtype = helper.tensor_dtype_to_storage_np_dtype(tensor_dtype)
         # Raw_bytes support: using frombuffer.
         raw_data = tensor.raw_data
         if sys.byteorder == "big":
             # Convert endian from little to big
-            raw_data = np.frombuffer(raw_data, dtype=np_dtype).byteswap().tobytes()
+            raw_data = np.frombuffer(raw_data, dtype=storage_np_dtype).byteswap().tobytes()
 
         # manually convert bf16 since there's no numpy support
         if tensor_dtype == TensorProto.BFLOAT16:
@@ -288,6 +287,10 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
 
+    # dtype for raw data is determined by the storage_dtype
+    storage_np_dtype = helper.tensor_dtype_to_np_dtype(
+        helper.tensor_dtype_to_storage_tensor_dtype(tensor_dtype)
+    )
     # float16 is stored as int32 (uint16 type); Need view to get the original value
     if tensor_dtype == TensorProto.FLOAT16:
         return (

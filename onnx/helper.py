@@ -1563,6 +1563,16 @@ def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
     """
     return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
+def tensor_dtype_to_storage_np_dtype(tensor_dtype: int) -> int:
+    """Convert a TensorProto's data_type to corresponding data_type for raw storage.
+    
+    Args:
+        tensor_dtype: TensorProto's data_type
+        
+    Returns:
+        numpy's data_type for the raw storage
+    """
+    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_np_dtype
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
     """Get the name of given TensorProto's data_type.
