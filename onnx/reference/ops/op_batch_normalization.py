@@ -62,7 +62,7 @@ class BatchNormalization_6(OpRun):
         is_test=None,
         momentum=None,
         spatial=None,
-    ):  # type: ignore  # noqa: ARG002
+    ):  # type: ignore
         if is_test:
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
         else:
