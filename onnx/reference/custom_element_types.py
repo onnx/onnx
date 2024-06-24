@@ -22,10 +22,10 @@ from onnx._custom_element_types import (
 
 _supported_types = [
     (bfloat16, "bfloat16", "bfloat16"),
-    (float8e4m3fn, "float8e4m3fn", "float8_e4m3fn"),
-    (float8e4m3fnuz, "float8e4m3fnuz", "float8_e4m3fnuz"),
-    (float8e5m2, "float8e5m2", "float8_e5m2"),
-    (float8e5m2fnuz, "float8e5m2fnuz", "float8_e5m2fnuz"),
+    (float8e4m3fn, "e4m3fn", "float8_e4m3fn"),
+    (float8e4m3fnuz, "e4m3fnuz", "float8_e4m3fnuz"),
+    (float8e5m2, "e5m2", "float8_e5m2"),
+    (float8e5m2fnuz, "e5m2fnuz", "float8_e5m2fnuz"),
     (int4, "int4", "int4"),
     (uint4, "uint4", "uint4"),
 ]
@@ -71,6 +71,8 @@ def convert_to_ml_dtypes(array: np.ndarray) -> np.ndarray:
             break
 
     if new_dt:
+        # int4, uint4, the representation uses 1 byte per element,
+        # only onnx storage uses 1 byte for two elements
         return array.view(dtype=new_dt)
 
     return array

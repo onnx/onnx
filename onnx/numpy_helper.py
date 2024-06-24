@@ -511,6 +511,11 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
 
     if to in (TensorProto.UINT4, TensorProto.INT4):
         value = tensor.astype(dt_to).ravel()
+        if value.size % 2 == 1:
+            raise ValueError(
+                f"The conversion of a tensor of INT4 or UINT4 requires an even size "
+                f"(shape={tensor.shape}). Every byte stores two INT4 or two UINT4."
+            )
         buffer = (value[::2] & 0x0F) + (value[1::2] << 4)
 
         pb = TensorProto()
