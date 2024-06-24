@@ -554,7 +554,7 @@ if(BUILD_ONNX_PYTHON)
                              $<INSTALL_INTERFACE:include>)
 
   # pybind11 is a header only lib
-  find_package(pybind11 2.12 CONFIG)
+  find_package(pybind11 2.2 CONFIG)
   if(NOT pybind11_FOUND)
     if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
       add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
