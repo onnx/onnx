@@ -325,14 +325,13 @@ if ort is not None:
             ")"
         )
 
-    if ort_version is not None and ort_version < Version("1.18"):
+    if ort_version is not None and ort_version < Version("1.19"):
         backend_test.exclude(
             "("
             "tree_ensemble_set_membership"  # ai.onnx.ml==5 not implemented
             "|_tree_ensemble_single_tree"
             "|image_decoder"
-            "|qlinearmatmul_3D_int8"
-            "|qlinearmatmul_3D_uint8"
+            "|qlinearmatmul"
             ")"
         )
     # Import all test cases at global scope to make them visible to python.unittest
