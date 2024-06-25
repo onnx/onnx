@@ -73,14 +73,28 @@ def _create_inference_session(model: onnx.ModelProto, device: str):
         if "is under development and support for this is limited" in str(e):
             # decrease the opset
             current_opset = min(d.version for d in model.opset_import if d.domain == "")
-            new_model = onnx.version_converter.convert_version(model, current_opset - 1)
+            try:
+                new_model = onnx.version_converter.convert_version(model, current_opset - 1)
+            except Exception as ne:
+                raise RuntimeError(
+                    f"convert_version failed to downgrade the opset from "
+                    f"{current_opset} due to {e}. "
+                    f"Model is:\n\n{onnx.printer.to_text(model)}"
+                ) from ne
+            new_opset = min(d.version for d in new_model.opset_import if d.domain == "")
+            if new_opset >= current_opset:
+                raise RuntimeError(
+                    f"convert_version was not able to downgrade the opset from "
+                    f"{current_opset}, new_opset={new_opset}. "
+                    f"Model is:\n\n{onnx.printer.to_text(model)}"
+                ) from e
             return _create_inference_session(new_model, device)
         raise RuntimeError(
-            f"Unable to create inference session. Model is:\n\n{onnx.printer.to_text(model)}"
+            f"Unable to create inference session due to {e}. Model is:\n\n{onnx.printer.to_text(model)}"
         ) from e
     except Exception as e:
         raise RuntimeError(
-            f"Unable to create inference session. Model is:\n\n{onnx.printer.to_text(model)}"
+            f"Unable to create inference session due to {e}. Model is:\n\n{onnx.printer.to_text(model)}"
         ) from e
     return session
 
@@ -168,10 +182,13 @@ if ort is not None:
         "|test_quantizelinear_int4"  # No corresponding Numpy type for Tensor Type.
         "|test_dequantizelinear_uint4"  # No corresponding Numpy type for Tensor Type.
         "|test_dequantizelinear_int4"  # No corresponding Numpy type for Tensor Type.
-        "|test_cast_UINT4_to_FLOAT"  # No corresponding Numpy type for Tensor Type.
-        "|test_cast_INT4_to_FLOAT"  # No corresponding Numpy type for Tensor Type.
-        "|test_cast_UINT4_to_FLOAT16"  # No corresponding Numpy type for Tensor Type.
-        "|test_cast_INT4_to_FLOAT16"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_UINT4_to"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_INT4_to"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_UINT4_to"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_INT4_to"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_BFLOAT16_to"  # No corresponding Numpy type for Tensor Type.
+        "|cast_FLOAT_to_UINT4"  # No corresponding Numpy type for Tensor Type.
+        "|cast_FLOAT_to_INT4"  # No corresponding Numpy type for Tensor Type.
         "|test_maxpool_2d_ceil_output_size_reduce_by_one"  # TODO: remove after https://github.com/microsoft/onnxruntime/pull/18377 in Ort release.
         ")"
     )
@@ -308,6 +325,16 @@ if ort is not None:
             ")"
         )
 
+    if ort_version is not None and ort_version < Version("1.18"):
+        backend_test.exclude(
+            "("
+            "tree_ensemble_set_membership"  # ai.onnx.ml==5 not implemented
+            "|_tree_ensemble_single_tree"
+            "|image_decoder"
+            "|qlinearmatmul_3D_int8"
+            "|qlinearmatmul_3D_uint8"
+            ")"
+        )
     # Import all test cases at global scope to make them visible to python.unittest
     globals().update(backend_test.test_cases)
 
