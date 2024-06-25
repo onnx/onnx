@@ -144,6 +144,7 @@ jobs:
 
       - name: Run Python tests
         run: |
+          python -m pip install onnxruntime ml_types
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
 
       - name: Run C++ tests
