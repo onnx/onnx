@@ -459,8 +459,8 @@ class Runner:
                     self.assert_similar_outputs(
                         ref_outputs,
                         outputs,
-                        rtol=model_test.rtol,
-                        atol=model_test.atol,
+                        rtol=kwargs.get("rtol", model_test.rtol),
+                        atol=kwargs.get("atol", model_test.atol),
                         model_dir=model_dir,
                     )
 
@@ -483,8 +483,8 @@ class Runner:
                 self.assert_similar_outputs(
                     ref_outputs,
                     outputs,
-                    rtol=model_test.rtol,
-                    atol=model_test.atol,
+                    rtol=kwargs.get("rtol", model_test.rtol),
+                    atol=kwargs.get("atol", model_test.atol),
                     model_dir=model_dir,
                 )
 
