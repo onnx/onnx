@@ -349,6 +349,7 @@ if ort is not None:
             "|image_decoder"
             "|qlinearmatmul"
             "|_deform_"
+            "|globalmaxpool"  # fail to downgrade opset
             ")"
         )
     # Import all test cases at global scope to make them visible to python.unittest

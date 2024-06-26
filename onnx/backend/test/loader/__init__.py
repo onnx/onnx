@@ -41,8 +41,8 @@ def load_model_tests(
                 data = json.load(f)
                 url = data["url"]
                 model_name = data["model_name"]
-                rtol = data.get("rtol", 1e-3)
-                atol = data.get("atol", 1e-7)
+                rtol = data.get("rtol", rtol)
+                atol = data.get("atol", atol)
                 model_dir = None
         testcases.append(
             TestCase(
