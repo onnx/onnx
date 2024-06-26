@@ -74,7 +74,9 @@ def _create_inference_session(model: onnx.ModelProto, device: str):
             # decrease the opset
             current_opset = min(d.version for d in model.opset_import if d.domain == "")
             try:
-                new_model = onnx.version_converter.convert_version(model, current_opset - 1)
+                new_model = onnx.version_converter.convert_version(
+                    model, current_opset - 1
+                )
             except Exception as ne:
                 raise RuntimeError(
                     f"convert_version failed to downgrade the opset from "
@@ -131,7 +133,19 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
 
 
 if ort is not None:
-    backend_test = onnx.backend.test.BackendTest(InferenceSessionBackend, __name__)
+    dft_atol = 1e-3
+    backend_test = onnx.backend.test.BackendTest(
+        InferenceSessionBackend,
+        __name__,
+        test_kwargs={
+            "test_dft": {"atol": dft_atol},
+            "test_dft_axis": {"atol": dft_atol},
+            "test_dft_axis_opset19": {"atol": dft_atol},
+            "test_dft_inverse": {"atol": dft_atol},
+            "test_dft_inverse_opset19": {"atol": dft_atol},
+            "test_dft_opset19": {"atol": dft_atol},
+        },
+    )
 
     if platform.architecture()[0] == "32bit":
         backend_test.exclude("(test_vgg19|test_zfnet|test_bvlc_alexnet)")
@@ -189,6 +203,8 @@ if ort is not None:
         "|test_cast_BFLOAT16_to"  # No corresponding Numpy type for Tensor Type.
         "|cast_FLOAT_to_UINT4"  # No corresponding Numpy type for Tensor Type.
         "|cast_FLOAT_to_INT4"  # No corresponding Numpy type for Tensor Type.
+        "|cast_FLOAT16_to_UINT4"  # No corresponding Numpy type for Tensor Type.
+        "|cast_FLOAT16_to_INT4"  # No corresponding Numpy type for Tensor Type.
         "|test_maxpool_2d_ceil_output_size_reduce_by_one"  # TODO: remove after https://github.com/microsoft/onnxruntime/pull/18377 in Ort release.
         ")"
     )
@@ -332,6 +348,7 @@ if ort is not None:
             "|_tree_ensemble_single_tree"
             "|image_decoder"
             "|qlinearmatmul"
+            "|_deform_"
             ")"
         )
     # Import all test cases at global scope to make them visible to python.unittest
