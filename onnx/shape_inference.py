@@ -26,48 +26,6 @@ from onnx import (
 
 GraphInferencer = C.GraphInferencer
 
-
-def _do_inferencing(
-    self, input_types: list[TypeProto], input_data: list[TensorProto]
-) -> list[TypeProto]:
-    input_types_bytes = [proto.SerializeToString() for proto in input_types]
-    input_data_bytes = [proto.SerializeToString() for proto in input_data]
-    ret = self.__impl.__do_inferencing(input_types_bytes, input_data_bytes)
-    return [TypeProto.FromString(data) for data in ret]
-
-
-GraphInferencer.do_inferencing = _do_inferencing  # type: ignore
-
-
-def _parse_to_proto(attr, proto_type):
-    def impl(self, *args, **kwargs):
-        data = getattr(self, attr)(*args, **kwargs)
-        return data if data is None else proto_type.FromString(data)
-
-    return impl
-
-
-InferenceContext = C.InferenceContext
-InferenceContext.get_attribute = _parse_to_proto("__get_attribute", AttributeProto)  # type: ignore
-InferenceContext.get_input_type = _parse_to_proto("__get_input_type", TypeProto)  # type: ignore
-InferenceContext.get_input_data = _parse_to_proto("__get_input_data", TensorProto)  # type: ignore
-InferenceContext.get_input_sparse_data = _parse_to_proto(  # type: ignore
-    "__get_input_sparse_data", SparseTensorProto
-)
-InferenceContext.get_symbolic_input = _parse_to_proto(  # type: ignore
-    "__get_symbolic_input", TensorShapeProto
-)
-InferenceContext.get_output_type = _parse_to_proto("__get_output_type", TypeProto)  # type: ignore
-
-
-def _op_set_output_type(self, idx: int, output: TypeProto):
-    data = output.SerializeToString()
-    self.__set_output_type(idx, data)
-
-
-InferenceContext.set_output_type = _op_set_output_type  # type: ignore
-
-
 def infer_shapes(
     model: ModelProto | bytes,
     check_type: bool = False,

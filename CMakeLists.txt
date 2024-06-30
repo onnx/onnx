@@ -541,7 +541,25 @@ if(BUILD_ONNX_PYTHON)
     endif()
   endif()
 
-  add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  set(SOURCE_FILE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+
+  # In order to keep the versions of the third-party libraries consistent,
+  # use the source files directly.
+  set(PYBIND11_PROTOBUF_DIR "${ONNX_ROOT}/third_party/pybind11_protobuf/")
+  if(EXISTS "${PYBIND11_PROTOBUF_DIR}")
+    set(SOURCE_FILE
+      "${SOURCE_FILE}"
+      ${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/native_proto_caster.h
+      ${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/enum_type_caster.h
+      ${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_cast_util.cc
+      ${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_cast_util.h
+      ${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_caster_impl.h
+    )
+  else()
+    message(FATAL_ERROR "cannot find pybind11_protobuf")
+  endif()
+
+  add_library(onnx_cpp2py_export MODULE "${SOURCE_FILE}")
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
@@ -565,7 +583,8 @@ if(BUILD_ONNX_PYTHON)
 
   target_include_directories(onnx_cpp2py_export PUBLIC
     "${pybind11_INCLUDE_DIRS}"
-    "${PYTHON_INCLUDE_DIRS}")
+    "${PYTHON_INCLUDE_DIRS}"
+    "${PYBIND11_PROTOBUF_DIR}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
