@@ -5,6 +5,7 @@
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11_protobuf/native_proto_caster.h>
 
 #include <climits>
 #include <limits>
@@ -106,6 +107,8 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
 }
 
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+  pybind11_protobuf::ImportNativeProtoCasters();
+
   onnx_cpp2py_export.doc() = "Python interface to ONNX";
 
   onnx_cpp2py_export.attr("ONNX_ML") = py::bool_(
@@ -402,10 +405,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           })
       .def(
           "set_type_and_shape_inference_function",
-          [](OpSchema* op, const std::function<void(InferenceContext*)>& func) {
+          [](OpSchema& op, const std::function<void(InferenceContext*)>& func) -> OpSchema& {
             auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
-            return op->TypeAndShapeInferenceFunction(wrapper);
-          });
+            return op.TypeAndShapeInferenceFunction(wrapper);
+          },
+          py::return_value_policy::reference_internal);
 
   defs.def(
           "has_schema",
@@ -638,124 +642,26 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   py::class_<InferenceContext> inference_ctx(shape_inference, "InferenceContext", "Inference context");
 
-  inference_ctx.def("__get_attribute", [](InferenceContext* ctx, std::string name) -> py::object {
-    if (ctx == nullptr) {
-      fail_shape_inference("Internal error: `ctx` is nullptr in `__get_attribute`");
-    }
-    auto attr = ctx->getAttribute(name);
-    if (attr == nullptr) {
-      return py::none();
-    }
-    std::string data;
-    attr->SerializeToString(&data);
-    return py::bytes(data);
-  });
+  inference_ctx.def("get_attribute", &InferenceContext::getAttribute);
   inference_ctx.def("get_num_inputs", &InferenceContext::getNumInputs);
   inference_ctx.def("has_input", &InferenceContext::hasInput);
-  inference_ctx.def("__get_input_type", [](InferenceContext* ctx, size_t index) -> py::object {
-    if (ctx == nullptr) {
-      fail_shape_inference("Internal error: `ctx` is nullptr in `__get_input_type`");
-    }
-    auto type = ctx->getInputType(index);
-    if (type == nullptr) {
-      return py::none();
-    }
-    std::string data;
-    type->SerializeToString(&data);
-    return py::bytes(data);
-  });
-  inference_ctx.def("__get_input_data", [](InferenceContext* ctx, size_t index) -> py::object {
-    if (ctx == nullptr) {
-      fail_shape_inference("Internal error: `ctx` is nullptr in `__get_input_data`");
-    }
-    auto tensor = ctx->getInputData(index);
-    if (tensor == nullptr) {
-      return py::none();
-    }
-    std::string data;
-    tensor->SerializeToString(&data);
-    return py::bytes(data);
-  });
-  inference_ctx.def("__get_input_sparse_data", [](InferenceContext* ctx, size_t index) -> py::object {
-    if (ctx == nullptr) {
-      fail_shape_inference("Internal error: `ctx` is nullptr in `__get_input_sparse_data`");
-    }
-    auto stensor = ctx->getInputSparseData(index);
-    if (stensor == nullptr) {
-      return py::none();
-    }
-    std::string data;
-    stensor->SerializeToString(&data);
-    return py::bytes(data);
-  });
-  inference_ctx.def("__get_symbolic_input", [](InferenceContext* ctx, size_t index) -> py::object {
-    if (ctx == nullptr) {
-      fail_shape_inference("Internal error: `ctx` is nullptr in `__get_symbolic_input`");
-    }
-    auto shape = ctx->getSymbolicInput(index);
-    if (shape == nullptr) {
-      return py::none();
-    }
-    std::string data;
-    shape->SerializeToString(&data);
-    return py::bytes(data);
-  });
-  inference_ctx.def("__get_graph_attribute_inferencer", &InferenceContext::getGraphAttributeInferencer);
+  inference_ctx.def("get_input_type", &InferenceContext::getInputType);
+  inference_ctx.def("get_input_data", &InferenceContext::getInputData);
+  inference_ctx.def("get_input_sparse_data", &InferenceContext::getInputSparseData);
+  inference_ctx.def("get_symbolic_input", &InferenceContext::getSymbolicInput);
+  inference_ctx.def("get_graph_attribute_inferencer", &InferenceContext::getGraphAttributeInferencer);
   inference_ctx.def("get_num_outputs", &InferenceContext::getNumOutputs);
-  inference_ctx.def("__get_output_type", [](InferenceContext* ctx, size_t index) -> py::object {
-    if (ctx == nullptr) {
-      fail_shape_inference("Internal error: `ctx` is nullptr in `__get_output_type`");
+  inference_ctx.def("get_output_type", &InferenceContext::getOutputType, py::return_value_policy::reference);
+  inference_ctx.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
+    auto* dst = self.getOutputType(idx);
+    if (dst == nullptr || dst == &src) {
+      return;
     }
-    auto type = ctx->getOutputType(index);
-    if (type == nullptr) {
-      return py::none();
-    }
-    std::string data;
-    type->SerializeToString(&data);
-    return py::bytes(data);
-  });
-  inference_ctx.def("__set_output_type", [](InferenceContext* ctx, size_t index, py::bytes bytes) {
-    if (ctx == nullptr) {
-      fail_shape_inference("Internal error: `ctx` is nullptr in `__set_output_type`");
-    }
-    auto type = ctx->getOutputType(index);
-    if (type == nullptr) {
-      fail_shape_inference("Output index out of bounds. index: ", index, ", output number: ", ctx->getNumOutputs());
-    }
-    ParseProtoFromPyBytes(type, bytes);
+    dst->CopyFrom(src);
   });
 
   py::class_<GraphInferencer> graph_inferencer(shape_inference, "GraphInferencer", "Graph Inferencer");
-  graph_inferencer.def(
-      "__do_inferencing",
-      [](GraphInferencer* inferencer,
-         const std::vector<py::bytes>& input_types,
-         const std::vector<py::bytes>& input_data) {
-        std::vector<TypeProto> type_proto;
-        std::vector<TensorProto> tensor_proto;
-        std::vector<const TypeProto*> type_inputs;
-        std::vector<const TensorProto*> tensor_inputs;
-        for (const auto& bytes : input_types) {
-          TypeProto proto{};
-          ParseProtoFromPyBytes(&proto, bytes);
-          type_proto.emplace_back(proto);
-          type_inputs.emplace_back(&type_proto.back());
-        }
-        for (const auto& bytes : input_data) {
-          TensorProto proto{};
-          ParseProtoFromPyBytes(&proto, bytes);
-          tensor_proto.emplace_back(proto);
-          tensor_inputs.emplace_back(&tensor_proto.back());
-        }
-        auto ret = inferencer->doInferencing(type_inputs, tensor_inputs);
-        std::vector<py::bytes> out;
-        for (const auto& type : ret) {
-          std::string data;
-          type->SerializeToString(&data);
-          out.emplace_back(py::bytes(data));
-        }
-        return out;
-      });
+  graph_inferencer.def("do_inferencing", &GraphInferencer::doInferencing);
 
   shape_inference.def(
       "infer_shapes",
