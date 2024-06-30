@@ -14,17 +14,11 @@ from typing import Sequence
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
-from onnx import (
-    AttributeProto,
-    FunctionProto,
-    ModelProto,
-    SparseTensorProto,
-    TensorProto,
-    TensorShapeProto,
-    TypeProto,
-)
+from onnx import AttributeProto, FunctionProto, ModelProto, TypeProto
 
 GraphInferencer = C.GraphInferencer
+InferenceContext = C.InferenceContext
+
 
 def infer_shapes(
     model: ModelProto | bytes,
