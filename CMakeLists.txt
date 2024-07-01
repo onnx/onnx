@@ -559,7 +559,7 @@ if(BUILD_ONNX_PYTHON)
     if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
       add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
     else()
-      message(FATAL_ERROR "cannot find pybind")
+      message(FATAL_ERROR "cannot find pybind at '${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h'")
     endif()
   endif()
 

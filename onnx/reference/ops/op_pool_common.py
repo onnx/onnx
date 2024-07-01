@@ -249,7 +249,7 @@ def pool(
             y[shape] = f(window_vals)
         else:
             y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
-    return y
+    return y.astype(padded.dtype)
 
 
 class CommonPool(OpRun):

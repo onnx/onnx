@@ -59,8 +59,9 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
     if reduction == "none":
         scattered[tuple(idx)] = updates[tuple(updates_idx)]
     else:
-        idx, updates_idx = make_indices_for_duplicate(idx), make_indices_for_duplicate(
-            updates_idx
+        idx, updates_idx = (
+            make_indices_for_duplicate(idx),
+            make_indices_for_duplicate(updates_idx),
         )
         for iter, idx_set in enumerate(idx):  # noqa: A001
             if reduction == "add":

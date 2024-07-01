@@ -19,7 +19,7 @@ def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # t
     h_sqrt = np.sqrt(h_new) + epsilon
     # Apply ADAGRAD update rule.
     x_new = x - r_ * g_regularized / h_sqrt
-    return (x_new, h_new)
+    return (x_new.astype(x.dtype), h_new.astype(h.dtype))
 
 
 class Adagrad(OpRunTraining):

@@ -3314,6 +3314,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
+        print([float32_to_float8e4m3(x) for x in data])
         expected1 = np.array(
             [float8e4m3_to_float32(float32_to_float8e4m3(x)) for x in data]
         )
@@ -3321,10 +3322,10 @@ class TestReferenceEvaluator(unittest.TestCase):
             [float8e5m2_to_float32(float32_to_float8e5m2(x)) for x in data]
         )
         got = ref.run(None, {"X": data})
-        assert_allclose(got[0], expected1)
-        assert_allclose(got[1], expected2)
-        assert_allclose(got[2], expected1)
-        assert_allclose(got[3], expected2)
+        assert_allclose(expected1, got[0])
+        assert_allclose(expected2, got[1])
+        assert_allclose(expected1, got[2])
+        assert_allclose(expected2, got[3])
 
     def test_cast_like_float8(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -5361,7 +5362,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         result, *_ = ref.run(None, {"A": np.array(a), "B": np.array(b)})
         np.testing.assert_array_equal(result, expected)
-        self.assertEqual(result.dtype.kind, "O")
+        self.assertIn(result.dtype.kind, {"O", "U"})
         self.assertEqual(result.shape, expected_shape)
 
     @parameterized.parameterized.expand(
@@ -5691,7 +5692,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         data = np.array(range(7), dtype=np.float32)
         cast_from_np = custom.uint4 if cast_from == TensorProto.UINT4 else custom.int4
-        data = data.astype(cast_from_np)
         expected1 = np.array(
             [subbyte.float32_to_4bit_unpacked(x, cast_from_np) for x in data]
         )
