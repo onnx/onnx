@@ -484,7 +484,7 @@ foo (x) => (y) {
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   check_model(model);
 
-  ShapeInferenceOptions options{true, 1, true};
+  ShapeInferenceOptions options{true, FailAnyInferenceError, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
 }
 
@@ -550,7 +550,7 @@ foo (x) => (y) {
 
   check_model(model);
 
-  ShapeInferenceOptions options{true, 1, true};
+  ShapeInferenceOptions options{true, FailAnyInferenceError, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
 }
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 SKIP_VERSION_CONVERTER_MODELS = {
     "vision/classification/inception_and_googlenet/inception_v2/model/inception-v2-6.onnx",  # the converted opset 7 model cannot pass shape inference:
-    # [ShapeInferenceError] (op_type:Mul, node name: ): [ShapeInferenceError] Inferred shape and existing shape differ in dimension 0: (64) vs (1)
+    # [ShapeError] (op_type:Mul, node name: ): [ShapeError] Inferred shape and existing shape differ in dimension 0: (64) vs (1)
     "vision/classification/resnet/preproc/resnet-preproc-v1-18.onnx",  # preprocessing model contains unknown domain "local"
     "vision/classification/vgg/model/vgg16-bn-7.onnx",  # version_converter/adapters/transformers.h:30: operator(): Assertion `node->i(attr) == value` failed: Attribute spatial must have value 1
     "vision/classification/vgg/model/vgg19-bn-7.onnx",  # version_converter/adapters/transformers.h:30: operator(): Assertion `node->i(attr) == value` failed: Attribute spatial must have value 1

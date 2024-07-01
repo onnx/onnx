@@ -412,7 +412,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   std::vector<const TypeProto*> subgraphInputTypes = {&simple_tensor, &simple_tensor};
 
   std::vector<const TensorProto*> subgraphInputData = {};
-  ShapeInferenceOptions options{false, 0, false};
+  ShapeInferenceOptions options{false, IgnoreInferenceError, false};
   auto output = graphInferencer.doInferencing(subgraphInputTypes, subgraphInputData);
 
   // check the subgraph outputs had their shape inferred when we called
@@ -513,7 +513,7 @@ void ParseAndInfer(ModelProto& model, const char* modelStr) {
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
 
-  ShapeInferenceOptions options{true, 1, true};
+  ShapeInferenceOptions options{true, FailAnyInferenceError, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
 }
 
