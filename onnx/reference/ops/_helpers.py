@@ -11,7 +11,7 @@ from onnx.reference.op_run import OpRun, _split_class_name
 
 
 def build_registered_operators_any_domain(
-    module_context: dict[str, Any]
+    module_context: dict[str, Any],
 ) -> dict[str, dict[int | None, OpRun]]:
     reg_ops: dict[str, dict[int | None, OpRun]] = {}
     for class_name, class_type in module_context.items():

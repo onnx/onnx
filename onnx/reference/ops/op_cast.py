@@ -6,6 +6,15 @@ from __future__ import annotations
 import numpy as np
 
 from onnx import subbyte
+from onnx._custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+    int4,
+    uint4,
+)
 from onnx.helper import (
     float32_to_bfloat16,
     float32_to_float8e4m3,
@@ -18,15 +27,6 @@ from onnx.numpy_helper import (
     float8e5m2_to_float32,
 )
 from onnx.onnx_pb import TensorProto
-from onnx.reference.custom_element_types import (
-    bfloat16,
-    float8e4m3fn,
-    float8e4m3fnuz,
-    float8e5m2,
-    float8e5m2fnuz,
-    int4,
-    uint4,
-)
 from onnx.reference.op_run import OpRun
 
 
@@ -94,6 +94,7 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
             for i in range(y.shape[0]):
                 el = subbyte.float32_to_4bit_unpacked(xf[i], signed=signed)
                 y[i] = el
+            # This operator preduces a tensor with the same shape for INT4.
             return y.reshape(x.shape)
 
     f8back = {

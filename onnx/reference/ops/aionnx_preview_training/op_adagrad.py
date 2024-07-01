@@ -48,8 +48,17 @@ class Adagrad(OpRunTraining):
             hs.append(b)
         return tuple(xs + hs)
 
-    def _run1(self, r, t, x, g, h, decay_factor=None, epsilon=None, norm_coefficient=None):  # type: ignore
+    def _run1(
+        self, r, t, x, g, h, decay_factor=None, epsilon=None, norm_coefficient=None
+    ):  # type: ignore
         x_new, h_new = _apply_adagrad(
-            r, t, x, g, h, norm_coefficient, epsilon, decay_factor  # type: ignore
+            r,
+            t,
+            x,
+            g,
+            h,
+            norm_coefficient,
+            epsilon,
+            decay_factor,  # type: ignore
         )
         return x_new, h_new
