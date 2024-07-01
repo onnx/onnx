@@ -3472,6 +3472,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           auto& input_shape = getInputShape(ctx, 0);
+          if (input_shape.dim_size() < 2) {
+            fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".");
+          }
           auto signal_dim = input_shape.dim(1);
           if (!signal_dim.has_dim_value()) {
             return;
