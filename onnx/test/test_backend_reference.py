@@ -200,6 +200,9 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
 
+if sys.version_info <= (3, 9):
+    backend_test.exclude("test_image_decoder_decode_")
+
 if sys.platform == "darwin":
     # FIXME: https://github.com/onnx/onnx/issues/5792
     backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
