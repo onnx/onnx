@@ -25,7 +25,7 @@ def gemm_reference_implementation(
 
     Y = alpha * np.dot(A, B) + beta * C
 
-    return Y
+    return Y.astype(A.dtype)
 
 
 class Gemm(Base):
