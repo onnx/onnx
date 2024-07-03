@@ -1345,7 +1345,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* MatMul_ver13_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1943,7 +1943,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(defs::math::utils::QLinearMatMulShapeInference));
 
 static const char* MatMulInteger_ver10_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 )DOC";
 
@@ -3472,6 +3472,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           auto& input_shape = getInputShape(ctx, 0);
+          if (input_shape.dim_size() < 2) {
+            fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".");
+          }
           auto signal_dim = input_shape.dim(1);
           if (!signal_dim.has_dim_value()) {
             return;
