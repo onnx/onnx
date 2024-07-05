@@ -434,6 +434,10 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(string_list, list(tensor.string_data))
 
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.26.0"),
+        "The test requires numpy 1.26.0 or later",
+    )
     def test_make_bfloat16_tensor(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
         np_array = np.array(
@@ -525,6 +529,10 @@ class TestHelperTensorFunctions(unittest.TestCase):
         expected = np.array([0, 0.5, 1, 49152, 96, 0, 0], dtype=np.float32)
         np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT8E5M2FNUZ), ynp)  # type: ignore[arg-type]
 
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.26.0"),
+        "The test requires numpy 1.26.0 or later",
+    )
     def test_make_bfloat16_tensor_raw(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
         np_array = np.array(
@@ -701,6 +709,10 @@ class TestHelperTensorFunctions(unittest.TestCase):
         itertools.product(
             (TensorProto.UINT4, TensorProto.INT4), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
         )
+    )
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.26.0"),
+        "The test requires numpy 1.26.0 or later",
     )
     def test_make_4bit_raw_tensor(self, dtype, dims) -> None:
         type_range = {
