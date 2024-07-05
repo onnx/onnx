@@ -85,8 +85,8 @@ def _create_inference_session(model: onnx.ModelProto, device: str):
                 ) from e
             return _create_inference_session(new_model, device)
         raise RuntimeError(
-              f"Unable to create inference session due to {e}. "
-              f"Model is:\n\n{onnx.printer.to_text(model)}"
+            f"Unable to create inference session due to {e}. "
+            f"Model is:\n\n{onnx.printer.to_text(model)}"
         ) from e
     except Exception as e:
         raise RuntimeError(
