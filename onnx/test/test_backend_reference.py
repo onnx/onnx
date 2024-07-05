@@ -220,6 +220,9 @@ if version_utils.numpy_older_than("1.21.5"):
     backend_test.exclude("test_dft_axis_opset19")
     backend_test.exclude("test_dft_inverse_opset19")
 
+if version_utils.pillow_older_than("10.0"):
+    backend_test.exclude("test_image_decoder_decode_webp_rgb")
+
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
 
