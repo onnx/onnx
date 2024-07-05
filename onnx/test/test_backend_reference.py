@@ -222,6 +222,7 @@ if version_utils.numpy_older_than("1.21.5"):
 
 if version_utils.pillow_older_than("10.0"):
     backend_test.exclude("test_image_decoder_decode_webp_rgb")
+    backend_test.exclude("test_image_decoder_decode_jpeg2k_rgb")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
