@@ -80,13 +80,13 @@ def _create_inference_session(model: onnx.ModelProto, device: str):
             except Exception as ne:
                 raise RuntimeError(
                     f"convert_version was not able to downgrade the opset from "
-                    f"{current_opset}, new_opset={new_opset}. "
+                    f"{current_opset}, new_opset={current_opset - 1} due to {ne}"
                     f"Model is:\n\n{onnx.printer.to_text(model)}"
                 ) from e
             return _create_inference_session(new_model, device)
         raise RuntimeError(
               f"Unable to create inference session due to {e}. Model is:\n\n{onnx.printer.to_text(model)}"
-        ) from e    
+        ) from e
     except Exception as e:
         raise RuntimeError(
             f"Unable to create inference session due to {e}. Model is:\n\n{onnx.printer.to_text(model)}"
