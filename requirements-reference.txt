@@ -1,2 +1,2 @@
 google-re2
-Pillow>=10.4
+Pillow
