@@ -69,9 +69,27 @@ def _create_inference_session(model: onnx.ModelProto, device: str):
         raise ValueError(f"Unexpected device {device!r}.")
     try:
         session = ort.InferenceSession(model.SerializeToString(), providers=providers)
+    except ort.capi.onnxruntime_pybind11_state.InvalidArgument as e:
+        if "is under development and support for this is limited" in str(e):
+            # decrease the opset
+            current_opset = min(d.version for d in model.opset_import if d.domain == "")
+            try:
+                new_model = onnx.version_converter.convert_version(
+                    model, current_opset - 1
+                )
+            except Exception as ne:
+                raise RuntimeError(
+                    f"convert_version was not able to downgrade the opset from "
+                    f"{current_opset}, new_opset={new_opset}. "
+                    f"Model is:\n\n{onnx.printer.to_text(model)}"
+                ) from e
+            return _create_inference_session(new_model, device)
+        raise RuntimeError(
+              f"Unable to create inference session due to {e}. Model is:\n\n{onnx.printer.to_text(model)}"
+        ) from e    
     except Exception as e:
         raise RuntimeError(
-            f"Unable to create inference session. Model is:\n\n{onnx.printer.to_text(model)}"
+            f"Unable to create inference session due to {e}. Model is:\n\n{onnx.printer.to_text(model)}"
         ) from e
     return session
 
@@ -108,7 +126,19 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
 
 
 if ort is not None:
-    backend_test = onnx.backend.test.BackendTest(InferenceSessionBackend, __name__)
+    dft_atol = 1e-3
+    backend_test = onnx.backend.test.BackendTest(
+        InferenceSessionBackend,
+        __name__,
+        test_kwargs={
+            "test_dft": {"atol": dft_atol},
+            "test_dft_axis": {"atol": dft_atol},
+            "test_dft_axis_opset19": {"atol": dft_atol},
+            "test_dft_inverse": {"atol": dft_atol},
+            "test_dft_inverse_opset19": {"atol": dft_atol},
+            "test_dft_opset19": {"atol": dft_atol},
+        },
+    )
 
     if platform.architecture()[0] == "32bit":
         backend_test.exclude("(test_vgg19|test_zfnet|test_bvlc_alexnet)")
@@ -159,294 +189,16 @@ if ort is not None:
         "|test_quantizelinear_int4"  # No corresponding Numpy type for Tensor Type.
         "|test_dequantizelinear_uint4"  # No corresponding Numpy type for Tensor Type.
         "|test_dequantizelinear_int4"  # No corresponding Numpy type for Tensor Type.
-        "|test_cast_UINT4_to_FLOAT"  # No corresponding Numpy type for Tensor Type.
-        "|test_cast_INT4_to_FLOAT"  # No corresponding Numpy type for Tensor Type.
-        "|test_cast_UINT4_to_FLOAT16"  # No corresponding Numpy type for Tensor Type.
-        "|test_cast_INT4_to_FLOAT16"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_UINT4_to"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_INT4_to"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_UINT4_to"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_INT4_to"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_BFLOAT16_to"  # No corresponding Numpy type for Tensor Type.
+        "|cast_FLOAT_to_UINT4"  # No corresponding Numpy type for Tensor Type.
+        "|cast_FLOAT_to_INT4"  # No corresponding Numpy type for Tensor Type.
+        "|cast_FLOAT16_to_UINT4"  # No corresponding Numpy type for Tensor Type.
+        "|cast_FLOAT16_to_INT4"  # No corresponding Numpy type for Tensor Type.
         "|test_maxpool_2d_ceil_output_size_reduce_by_one"  # TODO: remove after https://github.com/microsoft/onnxruntime/pull/18377 in Ort release.
-        ")"
-    )
-
-    # Exclude all tests that require IR10 until onnxruntime aligns
-    # TODO: Unwaive tests once onnxruntime supports Opset21/IR10 https://github.com/onnx/onnx/issues/5840
-    backend_test.exclude(
-        "("
-        "test_cast_"
-        "|test_castlike_"
-        "|test_constant"
-        "|test_edge_pad_cpu"
-        "|test_flatten_"
-        "|test_identity"
-        "|test_reflect_pad"
-        "|test_reshape_"
-        "|test_shape_"
-        "|test_size_"
-        "|test_squeeze_"
-        "|test_transpose_"
-        "|test_unsqueeze_"
-        "|test_wrap_pad_"
-        "|test_acos_cpu"
-        "|test_acos_example_cpu"
-        "|test_acosh_cpu"
-        "|test_acosh_example_cpu"
-        "|test_asin_cpu"
-        "|test_asin_example_cpu"
-        "|test_asinh_cpu"
-        "|test_asinh_example_cpu"
-        "|test_atan_cpu"
-        "|test_atan_example_cpu"
-        "|test_atanh_cpu"
-        "|test_atanh_example_cpu"
-        "|test_averagepool_1d_default_cpu"
-        "|test_averagepool_2d_ceil_cpu"
-        "|test_averagepool_2d_default_cpu"
-        "|test_averagepool_2d_dilations_cpu"
-        "|test_averagepool_2d_pads_count_include_pad_cpu"
-        "|test_averagepool_2d_pads_cpu"
-        "|test_averagepool_2d_precomputed_pads_count_include_pad_cpu"
-        "|test_averagepool_2d_precomputed_pads_cpu"
-        "|test_averagepool_2d_precomputed_same_upper_cpu"
-        "|test_averagepool_2d_precomputed_strides_cpu"
-        "|test_averagepool_2d_same_lower_cpu"
-        "|test_averagepool_2d_same_upper_cpu"
-        "|test_averagepool_2d_strides_cpu"
-        "|test_averagepool_3d_default_cpu"
-        "|test_averagepool_3d_dilations_large_count_include_pad_is_0_ceil_mode_is_False_cpu"
-        "|test_averagepool_3d_dilations_large_count_include_pad_is_0_ceil_mode_is_True_cpu"
-        "|test_averagepool_3d_dilations_large_count_include_pad_is_1_ceil_mode_is_False_cpu"
-        "|test_averagepool_3d_dilations_large_count_include_pad_is_1_ceil_mode_is_True_cpu"
-        "|test_averagepool_3d_dilations_small_cpu"
-        "|test_basic_conv_with_padding_cpu"
-        "|test_basic_conv_without_padding_cpu"
-        "|test_conv_with_autopad_same_cpu"
-        "|test_conv_with_strides_and_asymmetric_padding_cpu"
-        "|test_conv_with_strides_no_padding_cpu"
-        "|test_conv_with_strides_padding_cpu"
-        "|test_convtranspose_1d_cpu"
-        "|test_convtranspose_3d_cpu"
-        "|test_convtranspose_autopad_same_cpu"
-        "|test_convtranspose_cpu"
-        "|test_convtranspose_dilations_cpu"
-        "|test_convtranspose_kernel_shape_cpu"
-        "|test_convtranspose_output_shape_cpu"
-        "|test_convtranspose_pad_cpu"
-        "|test_convtranspose_pads_cpu"
-        "|test_cos_cpu"
-        "|test_cos_example_cpu"
-        "|test_cosh_cpu"
-        "|test_cosh_example_cpu"
-        "|test_det_2d_cpu"
-        "|test_det_nd_cpu"
-        "|test_dropout_default_cpu"
-        "|test_dropout_default_mask_cpu"
-        "|test_dropout_default_mask_ratio_cpu"
-        "|test_dropout_default_ratio_cpu"
-        "|test_elu_cpu"
-        "|test_elu_default_cpu"
-        "|test_elu_example_cpu"
-        "|test_eyelike_populate_off_main_diagonal_cpu"
-        "|test_eyelike_with_dtype_cpu"
-        "|test_eyelike_without_dtype_cpu"
-        "|test_globalaveragepool_cpu"
-        "|test_globalaveragepool_precomputed_cpu"
-        "|test_gridsample_aligncorners_true_cpu"
-        "|test_gridsample_bicubic_align_corners_0_additional_1_cpu"
-        "|test_gridsample_bicubic_align_corners_1_additional_1_cpu"
-        "|test_gridsample_bicubic_cpu"
-        "|test_gridsample_bilinear_align_corners_0_additional_1_cpu"
-        "|test_gridsample_bilinear_align_corners_1_additional_1_cpu"
-        "|test_gridsample_bilinear_cpu"
-        "|test_gridsample_border_padding_cpu"
-        "|test_gridsample_cpu"
-        "|test_gridsample_nearest_align_corners_0_additional_1_cpu"
-        "|test_gridsample_nearest_align_corners_1_additional_1_cpu"
-        "|test_gridsample_nearest_cpu"
-        "|test_gridsample_reflection_padding_cpu"
-        "|test_gridsample_volumetric_bilinear_align_corners_0_cpu"
-        "|test_gridsample_volumetric_bilinear_align_corners_1_cpu"
-        "|test_gridsample_volumetric_nearest_align_corners_0_cpu"
-        "|test_gridsample_volumetric_nearest_align_corners_1_cpu"
-        "|test_gridsample_zeros_padding_cpu"
-        "|test_gru_defaults_cpu"
-        "|test_gru_seq_length_cpu"
-        "|test_gru_with_initial_bias_cpu"
-        "|test_hardsigmoid_cpu"
-        "|test_hardsigmoid_default_cpu"
-        "|test_hardsigmoid_example_cpu"
-        "|test_hardswish_cpu"
-        "|test_hardswish_expanded_cpu"
-        "|test_lppool_1d_default_cpu"
-        "|test_lppool_2d_default_cpu"
-        "|test_lppool_2d_dilations_cpu"
-        "|test_lppool_2d_pads_cpu"
-        "|test_lppool_2d_same_lower_cpu"
-        "|test_lppool_2d_same_upper_cpu"
-        "|test_lppool_2d_strides_cpu"
-        "|test_lppool_3d_default_cpu"
-        "|test_lstm_defaults_cpu"
-        "|test_lstm_with_initial_bias_cpu"
-        "|test_lstm_with_peepholes_cpu"
-        "|test_maxpool_1d_default_cpu"
-        "|test_maxpool_2d_ceil_cpu"
-        "|test_maxpool_2d_default_cpu"
-        "|test_maxpool_2d_dilations_cpu"
-        "|test_maxpool_2d_pads_cpu"
-        "|test_maxpool_2d_precomputed_pads_cpu"
-        "|test_maxpool_2d_precomputed_same_upper_cpu"
-        "|test_maxpool_2d_precomputed_strides_cpu"
-        "|test_maxpool_2d_same_lower_cpu"
-        "|test_maxpool_2d_same_upper_cpu"
-        "|test_maxpool_2d_strides_cpu"
-        "|test_maxpool_2d_uint8_cpu"
-        "|test_maxpool_3d_default_cpu"
-        "|test_maxpool_3d_dilations_cpu"
-        "|test_maxpool_3d_dilations_use_ref_impl_cpu"
-        "|test_maxpool_3d_dilations_use_ref_impl_large_cpu"
-        "|test_maxpool_with_argmax_2d_precomputed_pads_cpu"
-        "|test_maxpool_with_argmax_2d_precomputed_strides_cpu"
-        "|test_maxunpool_export_without_output_shape_cpu"
-        "|test_mish_cpu"
-        "|test_mish_expanded_cpu"
-        "|test_nllloss_NC_cpu"
-        "|test_nllloss_NC_expanded_cpu"
-        "|test_nllloss_NCd1_cpu"
-        "|test_nllloss_NCd1_expanded_cpu"
-        "|test_nllloss_NCd1_ii_cpu"
-        "|test_nllloss_NCd1_ii_expanded_cpu"
-        "|test_nllloss_NCd1_mean_weight_negative_ii_cpu"
-        "|test_nllloss_NCd1_mean_weight_negative_ii_expanded_cpu"
-        "|test_nllloss_NCd1_weight_cpu"
-        "|test_nllloss_NCd1_weight_expanded_cpu"
-        "|test_nllloss_NCd1_weight_ii_cpu"
-        "|test_nllloss_NCd1_weight_ii_expanded_cpu"
-        "|test_nllloss_NCd1d2_cpu"
-        "|test_nllloss_NCd1d2_expanded_cpu"
-        "|test_nllloss_NCd1d2_no_weight_reduction_mean_ii_cpu"
-        "|test_nllloss_NCd1d2_no_weight_reduction_mean_ii_expanded_cpu"
-        "|test_nllloss_NCd1d2_reduction_mean_cpu"
-        "|test_nllloss_NCd1d2_reduction_mean_expanded_cpu"
-        "|test_nllloss_NCd1d2_reduction_sum_cpu"
-        "|test_nllloss_NCd1d2_reduction_sum_expanded_cpu"
-        "|test_nllloss_NCd1d2_with_weight_cpu"
-        "|test_nllloss_NCd1d2_with_weight_expanded_cpu"
-        "|test_nllloss_NCd1d2_with_weight_reduction_mean_cpu"
-        "|test_nllloss_NCd1d2_with_weight_reduction_mean_expanded_cpu"
-        "|test_nllloss_NCd1d2_with_weight_reduction_sum_cpu"
-        "|test_nllloss_NCd1d2_with_weight_reduction_sum_expanded_cpu"
-        "|test_nllloss_NCd1d2_with_weight_reduction_sum_ii_cpu"
-        "|test_nllloss_NCd1d2_with_weight_reduction_sum_ii_expanded_cpu"
-        "|test_nllloss_NCd1d2d3_none_no_weight_negative_ii_cpu"
-        "|test_nllloss_NCd1d2d3_none_no_weight_negative_ii_expanded_cpu"
-        "|test_nllloss_NCd1d2d3_sum_weight_high_ii_cpu"
-        "|test_nllloss_NCd1d2d3_sum_weight_high_ii_expanded_cpu"
-        "|test_nllloss_NCd1d2d3d4d5_mean_weight_cpu"
-        "|test_nllloss_NCd1d2d3d4d5_mean_weight_expanded_cpu"
-        "|test_nllloss_NCd1d2d3d4d5_none_no_weight_cpu"
-        "|test_nllloss_NCd1d2d3d4d5_none_no_weight_expanded_cpu"
-        "|test_rnn_seq_length_cpu"
-        "|test_roialign_aligned_false_cpu"
-        "|test_roialign_aligned_true_cpu"
-        "|test_roialign_mode_max_cpu"
-        "|test_round_cpu"
-        "|test_selu_cpu"
-        "|test_selu_default_cpu"
-        "|test_selu_example_cpu"
-        "|test_simple_rnn_defaults_cpu"
-        "|test_simple_rnn_with_initial_bias_cpu"
-        "|test_sin_cpu"
-        "|test_sin_example_cpu"
-        "|test_sinh_cpu"
-        "|test_sinh_example_cpu"
-        "|test_softplus_cpu"
-        "|test_softplus_example_cpu"
-        "|test_softsign_cpu"
-        "|test_softsign_example_cpu"
-        "|test_tan_cpu"
-        "|test_tan_example_cpu"
-        "|test_thresholdedrelu_cpu"
-        "|test_thresholdedrelu_default_cpu"
-        "|test_thresholdedrelu_example_cpu"
-        "|test_resize_downsample_scales_cubic_A_n0p5_exclude_outside_cpu"
-        "|test_resize_downsample_scales_cubic_antialias_cpu"
-        "|test_resize_downsample_scales_cubic_cpu"
-        "|test_resize_downsample_scales_linear_antialias_cpu"
-        "|test_resize_downsample_scales_linear_cpu"
-        "|test_resize_downsample_scales_linear_half_pixel_symmetric_cpu"
-        "|test_resize_downsample_scales_nearest_cpu"
-        "|test_resize_downsample_sizes_cubic_antialias_cpu"
-        "|test_resize_downsample_sizes_cubic_cpu"
-        "|test_resize_downsample_sizes_linear_antialias_cpu"
-        "|test_resize_downsample_sizes_linear_pytorch_half_pixel_cpu"
-        "|test_resize_downsample_sizes_nearest_cpu"
-        "|test_resize_downsample_sizes_nearest_not_larger_cpu"
-        "|test_resize_downsample_sizes_nearest_not_smaller_cpu"
-        "|test_resize_tf_crop_and_resize_axes_2_3_cpu"
-        "|test_resize_tf_crop_and_resize_axes_3_2_cpu"
-        "|test_resize_tf_crop_and_resize_cpu"
-        "|test_resize_upsample_scales_cubic_A_n0p5_exclude_outside_cpu"
-        "|test_resize_upsample_scales_cubic_align_corners_cpu"
-        "|test_resize_upsample_scales_cubic_asymmetric_cpu"
-        "|test_resize_upsample_scales_cubic_cpu"
-        "|test_resize_upsample_scales_linear_align_corners_cpu"
-        "|test_resize_upsample_scales_linear_cpu"
-        "|test_resize_upsample_scales_linear_half_pixel_symmetric_cpu"
-        "|test_resize_upsample_scales_nearest_axes_2_3_cpu"
-        "|test_resize_upsample_scales_nearest_axes_3_2_cpu"
-        "|test_resize_upsample_scales_nearest_cpu"
-        "|test_resize_upsample_sizes_cubic_cpu"
-        "|test_resize_upsample_sizes_nearest_axes_2_3_cpu"
-        "|test_resize_upsample_sizes_nearest_axes_3_2_cpu"
-        "|test_resize_upsample_sizes_nearest_ceil_half_pixel_cpu"
-        "|test_resize_upsample_sizes_nearest_cpu"
-        "|test_resize_upsample_sizes_nearest_floor_align_corners_cpu"
-        "|test_resize_upsample_sizes_nearest_not_larger_cpu"
-        "|test_resize_upsample_sizes_nearest_round_prefer_ceil_asymmetric_cpu"
-        "|test_qlinearmatmul_2D_uint8_float32_cuda"
-        "|test_qlinearmatmul_2D_int8_float32_cpu"
-        "|test_image_decoder_decode_jpeg_rgb_cpu"
-        "|test_basic_deform_conv_without_padding_cuda"
-        "|test_qlinearmatmul_3D_int8_float16_cuda"
-        "|test_image_decoder_decode_bmp_rgb_cuda"
-        "|test_qlinearmatmul_2D_uint8_float16_cpu"
-        "|test_image_decoder_decode_jpeg2k_rgb_cuda"
-        "|test_image_decoder_decode_jpeg_bgr_cuda"
-        "|test_qlinearmatmul_3D_uint8_float32_cpu"
-        "|test_qlinearmatmul_3D_uint8_float16_cuda"
-        "|test_deform_conv_with_mask_bias_cpu"
-        "|test_qlinearmatmul_2D_int8_float16_cuda"
-        "|test_image_decoder_decode_jpeg_grayscale_cpu"
-        "|test_basic_deform_conv_without_padding_cpu"
-        "|test_qlinearmatmul_3D_int8_float32_cuda"
-        "|test_qlinearmatmul_3D_int8_float16_cpu"
-        "|test_qlinearmatmul_2D_int8_float32_cuda"
-        "|test_deform_conv_with_mask_bias_cuda"
-        "|test_image_decoder_decode_tiff_rgb_cuda"
-        "|test_image_decoder_decode_jpeg2k_rgb_cpu"
-        "|test_image_decoder_decode_jpeg_rgb_cuda"
-        "|test_image_decoder_decode_jpeg_grayscale_cuda"
-        "|test_qlinearmatmul_3D_uint8_float32_cuda"
-        "|test_image_decoder_decode_png_rgb_cpu"
-        "|test_image_decoder_decode_png_rgb_cuda"
-        "|test_image_decoder_decode_bmp_rgb_cpu"
-        "|test_qlinearmatmul_3D_uint8_float16_cpu"
-        "|test_deform_conv_with_multiple_offset_groups_cuda"
-        "|test_image_decoder_decode_webp_rgb_cpu"
-        "|test_basic_deform_conv_with_padding_cpu"
-        "|test_qlinearmatmul_2D_uint8_float16_cuda"
-        "|test_image_decoder_decode_webp_rgb_cuda"
-        "|test_basic_deform_conv_with_padding_cuda"
-        "|test_image_decoder_decode_pnm_rgb_cpu"
-        "|test_qlinearmatmul_3D_int8_float32_cpu"
-        "|test_image_decoder_decode_jpeg_bgr_cpu"
-        "|test_qlinearmatmul_2D_int8_float16_cpu"
-        "|test_image_decoder_decode_pnm_rgb_cuda"
-        "|test_deform_conv_with_multiple_offset_groups_cpu"
-        "|test_qlinearmatmul_2D_uint8_float32_cpu"
-        "|test_image_decoder_decode_tiff_rgb_cpu"
-        "|test_globalmaxpool_cpu"
-        "|test_globalmaxpool_precomputed_cpu"
-        "|test_instancenorm_example_cpu"
-        "|test_instancenorm_epsilon_cpu"
         ")"
     )
 
@@ -584,10 +336,12 @@ if ort is not None:
     if ort_version is not None and ort_version < Version("1.19"):
         backend_test.exclude(
             "("
-            "tree_ensemble_set_membership"
-            "|tree_ensemble_single_tree"
-            "|convtranspose_group_2"
-            "|dft"
+            "tree_ensemble_set_membership"  # ai.onnx.ml==5 not implemented
+            "|_tree_ensemble_single_tree"
+            "|image_decoder"
+            "|qlinearmatmul"
+            "|_deform_"
+            "|globalmaxpool"  # fail to downgrade opset
             ")"
         )
 
