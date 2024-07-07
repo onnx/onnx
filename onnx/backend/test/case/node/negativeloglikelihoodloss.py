@@ -10,7 +10,9 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def compute_negative_log_likelihood_loss(input, target, weight=None, reduction="mean", ignore_index=None):  # type: ignore
+def compute_negative_log_likelihood_loss(
+    input, target, weight=None, reduction="mean", ignore_index=None
+):  # type: ignore
     input_shape = input.shape
     if len(input_shape) == 1:
         raise RuntimeError("Unsupported shape")

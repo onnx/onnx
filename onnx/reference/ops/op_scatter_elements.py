@@ -88,55 +88,24 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
                         )
         return scattered
 
-    idx_xsection_shape = indices.shape[:axis] + indices.shape[axis + 1 :]
+    if len(indices.shape) == 4:
+        scattered = np.copy(data)
+        for a in range(indices.shape[0]):
+            for i in range(indices.shape[1]):
+                for j in range(indices.shape[2]):
+                    for k in range(indices.shape[3]):
+                        index = [a, i, j, k]
+                        index[axis] = indices[a, i, j, k]
+                        tuple_index = tuple(index)
+                        scattered[tuple_index] = f(
+                            scattered[tuple_index],
+                            updates[a, i, j, k],
+                        )
+        return scattered
 
-    def make_slice(arr, axis, i):  # type: ignore
-        slc = [slice(None)] * arr.ndim
-        slc[axis] = i
-        return slc
-
-    def unpack(packed):  # type: ignore
-        unpacked = packed[0]
-        for i in range(1, len(packed)):
-            unpacked = unpacked, packed[i]
-        return unpacked
-
-    # We use indices and axis parameters to create idx
-    # idx is in a form that can be used as a NumPy advanced
-    # indices for scattering of updates param. in data
-    idx = [
-        [
-            unpack(np.indices(idx_xsection_shape).reshape(indices.ndim - 1, -1)),
-            indices[tuple(make_slice(indices, axis, i))].reshape(1, -1)[0],
-        ]
-        for i in range(indices.shape[axis])
-    ]
-    idx = list(np.concatenate(idx, axis=1))
-    idx.insert(axis, idx.pop())
-
-    # updates_idx is a NumPy advanced indices for indexing
-    # of elements in the updates
-    updates_idx = list(idx)
-    updates_idx.pop(axis)
-    updates_idx.insert(  # type: ignore
-        axis,
-        np.repeat(np.arange(indices.shape[axis]), np.prod(idx_xsection_shape)),  # type: ignore
+    raise NotImplementedError(
+        f"ScatterND is not implement for indices.shape={indices.shape} and axis={axis}."
     )
-
-    scattered = np.copy(data)
-    if reduction == "min":
-        scattered[tuple(idx)] = np.minimum(
-            scattered[tuple(idx)], updates[tuple(updates_idx)]
-        )
-    elif reduction == "max":
-        scattered[tuple(idx)] = np.maximum(
-            scattered[tuple(idx)], updates[tuple(updates_idx)]
-        )
-    elif reduction == "add":
-        scattered[tuple(idx)] += updates[tuple(updates_idx)]
-    else:
-        scattered[tuple(idx)] = updates[tuple(updates_idx)]
-    return scattered
 
 
 class ScatterElements(OpRun):

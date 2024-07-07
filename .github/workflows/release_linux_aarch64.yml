@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: LinuxRelease_aarch64
 
 on:
@@ -50,7 +54,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '${{ env.py }} -m pip install -q virtualenv && ${{ env.py }} -m venv .env && \
           source .env/bin/activate && \
-          ${{ env.py }} -m pip install -q -r requirements-release.txt && \
+          ${{ env.py }} -m pip install -q --only-binary google-re2 -r requirements-release.txt && \
           yum install -y protobuf-compiler protobuf-devel
           deactivate'
 
@@ -74,7 +78,7 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip install -q --upgrade pip && \
-          python -m pip install -q -r requirements-release.txt && \
+          python -m pip install -q --only-binary google-re2 -r requirements-release.txt && \
           pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
@@ -122,7 +126,7 @@ jobs:
           bash -exc '\
           source .env/bin/activate && \
           python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt && \
-          python -m pip install -q onnxruntime && \
+          python -m pip install -q onnxruntime==1.16.3 && \
           export ORT_MAX_IR_SUPPORTED_VERSION=9 \
           export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3 \
           export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20 \

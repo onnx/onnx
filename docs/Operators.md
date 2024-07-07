@@ -3298,7 +3298,12 @@ a2 = 0.08
 y = a0
 y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_blackmanwindow",
+)
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -3315,7 +3320,12 @@ y += a1 * np.cos(
 y += a2 * np.cos(
     4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_blackmanwindow_symmetric",
+)
 ```
 
 </details>
@@ -6449,6 +6459,152 @@ expect(node, inputs=[x, W], outputs=[y], name="test_convtranspose_dilations")
 
 
 <details>
+<summary>convtranspose_group_2</summary>
+
+```python
+x = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ]
+    ]
+).astype(np.float32)
+W = np.array(
+    [
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=2)
+
+y = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 3.0, 2.0],
+                [3.0, 8.0, 15.0, 12.0, 7.0],
+                [9.0, 21.0, 36.0, 27.0, 15.0],
+                [9.0, 20.0, 33.0, 24.0, 13.0],
+                [6.0, 13.0, 21.0, 15.0, 8.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name="test_convtranspose_group_2")
+```
+
+</details>
+
+
+<details>
+<summary>convtranspose_group_2_image_3</summary>
+
+```python
+x = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ],
+        [
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0], [24.0, 25.0, 26.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ],
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ],
+    ]
+).astype(np.float32)
+W = np.array(
+    [
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=2)
+
+y = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 3.0, 2.0],
+                [3.0, 8.0, 15.0, 12.0, 7.0],
+                [9.0, 21.0, 36.0, 27.0, 15.0],
+                [9.0, 20.0, 33.0, 24.0, 13.0],
+                [6.0, 13.0, 21.0, 15.0, 8.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ],
+        [
+            [
+                [18.0, 37.0, 57.0, 39.0, 20.0],
+                [39.0, 80.0, 123.0, 84.0, 43.0],
+                [63.0, 129.0, 198.0, 135.0, 69.0],
+                [45.0, 92.0, 141.0, 96.0, 49.0],
+                [24.0, 49.0, 75.0, 51.0, 26.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ],
+        [
+            [
+                [0.0, 1.0, 3.0, 3.0, 2.0],
+                [3.0, 8.0, 15.0, 12.0, 7.0],
+                [9.0, 21.0, 36.0, 27.0, 15.0],
+                [9.0, 20.0, 33.0, 24.0, 13.0],
+                [6.0, 13.0, 21.0, 15.0, 8.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ],
+    ]
+).astype(np.float32)
+
+expect(
+    node, inputs=[x, W], outputs=[y], name="test_convtranspose_group_2_image_3"
+)
+```
+
+</details>
+
+
+<details>
 <summary>convtranspose_pads</summary>
 
 ```python
@@ -7023,12 +7179,10 @@ W = np.ones((1, 1, 2, 2), dtype=np.float32)
 
 # Convolution with padding
 offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
-offset_with_padding[0, 0, 0, 0] = (
-    0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-)
-offset_with_padding[0, 5, 1, 2] = (
-    -0.1
-)  # w-coord of [1, 0] element of kernel, at output position [1, 2]
+# h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_with_padding[0, 0, 0, 0] = 0.5
+# w-coord of [1, 0] element of kernel, at output position [1, 2]
+offset_with_padding[0, 5, 1, 2] = -0.1
 
 node_with_padding = onnx.helper.make_node(
     "DeformConv",
@@ -7058,12 +7212,10 @@ expect(
 
 # Convolution without padding
 offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
-offset_without_padding[0, 0, 0, 0] = (
-    0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-)
-offset_without_padding[0, 5, 0, 1] = (
-    -0.1
-)  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+# h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_without_padding[0, 0, 0, 0] = 0.5
+# w-coord of [1, 0] element of kernel, at output position [0, 1]
+offset_without_padding[0, 5, 0, 1] = -0.1
 
 node_without_padding = onnx.helper.make_node(
     "DeformConv",
@@ -7103,12 +7255,10 @@ W = np.ones((1, 1, 2, 2), dtype=np.float32)
 B = np.ones((1,), dtype=np.float32)
 
 offset = np.zeros((1, 8, 2, 2), dtype=np.float32)
-offset[0, 0, 0, 0] = (
-    0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-)
-offset[0, 5, 0, 1] = (
-    -0.1
-)  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+# h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset[0, 0, 0, 0] = 0.5
+# w-coord of [1, 0] element of kernel, at output position [0, 1]
+offset[0, 5, 0, 1] = -0.1
 
 mask = np.ones((1, 4, 2, 2), dtype=np.float32)
 mask[0, 2, 1, 1] = 0.2  # [1, 0] element of kernel at output position [1, 1]
@@ -7152,12 +7302,10 @@ X.shape = (1, 2, 3, 3)
 W = np.ones((1, 2, 2, 2), dtype=np.float32)
 
 offset = np.zeros((1, 16, 2, 2), dtype=np.float32)
-offset[0, 0, 0, 0] = (
-    0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
-)
-offset[0, 13, 0, 1] = (
-    -0.1
-)  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+# h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
+offset[0, 0, 0, 0] = 0.5
+# w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+offset[0, 13, 0, 1] = -0.1
 
 node = onnx.helper.make_node(
     "DeformConv",
@@ -11684,7 +11832,12 @@ size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
 y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_hammingwindow",
+)
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -11696,7 +11849,12 @@ a1 = 1 - a0
 y = a0 - a1 * np.cos(
     2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_hammingwindow_symmetric",
+)
 ```
 
 </details>
@@ -11759,7 +11917,9 @@ size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
 y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_hannwindow")
+expect(
+    node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hannwindow"
+)
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -11771,7 +11931,12 @@ a1 = 0.5
 y = a0 - a1 * np.cos(
     2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_hannwindow_symmetric",
+)
 ```
 
 </details>
@@ -15156,7 +15321,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_3d_default")
 
 ### <a name="MatMul"></a><a name="matmul">**MatMul**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
 #### Version
 
@@ -15224,7 +15389,7 @@ expect(node, inputs=[a, b], outputs=[c], name="test_matmul_4d")
 
 ### <a name="MatMulInteger"></a><a name="matmulinteger">**MatMulInteger**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 
 #### Version
@@ -20058,7 +20223,7 @@ expect(
 
 ### <a name="QLinearMatMul"></a><a name="qlinearmatmul">**QLinearMatMul**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
   and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
   For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
@@ -20309,7 +20474,7 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, rendering the axis unnecessary in this scenario.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 <dt><tt>output_dtype</tt> : int (default is 0)</dt>
@@ -22601,7 +22766,7 @@ expect(
     node,
     inputs=[data, axes],
     outputs=[reduced],
-    name="test_reduce_min_empty_set",
+    name="test_reduce_max_empty_set",
 )
 ```
 
@@ -23687,7 +23852,7 @@ expect(
     node,
     inputs=[data, axes],
     outputs=[reduced],
-    name="test_reduce_sum_negative_axes_keepdims_random",
+    name="test_reduce_sum_empty_axes_input_noop",
 )
 ```
 
@@ -25467,7 +25632,7 @@ expect(
     node,
     inputs=[data, roi, sizes],
     outputs=[output],
-    name="test_resize_tf_crop_and_resize",
+    name="test_resize_tf_crop_and_resize_extrapolation_value",
 )
 ```
 
@@ -26399,7 +26564,7 @@ expect(
     node,
     inputs=[data, sizes],
     outputs=[output],
-    name="test_resize_upsample_sizes_nearest_not_larger",
+    name="test_resize_upsample_sizes_nearest_not_smaller",
 )
 ```
 
@@ -27082,6 +27247,8 @@ x = np.array(
         -2.8,
     ]
 ).astype(np.float32)
+
+# expected output
 y = np.array(
     [
         0.0,
@@ -27100,9 +27267,7 @@ y = np.array(
         -2.0,
         -3.0,
     ]
-).astype(
-    np.float32
-)  # expected output
+).astype(np.float32)
 expect(node, inputs=[x], outputs=[y], name="test_round")
 ```
 
@@ -27181,6 +27346,7 @@ for i in range(nstfts):
     complex_out = np.fft.fft(signal[0, start:stop, 0])[0:onesided_length]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 
+output = output.astype(signal.dtype)
 expect(node, inputs=[signal, step, length], outputs=[output], name="test_stft")
 
 node = onnx.helper.make_node(
@@ -27206,6 +27372,8 @@ for i in range(nstfts):
         0:onesided_length
     ]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
+window = window.astype(signal.dtype)
+output = output.astype(signal.dtype)
 expect(
     node,
     inputs=[signal, step, window],
@@ -34676,6 +34844,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behavior changed with numpy >= 2.0
+inverse_indices = inverse_indices.squeeze()
 # print(y)
 # [[1. 0. 0.]
 #  [2. 3. 4.]]
@@ -34720,6 +34890,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behavior changed with numpy >= 2.0
+inverse_indices = inverse_indices.squeeze()
 # print(y)
 # [[[0. 1.]
 #  [1. 1.]
@@ -34761,6 +34933,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behavior changed with numpy >= 2.0
+inverse_indices = inverse_indices.squeeze()
 # print(y)
 # [[0. 1.]
 #  [0. 1.]
