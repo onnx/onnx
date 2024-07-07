@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Windows_No_Exception_CI
 
 on:
@@ -25,14 +29,7 @@ jobs:
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
          path: ./onnx
-
-    - name: Checkout ONNX submodules
-      shell: bash
-      run: |
-         cd onnx
-         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-         git submodule sync --recursive
-         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+         submodules: 'recursive'
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
@@ -44,6 +41,11 @@ jobs:
       uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
       with:
         msbuild-architecture: ${{ matrix.architecture }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install cmake
 
     - name: Build and test ONNX binaries
       run: |
@@ -63,6 +65,7 @@ jobs:
 
         cd ..
         git clean -xdf
+        set ONNX_BUILD_TESTS=1
         echo "Build ONNX with non-static registration for testing selective ONNX schema loading"
         cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -DONNX_DISABLE_STATIC_REGISTRATION=ON -S . -B .setuptools-cmake-build\
 

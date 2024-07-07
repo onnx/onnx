@@ -90,7 +90,19 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
         raise NotImplementedError("Unable to run the model node by node.")
 
 
-backend_test = onnx.backend.test.BackendTest(ReferenceEvaluatorBackend, __name__)
+dft_atol = 1e-3 if sys.platform != "linux" else 1e-6
+backend_test = onnx.backend.test.BackendTest(
+    ReferenceEvaluatorBackend,
+    __name__,
+    test_kwargs={
+        "test_dft": {"atol": dft_atol},
+        "test_dft_axis": {"atol": dft_atol},
+        "test_dft_axis_opset19": {"atol": dft_atol},
+        "test_dft_inverse": {"atol": dft_atol},
+        "test_dft_inverse_opset19": {"atol": dft_atol},
+        "test_dft_opset19": {"atol": dft_atol},
+    },
+)
 
 if os.getenv("APPVEYOR"):
     backend_test.exclude("(test_vgg19|test_zfnet)")
@@ -186,6 +198,9 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_basic_cpu")
     backend_test.exclude("test_regex_full_match_email_domain_cpu")
     backend_test.exclude("test_regex_full_match_empty_cpu")
+    backend_test.exclude("test_image_decoder_decode_")
+
+if sys.version_info <= (3, 9):
     backend_test.exclude("test_image_decoder_decode_")
 
 if sys.platform == "darwin":

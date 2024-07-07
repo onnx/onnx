@@ -29,7 +29,8 @@ def float32_to_4bit_unpacked(
     if not isinstance(x, np.ndarray):
         x = np.asarray(x)
 
-    return np.rint(np.clip(x, clip_low, clip_high)).astype(dtype)  # type: ignore[no-any-return]
+    clipped = np.clip(x, clip_low, clip_high)
+    return np.rint(clipped).astype(dtype)  # type: ignore[no-any-return]
 
 
 def float32x2_to_4bitx2(
