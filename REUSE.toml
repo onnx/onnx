@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 version = 1
 SPDX-PackageName = "onnx"
 SPDX-PackageSupplier = "onnx-technical-discuss@lists.lfaidata.foundation"
