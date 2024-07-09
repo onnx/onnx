@@ -55,7 +55,9 @@ class Loop(OpRun):
         while cond and (M is None or it < M):
             self._log("  -- loop> {%r}", context)
             if len(body.input_names) > 0 and body.input_names[0] is not None:
-                inputs[body.input_names[0]] = np.array(it, dtype=None if M is None else M.dtype)  # type: ignore
+                inputs[body.input_names[0]] = np.array(
+                    it, dtype=None if M is None else M.dtype
+                )  # type: ignore
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
             outputs = self._run_body(inputs, attributes=attributes)  # type: ignore

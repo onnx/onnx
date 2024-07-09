@@ -34,7 +34,7 @@ a highly optimized end-to-end W4A4 encoder inference pipeline that supports vari
 As a result, two new types were introduced in `onnx==1.17.0` supporting a limited set of operators to enable compression using
 4 bit data-types:
 - `UINT4`: 4 bit unsigned integer, values in range [0, 15]
-- `INT4`: 4 bit signed integer, using two's complement represntation. Values in range [-8, 7].
+- `INT4`: 4 bit signed integer, using two's complement representation. Values in range [-8, 7].
 
 ## Cast
 
@@ -47,7 +47,7 @@ nearest-even integer and truncating.
 All 4 bit types are stored as 2x4bit in a single byte.
 The first element is stored in the 4 LSB and the second element is stored in the 4 MSB.
 i.e. for elements x, y, that are consecutive elements in the array:
-```{eval-rst}
+```
 pack(x,y): y << 4 | x & 0x0F
 unpack(z): x = z & 0x0F, y = z >> 4
 ```
