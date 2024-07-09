@@ -200,7 +200,8 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
 
-if sys.version_info <= (3, 9):
+if sys.version_info <= (3, 10):
+    #  AttributeError: module 'numpy.typing' has no attribute 'NDArray'
     backend_test.exclude("test_image_decoder_decode_")
 
 if sys.platform == "darwin":
