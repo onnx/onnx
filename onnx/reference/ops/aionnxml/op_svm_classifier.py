@@ -214,7 +214,10 @@ class SVMClassifier(OpRunAiOnnxMl):
             label = max_class
 
         new_scores = write_scores(
-            scores.size, scores, self._svm.atts.post_transform, write_additional_scores  # type: ignore
+            scores.size,
+            scores,
+            self._svm.atts.post_transform,
+            write_additional_scores,  # type: ignore
         )
         return label, new_scores
 
