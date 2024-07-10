@@ -4,15 +4,22 @@
 
 name: MacRelease
 
-on:
-  schedule:
-    # Run weekly on Monday 00:00
-    - cron:  '00 00 * * MON'
-  push:
-    branches: [main, rel-*]
-  pull_request:
-    branches: [main, rel-*]
-  workflow_dispatch:
+on:  # Specifies the event triggering the workflow
+  workflow_call:  # Indicates that this is a reusable workflow
+    inputs:
+      node:
+        required: true
+        type: string
+
+# on:
+#   schedule:
+#     # Run weekly on Monday 00:00
+#     - cron:  '00 00 * * MON'
+#   push:
+#     branches: [main, rel-*]
+#   pull_request:
+#     branches: [main, rel-*]
+#   workflow_dispatch:
 
 # Use MACOSX_DEPLOYMENT_TARGET=11.0 to produce compatible wheel
 env:
