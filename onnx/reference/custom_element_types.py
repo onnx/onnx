@@ -1,5 +1,5 @@
 # Copyright (c) ONNX Project Contributors
-#
+
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
@@ -10,13 +10,25 @@ try:
 except ImportError:
     ml_dtypes = None  # type: ignore[assignment]
 
-bfloat16 = np.dtype((np.uint16, {"bfloat16": (np.uint16, 0)}))
-float8e4m3fn = np.dtype((np.uint8, {"e4m3fn": (np.uint8, 0)}))
-float8e4m3fnuz = np.dtype((np.uint8, {"e4m3fnuz": (np.uint8, 0)}))
-float8e5m2 = np.dtype((np.uint8, {"e5m2": (np.uint8, 0)}))
-float8e5m2fnuz = np.dtype((np.uint8, {"e5m2fnuz": (np.uint8, 0)}))
-uint4 = np.dtype((np.uint8, {"uint4": (np.uint8, 0)}))
-int4 = np.dtype((np.int8, {"int4": (np.int8, 0)}))
+from onnx._custom_element_types import (
+    bfloat16,
+    float8e4m3fn,
+    float8e4m3fnuz,
+    float8e5m2,
+    float8e5m2fnuz,
+    int4,
+    uint4,
+)
+
+_supported_types = [
+    (bfloat16, "bfloat16", "bfloat16"),
+    (float8e4m3fn, "e4m3fn", "float8_e4m3fn"),
+    (float8e4m3fnuz, "e4m3fnuz", "float8_e4m3fnuz"),
+    (float8e5m2, "e5m2", "float8_e5m2"),
+    (float8e5m2fnuz, "e5m2fnuz", "float8_e5m2fnuz"),
+    (int4, "int4", "int4"),
+    (uint4, "uint4", "uint4"),
+]
 
 
 def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
@@ -31,8 +43,9 @@ def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
     """
     if not ml_dtypes:
         return array
-    if array.dtype == ml_dtypes.bfloat16:
-        return array.view(dtype=bfloat16)
+    for dtype, _, ml_name in _supported_types:
+        if array.dtype == getattr(ml_dtypes, ml_name):
+            return array.view(dtype=dtype)
     return array
 
 
@@ -46,17 +59,20 @@ def convert_to_ml_dtypes(array: np.ndarray) -> np.ndarray:
     Returns:
         numpy Numpy array with a dtype from ml_dtypes.
     """
-    dt = array.dtype
     new_dt = None
-    if dt == bfloat16 and array.dtype.descr[0][0] == "bfloat16":
-        assert ml_dtypes, (
-            f"ml_dtypes is not installed and the tensor cannot "
-            f"be converted into ml_dtypes.{array.dtype.descr[0][0]}"
-        )
 
-        new_dt = ml_dtypes.bfloat16
+    for dtype, name, ml_name in _supported_types:
+        if array.dtype == dtype and array.dtype.descr[0][0] == name:
+            assert ml_dtypes, (
+                f"ml_dtypes is not installed and the tensor cannot "
+                f"be converted into ml_dtypes.{array.dtype.descr[0][0]}"
+            )
+            new_dt = getattr(ml_dtypes, ml_name)
+            break
 
     if new_dt:
-        return array.view(dtype=new_dt).reshape(array.shape)
+        # int4, uint4, the representation uses 1 byte per element,
+        # only onnx storage uses 1 byte for two elements
+        return array.view(dtype=new_dt)
 
     return array
