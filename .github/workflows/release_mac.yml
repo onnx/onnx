@@ -16,7 +16,7 @@ on:
 
 # Use MACOSX_DEPLOYMENT_TARGET=11.0 to produce compatible wheel
 env:
-  MACOSX_DEPLOYMENT_TARGET: 11.0
+  MACOSX_DEPLOYMENT_TARGET: 11.7.10
 
 permissions:
   contents: read
