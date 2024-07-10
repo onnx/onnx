@@ -26,6 +26,11 @@ jobs:
     if: github.event_name != 'pull_request' || contains( github.event.pull_request.labels.*.name, 'test ONNX Model Zoo')
     runs-on: macOS-11
     steps:
+    - name: import ONNX 1.16.1
+      run: |
+        pip install onnx==1.16.1
+        python -c "import onnx"
+
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       name: Checkout repo
     - name: Checkout submodules

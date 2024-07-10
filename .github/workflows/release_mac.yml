@@ -34,6 +34,11 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
+    - name: import ONNX 1.16.1
+      run: |
+        pip install onnx==1.16.1
+        python -c "import onnx"
+
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - name: Checkout submodules
       shell: bash
