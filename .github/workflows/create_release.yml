@@ -6,4 +6,7 @@ name: Caller Workflow
 on: [push, pull_request]
 jobs:
   build:
-    uses: ./.github/workflows/release_linux_x86_64.yml    
+    uses: ./.github/workflows/release_linux_x86_64.yml
+    with:
+      input: 14
+      node: "14"

@@ -7,6 +7,9 @@ name: LinuxRelease_x86_64
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:
+      input:
+        required: true
+        type: number
       node:
         required: true
         type: string
