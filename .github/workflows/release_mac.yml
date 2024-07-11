@@ -78,10 +78,18 @@ jobs:
         fi
         python -m build --wheel
 
-    - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+    # - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+    #   with:
+    #     name: macos-wheel-${{ matrix.python-version }}
+    #     path: dist
+
+
+    - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
       with:
-        name: macos-wheel-${{ matrix.python-version }}
-        path: dist
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
+        path: |
+            ./dist/*.whl
+            ./dist/*.tar.gz
 
   test:
     needs: build
