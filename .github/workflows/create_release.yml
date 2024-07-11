@@ -6,7 +6,15 @@ name: Caller Workflow
 on: [push, pull_request]
 jobs:
   build:
-    uses: ./.github/workflows/release_linux_x86_64.yml
-    with:      
-      node: "14"
-      os: "linux"
+
+    strategy:
+      matrix:
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+
+    runs-on: ${{ matrix.os}}
+    steps: 
+
+      uses: ./.github/workflows/release_linux_x86_64.yml
+      with:      
+        node: "14"
+        os: "linux"
