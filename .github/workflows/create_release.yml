@@ -4,28 +4,30 @@
 
 name: Caller Workflow
 on: [push, pull_request]
-jobs:
-  build:
 
+#strategy:
+#  matrix:
+#    os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+
+jobs:
+ 
+
+  call-workflow-ubuntu:
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        os: ['ubuntu-latest']    
+    uses: andife/onnx/.github/workflows/release_linux_x86_64.yml@20240710_start_reuseableworkflow    
+    with:      
+      node: "14"
+      os: "linux"
 
-    runs-on: ${{ matrix.os}}
-    steps: 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  call-workflow-win:
+    strategy:
+      matrix:
+        os: ['windows-latest']    
+    uses: andife/onnx/.github/workflows/release_win.yml@20240710_start_reuseableworkflow   
+    with:      
+      node: "14"
+      os: "win"
 
-      - name: RunLinux
-        if: matrix.os == 'ubuntu-latest'
-        uses: andife/onnx/.github/workflows/release_linux_x86_64.yml@20240710_start_reuseableworkflow
-        with:      
-          node: "14"
-          os: "linux"
-
-      - name: RunLWindows
-        if: matrix.os == 'windows-latest'
-        uses: andife/onnx/.github/workflows/release_win.yml@20240710_start_reuseableworkflow
-        with:      
-          node: "14"
-          os: "win"
+    
