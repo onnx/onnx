@@ -13,8 +13,16 @@ jobs:
 
     runs-on: ${{ matrix.os}}
     steps: 
+      - name: RunLinux
+        if: matrix.os == 'ubuntu.latest'
+        uses: ./.github/workflows/release_linux_x86_64.yml
+        with:      
+          node: "14"
+          os: "linux"
 
-      uses: ./.github/workflows/release_linux_x86_64.yml
-      with:      
-        node: "14"
-        os: "linux"
+      - name: RunLinux
+        if: matrix.os == 'windows-latest'
+        uses: ./.github/workflows/release_win.yml
+        with:      
+          node: "14"
+          os: "win"
