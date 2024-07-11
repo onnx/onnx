@@ -18,14 +18,14 @@ jobs:
 
       - name: RunLinux
         if: matrix.os == 'ubuntu-latest'
-        uses: ./.github/workflows/release_linux_x86_64.yml
+        uses: andife/onnx/.github/workflows/release_linux_x86_64.yml@20240710_start_reuseableworkflow
         with:      
           node: "14"
           os: "linux"
 
       - name: RunLWindows
         if: matrix.os == 'windows-latest'
-        uses: ./.github/workflows/release_win.yml
+        uses: andife/onnx/.github/workflows/release_win.yml@20240710_start_reuseableworkflow
         with:      
           node: "14"
           os: "win"
