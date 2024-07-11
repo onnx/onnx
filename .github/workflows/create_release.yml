@@ -7,6 +7,6 @@ on: [push, pull_request]
 jobs:
   build:
     uses: ./.github/workflows/release_linux_x86_64.yml
-    with:
-      input: 14
+    with:      
       node: "14"
+      os: "linux"

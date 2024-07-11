@@ -10,6 +10,9 @@ on:  # Specifies the event triggering the workflow
       node:
         required: true
         type: string
+      os:
+        required: true
+        type: string
 
 # on:
 #   schedule:
