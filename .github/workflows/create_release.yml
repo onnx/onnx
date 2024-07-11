@@ -15,15 +15,15 @@ jobs:
     steps: 
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: RunLinux
-        if: matrix.os == 'ubuntu.latest'
+        if: matrix.os == 'ubuntu-latest'
         uses: ./.github/workflows/release_linux_x86_64.yml
         with:      
           node: "14"
           os: "linux"
 
-      - name: RunLinux
+      - name: RunLWindows
         if: matrix.os == 'windows-latest'
         uses: ./.github/workflows/release_win.yml
         with:      
