@@ -18,14 +18,14 @@ jobs:
 
       - name: RunLinux
         if: matrix.os == 'ubuntu-latest'
-        uses: ./release_linux_x86_64.yml
+        uses: ./.github/workflows/release_linux_x86_64.yml
         with:      
           node: "14"
           os: "linux"
 
       - name: RunLWindows
         if: matrix.os == 'windows-latest'
-        uses: ./release_win.yml
+        uses: ./.github/workflows/release_win.yml
         with:      
           node: "14"
           os: "win"
