@@ -26,14 +26,13 @@ jobs:
       node: "14"
       os: "win"
 
+  call-workflow-mac:
+    strategy:
+      matrix:
+        os: ['mac-latest']    
+    uses: andife/onnx/.github/workflows/release_mac.yml@20240710_start_reuseableworkflow   
+    with:      
+      node: "14"
+      os: "mac"
 
-    call-workflow-mac
-      strategy:
-        matrix:
-          os: ['mac-latest']    
-      uses: andife/onnx/.github/workflows/release_mac.yml@20240710_start_reuseableworkflow   
-      with:      
-        node: "14"
-        os: "mac"
-
-    
+  
