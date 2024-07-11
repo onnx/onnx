@@ -9,16 +9,18 @@ import tempfile
 import unittest
 
 import numpy as np
+import parameterized
 
 import onnx
 import onnx.helper as oh
 import onnx.numpy_helper as onh
-import parameterized
 
 
 class TestShapeInferenceIssue(unittest.TestCase):
-    @parameterized.parameterized.expand([False, True])
-    def test_issue_6182(self, convert_attribute):
+    @parameterized.parameterized.expand(
+        [(False, False), (False, True), (True, False), (True, True)]
+    )
+    def test_issue_6182(self, convert_attribute, full_check):
         # import torch
         # import onnx
         # class Linear(torch.nn.Module):
@@ -102,7 +104,7 @@ class TestShapeInferenceIssue(unittest.TestCase):
             )
 
             # Check the model
-            onnx.checker.check_model(model_path, full_check=True)
+            onnx.checker.check_model(model_path, full_check=full_check)
 
 
 if __name__ == "__main__":
