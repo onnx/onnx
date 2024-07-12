@@ -58,13 +58,13 @@ jobs:
         uses: sigstore/gh-action-sigstore-python@v2.1.1
         with:
           inputs: >-
-            ./dist/*.tar.gz
-            ./dist/*.whl
+            /home/runner/work/onnx/onnx/dist/*.tar.gz
+            /home/runner/work/onnx/onnx/dist/*.whl
   
       - name: Rename files # to match new file extension https://github.com/sigstore/sigstore-python/blob/main/CHANGELOG.md#changed
         run: |
           sudo apt install mmv 
-          mmv "./dist/*.sigstore" ./dist/#1.sigstore.json
+          mmv "/home/runner/work/onnx/onnx/dist/*.sigstore" /home/runner/work/onnx/onnx/dist/#1.sigstore.json
               
       - name: Upload artifact signatures to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
