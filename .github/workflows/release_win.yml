@@ -99,8 +99,8 @@ jobs:
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: |
-            ./dist/*.whl
-            ./dist/*.tar.gz
+            dist/*.whl
+            
 
     - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
