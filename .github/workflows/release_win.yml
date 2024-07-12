@@ -99,7 +99,7 @@ jobs:
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: |
-            dist/*.whl
+            d:\a\onnx\onnx\onnx\dist\*.whl
             
 
     - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
