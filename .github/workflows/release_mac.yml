@@ -14,15 +14,7 @@ on:  # Specifies the event triggering the workflow
         required: true
         type: string
 
-# on:
-#   schedule:
-#     # Run weekly on Monday 00:00
-#     - cron:  '00 00 * * MON'
-#   push:
-#     branches: [main, rel-*]
-#   pull_request:
-#     branches: [main, rel-*]
-#   workflow_dispatch:
+
 
 # Use MACOSX_DEPLOYMENT_TARGET=11.0 to produce compatible wheel
 env:
@@ -78,11 +70,7 @@ jobs:
           export ONNX_PREVIEW_BUILD=1
         fi
         python -m build --wheel
-
-    # - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
-    #   with:
-    #     name: macos-wheel-${{ matrix.python-version }}
-    #     path: dist
+    
 
 
     - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
