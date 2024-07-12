@@ -54,11 +54,10 @@ jobs:
           merge-multiple: true
 
 
-      - name: Sign the dists with Sigstore
+      - name: Sign the dists with Sigstore #/home/runner/work/onnx/onnx/dist/*.tar.gz
         uses: sigstore/gh-action-sigstore-python@v2.1.1
         with:
-          inputs: >-
-            /home/runner/work/onnx/onnx/dist/*.tar.gz
+          inputs: >-            
             /home/runner/work/onnx/onnx/dist/*.whl
   
       - name: Rename files # to match new file extension https://github.com/sigstore/sigstore-python/blob/main/CHANGELOG.md#changed
