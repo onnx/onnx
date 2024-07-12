@@ -7,9 +7,6 @@ name: MacRelease
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:
-      node:
-        required: true
-        type: string
       os:
         required: true
         type: string

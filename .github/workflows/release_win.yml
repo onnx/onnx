@@ -6,10 +6,7 @@ name: WindowsRelease
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
-    inputs:
-      node:
-        required: true
-        type: string
+    inputs:      
       os:
         required: true
         type: string
