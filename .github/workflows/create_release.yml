@@ -35,4 +35,46 @@ jobs:
       node: "14"
       os: "mac"
 
+
+  github-release:
+    name: Build distribution with poetry
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # IMPORTANT: mandatory for making GitHub Releases
+      id-token: write  # IMPORTANT: mandatory for sigstore
+
+    steps:
+    
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels* # TODO change back to python-wheels?
+          path: dist
+          merge-multiple: true
+
+
+      - name: Sign the dists with Sigstore
+        uses: sigstore/gh-action-sigstore-python@v2.1.1
+        with:
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
   
+      - name: Rename files # to match new file extension https://github.com/sigstore/sigstore-python/blob/main/CHANGELOG.md#changed
+        run: |
+          sudo apt install mmv 
+          mmv "./dist/*.sigstore" ./dist/#1.sigstore.json
+    
+
+            
+      - name: Upload artifact signatures to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # Upload to GitHub Release using the `gh` CLI.
+        # `dist/` contains the built packages, and the
+        # sigstore-produced signatures and certificates.
+        run: >-
+          gh release upload
+          '${{ github.ref_name }}' dist/** 
+          --repo '${{ github.repository }}'      
