@@ -15,14 +15,24 @@ on:
 
 jobs: 
 
-  call-workflow-ubuntu:
+  call-workflow-ubuntu_x86:
     strategy:
       matrix:
         os: ['ubuntu-latest']    
     uses: andife/onnx/.github/workflows/release_linux_x86_64.yml@20240710_start_reuseableworkflow    
     with:      
       node: "14"
-      os: "linux"
+      os: "linux_x86_64"
+
+
+  call-workflow-ubuntu_aarch64:
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']    
+    uses: andife/onnx/.github/workflows/release_linux_aarch64.yml@20240710_start_reuseableworkflow    
+    with:      
+      node: "14"
+      os: "linux_aarch64"
 
   # call-workflow-win:
   #   strategy:
@@ -42,12 +52,25 @@ jobs:
       node: "14"
       os: "mac"
 
+  # TODO: each for every OS?
+  # provenance:
+  #   name: Generate SLSA provenance data
+  #   needs: [build]
+  #   permissions:
+  #     actions: read # Needed for detection of GitHub Actions environment.
+  #     id-token: write # Needed for provenance signing and ID
+  #     contents: write  # Needed for release uploads, https://github.com/slsa-framework/slsa-github-generator/issues/2044 :( 
+  #   uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+  #   with:
+  #     base64-subjects: '${{ needs.build.outputs.hash }}'
+  #     # Upload provenance to a new release
+  #     upload-assets: true     
 
   github-release:
     name: Prepare Files for Github Release
     runs-on: ubuntu-latest
     needs: [call-workflow-ubuntu, call-workflow-mac]
-    if: always() && (needs.call-workflow-ubuntu.result == 'success') && ((needs.call-workflow-mac.result == 'success'))
+    if: always() && (needs.call-workflow-ubuntux86.result == 'success') && ((needs.call-workflow-mac.result == 'success'))
 
     permissions:
       contents: write  # IMPORTANT: mandatory for making GitHub Releases
@@ -80,10 +103,13 @@ jobs:
           path: |
               /home/runner/work/onnx/onnx/dist/*.sigstore.json
                 
-
+      # TODO
+      # at this point, we have the wheels and could check if they are usable by offline testing...continue-on-error: 
+      # For more information about environments and required approvals, see "Using environments for deployment." F
+      # We can use a separate requirement for deploay
 
       - name: Upload artifact signatures to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
+        if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes # TODO check exact variants
         env:
           GITHUB_TOKEN: ${{ github.token }}
         # Upload to GitHub Release using the `gh` CLI.
@@ -91,5 +117,12 @@ jobs:
         # sigstore-produced signatures and certificates.
         run: >-
           gh release upload
-          '${{ github.ref_name }}' dist/** 
-          --repo '${{ github.repository }}'      
+          '${{ github.ref_name }}' /home/runner/work/onnx/onnx/dist/**.sigstore 
+          --repo '${{ github.repository }}'  
+         
+    
+      # https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1     
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') # TODO check exact variants
+        
