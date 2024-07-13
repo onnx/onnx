@@ -75,8 +75,13 @@ jobs:
     if: always() && (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || ((needs.call-workflow-mac.result == 'success'))
 
     environment:
-      name: pypi # TODO: Does not yet exist, has to be created, see here: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
-      url: https://pypi.org/p/onnx
+      name: testpypi # TODO: Does not yet exist, has to be created, see here: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+      url: https://test.pypi.org/p/af-test-onnx-sigstore
+      #url: https://pypi.org/p/onnx
+
+    #environment:
+    #  name: pypi # TODO: Does not yet exist, has to be created, see here: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+    #  url: https://pypi.org/p/onnx
         
     permissions:
       contents: write  # IMPORTANT: mandatory for making GitHub Releases # TODO: check what is needed here?

@@ -10,6 +10,7 @@ set -e -x
 PY_VERSION=$1
 PLAT=$2
 GITHUB_EVENT_NAME=$3
+DATE_FOR_WEEKLY=$4
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
@@ -40,9 +41,16 @@ export CMAKE_ARGS="-DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python$PY_
 # Install Python dependency
 $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 
+todays_date=".dev" + $DATE_FOR_WEEKLY #datetime.date.today().strftime("%Y%m%d")
+sed ' 1 s/.*/$todays_date/' VERSION_NUMBER
+
 # Build wheels
 if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+    todays_date=".dev" + $DATE_FOR_WEEKLY #datetime.date.today().strftime("%Y%m%d")
+    sed -i ' 1 s/.*/$todays_date/' VERSION_NUMBER
+
+    #    _version += ".dev" + todays_date
     ONNX_PREVIEW_BUILD=1 $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
 else
     $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
