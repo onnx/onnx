@@ -43,7 +43,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2014_x86_64:latest
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }} $${{ inputs.currdate}}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }} ${{ inputs.currdate}}
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
