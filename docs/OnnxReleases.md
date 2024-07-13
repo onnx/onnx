@@ -157,6 +157,11 @@ Validation steps must be completed before this point! This is the point of new r
         * Add any additional commits that merged into the release in since wiki was written.
     * .tar.gz and .zip will be auto-generated after publishing the release.
 
+* a) The pipelines for different os variants start to run and save the wheels for all OS Version. Only if all all 4 release pipelines were successful the next preparation step is started
+* b) During the preparation step of the pipeline, the artifacts are merged and cryptographically signed with sigstore for supply chain security reasons
+* c) The final step is about i) publishing the wheels and tar.gz file to Official Pypypi, ii) adding the signing information to the official github release
+    * The step is paused (We use the feature of [deployment environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) until some reviewer say the wheels are ok)
+
 ## Upload to Official PyPI
 ### NOTES:
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
