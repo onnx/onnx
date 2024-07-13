@@ -41,7 +41,8 @@ export CMAKE_ARGS="-DPYTHON_INCLUDE_DIR=/opt/python/${PY_VER}/include/python$PY_
 # Install Python dependency
 $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 todays_date=".dev"$DATE_FOR_WEEKLY #datetime.date.today().strftime("%Y%m%d")
-sed " 1 s/.*/$todays_date/" VERSION_NUMBER
+cat VERSION_NUMBER
+sed -i " 1 s/.*/$todays_date/" 'VERSION_NUMBER'
 
 # Build wheels
 if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
