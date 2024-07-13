@@ -97,7 +97,7 @@ jobs:
 
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1     
-        if: github.event_name == 'schedule'
+        # if: github.event_name == 'schedule'
 
 
   prepare-release:
