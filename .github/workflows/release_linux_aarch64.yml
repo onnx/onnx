@@ -69,7 +69,7 @@ jobs:
           source .env/bin/activate && \
           yum install -y sudo && \
           sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
-          sudo .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }}
+          sudo .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }} ${{ inputs.currdate}}
           deactivate'
 
       # using created virtual environment in new container and testing the wheel
