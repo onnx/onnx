@@ -10,6 +10,9 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
+      currdate: # for weekly
+        required: true
+        type: string
 
 
 
@@ -26,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9'] #, '3.10', '3.11', '3.12']: Todo: Change back.... only limited for rework of the pipelines
         architecture: ['x64']
 
     steps:

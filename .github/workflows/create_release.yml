@@ -22,6 +22,7 @@ jobs:
     uses: andife/onnx/.github/workflows/release_linux_x86_64.yml@20240710_start_reuseableworkflow    
     with:            
       os: "linux_x86_64"
+      currdate: "20240708"
 
 
   call-workflow-ubuntu_aarch64:
@@ -31,6 +32,7 @@ jobs:
     uses: andife/onnx/.github/workflows/release_linux_aarch64.yml@20240710_start_reuseableworkflow    
     with:            
       os: "linux_aarch64"
+      currdate: "20240708"
 
   # call-workflow-win:
   #   strategy:
@@ -48,6 +50,7 @@ jobs:
     uses: andife/onnx/.github/workflows/release_mac.yml@20240710_start_reuseableworkflow   
     with:            
       os: "mac"
+      currdate: "20240708"
 
   # TODO: each for every OS?
   # provenance:
