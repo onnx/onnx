@@ -137,7 +137,7 @@ jobs:
       # We can use a separate requirement for deploay
 
   release:
-    name: Create Release
+    name: Release (Publish to pypi and add files to github release)
     runs-on: ubuntu-latest
     needs: [prepare-release]
     if: always() && (needs.prepare-release.result == 'success')
