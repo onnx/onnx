@@ -26,7 +26,6 @@ jobs:
       os: "linux_x86_64"
       currdate: "20240708"
 
-
   call-workflow-ubuntu_aarch64:
     strategy:
       matrix:
@@ -173,5 +172,5 @@ jobs:
       # https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1     
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') # TODO check exact variants
+        #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') # TODO check exact variants
         
