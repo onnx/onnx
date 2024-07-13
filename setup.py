@@ -76,6 +76,9 @@ except (OSError, subprocess.CalledProcessError):
 
 with open(os.path.join(TOP_DIR, "VERSION_NUMBER"), encoding="utf-8") as version_file:
     _version = version_file.read().strip()
+
+
+
     #if ONNX_PREVIEW_BUILD: # TODO: move to caller...
     #    # Create the dev build for weekly releases
     #    todays_date = datetime.date.today().strftime("%Y%m%d")
