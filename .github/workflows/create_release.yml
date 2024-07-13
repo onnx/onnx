@@ -91,7 +91,7 @@ jobs:
 
 
   prepare-release:
-    name: Release-Preparationejh(Github, pypi)
+    name: Release-Prep (p.ex. sigstore, pypi)
     runs-on: ubuntu-latest
     needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac]
     if: always() && (needs.call-workflow-ubuntu_x86.result == 'success') && (needs.call-workflow-ubuntu_aarch64.result == 'success') && ((needs.call-workflow-mac.result == 'success'))
