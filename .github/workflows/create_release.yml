@@ -63,6 +63,27 @@ jobs:
   #     # Upload provenance to a new release
   #     upload-assets: true     
 
+  publish-weekly:
+    name: Publish Weekly to PyPI
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write  # IMPORTANT: mandatory for making GitHub Releases # TODO: check what is needed here?
+      id-token: write  # IMPORTANT: mandatory for sigstore # TODO: check what is needed here?
+
+    steps:
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels* # TODO change back to python-wheels?
+          path: dist
+          merge-multiple: true
+
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1     
+        if: github.event_name == 'schedule'
+
+
   prepare-release:
     name: Prepare Files for Release (Github, pypi)
     runs-on: ubuntu-latest
@@ -99,6 +120,10 @@ jobs:
           name: sigstore-files
           path: |
               /home/runner/work/onnx/onnx/dist/*.sigstore.json
+
+
+      
+
                 
       # TODO
       # at this point, we have the wheels and could check if they are usable by offline testing...continue-on-error: 
