@@ -73,13 +73,7 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
-            ./dist/*.tar.gz
-
-    #- name: Upload wheel to PyPI weekly
-    #  if: (github.event_name == 'schedule') # Only triggered by weekly event
-    #  run: |
-    #    twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-    #    TEST_HUB=1 pytest
+            ./dist/*.tar.gz   
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}

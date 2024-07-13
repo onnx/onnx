@@ -110,7 +110,7 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
-    #- name: Upload wheel to PyPI weekly
+    #- name: Upload wheel to PyPI weekly # TODO: why only arm64?
     #  if: github.event_name == 'schedule' && matrix.target-architecture == 'arm64'  # Only triggered by weekly event
     #  run: |
     #    twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
