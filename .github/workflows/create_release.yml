@@ -66,10 +66,16 @@ jobs:
   publish-weekly:
     name: Publish Weekly to PyPI
     runs-on: ubuntu-latest
-    
+    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac]
+    if: always() && (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || ((needs.call-workflow-mac.result == 'success'))
+
+    environment:
+      name: pypi # TODO: Does not yet exist, has to be created, see here: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+      url: https://pypi.org/p/onnx
+        
     permissions:
       contents: write  # IMPORTANT: mandatory for making GitHub Releases # TODO: check what is needed here?
-      id-token: write  # IMPORTANT: mandatory for sigstore # TODO: check what is needed here?
+      id-token: write  # IMPORTANT: mandatory for trusted publishing (which means without api-token or password)
 
     steps:
 
