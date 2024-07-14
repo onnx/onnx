@@ -36,14 +36,14 @@ jobs:
       os: "linux_aarch64"
       currdate: "20240708"
 
-  # call-workflow-win:
-  #   strategy:
-  #     matrix:
-  #       os: ['windows-latest']    
-  #   uses: andife/onnx/.github/workflows/release_win.yml@20240710_start_reuseableworkflow   
-  #   with:      
-  #     node: "14"
-  #     os: "win"
+  call-workflow-win:
+    strategy:
+      matrix:
+        os: ['windows-latest']    
+    uses: andife/onnx/.github/workflows/release_win.yml@20240710_start_reuseableworkflow   
+    with:      
+      os: "win"
+      currdate: "20240708"
 
   call-workflow-mac:
     strategy:
