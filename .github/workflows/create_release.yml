@@ -71,8 +71,8 @@ jobs:
   publish-weekly:
     name: Publish Weekly to PyPI
     runs-on: ubuntu-latest
-    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac]
-    if: always() && (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || ((needs.call-workflow-mac.result == 'success'))
+    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win]
+    if: (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || ((needs.call-workflow-mac.result == 'success'))
 
     environment:
       name: testpypi # TODO: Does exist, has to be created, see here: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
