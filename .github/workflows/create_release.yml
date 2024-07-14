@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']    
-    uses: andife/onnx/.github/workflows/release_linux_x86_64.yml@20240710_start_reuseableworkflow    
+    uses: andife/onnx/.github/workflows/release_linux_x86_64.yml
     with:            
       os: "linux_x86_64"
       currdate: ${{needs.determine-date.outputs.output1}}
@@ -44,7 +44,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']    
-    uses: andife/onnx/.github/workflows/release_linux_aarch64.yml@20240710_start_reuseableworkflow    
+    uses: andife/onnx/.github/workflows/release_linux_aarch64.yml
     with:            
       os: "linux_aarch64"
       currdate: ${{needs.determine-date.outputs.output1}}
@@ -54,7 +54,7 @@ jobs:
     strategy:
       matrix:
         os: ['windows-latest']    
-    uses: andife/onnx/.github/workflows/release_win.yml@20240710_start_reuseableworkflow   
+    uses: andife/onnx/.github/workflows/release_win.yml
     with:      
       os: "win"
       currdate: ${{needs.determine-date.outputs.output1}}
@@ -64,7 +64,7 @@ jobs:
     strategy:
       matrix:
         os: ['mac-latest']    
-    uses: andife/onnx/.github/workflows/release_mac.yml@20240710_start_reuseableworkflow   
+    uses: andife/onnx/.github/workflows/release_mac.yml
     with:            
       os: "mac"
       currdate: ${{needs.determine-date.outputs.output1}}
