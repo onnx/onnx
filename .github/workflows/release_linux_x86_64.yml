@@ -13,6 +13,10 @@ on:  # Specifies the event triggering the workflow
       currdate: # for weekly
         required: true
         type: string
+      #  https://stackoverflow.com/questions/77960984/how-to-pass-an-input-as-list-to-a-reusable-github-actions-workflow
+      #list_python_version:
+      #  required: true
+      #  type: list
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -27,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.10'] # ['3.8', '3.9', '3.10', '3.11', '3.12']
         architecture: ['x64']
 
     steps:

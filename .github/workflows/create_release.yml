@@ -38,6 +38,7 @@ jobs:
     with:            
       os: "linux_x86_64"
       currdate: ${{needs.determine-date.outputs.output1}}
+      
 
   call-workflow-ubuntu_aarch64:
     needs: determine-date
@@ -54,7 +55,7 @@ jobs:
     strategy:
       matrix:
         os: ['windows-latest']    
-    uses: andife/onnx/.github/workflows/release_win.yml@main
+    uses: andife/onnx/.github/workflows/release_win_x86_64.yml@main
     with:      
       os: "win"
       currdate: ${{needs.determine-date.outputs.output1}}
