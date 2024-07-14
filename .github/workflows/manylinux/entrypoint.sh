@@ -4,6 +4,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+
+# the file is used for building python wheels
+
 set -e -x
 
 # CLI arguments

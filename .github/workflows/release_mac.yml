@@ -37,6 +37,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
     - name: Checkout submodules
       shell: bash
       run: |
@@ -67,6 +68,10 @@ jobs:
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         if [ '${{ github.event_name }}' == 'schedule' ]; then
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+          todays_date=".dev"'${{ inputs.currdate }}
+          cat VERSION_NUMBER
+          sed -i " 1 s/$/$todays_date/" 'VERSION_NUMBER'
+          cat VERSION_NUMBER
           export ONNX_PREVIEW_BUILD=1
         fi
         python -m build --wheel
@@ -139,21 +144,25 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
-    # # Only triggered by weekly event on certain CI
-    # - name: Build and upload source distribution to PyPI weekly
-    #   if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
-    #   run: |
-    #     # Build and upload source distribution to PyPI
-    #     git clean -xdf
-    #     sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-    #     ONNX_PREVIEW_BUILD=1 python -m build --sdist
-    #     twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
+     # Only triggered by weekly event on certain CI
+    - name: Build and upload source distribution to PyPI weekly
+      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+      run: |
+        # Build and upload source distribution to PyPI
+        git clean -xdf
+        sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+        todays_date=".dev"$DATE_FOR_WEEKLY 
+        cat VERSION_NUMBER
+        sed -i " 1 s/$/$todays_date/" 'VERSION_NUMBER'
+        cat VERSION_NUMBER
 
-    #     # Test weekly source distribution from PyPI
-    #     python -m pip uninstall -y onnx-weekly
-    #     python -m pip install setuptools
-    #     python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-    #     pytest
+        ONNX_PREVIEW_BUILD=1 python -m build --sdist
+        twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
+        # Test weekly source distribution from PyPI
+        python -m pip uninstall -y onnx-weekly
+        python -m pip install setuptools
+        python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
+        pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != '3.12'
