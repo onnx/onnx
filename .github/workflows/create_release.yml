@@ -21,11 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     # Map a step output to a job output
     outputs:
-      output1: ${{ steps.step1.outputs.date }}      
+      output1: ${{ steps.step1.outputs.currdate }}      
 
     steps:
       - id: step1
-        run: echo "date=${date +'%Y%m%d'}" >> "$GITHUB_OUTPUT"
+        run: echo "currdate=$(date +'%Y%m%d')" >> "$GITHUB_OUTPUT"
       
 
 
