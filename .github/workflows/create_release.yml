@@ -17,43 +17,57 @@ on:
 
 jobs: 
 
-  # Add job which save the current date to a variable
+  determine-date:
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      output1: ${{ steps.step1.outputs.date }}      
+
+    steps:
+      - id: step1
+        run: echo "date=${date +'%Y%m%d'}" >> "$GITHUB_OUTPUT"
+      
+
 
   call-workflow-ubuntu_x86:
+    needs: determine-date
     strategy:
       matrix:
         os: ['ubuntu-latest']    
     uses: andife/onnx/.github/workflows/release_linux_x86_64.yml@20240710_start_reuseableworkflow    
     with:            
       os: "linux_x86_64"
-      currdate: "20240708"
+      currdate: ${{needs.determine-date.outputs.output1}}
 
   call-workflow-ubuntu_aarch64:
+    needs: determine-date
     strategy:
       matrix:
         os: ['ubuntu-latest']    
     uses: andife/onnx/.github/workflows/release_linux_aarch64.yml@20240710_start_reuseableworkflow    
     with:            
       os: "linux_aarch64"
-      currdate: "20240708"
+      currdate: ${{needs.determine-date.outputs.output1}}
 
   call-workflow-win:
+    needs: determine-date
     strategy:
       matrix:
         os: ['windows-latest']    
     uses: andife/onnx/.github/workflows/release_win.yml@20240710_start_reuseableworkflow   
     with:      
       os: "win"
-      currdate: "20240708"
+      currdate: ${{needs.determine-date.outputs.output1}}
 
   call-workflow-mac:
+    needs: determine-date
     strategy:
       matrix:
         os: ['mac-latest']    
     uses: andife/onnx/.github/workflows/release_mac.yml@20240710_start_reuseableworkflow   
     with:            
       os: "mac"
-      currdate: "20240708"
+      currdate: ${{needs.determine-date.outputs.output1}}
 
   # TODO: each for every OS?
   # provenance:
