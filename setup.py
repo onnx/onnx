@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import contextlib
-import datetime
 import glob
 import logging
 import multiprocessing
