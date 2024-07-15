@@ -15,7 +15,15 @@ import numpy as np
 import parameterized
 
 import onnx
-from onnx import ModelProto, NodeProto, TensorProto, checker, helper, parser, shape_inference
+from onnx import (
+    ModelProto,
+    NodeProto,
+    TensorProto,
+    checker,
+    helper,
+    parser,
+    shape_inference,
+)
 from onnx.external_data_helper import (
     convert_model_from_external_data,
     convert_model_to_external_data,
@@ -811,7 +819,18 @@ class TestFunctionsAndSubGraphs(unittest.TestCase):
     def _check_is_external(self, tensor: TensorProto) -> None:
         self.assertEqual(tensor.data_location, TensorProto.EXTERNAL)
 
-    def _check (self, model: ModelProto, nodes: Sequence[NodeProto]) -> None:
+    def _check(self, model: ModelProto, nodes: Sequence[NodeProto]) -> None:
+        """Check that the tensors in the model are externalized.
+
+        The tensors in the specified sequence of Constant nodes are set to self._tensor,
+        an internal tensor. The model is then converted to external data format.
+        The tensors are then checked to ensure that they are externalized.
+
+        Arguments:
+            model: The model to check.
+            nodes: A sequence of Constant nodes.
+
+        """
         for node in nodes:
             self.assertEqual(node.op_type, "Constant")
             tensor = node.attribute[0].t
@@ -824,8 +843,6 @@ class TestFunctionsAndSubGraphs(unittest.TestCase):
             tensor = node.attribute[0].t
             self._check_is_external(tensor)
 
-    
-    @unittest.skip("This test is not working")
     def test_function(self) -> None:
         model_text = """
            <ir_version: 7,  opset_import: ["": 15, "local": 1]>
@@ -833,6 +850,8 @@ class TestFunctionsAndSubGraphs(unittest.TestCase):
             {
               Y = local.add(X)
             }
+
+            <opset_import: ["" : 15],  domain: "local">
             add (float[N] X) => (float[N] Y) {
               C = Constant <value = float[1] {1.0}> ()
               Y = Add (X, C)
