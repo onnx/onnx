@@ -42,7 +42,7 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
             for i in range(1, times + 1):
                 try:
                     return func(*args, **kwargs)
-                except Exception:  # noqa: BLE001, PERF203
+                except Exception:  # noqa: PERF203
                     print(f"{i} times tried")
                     if i == times:
                         raise
@@ -225,10 +225,14 @@ class Runner:
     @classmethod
     @retry_execute(3)
     def download_model(
-        cls, model_test: TestCase, model_dir: str, models_dir: str  # noqa: ARG003
+        cls,
+        model_test: TestCase,
+        model_dir: str,
+        models_dir: str,
     ) -> None:
         # On Windows, NamedTemporaryFile can not be opened for a
         # second time
+        del model_dir
         download_file = tempfile.NamedTemporaryFile(delete=False)
         try:
             download_file.close()
@@ -459,8 +463,8 @@ class Runner:
                     self.assert_similar_outputs(
                         ref_outputs,
                         outputs,
-                        rtol=model_test.rtol,
-                        atol=model_test.atol,
+                        rtol=kwargs.get("rtol", model_test.rtol),
+                        atol=kwargs.get("atol", model_test.atol),
                         model_dir=model_dir,
                     )
 
@@ -483,8 +487,8 @@ class Runner:
                 self.assert_similar_outputs(
                     ref_outputs,
                     outputs,
-                    rtol=model_test.rtol,
-                    atol=model_test.atol,
+                    rtol=kwargs.get("rtol", model_test.rtol),
+                    atol=kwargs.get("atol", model_test.atol),
                     model_dir=model_dir,
                 )
 

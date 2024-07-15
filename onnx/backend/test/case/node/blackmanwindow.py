@@ -26,7 +26,12 @@ class BlackmanWindow(Base):
         y = a0
         y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
         y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-        expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
+        expect(
+            node,
+            inputs=[size],
+            outputs=[y.astype(np.float32)],
+            name="test_blackmanwindow",
+        )
 
         # Test symmetric window
         node = onnx.helper.make_node(
@@ -43,4 +48,9 @@ class BlackmanWindow(Base):
         y += a2 * np.cos(
             4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
         )
-        expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
+        expect(
+            node,
+            inputs=[size],
+            outputs=[y.astype(np.float32)],
+            name="test_blackmanwindow_symmetric",
+        )

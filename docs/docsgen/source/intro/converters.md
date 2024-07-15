@@ -64,6 +64,9 @@ on numpy or scipy. The user must implement
 its transformer or predictor with ONNX primitives, whether or
 not it was implemented with numpy.
 
+## Alternatives
+One alternative for implementing ONNX export capability is to leverage standard protocols such as the [Array API standard](https://data-apis.org/array-api/latest/), which standardizes a common set of array operations. It enables code reuse across libraries like NumPy, JAX, PyTorch, CuPy and more. [ndonnx](https://github.com/Quantco/ndonnx) enables execution with an ONNX backend and instant ONNX export for Array API compliant code. This diminishes the need for dedicated converter library code since the same code used to implement most of a library can reused in ONNX conversion. It also provides a convenient primitive for converter authors looking for a NumPy-like experience when constructing ONNX graphs.
+
 ## Opsets
 
 ONNX releases packages with version numbers like

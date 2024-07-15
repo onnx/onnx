@@ -55,7 +55,7 @@ Then, after you have made changes to Python and C++ files:
 Assuming build succeed in the initial step, simply running
 
 ```sh
-pip install -e .
+pip install -e . -v
 ```
 
 from onnx root dir should work.
@@ -86,7 +86,7 @@ set ONNX_ML=1
 ```sh
 # UNIX
 export ONNX_ML=1
-pip install -e .
+pip install -e . -v
 python onnx/defs/gen_doc.py
 ```
 
@@ -146,7 +146,7 @@ python onnx/backend/test/stat_coverage.py
 
 Some functionalities are tested with googletest. Those tests are listed in `test/cpp`, and include tests for shape inference, data propagation, parser, and others.
 
-To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e .`.
+To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e . -v`.
 
 ##### Linux and MacOS
 

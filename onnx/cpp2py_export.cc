@@ -20,6 +20,10 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
+#if (PYBIND11_VERSION_MAJOR != 2 || PYBIND11_VERSION_MINOR < 12)
+#pragma error "Pybind11 must be >= 2.12 to be compatible with numpy 2.0."
+#endif
+
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
 using namespace pybind11::literals;

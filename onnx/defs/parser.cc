@@ -459,11 +459,19 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
     if (!Matches('}')) {
       do {
         switch (static_cast<TensorProto::DataType>(elem_type)) {
+          case TensorProto::DataType::TensorProto_DataType_INT4:
           case TensorProto::DataType::TensorProto_DataType_INT8:
           case TensorProto::DataType::TensorProto_DataType_INT16:
           case TensorProto::DataType::TensorProto_DataType_INT32:
+          case TensorProto::DataType::TensorProto_DataType_UINT4:
           case TensorProto::DataType::TensorProto_DataType_UINT8:
           case TensorProto::DataType::TensorProto_DataType_UINT16:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+          case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FN:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
           case TensorProto::DataType::TensorProto_DataType_BOOL:
             PARSE_TOKEN(intval);
             // TODO: check values are in the correct range.
@@ -478,10 +486,12 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
             PARSE_TOKEN(uintval);
             tensorProto.add_uint64_data(uintval);
             break;
+          case TensorProto::DataType::TensorProto_DataType_COMPLEX64:
           case TensorProto::DataType::TensorProto_DataType_FLOAT:
             PARSE_TOKEN(floatval);
             tensorProto.add_float_data(floatval);
             break;
+          case TensorProto::DataType::TensorProto_DataType_COMPLEX128:
           case TensorProto::DataType::TensorProto_DataType_DOUBLE:
             PARSE_TOKEN(dblval);
             tensorProto.add_double_data(dblval);

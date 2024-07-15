@@ -906,7 +906,7 @@ struct FunctionInferenceContext : public InferenceContext {
       const std::vector<TypeProto>& input_types,
       const std::vector<AttributeProto>& attributes,
       const ShapeInferenceOptions& options)
-      : input_types_(input_types), options_(options) {
+      : input_types_(input_types), options_(options), func_proto_(&func_proto) {
     for (const auto& attr : attributes) {
       attributesByName_[attr.name()] = &attr;
     }
@@ -971,11 +971,25 @@ struct FunctionInferenceContext : public InferenceContext {
     return std::move(output_types_);
   }
 
+  std::string getDisplayName() const override {
+    if (func_proto_ == nullptr)
+      return "";
+    if (func_proto_->domain().empty()) {
+      if (func_proto_->name().empty())
+        return "";
+      return MakeString("function ", func_proto_->name());
+    }
+    if (func_proto_->name().empty())
+      return MakeString("function [", func_proto_->domain(), "]");
+    return MakeString("function ", func_proto_->name(), "[", func_proto_->domain(), "]");
+  }
+
  private:
   const std::vector<TypeProto>& input_types_;
   std::vector<TypeProto> output_types_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   ShapeInferenceOptions options_;
+  const FunctionProto* func_proto_;
 };
 
 std::vector<TypeProto> InferFunctionOutputTypes(
