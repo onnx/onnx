@@ -9,7 +9,6 @@ import hashlib
 import json
 import os
 import sys
-import tarfile
 from io import BytesIO
 from os.path import join
 from typing import IO, Any, Dict, List, Optional, Set, Tuple, cast
@@ -288,35 +287,6 @@ def load(
     return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
 
 
-def _tar_members_filter(tar: tarfile.TarFile, base: str) -> list[tarfile.TarInfo]:
-    """Check that the content of ``tar`` will be extracted safely
-
-    Args:
-        tar: The tarball file
-        base: The directory where the tarball will be extracted
-
-    Returns:
-        list of tarball members
-    """
-    result = []
-    for member in tar:
-        member_path = os.path.join(base, member.name)
-        abs_base = os.path.abspath(base)
-        abs_member = os.path.abspath(member_path)
-        if not abs_member.startswith(abs_base):
-            raise RuntimeError(
-                f"The tarball member {member_path} in downloading model contains "
-                f"directory traversal sequence which may contain harmful payload."
-            )
-        elif member.issym() or member.islnk():
-            raise RuntimeError(
-                f"The tarball member {member_path} in downloading model contains "
-                f"symbolic links which may contain harmful payload."
-            )
-        result.append(member)
-    return result
-
-
 def download_model_with_test_data(
     model: str,
     repo: str = "onnx/models:main",
@@ -391,23 +361,14 @@ def download_model_with_test_data(
                 "download the model from the model hub."
             )
 
-    with tarfile.open(local_model_with_data_path) as model_with_data_zipped:
-        # FIXME: Avoid index manipulation with magic numbers
-        local_model_with_data_dir_path = local_model_with_data_path[
-            0 : len(local_model_with_data_path) - 7
-        ]
-        # Mitigate tarball directory traversal risks
-        if hasattr(tarfile, "data_filter"):
-            model_with_data_zipped.extractall(
-                path=local_model_with_data_dir_path, filter="data"
-            )
-        else:
-            model_with_data_zipped.extractall(
-                path=local_model_with_data_dir_path,
-                members=_tar_members_filter(
-                    model_with_data_zipped, local_model_with_data_dir_path
-                ),
-            )
+    # FIXME: Avoid index manipulation with magic numbers,
+    # remove ".tar.gz"
+    local_model_with_data_dir_path = local_model_with_data_path[
+        0 : len(local_model_with_data_path) - 7
+    ]
+    onnx.utils._extract_model_safe(
+        local_model_with_data_path, local_model_with_data_dir_path
+    )
     model_with_data_path = (
         local_model_with_data_dir_path
         + "/"
