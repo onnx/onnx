@@ -248,7 +248,7 @@ def _get_initializer_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorPro
 
 
 def _get_attribute_tensors_from_graph(
-    graph_or_function: GraphProto | FunctionProto,
+    graph_or_function: GraphProto | FunctionProto, /
 ) -> Iterable[TensorProto]:
     """Create an iterator of tensors from node attributes of an ONNX model graph/function."""
     for node in graph_or_function.node:
