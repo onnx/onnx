@@ -264,7 +264,7 @@ def _tar_members_filter(tar: tarfile.TarFile, base: str) -> list[tarfile.TarInfo
     return result
 
 
-def extract_model_safe(model_tar_path: str, local_model_with_data_dir_path: str) -> None:
+def extract_model_safe(model_tar_path: str | os.PathLike, local_model_with_data_dir_path: str | os.PathLike) -> None:
     """
     Safely extracts a tar file to a specified directory.
 
