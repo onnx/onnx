@@ -236,8 +236,7 @@ def extract_model(
 
 
 def _tar_members_filter(
-    tar: tarfile.TarFile,
-    base: str | os.PathLike
+    tar: tarfile.TarFile, base: str | os.PathLike
 ) -> list[tarfile.TarInfo]:
     """Check that the content of ``tar`` will be extracted safely
 
