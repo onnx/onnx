@@ -235,7 +235,10 @@ def extract_model(
         onnx.checker.check_model(output_path)
 
 
-def _tar_members_filter(tar: tarfile.TarFile, base: str | os.PathLike) -> list[tarfile.TarInfo]:
+def _tar_members_filter(
+    tar: tarfile.TarFile,
+    base: str | os.PathLike
+) -> list[tarfile.TarInfo]:
     """Check that the content of ``tar`` will be extracted safely
 
     Args:
@@ -266,7 +269,7 @@ def _tar_members_filter(tar: tarfile.TarFile, base: str | os.PathLike) -> list[t
 
 def _extract_model_safe(
     model_tar_path: str | os.PathLike, local_model_with_data_dir_path: str | os.PathLike
-    ) -> None:
+) -> None:
     """Safely extracts a tar file to a specified directory.
 
     This function ensures that the extraction process mitigates against
