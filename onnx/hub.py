@@ -369,7 +369,7 @@ def download_model_with_test_data(
     local_model_with_data_dir_path = local_model_with_data_path[
         0 : len(local_model_with_data_path) - 7
     ]
-    onnx.utils.extract_model_safe(local_model_with_data_path, local_model_with_data_dir_path)
+    onnx.utils._extract_model_safe(local_model_with_data_path, local_model_with_data_dir_path)
     model_with_data_path = (
         local_model_with_data_dir_path
         + "/"

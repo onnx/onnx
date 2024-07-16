@@ -242,7 +242,7 @@ class Runner:
             )
             urlretrieve(model_test.url, download_file.name)
             print("Done")
-            onnx.utils.extract_model_safe(download_file.name, models_dir)
+            onnx.utils._extract_model_safe(download_file.name, models_dir)
         except Exception as e:
             print(f"Failed to prepare data for model {model_test.model_name}: {e}")
             raise
