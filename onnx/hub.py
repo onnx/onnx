@@ -11,7 +11,6 @@ import hashlib
 import json
 import os
 import sys
-import tarfile
 from io import BytesIO
 from os.path import join
 from typing import IO, Any, Dict, List, cast
