@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # This standalone CI is needed for commenting in PRs from forks
 name: Post clang-tidy review comments
 

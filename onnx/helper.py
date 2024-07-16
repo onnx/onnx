@@ -23,6 +23,7 @@ from typing import (
 import google.protobuf.message
 import numpy as np
 
+import onnx._custom_element_types as custom_np_types
 from onnx import (
     IR_VERSION,
     AttributeProto,
@@ -1599,9 +1600,28 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     Returns:
         TensorsProto's data_type
     """
-    return cast(
-        int,
-        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
+    if np_dtype in mapping._NP_TYPE_TO_TENSOR_TYPE:
+        return cast(
+            int,
+            mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
+        )
+
+    if np.issubdtype(np_dtype, np.str_):
+        return TensorProto.STRING
+
+    if np_dtype in {
+        custom_np_types.bfloat16,
+        custom_np_types.float8e4m3fn,
+        custom_np_types.float8e4m3fnuz,
+        custom_np_types.float8e5m2,
+        custom_np_types.float8e5m2fnuz,
+        custom_np_types.int4,
+        custom_np_types.uint4,
+    }:
+        return custom_np_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
+
+    raise ValueError(
+        f"Unable to convert type {np_dtype!r} into TensorProto element type."
     )
 
 

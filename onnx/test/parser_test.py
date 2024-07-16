@@ -8,7 +8,7 @@ import unittest
 from parameterized import parameterized
 
 import onnx
-from onnx import GraphProto, OperatorSetIdProto, checker
+from onnx import GraphProto, OperatorSetIdProto, TensorProto, checker
 
 
 class TestBasicFunctions(unittest.TestCase):
@@ -268,6 +268,50 @@ class TestBasicFunctions(unittest.TestCase):
                 str(model.graph.node[0].attribute[0].f), str(float(test_literal))
             )
 
+    @parameterized.expand(
+        [
+            ("bfloat16", TensorProto.BFLOAT16),
+            ("bool", TensorProto.BOOL),
+            ("complex64", TensorProto.COMPLEX64),
+            ("complex128", TensorProto.COMPLEX128),
+            ("double", TensorProto.DOUBLE),
+            ("float16", TensorProto.FLOAT16),
+            ("float", TensorProto.FLOAT),
+            ("float8e4m3fn", TensorProto.FLOAT8E4M3FN),
+            ("float8e4m3fnuz", TensorProto.FLOAT8E4M3FNUZ),
+            ("float8e5m2", TensorProto.FLOAT8E5M2),
+            ("float8e5m2fnuz", TensorProto.FLOAT8E5M2FNUZ),
+            ("int4", TensorProto.INT4),
+            ("int8", TensorProto.INT8),
+            ("int16", TensorProto.INT16),
+            ("int32", TensorProto.INT32),
+            ("int64", TensorProto.INT64),
+            ("string", TensorProto.STRING),
+            ("uint4", TensorProto.UINT4),
+            ("uint8", TensorProto.UINT8),
+            ("uint16", TensorProto.UINT16),
+            ("uint32", TensorProto.UINT32),
+            ("uint64", TensorProto.UINT64),
+        ]
+    )
+    def test_parse_graph_types(self, name, itype) -> None:
+        w = '{"0"}' if itype == TensorProto.STRING else "{0}"
+        text_graph = f"""
+           <
+             ir_version: 10,
+             opset_import: [ "" : 19]
+           >
+           agraph (float[N] X) => ({name}[N] C)
+           <
+             {name}[1] weight = {w}
+           >
+           {{
+              C = Cast<to={itype}>(X)
+           }}
+           """
+        graph = onnx.parser.parse_model(text_graph)
+        self.assertEqual(len(graph.graph.node), 1)
+
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

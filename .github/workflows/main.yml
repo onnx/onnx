@@ -206,7 +206,7 @@ jobs:
       - name: Run Python tests with numpy<2.0
         if: matrix.python_version == '3.11' || matrix.python_version == '3.12'
         run: |
-          pip install "numpy<2.0"
+          pip install "numpy<2.0" "pillow<10"
           pytest -s
 
   publish-test-results:

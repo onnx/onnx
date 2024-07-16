@@ -8,7 +8,9 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def _compute_negative_log_likelihood_loss(x, target, weight=None, reduction="mean", ignore_index=None):  # type: ignore
+def _compute_negative_log_likelihood_loss(
+    x, target, weight=None, reduction="mean", ignore_index=None
+):  # type: ignore
     input_shape = x.shape
     if len(input_shape) == 1:
         raise RuntimeError(f"Unsupported shape {input_shape!r}.")

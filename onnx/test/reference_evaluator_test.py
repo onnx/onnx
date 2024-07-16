@@ -28,7 +28,7 @@ import parameterized
 import version_utils
 from numpy.testing import assert_allclose, assert_almost_equal
 
-import onnx.reference.custom_element_types as custom
+import onnx._custom_element_types as custom
 from onnx import (
     AttributeProto,
     FunctionProto,
@@ -5932,16 +5932,16 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @parameterized.parameterized.expand(
         [
-            ("DOUBLE", 0),
-            ("FLOAT", 0),
-            ("FLOAT16", 1e-3),
-            ("BFLOAT16", 1e-2),
-            ("FLOAT8E4M3FN", 1),
-            ("FLOAT8E4M3FNUZ", 0.9),
+            ("UINT4", 0.84),
+            ("INT4", 0.84),
+            ("FLOAT8E4M3FN", 0.23),
+            ("FLOAT8E4M3FNUZ", 0.23),
             ("FLOAT8E5M2", 0.85),
             ("FLOAT8E5M2FNUZ", 0.85),
-            ("INT4", 0.5),
-            ("UINT4", 0.5),
+            ("DOUBLE", 0),
+            ("FLOAT", 0),
+            ("FLOAT16", 2e-3),
+            ("BFLOAT16", 2e-2),
         ]
     )
     @skip_if_no_ml_dtypes
@@ -5952,8 +5952,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 [
                     make_node("Cast", ["X"], ["Xc"], to=itype),
                     make_node("Cast", ["Y"], ["Yc"], to=itype),
-                    make_node("Neg", ["Yc"], ["Ycn"]),
-                    make_node("Add", ["Xc", "Ycn"], ["Zc"]),
+                    make_node("Add", ["Xc", "Yc"], ["Zc"]),
                     make_node("Cast", ["Zc"], ["Z"], to=TensorProto.FLOAT),
                 ],
                 "nd",
@@ -5967,12 +5966,12 @@ class TestReferenceEvaluator(unittest.TestCase):
             ir_version=9,
         )
 
-        ref = ReferenceEvaluator(model)
+        ref = ReferenceEvaluator(model, verbose=0)
 
-        x = (np.arange(18) / 18).reshape((2, 3, 3)).astype(np.float32)
-        y = (np.arange(18) / 180).reshape((2, 3, 3)).astype(np.float32)
+        x = (np.arange(18) / 6).reshape((2, 3, 3)).astype(np.float32)
+        y = (np.arange(18) / 9).reshape((2, 3, 3)).astype(np.float32)
         feeds = dict(X=x, Y=y)
-        expected = x - y
+        expected = x + y
         got = ref.run(None, feeds)[0]
         assert_allclose(expected, got, atol=atol)
 
