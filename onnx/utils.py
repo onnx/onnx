@@ -274,13 +274,10 @@ def extract_model_safe(model_tar_path: str, local_model_with_data_dir_path: str)
     of the tarfile module by checking for the availability of certain attributes
     or methods before invoking them.
 
-    Parameters:
-    - model_tar_path (str): The path to the tar file to be extracted.
-    - local_model_with_data_dir_path (str): The directory path where the tar file
+    Args:
+        model_tar_path: The path to the tar file to be extracted.
+        local_model_with_data_dir_path: The directory path where the tar file
       contents will be extracted to.
-
-    Returns:
-    None
     """
     with tarfile.open(model_tar_path) as model_with_data_zipped:
         # Mitigate tarball directory traversal risks
