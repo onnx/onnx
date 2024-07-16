@@ -228,7 +228,7 @@ def _recursive_attribute_processor(
 
 
 def _get_initializer_tensors_from_graph(
-    graph_or_function: GraphProto | FunctionProto,
+    graph_or_function: GraphProto | FunctionProto, /
 ) -> Iterable[TensorProto]:
     """Create an iterator of initializer tensors from ONNX model graph/function."""
     if isinstance(graph_or_function, GraphProto):
