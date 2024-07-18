@@ -41,7 +41,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 **Important**
 * **WAIT** for PR to set the release branch's `VERSION_NUMBER` to merge and build before continuing.
 * To push files to TestPyPI or PyPI, install `twine` if you don't already have it: `pip install twine`
-    * When prompted for a password by `twine` commands, use an API token. Your passowrd will not work.
+    * When prompted for a password by `twine` commands, use an API token. Your password will not work.
         * Note: TestPyPI and PyPI are separate accounts so make sure you are using the correct one depending where you are uploading.
         * [Generate a TestPYI API token](https://test.pypi.org/manage/account/token/)
         * [Generate a PyPI API token](https://pypi.org/manage/account/token/)
