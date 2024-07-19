@@ -36,3 +36,15 @@
 ```{eval-rst}
 .. autofunction:: onnx.hub.load_composite_model
 ```
+
+## set_dir
+
+```{eval-rst}
+.. autofunction:: onnx.hub.set_dir
+```
+
+## get_dir
+
+```{eval-rst}
+.. autofunction:: onnx.hub.get_dir
+```
