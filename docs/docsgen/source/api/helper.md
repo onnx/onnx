@@ -188,7 +188,7 @@ All functions uses to create an ONNX graph.
 ```
 
 ```{eval-rst}
-.. autofunction:: onnx.helper.make_optionalmake_optional
+.. autofunction:: onnx.helper.make_optional
 ```
 
 ```{eval-rst}
