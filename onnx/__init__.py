@@ -287,6 +287,8 @@ def save_model(
     location: str | None = None,
     size_threshold: int = 1024,
     convert_attribute: bool = False,
+    page_align_offset: bool = False,
+    page_align_threshold: int = 4096,
 ) -> None:
     """Saves the ModelProto to the specified path and optionally, serialize tensors with raw data as external data before saving.
 
@@ -312,13 +314,16 @@ def save_model(
         convert_attribute: Effective only if save_as_external_data is True.
             If true, convert all tensors to external data
             If false, convert only non-attribute tensors to external data
+        page_align_offset: Offset will always be 4k page aligned for mmap support. This is done by padding previous tensor data with zeros keeping same length. Tensor data will be 4k page aligned if > page_align_threshold
+        page_align_threshold: Page alignment threshold for size of data. Only when tensor's data is > the page_align_threshold
+            it will be force page aligned on 4k boundary
     """
     if isinstance(proto, bytes):
         proto = _get_serializer(_DEFAULT_FORMAT).deserialize_proto(proto, ModelProto())
 
     if save_as_external_data:
         convert_model_to_external_data(
-            proto, all_tensors_to_one_file, location, size_threshold, convert_attribute
+            proto, all_tensors_to_one_file, location, size_threshold, convert_attribute, page_align_offset, page_align_threshold
         )
 
     model_filepath = _get_file_path(f)

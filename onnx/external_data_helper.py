@@ -106,6 +106,8 @@ def convert_model_to_external_data(
     location: str | None = None,
     size_threshold: int = 1024,
     convert_attribute: bool = False,
+    page_align_offset: bool = False,
+    page_align_threshold: int = 1048576, # 1MB
 ) -> None:
     """Call to set all tensors with raw data as external data. This call should precede 'save_model'.
     'save_model' saves all the tensors data as external data after calling this function.
@@ -121,6 +123,9 @@ def convert_model_to_external_data(
             it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
         convert_attribute (bool): If true, convert all tensors to external data
                        If false, convert only non-attribute tensors to external data
+        page_align_offset: Offset will always be 4k page aligned for mmap support. This is done by padding previous tensor data with zeros keeping same length. Tensor data will be 4k page aligned if > page_align_threshold
+        page_align_threshold: Page alignment threshold for size of data. Only when tensor's data is > the page_align_threshold
+            it will be force page aligned on 4k boundary
     """
     tensors = _get_initializer_tensors(model)
     if convert_attribute:
@@ -134,17 +139,22 @@ def convert_model_to_external_data(
                     "location must be a relative path that is relative to the model path."
                 )
             file_name = location
+        current_offset = 0
         for tensor in tensors:
+            tensor_size = len(tensor.raw_data)
             if (
                 tensor.HasField("raw_data")
-                and sys.getsizeof(tensor.raw_data) >= size_threshold
+                and tensor_size >= size_threshold
             ):
-                set_external_data(tensor, file_name)
+                if page_align_offset and tensor_size > page_align_threshold:
+                    current_offset = (current_offset + 4095) // 4096 * 4096 # 4k page align
+                set_external_data(tensor, file_name, offset=current_offset)
+                current_offset += tensor_size
     else:
         for tensor in tensors:
             if (
                 tensor.HasField("raw_data")
-                and sys.getsizeof(tensor.raw_data) >= size_threshold
+                and len(tensor.raw_data) >= size_threshold
             ):
                 tensor_location = tensor.name
                 if not _is_valid_filename(tensor_location):
@@ -181,11 +191,6 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     # Retrieve the tensor's data from raw_data or load external file
     if not tensor.HasField("raw_data"):
         raise ValueError("raw_data field doesn't exist.")
-
-    # Create file if it doesn't exist
-    if not os.path.isfile(external_data_file_path):
-        with open(external_data_file_path, "ab"):
-            pass
 
     # Open file for reading and writing at random locations ('r+b')
     with open(external_data_file_path, "r+b") as data_file:
@@ -298,12 +303,21 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
     Returns:
         ModelProto: The modified model object.
     """
+    file_cleared = False
+
     for tensor in _get_all_tensors(model):
         # Writing to external data happens in 2 passes:
         # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
         # 2. The raw data in these tensors is serialized to a file
         # Thus serialize only if tensor has raw data and it was marked for serialization
         if uses_external_data(tensor) and tensor.HasField("raw_data"):
+            if not file_cleared:
+                # Clear the file if it exists, then open for reading and writing
+                # Clear needed for old data, to ensure file_size grows and padding is added
+                external_data_file_path = os.path.join(filepath, ExternalDataInfo(tensor).location)
+                with open(external_data_file_path, "wb"):
+                    pass
+                file_cleared = True
             save_external_data(tensor, filepath)
             tensor.ClearField("raw_data")
 
