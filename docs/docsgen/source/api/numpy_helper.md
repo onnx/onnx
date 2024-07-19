@@ -17,7 +17,7 @@
     to_array
     to_dict
     to_list
-    to_optional
+    to_optionalto_optional
 
 ```
 
@@ -78,6 +78,10 @@ these two functions use a custom dtype defined in :mod:`onnx._custom_element_typ
 
 ```{eval-rst}
 .. autofunction:: onnx.numpy_helper.create_random_int
+```
+
+```{eval-rst}
+.. autofunction:: onnx.numpy_helper.unpack_int4
 ```
 
 ## cast
