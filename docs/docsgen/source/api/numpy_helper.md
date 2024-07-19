@@ -17,7 +17,7 @@
     to_array
     to_dict
     to_list
-    to_optionalto_optional
+    to_optional
 
 ```
 
