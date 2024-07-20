@@ -104,11 +104,11 @@ jobs:
       run: |
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
-    - name: Verify ONNX with the latest numpy
+    - name: Verify ONNX with the latest numpy (below version 2)
       if: ${{ always() }}
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
-        arch -${{ matrix.target-architecture }} python -m pip install numpy
+        arch -${{ matrix.target-architecture }} python -m pip install numpy<2
         arch -${{ matrix.target-architecture }}  python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
