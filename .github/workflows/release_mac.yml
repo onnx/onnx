@@ -108,7 +108,7 @@ jobs:
       if: ${{ always() }}
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
-        arch -${{ matrix.target-architecture }} python -m pip install numpy<2
+        arch -${{ matrix.target-architecture }} python -m pip install numpy==1.26.4
         arch -${{ matrix.target-architecture }}  python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 

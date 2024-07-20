@@ -100,7 +100,7 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy<2
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.26.4
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
