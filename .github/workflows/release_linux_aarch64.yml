@@ -90,14 +90,14 @@ jobs:
         python -m pip install -q twine
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
-    - name: Verify ONNX with the latest numpy and protobuf
+    - name: Verify ONNX with the latest numpy (below version 2) and protobuf
       if: ${{ always() }}
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
+          python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy<2 protobuf && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
