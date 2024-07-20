@@ -91,6 +91,7 @@ jobs:
       run: |
         python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
         python -m pip install dist/*manylinux2014_x86_64.whl
+        python -m pip list
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
