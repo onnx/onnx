@@ -75,7 +75,7 @@ jobs:
     - name: Verify ONNX with the latest numpy (below version 2)
       if: ${{ always() }}
       run: |
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy==1.26.4
+        python -m pip uninstall -y numpy onnx && python -m pip install "numpy<2"
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 

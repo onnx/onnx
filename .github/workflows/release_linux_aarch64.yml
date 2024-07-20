@@ -97,7 +97,7 @@ jobs:
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy==1.26.4 protobuf && \
+          python -m pip uninstall -y numpy onnx protobuf && python -m pip install "numpy<2" protobuf && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
