@@ -30,7 +30,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']    
-    uses: ./.github/workflows/release_linux_x86_64.yml@main    
+    uses: ./.github/workflows/release_linux_x86_64.yml   
     with:            
       os: "linux_x86_64" 
       processmode: ${{inputs.processmode}}      
@@ -39,7 +39,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']    
-    uses: ./.github/workflows/release_linux_aarch64.yml@main
+    uses: ./.github/workflows/release_linux_aarch64.yml
     with:            
       os: "linux_aarch64"
       processmode: ${{inputs.processmode}}
@@ -48,7 +48,7 @@ jobs:
     strategy:
       matrix:
         os: ['windows-latest']    
-    uses: ./.github/workflows/release_win_x86_64.yml@main
+    uses: ./.github/workflows/release_win_x86_64.yml
     with:      
       os: "win"      
       processmode: ${{inputs.processmode}}
@@ -57,7 +57,7 @@ jobs:
     strategy:
       matrix:
         os: ['mac-latest']    
-    uses: ./.github/workflows/release_mac.yml@main
+    uses: ./.github/workflows/release_mac.yml
     with:            
       os: "mac"      
       processmode: ${{inputs.processmode}}
