@@ -33,8 +33,7 @@ jobs:
     uses: andife/onnx/.github/workflows/release_linux_x86_64.yml@main    
     with:            
       os: "linux_x86_64" 
-      processmode: ${{inputs.processmode}}
-      
+      processmode: ${{inputs.processmode}}      
 
   call-workflow-ubuntu_aarch64:    
     strategy:
@@ -43,6 +42,7 @@ jobs:
     uses: andife/onnx/.github/workflows/release_linux_aarch64.yml@main
     with:            
       os: "linux_aarch64"
+      processmode: ${{inputs.processmode}}
 
   call-workflow-win:    
     strategy:
@@ -51,6 +51,7 @@ jobs:
     uses: andife/onnx/.github/workflows/release_win_x86_64.yml@main
     with:      
       os: "win"      
+      processmode: ${{inputs.processmode}}
 
   call-workflow-mac:    
     strategy:
@@ -58,8 +59,7 @@ jobs:
         os: ['mac-latest']    
     uses: andife/onnx/.github/workflows/release_mac.yml@main
     with:            
-      os: "mac"
-      currdate: ${{needs.determine-date.outputs.output1}}
+      os: "mac"      
       processmode: ${{inputs.processmode}}
 
   publish-weekly:
