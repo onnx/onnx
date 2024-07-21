@@ -11,8 +11,7 @@ on:
     branches: [main, rel-*]
   pull_request:
     branches: [main, rel-*]
-  workflow_dispatch:
-    inputs:
+  workflow_dispatch:    
 
 jobs: 
  
