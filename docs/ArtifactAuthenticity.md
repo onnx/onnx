@@ -38,8 +38,7 @@ are appropriate.
   * Download the release artifacts you are interested in through whichever channel you prefer
     (e.g. using ``pip wheel``, or manual download from GitHub/PyPI)
 
-.. code-block:: bash
-
+```bash
     #!/bin/bash
 
     export EXPECTED_VERSION=<version number goes here>
@@ -49,4 +48,8 @@ are appropriate.
         --ref "refs/tags/v$EXPECTED_VERSION" \
         --repo "$REPO" \
         onnx-$EXPECTED_VERSION-*.whl onnx-$EXPECTED_VERSION.tar.gz
+
+
+    sigstore verify github  --bundle onnx-$EXPECTED_VERSION-py3-none-any.whl.sigstore.json --repo "$REPO" onnx-$EXPECTED_VERSION-*.whl
+```
 
