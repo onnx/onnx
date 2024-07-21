@@ -10,6 +10,11 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
+      processmode:
+        required: true
+        type: string
+      
+      
 
 
 permissions:  # set top-level default permissions as security best practice
