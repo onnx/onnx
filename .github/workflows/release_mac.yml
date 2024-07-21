@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs') || (inputs.processmode == 'manual_schedule')
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs') 
     runs-on: macos-latest
     strategy:
       matrix:
@@ -66,7 +66,7 @@ jobs:
         python -m build --wheel
 
     - name: Build wheel (schedule)
-      if: (inputs.processmode == 'manual_schedule') || (github.event_name == 'schedule' )
+      if: (github.event_name == 'schedule' )
       env:
         CC: "clang"
         CXX: "clang++"
