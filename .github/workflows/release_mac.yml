@@ -4,15 +4,18 @@
 
 name: MacRelease
 
-on:
-  schedule:
-    # Run weekly on Monday 00:00
-    - cron:  '00 00 * * MON'
-  push:
-    branches: [main, rel-*]
-  pull_request:
-    branches: [main, rel-*]
-  workflow_dispatch:
+on:  # Specifies the event triggering the workflow
+  workflow_call:  # Indicates that this is a reusable workflow
+    inputs:
+      os:
+        required: true
+        type: string
+      currdate: # for weekly
+        required: true
+        type: string
+      processmode:
+        required: true
+        type: string
 
 # Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
 env:
@@ -22,12 +25,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-${{ inputs.os }}
   cancel-in-progress: true
 
 jobs:
   build:
-    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs') || (inputs.processmode == 'manual_schedule')
     runs-on: macos-latest
     strategy:
       matrix:
@@ -35,6 +38,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
     - name: Checkout submodules
       shell: bash
       run: |
@@ -45,13 +49,29 @@ jobs:
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: ${{ matrix.python-version }}
+        check-latest: true
 
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
 
-    - name: Build wheel and install
+
+    - name: Build wheel      
+      env:
+        CC: "clang"
+        CXX: "clang++"
+        ONNX_ML: 1
+        CMAKE_OSX_ARCHITECTURES: "arm64;x86_64"
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
+      run: |
+        # Install Protobuf from source
+        export NUM_CORES=`sysctl -n hw.logicalcpu`
+        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install    
+        python -m build --wheel
+
+    - name: Build wheel (schedule)
+      if: (inputs.processmode == 'manual_schedule') || (github.event_name == 'schedule' )
       env:
         CC: "clang"
         CXX: "clang++"
@@ -62,16 +82,19 @@ jobs:
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-        if [ '${{ github.event_name }}' == 'schedule' ]; then
-          sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-          export ONNX_PREVIEW_BUILD=1
-        fi
-        python -m build --wheel
+        
+        brew install gnu-sed
+        gsed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+        export ONNX_PREVIEW_BUILD=1
+        python -m build --wheel    
 
-    - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+
+    - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
       with:
-        name: macos-wheel-${{ matrix.python-version }}
-        path: dist
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
+        path: |
+            ./dist/*.whl
+            ./dist/*.tar.gz
 
   test:
     needs: build
@@ -95,7 +118,7 @@ jobs:
 
     - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
       with:
-        name: macos-wheel-${{ matrix.python-version }}
+        name: wheels-mac-${{ matrix.python-version }}
         path: dist
 
     - name: Test the wheel
@@ -103,7 +126,7 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
-    - name: Upload wheel to PyPI weekly
+    - name: Upload wheel to PyPI weekly # TODO: why only arm64?
       if: github.event_name == 'schedule' && matrix.target-architecture == 'arm64'  # Only triggered by weekly event
       run: |
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
@@ -132,16 +155,26 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
-    # Only triggered by weekly event on certain CI
+     # Only triggered by weekly event on certain CI
     - name: Build and upload source distribution to PyPI weekly
-      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+      if: (github.event_name == 'schedule' || inputs.processmode == 'manual_schedule') && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
       run: |
         # Build and upload source distribution to PyPI
         git clean -xdf
-        sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+        # https://unix.stackexchange.com/questions/13711/differences-between-sed-on-mac-osx-and-other-standard-sed
+        brew install gnu-sed
+        cat pyproject.toml
+        gsed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+        head -n 10 pyproject.toml
+        todays_date=.dev'${{ inputs.currdate }}'
+        cat VERSION_NUMBER
+        echo $todays_date
+        ls -lauh
+        gsed -i "1s/$/$todays_date/" 'VERSION_NUMBER'
+        cat VERSION_NUMBER
+
         ONNX_PREVIEW_BUILD=1 python -m build --sdist
         twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-
         # Test weekly source distribution from PyPI
         python -m pip uninstall -y onnx-weekly
         python -m pip install setuptools
