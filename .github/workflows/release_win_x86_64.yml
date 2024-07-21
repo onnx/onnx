@@ -10,10 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-      currdate: # for weekly
-        required: true
-        type: string
-
 
 
 permissions:  # set top-level default permissions as security best practice

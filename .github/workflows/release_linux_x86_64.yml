@@ -10,9 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-      currdate: # for weekly
-        required: true
-        type: string
       processmode: 
         required: false
         type: string

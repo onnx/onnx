@@ -25,52 +25,34 @@ on:
 
 
 jobs: 
-
-  determine-date:
-    runs-on: ubuntu-latest
-    # Map a step output to a job output
-    outputs:
-      output1: ${{ steps.step1.outputs.currdate }}      
-
-    steps:
-      - id: step1
-        run: echo "currdate=$(date +'%Y%m%d')" >> "$GITHUB_OUTPUT"
-      
-
-  call-workflow-ubuntu_x86:
-    needs: determine-date
+ 
+  call-workflow-ubuntu_x86:    
     strategy:
       matrix:
         os: ['ubuntu-latest']    
     uses: andife/onnx/.github/workflows/release_linux_x86_64.yml@main    
     with:            
-      os: "linux_x86_64"
-      currdate: ${{needs.determine-date.outputs.output1}}
+      os: "linux_x86_64" 
       processmode: ${{inputs.processmode}}
       
 
-  call-workflow-ubuntu_aarch64:
-    needs: determine-date
+  call-workflow-ubuntu_aarch64:    
     strategy:
       matrix:
         os: ['ubuntu-latest']    
     uses: andife/onnx/.github/workflows/release_linux_aarch64.yml@main
     with:            
       os: "linux_aarch64"
-      currdate: ${{needs.determine-date.outputs.output1}}
 
-  call-workflow-win:
-    needs: determine-date
+  call-workflow-win:    
     strategy:
       matrix:
         os: ['windows-latest']    
     uses: andife/onnx/.github/workflows/release_win_x86_64.yml@main
     with:      
-      os: "win"
-      currdate: ${{needs.determine-date.outputs.output1}}
+      os: "win"      
 
-  call-workflow-mac:
-    needs: determine-date
+  call-workflow-mac:    
     strategy:
       matrix:
         os: ['mac-latest']    

@@ -10,9 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-      currdate: # for weekly
-        required: true
-        type: string
       processmode:
         required: true
         type: string
@@ -83,8 +80,7 @@ jobs:
         export NUM_CORES=`sysctl -n hw.logicalcpu`
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
         
-        brew install gnu-sed
-        gsed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+        sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
         export ONNX_PREVIEW_BUILD=1
         python -m build --wheel    
 
@@ -157,22 +153,11 @@ jobs:
 
      # Only triggered by weekly event on certain CI
     - name: Build and upload source distribution to PyPI weekly
-      if: (github.event_name == 'schedule' || inputs.processmode == 'manual_schedule') && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+      if: (github.event_name == 'schedule' ) && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
       run: |
         # Build and upload source distribution to PyPI
         git clean -xdf
-        # https://unix.stackexchange.com/questions/13711/differences-between-sed-on-mac-osx-and-other-standard-sed
-        brew install gnu-sed
-        cat pyproject.toml
-        gsed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-        head -n 10 pyproject.toml
-        todays_date=.dev'${{ inputs.currdate }}'
-        cat VERSION_NUMBER
-        echo $todays_date
-        ls -lauh
-        gsed -i "1s/$/$todays_date/" 'VERSION_NUMBER'
-        cat VERSION_NUMBER
-
+        sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
         ONNX_PREVIEW_BUILD=1 python -m build --sdist
         twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
         # Test weekly source distribution from PyPI
