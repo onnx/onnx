@@ -10,11 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-      processmode:
-        required: true
-        type: string
-      
-      
 
 
 permissions:  # set top-level default permissions as security best practice
@@ -60,8 +55,8 @@ jobs:
         }
         python -m pip install -q -r requirements-release.txt
         python -m pip install cmake
-
-    - name: Build ONNX wheel
+    
+    - name: Build ONNX wheel      
       run: |
         $arch = 'x64'
         if ('${{ matrix.architecture }}' -eq 'x86') {
