@@ -9,13 +9,21 @@ import pathlib
 import tempfile
 import unittest
 import uuid
-from typing import Any
+from typing import Any, Sequence
 
 import numpy as np
 import parameterized
 
 import onnx
-from onnx import ModelProto, TensorProto, checker, helper, shape_inference
+from onnx import (
+    ModelProto,
+    NodeProto,
+    TensorProto,
+    checker,
+    helper,
+    parser,
+    shape_inference,
+)
 from onnx.external_data_helper import (
     convert_model_from_external_data,
     convert_model_to_external_data,
@@ -792,6 +800,87 @@ class TestExternalDataToArrayWithPath(TestExternalDataToArray):
     @property
     def model_file_path(self) -> pathlib.Path:
         return pathlib.Path(self._model_file_path)
+
+
+class TestFunctionsAndSubGraphs(unittest.TestCase):
+    def setUp(self) -> None:
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
+        temp_dir = self._temp_dir_obj.name
+        self._model_file_path: str = os.path.join(temp_dir, "model.onnx")
+        array = np.arange(4096).astype(np.float32)
+        self._tensor = from_array(array, "tensor")
+
+    def tearDown(self) -> None:
+        self._temp_dir_obj.cleanup()
+
+    def _check_is_internal(self, tensor: TensorProto) -> None:
+        self.assertEqual(tensor.data_location, TensorProto.DEFAULT)
+
+    def _check_is_external(self, tensor: TensorProto) -> None:
+        self.assertEqual(tensor.data_location, TensorProto.EXTERNAL)
+
+    def _check(self, model: ModelProto, nodes: Sequence[NodeProto]) -> None:
+        """Check that the tensors in the model are externalized.
+
+        The tensors in the specified sequence of Constant nodes are set to self._tensor,
+        an internal tensor. The model is then converted to external data format.
+        The tensors are then checked to ensure that they are externalized.
+
+        Arguments:
+            model: The model to check.
+            nodes: A sequence of Constant nodes.
+
+        """
+        for node in nodes:
+            self.assertEqual(node.op_type, "Constant")
+            tensor = node.attribute[0].t
+            tensor.CopyFrom(self._tensor)
+            self._check_is_internal(tensor)
+
+        convert_model_to_external_data(model, size_threshold=0, convert_attribute=True)
+
+        for node in nodes:
+            tensor = node.attribute[0].t
+            self._check_is_external(tensor)
+
+    def test_function(self) -> None:
+        model_text = """
+           <ir_version: 7,  opset_import: ["": 15, "local": 1]>
+           agraph (float[N] X) => (float[N] Y)
+            {
+              Y = local.add(X)
+            }
+
+            <opset_import: ["" : 15],  domain: "local">
+            add (float[N] X) => (float[N] Y) {
+              C = Constant <value = float[1] {1.0}> ()
+              Y = Add (X, C)
+           }
+        """
+        model = parser.parse_model(model_text)
+        self._check(model, [model.functions[0].node[0]])
+
+    def test_subgraph(self) -> None:
+        model_text = """
+           <ir_version: 7,  opset_import: ["": 15, "local": 1]>
+           agraph (bool flag, float[N] X) => (float[N] Y)
+            {
+              Y = if (flag) <
+                then_branch = g1 () => (float[N] Y_then) {
+                    B = Constant <value = float[1] {0.0}> ()
+                    Y_then = Add (X, C)
+                },
+                else_branch = g2 () => (float[N] Y_else) {
+                    C = Constant <value = float[1] {1.0}> ()
+                    Y_else = Add (X, C)
+                }
+              >
+            }
+        """
+        model = parser.parse_model(model_text)
+        if_node = model.graph.node[0]
+        constant_nodes = [attr.g.node[0] for attr in if_node.attribute]
+        self._check(model, constant_nodes)
 
 
 if __name__ == "__main__":

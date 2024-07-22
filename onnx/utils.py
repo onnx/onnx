@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import tarfile
 
 import onnx.checker
 import onnx.helper
@@ -232,3 +233,65 @@ def extract_model(
     onnx.save(extracted, output_path)
     if check_model:
         onnx.checker.check_model(output_path)
+
+
+def _tar_members_filter(
+    tar: tarfile.TarFile, base: str | os.PathLike
+) -> list[tarfile.TarInfo]:
+    """Check that the content of ``tar`` will be extracted safely
+
+    Args:
+        tar: The tarball file
+        base: The directory where the tarball will be extracted
+
+    Returns:
+        list of tarball members
+    """
+    result = []
+    for member in tar:
+        member_path = os.path.join(base, member.name)
+        abs_base = os.path.abspath(base)
+        abs_member = os.path.abspath(member_path)
+        if not abs_member.startswith(abs_base):
+            raise RuntimeError(
+                f"The tarball member {member_path} in downloading model contains "
+                f"directory traversal sequence which may contain harmful payload."
+            )
+        elif member.issym() or member.islnk():
+            raise RuntimeError(
+                f"The tarball member {member_path} in downloading model contains "
+                f"symbolic links which may contain harmful payload."
+            )
+        result.append(member)
+    return result
+
+
+def _extract_model_safe(
+    model_tar_path: str | os.PathLike, local_model_with_data_dir_path: str | os.PathLike
+) -> None:
+    """Safely extracts a tar file to a specified directory.
+
+    This function ensures that the extraction process mitigates against
+    directory traversal vulnerabilities by validating or sanitizing paths
+    within the tar file. It also provides compatibility for different versions
+    of the tarfile module by checking for the availability of certain attributes
+    or methods before invoking them.
+
+    Args:
+        model_tar_path: The path to the tar file to be extracted.
+        local_model_with_data_dir_path: The directory path where the tar file
+      contents will be extracted to.
+    """
+    with tarfile.open(model_tar_path) as model_with_data_zipped:
+        # Mitigate tarball directory traversal risks
+        if hasattr(tarfile, "data_filter"):
+            model_with_data_zipped.extractall(
+                path=local_model_with_data_dir_path, filter="data"
+            )
+        else:
+            model_with_data_zipped.extractall(
+                path=local_model_with_data_dir_path,
+                members=_tar_members_filter(
+                    model_with_data_zipped, local_model_with_data_dir_path
+                ),
+            )

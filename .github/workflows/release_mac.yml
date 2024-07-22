@@ -14,9 +14,9 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:
 
-# Use MACOSX_DEPLOYMENT_TARGET=11.0 to produce compatible wheel
+# Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
 env:
-  MACOSX_DEPLOYMENT_TARGET: 11.0
+  MACOSX_DEPLOYMENT_TARGET: "12.0"
 
 permissions:
   contents: read
@@ -75,7 +75,7 @@ jobs:
 
   test:
     needs: build
-    runs-on: macos-latest
+    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-12' || 'macos-14' }}
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
@@ -113,7 +113,7 @@ jobs:
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
         arch -${{ matrix.target-architecture }} python -m pip install numpy
-        arch -${{ matrix.target-architecture }}  python -m pip install --upgrade dist/*.whl
+        arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest protobuf
@@ -128,7 +128,7 @@ jobs:
       if: always() && (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.8' && matrix.python-version != '3.9'))
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
-        arch -${{ matrix.target-architecture }}  python -m pip install -r requirements-min.txt
+        arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
