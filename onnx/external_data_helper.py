@@ -106,8 +106,9 @@ def convert_model_to_external_data(
     location: str | None = None,
     size_threshold: int = 1024,
     convert_attribute: bool = False,
-    page_align_offset: bool = False,
-    page_align_threshold: int = 1048576, # 1MB
+    align_offset: bool = False,
+    align_threshold: int = 1048576, # 1MB
+    allocation_granularity: int = 65536, # 64KB
 ) -> None:
     """Call to set all tensors with raw data as external data. This call should precede 'save_model'.
     'save_model' saves all the tensors data as external data after calling this function.
@@ -123,9 +124,10 @@ def convert_model_to_external_data(
             it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
         convert_attribute (bool): If true, convert all tensors to external data
                        If false, convert only non-attribute tensors to external data
-        page_align_offset: Offset will always be 4k page aligned for mmap support. This is done by padding previous tensor data with zeros keeping same length. Tensor data will be 4k page aligned if > page_align_threshold
-        page_align_threshold: Page alignment threshold for size of data. Only when tensor's data is > the page_align_threshold
-            it will be force page aligned on 4k boundary
+        align_offset: Offset will always be page aligned and alloction granularity aligned for mmap support. This is done by padding previous tensor data with zeros keeping same length. Tensor data will be aligned if > align_threshold
+        align_threshold: Alignment threshold for size of data. Having a low threshold will waste file space for small initializers. Only when tensor's data is > the page_align_threshold
+            it will be force aligned
+        allocation_granularity: The allocation Granularity for mmap() support. Typically 64KB for Windows & 4KB for other OSes
     """
     tensors = _get_initializer_tensors(model)
     if convert_attribute:
@@ -146,8 +148,11 @@ def convert_model_to_external_data(
                 tensor.HasField("raw_data")
                 and tensor_size >= size_threshold
             ):
-                if page_align_offset and tensor_size > page_align_threshold:
-                    current_offset = (current_offset + 4095) // 4096 * 4096 # 4k page align
+                if align_offset and tensor_size > align_threshold:
+                    # Align to the larger of the page size or the allocation granularity
+                    alignment_factor = max(4096, allocation_granularity)  # Assuming 4k page size
+                    current_offset = (current_offset + alignment_factor - 1) // alignment_factor * alignment_factor # Align to the next page or alloc granularity boundary
+
                 set_external_data(tensor, file_name, offset=current_offset)
                 current_offset += tensor_size
     else:
