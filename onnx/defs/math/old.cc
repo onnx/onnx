@@ -3304,15 +3304,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto transBAttr = ctx.getAttribute("transB");
             bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
 
+            checkInputRank(ctx, 0, 2);
+            checkInputRank(ctx, 1, 2);
+
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
-            if (first_input_shape.dim_size() != 2) {
-              fail_shape_inference("First input does not have rank 2");
-            }
-            if (second_input_shape.dim_size() != 2) {
-              fail_shape_inference("Second input does not have rank 2");
-            }
-
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
                 first_input_shape.dim(transA ? 1 : 0);
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
