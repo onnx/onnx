@@ -33,6 +33,10 @@ RESHAPE_SCHEMA = max(
     ),
     key=lambda s: s.since_version,
 )
+CLIP_SCHEMA = max(
+    (s for s in get_all_schemas_with_history() if s.name == "Clip" and s.domain == ""),
+    key=lambda s: s.since_version,
+)
 
 
 def _to_tensor_types(
@@ -96,6 +100,19 @@ class TestInferenceFunctionCall(unittest.TestCase):
         ]
         for ins, outs in cases:
             assert _run_case(ADD_SCHEMA, ["A", "B"], ["C"], _to_tensor_types(ins)) == _to_tensor_types(outs)  # type: ignore
+
+    def test_clip_inference_with_optional_input(self) -> None:
+        # Test case where the second input is optional
+        input_names = ["X", "", "max"]
+        output_names = ["Y"]
+        input_types = _to_tensor_types(
+            {"X": (TensorProto.FLOAT, (3, 4)), "max": (TensorProto.FLOAT, ())}
+        )
+        expected_output_types = _to_tensor_types({"Y": (TensorProto.FLOAT, (3, 4))})
+        assert (
+            _run_case(CLIP_SCHEMA, input_names, output_names, input_types)
+            == expected_output_types
+        )
 
     def test_add_inference_raises_errors(self) -> None:
         with self.assertRaises(ValidationError):
