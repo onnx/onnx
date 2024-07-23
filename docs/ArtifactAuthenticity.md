@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 -->
 
 
-### Overview ###
+## Overview
 
 onnx uses sigstore to provide assurances regarding the authenticity of
 its release artifacts, with the goal of mitigating its exposure to downstream software
