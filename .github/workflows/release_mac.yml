@@ -104,7 +104,7 @@ jobs:
       run: |
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
-    - name: Verify ONNX with the latest numpy (below version2)
+    - name: Verify ONNX with the latest numpy (below version 2)
       if: ${{ always() }}
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx

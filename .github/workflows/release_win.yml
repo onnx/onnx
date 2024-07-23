@@ -104,7 +104,7 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
-    - name: Verify ONNX with the latest protobuf
+    - name: Verify ONNX with the latest numpy (below version 2)
       if: ${{ always() }}
       run: |
         cd onnx

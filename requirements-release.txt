@@ -12,6 +12,6 @@ pytest-xdist
 setuptools
 twine
 wheel
-Pillow<10.4
+pillow<10.4
 # Dependencies for the reference implementation.
 -r requirements-reference.txt
