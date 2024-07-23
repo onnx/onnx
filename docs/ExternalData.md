@@ -85,7 +85,7 @@ There are two fields related to the external data in TensorProto message type.
 Recognized keys are:
 
 * `"location"` (required) - file path relative to the filesystem directory where the ONNX protobuf model was stored. Up-directory path components such as .. are disallowed and should be stripped when parsing.
-* `"offset"` (optional) - position of byte at which stored data begins. Integer stored as string. Offset values SHOULD be multiples 4096 (page size) to enable mmap support.
+* `"offset"` (optional) - position of byte at which stored data begins. Integer stored as string. Offset values SHOULD be multiples of the page size (usually 4kb) to enable mmap support. On Windows, offset values SHOULD be multiples of the VirtualAlloc [allocation granularity](https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info) (usually 64kb) to enable [memory mapping](https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-mapviewoffile).
 * `"length"` (optional) - number of bytes containing data. Integer stored as string.
 * `"checksum"` (optional) - SHA1 digest of file specified in under 'location' key.
 
