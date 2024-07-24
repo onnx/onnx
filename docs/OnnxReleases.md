@@ -30,52 +30,14 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
     1. Make sure all tests pass on the new branch.
 
 * After cutting the release branch:
-    1. Create PR to set [VERSION_NUMBER](/VERSION_NUMBER) file in `main` to the next future releas, `X.Y+1.0`.
+    1. Create PR to set [VERSION_NUMBER](/VERSION_NUMBER) file in `main` to the next future release, `X.Y+1.0`.
     1. Create PR to set `VERSION_NUMBER` file in the new release's branch to `X.Y.Zrc1`.
         * For example the first release candidate for 1.16.0 would be `1.16.0rc1`
     1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
         * For example, this [demo PR](https://github.com/onnx/onnx/pull/6001).
 
-## Upload release candidate to TestPyPI
 
-**Important**
-* **WAIT** for PR to set the release branch's `VERSION_NUMBER` to merge and build before continuing.
-* To push files to TestPyPI or PyPI, install `twine` if you don't already have it: `pip install twine`
-    * When prompted for a password by `twine` commands, use an API token. Your password will not work.
-        * Note: TestPyPI and PyPI are separate accounts so make sure you are using the correct one depending where you are uploading.
-        * [Generate a TestPYI API token](https://test.pypi.org/manage/account/token/)
-        * [Generate a PyPI API token](https://pypi.org/manage/account/token/)
-* Like PyPI, A release version can only be pushed to TestPyPI **ONCE**.
-    * To update an already pushed file, you must increase the `VERSION_NUMBER`, rebuild, and push a new X.Y.Zrc2, etc.
-    * To test push commands, you can use docker or podman to create a local pypi server
-        1. Start server `docker run --rm -it --platform linux/amd64 -p 80:8080 pypiserver/pypiserver:latest run -a . -P .`
-            * This starts a local pypiserver that does not require authentication (any user/password will work on it).
-            * The container does not save state. Stopping and starting it again will let you push the same version multiple times.
-        1. To push files:
-            * wheels: `twine upload --repository-url http://127.0.0.1:80 --verbose -u fake -p fake *.whl`
-            * source: `twine upload --repository-url http://127.0.0.1:80 --verbose -u fake -p fake dist/*`
-        1. To pull and install from your test server:
-            * `pip uninstall -y onnx && pip install --index-url http://127.0.0.1:80/simple/ --pre onnx`
-
-**Push Wheels**
-1. Gather the wheel files from the ONNX Github Actions for the release candidate.
-    * For each ONNX GitHub Action:
-        * ONNX GitHub Action
-            * [LinuxRelease_x86_64](https://github.com/onnx/onnx/actions/workflows/release_linux_x86_64.yml)
-            * [LinuxRelease_aarch64](https://github.com/onnx/onnx/actions/workflows/release_linux_aarch64.yml)
-            * [MacRelease](https://github.com/onnx/onnx/actions/workflows/release_mac.yml)
-            * [WindowsRelease](https://github.com/onnx/onnx/actions/workflows/release_win.yml)
-
-        * Find the run for the release branch
-            * Or start a run by clicking "Run workflow", pick the release branch, Click "Run Workflow"
-        * Click the completed run, scroll to the "Artifacts" section (bottom), and click "wheels" to download the files
-        * Extract the wheels.zip files and combine their contents into a single folder
-
-2. Upload the produced wheels manually to TestPyPI: `twine upload --repository testpypi --verbose -u <YOUR_TESTPYPI_USER> <extracted_wheel.zip_folder>/*.whl`.
-    * A current owner of the ONNX project will need to give you access to the project before you can push files.
-    * The project name and version built into the files.
-
-**Source Distribution**
+** Source Distribution (TODO: this has to also made by a step of the release pipeline **
 1. Make sure all the git submodules are updated
     * ``git submodule update --init``
 1. Make sure the git checkout is clean –
@@ -133,6 +95,10 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
  * If issues are found, the bugs are to be fixed in the onnx `main` branch and then cherry-picked into the release branch.
     * Follow up with reporter to ensure issues are resolved (and validated in a new rc) or deferred to a new release.
 
+
+
+
+
 # Official Release
 
 Validation steps must be completed before this point! This is the point of new return.
@@ -156,6 +122,14 @@ Validation steps must be completed before this point! This is the point of new r
         * Use information from [Release logistics wiki](https://github.com/onnx/onnx/wiki) which should have been created prior to branch cut.
         * Add any additional commits that merged into the release in since wiki was written.
     * .tar.gz and .zip will be auto-generated after publishing the release.
+
+* a) The pipelines for different os variants start to run and save the wheels for all OS Version. Only if all all 4 release pipelines were successful the next preparation step is started
+* b) During the preparation step of the pipeline, the artifacts are cryptographically signed with sigstore for supply chain security reasons
+* c) The step is paused (until the deployment was reviewed and the defined reviewer approve the release). At this step the whl could also be downloaded for offline-testing. We use the feature of [deployment environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) here.
+* d) After the The final step is about 
+    i) publishing the wheels and tar.gz files to official pypi 
+    ii) adding the signing information to the official github release
+    
 
 ## Upload to Official PyPI
 ### NOTES:
