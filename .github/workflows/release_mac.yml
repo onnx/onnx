@@ -115,8 +115,6 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
-
-
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != '3.12'
       run: |
