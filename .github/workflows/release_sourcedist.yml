@@ -1,0 +1,59 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: sdistRelease
+
+on:  # Specifies the event triggering the workflow
+  workflow_call:  # Indicates that this is a reusable workflow
+    inputs:
+      os:
+        required: true
+        type: string
+
+
+# Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
+env:
+  MACOSX_DEPLOYMENT_TARGET: "12.0"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-${{ inputs.os }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs') 
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ['3.10']
+        target-architecture: ['arm64']
+
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+    # Only triggered by weekly event on certain CI
+    - name: Build source distribution (weekly)
+      if: github.event_name == 'schedule'  && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+      run: |
+        # Build and upload source distribution to PyPI
+        git clean -xdf
+        sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+        ONNX_PREVIEW_BUILD=1 python -m build --sdist
+
+    - name: Build source distribution (for release)
+      if: github.event_name == 'schedule'  && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+      run: |
+        # Build and upload source distribution to PyPI
+        git clean -xdf
+        python -m build --sdist      
+
+
+    - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
+      with:
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
+        path: |
+            ./dist/*.tar.gz

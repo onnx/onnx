@@ -15,6 +15,13 @@ on:
 
 jobs: 
  
+  call-workflow-sourcedist:    
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']    
+    uses: ./.github/workflows/release_sourcedist.yml    
+
+
   call-workflow-ubuntu_x86:    
     strategy:
       matrix:
@@ -72,6 +79,12 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sdist*
+          path: dist
+          merge-multiple: true
+
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
@@ -80,13 +93,11 @@ jobs:
           print-hash: true
 
 
-
-
   prepare-release:    
     name: Release-Prep (p.ex. sigstore, pypi)
     runs-on: ubuntu-latest
     needs: [call-workflow-mac, call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-win]
-    if: (needs.call-workflow-mac.result == 'success') && (needs.call-workflow-ubuntu_x86.result == 'success') && (needs.call-workflow-ubuntu_aarch64.result == 'success')  && (needs.call-workflow-win.result == 'success') 
+    if: (needs.call-workflow-mac.result == 'success') && (needs.call-workflow-ubuntu_x86.result == 'success') && (needs.call-workflow-ubuntu_aarch64.result == 'success')  && (needs.call-workflow-win.result == 'success')  && (needs.call-workflow-sourcedist.result == 'success')
 
     permissions:
       contents: write  # IMPORTANT: mandatory for making GitHub Releases
@@ -105,11 +116,8 @@ jobs:
         with:
           inputs: >-            
             /home/runner/work/onnx/onnx/dist/*.whl
+
   
-      #- name: Rename files # to match new file extension https://github.com/sigstore/sigstore-python/blob/main/CHANGELOG.md#changed
-      #  run: |
-      #    sudo apt install mmv 
-      #    mmv "/home/runner/work/onnx/onnx/dist/*.sigstore" /home/runner/work/onnx/onnx/dist/#1.sigstore.json      
       
       - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
         with:
