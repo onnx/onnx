@@ -113,6 +113,7 @@ jobs:
           merge-multiple: true
 
       - name: Sign the dists with Sigstore #/home/runner/work/onnx/onnx/dist/*.tar.gz
+        if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-')
         uses: sigstore/gh-action-sigstore-python@v3.0.0
         with:
           inputs: >-            
@@ -121,6 +122,7 @@ jobs:
   
       
       - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
+        if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-')
         with:
           name: sigstore-files
           path: |
