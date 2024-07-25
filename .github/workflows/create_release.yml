@@ -113,6 +113,7 @@ jobs:
           merge-multiple: true
 
       - name: Sign the dists with Sigstore #/home/runner/work/onnx/onnx/dist/*.tar.gz
+        # Signing should only be done for the final release and maybe not for release candidates... probably this prep release steps has to be splitted or renamend to prepare signatures
         if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-')
         uses: sigstore/gh-action-sigstore-python@v3.0.0
         with:
