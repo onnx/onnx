@@ -143,7 +143,7 @@ jobs:
     if: always() && (needs.prepare-release.result == 'success') && startsWith(github.base_ref, 'rel-') # TODO only if a release is requested
 
     environment:      
-      name: testpypi 
+      name: releasepypi 
       url: https://pypi.org/p/onnx
 
     permissions:
