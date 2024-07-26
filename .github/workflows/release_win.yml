@@ -96,7 +96,7 @@ jobs:
       run: |
         twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
-    - name: Verify ONNX with the latest numpy
+    - name: Verify ONNX with the latest numpy (below version 2)
       if: ${{ always() }}
       run: |
         cd onnx
@@ -104,7 +104,7 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
-    - name: Verify ONNX with the latest numpy (below version 2)
+    - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
         cd onnx
