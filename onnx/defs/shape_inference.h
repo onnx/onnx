@@ -340,9 +340,8 @@ inline const TensorShapeProto& getInputShape(const InferenceContext& ctx, size_t
   if (value_case != TypeProto::kTensorType && value_case != TypeProto::kSparseTensorType) {
     fail_type_inference("Input ", n, "expected to be a tensor or a sparse tensor type in ", ctx.getDisplayName(), ".");
   }
-  if (!hasShape(*input_type)) {
-    fail_shape_inference("Input ", n, " must have a non null shape in ", ctx.getDisplayName(), ".");
-  }
+
+  // do not check hasShape(*input_type) here, as scalar input is valid and it will return a default empty TensorShapeProto
   if (value_case == TypeProto::kTensorType) {
     return input_type->tensor_type().shape();
   } else {
