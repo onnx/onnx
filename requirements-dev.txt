@@ -10,7 +10,6 @@ pytest-xdist
 setuptools
 twine
 wheel
-pillow
 # Dependencies for linting. Versions match those in setup.py.
 lintrunner>=0.10.7
 lintrunner-adapters>=0.8
