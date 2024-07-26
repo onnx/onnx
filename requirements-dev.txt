@@ -1,7 +1,7 @@
 build
 jupyter
 nbval
-numpy<2
+numpy
 parameterized
 protobuf
 pytest
