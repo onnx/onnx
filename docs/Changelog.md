@@ -28712,3 +28712,4 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 </dl>
+
