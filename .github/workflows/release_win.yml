@@ -96,11 +96,11 @@ jobs:
       run: |
         twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
-    - name: Verify ONNX with the latest numpy
+    - name: Verify ONNX with the latest numpy (below version 2)
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        python -m pip uninstall -y numpy onnx && python -m pip install "numpy<2"
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 

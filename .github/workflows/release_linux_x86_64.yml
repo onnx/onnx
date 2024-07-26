@@ -72,10 +72,10 @@ jobs:
         twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
         TEST_HUB=1 pytest
 
-    - name: Verify ONNX with the latest numpy
+    - name: Verify ONNX with the latest numpy (below version 2)
       if: ${{ always() }}
       run: |
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        python -m pip uninstall -y numpy onnx && python -m pip install "numpy<2"
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
