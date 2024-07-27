@@ -75,6 +75,20 @@ jobs:
         path: |
             ./dist/*.whl            
 
+  test:
+    needs: build
+    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-12' || 'macos-14' }}
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        target-architecture: ['x86_64', 'arm64']
+
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+
+
     - name: Install Python dependencies
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
@@ -82,7 +96,7 @@ jobs:
 
     - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
       with:
-        name: wheels-macos-${{ matrix.python-version }}
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist
 
     - name: Test the wheel
