@@ -66,6 +66,7 @@ jobs:
         if [ '${{ github.event_name }}' == 'schedule' ]; then      
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1
+        fi
         python -m build --wheel    
 
 
@@ -87,6 +88,8 @@ jobs:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      with:
+        python-version: ${{ matrix.python-version }}
 
 
     - name: Install Python dependencies
