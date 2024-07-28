@@ -44,7 +44,8 @@ jobs:
         ONNX_PREVIEW_BUILD=1 python -m build --sdist
 
     - name: Build source distribution (for release)
-      if: github.event_name == 'schedule'  && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+      #if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+      if: matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
       run: |
         # Build and upload source distribution to PyPI
         git clean -xdf
