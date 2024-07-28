@@ -86,54 +86,42 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
-            ./dist/*.tar.gz   
-  test:
-    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312]
-    env:
-      # setting up python and docker image
-      py: /opt/python/${{ matrix.python-version }}/bin/python
-      img: quay.io/pypa/manylinux2014_aarch64
 
-    steps:
-      - name: Verify ONNX with the latest numpy and protobuf
-        if: ${{ always() }}
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-            ${{ env.img }} \
-            bash -exc '\
-            source .env/bin/activate && \
-            python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
-            python -m pip install dist/*manylinux2014_aarch64.whl && \
-            pytest && \
-            deactivate'
+    - name: Verify ONNX with the latest numpy and protobuf
+      if: ${{ always() }}
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          pytest && \
+          deactivate'
 
-      - name: Verify ONNX with the minimumly supported packages
-        if: ${{ always() }}
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-            ${{ env.img }} \
-            bash -exc '\
-            source .env/bin/activate && \
-            python -m pip uninstall -y onnx && python -m pip install -r requirements-min.txt && \
-            python -m pip install dist/*manylinux2014_aarch64.whl && \
-            pytest && \
-            deactivate'
+    - name: Verify ONNX with the minimumly supported packages
+      if: ${{ always() }}
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          python -m pip uninstall -y onnx && python -m pip install -r requirements-min.txt && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          pytest && \
+          deactivate'
 
-      - name: Verify ONNX with ONNX Runtime PyPI package
-        if: matrix.python-version != 'cp312-cp312'
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-            ${{ env.img }} \
-            bash -exc '\
-            source .env/bin/activate && \
-            python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt && \
-            python -m pip install -q onnxruntime==1.16.3 && \
-            export ORT_MAX_IR_SUPPORTED_VERSION=9 \
-            export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3 \
-            export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20 \
-            pytest && \
-            deactivate'
+    - name: Verify ONNX with ONNX Runtime PyPI package
+      if: matrix.python-version != 'cp312-cp312'
+      run: |
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt && \
+          python -m pip install -q onnxruntime==1.16.3 && \
+          export ORT_MAX_IR_SUPPORTED_VERSION=9 \
+          export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3 \
+          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20 \
+          pytest && \
+          deactivate'
