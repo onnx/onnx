@@ -45,7 +45,6 @@ jobs:
       uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
       with:
         python-version: ${{ matrix.python-version }}
-        check-latest: true
 
     - name: Install Python dependencies
       run: |
