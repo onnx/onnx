@@ -34,6 +34,24 @@ jobs:
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
+
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+        
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements-release.txt
+
     # Only triggered by weekly event on certain CI
     - name: Build source distribution (weekly)
       if: github.event_name == 'schedule'  && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
@@ -44,7 +62,6 @@ jobs:
         ONNX_PREVIEW_BUILD=1 python -m build --sdist
 
     - name: Build source distribution (for release)
-      #if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
       if: matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
       run: |
         # Build and upload source distribution to PyPI
