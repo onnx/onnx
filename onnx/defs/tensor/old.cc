@@ -1380,7 +1380,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Slice_ver11_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
-https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+https://numpy.org/doc/stable/reference/routines.indexing.html
 Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
 dimension and step for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
@@ -4443,7 +4443,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Slice_ver1_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
-https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+https://numpy.org/doc/stable/reference/routines.indexing.html
 Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
 dimension for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
@@ -4559,7 +4559,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Slice_ver10_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
-https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+https://numpy.org/doc/stable/reference/routines.indexing.html
 Slices uses `starts`, `ends`, `axes` and `steps` inputs to specify the start and end
 dimension and step for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the

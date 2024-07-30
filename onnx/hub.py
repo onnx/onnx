@@ -9,7 +9,6 @@ import hashlib
 import json
 import os
 import sys
-import tarfile
 from io import BytesIO
 from os.path import join
 from typing import IO, Any, Dict, List, Optional, Set, Tuple, cast
@@ -296,6 +295,7 @@ def download_model_with_test_data(
     silent: bool = False,
 ) -> Optional[str]:
     """Downloads a model along with test data by name from the onnx model hub and returns the directory to which the files have been extracted.
+    Users are responsible for making sure the model comes from a trusted source, and the data is safe to be extracted.
 
     Args:
         model: The name of the onnx model in the manifest. This field is
@@ -361,12 +361,14 @@ def download_model_with_test_data(
                 "download the model from the model hub."
             )
 
-    with tarfile.open(local_model_with_data_path) as model_with_data_zipped:
-        # FIXME: Avoid index manipulation with magic numbers
-        local_model_with_data_dir_path = local_model_with_data_path[
-            0 : len(local_model_with_data_path) - 7
-        ]
-        model_with_data_zipped.extractall(local_model_with_data_dir_path)
+    # FIXME: Avoid index manipulation with magic numbers,
+    # remove ".tar.gz"
+    local_model_with_data_dir_path = local_model_with_data_path[
+        0 : len(local_model_with_data_path) - 7
+    ]
+    onnx.utils._extract_model_safe(
+        local_model_with_data_path, local_model_with_data_dir_path
+    )
     model_with_data_path = (
         local_model_with_data_dir_path
         + "/"
