@@ -17,7 +17,7 @@ or value_* must be specified.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
-    21,
+    23,
     OpSchema()
         .SetDoc(Constant_ver19_doc)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
@@ -57,7 +57,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRINGS,
             false)
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir10(), "Constrain input and output types to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
 static const char* ConstantOfShape_ver20_doc = R"DOC(
@@ -66,7 +66,7 @@ Generate a tensor with given value and shape.
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
-    21,
+    23,
     OpSchema()
         .SetDoc(ConstantOfShape_ver20_doc)
         .Attr(
@@ -92,25 +92,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(uint4)",
-             "tensor(int4)",
-             "tensor(bool)",
-             "tensor(bfloat16)",
-             "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)"},
+            {"tensor(float16)",        "tensor(float)",      "tensor(double)",         "tensor(int8)",
+             "tensor(int16)",          "tensor(int32)",      "tensor(int64)",          "tensor(uint8)",
+             "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",         "tensor(uint4)",
+             "tensor(int4)",           "tensor(bool)",       "tensor(bfloat16)",       "tensor(float8e4m3fn)",
+             "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(float4e2m1)"},
             "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {

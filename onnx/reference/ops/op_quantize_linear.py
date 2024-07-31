@@ -11,6 +11,7 @@ import numpy as np
 
 from onnx import TensorProto, subbyte
 from onnx._custom_element_types import (
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
@@ -97,6 +98,7 @@ class _CommonQuantizeLinear(OpRun):
         TensorProto.FLOAT8E4M3FNUZ,
         TensorProto.FLOAT8E5M2,
         TensorProto.FLOAT8E5M2FNUZ,
+        TensorProto.FLOAT4E2M1,
     )
 
     def get_zero_point_type(self, zero_point: np.ndarray) -> int:
@@ -122,6 +124,11 @@ class _CommonQuantizeLinear(OpRun):
             zero_point_type = TensorProto.UINT4
         elif zero_point.dtype == int4 and zero_point.dtype.descr[0][0] == "int4":
             zero_point_type = TensorProto.INT4
+        elif (
+            zero_point.dtype == float4e2m1
+            and zero_point.dtype.descr[0][0] == "float4e2m1"
+        ):
+            zero_point_type = TensorProto.FLOAT4E2M1
         else:
             zero_point_type = np_dtype_to_tensor_dtype(zero_point.dtype)
         return zero_point_type
@@ -198,6 +205,11 @@ class _CommonQuantizeLinear(OpRun):
             func = np.vectorize(single_func)
             i4 = func(xi)
             return (i4,)  # type: ignore[attr-defined]
+
+        if tensor_type == TensorProto.FLOAT4E2M1:
+            x += zero_point
+            f4 = subbyte.float32_to_float4e2m1_unpacked(x)
+            return (f4,)  # type: ignore[attr-defined]
 
         raise ValueError(
             f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."
