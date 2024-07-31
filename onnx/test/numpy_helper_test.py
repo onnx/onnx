@@ -634,6 +634,7 @@ class TestNumpyHelper(unittest.TestCase):
             "UNDEFINED",
             "DEFAULT",
             "NAME_FIELD_NUMBER",
+            "FLOAT4E2M1"
         }:
             return
         if att[0] < "A" or att[0] > "Z":

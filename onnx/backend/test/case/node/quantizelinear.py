@@ -277,6 +277,38 @@ class QuantizeLinear(Base):
         )
 
     @staticmethod
+    def export_e2m1() -> None:
+        node = onnx.helper.make_node(
+            "QuantizeLinear",
+            inputs=["x", "y_scale", "y_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        x = np.array(
+            [
+                [0.0, 2.5, 4.8, 8.6],
+                [-30, -20, 6, 9],
+                [-0.0, -2.5, -4.8, -8.6],
+            ]
+        ).astype(np.float32)
+
+        y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+        y_zero_point = make_tensor(
+            "y_zero_point", TensorProto.FLOAT4E2M1, y_scale.shape, np.ones_like(y_scale)
+        )
+        y = make_tensor(
+            "y", TensorProto.INT4, x.shape, [1, 2, 3, 6, -6, -6, 3, 4, 1, 0.5, -0.0, -1]
+        )
+
+        expect(
+            node,
+            inputs=[x, y_scale, y_zero_point],
+            outputs=[y],
+            name="test_quantizelinear_e2m1",
+        )
+
+    @staticmethod
     def export_blocked_asymmetric() -> None:
         node = onnx.helper.make_node(
             "QuantizeLinear",
