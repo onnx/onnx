@@ -143,8 +143,8 @@ backend_test.exclude(
     "|test_castlike_BFLOAT16_to_FLOAT"
     "|test_quantizelinear_e4m3"
     "|test_quantizelinear_e5m2"
-    "|test_quantizelinear_uint4"
-    "|test_quantizelinear_int4"
+    # "|test_quantizelinear_uint4"
+    # "|test_quantizelinear_int4"
     ")"
 )
 

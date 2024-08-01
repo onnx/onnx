@@ -740,8 +740,8 @@ def make_tensor(
             TensorProto.FLOAT8E5M2FNUZ,
         ):
             expected_size = 1
-        # NumPy doesn't have INT4. It is packed in couples to UINT8 buffers.
-        elif data_type in (TensorProto.UINT4, TensorProto.INT4):
+        # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
+        elif data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
             expected_size = 0.5  # type: ignore[assignment]
         else:
             expected_size = np_dtype.itemsize
@@ -754,9 +754,10 @@ def make_tensor(
     if len(vals) != expected_size:
         # padding of half a byte is acceptable for 4bit types
         if not (
-            data_type in (TensorProto.UINT4, TensorProto.INT4)
+            data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1)
             and len(vals) == expected_size + 0.5
         ):
+            print('$$$$$$', data_type, vals, len(vals), expected_size, dims)
             raise ValueError(
                 f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
             )

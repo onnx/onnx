@@ -221,8 +221,18 @@ def unpack_int4(
     return res
 
 
-def uint8_to_float4e2m1(x):
+def evaluate_float4e2m1_from_uint8(x):
+    """Evaluate the numerical value of a float4e2m1 element represented as uint8
+    See :ref:`onnx-detail-int4` for technical details.
+
+    Args:
+        x: a uint8 element representing a float4e2m1 (using the 4 LSB)
+
+    Returns:
+        Packed array with size `ceil(farray.size/2)` (single dimension).
+    """
     # x is stored in 4 LSB of int
+    assert(isinstance(x, np.uint8))
     S = -1 if bool(x & 0x08) else 1
     M = x & 0x01
     E = (x & 0x06) >> 1
@@ -256,8 +266,11 @@ def unpack_float4e2m1(
 
     res_high, res_low = func(data.ravel())
     res = np.empty((res_high.size + res_low.size,), dtype=np.float32)
-    res[0::2] = uint8_to_float4e2m1(res_high)
-    res[1::2] = uint8_to_float4e2m1(res_low)
+    
+    evaluate_func = lambda x: evaluate_float4e2m1_from_uint8(x)
+    func2 = np.frompyfunc(evaluate_func, 1, 1)
+    res[0::2] = func2(res_high)
+    res[1::2] = func2(res_low)
 
     if (
         res.size == np.prod(dims) + 1
@@ -266,6 +279,36 @@ def unpack_float4e2m1(
     res = res.reshape(dims)
     return res
 
+def unpack_float4e2m1_to_uint8(
+    data: np.int32 | np.ndarray,
+    dims: int | Sequence[int],
+) -> np.ndarray:
+    """Converts ndarray of float4e2m1 (as packed uint8) to uint8
+    See :ref:`onnx-detail-float4` for technical details.
+
+    Args:
+        data: A numpy array, empty dimensions are allowed if dims is
+            None.
+        dims: The dimensions are used to reshape the unpacked buffer
+
+    Returns:
+        A numpy array of uint8 reshaped to dims.
+    """
+    single_func = lambda x: subbyte.unpack_single_4bitx2(x, False)  # noqa: E731
+    func = np.frompyfunc(single_func, 1, 2)
+
+    res_high, res_low = func(data.ravel())
+    res = np.empty((res_high.size + res_low.size,), dtype=np.uint8)
+    
+    res[0::2] = res_high
+    res[1::2] = res_low
+
+    if (
+        res.size == np.prod(dims) + 1
+    ):  # handle single-element padding due to odd number of elements
+        res = res.ravel()[:-1]
+    res = res.reshape(dims)
+    return res
 
 def _to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
@@ -462,13 +505,13 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         else:
             data = tensor.int32_data
         shape = tuple(tensor.dims)
-        signed = elem_type == TensorProto.INT4
+
         # 2 packed fp4e2m1 elements must be represented as a single uint8 value.
         # Therefore, y is np.uint8 (not the dtype to which the int4 maps)
-        y = np.empty(len(data), dtype=np.uint8).ravel()  # type: ignore[assignment]
+        y = np.empty(len(data), dtype=custom_np_types.float4e2m1).ravel()  # type: ignore[assignment]
         for i, d in enumerate(data):
             y[i] = d
-        unpacked_data = unpack_float4e2m1(y, dims=shape)
+        unpacked_data = unpack_float4e2m1_to_uint8(y, dims=shape)
         return unpacked_data.astype(custom_np_types.float4e2m1)
     return _to_array(tensor, base_dir=base_dir)
 
