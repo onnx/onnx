@@ -18,7 +18,7 @@ jobs:
   call-workflow-sourcedist:    
     strategy:
       matrix:
-        os: ['ubuntu-latest']    
+        os: ['mac-latest']
     uses: ./.github/workflows/release_sourcedist.yml    
     with:
       os: "mac" 
