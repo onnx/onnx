@@ -83,9 +83,9 @@ std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
   shape_inference::GraphInferenceContext graphInferenceContext(
       valueTypes.second, opsetImports, nullptr, {}, OpSchemaRegistry::Instance(), nullptr, irVersion);
   // Construct inference context and get results - may throw InferenceError
-  // TODO: if it is desirable for infer_node_outputs to provide check_type, strict_mode, data_prop,
+  // TODO: if it is desirable for infer_node_outputs to provide check_type, error_mode, data_prop,
   // we can add them to the Python API. For now we just assume the default options.
-  ShapeInferenceOptions options{false, 0, false};
+  ShapeInferenceOptions options{false, IgnoreInferenceError, false};
   shape_inference::InferenceContextImpl ctx(
       node, valueTypes.second, inputData.second, inputSparseData.second, options, nullptr, &graphInferenceContext);
   schema->GetTypeAndShapeInferenceFunction()(ctx);
@@ -628,13 +628,21 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
   py::register_exception<InferenceError>(shape_inference, "InferenceError");
+  py::register_exception<TypeError>(shape_inference, "TypeError");
+  py::register_exception<ShapeError>(shape_inference, "ShapeError");
+
+  py::enum_<InferenceErrorMode>(shape_inference, "InferenceErrorMode")
+      .value("IgnoreInferenceError", IgnoreInferenceError)
+      .value("FailAnyInferenceError", FailAnyInferenceError)
+      .value("FailShapeInferenceError", FailShapeInferenceError)
+      .value("FailTypeInferenceError", FailTypeInferenceError);
 
   shape_inference.def(
       "infer_shapes",
-      [](const py::bytes& bytes, bool check_type, bool strict_mode, bool data_prop) {
+      [](const py::bytes& bytes, bool check_type, InferenceErrorMode error_mode, bool data_prop) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
-        ShapeInferenceOptions options{check_type, strict_mode == true ? 1 : 0, data_prop};
+        ShapeInferenceOptions options{check_type, error_mode, data_prop};
         shape_inference::InferShapes(proto, OpSchemaRegistry::Instance(), options);
         std::string out;
         proto.SerializeToString(&out);
@@ -642,7 +650,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       },
       "bytes"_a,
       "check_type"_a = false,
-      "strict_mode"_a = false,
+      "error_mode"_a = IgnoreInferenceError,
       "data_prop"_a = false);
 
   shape_inference.def(
@@ -650,9 +658,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](const std::string& model_path,
          const std::string& output_path,
          bool check_type,
-         bool strict_mode,
+         InferenceErrorMode error_mode,
          bool data_prop) -> void {
-        ShapeInferenceOptions options{check_type, strict_mode == true ? 1 : 0, data_prop};
+        ShapeInferenceOptions options{check_type, error_mode, data_prop};
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
       });
 

@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import unittest
 
+from onnx.shape_inference import InferenceErrorMode
+
 
 class TestONNXRuntime(unittest.TestCase):
     def test_with_ort_example(self) -> None:
@@ -31,7 +33,10 @@ class TestONNXRuntime(unittest.TestCase):
         checker.check_model(model)
         checker.check_model(model, full_check=True)
         inferred_model = shape_inference.infer_shapes(
-            model, check_type=True, strict_mode=True, data_prop=True
+            model,
+            check_type=True,
+            error_mode=InferenceErrorMode.FailAnyInferenceError,
+            data_prop=True,
         )
         converted_model = version_converter.convert_version(inferred_model, 10)
 

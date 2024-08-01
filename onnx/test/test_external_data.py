@@ -32,6 +32,7 @@ from onnx.external_data_helper import (
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
+from onnx.shape_inference import InferenceErrorMode
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
@@ -648,10 +649,10 @@ class TestExternalDataToArray(unittest.TestCase):
         # ParseData cannot handle external data and should throw the error as follows:
         # Cannot parse data from external tensors. Please load external data into raw data for tensor: Shape
         self.assertRaises(
-            shape_inference.InferenceError,
+            shape_inference.ShapeError,
             shape_inference.infer_shapes,
             model_without_external_data,
-            strict_mode=True,
+            error_mode=InferenceErrorMode.FailAnyInferenceError,
         )
 
     def test_to_array_with_external_data(self) -> None:
