@@ -287,6 +287,9 @@ def save_model(
     location: str | None = None,
     size_threshold: int = 1024,
     convert_attribute: bool = False,
+    align_offset: bool = False,
+    align_threshold: int = 1048576, # 1MB
+    allocation_granularity: int = 65536, # 64KB
 ) -> None:
     """Saves the ModelProto to the specified path and optionally, serialize tensors with raw data as external data before saving.
 
@@ -312,13 +315,17 @@ def save_model(
         convert_attribute: Effective only if save_as_external_data is True.
             If true, convert all tensors to external data
             If false, convert only non-attribute tensors to external data
+        align_offset: Offset will always be page aligned and alloction granularity aligned for mmap support. This is done by padding previous tensor data with zeros keeping same length. Tensor data will be aligned if > align_threshold
+        align_threshold: Alignment threshold for size of data. Having a low threshold will waste file space for small initializers. Only when tensor's data is > the page_align_threshold
+            it will be force aligned
+        allocation_granularity: The allocation Granularity for mmap() support. Typically 64KB for Windows & 4KB for other OSes
     """
     if isinstance(proto, bytes):
         proto = _get_serializer(_DEFAULT_FORMAT).deserialize_proto(proto, ModelProto())
 
     if save_as_external_data:
         convert_model_to_external_data(
-            proto, all_tensors_to_one_file, location, size_threshold, convert_attribute
+            proto, all_tensors_to_one_file, location, size_threshold, convert_attribute, align_offset, align_threshold, allocation_granularity
         )
 
     model_filepath = _get_file_path(f)
