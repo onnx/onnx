@@ -8,7 +8,7 @@ import sys
 import numpy as np
 
 import onnx
-import onnx.reference.custom_element_types as custom
+import onnx._custom_element_types as custom
 from onnx import TensorProto, helper, subbyte
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect

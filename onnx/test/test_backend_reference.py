@@ -200,7 +200,8 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
 
-if sys.version_info <= (3, 9):
+if sys.version_info <= (3, 10):
+    #  AttributeError: module 'numpy.typing' has no attribute 'NDArray'
     backend_test.exclude("test_image_decoder_decode_")
 
 if sys.platform == "darwin":
@@ -219,6 +220,10 @@ if version_utils.numpy_older_than("1.21.5"):
     backend_test.exclude("test_dft_opset19")
     backend_test.exclude("test_dft_axis_opset19")
     backend_test.exclude("test_dft_inverse_opset19")
+
+if version_utils.pillow_older_than("10.0"):
+    backend_test.exclude("test_image_decoder_decode_webp_rgb")
+    backend_test.exclude("test_image_decoder_decode_jpeg2k_rgb")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
