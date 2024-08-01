@@ -164,7 +164,7 @@ jobs:
 
       - name: Upload Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Test Results (${{ matrix.os }}-{{ matrix.python_version }})
           path: pytest.xml
