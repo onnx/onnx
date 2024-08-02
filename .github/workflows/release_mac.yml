@@ -68,8 +68,8 @@ jobs:
 
     - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
       with:
-        name: macos-wheel-${{ matrix.python-version }}
-        path: dist
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}        
+        path: dist/*.whl
 
   test:
     needs: build
