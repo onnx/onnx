@@ -72,7 +72,7 @@ def unpack_single_4bitx2(
     return (x_low.astype(dtype), x_high.astype(dtype))
 
 
-def float32_to_float4e2m1_unpacked(x: float) -> np.ndarray:
+def float32_to_float4e2m1_unpacked(x: np.ndarray | np.dtype) -> np.ndarray:
     """Cast to 4bit via rounding and clipping (without packing).
 
     Args:
@@ -109,7 +109,10 @@ def float32_to_float4e2m1_unpacked(x: float) -> np.ndarray:
     if not isinstance(x, np.ndarray):
         x = np.asarray(x)
     func = np.frompyfunc(float32_to_float4e2m1, 1, 1)
-    return func(x).astype(np.uint8)
+    y = func(x)
+    if not isinstance(y, np.ndarray):
+        y = np.asarray(y)
+    return y.astype(np.uint8)
 
 
 def float32x2_to_float4e2m1x2(

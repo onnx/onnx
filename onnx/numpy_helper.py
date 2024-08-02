@@ -221,8 +221,8 @@ def unpack_int4(
     return res
 
 
-def evaluate_float4e2m1_from_uint8(x):
-    """Evaluate the numerical value of a float4e2m1 element represented as uint8
+def evaluate_float4e2m1_from_bits(x):
+    """Evaluate the numerical value of a single float4e2m1 element represented as uint8
     See :ref:`onnx-detail-int4` for technical details.
 
     Args:
@@ -232,7 +232,7 @@ def evaluate_float4e2m1_from_uint8(x):
         Packed array with size `ceil(farray.size/2)` (single dimension).
     """
     # x is stored in 4 LSB of int
-    assert(isinstance(x, np.uint8))
+    # assert(isinstance(x, np.uint8))
     S = -1 if bool(x & 0x08) else 1
     M = x & 0x01
     E = (x & 0x06) >> 1
@@ -267,7 +267,7 @@ def unpack_float4e2m1(
     res_high, res_low = func(data.ravel())
     res = np.empty((res_high.size + res_low.size,), dtype=np.float32)
     
-    evaluate_func = lambda x: evaluate_float4e2m1_from_uint8(x)
+    evaluate_func = lambda x: evaluate_float4e2m1_from_bits(x)
     func2 = np.frompyfunc(evaluate_func, 1, 1)
     res[0::2] = func2(res_high)
     res[1::2] = func2(res_low)

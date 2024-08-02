@@ -27,6 +27,7 @@ from onnx.numpy_helper import (
     float8e4m3_to_float32,
     float8e5m2_to_float32,
     unpack_float4e2m1,
+    evaluate_float4e2m1_from_bits
 )
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
@@ -131,9 +132,12 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
     if x.dtype == float4e2m1 and x.dtype.descr[0][0] == "float4e2m1":
         if to == TensorProto.FLOAT4E2M1:
             return x
-        assert(to == TensorProto.FLOAT)
-        breakpoint()
-        return unpack_float4e2m1(x)
+        evaluate_func = np.vectorize(evaluate_float4e2m1_from_bits)
+        res = evaluate_func(x)
+        if to == TensorProto.FLOAT:
+            return res.astype(np.float32)
+        elif to == TensorProto.FLOAT16:
+            return res.astype(np.float16)
         
     if to == TensorProto.FLOAT4E2M1:
         xf = x.astype(np.float32).ravel()

@@ -16,7 +16,7 @@ from onnx._custom_element_types import (
     float4e2m1,
 )
 from onnx.helper import np_dtype_to_tensor_dtype
-from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, evaluate_float4e2m1_from_uint8
+from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, evaluate_float4e2m1_from_bits
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_quantize_linear import reshape_input
 
@@ -89,7 +89,7 @@ class _CommonDequantizeLinear(OpRun):
                 dx = np.empty(x.shape, dtype=np.float32).ravel()
                 xr = x.ravel()
                 for i in range(x.flatten().size):
-                    dx[i] = evaluate_float4e2m1_from_uint8(xr[i])
+                    dx[i] = evaluate_float4e2m1_from_bits(xr[i])
                 dx.reshape(x_shape)
             else:
                 dx = x.astype(np.float32)
