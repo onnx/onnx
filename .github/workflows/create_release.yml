@@ -45,4 +45,4 @@ jobs:
         os: ['mac-latest']    
     uses: ./.github/workflows/release_mac.yml
     with:            
-      os: "mac"   
+      os: "macos"   
