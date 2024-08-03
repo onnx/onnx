@@ -10,7 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-  workflow_dispatch:
 
 permissions:  # set top-level default permissions as security best practice
   contents: read

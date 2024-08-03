@@ -10,7 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-  workflow_dispatch:
 
 # Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
 env:

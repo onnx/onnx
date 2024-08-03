@@ -9,8 +9,7 @@ on:  # Specifies the event triggering the workflow
     inputs:      
       os:
         required: true
-        type: string
-  workflow_dispatch:
+        type: string  
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -65,8 +64,10 @@ jobs:
 
     - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
       with:
-        name: wheels
-        path: dist
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
+        path: |
+            ./dist/*.whl
+        
 
     - name: Upload wheel to PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
