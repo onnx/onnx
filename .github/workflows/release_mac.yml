@@ -65,7 +65,7 @@ jobs:
         fi
         python -m build --wheel
 
-    - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
+    - uses: actions/upload-artifact@v4
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}        
         path: dist/*.whl
@@ -90,7 +90,7 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release.txt
 
-    - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+    - uses: actions/download-artifact@v4
       with:
         name:  wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist
