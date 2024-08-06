@@ -410,12 +410,14 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 19)], 9)
         test([("", 20)], 9)
         test([("", 21)], 10)
+        test([("", 22)], 10)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
         test([("ai.onnx.ml", 3)], 8)
         test([("ai.onnx.ml", 4)], 9)
         test([("ai.onnx.ml", 5)], 10)
+        test([("ai.onnx.ml", 6)], 10)
         test([("ai.onnx.training", 1)], 7)
         # helper should pick *max* IR version required from all opsets specified.
         test([("", 10), ("ai.onnx.ml", 2)], 6)
