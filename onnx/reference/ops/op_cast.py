@@ -8,13 +8,13 @@ import numpy as np
 from onnx import subbyte
 from onnx._custom_element_types import (
     bfloat16,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
     int4,
     uint4,
-    float4e2m1,
 )
 from onnx.helper import (
     float32_to_bfloat16,
@@ -24,10 +24,9 @@ from onnx.helper import (
 )
 from onnx.numpy_helper import (
     bfloat16_to_float32,
+    evaluate_float4e2m1_from_bits,
     float8e4m3_to_float32,
     float8e5m2_to_float32,
-    unpack_float4e2m1,
-    evaluate_float4e2m1_from_bits
 )
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
@@ -138,7 +137,7 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
             return res.astype(np.float32)
         elif to == TensorProto.FLOAT16:
             return res.astype(np.float16)
-        
+
     if to == TensorProto.FLOAT4E2M1:
         xf = x.astype(np.float32).ravel()
         y = np.empty(xf.shape, dtype=float4e2m1).ravel()

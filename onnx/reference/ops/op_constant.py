@@ -7,13 +7,13 @@ import numpy as np
 
 from onnx._custom_element_types import (
     bfloat16,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
     int4,
     uint4,
-    float4e2m1,
 )
 from onnx.reference.op_run import OpRun, RefAttrName
 

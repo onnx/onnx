@@ -295,10 +295,16 @@ class QuantizeLinear(Base):
 
         y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
         y_zero_point = make_tensor(
-            "y_zero_point", TensorProto.FLOAT4E2M1, y_scale.shape, np.zeros_like(y_scale)
+            "y_zero_point",
+            TensorProto.FLOAT4E2M1,
+            y_scale.shape,
+            np.zeros_like(y_scale),
         )
         y = make_tensor(
-            "y", TensorProto.FLOAT4E2M1, x.shape, [0, 1, 2, 4, -6, -6, 2, 3, 0, -0.5, -1, -2]
+            "y",
+            TensorProto.FLOAT4E2M1,
+            x.shape,
+            [0, 1, 2, 4, -6, -6, 2, 3, 0, -0.5, -1, -2],
         )
 
         expect(

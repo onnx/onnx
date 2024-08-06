@@ -9,13 +9,13 @@ from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_cast import (
     bfloat16,
     cast_to,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
     int4,
     uint4,
-    float4e2m1,
 )
 
 

@@ -736,18 +736,25 @@ class TestHelperTensorFunctions(unittest.TestCase):
         data = np.array([0, 0.5, 1, 240, 10, -2], dtype=np.float32)
         packed_data = helper.pack_float32_to_float4e2m1(data)
         y = helper.make_tensor(
-            "packed_fp4e2m1", TensorProto.FLOAT4E2M1, data.shape, packed_data.tobytes(), raw=True
+            "packed_fp4e2m1",
+            TensorProto.FLOAT4E2M1,
+            data.shape,
+            packed_data.tobytes(),
+            raw=True,
         )
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(Cast.eval(data, to=TensorProto.FLOAT4E2M1), ynp)  # type: ignore[arg-type]
 
     def test_make_float4e2m1_tensor(self) -> None:
         y = helper.make_tensor(
-            "zero_point", TensorProto.FLOAT4E2M1, [7], [0, 0.5, 1, 50000, -0.6, -100, -5]
+            "zero_point",
+            TensorProto.FLOAT4E2M1,
+            [7],
+            [0, 0.5, 1, 50000, -0.6, -100, -5],
         )
         ynp = numpy_helper.to_array(y)
         expected = np.array([0, 0.5, 1, 6, -0.5, -6, -4], dtype=np.float32)
-        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT4E2M1), ynp)
+        np.testing.assert_equal(Cast.eval(expected, to=TensorProto.FLOAT4E2M1), ynp)  # type: ignore[arg-type]
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
@@ -948,7 +955,7 @@ class TestPrintableGraph(unittest.TestCase):
             TensorProto.STRING,
             TensorProto.COMPLEX64,
             TensorProto.COMPLEX128,
-            TensorProto.FLOAT4E2M1
+            TensorProto.FLOAT4E2M1,
         }
     ],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),

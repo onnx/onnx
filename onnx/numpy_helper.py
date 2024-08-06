@@ -236,13 +236,12 @@ def evaluate_float4e2m1_from_bits(x):
     S = -1 if bool(x & 0x08) else 1
     M = x & 0x01
     E = (x & 0x06) >> 1
-    bias = 1
     if E == 0:
         # denormalized
-        val = S * (M/2.0)
+        val = S * (M / 2.0)
     else:
         # normalized
-        val = S * (1.0 + M/2.0) * 2.0**(E-1)
+        val = S * (1.0 + M / 2.0) * 2.0 ** (E - 1)
     return val
 
 
@@ -266,8 +265,10 @@ def unpack_float4e2m1(
 
     res_high, res_low = func(data.ravel())
     res = np.empty((res_high.size + res_low.size,), dtype=np.float32)
-    
-    evaluate_func = lambda x: evaluate_float4e2m1_from_bits(x)
+
+    def evaluate_func(x):
+        return evaluate_float4e2m1_from_bits(x)
+
     func2 = np.frompyfunc(evaluate_func, 1, 1)
     res[0::2] = func2(res_high)
     res[1::2] = func2(res_low)
@@ -278,6 +279,7 @@ def unpack_float4e2m1(
         res = res.ravel()[:-1]
     res = res.reshape(dims)
     return res
+
 
 def unpack_float4e2m1_to_uint8(
     data: np.int32 | np.ndarray,
@@ -299,7 +301,7 @@ def unpack_float4e2m1_to_uint8(
 
     res_high, res_low = func(data.ravel())
     res = np.empty((res_high.size + res_low.size,), dtype=np.uint8)
-    
+
     res[0::2] = res_high
     res[1::2] = res_low
 
@@ -309,6 +311,7 @@ def unpack_float4e2m1_to_uint8(
         res = res.ravel()[:-1]
     res = res.reshape(dims)
     return res
+
 
 def _to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.

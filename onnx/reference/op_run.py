@@ -11,13 +11,13 @@ import numpy as np
 from onnx import TensorProto
 from onnx._custom_element_types import (
     bfloat16,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
     int4,
     uint4,
-    float4e2m1,
 )
 from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
 from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype

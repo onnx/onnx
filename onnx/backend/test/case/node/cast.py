@@ -18,7 +18,11 @@ from onnx.helper import (
     make_tensor,
     tensor_dtype_to_field,
 )
-from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, evaluate_float4e2m1_from_bits
+from onnx.numpy_helper import (
+    evaluate_float4e2m1_from_bits,
+    float8e4m3_to_float32,
+    float8e5m2_to_float32,
+)
 
 
 class Cast(Base):
@@ -328,7 +332,9 @@ class Cast(Base):
                     raise ValueError(
                         f"Conversion from {from_type} to {to_type} is not tested."
                     )
-                expected = vect_evaluate_float4e2m1_from_bits(subbyte.float32_to_float4e2m1_unpacked(np_fp32))
+                expected = vect_evaluate_float4e2m1_from_bits(
+                    subbyte.float32_to_float4e2m1_unpacked(np_fp32)
+                )
                 output = make_tensor(
                     "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
                 )
