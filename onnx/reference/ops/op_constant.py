@@ -13,6 +13,7 @@ from onnx._custom_element_types import (
     float8e5m2fnuz,
     int4,
     uint4,
+    float4e2m1,
 )
 from onnx.reference.op_run import OpRun, RefAttrName
 
@@ -27,6 +28,7 @@ def _check_dtype(val):  # type: ignore
         float8e5m2fnuz,
         uint4,
         int4,
+        float4e2m1,
         np.int8,
         np.uint8,
         np.float16,

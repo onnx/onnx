@@ -15,6 +15,7 @@ from onnx.reference.ops.op_cast import (
     float8e5m2fnuz,
     int4,
     uint4,
+    float4e2m1,
 )
 
 
@@ -34,6 +35,8 @@ def _cast_like(x, y, saturate):
         to = TensorProto.UINT4
     elif y.dtype == int4 and y.dtype.descr[0][0] == "int4":
         to = TensorProto.INT4
+    elif y.dtype == float4e2m1 and y.dtype.descr[0][0] == "float4e2m1":
+        to = TensorProto.FLOAT4E2M1
     else:
         to = np_dtype_to_tensor_dtype(y.dtype)  # type: ignore
     return (cast_to(x, to, saturate),)
