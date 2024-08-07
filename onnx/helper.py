@@ -690,9 +690,7 @@ def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
 
-    single_func = lambda x, y: subbyte.float32x2_to_float4e2m1x2(x, y)  # noqa: E731
-    func = np.frompyfunc(single_func, 2, 1)
-
+    func = np.vectorize(subbyte.float32x2_to_float4e2m1x2)
     arr = func(array_flat[0::2], array_flat[1::2])
     return arr.astype(np.uint8)  # type: ignore[no-any-return]
 
