@@ -13,6 +13,10 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:    
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
 jobs: 
 
   call-workflow-ubuntu_x86:    
