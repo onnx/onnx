@@ -221,7 +221,7 @@ def unpack_int4(
     return res
 
 
-def evaluate_float4e2m1_from_bits(x):
+def evaluate_float4e2m1_from_bits(x: np.uint8) -> np.float32:
     """Evaluate the numerical value of a single float4e2m1 element represented as uint8
     See :ref:`onnx-detail-int4` for technical details.
 
@@ -232,7 +232,6 @@ def evaluate_float4e2m1_from_bits(x):
         Packed array with size `ceil(farray.size/2)` (single dimension).
     """
     # x is stored in 4 LSB of int
-    # assert(isinstance(x, np.uint8))
     S = -1 if bool(x & 0x08) else 1
     M = x & 0x01
     E = (x & 0x06) >> 1
@@ -509,8 +508,8 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
             data = tensor.int32_data
         shape = tuple(tensor.dims)
 
-        # 2 packed fp4e2m1 elements must be represented as a single uint8 value.
-        # Therefore, y is np.uint8 (not the dtype to which the int4 maps)
+        # 2 packed float4e2m1 elements must be represented as a single uint8 value.
+        # Therefore, y is np.uint8.
         y = np.empty(len(data), dtype=custom_np_types.float4e2m1).ravel()  # type: ignore[assignment]
         for i, d in enumerate(data):
             y[i] = d

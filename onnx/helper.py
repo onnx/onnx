@@ -673,15 +673,14 @@ def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarr
 
 
 def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
-    """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
-    See :ref:`onnx-detail-int4` for technical details.
+    """Convert an array of float32 value to float4e2m1 and pack every two concecutive elements in a byte.
+    See :ref:`onnx-detail-float4` for technical details.
 
     Args:
         array: array of float to convert and pack
-        signed: Whether the 4 bit variant is signed or unsigned
 
     Returns:
-        Packed array with size `ceil(farray.size/2)` (single dimension).
+        Packed array of float4e2m1 (as uint8) with size `ceil(farray.size/2)` (single dimension).
     """
     if not isinstance(array, np.ndarray):
         array = np.asarray(array, dtype=np.float32)
@@ -757,7 +756,6 @@ def make_tensor(
             data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1)
             and len(vals) == expected_size + 0.5
         ):
-            print("$$$$$$", data_type, vals, len(vals), expected_size, dims)
             raise ValueError(
                 f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
             )

@@ -139,12 +139,8 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
             return res.astype(np.float16)
 
     if to == TensorProto.FLOAT4E2M1:
-        xf = x.astype(np.float32).ravel()
-        y = np.empty(xf.shape, dtype=float4e2m1).ravel()
-        for i in range(y.shape[0]):
-            el = subbyte.float32_to_float4e2m1_unpacked(xf[i])
-            y[i] = el
-        # This operator preduces a tensor with the same shape for INT4.
+        xf = x.astype(np.float32)
+        y = subbyte.float32_to_float4e2m1_unpacked(xf)
         return y.reshape(x.shape)
 
     if to == TensorProto.STRING:

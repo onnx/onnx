@@ -207,11 +207,8 @@ class _CommonQuantizeLinear(OpRun):
             return (i4,)  # type: ignore[attr-defined]
 
         if tensor_type == TensorProto.FLOAT4E2M1:
-            # x += zero_point
-            def single_func(x):
-                return subbyte.float32_to_float4e2m1_unpacked(x)
-
-            func = np.vectorize(single_func)
+            x += zero_point
+            func = np.vectorize(subbyte.float32_to_float4e2m1_unpacked)
             f4 = func(x)
             return (f4,)  # type: ignore[attr-defined]
 

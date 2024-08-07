@@ -2616,7 +2616,9 @@ for from_type, to_type in test_cases:
             raise ValueError(
                 f"Conversion from {from_type} to {to_type} is not tested."
             )
-        expected = vect_evaluate_float4e2m1_from_bits(subbyte.float32_to_float4e2m1_unpacked(np_fp32))
+        expected = vect_evaluate_float4e2m1_from_bits(
+            subbyte.float32_to_float4e2m1_unpacked(np_fp32)
+        )
         output = make_tensor(
             "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
         )
@@ -14184,42 +14186,6 @@ expect(
 
 </details>
 <details>
-<summary>e2m1</summary>
-
-```python
-node = onnx.helper.make_node(
-    "QuantizeLinear",
-    inputs=["x", "y_scale", "y_zero_point"],
-    outputs=["y"],
-    axis=0,
-)
-
-x = np.array(
-    [
-        [0.0, 2.5, 4.8, 8.6],
-        [-30, -20, 6, 9],
-        [-0.0, -2.5, -4.8, -8.6],
-    ]
-).astype(np.float32)
-
-y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
-y_zero_point = make_tensor(
-    "y_zero_point", TensorProto.FLOAT4E2M1, y_scale.shape, np.zeros_like(y_scale)
-)
-y = make_tensor(
-    "y", TensorProto.FLOAT4E2M1, x.shape, [0, 1, 2, 4, -6, -6, 2, 3, 0, -0.5, -1, -2]
-)
-
-expect(
-    node,
-    inputs=[x, y_scale, y_zero_point],
-    outputs=[y],
-    name="test_quantizelinear_float4e2m1",
-)
-```
-
-</details>
-<details>
 <summary>e4m3fn</summary>
 
 ```python
@@ -14263,6 +14229,48 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_e5m2",
+)
+```
+
+</details>
+<details>
+<summary>float4e2m1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-30, -20, 6, 9],
+        [-0.0, -2.5, -4.8, -8.6],
+    ]
+).astype(np.float32)
+
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "y_zero_point",
+    TensorProto.FLOAT4E2M1,
+    y_scale.shape,
+    np.zeros_like(y_scale),
+)
+y = make_tensor(
+    "y",
+    TensorProto.FLOAT4E2M1,
+    x.shape,
+    [0, 1, 2, 4, -6, -6, 2, 3, 0, -0.5, -1, -2],
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_float4e2m1",
 )
 ```
 

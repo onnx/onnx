@@ -73,13 +73,13 @@ def unpack_single_4bitx2(
 
 
 def float32_to_float4e2m1_unpacked(x: np.ndarray | np.dtype) -> np.ndarray:
-    """Cast to 4bit via rounding and clipping (without packing).
+    """Cast float32 to float4e2m1 (without packing).
 
     Args:
-        x: element to be converted
+        x: element or array to be converted
 
     Returns:
-        An ndarray with a single float4e2m1 element (as uint8)
+        An ndarray with unpacked float4e2m1 elements (as uint8)
     """
 
     def float32_to_float4e2m1(value):
@@ -117,14 +117,13 @@ def float32_to_float4e2m1_unpacked(x: np.ndarray | np.dtype) -> np.ndarray:
 
 
 def float32x2_to_float4e2m1x2(val_low: np.dtype, val_high: np.dtype) -> np.ndarray:
-    """Cast two elements to 4bit (via rounding and clipping) and pack
-    to a single byte
+    """Cast two elements to float4e2m1 and pack to a single byte
     Args:
         val_low: element to be packed in the 4 LSB
         val_high: element to be packed in the 4 MSB
 
     Returns:
-        An ndarray with a single int8/uint8 element, containing both int4 elements
+        An ndarray with a single uint8 element, containing both float4e2m1 elements
     """
     i8_high = float32_to_float4e2m1_unpacked(val_high)
     i8_low = float32_to_float4e2m1_unpacked(val_low)

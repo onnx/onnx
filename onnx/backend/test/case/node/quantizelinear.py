@@ -277,7 +277,7 @@ class QuantizeLinear(Base):
         )
 
     @staticmethod
-    def export_e2m1() -> None:
+    def export_float4e2m1() -> None:
         node = onnx.helper.make_node(
             "QuantizeLinear",
             inputs=["x", "y_scale", "y_zero_point"],

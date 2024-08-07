@@ -93,12 +93,8 @@ class _CommonDequantizeLinear(OpRun):
             elif x_type == TensorProto.FLOAT8E5M2FNUZ:
                 dx = float8e5m2_to_float32(x, fn=True, uz=True)
             elif x_type == TensorProto.FLOAT4E2M1:
-                x_shape = x.shape
-                dx = np.empty(x.shape, dtype=np.float32).ravel()
-                xr = x.ravel()
-                for i in range(x.flatten().size):
-                    dx[i] = evaluate_float4e2m1_from_bits(xr[i])
-                dx.reshape(x_shape)
+                evaluate_func = np.vectorize(evaluate_float4e2m1_from_bits)
+                dx = evaluate_func(x)
             else:
                 dx = x.astype(np.float32)
         y = dx * reshape_input(x_scale, x.shape, axis, block_size)
