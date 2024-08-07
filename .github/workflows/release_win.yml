@@ -122,6 +122,11 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
+    - name: Test ONNX import
+      run: |
+        echo "import onnx" > test_onnx_import.py
+        python test_onnx_import.py
+
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != '3.12'
       run: |
