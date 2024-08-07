@@ -18,9 +18,9 @@ env:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
-  cancel-in-progress: true
+#concurrency:
+#  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+#  cancel-in-progress: true
 
 jobs:
   build:
@@ -67,7 +67,7 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}        
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }} s       
         path: dist/*.whl
 
   test:
