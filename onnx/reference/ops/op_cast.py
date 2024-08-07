@@ -140,7 +140,7 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
 
     if to == TensorProto.FLOAT4E2M1:
         xf = x.astype(np.float32)
-        y = subbyte.float32_to_float4e2m1_unpacked(xf)
+        y = subbyte.float32_to_float4e2m1_unpacked(xf).astype(float4e2m1)
         return y.reshape(x.shape)
 
     if to == TensorProto.STRING:

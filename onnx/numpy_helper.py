@@ -229,7 +229,7 @@ def evaluate_float4e2m1_from_bits(x: np.uint8) -> np.float32:
         x: a uint8 element representing a float4e2m1 (using the 4 LSB)
 
     Returns:
-        Packed array with size `ceil(farray.size/2)` (single dimension).
+        A float32 element representing the value of the float4e2m1 input.
     """
     # x is stored in 4 LSB of int
     S = -1 if bool(x & 0x08) else 1
@@ -619,10 +619,13 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
     elif dt == custom_np_types.uint4 and dt.descr[0][0] == "uint4":
         to = TensorProto.UINT4
         dt_to = np.uint8  # type: ignore[assignment]
+    elif dt == custom_np_types.float4e2m1 and dt.descr[0][0] == "float4e2m1":
+        to = TensorProto.FLOAT4E2M1
+        dt_to = np.uint8
     else:
         return _from_array(tensor, name)
 
-    if to in (TensorProto.UINT4, TensorProto.INT4):
+    if to in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
         value = tensor.astype(dt_to).ravel()
         if value.size % 2 == 1:
             raise ValueError(
