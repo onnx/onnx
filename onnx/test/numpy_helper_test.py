@@ -634,6 +634,7 @@ class TestNumpyHelper(unittest.TestCase):
             "UNDEFINED",
             "DEFAULT",
             "NAME_FIELD_NUMBER",
+            "FLOAT4E2M1",
         }:
             return
         if att[0] < "A" or att[0] > "Z":
@@ -647,6 +648,7 @@ class TestNumpyHelper(unittest.TestCase):
     def test_to_array_from_array_subtype(self):
         self._to_array_from_array(onnx.TensorProto.INT4)
         self._to_array_from_array(onnx.TensorProto.UINT4)
+        self._to_array_from_array(onnx.TensorProto.FLOAT4E2M1)
 
     def test_to_array_from_array_string(self):
         self._to_array_from_array(onnx.TensorProto.STRING, False)

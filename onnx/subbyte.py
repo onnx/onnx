@@ -70,3 +70,61 @@ def unpack_single_4bitx2(
     x_high = unpack_signed(x_high) if signed else x_high
     dtype = np.int8 if signed else np.uint8
     return (x_low.astype(dtype), x_high.astype(dtype))
+
+
+def float32_to_float4e2m1_unpacked(x: np.ndarray | np.dtype) -> np.ndarray:
+    """Cast float32 to float4e2m1 (without packing).
+
+    Args:
+        x: element or array to be converted
+
+    Returns:
+        An ndarray with unpacked float4e2m1 elements (as uint8)
+    """
+
+    def float32_to_float4e2m1(value):
+        if np.isnan(value):
+            return 0x7
+        s = 0x0 if value >= 0 else 0x8
+        magnitude = np.abs(value)
+        if np.isinf(magnitude):
+            ret = 0x7
+        elif magnitude > 5:
+            ret = 0x7
+        elif magnitude >= 3.5:
+            ret = 0x6
+        elif magnitude > 2.5:
+            ret = 0x5
+        elif magnitude >= 1.75:
+            ret = 0x4
+        elif magnitude > 1.25:
+            ret = 0x3
+        elif magnitude >= 0.75:
+            ret = 0x2
+        elif magnitude > 0.25:
+            ret = 0x1
+        else:
+            ret = 0x0
+        return np.array(ret | s, dtype=np.uint8)
+
+    if not isinstance(x, np.ndarray):
+        x = np.asarray(x)
+    func = np.frompyfunc(float32_to_float4e2m1, 1, 1)
+    y = func(x)
+    if not isinstance(y, np.ndarray):
+        y = np.asarray(y)
+    return y.astype(np.uint8)  # type: ignore[no-any-return]
+
+
+def float32x2_to_float4e2m1x2(val_low: np.dtype, val_high: np.dtype) -> np.ndarray:
+    """Cast two elements to float4e2m1 and pack to a single byte
+    Args:
+        val_low: element to be packed in the 4 LSB
+        val_high: element to be packed in the 4 MSB
+
+    Returns:
+        An ndarray with a single uint8 element, containing both float4e2m1 elements
+    """
+    i8_high = float32_to_float4e2m1_unpacked(val_high)
+    i8_low = float32_to_float4e2m1_unpacked(val_low)
+    return i8_high << 4 | i8_low & 0x0F  # type: ignore[operator]
