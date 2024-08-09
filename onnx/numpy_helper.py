@@ -221,7 +221,7 @@ def unpack_int4(
     return res
 
 
-def evaluate_float4e2m1_from_bits(x: np.uint8) -> np.float32:
+def evaluate_float4e2m1_from_bits(x: np.ndarray[np.uint8]) -> np.ndarray[np.float32]:
     """Evaluate the numerical value of a single float4e2m1 element represented as uint8
     See :ref:`onnx-detail-int4` for technical details.
 
@@ -232,15 +232,11 @@ def evaluate_float4e2m1_from_bits(x: np.uint8) -> np.float32:
         A float32 element representing the value of the float4e2m1 input.
     """
     # x is stored in 4 LSB of int
-    S = -1 if bool(x & 0x08) else 1
+    S = np.where(np.bitwise_and(x, 0x08), -1, 1)
     M = x & 0x01
     E = (x & 0x06) >> 1
-    if E == 0:
-        # denormalized
-        val = S * (M / 2.0)
-    else:
-        # normalized
-        val = S * (1.0 + M / 2.0) * 2.0 ** (E - 1)
+
+    val = np.where(E==0, S*(M/2.0), S*(1.0+M/2.0) *2.0 **(E-1))  # denormalized, normalized
     return val
 
 
@@ -259,18 +255,11 @@ def unpack_float4e2m1(
     Returns:
         A numpy array of float32 reshaped to dims.
     """
-    single_func = lambda x: subbyte.unpack_single_4bitx2(x, False)  # noqa: E731
-    func = np.frompyfunc(single_func, 1, 2)
-
-    res_high, res_low = func(data.ravel())
+    res_high, res_low = subbyte.unpack_single_4bitx2(data.ravel(), False)
     res = np.empty((res_high.size + res_low.size,), dtype=np.float32)
 
-    def evaluate_func(x):
-        return evaluate_float4e2m1_from_bits(x)
-
-    func2 = np.frompyfunc(evaluate_func, 1, 1)
-    res[0::2] = func2(res_high)
-    res[1::2] = func2(res_low)
+    res[0::2] = evaluate_float4e2m1_from_bits(res_high)
+    res[1::2] = evaluate_float4e2m1_from_bits(res_low)
 
     if (
         res.size == np.prod(dims) + 1
@@ -295,10 +284,7 @@ def unpack_float4e2m1_to_uint8(
     Returns:
         A numpy array of uint8 reshaped to dims.
     """
-    single_func = lambda x: subbyte.unpack_single_4bitx2(x, False)  # noqa: E731
-    func = np.frompyfunc(single_func, 1, 2)
-
-    res_high, res_low = func(data.ravel())
+    res_high, res_low = subbyte.unpack_single_4bitx2(data.ravel(), False)
     res = np.empty((res_high.size + res_low.size,), dtype=np.uint8)
 
     res[0::2] = res_high

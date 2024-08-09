@@ -2364,7 +2364,6 @@ vect_float32_to_uint4 = np.vectorize(
 vect_float32_to_int4 = np.vectorize(
     lambda x: subbyte.float32_to_4bit_unpacked(x, signed=True)
 )
-vect_evaluate_float4e2m1_from_bits = np.vectorize(evaluate_float4e2m1_from_bits)
 
 f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
 
@@ -2616,7 +2615,7 @@ for from_type, to_type in test_cases:
             raise ValueError(
                 f"Conversion from {from_type} to {to_type} is not tested."
             )
-        expected = vect_evaluate_float4e2m1_from_bits(
+        expected = evaluate_float4e2m1_from_bits(
             subbyte.float32_to_float4e2m1_unpacked(np_fp32)
         )
         output = make_tensor(

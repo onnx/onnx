@@ -131,8 +131,7 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
     if x.dtype == float4e2m1 and x.dtype.descr[0][0] == "float4e2m1":
         if to == TensorProto.FLOAT4E2M1:
             return x
-        evaluate_func = np.vectorize(evaluate_float4e2m1_from_bits)
-        res = evaluate_func(x)
+        res = evaluate_float4e2m1_from_bits(x)
         if to == TensorProto.FLOAT:
             return res.astype(np.float32)
         elif to == TensorProto.FLOAT16:
