@@ -72,14 +72,7 @@ jobs:
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-    
-    - name: Test wheel
-      run: |
-        pip install turnkey
-        pip install onnx==1.16.2
-        turnkey -h
-        python -c "import onnx; print(onnx.__version__)"
-        
+            
     - name: Test the installed wheel
       run: |
         cd onnx
