@@ -62,7 +62,7 @@ jobs:
 
     environment:      
       name: testpypi 
-      url: https://pypi.org/p/onnx
+      url: https://test.pypi.org/p/onnx
 
     permissions:
       contents: write  # IMPORTANT: mandatory for making GitHub Releases
