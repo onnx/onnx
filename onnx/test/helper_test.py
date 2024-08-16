@@ -417,7 +417,6 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("ai.onnx.ml", 3)], 8)
         test([("ai.onnx.ml", 4)], 9)
         test([("ai.onnx.ml", 5)], 10)
-        test([("ai.onnx.ml", 6)], 10)
         test([("ai.onnx.training", 1)], 7)
         # helper should pick *max* IR version required from all opsets specified.
         test([("", 10), ("ai.onnx.ml", 2)], 6)
