@@ -20860,7 +20860,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>size</tt> (non-differentiable) : T1</dt>
-<dd>A scalar value indicating the length of the window.</dd>
+<dd>A scalar value indicating the length of the window. Constrain the input size to int64_t. </dd>
 </dl>
 
 #### Outputs
