@@ -90,7 +90,7 @@ pip install onnx  # or pip install onnx[reference] for optional reference implem
 ### Note for ONNX v1.16.2
 
 Github Action for Windows has been updated with a newer compiler version with MSVC runtime that is not compatible with some python conda environment. This caused an issue: https://github.com/onnx/onnx/issues/6267.
-If you see "ImportError: DLL load failed while importing onnxruntime_genai: A dynamic link library (DLL) initialization routine failed." in a Conda environment on Windows, you need to upgrade the C++ runtime for Visual Studio with following command:
+If you see "ImportError: DLL load failed while importing onnx_cpp2py_export: A dynamic link library (DLL) initialization routine failed." in a Conda environment on Windows, you need to upgrade the C++ runtime for Visual Studio with following command:
 
 ```sh
 conda install conda-forge::vs2015_runtime
