@@ -83,6 +83,10 @@ jobs:
     - name: Test the installed wheel
       run: |
         cd onnx
+        # https://github.com/onnx/onnx/issues/6267
+        # Github Action updated the compiler viersion without
+        # updating the runtime. The workaround is to install the runtime manually
+        # on the build machine and in the user environment.
         python -m pip install vs2015_runtime
         pytest
 
