@@ -252,7 +252,7 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
 std::string GetFunctionIdentifier(const FunctionProto& function) {
   // Note: Models with IR version < 10 do not have the overload attribute.
   // However, that will be mapped to an empty identifier.
-  const std::string &overload = function.overload();
+  const std::string& overload = function.overload();
   if (overload.empty()) {
     return function.domain() + ":" + function.name();
   }

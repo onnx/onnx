@@ -2,7 +2,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
 
 #include <algorithm>
@@ -11,6 +10,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "onnx/defs/function.h"
 
 namespace ONNX_NAMESPACE {
 void resizeShapeInferenceHelper(
