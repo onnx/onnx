@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
 
 #include <algorithm>
