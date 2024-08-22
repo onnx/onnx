@@ -1680,6 +1680,21 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (3, 2))]
         )
 
+    def test_squeeze_no_axes_dynamic_input_opset11(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 3, 1, None, 2, 1)),
+            ],
+            [make_node("Squeeze", ["x"], "y")],
+            [],
+        )
+        operatorsetid = OperatorSetIdProto()
+        operatorsetid.domain = ""
+        operatorsetid.version = 11
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, None)]
+        )
+
     def test_unsqueeze_regular(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 2)), ("axes", TensorProto.INT64, (4,))],
