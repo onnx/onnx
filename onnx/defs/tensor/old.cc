@@ -2757,7 +2757,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           std::vector<int64_t> axes;
@@ -2776,6 +2775,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return axis < 0 ? axis + input_ndim : axis;
           });
 
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           for (int i = 0; i < input_ndim; ++i) {
             if (std::find(axes.begin(), axes.end(), i) != axes.end()) {
               if (input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
@@ -5096,7 +5096,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_ndim = input_shape.dim_size();
           std::vector<int64_t> axes;
@@ -5111,6 +5110,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           for (int i = 0, j = 0; i < input_shape.dim_size(); ++i) {
             if (static_cast<size_t>(j) < axes.size() && axes[j] == i) {
               if (input_shape.dim(i).has_dim_value() && input_shape.dim(i).dim_value() != 1) {
