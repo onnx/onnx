@@ -663,7 +663,6 @@ Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   if (NextChar() == '[') {
     // Parse a list of values. For an empty list, the type MUST be specified
     // using the type-annotation syntax of ": type".
-    std::vector<Literal> vals;
     MATCH('[');
     if (NextChar() != ']') {
       do {

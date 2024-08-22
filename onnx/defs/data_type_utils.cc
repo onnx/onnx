@@ -139,7 +139,6 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
     }
 #ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType: {
-      static const std::string empty;
       std::string result;
       const auto& op_type = type_proto.opaque_type();
       result.append(left).append("opaque(");
