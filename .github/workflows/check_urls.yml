@@ -42,7 +42,7 @@ jobs:
         print_all: false
         timeout: 10
         retry_count : 2
-        exclude_urls: https://github.com/onnx/onnx/blob/main/docs/Operators,https://github.com/onnx/onnx/pull/436
+        exclude_urls: https://github.com/onnx/onnx/blob/main/docs/Operators,https://github.com/onnx/onnx/pull/436,http://127.0.0.1:80,http://127.0.0.1:80/simple/
         force_pass: false
 
     - name: urls-checker-community
