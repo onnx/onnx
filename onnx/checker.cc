@@ -910,7 +910,6 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
       }
     }
   }
-  std::unordered_map<std::string, int> versions;
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
