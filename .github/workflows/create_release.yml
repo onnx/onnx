@@ -77,7 +77,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish distribution to TestPyPI
-        if: (github.repository_owner == 'onnx')
+        if: (github.event_name == 'schedule') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@release/v1
         with:   
           repository-url: https://test.pypi.org/legacy/
