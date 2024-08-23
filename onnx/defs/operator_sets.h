@@ -1290,6 +1290,15 @@ class OpSet_Onnx_ver22 {
   }
 };
 
+// Iterate over schema from ai.onnx version 23
+class OpSet_Onnx_ver23 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    // TODO: Remove after introducing the first schema to opset 23
+    (void)fn;
+  }
+};
+
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -1313,6 +1322,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver20>();
   RegisterOpSetSchema<OpSet_Onnx_ver21>();
   RegisterOpSetSchema<OpSet_Onnx_ver22>();
+  RegisterOpSetSchema<OpSet_Onnx_ver23>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
@@ -1322,6 +1332,7 @@ inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicat
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
   // Version-specific registration sees duplicate schema version request as error if fail_duplicate_schema
+  RegisterOpSetSchema<OpSet_Onnx_ver23>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver22>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver21>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver20>(target_version, fail_duplicate_schema);
