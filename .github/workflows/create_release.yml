@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 name: Create Releases
-on: 
+on:
   schedule:
     # Run weekly on Monday 00:00
     - cron:  '00 00 * * MON'
@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']    
-    uses: ./.github/workflows/release_linux_x86_64.yml   
+    uses: ./.github/workflows/release_linux_x86_64.yml
     with:            
       os: "linux_x86_64" 
 
@@ -58,7 +58,7 @@ jobs:
     name: Release (Publish to testpypi, onnxweekly)
     runs-on: ubuntu-latest
     needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win]
-    if: (needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success')
+    if: (github.event_name != 'pull_request') && (github.repository == 'onnx/onnx') && ((needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success'))
 
     environment:      
       name: testpypi 
