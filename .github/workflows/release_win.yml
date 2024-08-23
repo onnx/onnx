@@ -72,7 +72,6 @@ jobs:
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-            
     - name: Test the installed wheel
       run: |
         cd onnx
