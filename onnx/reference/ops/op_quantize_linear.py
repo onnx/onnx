@@ -133,7 +133,7 @@ class _CommonQuantizeLinear(OpRun):
             zero_point_type = np_dtype_to_tensor_dtype(zero_point.dtype)
         return zero_point_type
 
-    def _run(
+    def _run(  # noqa: PLR0911
         self,
         x: np.ndarray,
         y_scale: np.ndarray,
