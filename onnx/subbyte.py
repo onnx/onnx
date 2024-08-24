@@ -3,7 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from typing import Sequence
+
 import numpy as np
+import numpy.typing as npt
 
 INT4_MIN = -8
 INT4_MAX = 7
@@ -51,6 +54,33 @@ def float32x2_to_4bitx2(
     return i8_high << 4 | i8_low & 0x0F  # type: ignore[operator]
 
 
+def unpack_4bitx2(
+    x: npt.NDArray[np.uint8], dims: int | Sequence[int]
+) -> npt.NDArray[np.uint8]:
+    """Unpack an array of packed uint8 elements (4bitx2) into individual elements
+    (still represented as uint8)
+
+    Args:
+        x: Input data
+        dims: The shape of the output array.
+
+    Returns:
+        A array containing unpacked 4-bit elements (as int8/uint8)
+    """
+    res = np.empty([x.size * 2], dtype=np.uint8)
+    x_low = x & np.uint8(0x0F)
+    x_high = x & np.uint8(0xF0)
+    x_high >>= np.uint8(4)
+    res[0::2] = x_low
+    res[1::2] = x_high
+    if (
+        res.size == np.prod(dims) + 1
+    ):  # handle single-element padding due to odd number of elements
+        res = res.ravel()[:-1]
+    res = res.reshape(dims)
+    return res
+
+
 def unpack_single_4bitx2(
     x: np.ndarray | np.dtype | float, signed: bool
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -70,3 +100,41 @@ def unpack_single_4bitx2(
     x_high = unpack_signed(x_high) if signed else x_high
     dtype = np.int8 if signed else np.uint8
     return (x_low.astype(dtype), x_high.astype(dtype))
+
+
+def float32_to_float4e2m1_unpacked(values: np.ndarray) -> np.ndarray:
+    """Cast float32 to float4e2m1 (without packing).
+
+    Args:
+        values: element or array to be converted
+
+    Returns:
+        An ndarray with unpacked float4e2m1 elements (as uint8)
+    """
+    sign = np.where(np.signbit(values), 0x8, 0x0).astype(np.uint8)
+    magnitude = np.abs(values)
+    res = np.zeros(values.shape, dtype=np.uint8)
+    res[(magnitude > 0.25) & (magnitude < 0.75)] = 0x1  # noqa: PLR2004
+    res[(magnitude >= 0.75) & (magnitude <= 1.25)] = 0x2  # noqa: PLR2004
+    res[(magnitude > 1.25) & (magnitude < 1.75)] = 0x3  # noqa: PLR2004
+    res[(magnitude >= 1.75) & (magnitude <= 2.5)] = 0x4  # noqa: PLR2004
+    res[(magnitude > 2.5) & (magnitude < 3.5)] = 0x5  # noqa: PLR2004
+    res[(magnitude >= 3.5) & (magnitude <= 5.0)] = 0x6  # noqa: PLR2004
+    res[magnitude > 5.0] = 0x7  # noqa: PLR2004
+    res |= sign
+    res[np.isnan(values)] = 0x7
+    return res
+
+
+def float32x2_to_float4e2m1x2(val_low: np.ndarray, val_high: np.ndarray) -> np.ndarray:
+    """Cast two elements to float4e2m1 and pack to a single byte
+    Args:
+        val_low: element to be packed in the 4 LSB
+        val_high: element to be packed in the 4 MSB
+
+    Returns:
+        An ndarray with uint8 elements, containing both float4e2m1 elements
+    """
+    i8_high = float32_to_float4e2m1_unpacked(val_high)
+    i8_low = float32_to_float4e2m1_unpacked(val_low)
+    return i8_high << 4 | i8_low & 0x0F  # type: ignore[operator]

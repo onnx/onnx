@@ -581,7 +581,7 @@ if ort is not None:
             ")"
         )
 
-    if ort_version is not None and ort_version < Version("1.19"):
+    if ort_version is not None and ort_version < Version("1.20"):
         backend_test.exclude(
             "("
             "tree_ensemble_set_membership"

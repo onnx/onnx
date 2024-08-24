@@ -633,8 +633,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("GroupNormalization", OpSetID(20), OpSetID(21)));
 
     /******** 21 -> 20 ********/
-    const std::vector<TensorProto_DataType> q_dq_20_unallowed_types = {
-        TensorProto_DataType_UINT16, TensorProto_DataType_INT16, TensorProto_DataType_UINT4, TensorProto_DataType_INT4};
     const std::vector<TensorProto_DataType> q_dqmm_20_unallowed_types = {
         TensorProto_DataType_BFLOAT16,
         TensorProto_DataType_FLOAT16,

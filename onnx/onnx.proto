@@ -108,9 +108,13 @@ enum Version {
   // Added FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ.
   IR_VERSION_2023_5_5 = 0x0000000000000009;
 
-  // IR VERSION 10 published on TBD
+  // IR VERSION 10 published on March 25, 2024
   // Added UINT4, INT4.
-  IR_VERSION = 0x000000000000000A;
+  IR_VERSION_2024_3_25 = 0x000000000000000A;
+
+  // IR VERSION 11 published on TBD
+  // Added FLOAT4E2M1.
+  IR_VERSION = 0x000000000000000B;
 }
 
 // Attributes
@@ -536,9 +540,12 @@ message TensorProto {
     FLOAT8E5M2 = 19;      // follows IEEE 754, supports nan, inf, mostly used for gradients
     FLOAT8E5M2FNUZ = 20;  // follows IEEE 754, supports nan, not inf, mostly used for gradients, no negative zero
 
-    // 4-bit data-types
+    // 4-bit integer data types
     UINT4 = 21;  // Unsigned integer in range [0, 15]
     INT4 = 22;   // Signed integer in range [-8, 7], using two's-complement representation
+
+    // 4-bit floating point data types
+    FLOAT4E2M1 = 23;
 
     // Future extensions go here.
   }
