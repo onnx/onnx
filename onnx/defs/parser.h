@@ -96,6 +96,7 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["float8e5m2fnuz"] = TensorProto_DataType_FLOAT8E5M2FNUZ;
     map_["uint4"] = TensorProto_DataType_UINT4;
     map_["int4"] = TensorProto_DataType_INT4;
+    map_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
   }
 
   static bool IsTypeName(const std::string& dtype) {
