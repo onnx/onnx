@@ -7,6 +7,7 @@ import sys
 from typing import Any, Sequence
 
 import numpy as np
+import numpy.typing as npt
 
 import onnx._custom_element_types as custom_np_types
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
@@ -221,6 +222,48 @@ def unpack_int4(
     return res
 
 
+def unpacked_float4e2m1_to_float32(x: npt.NDArray[np.uint8]) -> npt.NDArray[np.float32]:
+    """Evaluate the numerical value of an array of unpacked float4e2m1 values (as uint8)
+    See :ref:`onnx-detail-int4` for technical details.
+
+    Args:
+        x: an array of uint8 elements representing a float4e2m1 (using the 4 LSB)
+
+    Returns:
+        An array of float32 elements representing the values of the float4e2m1 input.
+    """
+    # x is stored in 4 LSB of int
+    sign = np.where(np.bitwise_and(x, 0x08), -1, 1)
+    mantissa = x & 0x01
+    exponent = (x & 0x06) >> 1
+
+    val = np.where(
+        exponent == 0,
+        sign * (mantissa / 2.0),
+        sign * (1.0 + mantissa / 2.0) * 2.0 ** (exponent - 1),
+    )  # denormalized, normalized
+    return val
+
+
+def unpack_float4e2m1(
+    data: npt.NDArray[np.uint8],
+    dims: int | Sequence[int],
+) -> np.ndarray:
+    """Converts ndarray of float4e2m1 (as packed uint8) to f32
+    See :ref:`onnx-detail-float4` for technical details.
+
+    Args:
+        data: A numpy array, empty dimensions are allowed if dims is
+            None.
+        dims: The dimensions are used to reshape the unpacked buffer
+
+    Returns:
+        A numpy array of float32 reshaped to dims.
+    """
+    res = subbyte.unpack_4bitx2(data.ravel(), dims)
+    return unpacked_float4e2m1_to_float32(res)
+
+
 def _to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
 
@@ -288,6 +331,10 @@ def _to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: P
         if tensor_dtype == TensorProto.INT4:
             data = np.frombuffer(raw_data, dtype=np.int8)
             return unpack_int4(data, dims, signed=True)
+
+        if tensor_dtype == TensorProto.FLOAT4E2M1:
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            return unpack_float4e2m1(data, dims)  # type: ignore[arg-type]
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
 
@@ -404,6 +451,22 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         unpacked_data = unpack_int4(y, dims=shape, signed=signed)
         return unpacked_data.astype(dtype)
 
+    if elem_type == TensorProto.FLOAT4E2M1:
+        if uses_external_data(tensor):
+            load_external_data_for_tensor(tensor, base_dir)
+        if tensor.HasField("raw_data"):
+            data = tensor.raw_data  # type: ignore[assignment]
+        else:
+            data = tensor.int32_data
+        shape = tuple(tensor.dims)
+
+        # 2 packed float4e2m1 elements must be represented as a single uint8 value.
+        # Therefore, y is np.uint8.
+        y = np.empty(len(data), dtype=custom_np_types.float4e2m1).ravel()  # type: ignore[assignment]
+        for i, d in enumerate(data):
+            y[i] = d
+        unpacked_data = subbyte.unpack_4bitx2(y, dims=shape)  # type: ignore[arg-type]
+        return unpacked_data.astype(custom_np_types.float4e2m1)
     return _to_array(tensor, base_dir=base_dir)
 
 
@@ -508,10 +571,13 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
     elif dt == custom_np_types.uint4 and dt.descr[0][0] == "uint4":
         to = TensorProto.UINT4
         dt_to = np.uint8  # type: ignore[assignment]
+    elif dt == custom_np_types.float4e2m1 and dt.descr[0][0] == "float4e2m1":
+        to = TensorProto.FLOAT4E2M1
+        dt_to = np.uint8
     else:
         return _from_array(tensor, name)
 
-    if to in (TensorProto.UINT4, TensorProto.INT4):
+    if to in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
         value = tensor.astype(dt_to).ravel()
         if value.size % 2 == 1:
             raise ValueError(
