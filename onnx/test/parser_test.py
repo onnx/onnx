@@ -292,6 +292,7 @@ class TestBasicFunctions(unittest.TestCase):
             ("uint16", TensorProto.UINT16),
             ("uint32", TensorProto.UINT32),
             ("uint64", TensorProto.UINT64),
+            ("float4e2m1", TensorProto.FLOAT4E2M1),
         ]
     )
     def test_parse_graph_types(self, name, itype) -> None:
