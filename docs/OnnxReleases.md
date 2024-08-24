@@ -8,6 +8,29 @@ SPDX-License-Identifier: Apache-2.0
 
 The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
+```mermaid
+
+graph TD
+    A[Source Code - ONNX Repository] -->|Pull Request| B[CI Build and Test]
+    B --> C{Tests}
+    C -->|Unit Tests Passed| D[Package ONNX]
+    C -->|Unit Tests Failed| E[Send Notification]
+    D --> F[Publish to Test PyPI]
+    F --> G[Integration Tests]
+    G --> H{Integration Tests Passed?}
+    H -->|Yes| I[Manual Approval for Release]
+    I --> J[Publish to PyPI]
+    J --> K[Tag Release in GitHub]
+    K --> L[Create Release Notes]
+    L --> M[Announce Release]
+    H -->|No| N[Rollback and Investigate]
+    N --> E
+    E --> O[End Pipeline]
+    M --> O
+
+```mermaid
+
+
 ## Preparation
 * Determine version (X.Y.Z) for the new release
     * Discuss in Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
