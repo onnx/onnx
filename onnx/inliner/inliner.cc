@@ -66,7 +66,6 @@ struct OpsetMap : public OpsetMapBase {
   }
 
   bool Add(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
-    OpsetMapBase result;
     for (const auto& pair : list) {
       auto domain = NormalizeDomain(pair.domain());
       auto version = pair.version();
