@@ -15,10 +15,6 @@ on:  # Specifies the event triggering the workflow
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-${{ inputs.os }}
-  cancel-in-progress: true
-
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
@@ -86,6 +82,12 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
+            
+    - name: Upload wheel to PyPI weekly
+      if: (github.event_name == 'schedule') # Only triggered by weekly event
+      run: |
+        python -m pip install -q twine
+        twine upload --verbose dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
     - name: Verify ONNX with the latest numpy and protobuf
       if: ${{ always() }}

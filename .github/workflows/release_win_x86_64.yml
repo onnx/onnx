@@ -15,10 +15,6 @@ on:  # Specifies the event triggering the workflow
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-${{ inputs.os }}
-  cancel-in-progress: true
-
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
@@ -77,7 +73,6 @@ jobs:
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-
     - name: Test the installed wheel
       run: |
         cd onnx
