@@ -166,7 +166,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: TestResults-(${{ matrix.os }}-{{ matrix.python_version }})
+          name: TestResults-(${{ matrix.os }}-${{ matrix.python_version }})
           path: pytest.xml          
 
       # Note that the test data should be generated with numpy>=2.0.
