@@ -8,27 +8,8 @@ SPDX-License-Identifier: Apache-2.0
 
 The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
-```mermaid
-
-graph TD
-    A[Source Code - ONNX Repository] -->|Pull Request| B[CI Build and Test]
-    B --> C{Tests}
-    C -->|Unit Tests Passed| D[Package ONNX]
-    C -->|Unit Tests Failed| E[Send Notification]
-    D --> F[Publish to Test PyPI]
-    F --> G[Integration Tests]
-    G --> H{Integration Tests Passed?}
-    H -->|Yes| I[Manual Approval for Release]
-    I --> J[Publish to PyPI]
-    J --> K[Tag Release in GitHub]
-    K --> L[Create Release Notes]
-    L --> M[Announce Release]
-    H -->|No| N[Rollback and Investigate]
-    N --> E
-    E --> O[End Pipeline]
-    M --> O
-
-```mermaid
+	
+## Release-Workflow
 
 
 ## Preparation
@@ -124,6 +105,50 @@ graph TD
 
 # Official Release
 
+
+```mermaid
+graph TB
+    subgraph GitHub GUI
+        A[Trigger: Draft a new Release in Github GUI and select 1.X.X Branch] --> B[SaveDraft or Publish Release?] 
+    end
+
+    subgraph CI Pipeline
+        B --> D1[create_release.yml is called]
+
+        D1 --> D{All 4 different OSPipelines were successful?}
+        D -->|Yes| E[Job 3: Call Prepare Release Workflow]
+        D -->|No| F[Job: Send Failure Notification]
+        E --> G[Job 4: Prepare Release Workflow]
+    end
+    
+    subgraph Prepare Release Workflow
+        G --> H[Job 5: Download all artifacts]
+        H --> I[Job 6: Sign all artifacts with sigstore]
+    end
+
+    subgraph Integration Testing
+        I --> J[Job 7: External Integration Tests]
+        J --> K{Integration Tests Passed?}
+        K -->|Yes| L[Job 8: Manual Approval for Release]
+        K -->|No| M[Job: Rollback & Investigate]
+        M --> F
+    end
+
+    subgraph Release
+        L --> N[Job 9: Publish to PyPI]
+        N --> O[Job 10: Add signature files to GithubRelease]
+        O --> P[Job 10: Tag Release in GitHub]
+        P --> Q1[Job 11: Create Release Notes]
+        Q1 --> Q[Job 12: Add files to release]
+    end
+
+
+    Q --> R[End Pipeline]
+    F --> R
+    M --> R
+```
+
+
 Validation steps must be completed before this point! This is the point of new return.
 
 * git tags should not be changed once published
@@ -206,3 +231,4 @@ Conda builds of ONNX are done via [conda-forge/onnx-feedstock](https://github.co
     * Go to [PyPI onnx-weekly/releases](https://pypi.org/manage/project/onnx-weekly/releases/)
         * This is a separate project than the onnx releases so you may need to request access from an owner
     * Click target package -> Options -> Delete.
+d
