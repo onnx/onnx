@@ -59,7 +59,6 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-
     - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
