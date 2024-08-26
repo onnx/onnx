@@ -26,6 +26,7 @@ jobs:
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:            
       os: "linux_x86_64" 
+    secrets: inherit
 
   call-workflow-ubuntu_aarch64:    
     strategy:
@@ -34,6 +35,7 @@ jobs:
     uses: ./.github/workflows/release_linux_aarch64.yml
     with:            
       os: "linux_aarch64"      
+    secrets: inherit
 
   call-workflow-win:    
     strategy:
@@ -41,7 +43,8 @@ jobs:
         os: ['windows-latest']    
     uses: ./.github/workflows/release_win.yml
     with:      
-      os: "win"      
+      os: "win"
+    secrets: inherit
 
   call-workflow-mac:    
     strategy:
@@ -49,7 +52,8 @@ jobs:
         os: ['mac-latest']    
     uses: ./.github/workflows/release_mac.yml
     with:            
-      os: "macos"   
+      os: "macos"
+    secrets: inherit
 
 
 
@@ -70,7 +74,7 @@ jobs:
 
     steps:
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
           pattern: wheels* 
           path: dist
