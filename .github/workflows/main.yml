@@ -223,7 +223,7 @@ jobs:
         with:
           path: artifacts
           pattern: TestResults*
-          merge-multiple: true          
+          merge-multiple: true
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@567cc7f8dcea3eba5da355f6ebc95663310d8a07
