@@ -27,7 +27,8 @@ inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_typ
     fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (", size_0, ") vs (", size_1, ").");
   }
   TensorShapeProto tsp;
-  for (int i = 0; i < std::max(size_0, size_1); ++i) {
+  int size_out = size_0 == 1 ? size_1 : size_0;
+  for (int i = 0; i < size_out; ++i) {
     auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
     auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
     if (input_dim_0.has_dim_value() && input_dim_1.has_dim_value()) {
