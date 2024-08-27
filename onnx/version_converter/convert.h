@@ -776,6 +776,50 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("GRU", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("LSTM", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("GridSample", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+
+    /******** 22 -> 23 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Flatten", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Squeeze", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Transpose", OpSetID(22), OpSetID(23)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Unsqueeze", OpSetID(22), OpSetID(23)));
+
+    /******** 23 -> 22 ********/
+    const std::vector<TensorProto_DataType> ir11_types_not_in_ir10 = {TensorProto_DataType_FLOAT4E2M1};
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

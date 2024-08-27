@@ -234,8 +234,8 @@ def unpacked_float4e2m1_to_float32(x: npt.NDArray[np.uint8]) -> npt.NDArray[np.f
     """
     # x is stored in 4 LSB of int
     sign = np.where(np.bitwise_and(x, 0x08), -1, 1)
-    mantissa = x & 0x01
-    exponent = (x & 0x06) >> 1
+    mantissa = (x & 0x01).astype(np.float32)
+    exponent = ((x & 0x06) >> 1).astype(np.float32)
 
     val = np.where(
         exponent == 0,

@@ -141,10 +141,13 @@ backend_test.exclude(
     "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
     "|test_cast_BFLOAT16_to_FLOAT"
     "|test_castlike_BFLOAT16_to_FLOAT"
+    "|test_cast_FLOAT_to_FLOAT4"
+    "|test_cast_FLOAT16_to_FLOAT4"
     "|test_quantizelinear_e4m3"
     "|test_quantizelinear_e5m2"
     "|test_quantizelinear_uint4"
     "|test_quantizelinear_int4"
+    "|test_quantizelinear_float4e2m1"
     ")"
 )
 

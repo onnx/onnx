@@ -1975,7 +1975,7 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    21,
+    23,
     OpSchema()
         .SetDoc(Flatten_ver11_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -1993,7 +1993,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_ir10(),
+            OpSchema::all_tensor_types_ir11(),
             "Constrain input and output to all tensor types up to IRv10.")
         .Attr(
             "axis",
