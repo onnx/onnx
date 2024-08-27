@@ -139,11 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare-release]
     if: (needs.prepare-release.result == 'success') && startsWith(github.base_ref, 'rel-') # TODO only if a release is requested
-
-    environment:      
-      name: releasepypi 
-      url: https://pypi.org/p/onnx
-
+   
     steps:
 
     - uses: actions/download-artifact@v4
@@ -152,11 +148,24 @@ jobs:
         path: dist
         merge-multiple: true
 
+    - name: Publish distribution to TestPyPI      
+      if: contains(github.ref,'rc')
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:   
+        repository-url: https://test.pypi.org/legacy/
+      environment:
+        name: testpypi 
+        url: https://test.pypi.org/p/onnx
+
     - name: Publish distribution to PyPI      
+      if: !contains(github.ref,'rc')
       uses: pypa/gh-action-pypi-publish@release/v1
       with:   
         repository-url: https://pypi.org/legacy/
-        
+      environment:
+        name: releasepypi 
+        url: https://pypi.org/p/onnx
+       
 
       # The Release is created by the Github GUI, we only add the files here
     - name: Upload artifact signatures to GitHub Release
