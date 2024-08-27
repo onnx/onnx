@@ -47,7 +47,7 @@ jobs:
     strategy:
       matrix:
         os: ['windows-latest']    
-    uses: ./.github/workflows/release_win_x86_64.yml
+    uses: ./.github/workflows/release_win.yml
     with:      
       os: "win"      
 
