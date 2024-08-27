@@ -47,7 +47,7 @@ jobs:
     strategy:
       matrix:
         os: ['windows-latest']    
-    uses: ./.github/workflows/release_win.yml
+    uses: ./.github/workflows/release_win_x86_64.yml
     with:      
       os: "win"      
 
@@ -158,7 +158,7 @@ jobs:
         url: https://test.pypi.org/p/onnx
 
     - name: Publish distribution to PyPI      
-      if: !contains(github.ref,'rc')
+      if: ${{ !contains(github.ref, 'rc') }}
       uses: pypa/gh-action-pypi-publish@release/v1
       with:   
         repository-url: https://pypi.org/legacy/
