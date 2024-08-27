@@ -132,6 +132,86 @@ class TestDataPropagation(TestShapeInferenceHelper):
             data_prop=True,
         )
 
+    def test_shape_arithmetic(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5)), ("y", TensorProto.FLOAT, (1, 2, 3))],
+            [
+                make_node("Shape", ["x"], ["xshape"]),
+                make_node("Shape", ["y"], ["yshape"]),
+                make_node("Add", ["xshape", "yshape"], ["zshape"]),
+                make_node(
+                    "ConstantOfShape",
+                    ["zshape"],
+                    ["z"],
+                    value=make_tensor("value", TensorProto.INT32, (1,), (2,)),
+                ),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("xshape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("yshape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("zshape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("z", TensorProto.INT32, (4, 6, 8)),
+            ],
+            data_prop=True,
+        )  # type: ignore
+
+    def test_shape_arithmetic_with_broadcast(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5)), ("y", TensorProto.FLOAT, (3,))],
+            [
+                make_node("Shape", ["x"], ["xshape"]),
+                make_node("Shape", ["y"], ["yshape"]),
+                make_node("Add", ["xshape", "yshape"], ["zshape"]),
+                make_node(
+                    "ConstantOfShape",
+                    ["zshape"],
+                    ["z"],
+                    value=make_tensor("value", TensorProto.INT32, (1,), (2,)),
+                ),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("xshape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("yshape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("zshape", TensorProto.INT64, (3,)),
+                make_tensor_value_info("z", TensorProto.INT32, (6, 7, 8)),
+            ],
+            data_prop=True,
+        )  # type: ignore
+
+    def test_shape_arithmetic_with_zero_broadcast(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ()), ("y", TensorProto.FLOAT, (3,))],
+            [
+                make_node("Shape", ["x"], ["xshape"]),
+                make_node("Shape", ["y"], ["yshape"]),
+                make_node("Add", ["xshape", "yshape"], ["zshape"]),
+                make_node(
+                    "ConstantOfShape",
+                    ["zshape"],
+                    ["z"],
+                    value=make_tensor("value", TensorProto.INT32, (1,), (2,)),
+                ),
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("xshape", TensorProto.INT64, (0,)),
+                make_tensor_value_info("yshape", TensorProto.INT64, (1,)),
+                make_tensor_value_info("zshape", TensorProto.INT64, (0,)),
+                make_tensor_value_info("z", TensorProto.INT32, ()),
+            ],
+            data_prop=True,
+        )  # type: ignore
 
 if __name__ == "__main__":
     unittest.main()
