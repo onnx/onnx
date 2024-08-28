@@ -83,6 +83,9 @@ if(NOT ONNX_NAMESPACE)
 endif()
 
 if(MSVC)
+  # this line is for https://github.com/onnx/onnx/issues/6267
+  # the change is copied from https://github.com/microsoft/onnxruntime/pull/21005
+  string(APPEND CMAKE_CXX_FLAGS " /D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR")
   if(NOT ONNX_DISABLE_EXCEPTIONS)
     string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
