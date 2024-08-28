@@ -213,5 +213,6 @@ class TestDataPropagation(TestShapeInferenceHelper):
             data_prop=True,
         )  # type: ignore
 
+
 if __name__ == "__main__":
     unittest.main()
