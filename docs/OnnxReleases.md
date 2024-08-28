@@ -103,13 +103,13 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 
 
-# Official Release
+# Official Release-Workflow
 
 
 ```mermaid
 graph TB
     subgraph GitHub GUI
-        A[Trigger: Draft a new Release in Github GUI and select 1.X.X Branch] --> B[SaveDraft or Publish Release?] 
+        A[Trigger: Draft a new Release in Github GUI and select the 1.X.X Branch] --> B[SaveDraft or Publish Release?] 
     end
 
     subgraph CI Pipeline
@@ -135,8 +135,11 @@ graph TB
     end
 
     subgraph Release
-        L --> N[Job 9: Publish to PyPI]
-        N --> O[Job 10: Add signature files to GithubRelease]
+        L --> N{Is it an official release?}
+        N --> |Yes| O1[Publish to PyPI]
+        N --> |No| O2[Publish to rc-candidate to TestPyPI]        
+        O1 --> O[Job 10: Add signature files to GithubRelease]
+        O2 --> O[Job 10: Add signature files to GithubRelease]
         O --> P[Job 10: Tag Release in GitHub]
         P --> Q1[Job 11: Create Release Notes]
         Q1 --> Q[Job 12: Add files to release]
