@@ -1692,7 +1692,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         operatorsetid.domain = ""
         operatorsetid.version = 11
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, None)]
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, None)],
+            opset_imports=[operatorsetid],
         )
 
     def test_unsqueeze_regular(self) -> None:
