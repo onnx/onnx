@@ -7,6 +7,7 @@ import numpy as np
 
 from onnx._custom_element_types import (
     bfloat16,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
@@ -27,6 +28,7 @@ def _check_dtype(val):  # type: ignore
         float8e5m2fnuz,
         uint4,
         int4,
+        float4e2m1,
         np.int8,
         np.uint8,
         np.float16,
