@@ -1,9 +1,8 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
+---
 name: LinuxRelease_aarch64
-
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:      
