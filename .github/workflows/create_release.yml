@@ -1,204 +1,159 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
 name: Create Releases
 on:
   schedule:
     # Run weekly on Monday 00:00
-    - cron:  '00 00 * * MON'
+    - cron: '00 00 * * MON'
   push:
     branches: [main, rel-*]
   pull_request:
     branches: [main, rel-*]
-  workflow_dispatch:    
-
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
   cancel-in-progress: true
-
-jobs: 
-
-  call-workflow-sourcedist:    
+jobs:
+  call-workflow-sourcedist:
     strategy:
       matrix:
         os: ['mac-latest']
-    uses: ./.github/workflows/release_sourcedist.yml    
+    uses: ./.github/workflows/release_sourcedist.yml
     with:
-      os: "mac" 
-
-  call-workflow-ubuntu_x86:    
+      os: "mac"
+  call-workflow-ubuntu_x86:
     strategy:
       matrix:
-        os: ['ubuntu-latest']    
+        os: ['ubuntu-latest']
     uses: ./.github/workflows/release_linux_x86_64.yml
-    with:            
-      os: "linux_x86_64" 
+    with:
+      os: "linux_x86_64"
     secrets: inherit
-
-  call-workflow-ubuntu_aarch64:    
+  call-workflow-ubuntu_aarch64:
     strategy:
       matrix:
-        os: ['ubuntu-latest']    
+        os: ['ubuntu-latest']
     uses: ./.github/workflows/release_linux_aarch64.yml
-    with:            
-      os: "linux_aarch64"      
+    with:
+      os: "linux_aarch64"
     secrets: inherit
-
-  call-workflow-win:    
+  call-workflow-win:
     strategy:
       matrix:
-        os: ['windows-latest']    
+        os: ['windows-latest']
     uses: ./.github/workflows/release_win.yml
-    with:      
+    with:
       os: "win"
     secrets: inherit
-
-  call-workflow-mac:    
+  call-workflow-mac:
     strategy:
       matrix:
-        os: ['mac-latest']    
+        os: ['mac-latest']
     uses: ./.github/workflows/release_mac.yml
-    with:            
+    with:
       os: "macos"
     secrets: inherit
-
-
-
-  publish_to_testpypi: 
+  publish_to_testpypi:
     # TODO Add a deployment step for reviewing https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
     name: Preview build (e.g. onnx-weekly), Publish to testpypi
     runs-on: ubuntu-latest
     needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win]
     if: (github.ref == 'refs/head/main') && (github.event_name != 'pull_request') && ((needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success'))
-
-    environment:      
-      name: testpypi 
+    environment:
+      name: testpypi
       url: https://test.pypi.org/p/onnx
-
     permissions:
-      contents: write  # IMPORTANT: mandatory for making GitHub Releases
-      id-token: write  # IMPORTANT: mandatory for sigstore     
-
+      contents: write # IMPORTANT: mandatory for making GitHub Releases
+      id-token: write # IMPORTANT: mandatory for sigstore     
     steps:
-
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
-          pattern: wheels* 
+          pattern: wheels*
           path: dist
           merge-multiple: true
-
       - name: Publish distribution to TestPyPI
         if: (github.event_name == 'schedule') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:   
+        with:
           repository-url: https://test.pypi.org/legacy/
-          verbose: true     
-          print-hash: true  
-
-  prepare-release:    
+          verbose: true
+          print-hash: true
+  prepare-release:
     name: Release-Prep (p.ex. sigstore, pypi)
     runs-on: ubuntu-latest
     needs: [call-workflow-mac, call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-win]
     if: (needs.call-workflow-mac.result == 'success') && (needs.call-workflow-ubuntu_x86.result == 'success') && (needs.call-workflow-ubuntu_aarch64.result == 'success')  && (needs.call-workflow-win.result == 'success')  && (needs.call-workflow-sourcedist.result == 'success')
-
     permissions:
-      contents: write  # IMPORTANT: mandatory for making GitHub Releases
-      id-token: write  # IMPORTANT: mandatory for sigstore
-
+      contents: write # IMPORTANT: mandatory for making GitHub Releases
+      id-token: write # IMPORTANT: mandatory for sigstore
     steps:
-    
       - uses: actions/download-artifact@v4
         with:
           pattern: wheels* # TODO change back to python-wheels?
           path: dist
           merge-multiple: true
-
       - name: Sign the dists with Sigstore #/home/runner/work/onnx/onnx/dist/*.tar.gz
         # Signing should only be done for the final release and maybe not for release candidates... probably this prep release steps has to be splitted or renamend to prepare signatures
+
         if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-')
         uses: sigstore/gh-action-sigstore-python@v3.0.0
         with:
-          inputs: >-            
+          inputs: >-
             /home/runner/work/onnx/onnx/dist/*.whl
-
-  
-      
       - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b
         if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-')
         with:
           name: sigstore-files
-          path: |
-              /home/runner/work/onnx/onnx/dist/*.sigstore.json
-
-                      
-      # TODO
-      # at this point, we have the wheels and could check if they are usable by offline testing...continue-on-error: 
-      # For more information about environments and required approvals, see "Using environments for deployment." F
-      # We can use a separate requirement for deploy
-
-
-
-
+          path: "/home/runner/work/onnx/onnx/dist/*.sigstore.json\n\n        \n"
+          # TODO
+          # at this point, we have the wheels and could check if they are usable by offline testing...continue-on-error: 
+          # For more information about environments and required approvals, see "Using environments for deployment." F
+          # We can use a separate requirement for deploy
   publish-to-pypi:
-
     name: Publish to pypi
     runs-on: ubuntu-latest
     needs: [prepare-release]
     if: needs.prepare-release.result == 'success' && !contains(github.ref, 'rc')
-
     environment:
-        name: releasepypi 
-        url: https://pypi.org/p/onnx
-
+      name: releasepypi
+      url: https://pypi.org/p/onnx
     steps:
-
-    - name: Publish distribution to TestPyPI      
-      if: contains(github.ref,'rc')
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:   
-        repository-url: https://test.pypi.org/legacy/
-
-
+      - name: Publish distribution to TestPyPI
+        if: contains(github.ref,'rc')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
   publish-to-testpypi:
     name: Publish to TestPyPi (rc)
     runs-on: ubuntu-latest
     needs: [prepare-release]
     if: needs.prepare-release.result == 'success' && contains(github.ref, 'rc')
-
     environment:
       name: testpypi # ???
       url: https://test.pypi.org/p/onnx
-
     steps:
-
-    - name: Publish distribution to PyPI      
-      if: ${{ !contains(github.ref, 'rc') }}
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:   
-        repository-url: https://pypi.org/legacy/
-      
-  release: 
+      - name: Publish distribution to PyPI
+        if: ${{ !contains(github.ref, 'rc') }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://pypi.org/legacy/
+  release:
     # TODO Add a deployment step for reviewing https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
     name: Release (Add files to github release)
     runs-on: ubuntu-latest
     needs: [prepare-release]
     if: startsWith(github.ref, 'refs/tags/') && startsWith(github.base_ref, 'rel-') && (needs.publish-to-testpypi.result  == 'success' || needs.publish-to-pypi.result  == 'success')
-    
     steps:
-
-    - uses: actions/download-artifact@v4
-      with:
-        pattern: sigstore-files* # TODO change back to python-wheels?
-        path: dist
-        merge-multiple: true      
-
-    # The Release is created by the Github GUI, we only add the files here
-    - name: Upload artifact signatures to GitHub Release
-      if:  startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes # TODO check exact variants
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-
-      run: >-
-        gh release upload
-        '${{ github.ref_name }}' dist/*.sigstore.json
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: sigstore-files* # TODO change back to python-wheels?
+          path: dist
+          merge-multiple: true
+      # The Release is created by the Github GUI, we only add the files here
+      - name: Upload artifact signatures to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') # only publish to PyPI on tag pushes # TODO check exact variants
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          gh release upload '${{ github.ref_name }}' dist/*.sigstore.json
