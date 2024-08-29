@@ -1,15 +1,15 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
+---
 name: LinuxRelease_aarch64
-
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:      
       os:
         required: true
         type: string
+  
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -91,7 +91,7 @@ jobs:
     - name: Verify ONNX with the latest numpy and protobuf
       if: ${{ always() }}
       run: |
-         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
@@ -103,7 +103,7 @@ jobs:
     - name: Verify ONNX with the minimumly supported packages
       if: ${{ always() }}
       run: |
-         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
@@ -115,7 +115,7 @@ jobs:
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != 'cp312-cp312'
       run: |
-         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \

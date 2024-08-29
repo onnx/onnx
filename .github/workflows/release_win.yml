@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+---
 
 name: WindowsRelease
 
@@ -10,6 +11,7 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
+
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -50,8 +52,8 @@ jobs:
         }
         python -m pip install -q -r requirements-release.txt
         python -m pip install cmake
-
-    - name: Build ONNX wheel
+    
+    - name: Build ONNX wheel      
       run: |
         $arch = 'x64'
         if ('${{ matrix.architecture }}' -eq 'x86') {
@@ -81,11 +83,6 @@ jobs:
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./onnx/dist
-
-    - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
-      if: (github.event_name == 'schedule') # Only triggered by weekly event
-      run: |
-        twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
