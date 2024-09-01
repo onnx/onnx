@@ -12,6 +12,7 @@ except ImportError:
 
 from onnx._custom_element_types import (
     bfloat16,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
@@ -22,6 +23,7 @@ from onnx._custom_element_types import (
 
 _supported_types = [
     (bfloat16, "bfloat16", "bfloat16"),
+    (float4e2m1, "float4e2m1", "float4_e2m1"),
     (float8e4m3fn, "e4m3fn", "float8_e4m3fn"),
     (float8e4m3fnuz, "e4m3fnuz", "float8_e4m3fnuz"),
     (float8e5m2, "e5m2", "float8_e5m2"),

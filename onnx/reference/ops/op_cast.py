@@ -8,6 +8,7 @@ import numpy as np
 from onnx import subbyte
 from onnx._custom_element_types import (
     bfloat16,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
@@ -25,6 +26,7 @@ from onnx.numpy_helper import (
     bfloat16_to_float32,
     float8e4m3_to_float32,
     float8e5m2_to_float32,
+    unpacked_float4e2m1_to_float32,
 )
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
@@ -125,6 +127,20 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
                 el = cvt(xf[i])  # type: ignore[assignment]
                 y[i] = el
             return y.reshape(x.shape)
+
+    if x.dtype == float4e2m1 and x.dtype.descr[0][0] == "float4e2m1":
+        if to == TensorProto.FLOAT4E2M1:
+            return x
+        res = unpacked_float4e2m1_to_float32(x)
+        if to == TensorProto.FLOAT:
+            return res.astype(np.float32)
+        elif to == TensorProto.FLOAT16:
+            return res.astype(np.float16)
+
+    if to == TensorProto.FLOAT4E2M1:
+        xf = x.astype(np.float32)
+        y = subbyte.float32_to_float4e2m1_unpacked(xf).astype(float4e2m1)
+        return y.reshape(x.shape)
 
     if to == TensorProto.STRING:
         return x.astype(np.str_)

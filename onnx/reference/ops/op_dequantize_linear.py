@@ -7,6 +7,7 @@ import numpy as np
 
 from onnx import TensorProto
 from onnx._custom_element_types import (
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
@@ -15,7 +16,11 @@ from onnx._custom_element_types import (
     uint4,
 )
 from onnx.helper import np_dtype_to_tensor_dtype
-from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32
+from onnx.numpy_helper import (
+    float8e4m3_to_float32,
+    float8e5m2_to_float32,
+    unpacked_float4e2m1_to_float32,
+)
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_quantize_linear import reshape_input
 
@@ -35,6 +40,8 @@ class _CommonDequantizeLinear(OpRun):
             tensor_dtype = TensorProto.UINT4
         elif x.dtype == int4 and x.dtype.descr[0][0] == "int4":
             tensor_dtype = TensorProto.INT4
+        elif x.dtype == float4e2m1 and x.dtype.descr[0][0] == "float4e2m1":
+            tensor_dtype = TensorProto.FLOAT4E2M1
         else:
             tensor_dtype = np_dtype_to_tensor_dtype(x.dtype)
         return tensor_dtype
@@ -54,7 +61,11 @@ class _CommonDequantizeLinear(OpRun):
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
         }
-        if x_zero_point is not None and not fp8_type:
+        if (
+            x_zero_point is not None
+            and not fp8_type
+            and x_type != TensorProto.FLOAT4E2M1
+        ):
             zero_type = self.get_x_type(x_zero_point)
             if x_type != zero_type:
                 raise ValueError(
@@ -81,6 +92,8 @@ class _CommonDequantizeLinear(OpRun):
                 dx = float8e5m2_to_float32(x)
             elif x_type == TensorProto.FLOAT8E5M2FNUZ:
                 dx = float8e5m2_to_float32(x, fn=True, uz=True)
+            elif x_type == TensorProto.FLOAT4E2M1:
+                dx = unpacked_float4e2m1_to_float32(x)
             else:
                 dx = x.astype(np.float32)
         y = dx * reshape_input(x_scale, x.shape, axis, block_size)

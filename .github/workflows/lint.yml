@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: misspell # Check spellings as well
-        uses: reviewdog/action-misspell@30433ca7be17888deb78a32521706fb65defbf3f # v1.21.0
+        uses: reviewdog/action-misspell@ef8b22c1cca06c8d306fc6be302c3dab0f6ca12f # v1.23.0
         with:
           github_token: ${{ secrets.github_token }}
           locale: "US"
@@ -35,14 +35,14 @@ jobs:
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@52f34f737a16c65b8caa8c51ae1b23036afe5685 # v1.23.0
+        uses: reviewdog/action-shellcheck@d99499e855260c9c56f7a1d066933b57326e9e7c # v1.26.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
       - name: cpplint # Static check C++ code
-        uses: reviewdog/action-cpplint@f60159ccbe0f2f3657a23bd6c03b26dcca4b2102 # v1.5.0
+        uses: reviewdog/action-cpplint@3f691d27ef181edb2a57b6d1edcec63ade34c611 # v1.7.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
@@ -99,7 +99,7 @@ jobs:
         # To toggle linter comments in the files page, press `i` on the keyboard
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@b611370bb5703a7efb587f9d136a52ea24c5c38c # v3.25.11
+        uses: github/codeql-action/upload-sarif@afb54ba388a7dca6ecae48f608c4ff05ff4cc77a # v3.25.15
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif

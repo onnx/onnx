@@ -473,6 +473,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
           case TensorProto::DataType::TensorProto_DataType_BOOL:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:
             PARSE_TOKEN(intval);
             // TODO: check values are in the correct range.
             tensorProto.add_int32_data(intval);
@@ -663,7 +664,6 @@ Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   if (NextChar() == '[') {
     // Parse a list of values. For an empty list, the type MUST be specified
     // using the type-annotation syntax of ": type".
-    std::vector<Literal> vals;
     MATCH('[');
     if (NextChar() != ']') {
       do {
