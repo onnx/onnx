@@ -11,11 +11,22 @@ param(
 )
 
 echo "Build protobuf from source on Windows."
-Invoke-WebRequest -Uri https://github.com/protocolbuffers/protobuf/archive/refs/tags/v3.28.0.tar.gz -OutFile protobuf.tar.gz -Verbose
-tar -xvf protobuf.tar.gz
-cd protobuf-3.28.0
+$repoUrl = "https://github.com/protocolbuffers/protobuf.git"
+$tag = "v28.0"
+$directory = "protobuf-28.0"
+
+# Clone the repository recursively
+git clone --recursive $repoUrl $directory
+
+# Change to the cloned directory
+Set-Location $directory
+
+# Check out the specific tag
+git checkout tags/$tag
+
 $protobuf_root_dir = Get-Location
 mkdir protobuf_install
+
 cmake -G "Visual Studio 17 2022" -A $arch -DCMAKE_INSTALL_PREFIX="./protobuf_install" -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 msbuild protobuf.sln /m /p:Configuration=$build_type
 msbuild INSTALL.vcxproj /p:Configuration=$build_type
