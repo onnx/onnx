@@ -83,7 +83,7 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
         d = Device(device)
         if d.type == DeviceType.CPU and "CPUExecutionProvider" in providers:
             return True
-        if d.type == DeviceType.CUDA and "CUDAExecutionProvider" in providers:
+        elif d.type == DeviceType.CUDA and "CUDAExecutionProvider" in providers:
             return True
         return False
 
