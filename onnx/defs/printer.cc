@@ -14,17 +14,17 @@ namespace ONNX_NAMESPACE {
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
 bool IsValidIdentifier(const std::string& str) {
-    // Check if str is a valid identifier
-    const char* next_ = str.c_str();
-    const char* end_ = next_ + str.size();
-    if (next_ == end_)
-      return false; // empty string is not a valid identifier
-    if (! (isalpha(*next_) || (*next_ == '_')))
-      return false; // first character must be a letter or '_'
+  // Check if str is a valid identifier
+  const char* next_ = str.c_str();
+  const char* end_ = next_ + str.size();
+  if (next_ == end_)
+    return false; // empty string is not a valid identifier
+  if (!(isalpha(*next_) || (*next_ == '_')))
+    return false; // first character must be a letter or '_'
+  ++next_;
+  while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
     ++next_;
-    while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
-      ++next_;
-    return next_ == end_;
+  return next_ == end_;
 }
 
 class ProtoPrinter {
