@@ -11,4 +11,4 @@ isort==5.13.2
 # CLANG-FORMAT
 clang-format==17.0.6
 # EDITORCONFIG-CHECKER
-editorconfig-checker==2.7.3
+editorconfig-checker==3.0.3
