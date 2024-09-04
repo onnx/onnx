@@ -1963,7 +1963,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             LambdaLessThanInput = Less (LambdCast, input)
             InputSubBiasOrZero = Where (LambdaLessThanInput, InputSubBias, ZeroCast)
             output = Where(InputLessThanNegLambda, InputAddBias, InputSubBiasOrZero)
-		      }
+          }
         )ONNX",
             18));
 
