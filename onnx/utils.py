@@ -14,7 +14,7 @@ from onnx import FunctionProto, ModelProto, NodeProto, TensorProto, ValueInfoPro
 
 class Extractor:
     def __init__(self, model: ModelProto) -> None:
-        self.model = onnx.shape_inference.infer_shapes(model)
+        self.model = model
         self.graph = self.model.graph
         self.wmap = self._build_name2obj_dict(self.graph.initializer)
         self.vimap = self._build_name2obj_dict(self.graph.value_info)
@@ -227,6 +227,8 @@ def extract_model(
     if check_model:
         onnx.checker.check_model(input_path)
     model = onnx.load(input_path)
+    if check_model:
+        model = onnx.shape_inference.infer_shapes(model)
 
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)
