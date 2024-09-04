@@ -104,7 +104,7 @@ jobs:
         # https://github.com/protocolbuffers/protobuf/issues/18045
         # The protobuf Python package version 5.28.0 is broken on Windows.
         # Use the version prior to it until it gets fixed or a newer version is available.
-        python -m pip install protobuf==5.27.4
+        python -m pip install protobuf!=5.28.0
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
