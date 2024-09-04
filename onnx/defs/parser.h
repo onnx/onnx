@@ -364,6 +364,13 @@ class ParserBase {
     return Status::OK();
   }
 
+  Status ParseQuotableIdentifier(std::string& id) {
+    if (NextChar() == '"') {
+      return Parse(id);
+    }
+    return ParseIdentifier(id);
+  }
+
   Status PeekIdentifier(std::string& id) {
     SavePos();
     ParseOptionalIdentifier(id);

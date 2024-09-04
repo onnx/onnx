@@ -663,5 +663,27 @@ agraph (float y = {1.0}, float[N] z) => (w) <
   EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).value(), "17");
 }
 
+TEST(ParserTest, QuotedIdentifiersTest) {
+  const char* code = R"ONNX(
+"a graph name" (float[N, 128] "input/X", float[128,10] "input W", float[10] B) => (float[N] C)
+{
+    "some/temp" = MatMul("input/X", "input W")
+    S = Add("some/temp", B)
+    C = Softmax(S)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.name(), "a graph name");
+  EXPECT_EQ(graph.input_size(), 3);
+  EXPECT_EQ(graph.output_size(), 1);
+  EXPECT_EQ(graph.node_size(), 3);
+  EXPECT_EQ(graph.node(0).input(0), "input/X");
+  EXPECT_EQ(graph.node(0).input(1), "input W");
+  EXPECT_EQ(graph.node(0).output(0), "some/temp");
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE
