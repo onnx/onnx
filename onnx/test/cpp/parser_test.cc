@@ -685,5 +685,25 @@ TEST(ParserTest, QuotedIdentifiersTest) {
   EXPECT_EQ(graph.node(0).output(0), "some/temp");
 }
 
+TEST(ParserTest, QuotedIdentifierTest2) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+"a function name" (float[N] "#y", "$z") => (float[N] "!w")
+<float[N] "/layer/x", float[N] t>
+{
+    "/layer/x" = Add("#y", "$z")
+    t = Add("/layer/x", "/layer/x")
+    "!w" = Mul(t, "#y")
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE
