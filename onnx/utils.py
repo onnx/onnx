@@ -224,7 +224,8 @@ def extract_model(
     if not output_names:
         raise ValueError("Output tensor names shall not be empty!")
 
-    onnx.checker.check_model(input_path)
+    if check_model:
+        onnx.checker.check_model(input_path)
     model = onnx.load(input_path)
 
     e = Extractor(model)
