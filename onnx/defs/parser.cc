@@ -150,12 +150,12 @@ bool ParserBase::NextIsValidFloatString() {
 Status OnnxParser::Parse(IdList& idlist) {
   idlist.Clear();
   std::string id;
-  ParseQuotableIdentifier(id);
+  CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id));
   if (id.empty())
     return Status::OK(); // Treat as empty list of identifiers
   *idlist.Add() = id;
   while (Matches(',')) {
-    ParseQuotableIdentifier(id);
+    CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
     *idlist.Add() = id;
   }
   return Status::OK();
@@ -175,7 +175,7 @@ Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
   attrlist.Clear();
   do {
     std::string id;
-    ParseQuotableIdentifier(id);
+    CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
     auto next = NextChar();
     if (next == ':' || next == '=')
       Parse(*attrlist.Add(), id);
@@ -549,7 +549,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
       if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
-        ParseQuotableIdentifier(*tensorProto.mutable_name());
+        CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()));
         (void)Matches('='); // Optional, to unify handling of initializers
         Parse(tensorProto, typeProto);
       } else {
@@ -713,7 +713,7 @@ Status OnnxParser::Parse(AttrList& attrlist) {
 
 Status OnnxParser::Parse(NodeProto& node) {
   if (Matches('[')) {
-    ParseQuotableIdentifier(node.mutable_name());
+    CHECK_PARSER_STATUS(ParseQuotableIdentifier(*node.mutable_name()));
     MATCH(']');
   }
   PARSE(*node.mutable_output());
@@ -757,7 +757,7 @@ Status OnnxParser::Parse(NodeList& nodelist) {
 
 Status OnnxParser::Parse(GraphProto& graph) {
   std::string id;
-  ParseQuotableIdentifier(id);
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
   return Parse(id, graph);
 }
 
@@ -803,7 +803,7 @@ Status OnnxParser::Parse(FunctionProto& fn) {
     MATCH('>');
   }
   std::string id;
-  ParseQuotableIdentifier(id);
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
   fn.set_name(id);
 
   PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>');
