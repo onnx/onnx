@@ -52,6 +52,11 @@ uint4 = np.dtype((np.uint8, {"uint4": (np.uint8, 0)}))
 #: than its onnx size.
 int4 = np.dtype((np.int8, {"int4": (np.int8, 0)}))
 
+#: Defines float 4 e2m1 type, see See :ref:`onnx-detail-float4` for technical details.
+#: Do note that one integer is stored using a byte and therefore is twice bigger
+#: than its onnx size.
+float4e2m1 = np.dtype((np.uint8, {"float4e2m1": (np.uint8, 0)}))
+
 mapping_name_to_data_type = {
     "bfloat16": onnx.TensorProto.BFLOAT16,
     "e4m3fn": onnx.TensorProto.FLOAT8E4M3FN,
@@ -60,4 +65,5 @@ mapping_name_to_data_type = {
     "e5m2fnuz": onnx.TensorProto.FLOAT8E5M2FNUZ,
     "int4": onnx.TensorProto.INT4,
     "uint4": onnx.TensorProto.UINT4,
+    "float4e2m1": onnx.TensorProto.FLOAT4E2M1,
 }

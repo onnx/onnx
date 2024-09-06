@@ -49,29 +49,31 @@ The grammar below describes the syntax:
 
 ```
    id-list ::= id (',' id)*
+   quotable-id-list ::= quotable-id (',' quotable-id)*
    tensor-dim ::= '?' | id | int-constant
    tensor-dims ::= tensor-dim (',' tensor-dim)*
    tensor-type ::= prim-type | prim-type '[' ']' | prim-type '[' tensor-dims ']'
    type ::= tensor-type | 'seq' '(' type ')' | 'map' '(' prim-type ',' type ')'
             | 'optional' '(' type ')' | 'sparse_tensor' '(' tensor-type ')'
-   value-info ::= type id
+   value-info ::= type quotable-id
    value-infos ::= value-info (',' value-info)*
    value-info-list ::= '(' value-infos? ')
-   id-or-value-info ::= type? id
+   id-or-value-info ::= type? quotable-id
    id-or-value-infos ::= id-or-value-info (',' id-or-value-info)*
    quoted-str :== '"' ([^"])* '"'
+   quotable-id :== id | quoted-str
    str-str :== quoted-str ':' quoted-str
    str-str-list :== '[' str-str (',' str-str)* ']'
    internal-data ::= '{' prim-constants '}'
    external-data ::= str-str-list
    constant-data ::= internal-data | external-data
-   value-info-or-initializer ::= type id [ '=' constant-data ]
+   value-info-or-initializer ::= type quotable-id [ '=' constant-data ]
    value-info-or-initializers ::= value-info-or-initializer (',' value-info-or-initializer)*
    input-list ::= '(' value-info-or-initializers? ')'
    output-list ::= '(' value-infos? ')'
    initializer-list ::= '<' value-info-or-initializers? '>'
    prim-constants ::= prim-constant (',' prim-constant)*
-   tensor-constant ::= tensor-type (id)? ('=')? '{' prim-constants '}'
+   tensor-constant ::= tensor-type (quotable-id)? ('=')? '{' prim-constants '}'
    attr-ref ::= '@' id
    single-attr-value ::= tensor-constant | graph | prim-constant | attr-ref
    attr-value-list ::= '[' single-attr-value (',' single-attr-value)* ']'
@@ -79,16 +81,16 @@ The grammar below describes the syntax:
    attr-type ::= ':' id
    attr ::= id attr-type? '=' attr-value
    attr-list ::= '<' attr (',' attr)* '>'
-   node ::= id-list? '=' qualified-id attr-list? '(' id-list? ')'
-         |  id-list? '=' qualified-id '(' id-list? ')' attr-list
+   node ::= quotable-id-list? '=' qualified-id attr-list? '(' quotable-id-list? ')'
+         |  quotable-id-list? '=' qualified-id '(' quotable-id-list? ')' attr-list
    node-list ::= '{' node* '}'
-   graph ::= id input-list '=>' output-list initializer-list node-list
+   graph ::= quotable-id input-list '=>' output-list initializer-list node-list
    other-data ::= id ':' value
    other-data-list ::= '<' other-data (',' other-data)* '>'
    fun-attr-list ::= '<' id | attr (',' id | attr)* '>'
    fun-input-list ::= '(' id-or-value-infos ')'
    fun-output-list ::= '(' id-or-value-infos ')'
    fun-value-infos ::= ( '<' value-infos '>' )?
-   function ::= other-data-list? id fun-attr-list?  fun-input-list '=>' fun-output-list fun-value-infos node-list
+   function ::= other-data-list? id fun-attr-list? quotable-id fun-input-list '=>' fun-output-list fun-value-infos node-list
    model ::= other-data-list? graph function*
 ```
