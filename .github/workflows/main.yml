@@ -58,7 +58,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9a9194f87191a7e9055e3e9b95b8cfb13023bb08
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Set up Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
@@ -148,7 +148,7 @@ jobs:
 
       - name: Run Python tests
         run: |
-          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
+          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
@@ -162,12 +162,11 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
-          name: TestResults-(${{ matrix.os }}-${{ matrix.python_version }})
-          path: pytest.xml          
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
@@ -207,25 +206,3 @@ jobs:
         run: |
           pip install "numpy<2.0" "pillow<10"
           pytest -s
-
-  publish-test-results:
-    name: "Publish Test Results to Github"
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      # only needed unless run with comment_mode: off
-      pull-requests: write
-    if: always()
-    steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        with:
-          path: artifacts
-          pattern: TestResults*
-          merge-multiple: true
-
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@567cc7f8dcea3eba5da355f6ebc95663310d8a07
-        with:
-          files: "artifacts/**/*.xml"

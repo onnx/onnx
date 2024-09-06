@@ -24,13 +24,13 @@ jobs:
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
          path: ./onnx
          submodules: 'recursive'
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -101,7 +101,10 @@ jobs:
       run: |
         cd onnx
         python -m pip uninstall -y protobuf onnx
-        python -m pip install protobuf
+        # https://github.com/protocolbuffers/protobuf/issues/18045
+        # The protobuf Python package version 5.28.0 is broken on Windows.
+        # Use the version prior to it until it gets fixed or a newer version is available.
+        python -m pip install protobuf!=5.28.0
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
