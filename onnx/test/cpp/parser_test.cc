@@ -256,6 +256,23 @@ TEST(ParserTest, NodeTest) {
        )ONNX");
 }
 
+TEST(ParserTest, NodeLabelTest) {
+  const char* code = "[node1] x = foo(y, z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.name(), "node1");
+
+  NodeList nl;
+  Parse(nl, R"ONNX( {
+     [node1] x = foo(y, z)
+     [node2] w = bar(x, y)
+     s = foobar(x, w)
+  } )ONNX");
+  EXPECT_EQ(nl.Get(0).name(), "node1");
+  EXPECT_EQ(nl.Get(1).name(), "node2");
+  EXPECT_FALSE(nl.Get(2).has_name());
+}
+
 TEST(ParserTest, QualifiedOpNameTest) {
   const char* code = "x = com.example.foo(y, z)";
   NodeProto n;

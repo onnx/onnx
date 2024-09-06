@@ -366,6 +366,11 @@ void ProtoPrinter::print(const AttrList& attrlist) {
 
 void ProtoPrinter::print(const NodeProto& node) {
   output_ << std::setw(indent_level) << ' ';
+  if (node.has_name()) {
+    output_ << "[";
+    printId(node.name());
+    output_ << "] ";
+  }
   printIdSet("", ", ", "", node.output());
   output_ << " = ";
   if (node.domain() != "")

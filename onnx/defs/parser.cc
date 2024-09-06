@@ -712,6 +712,10 @@ Status OnnxParser::Parse(AttrList& attrlist) {
 }
 
 Status OnnxParser::Parse(NodeProto& node) {
+  if (Matches('[')) {
+    ParseQuotableIdentifier(node.mutable_name());
+    MATCH(']');
+  }
   PARSE(*node.mutable_output());
   MATCH('=');
   std::string domain("");
