@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "onnx/defs/shape_inference.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/onnx_pb.h"
