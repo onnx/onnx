@@ -13,9 +13,23 @@ namespace ONNX_NAMESPACE {
 
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
+bool IsValidIdentifier(const std::string& str) {
+  // Check if str is a valid identifier
+  const char* next_ = str.c_str();
+  const char* end_ = next_ + str.size();
+  if (next_ == end_)
+    return false; // empty string is not a valid identifier
+  if (!(isalpha(*next_) || (*next_ == '_')))
+    return false; // first character must be a letter or '_'
+  ++next_;
+  while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
+    ++next_;
+  return next_ == end_;
+}
+
 class ProtoPrinter {
  public:
-  ProtoPrinter(std::ostream& os) : output_(os) {}
+  explicit ProtoPrinter(std::ostream& os) : output_(os) {}
 
   void print(const TensorShapeProto_Dimension& dim);
 
@@ -68,6 +82,13 @@ class ProtoPrinter {
   }
 
  private:
+  void printId(const std::string& str) {
+    if (IsValidIdentifier(str))
+      output_ << str;
+    else
+      printQuoted(str);
+  }
+
   template <typename T>
   inline void print(T prim) {
     output_ << prim;
@@ -104,6 +125,18 @@ class ProtoPrinter {
     for (auto& elt : coll) {
       output_ << sep;
       print(elt);
+      sep = separator;
+    }
+    output_ << close;
+  }
+
+  template <typename Collection>
+  inline void printIdSet(const char* open, const char* separator, const char* close, Collection coll) {
+    const char* sep = "";
+    output_ << open;
+    for (auto& elt : coll) {
+      output_ << sep;
+      printId(elt);
       sep = separator;
     }
     output_ << close;
@@ -191,7 +224,8 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
     printSet("[", ",", "]", tensor.dims());
 
   if (!tensor.name().empty()) {
-    output_ << " " << tensor.name();
+    output_ << " ";
+    printId(tensor.name());
   }
   if (is_initializer) {
     output_ << " = ";
@@ -258,7 +292,8 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
 
 void ProtoPrinter::print(const ValueInfoProto& value_info) {
   print(value_info.type());
-  output_ << " " << value_info.name();
+  output_ << " ";
+  printId(value_info.name());
 }
 
 void ProtoPrinter::print(const ValueInfoList& vilist) {
@@ -331,7 +366,7 @@ void ProtoPrinter::print(const AttrList& attrlist) {
 
 void ProtoPrinter::print(const NodeProto& node) {
   output_ << std::setw(indent_level) << ' ';
-  printSet("", ", ", "", node.output());
+  printIdSet("", ", ", "", node.output());
   output_ << " = ";
   if (node.domain() != "")
     output_ << node.domain() << ".";
@@ -339,12 +374,12 @@ void ProtoPrinter::print(const NodeProto& node) {
   if (node.overload() != "")
     output_ << ":" << node.overload();
   bool has_subgraph = false;
-  for (auto attr : node.attribute())
+  for (const auto& attr : node.attribute())
     if (attr.has_g() || (attr.graphs_size() > 0))
       has_subgraph = true;
   if ((!has_subgraph) && (node.attribute_size() > 0))
     print(node.attribute());
-  printSet(" (", ", ", ")", node.input());
+  printIdSet(" (", ", ", ")", node.input());
   if ((has_subgraph) && (node.attribute_size() > 0))
     print(node.attribute());
   output_ << "\n";
@@ -361,7 +396,8 @@ void ProtoPrinter::print(const NodeList& nodelist) {
 }
 
 void ProtoPrinter::print(const GraphProto& graph) {
-  output_ << graph.name() << " " << graph.input() << " => " << graph.output() << " ";
+  printId(graph.name());
+  output_ << " " << graph.input() << " => " << graph.output() << " ";
   if ((graph.initializer_size() > 0) || (graph.value_info_size() > 0)) {
     output_ << std::endl << std::setw(indent_level) << ' ' << '<';
     const char* sep = "";
@@ -425,12 +461,13 @@ void ProtoPrinter::print(const FunctionProto& fn) {
           << "opset_import: ";
   printSet("[", ",", "]", fn.opset_import());
   output_ << "\n>\n";
-  output_ << fn.name() << " ";
+  printId(fn.name());
+  output_ << " ";
   if (fn.attribute_size() > 0)
     printSet("<", ",", ">", fn.attribute());
-  printSet("(", ", ", ")", fn.input());
+  printIdSet("(", ", ", ")", fn.input());
   output_ << " => ";
-  printSet("(", ", ", ")", fn.output());
+  printIdSet("(", ", ", ")", fn.output());
   output_ << "\n";
   print(fn.node());
 }
