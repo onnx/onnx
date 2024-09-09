@@ -21477,7 +21477,7 @@ This version of the operator has been available since version 18 of the default 
 <dd>Constrain input and output types to all numeric tensor types.</dd>
 </dl>
 
-### <a name="GroupNormalization-18"></a>**GroupNormalization-18**</a>
+### <a name="GroupNormalization-18"></a>**GroupNormalization-18** (deprecated)</a>
 
   A GroupNormalization function. Carries out group normalization as described in
   the paper https://arxiv.org/abs/1803.08494
@@ -21497,41 +21497,7 @@ This version of the operator has been available since version 18 of the default 
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>num_groups</tt> : int (required)</dt>
-<dd>The number of groups of channels. It should be a divisor of the number of channels `C`.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, `C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are in the form of `(N x C x D1 x D2 ... Dn)`.</dd>
-<dt><tt>scale</tt> (differentiable) : T</dt>
-<dd>Scale tensor of shape `(num_groups)`.</dd>
-<dt><tt>bias</tt> (differentiable) : T</dt>
-<dd>Bias tensor of shape `(num_groups)`.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>The output tensor of the same shape as `X`.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
+This version of the operator has been deprecated since version 18 of the default ONNX operator set.
 
 ### <a name="LpPool-18"></a>**LpPool-18**</a>
 
@@ -24864,7 +24830,7 @@ This version of the operator has been available since version 21 of the default 
   y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
   ```
   where the mean and variance are computed per instance per group of channels, and
-  `scale` and `bias` should be specified for each group of channels. The number of
+  `scale` and `bias` should be specified for each channel. The number of
   groups `num_groups` should be divisible by the number of channels so that there are
   an equal number of channels per group.
 
