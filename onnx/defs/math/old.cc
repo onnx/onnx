@@ -4,7 +4,6 @@
 
 #include <functional>
 
-#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
 #include "onnx/defs/schema.h"
@@ -1733,8 +1732,8 @@ void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int inp
 
   // Check for compatible matrix multiply dimensions
   {
-    auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-    auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+    const auto& dimL = shapeL.dim(shapeL.dim_size() - 1);
+    const auto& dimR = shapeR.dim(shapeR.dim_size() - 2);
     if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
       fail_shape_inference("Incompatible dimensions for matrix multiplication");
     }
@@ -2054,7 +2053,7 @@ TensorProto ToDimensionOneInt64Tensor_old(int64_t value) {
   return t;
 }
 
-TensorProto ToDimensionOneInt64Tensor_old(std::vector<int64_t> value) {
+TensorProto ToDimensionOneInt64Tensor_old(const std::vector<int64_t>& value) {
   auto t = ToTensor(value);
   t.add_dims(value.size());
   return t;
@@ -2387,12 +2386,12 @@ bool BuildContextDependentFunctionBodySCE_opset12(
       MakeRefAttribute("reduction", AttributeProto::STRING)};
   // Add weights as input if needed.
   if (ctx.hasInput(2)) {
-    input_tensor_names.push_back("weights");
+    input_tensor_names.emplace_back("weights");
   }
 
   // add ignore_index attributes if needed.
   if (ctx.getAttribute("ignore_index") != nullptr) {
-    attributes.push_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
+    attributes.emplace_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
   }
 
   body.push_back({{"output"}, "NegativeLogLikelihoodLoss", input_tensor_names, attributes});

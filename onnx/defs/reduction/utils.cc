@@ -13,11 +13,11 @@ namespace ONNX_NAMESPACE {
 std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit, bool supports_bool) {
   auto data_types = OpSchema::numeric_types_for_math_reduction_ir4();
   if (supports8bit) {
-    data_types.push_back("tensor(uint8)");
-    data_types.push_back("tensor(int8)");
+    data_types.emplace_back("tensor(uint8)");
+    data_types.emplace_back("tensor(int8)");
   }
   if (supports_bool) {
-    data_types.push_back("tensor(bool)");
+    data_types.emplace_back("tensor(bool)");
   }
 
   return data_types;
@@ -29,7 +29,7 @@ std::function<void(OpSchema&)> ReduceOpGenerator(
     bool supports_8bit_datatypes,
     bool axes_input,
     const char* func_body,
-    ContextDependentFunctionBodyBuilder function_builder,
+    const ContextDependentFunctionBodyBuilder& function_builder,
     bool supports_boolean_datatype /* = false */) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
