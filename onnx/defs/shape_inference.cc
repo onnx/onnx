@@ -186,7 +186,7 @@ void mergeInShapeInfo(const TypeProto_SparseTensor& source, TypeProto_SparseTens
 void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& target_shape) {
   auto source_rank = source_shape.dim_size();
   for (int i = 0; i < source_rank; ++i) {
-    const auto source_dim = source_shape.dim(i);
+    const auto& source_dim = source_shape.dim(i);
     const auto target_dim = target_shape.dim(i);
     bool is_dims_conflict = [&]() {
       if (source_dim.has_dim_value()) {

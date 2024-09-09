@@ -8,7 +8,6 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 
 #include "onnx/common/common.h"
 #include "onnx/onnx_pb.h"
