@@ -27,7 +27,7 @@ std::function<void(OpSchema&)> ReduceOpGenerator(
     bool supports_8bit_datatypes = false,
     bool axes_input = false,
     const char* func_body = nullptr,
-    ContextDependentFunctionBodyBuilder function_builder = nullptr,
+    const ContextDependentFunctionBodyBuilder& function_builder = nullptr,
     bool supports_boolean_datatype = false);
 
 inline std::function<void(OpSchema&)> ReduceOpDynamicAxes(const char* name, const char* empty_value) {
