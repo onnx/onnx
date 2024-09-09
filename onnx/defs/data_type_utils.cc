@@ -5,9 +5,7 @@
 #include "data_type_utils.h"
 
 #include <cctype>
-#include <iostream>
-#include <iterator>
-#include <sstream>
+#include <unordered_set>
 
 namespace ONNX_NAMESPACE {
 namespace Utils {

@@ -743,8 +743,8 @@ bool BuildSequenceMapBodyFunc(
     std::string seqempty_name = MakeString(out_prefix, "_seqempty");
     int64_t dtype = g_outputs.Get(outputIndex).type().tensor_type().elem_type();
     nodes.push_back({{seqempty_name}, "SequenceEmpty", {}, {MakeAttribute("dtype", dtype)}});
-    loop_node_inputs.push_back(seqempty_name);
-    loop_node_outputs.push_back(output_name);
+    loop_node_inputs.emplace_back(std::move(seqempty_name));
+    loop_node_outputs.emplace_back(std::move(output_name));
   }
 
   nodes.push_back({loop_node_outputs, "Loop", loop_node_inputs, {MakeAttribute("body", loopbody_graph)}});
