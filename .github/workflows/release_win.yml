@@ -5,7 +5,7 @@
 name: WindowsRelease
 
 on:  # Specifies the event triggering the workflow
-  workflow_call:  # Indicates that this is a reusable workflow
+  workflow_call:  # Indicates that this is a reusable workflowm
     inputs:      
       os:
         required: true
@@ -20,7 +20,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13.0-rc.1']
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
