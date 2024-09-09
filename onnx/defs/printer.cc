@@ -29,7 +29,7 @@ bool IsValidIdentifier(const std::string& str) {
 
 class ProtoPrinter {
  public:
-  ProtoPrinter(std::ostream& os) : output_(os) {}
+  explicit ProtoPrinter(std::ostream& os) : output_(os) {}
 
   void print(const TensorShapeProto_Dimension& dim);
 
@@ -379,7 +379,7 @@ void ProtoPrinter::print(const NodeProto& node) {
   if (node.overload() != "")
     output_ << ":" << node.overload();
   bool has_subgraph = false;
-  for (auto attr : node.attribute())
+  for (const auto& attr : node.attribute())
     if (attr.has_g() || (attr.graphs_size() > 0))
       has_subgraph = true;
   if ((!has_subgraph) && (node.attribute_size() > 0))

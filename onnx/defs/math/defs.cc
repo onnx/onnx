@@ -6,7 +6,6 @@
 #include <functional>
 
 #include "onnx/common/assertions.h"
-#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
 #include "onnx/defs/schema.h"
@@ -14,7 +13,7 @@
 
 namespace ONNX_NAMESPACE {
 
-inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_type) {
+inline void MathOpDataPropagator(DataPropagationContext& ctx, const std::string& op_type) {
   const auto input_0 = ctx.getInputData(0);
   const auto input_1 = ctx.getInputData(1);
   if (input_0 == nullptr || input_1 == nullptr) {
@@ -500,7 +499,7 @@ TensorProto ToDimensionOneInt64Tensor(int64_t value) {
   return t;
 }
 
-TensorProto ToDimensionOneInt64Tensor(std::vector<int64_t> value) {
+TensorProto ToDimensionOneInt64Tensor(const std::vector<int64_t>& value) {
   auto t = ToTensor(value);
   t.add_dims(value.size());
   return t;
@@ -2572,7 +2571,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
         continue;
       }
 
-      const auto inserted = label_maps.insert({term[index], num_labels}).second;
+      const auto inserted = label_maps.emplace(term[index], num_labels).second;
       if (inserted) {
         *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
         ++num_labels;
