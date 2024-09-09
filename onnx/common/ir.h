@@ -1229,7 +1229,7 @@ struct Graph final {
   }
 
   void forEachNode(const std::function<void(Node*)>& fn) {
-    forSelfAndEachSubGraph([fn](Graph* graph) {
+    forSelfAndEachSubGraph([&fn](Graph* graph) {
       for (Node* node : graph->nodes()) {
         fn(node);
       }
