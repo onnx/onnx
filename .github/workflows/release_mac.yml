@@ -25,6 +25,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        target-architecture: ['x86_64', 'arm64']
 
     steps:
     - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -61,7 +62,7 @@ jobs:
         fi
         python -m build --wheel
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist/*.whl
@@ -86,9 +87,9 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release.txt
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
       with:
-        name:  wheels-${{ inputs.os }}-${{ matrix.python-version }}
+        name:  wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.target-architecture }}
         path: dist
 
     - name: Test the wheel
