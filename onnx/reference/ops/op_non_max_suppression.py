@@ -177,10 +177,10 @@ class NonMaxSuppression(OpRun):
         self,
         boxes,
         scores,
-        max_output_boxes_per_class = None,
-        iou_threshold = None,
-        score_threshold = None,
-        center_point_box = None,
+        max_output_boxes_per_class=None,
+        iou_threshold=None,
+        score_threshold=None,
+        center_point_box=None,
     ):
         pc = PrepareContext()
         self.prepare_compute(
