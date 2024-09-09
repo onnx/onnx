@@ -44,8 +44,8 @@ class StringRange final {
  public:
   StringRange();
   StringRange(const char* data, size_t size);
-  explicit StringRange(const std::string& str);
-  explicit StringRange(const char* data);
+  StringRange(const std::string& str);
+  StringRange(const char* data);
   const char* Data() const;
   size_t Size() const;
   bool Empty() const;
