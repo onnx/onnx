@@ -149,7 +149,7 @@ Status OnnxParser::Parse(IdList& idlist) {
     return Status::OK(); // Treat as empty list of identifiers
   *idlist.Add() = id;
   while (Matches(',')) {
-    CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id));
     *idlist.Add() = id;
   }
   return Status::OK();
@@ -707,7 +707,7 @@ Status OnnxParser::Parse(AttrList& attrlist) {
 
 Status OnnxParser::Parse(NodeProto& node) {
   if (Matches('[')) {
-    CHECK_PARSER_STATUS(ParseQuotableIdentifier(*node.mutable_name()));
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*node.mutable_name()));
     MATCH(']');
   }
   PARSE(*node.mutable_output());

@@ -228,6 +228,26 @@ TEST(ParserTest, DomainOpCallTest) {
   Parse(n, code);
 }
 
+TEST(ParserTest, OptionalInputTest) {
+  const char* code = "x = SomeOp(y, , z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 3);
+  EXPECT_EQ(n.input(0), "y");
+  EXPECT_EQ(n.input(1), "");
+  EXPECT_EQ(n.input(2), "z");
+}
+
+TEST(ParserTest, OptionalInputTest2) {
+  const char* code = "x = SomeOp(y, \"\", z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 3);
+  EXPECT_EQ(n.input(0), "y");
+  EXPECT_EQ(n.input(1), "");
+  EXPECT_EQ(n.input(2), "z");
+}
+
 TEST(ParserTest, NodeTest) {
   const char* code = "x = foo(y, z)";
   NodeProto n;
