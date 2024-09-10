@@ -81,8 +81,9 @@ The grammar below describes the syntax:
    attr-type ::= ':' id
    attr ::= id attr-type? '=' attr-value
    attr-list ::= '<' attr (',' attr)* '>'
-   node ::= quotable-id-list? '=' qualified-id attr-list? '(' quotable-id-list? ')'
-         |  quotable-id-list? '=' qualified-id '(' quotable-id-list? ')' attr-list
+   node-label ::= '[' quotable-id ']'
+   node ::= node-label? quotable-id-list? '=' qualified-id attr-list? '(' quotable-id-list? ')'
+         |  node-label? quotable-id-list? '=' qualified-id '(' quotable-id-list? ')' attr-list
    node-list ::= '{' node* '}'
    graph ::= quotable-id input-list '=>' output-list initializer-list node-list
    other-data ::= id ':' value
