@@ -81,7 +81,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           output_tensor_type->set_elem_type(static_cast<TensorProto_DataType>(input_elem_types[0]));
 
-          if (!hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+          if (!hasNInputShapes(ctx, numInputs)) {
             return;
           }
 

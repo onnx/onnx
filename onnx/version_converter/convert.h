@@ -98,7 +98,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains");
   }
 
-  void convert_graph(std::shared_ptr<Graph> g, const OpSetID& initial_version, const OpSetID& target_version) const;
+  void convert_graph(const std::shared_ptr<Graph>& g, const OpSetID& initial_version, const OpSetID& target_version) const;
 
  public:
   DefaultVersionConverter() {
