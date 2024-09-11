@@ -1718,8 +1718,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_GroupNormalization(self) -> None:
         self._test_op_upgrade(
             "GroupNormalization",
-            18,
-            [[3, 4, 2, 2], [1], [1]],
+            21,
+            [[3, 4, 2, 2], [4], [4]],
             [[3, 4, 2, 2]],
             attrs={"epsilon": 1e-5, "num_groups": 2},
         )

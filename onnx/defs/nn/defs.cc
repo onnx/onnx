@@ -2699,7 +2699,7 @@ This operator transforms input according to
 y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
 ```
 where the mean and variance are computed per instance per group of channels, and
-`scale` and `bias` should be specified for each group of channels. The number of
+`scale` and `bias` should be specified for each channel. The number of
 groups `num_groups` should be divisible by the number of channels so that there are
 an equal number of channels per group.
 
