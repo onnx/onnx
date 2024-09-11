@@ -209,7 +209,7 @@ class _CommonQuantizeLinear(OpRun):
         if tensor_type == TensorProto.FLOAT4E2M1:
             x += zero_point
             f4 = subbyte.float32_to_float4e2m1_unpacked(x)
-            return (f4,)  # type: ignore[attr-defined]
+            return (f4.astype(float4e2m1),)  # type: ignore[attr-defined]
 
         raise ValueError(
             f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."
