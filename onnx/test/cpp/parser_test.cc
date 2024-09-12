@@ -228,6 +228,26 @@ TEST(ParserTest, DomainOpCallTest) {
   Parse(n, code);
 }
 
+TEST(ParserTest, OptionalInputTest) {
+  const char* code = "x = SomeOp(y, , z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 3);
+  EXPECT_EQ(n.input(0), "y");
+  EXPECT_EQ(n.input(1), "");
+  EXPECT_EQ(n.input(2), "z");
+}
+
+TEST(ParserTest, OptionalInputTest2) {
+  const char* code = "x = SomeOp(y, \"\", z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 3);
+  EXPECT_EQ(n.input(0), "y");
+  EXPECT_EQ(n.input(1), "");
+  EXPECT_EQ(n.input(2), "z");
+}
+
 TEST(ParserTest, NodeTest) {
   const char* code = "x = foo(y, z)";
   NodeProto n;
@@ -254,6 +274,23 @@ TEST(ParserTest, NodeTest) {
        variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
        }
        )ONNX");
+}
+
+TEST(ParserTest, NodeLabelTest) {
+  const char* code = "[node1] x = foo(y, z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.name(), "node1");
+
+  NodeList nl;
+  Parse(nl, R"ONNX( {
+     [node1] x = foo(y, z)
+     [node2] w = bar(x, y)
+     s = foobar(x, w)
+  } )ONNX");
+  EXPECT_EQ(nl.Get(0).name(), "node1");
+  EXPECT_EQ(nl.Get(1).name(), "node2");
+  EXPECT_FALSE(nl.Get(2).has_name());
 }
 
 TEST(ParserTest, QualifiedOpNameTest) {
