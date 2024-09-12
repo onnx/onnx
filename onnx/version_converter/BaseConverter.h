@@ -87,7 +87,7 @@ class BaseVersionConverter {
     adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::move(a_ptr);
   }
 
-  void registerAdapter(const char* op, int64_t from, int64_t to, NodeTransformerFunction transformer) {
+  void registerAdapter(const char* op, int64_t from, int64_t to, const NodeTransformerFunction& transformer) {
     registerAdapter(std::make_unique<GenericAdapter>(op, from, to, transformer));
   }
 };

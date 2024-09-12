@@ -26,7 +26,7 @@ class TypeRestriction : public Adapter {
       const std::vector<TensorProto_DataType>& unallowed_types)
       : Adapter(op_name, initial, target), unallowed_types_(unallowed_types) {}
 
-  void adapt_type_restriction(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_type_restriction(const std::shared_ptr<Graph>&, Node* node) const {
     // Since consumed_inputs is optional, no need to add it (as in batchnorm)
     // Iterate over all inputs and outputs
     for (Value* input : node->inputs()) {

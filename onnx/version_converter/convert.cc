@@ -27,7 +27,7 @@ ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
 }
 
 void DefaultVersionConverter::convert_graph(
-    std::shared_ptr<Graph> g,
+    const std::shared_ptr<Graph>& g,
     const OpSetID& initial_version,
     const OpSetID& target_version) const {
   assertNonNull(g);

@@ -11,7 +11,6 @@
 #include <string>
 
 #include "onnx/checker.h"
-#include "onnx/common/path.h"
 
 namespace ONNX_NAMESPACE {
 

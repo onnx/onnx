@@ -2496,7 +2496,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
   auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
 
   const size_t num_inputs = ctx.getNumInputs();
-  if (num_inputs < 1 || !hasNInputShapes(ctx, static_cast<int>(num_inputs))) {
+  if (num_inputs < 1 || !hasNInputShapes(ctx, num_inputs)) {
     return;
   }
   ONNX_NAMESPACE::TensorShapeProto output_shape;

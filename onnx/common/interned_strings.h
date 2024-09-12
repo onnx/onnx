@@ -11,8 +11,6 @@
 #include <stdint.h>
 
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace ONNX_NAMESPACE {
 
