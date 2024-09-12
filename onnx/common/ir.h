@@ -12,13 +12,11 @@
 #include <stdint.h>
 
 #include <algorithm>
-#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -135,7 +133,7 @@ struct ScalarAttributeValue final : public AttributeValue {
     return value_;
   }
   virtual Ptr clone() const override {
-    return Ptr(new ScalarAttributeValue(name, value_));
+    return std::make_unique<ScalarAttributeValue>(name, value_);
   }
   virtual AttributeKind kind() const override {
     return Kind;
@@ -157,8 +155,7 @@ struct VectorAttributeValue final : public AttributeValue {
     return Kind;
   }
   virtual std::unique_ptr<AttributeValue> clone() const override {
-    auto copy = value_;
-    return Ptr(new VectorAttributeValue(name, std::move(copy)));
+    return std::make_unique<VectorAttributeValue>(name, ValueType(value_));
   }
 
  private:
@@ -243,7 +240,7 @@ struct Attributes {
   template <typename T>
   Derived* set(Symbol name, typename T::ConstructorType v) {
     auto it = find(name, false);
-    auto nv = AVPtr(new T(name, std::forward<typename T::ConstructorType>(v)));
+    auto nv = std::make_unique<T>(name, std::forward<typename T::ConstructorType>(v));
     if (it == values_.end()) {
       values_.push_back(std::move(nv));
     } else {
