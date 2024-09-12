@@ -1300,6 +1300,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [[2, 3, 4]],
             attrs={"consumed_inputs": [0]},
         )
+    
+    def test_Swish(self) -> None:
+        self._test_op_upgrade("Swish", 23)
 
     def test_Tanh(self) -> None:
         self._test_op_upgrade("Tanh", 1, attrs={"consumed_inputs": [0]})
