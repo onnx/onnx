@@ -386,7 +386,7 @@ void propagateSequenceElemTypeWithValidation(const TypeProto* input_type, TypePr
     fail_type_inference("Input was expected to have sequence type. Got ", input_type->value_case());
   }
 
-  auto input_seq_type = input_type->sequence_type();
+  const auto& input_seq_type = input_type->sequence_type();
 
   if (input_seq_type.has_elem_type()) {
     propagateElemTypeWithValidation(
@@ -405,7 +405,7 @@ void propagateOptionalElemTypeWithValidation(const TypeProto* input_type, TypePr
     fail_type_inference("Input was expected to have optional type. Got ", input_type->value_case());
   }
 
-  auto input_opt_type = input_type->optional_type();
+  const auto& input_opt_type = input_type->optional_type();
 
   if (input_opt_type.has_elem_type()) {
     propagateElemTypeWithValidation(
@@ -424,7 +424,7 @@ void propagateMapElemTypeWithValidation(const TypeProto* input_type, TypeProto* 
     fail_type_inference("Input was expected to have map type. Got ", input_type->value_case());
   }
 
-  auto input_map_type = input_type->map_type();
+  const auto& input_map_type = input_type->map_type();
 
   if (!input_map_type.has_key_type()) {
     fail_type_inference("Key type of map input was unknown");

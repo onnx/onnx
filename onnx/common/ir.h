@@ -849,8 +849,8 @@ class OpSetID final {
   // target must be in the form "<domain>&<version>"
   static OpSetID fromString(const std::string& target) {
     ONNX_TRY {
-      std::string new_domain = target.substr(0, target.find("$"));
-      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
+      std::string new_domain = target.substr(0, target.find('$'));
+      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find('$') + 1, target.length()));
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
