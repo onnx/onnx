@@ -34,7 +34,7 @@ jobs:
             onnx_ml: 1
             debug_build: 1
             documentation: 1
-            protobuf_type: 'Internal'
+            protobuf_type: 'External'
           - python_version: '3.12'
             onnx_ml: 1
             debug_build: 1
