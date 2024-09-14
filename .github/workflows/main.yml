@@ -76,7 +76,7 @@ jobs:
           cmake --version
 
       - name: Install external protobuf - Linux
-        if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest'
+        if: matrix.protobuf_type == 'External' && (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
         run: |
           sudo apt-get install libprotobuf-dev protobuf-compiler
 
@@ -104,7 +104,7 @@ jobs:
           git submodule update --init --recursive
 
       - name: Build and install ONNX - Linux
-        if: matrix.os == 'ubuntu-latest'
+        if: (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
         run: |
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
@@ -156,7 +156,7 @@ jobs:
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' || matrix.os == 'ubuntu-24.04'
         run: |
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
@@ -176,7 +176,7 @@ jobs:
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && matrix.os == 'ubuntu-latest'
+        if: matrix.documentation == 1 && (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status
@@ -207,7 +207,7 @@ jobs:
         continue-on-error: true
 
       - name: Run Python tests with numpy<2.0
-        if: matrix.python_version == '3.11' || matrix.python_version == '3.12'
+        if: matrix.python_version == '3.11' || matrix.python_version == '3.12' || matrix.python_version == '3.13.0-rc.2'
         run: |
           pip install "numpy<2.0" "pillow<10"
           pytest -s
