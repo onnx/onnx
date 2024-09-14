@@ -1,5 +1,4 @@
 build
-jupyter
 nbval
 numpy
 parameterized
