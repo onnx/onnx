@@ -7,7 +7,6 @@
 #include <map>
 
 #include "onnx/defs/schema.h"
-#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 std::string InteralTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
@@ -45,7 +44,7 @@ void FunctionExpandHelper(
     // If the node output is missing, the corresponding function output should
     // be treated as an internal value (not as missing) because it could also be
     // an intermediate value.
-    if (node.output().Get(idx) == "") {
+    if (node.output().Get(idx).empty()) {
       continue;
     }
     io_names_map[func.output().Get(idx)] = node.output().Get(idx);

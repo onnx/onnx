@@ -895,7 +895,7 @@ bool OpSchema::ValidateReferencedOpsInFuncton(
     return all_ops_are_invalid;
   }
   for (auto& node : function->node()) {
-    if (node.domain() == "" || node.domain() == "ai.onnx") {
+    if (node.domain().empty() || node.domain() == "ai.onnx") {
       const OpSchema* op1 =
           OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, node.domain());
       const OpSchema* op2 =
