@@ -1,5 +1,5 @@
 build
-nbval
+nbval; python_version < '3.13'
 numpy
 parameterized
 protobuf
