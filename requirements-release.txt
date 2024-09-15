@@ -1,6 +1,6 @@
 build
-ipython
-nbval
+#ipython
+#nbval
 numpy==1.24.3; python_version<"3.9"
 numpy==2.0.0; "python_version>=3.9,<3.13"
 numpy==2.1.0; python_version>="3.13"
