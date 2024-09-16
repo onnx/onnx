@@ -12,8 +12,12 @@ from onnx.reference.op_run import OpRun
 
 def _concat_from_sequence(seq: list[Any], axis: int, new_axis: int = 0) -> np.ndarray:
     if new_axis == 1:
-        seq2 = [s[..., np.newaxis] for s in seq]
-        res = np.concatenate(seq2, axis=-1)
+        if axis == -1:
+            seq2 = [s[..., np.newaxis] for s in seq]
+            res = np.concatenate(seq2, axis=-1)
+        else:
+            seq2 = [np.expand_dims(s, axis) for s in seq]
+            res = np.concatenate(seq2, axis=axis)
     else:
         res = np.concatenate(seq, axis=axis)
     return res  # type: ignore
