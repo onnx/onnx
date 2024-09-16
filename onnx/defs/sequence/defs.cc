@@ -620,7 +620,7 @@ bool BuildSequenceMapBodyFunc(
     *functionProto.add_input() = MakeString(input_1_name, "_", i);
   }
 
-  auto schema_outputs = schema.outputs();
+  auto const& schema_outputs = schema.outputs();
   auto output_0_name = schema_outputs[0].GetName();
   for (int i = 0; i < noutputs; i++) {
     if (!ctx.hasOutput(i))

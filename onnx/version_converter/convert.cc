@@ -16,7 +16,7 @@ ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   // Get initial_opsetid from mp_in
   OpSetID initial_struct(0);
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
-    if (it->domain() == "" || it->domain() == "ai.onnx") {
+    if (it->domain().empty() || it->domain() == "ai.onnx") {
       initial_struct.setVersion(it->version());
       break;
     }
