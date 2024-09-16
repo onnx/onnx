@@ -90,7 +90,7 @@ class ProtoPrinter {
   }
 
   template <typename T>
-  inline void print(T prim) {
+  inline void print(const T& prim) {
     output_ << prim;
   }
 
@@ -119,7 +119,7 @@ class ProtoPrinter {
   }
 
   template <typename Collection>
-  inline void printSet(const char* open, const char* separator, const char* close, Collection coll) {
+  inline void printSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {
@@ -131,7 +131,7 @@ class ProtoPrinter {
   }
 
   template <typename Collection>
-  inline void printIdSet(const char* open, const char* separator, const char* close, Collection coll) {
+  inline void printIdSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {

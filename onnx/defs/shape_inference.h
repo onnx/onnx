@@ -61,7 +61,7 @@ class InferenceError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
 
-  InferenceError(const std::string& message) : std::runtime_error(message) {}
+  explicit InferenceError(const std::string& message) : std::runtime_error(message) {}
 
   const char* what() const noexcept override {
     if (!expanded_message_.empty()) {
@@ -101,7 +101,7 @@ struct InferenceContext {
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
   virtual GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) = 0;
-  virtual ~InferenceContext() {}
+  virtual ~InferenceContext() = default;
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
   // Gets the shape inputs computed by partial data propagation.
   virtual const TensorShapeProto* getSymbolicInput(size_t index) const = 0;
@@ -128,7 +128,7 @@ struct DataPropagationContext {
   virtual const TypeProto* getInputType(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual const TypeProto* getOutputType(size_t index) const = 0;
-  virtual ~DataPropagationContext() {}
+  virtual ~DataPropagationContext() = default;
   virtual const TensorShapeProto* getInputData(size_t index) = 0;
   virtual void addOutputData(size_t index, TensorShapeProto&& tp) = 0;
 };
@@ -144,7 +144,7 @@ inline void dummyInferenceFunction(InferenceContext&){};
 inline void dummyDataPropagationFunction(DataPropagationContext&){};
 
 template <typename T>
-inline bool getRepeatedAttribute(InferenceContext& ctx, std::string attr_name, std::vector<T>& values) {
+inline bool getRepeatedAttribute(InferenceContext& ctx, const std::string& attr_name, std::vector<T>& values) {
   const auto* attr = ctx.getAttribute(attr_name);
   if (attr) {
     values = RetrieveValues<T>(*attr);

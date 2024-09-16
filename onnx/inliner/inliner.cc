@@ -216,7 +216,7 @@ class InliningRenamer : private MutableVisitor {
     }
     for (; i < formals.size(); ++i) {
       std::string& formal = *formals.Mutable(i);
-      std::string rename_as = isOutput ? MakeUnique(formal) : std::string("");
+      std::string rename_as = isOutput ? MakeUnique(formal) : std::string();
       current_scope[formal] = rename_as;
       if (!rename_as.empty())
         formal = rename_as;

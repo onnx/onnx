@@ -68,7 +68,7 @@ inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
     return;
   }
   const auto input_indices = ctx.getInputData(1);
-  if (input_data == nullptr || input_indices == nullptr) {
+  if (input_indices == nullptr) {
     return;
   }
   TensorShapeProto tsp;

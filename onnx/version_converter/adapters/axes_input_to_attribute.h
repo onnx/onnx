@@ -39,7 +39,7 @@ class AxesInputToAttribute : public Adapter {
         ONNX_ASSERTM(
             raw_data.size() != 0 && raw_data.size() % 8 == 0,
             "Raw Data must be non-empty and size must be a multiple of 8");
-        int64_t* raw = (int64_t*)const_cast<char*>(raw_data.c_str());
+        int64_t* raw = reinterpret_cast<int64_t*>(raw_data.data());
         node->is_(kaxes, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
       } else {
         node->is_(kaxes, std::forward<const std::vector<int64_t>>(int64s));
