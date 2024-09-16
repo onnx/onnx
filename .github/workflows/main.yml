@@ -27,9 +27,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
-        include:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+        python_version: ['3.13.0-rc.2','3.12', '3.11', '3.10', '3.9', '3.8']
+        include:        
+          - python_version: '3.13.0-rc.2'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 1
+            protobuf_type: 'Internal'
           - python_version: '3.12'
             onnx_ml: 1
             debug_build: 1
@@ -71,7 +76,7 @@ jobs:
           cmake --version
 
       - name: Install external protobuf - Linux
-        if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest'
+        if: matrix.protobuf_type == 'External' && (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
         run: |
           sudo apt-get install libprotobuf-dev protobuf-compiler
 
