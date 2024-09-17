@@ -28,9 +28,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python_version: ['3.13.0-rc.2', '3.12', '3.11', '3.10', '3.9', '3.8']
+        python_version: ['3.13-dev', '3.12', '3.11', '3.10', '3.9', '3.8']
         include:
-          - python_version: '3.13.0-rc.2'
+          - python_version: '3.13-dev'
             onnx_ml: 1
             debug_build: 1
             documentation: 1
@@ -207,7 +207,7 @@ jobs:
         continue-on-error: true
 
       - name: Run Python tests with numpy<2.0
-        if: matrix.python_version == '3.11' || matrix.python_version == '3.12' || matrix.python_version == '3.13.0-rc.2'
+        if: matrix.python_version == '3.11' || matrix.python_version == '3.12' || matrix.python_version == '3.13-dev'
         run: |
           pip install "numpy<2.0" "pillow<10"
           pytest -s
