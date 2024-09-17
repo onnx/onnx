@@ -123,7 +123,7 @@ jobs:
           echo -e "::endgroup::"
 
   auto-apply-fixes:
-    name: Suggest lintrunner fixes
+    name: Suggest fixes
     runs-on: ubuntu-latest
     permissions:
       contents: read
