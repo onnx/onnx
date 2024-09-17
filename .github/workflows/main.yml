@@ -71,7 +71,7 @@ jobs:
           cmake --version
 
       - name: Install external protobuf - Linux
-        if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest'
+        if: matrix.protobuf_type == 'External' && (matrix.os == 'ubuntu-latest' || matrix.os == '24.04')
         run: |
           sudo apt-get install libprotobuf-dev protobuf-compiler
 
@@ -151,7 +151,7 @@ jobs:
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        if: (matrix.os == 'ubuntu-latest' || matrix.os == '24.04') || matrix.os == 'macos-latest'
         run: |
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
@@ -171,7 +171,7 @@ jobs:
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && matrix.os == 'ubuntu-latest'
+        if: matrix.documentation == 1 && (matrix.os == 'ubuntu-latest' || matrix.os == '24.04')
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status
