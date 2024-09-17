@@ -14,6 +14,8 @@ import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
+
+
     GraphProto,
     ModelProto,
     TensorProto,
@@ -29,7 +31,9 @@ class ExternalDataInfo:
         self.basepath = ""
 
         for entry in tensor.external_data:
-            setattr(self, entry.key, entry.value)
+            setattr(self, entry.key,
+                    
+                    entry.value)
 
         if self.offset:
             self.offset = int(self.offset)
@@ -48,7 +52,7 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
     """
     info = ExternalDataInfo(tensor)
     external_data_file_path = c_checker._resolve_external_data_location(  # type: ignore[attr-defined]
-        base_dir, info.location, tensor.name
+        base_dir, info.location, tensor.name 
     )
     with open(external_data_file_path, "rb") as data_file:
         if info.offset:
