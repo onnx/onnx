@@ -23,6 +23,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']    
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:            
       os: "linux_x86_64" 
@@ -31,7 +32,8 @@ jobs:
   call-workflow-ubuntu_aarch64:    
     strategy:
       matrix:
-        os: ['ubuntu-latest']    
+        os: ['ubuntu-latest'] 
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_aarch64.yml
     with:            
       os: "linux_aarch64"      
@@ -40,16 +42,18 @@ jobs:
   call-workflow-win:    
     strategy:
       matrix:
-        os: ['windows-latest']    
+        os: ['windows-latest']
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win.yml
     with:      
       os: "win"
     secrets: inherit
 
-  call-workflow-mac:    
+  call-workflow-mac:
     strategy:
       matrix:
         os: ['mac-latest']    
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
     with:            
       os: "macos"
