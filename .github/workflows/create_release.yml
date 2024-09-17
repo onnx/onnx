@@ -11,6 +11,8 @@ on:
     branches: [main, rel-*]
   pull_request:
     branches: [main, rel-*]
+    types: 
+      - labeled  # Trigger when a label is added to a PR, more information: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request
   workflow_dispatch:    
 
 concurrency:
