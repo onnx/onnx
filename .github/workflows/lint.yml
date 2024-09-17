@@ -140,7 +140,7 @@ jobs:
           lintrunner init
       - name: Run lintrunner on all files
         run: |
-          +e
+          set +e
           lintrunner f --all-files -v
       - uses: parkerbxyz/suggest-changes@v1
         with:
