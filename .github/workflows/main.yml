@@ -99,7 +99,7 @@ jobs:
           git submodule update --init --recursive
 
       - name: Build and install ONNX - Linux
-        if: matrix.os == 'ubuntu-latest' || matrix.os == "24.04"
+        if: (matrix.os == 'ubuntu-latest' || matrix.os == '24.04')
         run: |
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
