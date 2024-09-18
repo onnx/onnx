@@ -156,7 +156,7 @@ jobs:
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        if: always() && (matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest')
         run: |
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
