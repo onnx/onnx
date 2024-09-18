@@ -76,7 +76,7 @@ jobs:
           cmake --version
 
       - name: Install external protobuf - Linux
-        if: matrix.protobuf_type == 'External' && (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
+        if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest' 
         run: |
           sudo apt-get install libprotobuf-dev protobuf-compiler
 
@@ -104,7 +104,7 @@ jobs:
           git submodule update --init --recursive
 
       - name: Build and install ONNX - Linux
-        if: (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
+        if: matrix.os == 'ubuntu-latest'
         run: |
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
@@ -126,7 +126,7 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
-      - name: Build and install ONNX - Windows
+      - name: Build and install ONNX - Windows (setup.py build_ext)
         if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.8' && matrix.python_version != '3.12'
         run: |
           python setup.py build_ext --inplace
@@ -137,7 +137,7 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
-      - name: Build and install ONNX - Windows
+      - name: Build and install ONNX - Windows (pip)
         if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.8' || matrix.python_version == '3.12')
         run: |
           pip install -e . -v
@@ -207,7 +207,7 @@ jobs:
         continue-on-error: true
 
       - name: Run Python tests with numpy<2.0
-        if: matrix.python_version == '3.11' || matrix.python_version == '3.12'
+        if: matrix.python_version == '3.11' || matrix.python_version == '3.12' || matrix.python_version == '3.13'
         run: |
           pip install "numpy<2.0" "pillow<10"
           pytest -s
