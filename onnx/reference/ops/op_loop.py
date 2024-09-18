@@ -45,7 +45,7 @@ class Loop(OpRun):
             begin = len(loop_inputs) - len(args)
             all_inputs = loop_inputs[begin:]
             for name, val in zip(all_inputs, args):
-                inputs[name] = val
+                inputs[name] = val  # noqa: PERF403
         if context is not None:
             for a in context:
                 inputs[a] = context[a]

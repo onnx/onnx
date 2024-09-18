@@ -13,8 +13,8 @@ namespace ONNX_NAMESPACE {
 std::vector<std::string> GetSupportedDataTypesForReductionOps_opset12(bool supports8bit) {
   if (supports8bit) {
     auto data_types = OpSchema::numeric_types_for_math_reduction();
-    data_types.push_back("tensor(uint8)");
-    data_types.push_back("tensor(int8)");
+    data_types.emplace_back("tensor(uint8)");
+    data_types.emplace_back("tensor(int8)");
 
     return data_types;
   }

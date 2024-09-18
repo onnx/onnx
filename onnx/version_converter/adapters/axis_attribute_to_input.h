@@ -41,7 +41,7 @@ class AxisAttributeToInput : public Adapter {
   size_t axis_index;
   int64_t default_axis;
 
-  void AttrToInput(std::shared_ptr<Graph> graph, Node* node, int64_t axis, size_t axis_index) const {
+  void AttrToInput(const std::shared_ptr<Graph>& graph, Node* node, int64_t axis, size_t axis_index) const {
     const ArrayRef<Value*>& inputs = node->inputs();
 
     // Add the optional inputs if they don't exist
@@ -56,7 +56,7 @@ class AxisAttributeToInput : public Adapter {
     node->addInput(constant->output());
   }
 
-  Node* CreateAxisInput(std::shared_ptr<Graph> graph, Node* node, int64_t axis) const {
+  Node* CreateAxisInput(const std::shared_ptr<Graph>& graph, Node* node, int64_t axis) const {
     Tensor t;
     t.elem_type() = TensorProto_DataType_INT64;
     t.sizes() = std::vector<int64_t>{};

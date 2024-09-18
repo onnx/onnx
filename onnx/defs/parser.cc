@@ -8,15 +8,9 @@
 #include "onnx/defs/parser.h"
 
 #include <cctype>
-#include <iostream>
-#include <stdexcept>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 #include "onnx/common/common.h"
-#include "onnx/onnx_pb.h"
-#include "onnx/string_utils.h"
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
 #define PARSE(...) CHECK_PARSER_STATUS(Parse(__VA_ARGS__))
@@ -150,12 +144,12 @@ bool ParserBase::NextIsValidFloatString() {
 Status OnnxParser::Parse(IdList& idlist) {
   idlist.Clear();
   std::string id;
-  ParseOptionalIdentifier(id);
+  CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id));
   if (id.empty())
     return Status::OK(); // Treat as empty list of identifiers
   *idlist.Add() = id;
   while (Matches(',')) {
-    ParseOptionalIdentifier(id);
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id));
     *idlist.Add() = id;
   }
   return Status::OK();
@@ -175,7 +169,7 @@ Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
   attrlist.Clear();
   do {
     std::string id;
-    ParseIdentifier(id);
+    CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
     auto next = NextChar();
     if (next == ':' || next == '=')
       Parse(*attrlist.Add(), id);
@@ -311,7 +305,7 @@ Status OnnxParser::Parse(ValueInfoProto& valueinfo) {
   if (NextIsType())
     PARSE(*valueinfo.mutable_type());
   std::string name;
-  CHECK_PARSER_STATUS(ParseIdentifier(name));
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(name));
   valueinfo.set_name(name);
   return Status::OK();
 }
@@ -351,7 +345,7 @@ Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilis
         vi = vilist.Add();
         PARSE(*(vi->mutable_type()));
       }
-      CHECK_PARSER_STATUS(ParseIdentifier(*name));
+      CHECK_PARSER_STATUS(ParseQuotableIdentifier(*name));
       if (vi != nullptr)
         vi->set_name(*name);
     } while (Matches(','));
@@ -549,7 +543,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
       if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
-        ParseOptionalIdentifier(*tensorProto.mutable_name());
+        CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()));
         (void)Matches('='); // Optional, to unify handling of initializers
         Parse(tensorProto, typeProto);
       } else {
@@ -569,7 +563,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
     }
   } else if (Matches('@')) {
     std::string name;
-    CHECK_PARSER_STATUS(ParseIdentifier(name));
+    CHECK_PARSER_STATUS(ParseQuotableIdentifier(name));
     attr.set_ref_attr_name(name);
   } else {
     Literal literal;
@@ -712,6 +706,10 @@ Status OnnxParser::Parse(AttrList& attrlist) {
 }
 
 Status OnnxParser::Parse(NodeProto& node) {
+  if (Matches('[')) {
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*node.mutable_name()));
+    MATCH(']');
+  }
   PARSE(*node.mutable_output());
   MATCH('=');
   std::string domain("");
@@ -753,7 +751,7 @@ Status OnnxParser::Parse(NodeList& nodelist) {
 
 Status OnnxParser::Parse(GraphProto& graph) {
   std::string id;
-  ParseIdentifier(id);
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
   return Parse(id, graph);
 }
 
@@ -799,7 +797,7 @@ Status OnnxParser::Parse(FunctionProto& fn) {
     MATCH('>');
   }
   std::string id;
-  ParseIdentifier(id);
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
   fn.set_name(id);
 
   PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>');

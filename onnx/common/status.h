@@ -29,7 +29,7 @@ enum StatusCode {
 
 class Status {
  public:
-  Status() noexcept {}
+  Status() noexcept = default;
 
   Status(StatusCategory category, int code, const std::string& msg);
 

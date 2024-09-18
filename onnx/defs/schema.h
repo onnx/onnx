@@ -9,14 +9,12 @@
 #include <functional>
 #include <initializer_list>
 #include <iostream>
-#include <limits>
 #include <map>
 #include <memory>
 #include <ostream>
 #include <set>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -35,7 +33,7 @@ struct FunctionBodyBuildContext {
   // getInputType(i) should return null for missing optional inputs, or if
   // type-inference could not infer the input-type (erroneous model).
   virtual const TypeProto* getInputType(int inputIndex) const = 0;
-  virtual ~FunctionBodyBuildContext() {}
+  virtual ~FunctionBodyBuildContext() = default;
 };
 
 struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {

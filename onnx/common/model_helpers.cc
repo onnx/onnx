@@ -4,10 +4,6 @@
 
 #include "onnx/common/model_helpers.h"
 
-#include "onnx/checker.h"
-#include "onnx/defs/schema.h"
-#include "onnx/string_utils.h"
-
 namespace ONNX_NAMESPACE {
 
 Common::Status BuildNode(

@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -14,7 +13,6 @@
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
-#include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -98,14 +96,14 @@ class SymbolTableImpl : public SymbolTable {
 struct GraphInferenceContext {
   GraphInferenceContext(
       const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
-      const std::unordered_map<std::string, int> opset_imports_in,
+      std::unordered_map<std::string, int> opset_imports_in,
       SymbolTable* symbol_table_in = nullptr,
       const ModelLocalFunctionsMap& model_local_functions_in = {},
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
       const int ir_version_in = IR_VERSION)
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
-        opset_imports{opset_imports_in},
+        opset_imports{std::move(opset_imports_in)},
         symbol_table{symbol_table_in},
         model_local_functions{model_local_functions_in},
         schema_registry{schema_registry_in},

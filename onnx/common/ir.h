@@ -12,13 +12,11 @@
 #include <stdint.h>
 
 #include <algorithm>
-#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -135,7 +133,7 @@ struct ScalarAttributeValue final : public AttributeValue {
     return value_;
   }
   virtual Ptr clone() const override {
-    return Ptr(new ScalarAttributeValue(name, value_));
+    return std::make_unique<ScalarAttributeValue>(name, value_);
   }
   virtual AttributeKind kind() const override {
     return Kind;
@@ -157,8 +155,7 @@ struct VectorAttributeValue final : public AttributeValue {
     return Kind;
   }
   virtual std::unique_ptr<AttributeValue> clone() const override {
-    auto copy = value_;
-    return Ptr(new VectorAttributeValue(name, std::move(copy)));
+    return std::make_unique<VectorAttributeValue>(name, ValueType(value_));
   }
 
  private:
@@ -243,7 +240,7 @@ struct Attributes {
   template <typename T>
   Derived* set(Symbol name, typename T::ConstructorType v) {
     auto it = find(name, false);
-    auto nv = AVPtr(new T(name, std::forward<typename T::ConstructorType>(v)));
+    auto nv = std::make_unique<T>(name, std::forward<typename T::ConstructorType>(v));
     if (it == values_.end()) {
       values_.push_back(std::move(nv));
     } else {
@@ -852,8 +849,8 @@ class OpSetID final {
   // target must be in the form "<domain>&<version>"
   static OpSetID fromString(const std::string& target) {
     ONNX_TRY {
-      std::string new_domain = target.substr(0, target.find("$"));
-      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
+      std::string new_domain = target.substr(0, target.find('$'));
+      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find('$') + 1, target.length()));
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
@@ -1229,7 +1226,7 @@ struct Graph final {
   }
 
   void forEachNode(const std::function<void(Node*)>& fn) {
-    forSelfAndEachSubGraph([fn](Graph* graph) {
+    forSelfAndEachSubGraph([&fn](Graph* graph) {
       for (Node* node : graph->nodes()) {
         fn(node);
       }

@@ -11,12 +11,11 @@
 #include <string>
 
 #include "onnx/checker.h"
-#include "onnx/common/path.h"
 
 namespace ONNX_NAMESPACE {
 
 template <typename T>
-void LoadProtoFromPath(const std::string proto_path, T& proto) {
+void LoadProtoFromPath(const std::string& proto_path, T& proto) {
   std::filesystem::path proto_u8_path = std::filesystem::u8path(proto_path);
   std::fstream proto_stream(proto_u8_path, std::ios::in | std::ios::binary);
   if (!proto_stream.good()) {
