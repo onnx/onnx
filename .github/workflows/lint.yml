@@ -143,6 +143,7 @@ jobs:
           set +e
           lintrunner f --all-files -v
           exit 0
-      - uses: parkerbxyz/suggest-changes@v1
+      - uses: justinchuby/suggest-changes@comment-only
         with:
           comment: 'You can commit the suggested changes from lintrunner.'
+          request-changes: false
