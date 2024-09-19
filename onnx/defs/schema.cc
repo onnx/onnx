@@ -247,7 +247,7 @@ void OpSchema::Verify(const NodeProto& node) const {
     };
 
     const auto& search = attributes_.find(name);
-    AttributeProto::AttributeType expected_type;
+    AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
     } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
@@ -802,7 +802,7 @@ OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   OnnxParser parser(func_body);
   auto status = parser.Parse(*function_proto->mutable_node());
   if (!status.IsOK())
@@ -822,7 +822,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int o
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   for (const auto& node : func_nodes) {
     auto new_node = function_proto->add_node();
     new_node->CopyFrom(node);
@@ -831,7 +831,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int o
   // opset import may have been set
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
-  opset_version_to_function_body_.emplace(opset_version, function_proto);
+  opset_version_to_function_body_.emplace(opset_version, std::move(function_proto));
   return *this;
 }
 
@@ -843,7 +843,7 @@ OpSchema& OpSchema::FunctionBody(
     opset_version = since_version_;
   }
 
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   for (auto& relied_opset : relied_opsets) {
     *(function_proto->mutable_opset_import()->Add()) = relied_opset;
   }
@@ -855,7 +855,7 @@ OpSchema& OpSchema::FunctionBody(
   // opset import may have been set
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
-  opset_version_to_function_body_.emplace(opset_version, function_proto);
+  opset_version_to_function_body_.emplace(opset_version, std::move(function_proto));
   return *this;
 }
 
