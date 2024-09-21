@@ -132,10 +132,10 @@ struct ScalarAttributeValue final : public AttributeValue {
   ValueType& value() {
     return value_;
   }
-  virtual Ptr clone() const override {
+  Ptr clone() const override {
     return std::make_unique<ScalarAttributeValue>(name, value_);
   }
-  virtual AttributeKind kind() const override {
+  AttributeKind kind() const override {
     return Kind;
   }
 
@@ -147,14 +147,14 @@ template <typename T, AttributeKind Kind>
 struct VectorAttributeValue final : public AttributeValue {
   using ConstructorType = const std::vector<T>&&;
   using ValueType = std::vector<T>;
-  VectorAttributeValue(Symbol name, ConstructorType value_) : AttributeValue(name), value_(std::move(value_)) {}
+  VectorAttributeValue(Symbol name, ValueType value_) : AttributeValue(name), value_(std::move(value_)) {}
   ValueType& value() {
     return value_;
   }
-  virtual AttributeKind kind() const override {
+  AttributeKind kind() const override {
     return Kind;
   }
-  virtual std::unique_ptr<AttributeValue> clone() const override {
+  std::unique_ptr<AttributeValue> clone() const override {
     return std::make_unique<VectorAttributeValue>(name, ValueType(value_));
   }
 
@@ -181,7 +181,7 @@ using TypeProtosAttr = VectorAttributeValue<TypeProto, AttributeKind::tps>;
 // we return Derived* pointers because Nodes are normally held as pointers.
 template <typename Derived>
 struct Attributes {
-  Attributes() {}
+  Attributes() = default;
   void copyAttributes(const Attributes& rhs) {
     values_.clear();
     values_.reserve(rhs.values_.size());
@@ -375,7 +375,7 @@ struct Value final {
   Graph* owningGraph();
   const Graph* owningGraph() const;
   // TODO: make this more const correct
-  const use_list uses() const;
+  use_list uses() const;
 
   // Replaces all uses of this node with 'newValue'.
   //
@@ -839,7 +839,7 @@ class OpSetID final {
   // Default Domain Constructor
   explicit OpSetID(const int64_t version) : domain_(""), version_(version) {}
 
-  explicit OpSetID(const std::string& domain, int64_t version) : domain_(domain), version_(version) {}
+  explicit OpSetID(std::string domain, int64_t version) : domain_(std::move(domain)), version_(version) {}
 
   // target must be in the form "<domain>&<version>"
   std::string toString() const {
@@ -1425,7 +1425,7 @@ inline const_graph_node_list_iterator Node::reverseIterator() const {
 // nodes in subgraph are also included.
 // This method is usually used to check whether it is
 // safe to delete a Value.
-inline const use_list Value::uses() const {
+inline use_list Value::uses() const {
   use_list all_uses = uses_in_current_graph_;
   owningGraph()->forEachNode([this, &all_uses](const Node* node) {
     if (node->owningGraph() == this->owningGraph()) {

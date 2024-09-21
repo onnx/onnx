@@ -263,9 +263,8 @@ struct InferenceContextImpl : public InferenceContext {
         fail_type_inference("Attribute ", attr_name, " does not contain a graph.");
       }
 
-      std::unique_ptr<GraphInferencer> new_inferencer{
-          new GraphInferencerImpl(*attrNameToGraphProto->second, *graphInferenceContext_, options_)};
-
+      auto new_inferencer =
+          std::make_unique<GraphInferencerImpl>(*attrNameToGraphProto->second, *graphInferenceContext_, options_);
       inferencer = new_inferencer.get();
       graphAttributeInferencers_.emplace(attr_name, std::move(new_inferencer));
     } else {

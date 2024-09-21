@@ -29,7 +29,7 @@ class FunctionBodyHelper {
 
     AttributeProtoWrapper() = default;
 
-    AttributeProtoWrapper(const AttributeProto& attr_prot) : proto(attr_prot) {}
+    AttributeProtoWrapper(AttributeProto attr_prot) : proto(std::move(attr_prot)) {}
 
     template <typename T>
     AttributeProtoWrapper(const std::string& attr_name, const T& value) : proto(MakeAttribute(attr_name, value)) {}

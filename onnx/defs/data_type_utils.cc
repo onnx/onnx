@@ -186,8 +186,7 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     s.LStrip(key_size);
     s.LStrip(",");
     StringRange v(s.Data(), s.Size());
-    int32_t key_type;
-    FromDataTypeString(key, key_type);
+    auto key_type = FromDataTypeString(key);
     type_proto.mutable_map_type()->set_key_type(key_type);
     return FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
   } else
@@ -211,18 +210,15 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
 #endif
       if (s.LStrip("sparse_tensor")) {
     s.ParensWhitespaceStrip();
-    int32_t e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
     type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
   } else if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
-    int32_t e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
     type_proto.mutable_tensor_type()->set_elem_type(e);
   } else {
     // Scalar
-    int32_t e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
     TypeProto::Tensor* t = type_proto.mutable_tensor_type();
     t->set_elem_type(e);
     // Call mutable_shape() to initialize a shape with no dimension.
@@ -236,14 +232,14 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
   return (allowedSet.find(type_str) != allowedSet.end());
 }
 
-void DataTypeUtils::FromDataTypeString(const std::string& type_str, int32_t& tensor_data_type) {
+int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   if (!IsValidDataTypeString(type_str)) {
     ONNX_THROW_EX(std::invalid_argument(
         "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
   }
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  tensor_data_type = t.TypeStrToTensorDataType()[type_str];
+  return t.TypeStrToTensorDataType()[type_str];
 }
 
 StringRange::StringRange() : data_(""), size_(0), start_(data_), end_(data_) {}

@@ -1215,7 +1215,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       ctx.getInputType(1)->tensor_type().shape().dim(1) * group; // channels should be the second dim of second input
                                                                  // multiply group.
 
-  int size_of_output;
+  int size_of_output = 0;
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {

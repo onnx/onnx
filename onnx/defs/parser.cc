@@ -444,7 +444,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   // tensorProto.mutable_int64_data()->Reserve(n);
   // Parse the actual values:
 
-  int64_t intval;
+  int64_t intval = 0;
   uint64_t uintval = 0;
   float floatval = 0.0;
   double dblval = 0.0;
@@ -833,7 +833,7 @@ Status OnnxParser::Parse(OpsetIdList& opsets) {
 Status OnnxParser::Parse(ModelProto& model) {
   model.Clear();
   std::string strval;
-  int64_t intval;
+  int64_t intval = 0;
   if (Matches('<')) {
     do {
       KeyWordMap::KeyWord keyword = KeyWordMap::KeyWord::NONE;

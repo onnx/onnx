@@ -10,11 +10,8 @@
 #include <unordered_set>
 #include <utility>
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/onnx-data_pb.h"
-#include "onnx/onnx-operators_pb.h"
-#include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -107,6 +104,7 @@ class CheckerContext final {
 class LexicalScopeContext final {
  public:
   LexicalScopeContext() = default;
+  ~LexicalScopeContext() = default;
 
   // Construct an instance with the lexical scope from the parent graph to allow
   // lookup of names from that scope via this_or_ancestor_graph_has.
@@ -119,6 +117,8 @@ class LexicalScopeContext final {
     parent_context_ = &parent_context;
     return *this;
   }
+  LexicalScopeContext(LexicalScopeContext&&) = delete;
+  LexicalScopeContext& operator=(LexicalScopeContext&&) = delete;
 
   void add(const std::string& name) {
     output_names.insert(name);
