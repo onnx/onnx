@@ -44,7 +44,7 @@ class Status {
       if (nullptr == other.state_) {
         state_.reset();
       } else if (state_ != other.state_) {
-        state_.reset(new State(*other.state_));
+        state_ = std::make_unique<State>(*other.state_);
       }
     }
   }

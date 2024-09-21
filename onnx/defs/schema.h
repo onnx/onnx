@@ -185,7 +185,7 @@ class OpSchema final {
         std::string name,
         DataTypeSet allowed_type_set,
         std::string type_str,
-        const std::string& description,
+        std::string description,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
         int min_arity = 1,
@@ -194,7 +194,7 @@ class OpSchema final {
           type_set_(std::move(allowed_type_set)),
           type_str_(std::move(type_str)),
 #ifndef __ONNX_NO_DOC_STRINGS
-          description_(description),
+          description_(std::move(description)),
 #endif
           param_option_(param_option),
           is_homogeneous_(is_homogeneous),
@@ -207,7 +207,7 @@ class OpSchema final {
 
     explicit FormalParameter(
         std::string name,
-        const std::string& description,
+        std::string description,
         std::string type_str,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
@@ -216,7 +216,7 @@ class OpSchema final {
         : name_(std::move(name)),
           type_str_(std::move(type_str)),
 #ifndef __ONNX_NO_DOC_STRINGS
-          description_(description),
+          description_(std::move(description)),
 #endif
           param_option_(param_option),
           is_homogeneous_(is_homogeneous),
@@ -276,10 +276,10 @@ class OpSchema final {
 
     // For variadic parameters, a flag indicating if all parameters must be of
     // same type
-    bool is_homogeneous_;
+    bool is_homogeneous_{};
 
     // Minimum number of parameters expected. Applicable only for Variadic.
-    int min_arity_;
+    int min_arity_{};
 
     // True if this parameter can be an differentiable inputs of Gradient.
     // Otherwise, using this parameter as an differentiable inputs of Gradient
@@ -1381,7 +1381,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   class OpSchemaRegisterOnce final {
    public:
     // Export to cpp custom register macro
-    OpSchemaRegisterOnce(OpSchema op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
+    explicit OpSchemaRegisterOnce(
+        OpSchema op_schema,
+        int opset_version_to_load = 0,
+        bool fail_duplicate_schema = true) {
       OpSchemaRegisterNoExcept(std::move(op_schema), opset_version_to_load, fail_duplicate_schema);
     }
     static void
@@ -1589,7 +1592,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   static int loaded_schema_version;
 
  public:
-  static const std::vector<OpSchema> get_all_schemas_with_history() {
+  static std::vector<OpSchema> get_all_schemas_with_history() {
     std::vector<OpSchema> r;
     for (auto& x : map()) {
       for (auto& y : x.second) {
@@ -1601,7 +1604,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     return r;
   }
 
-  static const std::vector<OpSchema> get_all_schemas() {
+  static std::vector<OpSchema> get_all_schemas() {
     std::vector<OpSchema> r;
     for (auto& x : map()) {
       for (auto& y : x.second) {
