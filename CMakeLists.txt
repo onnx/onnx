@@ -175,6 +175,11 @@ else()
       set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
       set(PROTOBUF_INCLUDE_DIR "${_PROTOBUF_INSTALL_PREFIX}/include")
       set(Build_Protobuf OFF)
+      string(REPLACE "." ";" VERSION_LIST ${Protobuf_VERSION})
+      list(GET VERSION_LIST 1 VERSION_MINOR)
+      if ("${VERSION_MINOR}" LESS "22")
+        message(FATAL_ERROR "Protobuf is lower than x.22.y")
+      endif()
       if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
         # There are extra dependencies for protobuf.
         find_package(absl REQUIRED)
@@ -225,50 +230,67 @@ else()
   else()  # Protobuf_PROTOC_EXECUTABLE not found.
     set(Build_Protobuf ON)
   endif()
-  if (Build_Protobuf)
-    # FetchContent module requires 3.11.
-    cmake_minimum_required(VERSION 3.11)
-    include(FetchContent)
-    message("Loading Dependencies URLs ...")
-    # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.3
-    set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.tar.gz)
-    set(AbseilSHA1 e21faa0de5afbbf8ee96398ef0ef812daf416ad8)
-    FetchContent_Declare(
-      Abseil
-      URL ${AbseilURL}
-      URL_HASH SHA1=${AbseilSHA1}
-    )
-    set(ABSL_PROPAGATE_CXX_STD 1)
-    set(abseil_BUILD_TESTING 0)
-    set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-    # Use this setting to build thirdparty libs.
-    set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    message(STATUS "Download and build Abseil from ${AbseilURL}")
-    FetchContent_Populate(Abseil)
-    FetchContent_GetProperties(Abseil)
-    # ABSL_ROOT_DIR is required by Protobuf.
-    set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
-    message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
-    set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
-    FetchContent_Declare(
-      Protobuf
-      URL ${ProtobufURL}
-      URL_HASH SHA1=${ProtobufSHA1}
-    )
-    set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
-    message(STATUS "Download and build Protobuf from ${ProtobufURL}")
-    FetchContent_MakeAvailable(Protobuf Abseil)
-    set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "4.22.3")
-    # Change back the BUILD_SHARED_LIBS to control the onnx project.
-    set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
-    set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
-    set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
-  endif()
-  message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
-  message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 endif()
+
+set(Build_Abseil OFF)
+
+if (Build_Protobuf OR BUILD_ONNX_PYTHON)
+  # Absl is required by pybind_protobuf
+  set(Build_Abseil ON)
+endif()
+
+include(FetchContent)
+
+if (Build_Abseil)
+  message(STATUS "Build Abseil")
+  # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.3
+  set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.tar.gz)
+  set(AbseilSHA1 e21faa0de5afbbf8ee96398ef0ef812daf416ad8)
+  FetchContent_Declare(
+    Abseil
+    URL ${AbseilURL}
+    URL_HASH SHA1=${AbseilSHA1}
+  )
+  set(ABSL_PROPAGATE_CXX_STD 1)
+  set(abseil_BUILD_TESTING 0)
+  set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+  set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
+  message(STATUS "Download and build Abseil from ${AbseilURL}")
+  FetchContent_Populate(Abseil)
+  FetchContent_GetProperties(Abseil)
+  FetchContent_MakeAvailable(Abseil)
+  # ABSL_ROOT_DIR is required by Protobuf.
+  set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
+  set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
+endif()
+
+if (Build_Protobuf)
+  message(STATUS "Build Protobuf")
+  set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
+  set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
+  FetchContent_Declare(
+    Protobuf
+    URL ${ProtobufURL}
+    URL_HASH SHA1=${ProtobufSHA1}
+  )
+  if("${ABSL_ROOT_DIR}" STREQUAL "")
+    message(FATAL_ERROR "ABSL_ROOT_DIR not found")
+  endif()
+  message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
+  set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+  set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+  set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
+  message(STATUS "Download and build Protobuf from ${ProtobufURL}")
+  FetchContent_MakeAvailable(Protobuf)
+  set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+  set(Protobuf_VERSION "4.22.3")
+  set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
+  set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
+  set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
+endif()
+
+message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
+message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 
 # abseil build would fail if ONNX_WERROR is on.
 if(ONNX_WERROR)
@@ -363,7 +385,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
                        VERBATIM)
-    message("Generated: ${GENERATED_PROTO}")
+    message(STATUS "Generated: ${GENERATED_PROTO}")
     set(PROTOC_ARGS
         ${GENERATED_PROTO}
         -I
@@ -561,9 +583,32 @@ if(BUILD_ONNX_PYTHON)
     endif()
   endif()
 
+  set(PYBIND11_PROTOBUF_DIR "${ONNX_ROOT}/third_party/pybind11_protobuf/")
+  add_library(pybind11_native_proto_caster STATIC
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/native_proto_caster.h"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/enum_type_caster.h"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_cast_util.cc"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_cast_util.h"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_caster_impl.h"
+  )
+  target_include_directories(pybind11_native_proto_caster PUBLIC
+    "${PROTOBUF_INCLUDE_DIR}"
+    "${PYBIND11_PROTOBUF_DIR}"
+    "${pybind11_INCLUDE_DIRS}"
+  )
+  target_link_libraries(pybind11_native_proto_caster PUBLIC
+    absl::strings
+  )
+
   target_include_directories(onnx_cpp2py_export PUBLIC
     "${pybind11_INCLUDE_DIRS}"
-    "${PYTHON_INCLUDE_DIRS}")
+    "${PYTHON_INCLUDE_DIRS}"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf"
+  )
+
+  target_link_libraries(onnx_cpp2py_export PUBLIC
+    pybind11_native_proto_caster
+  )
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
