@@ -17,6 +17,7 @@ Checks: >-
   clang-analyzer-alpha.security.*,
   cppcoreguidelines-avoid-goto,
   cppcoreguidelines-interfaces-global-init,
+  cppcoreguidelines-init-variables,
   cppcoreguidelines-no-malloc,
   cppcoreguidelines-prefer-member-initializer,
   cppcoreguidelines-pro-type-member-init,
@@ -33,6 +34,13 @@ Checks: >-
   google-default-arguments,
   google-global-names-in-headers,
   google-explicit-constructor,
+  modernize-make-shared,
+  modernize-make-unique,
+  modernize-pass-by-value,
+  modernize-use-equals-default,
+  modernize-use-equals-delete,
+  modernize-use-nullptr,
+  modernize-use-override,
   modernize-use-emplace
 
 CheckOptions:
