@@ -639,7 +639,6 @@ if(MSVC)
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
-                                 /wd4996 # The second parameter is ignored.
                                  ${EXTRA_FLAGS})
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
