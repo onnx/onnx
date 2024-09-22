@@ -607,13 +607,6 @@ if(BUILD_ONNX_PYTHON)
                                            # possible loss of data
                                    /wd4996 # The second parameter is ignored.
                                    ${EXTRA_FLAGS})
-    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_cpp2py_export
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-    endif()
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -629,6 +622,8 @@ endif()
 if(MSVC)
   target_compile_options(onnx_proto
                          PRIVATE /MP
+                                 /wd4146 # unary minus operator applied to unsigned type,
+                                         # result still unsigned
                                  /wd4244 #'argument': conversion from 'google::
                                          #protobuf::uint64' to 'int', possible
                                          # loss of data
@@ -637,6 +632,8 @@ if(MSVC)
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
+                                 /wd4146 # unary minus operator applied to unsigned type,
+                                         # result still unsigned
                                  /wd4244 # 'argument': conversion from 'google::
                                          # protobuf::uint64' to 'int', possible
                                          # loss of data
@@ -644,18 +641,6 @@ if(MSVC)
                                          # possible loss of data
                                  /wd4996 # The second parameter is ignored.
                                  ${EXTRA_FLAGS})
-  if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_proto
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-      target_compile_options(onnx
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-  endif()
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
