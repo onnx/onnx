@@ -103,6 +103,22 @@ def get_ext_suffix():
     return sysconfig.get_config_var("EXT_SUFFIX")
 
 
+def get_python_execute():
+    if WINDOWS:
+        return sys.executable
+    python_dir = os.path.abspath(
+        os.path.join(sysconfig.get_path("include"), "..", "..")
+    )
+    if os.path.isdir(python_dir):
+        python_bin = os.path.join(python_dir, "bin", "python3")
+        if os.path.isfile(python_bin):
+            return python_bin
+        python_bin = os.path.join(python_dir, "bin", "python")
+        if os.path.isfile(python_bin):
+            return python_bin
+    return sys.executable
+
+
 ################################################################################
 # Customized commands
 ################################################################################
@@ -158,8 +174,8 @@ class CmakeBuild(setuptools.Command):
             # configure
             cmake_args = [
                 CMAKE,
-                f"-DPYTHON_INCLUDE_DIR={sysconfig.get_path('include')}",
-                f"-DPYTHON_EXECUTABLE={sys.executable}",
+                f"-DPython_INCLUDE_DIRS={sysconfig.get_path('include')}",
+                f"-DPYTHON_EXECUTABLE={get_python_execute()}",
                 "-DBUILD_ONNX_PYTHON=ON",
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
