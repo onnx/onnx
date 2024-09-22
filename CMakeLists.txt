@@ -283,7 +283,7 @@ if(ONNX_WERROR)
     string(APPEND CMAKE_C_FLAGS " /WX")
   else()
     string(APPEND CMAKE_CXX_FLAGS " -Werror")
-    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
+    string(APPEND CMAKE_C_FLAGS " -Werror")
   endif()
 endif()
 
@@ -480,15 +480,9 @@ target_include_directories(onnx_proto PUBLIC
 if (MSVC)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(EXTRA_FLAGS
-          "-Wno-implicit-function-declaration"
-          "-Wno-undefined-inline"
-          "-Wno-incompatible-pointer-types"
-          "-Wno-dllexport-explicit-instantiation-decl"
           "-Wno-microsoft-unqualified-friend"
           "-Wno-absolute-value"
-          "-Wno-unused-variable"
           "-Wno-unknown-argument"
-          "-Wno-writable-strings"
           "-Qunused-arguments")
   else()
     set(EXTRA_FLAGS "")
