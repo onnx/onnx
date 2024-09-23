@@ -3284,9 +3284,9 @@ expect(
     name="test_clip_splitbounds",
 )
 
-x = np.array([-1, 0, 6]).astype(np.float32)
-y = np.array([1, 1, 1]).astype(np.float32) # Value of max when min>max.
-min_val = np.float32(2) # Min greater than max.
+x = np.array([-2, 0, 6]).astype(np.float32)
+y = np.array([1, 1, 1]).astype(np.float32)
+min_val = np.float32(2)
 max_val = np.float32(1)
 expect(
     node,
