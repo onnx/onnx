@@ -15,7 +15,6 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"
-#include "onnx/common/interned_strings.h"
 #include "onnx/common/proto_util.h"
 #include "onnx/common/visitor.h"
 #include "onnx/shape_inference/attribute_binder.h"
@@ -66,7 +65,6 @@ struct OpsetMap : public OpsetMapBase {
   }
 
   bool Add(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
-    OpsetMapBase result;
     for (const auto& pair : list) {
       auto domain = NormalizeDomain(pair.domain());
       auto version = pair.version();
@@ -218,7 +216,7 @@ class InliningRenamer : private MutableVisitor {
     }
     for (; i < formals.size(); ++i) {
       std::string& formal = *formals.Mutable(i);
-      std::string rename_as = isOutput ? MakeUnique(formal) : std::string("");
+      std::string rename_as = isOutput ? MakeUnique(formal) : std::string();
       current_scope[formal] = rename_as;
       if (!rename_as.empty())
         formal = rename_as;
@@ -329,7 +327,7 @@ class ComputeInputs : private Visitor {
  public:
   std::vector<std::string> result;
 
-  ComputeInputs(const NodeProto& node) {
+  explicit ComputeInputs(const NodeProto& node) {
     result.reserve(node.input_size());
     VisitNode(node);
   }
@@ -351,7 +349,7 @@ ConstNodeMap FindConstantNodes(const GraphProto& graph) {
   return result;
 }
 
-const TypeProto& GetType(const ModelProto& model, std::string var) {
+const TypeProto& GetType(const ModelProto& model, const std::string& var) {
   for (auto& vi : model.graph().value_info()) {
     if (vi.name() == var)
       return vi.type();

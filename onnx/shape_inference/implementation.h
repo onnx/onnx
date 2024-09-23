@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -14,7 +13,6 @@
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
-#include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -98,14 +96,14 @@ class SymbolTableImpl : public SymbolTable {
 struct GraphInferenceContext {
   GraphInferenceContext(
       const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name_in,
-      const std::unordered_map<std::string, int> opset_imports_in,
+      std::unordered_map<std::string, int> opset_imports_in,
       SymbolTable* symbol_table_in = nullptr,
       const ModelLocalFunctionsMap& model_local_functions_in = {},
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
       const int ir_version_in = IR_VERSION)
       : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
-        opset_imports{opset_imports_in},
+        opset_imports{std::move(opset_imports_in)},
         symbol_table{symbol_table_in},
         model_local_functions{model_local_functions_in},
         schema_registry{schema_registry_in},
@@ -146,7 +144,7 @@ struct InferenceContextImpl : public InferenceContext {
       const ShapeInferenceOptions& options,
       DataValueMap* generatedShapeData = nullptr,
       GraphInferenceContext* graphInferenceContext = nullptr)
-      : graphInferenceContext_{graphInferenceContext}, options_(options) {
+      : graphInferenceContext_{graphInferenceContext}, options_(options), node_(&n) {
     for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
       if (attr.has_g()) {
@@ -265,9 +263,8 @@ struct InferenceContextImpl : public InferenceContext {
         fail_type_inference("Attribute ", attr_name, " does not contain a graph.");
       }
 
-      std::unique_ptr<GraphInferencer> new_inferencer{
-          new GraphInferencerImpl(*attrNameToGraphProto->second, *graphInferenceContext_, options_)};
-
+      auto new_inferencer =
+          std::make_unique<GraphInferencerImpl>(*attrNameToGraphProto->second, *graphInferenceContext_, options_);
       inferencer = new_inferencer.get();
       graphAttributeInferencers_.emplace(attr_name, std::move(new_inferencer));
     } else {
@@ -275,6 +272,19 @@ struct InferenceContextImpl : public InferenceContext {
     }
 
     return inferencer;
+  }
+
+  std::string getDisplayName() const override {
+    if (node_ == nullptr)
+      return "";
+    if (node_->domain().empty()) {
+      if (node_->name().empty())
+        return MakeString("node ", node_->op_type());
+      return MakeString("node ", node_->op_type(), " (", node_->name(), ")");
+    }
+    if (node_->name().empty())
+      return MakeString("node ", node_->op_type(), "[", node_->domain(), "]");
+    return MakeString("node ", node_->op_type(), "[", node_->domain(), "]", " (", node_->name(), ")");
   }
 
   std::vector<const TensorProto*> allInputData_;
@@ -289,6 +299,7 @@ struct InferenceContextImpl : public InferenceContext {
   // mutable as internal cache of GraphInferencer instances
   mutable std::unordered_map<std::string, std::unique_ptr<GraphInferencer>> graphAttributeInferencers_;
   ShapeInferenceOptions options_;
+  NodeProto* node_;
 };
 
 struct DataPropagationContextImpl : public DataPropagationContext {

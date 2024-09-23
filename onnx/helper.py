@@ -23,6 +23,7 @@ from typing import (
 import google.protobuf.message
 import numpy as np
 
+import onnx._custom_element_types as custom_np_types
 from onnx import (
     IR_VERSION,
     AttributeProto,
@@ -76,7 +77,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.14.1", 9, 19, 3, 1),
     ("1.15.0", 9, 20, 4, 1),
     ("1.16.0", 10, 21, 5, 1),
-    ("1.17.0", 10, 22, 6, 1),
+    ("1.17.0", 10, 22, 5, 1),
 ]
 
 VersionMapType = Dict[Tuple[str, int], int]
@@ -671,6 +672,28 @@ def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarr
     return arr.astype(np.uint8)  # type: ignore[no-any-return]
 
 
+def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
+    """Convert an array of float32 value to float4e2m1 and pack every two concecutive elements in a byte.
+    See :ref:`onnx-detail-float4` for technical details.
+
+    Args:
+        array: array of float to convert and pack
+
+    Returns:
+        Packed array of float4e2m1 (as uint8) with size `ceil(farray.size/2)` (single dimension).
+    """
+    if not isinstance(array, np.ndarray):
+        array = np.asarray(array, dtype=np.float32)
+
+    array_flat = array.ravel()
+    is_odd_volume = np.prod(array.shape) % 2 == 1
+    if is_odd_volume:
+        array_flat = np.append(array_flat, np.array([0]))
+
+    arr = subbyte.float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
+    return arr.astype(np.uint8)  # type: ignore[no-any-return]
+
+
 def make_tensor(
     name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
@@ -713,8 +736,8 @@ def make_tensor(
             TensorProto.FLOAT8E5M2FNUZ,
         ):
             expected_size = 1
-        # NumPy doesn't have INT4. It is packed in couples to UINT8 buffers.
-        elif data_type in (TensorProto.UINT4, TensorProto.INT4):
+        # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
+        elif data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
             expected_size = 0.5  # type: ignore[assignment]
         else:
             expected_size = np_dtype.itemsize
@@ -727,7 +750,7 @@ def make_tensor(
     if len(vals) != expected_size:
         # padding of half a byte is acceptable for 4bit types
         if not (
-            data_type in (TensorProto.UINT4, TensorProto.INT4)
+            data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1)
             and len(vals) == expected_size + 0.5
         ):
             raise ValueError(
@@ -781,6 +804,8 @@ def make_tensor(
             # the size of int4 tensors to increase ~5x if the tensor contains negative values (due to
             # the way negative values are serialized by protobuf).
             vals = pack_float32_to_4bit(vals, signed=signed).flatten().tolist()
+        elif data_type == TensorProto.FLOAT4E2M1:
+            vals = pack_float32_to_float4e2m1(vals).flatten().tolist()
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)
         elif data_type == TensorProto.STRING:
@@ -1609,9 +1634,29 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     Returns:
         TensorsProto's data_type
     """
-    return cast(
-        int,
-        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
+    if np_dtype in mapping._NP_TYPE_TO_TENSOR_TYPE:
+        return cast(
+            int,
+            mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
+        )
+
+    if np.issubdtype(np_dtype, np.str_):
+        return TensorProto.STRING
+
+    if np_dtype in {
+        custom_np_types.bfloat16,
+        custom_np_types.float8e4m3fn,
+        custom_np_types.float8e4m3fnuz,
+        custom_np_types.float8e5m2,
+        custom_np_types.float8e5m2fnuz,
+        custom_np_types.int4,
+        custom_np_types.uint4,
+        custom_np_types.float4e2m1,
+    }:
+        return custom_np_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
+
+    raise ValueError(
+        f"Unable to convert type {np_dtype!r} into TensorProto element type."
     )
 
 

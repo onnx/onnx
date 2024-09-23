@@ -5,9 +5,7 @@
 #include "data_type_utils.h"
 
 #include <cctype>
-#include <iostream>
-#include <iterator>
-#include <sstream>
+#include <unordered_set>
 
 namespace ONNX_NAMESPACE {
 namespace Utils {
@@ -139,7 +137,6 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
     }
 #ifdef ONNX_ML
     case TypeProto::ValueCase::kOpaqueType: {
-      static const std::string empty;
       std::string result;
       const auto& op_type = type_proto.opaque_type();
       result.append(left).append("opaque(");
@@ -189,8 +186,7 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     s.LStrip(key_size);
     s.LStrip(",");
     StringRange v(s.Data(), s.Size());
-    int32_t key_type;
-    FromDataTypeString(key, key_type);
+    auto key_type = FromDataTypeString(key);
     type_proto.mutable_map_type()->set_key_type(key_type);
     return FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
   } else
@@ -214,18 +210,15 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
 #endif
       if (s.LStrip("sparse_tensor")) {
     s.ParensWhitespaceStrip();
-    int32_t e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
     type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
   } else if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
-    int32_t e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
     type_proto.mutable_tensor_type()->set_elem_type(e);
   } else {
     // Scalar
-    int32_t e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
     TypeProto::Tensor* t = type_proto.mutable_tensor_type();
     t->set_elem_type(e);
     // Call mutable_shape() to initialize a shape with no dimension.
@@ -239,14 +232,14 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
   return (allowedSet.find(type_str) != allowedSet.end());
 }
 
-void DataTypeUtils::FromDataTypeString(const std::string& type_str, int32_t& tensor_data_type) {
+int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   if (!IsValidDataTypeString(type_str)) {
     ONNX_THROW_EX(std::invalid_argument(
         "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
   }
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  tensor_data_type = t.TypeStrToTensorDataType()[type_str];
+  return t.TypeStrToTensorDataType()[type_str];
 }
 
 StringRange::StringRange() : data_(""), size_(0), start_(data_), end_(data_) {}
@@ -442,6 +435,7 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["float8e5m2fnuz"] = TensorProto_DataType_FLOAT8E5M2FNUZ;
   type_str_to_tensor_data_type_["uint4"] = TensorProto_DataType_UINT4;
   type_str_to_tensor_data_type_["int4"] = TensorProto_DataType_INT4;
+  type_str_to_tensor_data_type_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
 
   for (auto& str_type_pair : type_str_to_tensor_data_type_) {
     tensor_data_type_to_type_str_[str_type_pair.second] = str_type_pair.first;

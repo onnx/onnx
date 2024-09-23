@@ -10,6 +10,7 @@ import numpy as np
 import parameterized
 
 import onnx
+import onnx.reference
 from onnx import helper, numpy_helper
 
 
@@ -597,6 +598,61 @@ class TestNumpyHelper(unittest.TestCase):
             # Differing value types should raise a TypeError
             numpy_helper.from_dict({0: np.array(1), 1: np.array(0.9)})
 
+    def _to_array_from_array(self, value: int, check_dtype: bool = True):
+        onnx_model = helper.make_model(
+            helper.make_graph(
+                [helper.make_node("Cast", ["X"], ["Y"], to=value)],
+                "test",
+                [helper.make_tensor_value_info("X", onnx.TensorProto.FLOAT, [4])],
+                [helper.make_tensor_value_info("Y", value, [4])],
+            )
+        )
+        ref = onnx.reference.ReferenceEvaluator(onnx_model)
+        start = ref.run(None, {"X": np.array([0, 1, -2, 3], dtype=np.float32)})
+        tp = numpy_helper.from_array(start[0], name="check")
+        self.assertEqual(tp.data_type, value)
+        back = numpy_helper.to_array(tp)
+        self.assertEqual(start[0].shape, back.shape)
+        if check_dtype:
+            self.assertEqual(start[0].dtype, back.dtype)
+        again = numpy_helper.from_array(back, name="check")
+        self.assertEqual(tp.data_type, again.data_type)
+        self.assertEqual(tp.name, again.name)
+        self.assertEqual(len(tp.raw_data), len(again.raw_data))
+        self.assertEqual(list(tp.raw_data), list(again.raw_data))
+        self.assertEqual(tp.raw_data, again.raw_data)
+        self.assertEqual(tuple(tp.dims), tuple(again.dims))
+        self.assertEqual(tp.SerializeToString(), again.SerializeToString())
+        self.assertEqual(tp.data_type, helper.np_dtype_to_tensor_dtype(back.dtype))
+
+    @parameterized.parameterized.expand([(att,) for att in dir(onnx.TensorProto)])
+    def test_to_array_from_array(self, att):
+        if att in {
+            "INT4",
+            "UINT4",
+            "STRING",
+            "UNDEFINED",
+            "DEFAULT",
+            "NAME_FIELD_NUMBER",
+            "FLOAT4E2M1",
+        }:
+            return
+        if att[0] < "A" or att[0] > "Z":
+            return
+        value = getattr(onnx.TensorProto, att)
+        if not isinstance(value, int):
+            return
+
+        self._to_array_from_array(value)
+
+    def test_to_array_from_array_subtype(self):
+        self._to_array_from_array(onnx.TensorProto.INT4)
+        self._to_array_from_array(onnx.TensorProto.UINT4)
+        self._to_array_from_array(onnx.TensorProto.FLOAT4E2M1)
+
+    def test_to_array_from_array_string(self):
+        self._to_array_from_array(onnx.TensorProto.STRING, False)
+
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

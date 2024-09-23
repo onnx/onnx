@@ -16,7 +16,6 @@
 #include "onnx/common/common.h"
 #include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
-#include "onnx/proto_utils.h"
 #include "onnx/shape_inference/attribute_binder.h"
 #include "onnx/string_utils.h"
 
@@ -253,7 +252,7 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
 std::string GetFunctionIdentifier(const FunctionProto& function) {
   // Note: Models with IR version < 10 do not have the overload attribute.
   // However, that will be mapped to an empty identifier.
-  std::string overload = function.overload();
+  const std::string& overload = function.overload();
   if (overload.empty()) {
     return function.domain() + ":" + function.name();
   }
@@ -263,7 +262,7 @@ std::string GetFunctionIdentifier(const FunctionProto& function) {
 std::string GetFunctionIdentifier(const NodeProto& node) {
   // Note: Models with IR version < 10 do not have the overload attribute.
   // However, that will be mapped to an empty identifier.
-  std::string overload = node.overload();
+  const std::string& overload = node.overload();
   if (overload.empty()) {
     return node.domain() + ":" + node.op_type();
   }
@@ -906,13 +905,13 @@ struct FunctionInferenceContext : public InferenceContext {
       const std::vector<TypeProto>& input_types,
       const std::vector<AttributeProto>& attributes,
       const ShapeInferenceOptions& options)
-      : input_types_(input_types), options_(options) {
+      : input_types_(input_types), options_(options), func_proto_(&func_proto) {
     for (const auto& attr : attributes) {
       attributesByName_[attr.name()] = &attr;
     }
     auto num_outputs = func_proto.output_size();
     for (int i = 0; i < num_outputs; i++) {
-      output_types_.push_back(TypeProto());
+      output_types_.emplace_back();
     }
   }
 
@@ -971,11 +970,25 @@ struct FunctionInferenceContext : public InferenceContext {
     return std::move(output_types_);
   }
 
+  std::string getDisplayName() const override {
+    if (func_proto_ == nullptr)
+      return "";
+    if (func_proto_->domain().empty()) {
+      if (func_proto_->name().empty())
+        return "";
+      return MakeString("function ", func_proto_->name());
+    }
+    if (func_proto_->name().empty())
+      return MakeString("function [", func_proto_->domain(), "]");
+    return MakeString("function ", func_proto_->name(), "[", func_proto_->domain(), "]");
+  }
+
  private:
   const std::vector<TypeProto>& input_types_;
   std::vector<TypeProto> output_types_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   ShapeInferenceOptions options_;
+  const FunctionProto* func_proto_;
 };
 
 std::vector<TypeProto> InferFunctionOutputTypes(

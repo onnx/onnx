@@ -16,7 +16,7 @@ ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   // Get initial_opsetid from mp_in
   OpSetID initial_struct(0);
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
-    if (it->domain() == "" || it->domain() == "ai.onnx") {
+    if (it->domain().empty() || it->domain() == "ai.onnx") {
       initial_struct.setVersion(it->version());
       break;
     }
@@ -27,7 +27,7 @@ ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
 }
 
 void DefaultVersionConverter::convert_graph(
-    std::shared_ptr<Graph> g,
+    const std::shared_ptr<Graph>& g,
     const OpSetID& initial_version,
     const OpSetID& target_version) const {
   assertNonNull(g);
@@ -49,7 +49,7 @@ void DefaultVersionConverter::convert_graph(
 
   // Iterate over all versions to target_version for specified
   int64_t curr_version = initial_version.version();
-  int64_t step;
+  int64_t step = 0;
   if (target_version.version() > initial_version.version()) {
     step = 1;
   } else {
@@ -66,7 +66,7 @@ void DefaultVersionConverter::convert_graph(
     debug(
         "curr_version: " + ONNX_NAMESPACE::to_string(curr_version) +
         ", next_version: " + ONNX_NAMESPACE::to_string(curr_version + step));
-    Node* cur_op;
+    Node* cur_op = nullptr;
     graph_node_list_iterator it = g->begin();
     // Iterate through and call adapter returned by adapter_lookup for ops from
     // current_version opset. We have to manipulate the iterator explicitly because cur_op

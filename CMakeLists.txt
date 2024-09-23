@@ -100,12 +100,10 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
-# find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
-# Use the following command in the future; now this is only compatible with the latest pybind11
-# find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
-find_package(PythonInterp ${PY_VERSION} REQUIRED)
 if(BUILD_ONNX_PYTHON)
-  find_package(PythonLibs ${PY_VERSION})
+  find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
+else()
+  find_package(Python ${PY_VERSION} COMPONENTS Interpreter REQUIRED)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
@@ -360,7 +358,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
+                       COMMAND Python::Interpreter "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -559,7 +557,7 @@ if(BUILD_ONNX_PYTHON)
     if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
       add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
     else()
-      message(FATAL_ERROR "cannot find pybind")
+      message(FATAL_ERROR "cannot find pybind at '${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h'")
     endif()
   endif()
 
@@ -587,7 +585,7 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export
                           PRIVATE "-Wl,--whole-archive" $<TARGET_FILE:onnx>
                                   "-Wl,--no-whole-archive")
-    # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv" 
+    # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
     # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
     if (CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
       target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")

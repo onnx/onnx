@@ -4,22 +4,15 @@
 
 name: WindowsRelease
 
-on:
-  schedule:
-    # Run weekly on Monday 00:00
-    - cron:  '00 00 * * MON'
-  push:
-    branches: [main, rel-*]
-  pull_request:
-    branches: [main, rel-*]
-  workflow_dispatch:
+on:  # Specifies the event triggering the workflow
+  workflow_call:  # Indicates that this is a reusable workflow
+    inputs:      
+      os:
+        required: true
+        type: string
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
-  cancel-in-progress: true
 
 jobs:
   build:
@@ -31,19 +24,13 @@ jobs:
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
          path: ./onnx
-    - name: Checkout ONNX submodules
-      shell: bash
-      run: |
-         cd onnx
-         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-         git submodule sync --recursive
-         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+         submodules: 'recursive'
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -62,6 +49,7 @@ jobs:
           sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
         }
         python -m pip install -q -r requirements-release.txt
+        python -m pip install cmake
 
     - name: Build ONNX wheel
       run: |
@@ -84,15 +72,14 @@ jobs:
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-
     - name: Test the installed wheel
       run: |
         cd onnx
         pytest
 
-    - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+    - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a
       with:
-        name: wheels
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./onnx/dist
 
     - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
@@ -104,7 +91,8 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        python -m pip uninstall -y numpy onnx
+        python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
@@ -112,7 +100,8 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
+        python -m pip uninstall -y protobuf onnx
+        python -m pip install protobuf
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
@@ -120,7 +109,8 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y protobuf numpy onnx && python -m pip install -r requirements-min.txt
+        python -m pip uninstall -y protobuf numpy onnx
+        python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
@@ -128,7 +118,8 @@ jobs:
       if: matrix.python-version != '3.12'
       run: |
         cd onnx
-        python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
+        python -m pip uninstall -y protobuf numpy
+        python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime==1.17.3
         $Env:ORT_MAX_IR_SUPPORTED_VERSION=9
         $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3

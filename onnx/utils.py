@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import tarfile
 
 import onnx.checker
 import onnx.helper
@@ -13,7 +14,7 @@ from onnx import FunctionProto, ModelProto, NodeProto, TensorProto, ValueInfoPro
 
 class Extractor:
     def __init__(self, model: ModelProto) -> None:
-        self.model = onnx.shape_inference.infer_shapes(model)
+        self.model = model
         self.graph = self.model.graph
         self.wmap = self._build_name2obj_dict(self.graph.initializer)
         self.vimap = self._build_name2obj_dict(self.graph.value_info)
@@ -46,21 +47,39 @@ class Extractor:
     def _dfs_search_reachable_nodes(
         self,
         node_output_name: str,
-        graph_input_names: list[str],
-        reachable_nodes: list[NodeProto],
+        graph_input_names: set[str],
+        nodes: list[NodeProto],
+        reachable: set[int],
+        unreachable: set[int],
     ) -> None:
+        """Helper function to find nodes which are connected to an output
+
+        Arguments:
+            node_output_name (str): The name of the output
+            graph_input_names (set of string): The names of all inputs of the graph
+            nodes (list of nodes): The list of all nodes of the graph
+            reachable (set of int): The set of indexes to reachable nodes in `nodes`
+            unreachable (set of int): The set of indexes to unreachable nodes in `nodes`
+        """
+        # finish search at inputs
         if node_output_name in graph_input_names:
             return
-        for node in self.graph.node:
-            # check output_name first to reduce run time
-            if node_output_name not in node.output:
-                continue
-            if node in reachable_nodes:
-                continue
-            reachable_nodes.append(node)
-            for name in node.input:
+
+        # find nodes connected to this output
+        nodes_to_search = [
+            index for index in unreachable if node_output_name in nodes[index].output
+        ]
+
+        # add nodes connected to this output to sets
+        for node_index in nodes_to_search:
+            reachable.add(node_index)
+            unreachable.remove(node_index)
+
+        # recurse on inputs
+        for node_index in nodes_to_search:
+            for name in nodes[node_index].input:
                 self._dfs_search_reachable_nodes(
-                    name, graph_input_names, reachable_nodes
+                    name, graph_input_names, nodes, reachable, unreachable
                 )
 
     def _collect_reachable_nodes(
@@ -68,11 +87,16 @@ class Extractor:
         input_names: list[str],
         output_names: list[str],
     ) -> list[NodeProto]:
-        reachable_nodes = []  # type: ignore[var-annotated]
+        _input_names = set(input_names)
+        nodes = list(self.graph.node)
+        reachable: set[int] = set()
+        unreachable: set[int] = set(range(len(nodes)))
         for name in output_names:
-            self._dfs_search_reachable_nodes(name, input_names, reachable_nodes)
-        # needs to be topology sorted.
-        nodes = [n for n in self.graph.node if n in reachable_nodes]
+            self._dfs_search_reachable_nodes(
+                name, _input_names, nodes, reachable, unreachable
+            )
+        # needs to be topologically sorted
+        nodes = [nodes[node_index] for node_index in sorted(reachable)]
         return nodes
 
     def _collect_referred_local_functions(
@@ -200,8 +224,11 @@ def extract_model(
     if not output_names:
         raise ValueError("Output tensor names shall not be empty!")
 
-    onnx.checker.check_model(input_path)
+    if check_model:
+        onnx.checker.check_model(input_path)
     model = onnx.load(input_path)
+    if check_model:
+        model = onnx.shape_inference.infer_shapes(model)
 
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)
@@ -209,3 +236,65 @@ def extract_model(
     onnx.save(extracted, output_path)
     if check_model:
         onnx.checker.check_model(output_path)
+
+
+def _tar_members_filter(
+    tar: tarfile.TarFile, base: str | os.PathLike
+) -> list[tarfile.TarInfo]:
+    """Check that the content of ``tar`` will be extracted safely
+
+    Args:
+        tar: The tarball file
+        base: The directory where the tarball will be extracted
+
+    Returns:
+        list of tarball members
+    """
+    result = []
+    for member in tar:
+        member_path = os.path.join(base, member.name)
+        abs_base = os.path.abspath(base)
+        abs_member = os.path.abspath(member_path)
+        if not abs_member.startswith(abs_base):
+            raise RuntimeError(
+                f"The tarball member {member_path} in downloading model contains "
+                f"directory traversal sequence which may contain harmful payload."
+            )
+        elif member.issym() or member.islnk():
+            raise RuntimeError(
+                f"The tarball member {member_path} in downloading model contains "
+                f"symbolic links which may contain harmful payload."
+            )
+        result.append(member)
+    return result
+
+
+def _extract_model_safe(
+    model_tar_path: str | os.PathLike, local_model_with_data_dir_path: str | os.PathLike
+) -> None:
+    """Safely extracts a tar file to a specified directory.
+
+    This function ensures that the extraction process mitigates against
+    directory traversal vulnerabilities by validating or sanitizing paths
+    within the tar file. It also provides compatibility for different versions
+    of the tarfile module by checking for the availability of certain attributes
+    or methods before invoking them.
+
+    Args:
+        model_tar_path: The path to the tar file to be extracted.
+        local_model_with_data_dir_path: The directory path where the tar file
+      contents will be extracted to.
+    """
+    with tarfile.open(model_tar_path) as model_with_data_zipped:
+        # Mitigate tarball directory traversal risks
+        if hasattr(tarfile, "data_filter"):
+            model_with_data_zipped.extractall(
+                path=local_model_with_data_dir_path, filter="data"
+            )
+        else:
+            model_with_data_zipped.extractall(
+                path=local_model_with_data_dir_path,
+                members=_tar_members_filter(
+                    model_with_data_zipped, local_model_with_data_dir_path
+                ),
+            )

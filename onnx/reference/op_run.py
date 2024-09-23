@@ -9,12 +9,9 @@ from typing import Any, ClassVar, Iterable
 import numpy as np
 
 from onnx import TensorProto
-from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
-from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
-from onnx.numpy_helper import to_array, unpack_int4
-from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
-from onnx.reference.custom_element_types import (
+from onnx._custom_element_types import (
     bfloat16,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
@@ -22,6 +19,10 @@ from onnx.reference.custom_element_types import (
     int4,
     uint4,
 )
+from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
+from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
+from onnx.numpy_helper import to_array
+from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 
 
 def _split_class_name(name):  # type: ignore
@@ -121,57 +122,7 @@ def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
 
 
 def to_array_extended(tensor: TensorProto) -> np.ndarray:
-    """Similar to :func:`to_array` but deals with non-numpy types bfloat16,
-    float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, uint4, int4.
-    """
-    elem_type = tensor.data_type
-    if elem_type == TensorProto.BFLOAT16:
-        data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        y = np.empty(shape, dtype=bfloat16).ravel()
-        for i, d in enumerate(data):
-            y[i] = d
-        return y.reshape(shape)
-
-    if elem_type in (
-        TensorProto.FLOAT8E4M3FN,
-        TensorProto.FLOAT8E4M3FNUZ,
-        TensorProto.FLOAT8E5M2,
-        TensorProto.FLOAT8E5M2FNUZ,
-    ):
-        m = {
-            TensorProto.FLOAT8E4M3FN: float8e4m3fn,
-            TensorProto.FLOAT8E4M3FNUZ: float8e4m3fnuz,
-            TensorProto.FLOAT8E5M2: float8e5m2,
-            TensorProto.FLOAT8E5M2FNUZ: float8e5m2fnuz,
-        }
-
-        if tensor.HasField("raw_data"):
-            data = tensor.raw_data  # type: ignore[assignment]
-        else:
-            data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
-        for i, d in enumerate(data):
-            y[i] = d
-        return y.reshape(shape)
-    if elem_type in (TensorProto.UINT4, TensorProto.INT4):
-        if tensor.HasField("raw_data"):
-            data = tensor.raw_data  # type: ignore[assignment]
-        else:
-            data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        m = {TensorProto.INT4: int4, TensorProto.UINT4: uint4}
-        dtype = m[elem_type]  # type: ignore[index]
-        signed = elem_type == TensorProto.INT4
-        # 2 packed int4 elements must be represented as a single uint8 value.
-        # Therefore, y is np.uint8 (not the dtype to which the int4 maps)
-        y = np.empty(len(data), dtype=np.uint8).ravel()  # type: ignore[assignment]
-        for i, d in enumerate(data):
-            y[i] = d
-
-        unpacked_data = unpack_int4(y, dims=shape, signed=signed)
-        return unpacked_data.astype(dtype)
+    """Alias for :func:`to_array`."""
     return to_array(tensor)
 
 
@@ -755,6 +706,8 @@ class OpFunctionContextDependant(OpFunction):
                     ttype = TensorProto.UINT4  # type: ignore[attr-defined]
                 elif t.dtype == int4:
                     ttype = TensorProto.INT4  # type: ignore[attr-defined]
+                elif t.dtype == float4e2m1:
+                    ttype = TensorProto.FLOAT4E2M1  # type: ignore[attr-defined]
                 else:
                     raise
             types.append(make_tensor_type_proto(ttype, t.shape))

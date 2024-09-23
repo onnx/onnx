@@ -26,20 +26,13 @@ jobs:
         architecture: ['x64']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
       with:
          path: ./onnx
-
-    - name: Checkout ONNX submodules
-      shell: bash
-      run: |
-         cd onnx
-         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-         git submodule sync --recursive
-         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+         submodules: 'recursive'
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -48,6 +41,11 @@ jobs:
       uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
       with:
         msbuild-architecture: ${{ matrix.architecture }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install cmake
 
     - name: Build and test ONNX binaries
       run: |

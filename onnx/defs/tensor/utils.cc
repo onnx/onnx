@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/defs/function.h"
+
 namespace ONNX_NAMESPACE {
 void resizeShapeInferenceHelper(
     const TensorShapeProto& input_shape,
@@ -393,8 +395,8 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
 std::function<void(OpSchema&)> PadDocGenerator(
     const char* description,
     const char* mode_description,
-    const std::vector<std::string> op_schema,
-    const std::string op_schema_description) {
+    const std::vector<std::string>& op_schema,
+    const std::string& op_schema_description) {
   return [=](OpSchema& schema) {
     schema.SetDoc(description);
     schema.Attr("mode", mode_description, AttributeProto::STRING, std::string("constant"));

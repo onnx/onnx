@@ -6,7 +6,6 @@
 #include <functional>
 
 #include "onnx/common/assertions.h"
-#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
 #include "onnx/defs/schema.h"
@@ -14,7 +13,7 @@
 
 namespace ONNX_NAMESPACE {
 
-inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_type) {
+inline void MathOpDataPropagator(DataPropagationContext& ctx, const std::string& op_type) {
   const auto input_0 = ctx.getInputData(0);
   const auto input_1 = ctx.getInputData(1);
   if (input_0 == nullptr || input_1 == nullptr) {
@@ -27,7 +26,8 @@ inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_typ
     fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (", size_0, ") vs (", size_1, ").");
   }
   TensorShapeProto tsp;
-  for (int i = 0; i < std::max(size_0, size_1); ++i) {
+  int size_out = size_0 == 1 ? size_1 : size_0;
+  for (int i = 0; i < size_out; ++i) {
     auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
     auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
     if (input_dim_0.has_dim_value() && input_dim_1.has_dim_value()) {
@@ -499,7 +499,7 @@ TensorProto ToDimensionOneInt64Tensor(int64_t value) {
   return t;
 }
 
-TensorProto ToDimensionOneInt64Tensor(std::vector<int64_t> value) {
+TensorProto ToDimensionOneInt64Tensor(const std::vector<int64_t>& value) {
   auto t = ToTensor(value);
   t.add_dims(value.size());
   return t;
@@ -1345,7 +1345,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* MatMul_ver13_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1943,7 +1943,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(defs::math::utils::QLinearMatMulShapeInference));
 
 static const char* MatMulInteger_ver10_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 )DOC";
 
@@ -2496,7 +2496,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
   auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
 
   const size_t num_inputs = ctx.getNumInputs();
-  if (num_inputs < 1 || !hasNInputShapes(ctx, static_cast<int>(num_inputs))) {
+  if (num_inputs < 1 || !hasNInputShapes(ctx, num_inputs)) {
     return;
   }
   ONNX_NAMESPACE::TensorShapeProto output_shape;
@@ -2571,7 +2571,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
         continue;
       }
 
-      const auto inserted = label_maps.insert({term[index], num_labels}).second;
+      const auto inserted = label_maps.emplace(term[index], num_labels).second;
       if (inserted) {
         *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
         ++num_labels;
@@ -3472,6 +3472,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           auto& input_shape = getInputShape(ctx, 0);
+          if (input_shape.dim_size() < 2) {
+            fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".");
+          }
           auto signal_dim = input_shape.dim(1);
           if (!signal_dim.has_dim_value()) {
             return;

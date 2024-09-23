@@ -16,4 +16,5 @@ deeper than the code documentation.
 
 float8
 int4
+float4
 ```

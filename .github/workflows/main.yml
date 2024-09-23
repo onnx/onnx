@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest,macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
         include:
           - python_version: '3.12'
@@ -58,10 +58,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
         with:
           python-version: ${{ matrix.python_version }}
 
@@ -142,9 +142,13 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
+      - name: pip freeze
+        run: |
+          pip freeze
+
       - name: Run Python tests
         run: |
-          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junit-xml pytest.xml -n auto --dist loadscope
+          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
@@ -154,17 +158,18 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v3
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
-          name: Test Results (${{ matrix.os }}-{{ matrix.python_version }})
-          path: pytest.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
+      # Note that the test data should be generated with numpy>=2.0.
+      # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
         if: matrix.documentation == 1 && matrix.os == 'ubuntu-latest'
         run: |
@@ -196,22 +201,8 @@ jobs:
           cd docs/docsgen && make text
         continue-on-error: true
 
-  publish-test-results:
-    name: "Publish Test Results to Github"
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      checks: write
-      # only needed unless run with comment_mode: off
-      pull-requests: write
-    if: always()
-    steps:
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        with:
-          files: "artifacts/**/*.xml"
+      - name: Run Python tests with numpy<2.0
+        if: matrix.python_version == '3.11' || matrix.python_version == '3.12'
+        run: |
+          pip install "numpy<2.0" "pillow<10"
+          pytest -s

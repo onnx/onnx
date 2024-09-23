@@ -247,7 +247,7 @@ void OpSchema::Verify(const NodeProto& node) const {
     };
 
     const auto& search = attributes_.find(name);
-    AttributeProto::AttributeType expected_type;
+    AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
     } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
@@ -477,7 +477,7 @@ OpSchema& OpSchema::SetDomain(const char* domain) {
 
 OpSchema& OpSchema::Attr(Attribute attr) {
   auto name = attr.name; // copy name so we can move attr in the next line
-  attributes_.insert(std::make_pair(std::move(name), std::move(attr)));
+  attributes_.emplace(std::move(name), std::move(attr));
   return *this;
 }
 
@@ -702,9 +702,8 @@ OpSchema::TypeConstraint(std::string type_str, std::vector<std::string> constrai
   for (const auto& t : constraints) {
     d.insert(Utils::DataTypeUtils::ToType(t));
   }
-  type_constraints_.insert(std::make_pair(type_str, std::make_pair(d, description)));
-  type_constraint_params_.push_back(
-      TypeConstraintParam(std::move(type_str), std::move(constraints), std::move(description)));
+  type_constraints_.emplace(type_str, std::make_pair(d, description));
+  type_constraint_params_.emplace_back(std::move(type_str), std::move(constraints), std::move(description));
   return *this;
 }
 
@@ -714,8 +713,8 @@ OpSchema& OpSchema::TypeConstraint(
     const char* description) {
   std::vector<std::string> constraints_vector;
   constraints_vector.reserve(constraints.size());
-  for (auto iter = constraints.begin(); iter != constraints.end(); ++iter) {
-    constraints_vector.push_back(*iter);
+  for (auto constraint : constraints) {
+    constraints_vector.emplace_back(constraint);
   }
 
   return TypeConstraint(std::string(type_str), constraints_vector, std::string(description));
@@ -803,7 +802,7 @@ OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   OnnxParser parser(func_body);
   auto status = parser.Parse(*function_proto->mutable_node());
   if (!status.IsOK())
@@ -815,7 +814,7 @@ OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
 
-  opset_version_to_function_body_.insert(std::make_pair(opset_version, function_proto));
+  opset_version_to_function_body_.emplace(opset_version, function_proto);
   return *this;
 }
 
@@ -823,7 +822,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int o
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   for (const auto& node : func_nodes) {
     auto new_node = function_proto->add_node();
     new_node->CopyFrom(node);
@@ -832,7 +831,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int o
   // opset import may have been set
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
-  opset_version_to_function_body_.insert(std::make_pair(opset_version, function_proto));
+  opset_version_to_function_body_.emplace(opset_version, std::move(function_proto));
   return *this;
 }
 
@@ -844,7 +843,7 @@ OpSchema& OpSchema::FunctionBody(
     opset_version = since_version_;
   }
 
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   for (auto& relied_opset : relied_opsets) {
     *(function_proto->mutable_opset_import()->Add()) = relied_opset;
   }
@@ -856,7 +855,7 @@ OpSchema& OpSchema::FunctionBody(
   // opset import may have been set
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
-  opset_version_to_function_body_.insert(std::make_pair(opset_version, function_proto));
+  opset_version_to_function_body_.emplace(opset_version, std::move(function_proto));
   return *this;
 }
 
@@ -896,7 +895,7 @@ bool OpSchema::ValidateReferencedOpsInFuncton(
     return all_ops_are_invalid;
   }
   for (auto& node : function->node()) {
-    if (node.domain() == "" || node.domain() == "ai.onnx") {
+    if (node.domain().empty() || node.domain() == "ai.onnx") {
       const OpSchema* op1 =
           OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, node.domain());
       const OpSchema* op2 =

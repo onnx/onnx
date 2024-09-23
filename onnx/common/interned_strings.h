@@ -11,8 +11,6 @@
 #include <stdint.h>
 
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace ONNX_NAMESPACE {
 
@@ -201,7 +199,7 @@ enum BuiltinSymbol {
 };
 
 struct Symbol {
-  Symbol() {}
+  Symbol() = default;
   /*implicit*/ Symbol(BuiltinSymbol value) : value(value) {}
   explicit Symbol(const std::string& s);
   explicit Symbol(uint32_t value) : value(value) {}
@@ -212,7 +210,7 @@ struct Symbol {
   const char* toString() const;
 
  private:
-  uint32_t value;
+  uint32_t value{0};
 };
 
 static inline bool operator==(Symbol lhs, Symbol rhs) {

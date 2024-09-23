@@ -13,6 +13,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
     - name: REUSE Compliance Check
-      uses: fsfe/reuse-action@a46482ca367aef4454a87620aa37c2be4b2f8106 # v3.0.0
+      uses: fsfe/reuse-action@3ae3c6bdf1257ab19397fab11fd3312144692083

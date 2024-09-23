@@ -4,18 +4,16 @@
 
 #include "onnx/checker.h"
 
-#include <fstream>
 #include <functional>
-#include <iterator>
 #include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
 #include "onnx/common/file_utils.h"
+#include "onnx/common/path.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
-#include "onnx/proto_utils.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
@@ -188,6 +186,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E5M2FNUZ:
       case TensorProto::UINT4:
       case TensorProto::INT4:
+      case TensorProto::FLOAT4E2M1:
         check_field(int32_data);
         break;
 
@@ -910,7 +909,6 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
       }
     }
   }
-  std::unordered_map<std::string, int> versions;
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {

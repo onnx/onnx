@@ -245,7 +245,12 @@ class CommonPool(OpRun):
         if auto_pad in ("SAME_LOWER", "SAME_UPPER"):
             const = np.nan if count_include_pad == 0 else 0
             out_shape = _get_output_shape(
-                auto_pad, x_shape, kernel_shape, strides, pad_shape, ceil_mode  # type: ignore
+                auto_pad,
+                x_shape,
+                kernel_shape,
+                strides,
+                pad_shape,
+                ceil_mode,  # type: ignore
             )
             pad_shape = _get_pad_shape(  # type: ignore
                 auto_pad, x_shape, kernel_shape, strides, out_shape
@@ -268,7 +273,12 @@ class CommonPool(OpRun):
             )
         else:
             out_shape = _get_output_shape(
-                auto_pad, x_shape, kernel_shape, strides, pad_shape, ceil_mode  # type: ignore
+                auto_pad,
+                x_shape,
+                kernel_shape,
+                strides,
+                pad_shape,
+                ceil_mode,  # type: ignore
             )
 
         n_dims = len(pads) // 2

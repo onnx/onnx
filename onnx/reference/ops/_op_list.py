@@ -10,6 +10,7 @@ with `_`, it means the implementation is valid for every opset.
 The operator may have been updated to support more types but that
 did not change the implementation.
 """
+
 from __future__ import annotations
 
 import textwrap

@@ -263,7 +263,9 @@ class RoiAlign(OpRun):
         sampling_ratio=None,
         spatial_scale=None,
     ):
-        coordinate_transformation_mode = coordinate_transformation_mode or self.coordinate_transformation_mode  # type: ignore
+        coordinate_transformation_mode = (
+            coordinate_transformation_mode or self.coordinate_transformation_mode
+        )  # type: ignore
         mode = mode or self.mode  # type: ignore
         output_height = output_height or self.output_height  # type: ignore
         output_width = output_width or self.output_width  # type: ignore

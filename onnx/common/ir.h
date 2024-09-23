@@ -12,13 +12,11 @@
 #include <stdint.h>
 
 #include <algorithm>
-#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -134,10 +132,10 @@ struct ScalarAttributeValue final : public AttributeValue {
   ValueType& value() {
     return value_;
   }
-  virtual Ptr clone() const override {
-    return Ptr(new ScalarAttributeValue(name, value_));
+  Ptr clone() const override {
+    return std::make_unique<ScalarAttributeValue>(name, value_);
   }
-  virtual AttributeKind kind() const override {
+  AttributeKind kind() const override {
     return Kind;
   }
 
@@ -149,16 +147,15 @@ template <typename T, AttributeKind Kind>
 struct VectorAttributeValue final : public AttributeValue {
   using ConstructorType = const std::vector<T>&&;
   using ValueType = std::vector<T>;
-  VectorAttributeValue(Symbol name, ConstructorType value_) : AttributeValue(name), value_(std::move(value_)) {}
+  VectorAttributeValue(Symbol name, ValueType value_) : AttributeValue(name), value_(std::move(value_)) {}
   ValueType& value() {
     return value_;
   }
-  virtual AttributeKind kind() const override {
+  AttributeKind kind() const override {
     return Kind;
   }
-  virtual std::unique_ptr<AttributeValue> clone() const override {
-    auto copy = value_;
-    return Ptr(new VectorAttributeValue(name, std::move(copy)));
+  std::unique_ptr<AttributeValue> clone() const override {
+    return std::make_unique<VectorAttributeValue>(name, ValueType(value_));
   }
 
  private:
@@ -184,7 +181,7 @@ using TypeProtosAttr = VectorAttributeValue<TypeProto, AttributeKind::tps>;
 // we return Derived* pointers because Nodes are normally held as pointers.
 template <typename Derived>
 struct Attributes {
-  Attributes() {}
+  Attributes() = default;
   void copyAttributes(const Attributes& rhs) {
     values_.clear();
     values_.reserve(rhs.values_.size());
@@ -243,7 +240,7 @@ struct Attributes {
   template <typename T>
   Derived* set(Symbol name, typename T::ConstructorType v) {
     auto it = find(name, false);
-    auto nv = AVPtr(new T(name, std::forward<typename T::ConstructorType>(v)));
+    auto nv = std::make_unique<T>(name, std::forward<typename T::ConstructorType>(v));
     if (it == values_.end()) {
       values_.push_back(std::move(nv));
     } else {
@@ -378,7 +375,7 @@ struct Value final {
   Graph* owningGraph();
   const Graph* owningGraph() const;
   // TODO: make this more const correct
-  const use_list uses() const;
+  use_list uses() const;
 
   // Replaces all uses of this node with 'newValue'.
   //
@@ -842,7 +839,7 @@ class OpSetID final {
   // Default Domain Constructor
   explicit OpSetID(const int64_t version) : domain_(""), version_(version) {}
 
-  explicit OpSetID(const std::string& domain, int64_t version) : domain_(domain), version_(version) {}
+  explicit OpSetID(std::string domain, int64_t version) : domain_(std::move(domain)), version_(version) {}
 
   // target must be in the form "<domain>&<version>"
   std::string toString() const {
@@ -852,8 +849,8 @@ class OpSetID final {
   // target must be in the form "<domain>&<version>"
   static OpSetID fromString(const std::string& target) {
     ONNX_TRY {
-      std::string new_domain = target.substr(0, target.find("$"));
-      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
+      std::string new_domain = target.substr(0, target.find('$'));
+      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find('$') + 1, target.length()));
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
@@ -1229,7 +1226,7 @@ struct Graph final {
   }
 
   void forEachNode(const std::function<void(Node*)>& fn) {
-    forSelfAndEachSubGraph([fn](Graph* graph) {
+    forSelfAndEachSubGraph([&fn](Graph* graph) {
       for (Node* node : graph->nodes()) {
         fn(node);
       }
@@ -1428,7 +1425,7 @@ inline const_graph_node_list_iterator Node::reverseIterator() const {
 // nodes in subgraph are also included.
 // This method is usually used to check whether it is
 // safe to delete a Value.
-inline const use_list Value::uses() const {
+inline use_list Value::uses() const {
   use_list all_uses = uses_in_current_graph_;
   owningGraph()->forEachNode([this, &all_uses](const Node* node) {
     if (node->owningGraph() == this->owningGraph()) {

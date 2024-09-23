@@ -126,6 +126,9 @@ void convPoolShapeInference(
             residual -= stride;
           }
         }
+        if (i >= static_cast<int>(effective_kernel_shape.size())) {
+          fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
+        }
         int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
         if (total_pad < 0)
           total_pad = 0;
@@ -959,19 +962,21 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto w_type = ctx.getInputType(3);
           if (nullptr == x_type || nullptr == w_type || x_type->value_case() != TypeProto::kTensorType ||
               w_type->value_case() != TypeProto::kTensorType) {
-            fail_type_inference("inputs are expected to have tensor type.");
+            fail_type_inference("inputs are expected to have tensor type in ", ctx.getDisplayName(), ".");
           }
 
           auto x_zero_point_type = ctx.getInputType(2);
           if (nullptr == x_zero_point_type ||
               x_zero_point_type->tensor_type().elem_type() != x_type->tensor_type().elem_type()) {
-            fail_type_inference("input and zero_point pair is expected to have be same type.");
+            fail_type_inference(
+                "input and zero_point pair is expected to have be same type in ", ctx.getDisplayName(), ".");
           }
 
           auto w_zero_point_type = ctx.getInputType(5);
           if (nullptr == w_zero_point_type ||
               w_zero_point_type->tensor_type().elem_type() != w_type->tensor_type().elem_type()) {
-            fail_type_inference("weight and zero_point pair is expected to have same type.");
+            fail_type_inference(
+                "weight and zero_point pair is expected to have same type in ", ctx.getDisplayName(), ".");
           }
 
           propagateElemTypeFromInputToOutput(ctx, 7, 0);
@@ -1210,7 +1215,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       ctx.getInputType(1)->tensor_type().shape().dim(1) * group; // channels should be the second dim of second input
                                                                  // multiply group.
 
-  int size_of_output;
+  int size_of_output = 0;
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
@@ -1958,7 +1963,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             LambdaLessThanInput = Less (LambdCast, input)
             InputSubBiasOrZero = Where (LambdaLessThanInput, InputSubBias, ZeroCast)
             output = Where(InputLessThanNegLambda, InputAddBias, InputSubBiasOrZero)
-		      }
+          }
         )ONNX",
             18));
 
@@ -1970,7 +1975,7 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    21,
+    23,
     OpSchema()
         .SetDoc(Flatten_ver11_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
@@ -1988,7 +1993,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_ir10(),
+            OpSchema::all_tensor_types_ir11(),
             "Constrain input and output to all tensor types up to IRv10.")
         .Attr(
             "axis",
@@ -2647,7 +2652,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+
+          auto& input_shape = getInputShape(ctx, 0);
           int64_t input_ndim = input_shape.dim_size();
           int64_t axis = -1;
           auto axis_proto = ctx.getAttribute("axis");
@@ -2659,7 +2665,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             // positive value.
             axis += input_ndim;
           }
-
+          if (axis < 0) {
+            fail_shape_inference(
+                "Unexpected axis value (",
+                axis,
+                ") rank of first input is ",
+                input_ndim,
+                " in ",
+                ctx.getDisplayName(),
+                ".");
+          }
           if (ctx.getNumOutputs() > 1) {
             auto mean_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
             mean_shape->CopyFrom(input_shape);
@@ -2684,7 +2699,7 @@ This operator transforms input according to
 y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
 ```
 where the mean and variance are computed per instance per group of channels, and
-`scale` and `bias` should be specified for each group of channels. The number of
+`scale` and `bias` should be specified for each channel. The number of
 groups `num_groups` should be divisible by the number of channels so that there are
 an equal number of channels per group.
 

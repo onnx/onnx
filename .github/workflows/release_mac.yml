@@ -1,25 +1,22 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: MacRelease
 
-on:
-  schedule:
-    # Run weekly on Monday 00:00
-    - cron:  '00 00 * * MON'
-  push:
-    branches: [main, rel-*]
-  pull_request:
-    branches: [main, rel-*]
-  workflow_dispatch:
+on:  # Specifies the event triggering the workflow
+  workflow_call:  # Indicates that this is a reusable workflow
+    inputs:      
+      os:
+        required: true
+        type: string
 
-# Use MACOSX_DEPLOYMENT_TARGET=11.0 to produce compatible wheel
+# Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
 env:
-  MACOSX_DEPLOYMENT_TARGET: 11.0
+  MACOSX_DEPLOYMENT_TARGET: "12.0"
 
 permissions:
   contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
-  cancel-in-progress: true
 
 jobs:
   build:
@@ -28,9 +25,10 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        target-architecture: ['x86_64', 'arm64']
 
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
     - name: Checkout submodules
       shell: bash
       run: |
@@ -38,7 +36,7 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -64,23 +62,23 @@ jobs:
         fi
         python -m build --wheel
 
-    - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+    - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
       with:
-        name: macos-wheel-${{ matrix.python-version }}
-        path: dist
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.target-architecture }}
+        path: dist/*.whl
 
   test:
     needs: build
-    runs-on: macos-latest
+    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-12' || 'macos-14' }}
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         target-architecture: ['x86_64', 'arm64']
 
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -89,9 +87,9 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release.txt
 
-    - uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4.1.7
+    - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
       with:
-        name: macos-wheel-${{ matrix.python-version }}
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.target-architecture }}
         path: dist
 
     - name: Test the wheel
@@ -109,7 +107,7 @@ jobs:
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
         arch -${{ matrix.target-architecture }} python -m pip install numpy
-        arch -${{ matrix.target-architecture }}  python -m pip install --upgrade dist/*.whl
+        arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest protobuf
@@ -124,7 +122,7 @@ jobs:
       if: always() && (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.8' && matrix.python-version != '3.9'))
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
-        arch -${{ matrix.target-architecture }}  python -m pip install -r requirements-min.txt
+        arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 

@@ -8,14 +8,16 @@
 
 #include <cinttypes>
 #include <string>
-#include <utility>
 #include <vector>
+
+#include "onnx/common/interned_strings.h"
+#include "onnx/version_converter/adapters/adapter.h"
 
 // Node transformers commonly used in version-adapters:
 
 // Capture context by copying values; the graph is unused by these transformers.
 
-#define NODE_TRANSFORMER(node) [=](std::shared_ptr<Graph>, Node * node)
+#define NODE_TRANSFORMER(node) [=](const std::shared_ptr<Graph>&, Node* node)
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
@@ -63,10 +65,9 @@ inline NodeTransformerFunction SetAttribute(Symbol attr, const std::string& valu
   };
 }
 
-inline NodeTransformerFunction SetAttribute(Symbol attr, std::vector<int64_t> value) {
+inline NodeTransformerFunction SetAttribute(Symbol attr, const std::vector<int64_t>& value) {
   return NODE_TRANSFORMER(node) {
-    std::vector<int64_t> local(value);
-    node->is_(attr, std::move(local));
+    node->is_(attr, std::vector<int64_t>(value));
     return node;
   };
 }
