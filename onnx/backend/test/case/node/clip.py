@@ -61,7 +61,7 @@ class Clip(Base):
         )
 
         x = np.array([-1, 0, 6]).astype(np.float32)
-        y = np.array([1, 1, 1]).astype(np.float32) # Value of max when min>max.
+        y = np.array([1, 1, 1]).astype(np.float32)  # Value of max when min>max.
         min_val = np.float32(2) # Min greater than max.
         max_val = np.float32(1)
         expect(
@@ -70,7 +70,6 @@ class Clip(Base):
             outputs=[y],
             name="test_clip_min_greater_than_max",
         )
-
 
     @staticmethod
     def export_clip_default() -> None:
