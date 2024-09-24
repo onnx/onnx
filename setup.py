@@ -106,6 +106,8 @@ def get_ext_suffix():
 def get_python_execute():
     if WINDOWS:
         return sys.executable
+    # Try to search more accurate path, because sys.executable may return a wrong one,
+    # as discussed in https://github.com/python/cpython/issues/84399
     python_dir = os.path.abspath(
         os.path.join(sysconfig.get_path("include"), "..", "..")
     )
@@ -174,7 +176,7 @@ class CmakeBuild(setuptools.Command):
             # configure
             cmake_args = [
                 CMAKE,
-                f"-DPython_INCLUDE_DIRS={sysconfig.get_path('include')}",
+                f"-DPYTHON_INCLUDE_DIR={sysconfig.get_path('include')}",
                 f"-DPYTHON_EXECUTABLE={get_python_execute()}",
                 "-DBUILD_ONNX_PYTHON=ON",
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
