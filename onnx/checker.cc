@@ -4,8 +4,6 @@
 
 #include "onnx/checker.h"
 
-#include <functional>
-#include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -1065,7 +1063,7 @@ std::string resolve_external_data_location(
 #endif
 }
 
-std::set<std::string> experimental_ops = {
+std::unordered_set<std::string> experimental_ops = {
     "ATen",
     "Affine",
     "ConstantFill",
