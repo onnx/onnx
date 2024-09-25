@@ -279,11 +279,9 @@ endif()
 # abseil build would fail if ONNX_WERROR is on.
 if(ONNX_WERROR)
   if(MSVC)
-    string(APPEND CMAKE_CXX_FLAGS " /WX")
-    string(APPEND CMAKE_C_FLAGS " /WX")
+    add_compile_options("/WX")
   else()
-    string(APPEND CMAKE_CXX_FLAGS " -Werror")
-    string(APPEND CMAKE_C_FLAGS " -Werror")
+    add_compile_options("-Werror")
   endif()
 endif()
 
