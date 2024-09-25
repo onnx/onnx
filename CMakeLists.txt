@@ -100,10 +100,16 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
+if(DEFINED PYTHON_EXECUTABLE)
+  message(STATUS "Use Python_EXECUTABLE ${Python_EXECUTABLE}")
+endif()
+
+# find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
+# Use the following command in the future; now this is only compatible with the latest pybind11
+# find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
+find_package(PythonInterp ${PY_VERSION} REQUIRED)
 if(BUILD_ONNX_PYTHON)
-  find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
-else()
-  find_package(Python ${PY_VERSION} COMPONENTS Interpreter REQUIRED)
+  find_package(PythonLibs ${PY_VERSION})
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
@@ -358,7 +364,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND Python::Interpreter "${GEN_PROTO_PY}"
+                       COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -541,8 +547,8 @@ if(BUILD_ONNX_PYTHON)
 
   add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
-  set_target_properties(onnx_cpp2py_export
-                        PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  set_target_properties(onnx_cpp2py_export PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -563,7 +569,7 @@ if(BUILD_ONNX_PYTHON)
 
   target_include_directories(onnx_cpp2py_export PUBLIC
     "${pybind11_INCLUDE_DIRS}"
-    "${PYTHON_INCLUDE_DIRS}")
+    "${PYTHON_INCLUDE_DIR}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
@@ -600,20 +606,14 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
+                                   /wd4146 # unary minus operator applied to unsigned type,
+                                           # result still unsigned
                                    /wd4244 # 'argument': conversion from 'google::
                                            # protobuf::uint64' to 'int', possible
                                            # loss of data
                                    /wd4267 # Conversion from 'size_t' to 'int',
                                            # possible loss of data
-                                   /wd4996 # The second parameter is ignored.
                                    ${EXTRA_FLAGS})
-    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_cpp2py_export
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-    endif()
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -629,6 +629,8 @@ endif()
 if(MSVC)
   target_compile_options(onnx_proto
                          PRIVATE /MP
+                                 /wd4146 # unary minus operator applied to unsigned type,
+                                         # result still unsigned
                                  /wd4244 #'argument': conversion from 'google::
                                          #protobuf::uint64' to 'int', possible
                                          # loss of data
@@ -637,25 +639,14 @@ if(MSVC)
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
+                                 /wd4146 # unary minus operator applied to unsigned type,
+                                         # result still unsigned
                                  /wd4244 # 'argument': conversion from 'google::
                                          # protobuf::uint64' to 'int', possible
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
-                                 /wd4996 # The second parameter is ignored.
                                  ${EXTRA_FLAGS})
-  if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_proto
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-      target_compile_options(onnx
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-  endif()
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
