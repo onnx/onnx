@@ -95,12 +95,14 @@ std::mutex& DataTypeUtils::GetTypeStrLock() {
 DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
   auto typeStr = ToString(type_proto);
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
-  if (GetTypeStrToProtoMap().find(typeStr) == GetTypeStrToProtoMap().end()) {
+  auto it = GetTypeStrToProtoMap().find(typeStr);
+  if (it == GetTypeStrToProtoMap().end()) {
     TypeProto type;
     FromString(typeStr, type);
     GetTypeStrToProtoMap()[typeStr] = type;
+    it = GetTypeStrToProtoMap().find(typeStr);
   }
-  return &(GetTypeStrToProtoMap().find(typeStr)->first);
+  return &(it->first);
 }
 
 DataType DataTypeUtils::ToType(const std::string& type_str) {

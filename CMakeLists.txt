@@ -29,6 +29,8 @@ option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx op
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 option(ONNX_BUILD_SHARED "Build ONNX as a shared library." OFF)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
     set(DEFAULT_ONNX_ML $ENV{ONNX_ML})

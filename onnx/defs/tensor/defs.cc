@@ -790,7 +790,7 @@ result = [
 ```
 )DOC";
 
-inline void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t& step) {
+inline void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t step) {
   auto clamp = [](int64_t val, int64_t min, int64_t max) -> int64_t {
     return (val < min) ? min : (val > max) ? max : val;
   };
