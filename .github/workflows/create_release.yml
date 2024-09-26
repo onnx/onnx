@@ -123,12 +123,12 @@ jobs:
       contents: write # IMPORTANT: mandatory for making GitHub Releases
       id-token: write # IMPORTANT: mandatory for sigstore
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
         with:
-          pattern: wheels* # TODO change back to python-wheels?
+          pattern: wheels*
           path: dist
           merge-multiple: true
-      - name: Sign the dists with Sigstore #/home/runner/work/onnx/onnx/dist/*.tar.gz
+      - name: Sign the artifacts with sigstore #/home/runner/work/onnx/onnx/dist/*.tar.gz
         # Signing should only be done for the final release and maybe not for release candidates... probably this prep release steps has to be splitted or renamend to prepare signatures
 
         if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-')
