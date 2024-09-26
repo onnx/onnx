@@ -481,7 +481,7 @@ class ShapeInferenceImplBase {
         if (options.check_type) {
           schema->CheckInputOutputType(ctx);
         }
-      } else if (model_local_functions_map.size() > 0) {
+      } else if (!model_local_functions_map.empty()) {
         auto iter = model_local_functions_map.find(GetFunctionIdentifier(n));
         if (iter != model_local_functions_map.end()) {
           ProcessCall(n, *(iter->second), ctx);

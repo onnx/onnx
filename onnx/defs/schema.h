@@ -42,7 +42,7 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
   // The default value for input_types is included only for backward compatibility.
   // It can be used for functions that do not depend on the type-context, but
   // will not be sufficient for functions that do use the type-context.
-  FunctionBodyBuildContextImpl(const NodeProto& node_proto, const std::vector<TypeProto>& input_types = {})
+  explicit FunctionBodyBuildContextImpl(const NodeProto& node_proto, const std::vector<TypeProto>& input_types = {})
       : node_proto_(node_proto), input_types_(input_types) {
     for (auto& attr : node_proto.attribute()) {
       attributesByName_[attr.name()] = &attr;
@@ -61,13 +61,13 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
   bool hasInput(int inputIndex) const override {
     if (inputIndex >= node_proto_.input_size())
       return false;
-    return node_proto_.input(inputIndex) != "";
+    return !node_proto_.input(inputIndex).empty();
   }
 
   bool hasOutput(int inputIndex) const override {
     if (inputIndex >= node_proto_.output_size())
       return false;
-    return node_proto_.output(inputIndex) != "";
+    return !node_proto_.output(inputIndex).empty();
   }
 
   const TypeProto* getInputType(int inputIndex) const override {
@@ -98,7 +98,7 @@ class SchemaError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
 
-  SchemaError(const std::string& message) : std::runtime_error(message) {}
+  explicit SchemaError(const std::string& message) : std::runtime_error(message) {}
 
   const char* what() const noexcept override {
     if (!expanded_message_.empty()) {
