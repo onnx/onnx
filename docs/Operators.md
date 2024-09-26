@@ -4549,6 +4549,8 @@ expect(node, inputs=[x, shape], outputs=[y], name="test_center_crop_pad_pad")
   Clip operator limits the given input within an interval. The interval is
   specified by the inputs 'min' and 'max'. They default to
   numeric_limits::lowest() and numeric_limits::max(), respectively.
+  When 'min' is greater than 'max', the clip operator sets all the 'input' values to
+  the value of 'max'.
 
 #### Version
 
@@ -4633,6 +4635,17 @@ expect(
     inputs=[x, min_val, max_val],
     outputs=[y],
     name="test_clip_splitbounds",
+)
+
+x = np.array([-2, 0, 6]).astype(np.float32)
+y = np.array([1, 1, 1]).astype(np.float32)
+min_val = np.float32(2)
+max_val = np.float32(1)
+expect(
+    node,
+    inputs=[x, min_val, max_val],
+    outputs=[y],
+    name="test_clip_min_greater_than_max",
 )
 ```
 
