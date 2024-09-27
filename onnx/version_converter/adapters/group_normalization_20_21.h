@@ -20,7 +20,7 @@ class GroupNormalization_20_21 final : public Adapter {
   explicit GroupNormalization_20_21() : Adapter("GroupNormalization", OpSetID(20), OpSetID(21)) {}
 
   void transform_input(
-      std::shared_ptr<Graph> graph,
+      const std::shared_ptr<Graph>& graph,
       Node* node,
       int64_t input_id,
       Value* reshape0_shape,
@@ -44,7 +44,7 @@ class GroupNormalization_20_21 final : public Adapter {
     node->replaceInput(input_id, reshape1->output());
   }
 
-  void adapt_group_normalization_20_21(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_group_normalization_20_21(const std::shared_ptr<Graph>& graph, Node* node) const {
     // Perform following sequence of ops on scale/bias, effect is similar to numpy.repeat()
     //
     //   Shape<start=1,end=2>(input0) -- Div(Shape_out (C), num_groups)
