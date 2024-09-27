@@ -525,6 +525,8 @@ elseif(ONNX_BUILD_SHARED)
 else()
   add_library(onnx ${ONNX_SRCS})
 endif()
+set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
