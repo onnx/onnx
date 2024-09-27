@@ -5,6 +5,11 @@
 Checks: >-
   -*,
   bugprone-*,
+  -bugprone-branch-clone,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-lambda-function-name,
+  -bugprone-macro-parentheses,
+  -bugprone-narrowing-conversions,
   clang-diagnostic-*,
   clang-analyzer-core.*,
   clang-analyzer-cplusplus.*,
