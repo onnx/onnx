@@ -176,7 +176,7 @@ getAttribute(InferenceContext& ctx, const std::string& attributeName, const std:
   return defaultValue;
 }
 
-inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, TensorShapeProto::Dimension dim2) {
+inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& dim1, const TensorShapeProto::Dimension& dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value() && dim2.has_dim_value()) {
     result.set_dim_value(dim1.dim_value() * dim2.dim_value());
@@ -197,7 +197,7 @@ std::pair<int, int> getAttributeElementTypeAndLength(
     const InferenceContext& ctx,
     const std::initializer_list<std::string>& attribute_names);
 
-inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, int64_t dim2) {
+inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
     result.set_dim_value(dim1.dim_value() * dim2);
@@ -207,7 +207,7 @@ inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, i
   return result;
 }
 
-inline TensorShapeProto::Dimension operator/(TensorShapeProto::Dimension dim1, int64_t dim2) {
+inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
     result.set_dim_value(dim1.dim_value() / dim2);
