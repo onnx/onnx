@@ -953,7 +953,7 @@ void check_model(
   check_model(model, ctx);
 
   if (full_check) {
-    ShapeInferenceOptions options{true, 1, false};
+    ShapeInferenceOptions options{true, FailAnyInferenceError, false};
     ONNX_NAMESPACE::shape_inference::InferShapes(model, ctx.get_schema_registry(), options);
   }
 }
@@ -968,7 +968,7 @@ void check_model(
   ctx.set_check_custom_domain(check_custom_domain);
   check_model(model, ctx);
   if (full_check) {
-    ShapeInferenceOptions options{true, 1, false};
+    ShapeInferenceOptions options{true, FailAnyInferenceError, false};
     // Do not update the model in place by the check from shape inference
     // because checker should not modify the original model
     ModelProto copy = model;
