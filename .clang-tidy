@@ -4,6 +4,7 @@
 # `clang-analyzer-alpha.deadcode.*` is just too verbose to enable
 Checks: >-
   -*,
+  bugprone-*,
   clang-diagnostic-*,
   clang-analyzer-core.*,
   clang-analyzer-cplusplus.*,
