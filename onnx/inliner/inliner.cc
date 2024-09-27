@@ -578,8 +578,7 @@ class VectorSet : public FunctionIdSet {
 std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::Create(
     FunctionIdVector&& function_ids,
     bool invert) {
-  auto* p = new VectorSet(std::move(function_ids), invert);
-  return std::unique_ptr<FunctionIdSet>(p);
+  return std::make_unique<VectorSet>(std::move(function_ids), invert);
 }
 
 void InlineLocalFunctions(ModelProto& model, bool convert_version) {
