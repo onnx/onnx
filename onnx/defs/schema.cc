@@ -934,7 +934,7 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   // This is simply for convienince. If any of the function body ops do not belong to same
   // domain as function itself, then the function author needs to explicitly add all the relevant
   // opset imports.
-  if (function_body.opset_import().size() == 0) {
+  if (function_body.opset_import().empty()) {
     auto* schema_opset = function_body.mutable_opset_import()->Add();
     schema_opset->set_domain(domain_);
     schema_opset->set_version(since_version_);
