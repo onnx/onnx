@@ -381,7 +381,7 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
   if (nullptr != scales) {
     // Infer output shape's dimension value if 'scales' is known.
     if (scales->data_type() == TensorProto::FLOAT) {
-      const auto& scales_data = ParseData<float>(scales);
+      const auto scales_data = ParseData<float>(scales);
       if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
         fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'");
       }
@@ -484,7 +484,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
           fail_shape_inference("'pads' input must be a 1D (shape: [2 * num_axes]) tensor of type int64");
         }
 
-        const auto& pads_data = ParseData<int64_t>(pads_initializer);
+        const auto pads_data = ParseData<int64_t>(pads_initializer);
         if (pads_data.size() != static_cast<size_t>(2 * num_axes)) {
           fail_shape_inference(
               "Pads has incorrect number of values. Expected 2 * ",

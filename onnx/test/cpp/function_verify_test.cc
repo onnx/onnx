@@ -258,7 +258,7 @@ struct FunctionTypeChecker {
 
     for (auto& attribute_vals : *attribute_cases) {
       ONNX_TRY {
-        auto output_types = shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
+        shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
       }
       ONNX_CATCH(ONNX_NAMESPACE::InferenceError & e) {
         ONNX_HANDLE_EXCEPTION(([&]() { recordError(e.what(), attribute_vals); }));

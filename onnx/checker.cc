@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "onnx/common/file_utils.h"
+#include "onnx/common/path.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/shape_inference/implementation.h"

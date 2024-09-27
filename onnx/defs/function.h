@@ -4,14 +4,11 @@
 
 #pragma once
 
-#include <mutex>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "attr_proto_util.h"
-#include "onnx/common/constants.h"
 #include "onnx/common/status.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
@@ -30,16 +27,12 @@ class FunctionBodyHelper {
   struct AttributeProtoWrapper {
     AttributeProto proto;
 
-    AttributeProtoWrapper() {}
+    AttributeProtoWrapper() = default;
 
-    AttributeProtoWrapper(const AttributeProto& attr_prot) {
-      proto = attr_prot;
-    }
+    AttributeProtoWrapper(AttributeProto attr_prot) : proto(std::move(attr_prot)) {}
 
     template <typename T>
-    AttributeProtoWrapper(const std::string& attr_name, const T& value) {
-      proto = MakeAttribute(attr_name, value);
-    }
+    AttributeProtoWrapper(const std::string& attr_name, const T& value) : proto(MakeAttribute(attr_name, value)) {}
   };
 
   struct NodeDef {

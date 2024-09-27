@@ -251,7 +251,7 @@ void convPoolShapeInference_opset19(
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
-    int64_t strided_kernel_positions;
+    int64_t strided_kernel_positions = 0;
 
     if (ceil_mode == 1)
       strided_kernel_positions =
@@ -726,7 +726,7 @@ void convTransposeShapeInference_opset11(InferenceContext& ctx) {
       ctx.getInputType(1)->tensor_type().shape().dim(1) * group; // channels should be the second dim of second input
                                                                  // multiply group.
 
-  int size_of_output;
+  int size_of_output = 0;
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
@@ -2013,7 +2013,7 @@ void convPoolShapeInference1(
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
-    int64_t strided_kernel_positions;
+    int64_t strided_kernel_positions = 0;
 
     if (ceil_mode == 1)
       strided_kernel_positions =
@@ -3004,7 +3004,7 @@ void convTransposeShapeInference1(InferenceContext& ctx) {
       ctx.getInputType(1)->tensor_type().shape().dim(1) * group; // channels should be the second dim of second input
                                                                  // multiply group.
 
-  int size_of_output;
+  int size_of_output = 0;
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {

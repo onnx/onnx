@@ -1834,7 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
             TensorShapeProto second_shape;
             if (nullptr != shape_initializer) {
-              const auto& shape_data = ParseData<int64_t>(shape_initializer);
+              const auto shape_data = ParseData<int64_t>(shape_initializer);
 
               for (const auto& e : shape_data) {
                 auto* dim = second_shape.add_dim();
@@ -3579,8 +3579,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Check for compatible matrix multiply dimensions
           {
-            auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-            auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+            auto const& dimL = shapeL.dim(shapeL.dim_size() - 1);
+            auto const& dimR = shapeR.dim(shapeR.dim_size() - 2);
             if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
               fail_shape_inference("Incompatible dimensions for matrix multiplication");
               ;
@@ -3756,7 +3756,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             if (k->data_type() == TensorProto::INT64) {
-              const auto& data = ParseData<int64_t>(k);
+              const auto data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
               fail_shape_inference("K input must be of type int64.");

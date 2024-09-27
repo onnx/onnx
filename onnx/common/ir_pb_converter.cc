@@ -227,7 +227,7 @@ void createDummyValue(
 }
 
 std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int ir_version) {
-  std::unique_ptr<Graph> g(new Graph());
+  auto g = std::make_unique<Graph>();
 
   if (gp.has_name()) {
     g->setName(gp.name());

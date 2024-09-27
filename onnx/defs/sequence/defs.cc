@@ -81,7 +81,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           output_tensor_type->set_elem_type(static_cast<TensorProto_DataType>(input_elem_types[0]));
 
-          if (!hasNInputShapes(ctx, static_cast<int>(numInputs))) {
+          if (!hasNInputShapes(ctx, numInputs)) {
             return;
           }
 
@@ -345,10 +345,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               std::vector<int64_t> splitSizes;
               if (splitInitializer->data_type() == TensorProto::INT64) {
-                const auto& data = ParseData<int64_t>(splitInitializer);
+                const auto data = ParseData<int64_t>(splitInitializer);
                 splitSizes.insert(splitSizes.end(), data.begin(), data.end());
               } else if (splitInitializer->data_type() == TensorProto::INT32) {
-                const auto& data = ParseData<int32_t>(splitInitializer);
+                const auto data = ParseData<int32_t>(splitInitializer);
                 splitSizes.insert(splitSizes.end(), data.begin(), data.end());
               } else {
                 // unaccepted data type
@@ -609,9 +609,9 @@ bool BuildSequenceMapBodyFunc(
   if (!first_input_type->has_sequence_type())
     ONNX_THROW_EX(std::invalid_argument("Expected a sequence type for input 0"));
 
-  auto schema_inputs = schema.inputs();
-  auto input_0_name = schema_inputs[0].GetName();
-  auto input_1_name = schema_inputs[1].GetName(); // variadic input
+  auto const& schema_inputs = schema.inputs();
+  auto const& input_0_name = schema_inputs[0].GetName();
+  auto const& input_1_name = schema_inputs[1].GetName(); // variadic input
 
   *functionProto.add_input() = input_0_name;
   for (int i = 1; i < ninputs; i++) {
@@ -620,7 +620,7 @@ bool BuildSequenceMapBodyFunc(
     *functionProto.add_input() = MakeString(input_1_name, "_", i);
   }
 
-  auto schema_outputs = schema.outputs();
+  auto const& schema_outputs = schema.outputs();
   auto output_0_name = schema_outputs[0].GetName();
   for (int i = 0; i < noutputs; i++) {
     if (!ctx.hasOutput(i))
@@ -676,7 +676,7 @@ bool BuildSequenceMapBodyFunc(
         seq_at_node.add_input(functionProto.input(inputIndex));
         seq_at_node.add_input(iter_count_name);
         seq_at_node.add_output(g_inputs.Get(inputIndex).name());
-        *loopbody_graph.add_node() = seq_at_node;
+        *loopbody_graph.add_node() = std::move(seq_at_node);
       } else {
         // If not a sequence, simply connect
         NodeProto identity;
@@ -684,7 +684,7 @@ bool BuildSequenceMapBodyFunc(
         identity.set_op_type("Identity");
         identity.add_input(functionProto.input(inputIndex));
         identity.add_output(g_inputs.Get(inputIndex).name());
-        *loopbody_graph.add_node() = identity;
+        *loopbody_graph.add_node() = std::move(identity);
       }
     }
 

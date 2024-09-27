@@ -5,7 +5,6 @@
 #include "onnx/defs/printer.h"
 
 #include <iomanip>
-#include <vector>
 
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -90,7 +89,7 @@ class ProtoPrinter {
   }
 
   template <typename T>
-  inline void print(T prim) {
+  inline void print(const T& prim) {
     output_ << prim;
   }
 
@@ -119,7 +118,7 @@ class ProtoPrinter {
   }
 
   template <typename Collection>
-  inline void printSet(const char* open, const char* separator, const char* close, Collection coll) {
+  inline void printSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {
@@ -131,7 +130,7 @@ class ProtoPrinter {
   }
 
   template <typename Collection>
-  inline void printIdSet(const char* open, const char* separator, const char* close, Collection coll) {
+  inline void printIdSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {
@@ -373,10 +372,10 @@ void ProtoPrinter::print(const NodeProto& node) {
   }
   printIdSet("", ", ", "", node.output());
   output_ << " = ";
-  if (node.domain() != "")
+  if (!node.domain().empty())
     output_ << node.domain() << ".";
   output_ << node.op_type();
-  if (node.overload() != "")
+  if (!node.overload().empty())
     output_ << ":" << node.overload();
   bool has_subgraph = false;
   for (const auto& attr : node.attribute())

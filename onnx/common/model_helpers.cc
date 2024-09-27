@@ -4,10 +4,6 @@
 
 #include "onnx/common/model_helpers.h"
 
-#include "onnx/checker.h"
-#include "onnx/defs/schema.h"
-#include "onnx/string_utils.h"
-
 namespace ONNX_NAMESPACE {
 
 Common::Status BuildNode(
@@ -18,7 +14,7 @@ Common::Status BuildNode(
     std::vector<std::string> const& inputs,
     std::vector<std::string> const& outputs,
     NodeProto* node) {
-  if (node == NULL) {
+  if (node == nullptr) {
     return Common::Status(Common::CHECKER, Common::INVALID_ARGUMENT, "node_proto should not be nullptr.");
   }
   node->set_name(name);
