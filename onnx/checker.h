@@ -125,7 +125,7 @@ class LexicalScopeContext final {
   }
 
   bool this_graph_has(const std::string& name) const {
-    return output_names.find(name) != output_names.cend();
+    return output_names.count(name) > 0;
   }
 
   bool this_or_ancestor_graph_has(const std::string& name) const {

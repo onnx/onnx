@@ -69,7 +69,7 @@ void FunctionExpandHelper(
 
   const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
   const auto schema = schema_registry->GetSchema(node.op_type(), domain_version, node.domain());
-  std::map<std::string, OpSchema::Attribute> default_attrs = schema->attributes();
+  auto default_attrs = schema->attributes();
 
   for (const auto& pair : default_attrs) {
     const auto& attr_name = pair.first;

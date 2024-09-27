@@ -12,7 +12,6 @@
 #include <map>
 #include <memory>
 #include <ostream>
-#include <set>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -366,12 +365,12 @@ class OpSchema final {
   /**
    * @brief Input could be one of the values specified in allowed_input_nums.
    */
-  OpSchema& NumInputs(std::set<int> allowed_input_nums);
+  OpSchema& NumInputs(std::unordered_set<int> allowed_input_nums);
 
   /**
    * @brief Output could be one of the values specified in allowed_output_nums.
    */
-  OpSchema& NumOutputs(std::set<int> allowed_output_nums);
+  OpSchema& NumOutputs(std::unordered_set<int> allowed_output_nums);
 
   // Shape Inference
   //
@@ -1061,7 +1060,7 @@ class OpSchema final {
     return domain_;
   }
 
-  const std::map<std::string, Attribute>& attributes() const {
+  const std::unordered_map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
 
@@ -1122,9 +1121,8 @@ class OpSchema final {
 
   std::vector<int> function_opset_versions() const {
     std::vector<int> opset_versions;
-    std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it = opset_version_to_function_body_.cbegin();
-    for (; it != opset_version_to_function_body_.cend(); ++it) {
-      opset_versions.push_back(it->first);
+    for (const auto& pair : opset_version_to_function_body_) {
+      opset_versions.push_back(pair.first);
     }
     return opset_versions;
   }
@@ -1165,9 +1163,8 @@ class OpSchema final {
 
   std::vector<int> context_dependent_function_opset_versions() const {
     std::vector<int> opset_versions;
-    std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it = opset_version_to_function_builder_.cbegin();
-    for (; it != opset_version_to_function_builder_.cend(); ++it) {
-      opset_versions.push_back(it->first);
+    for (const auto& pair : opset_version_to_function_builder_) {
+      opset_versions.push_back(pair.first);
     }
     return opset_versions;
   }
@@ -1205,7 +1202,7 @@ class OpSchema final {
       const FunctionProto* function,
       int requested_opset_version,
       int function_since_version,
-      std::set<std::string>* updated_ops = nullptr) const;
+      std::unordered_set<std::string>* updated_ops = nullptr) const;
   void UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int opset_version) const;
 
   /**
@@ -1234,7 +1231,7 @@ class OpSchema final {
   std::string doc_;
   // Default domain value ("") means it's ONNX domain.
   std::string domain_ = ONNX_DOMAIN;
-  std::map<std::string, Attribute> attributes_{};
+  std::unordered_map<std::string, Attribute> attributes_{};
   bool allows_unchecked_attributes_ = false;
   std::vector<FormalParameter> inputs_;
   std::vector<FormalParameter> outputs_;
