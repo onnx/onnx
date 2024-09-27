@@ -3,7 +3,7 @@
  */
 
 #include <algorithm>
-#include <functional>
+#include <map>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
@@ -2521,7 +2521,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
   // Parse the left-hand side
   std::stringstream str(left_equation);
   std::map<char, size_t> label_maps;
-  std::set<char> repeated_labels;
+  std::unordered_set<char> repeated_labels;
   ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
   size_t num_labels = 0;
   bool ellipsis_flag = true;
