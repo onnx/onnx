@@ -16,7 +16,7 @@ using AttributeMap = std::unordered_map<std::string, const AttributeProto*>;
 
 class AttributeBinder : public MutableVisitor {
  public:
-  AttributeBinder(const AttributeMap& attr_map) : attr_map_(attr_map) {}
+  explicit AttributeBinder(const AttributeMap& attr_map) : attr_map_(attr_map) {}
 
   // Binding a formal attribute-parameter to a value may, as a special case, also
   // remove the attribute from the list of attributes of a node (when the attribute

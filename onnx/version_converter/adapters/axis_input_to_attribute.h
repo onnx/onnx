@@ -62,8 +62,7 @@ class AxisInputToAttribute : public Adapter {
     if (int64s.empty()) {
       std::string raw_data = axis_node->t(kvalue).raw();
       ONNX_ASSERTM(
-          !raw_data.empty() && raw_data.size() % 8 == 0,
-          "Raw Data must be non-empty and size must be a multiple of 8");
+          !raw_data.empty() && raw_data.size() % 8 == 0, "Raw Data must be non-empty and size must be a multiple of 8");
       const int64_t* raw = reinterpret_cast<const int64_t*>(raw_data.c_str());
       node->i_(kaxis, raw[0]);
     } else {

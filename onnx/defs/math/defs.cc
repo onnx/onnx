@@ -2539,8 +2539,8 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
     size_t term_size = 0; // number of legal indices for the current term
     size_t num_illegal_char = 0; // number of illegal char before the current 'index' in the current term
 
-    for (size_t index = 0; index < term.size(); ++index) {
-      if (is_letter(term[index])) {
+    for (char index : term) {
+      if (is_letter(index)) {
         term_size += 1;
       }
     }

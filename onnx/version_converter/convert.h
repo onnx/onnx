@@ -92,7 +92,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
   void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
     ONNX_ASSERTM(
-        (initial_domain.empty() || initial_domain == "ai.onnx") && (target_domain.empty() || target_domain == "ai.onnx"),
+        (initial_domain.empty() || initial_domain == "ai.onnx") &&
+            (target_domain.empty() || target_domain == "ai.onnx"),
         "Warning: default onnx version converter can only convert "
         " between default domain opset versions ('' or 'ai.onnx')\n");
     ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains");

@@ -419,7 +419,7 @@ Output: [10, 8, 6]
 template <typename T>
 inline int64_t
 compute_output_dim_for_range(const TensorProto* start, const TensorProto* limit, const TensorProto* delta) {
-  if (start->dims().size() != 0 || limit->dims().size() != 0 || delta->dims().size() != 0) {
+  if (!start->dims().empty() || !limit->dims().empty() || !delta->dims().empty()) {
     fail_shape_inference("Input to 'Range' op should be scalars (Tensor with only one element and shape empty)");
   }
 

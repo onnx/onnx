@@ -10,7 +10,6 @@
 #include "onnx/common/interned_strings.h"
 
 #include <cstdint>
-
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -20,7 +19,7 @@
 namespace ONNX_NAMESPACE {
 
 struct InternedStrings {
-  InternedStrings()  {
+  InternedStrings() {
 #define REGISTER_SYMBOL(s)   \
   string_to_sym_[#s] = k##s; \
   sym_to_string_[k##s] = #s;

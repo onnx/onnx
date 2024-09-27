@@ -29,7 +29,7 @@ using DataValueMap = std::unordered_map<std::string, TensorShapeProto>;
 
 class SymbolTableImpl : public SymbolTable {
  public:
-  SymbolTableImpl() : index_(0) {}
+  SymbolTableImpl() {}
 
   void addFromGraph(const GraphProto& g) override {
     AddExistingSymbolicDims(g.input());
@@ -48,7 +48,7 @@ class SymbolTableImpl : public SymbolTable {
   }
 
  private:
-  unsigned int index_;
+  unsigned int index_{0};
   std::unordered_set<std::string> existing_symbols;
 
   // TypeProto_Tensor or TypeProto_SparseTensor

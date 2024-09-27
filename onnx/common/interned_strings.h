@@ -8,8 +8,7 @@
 // Adventurous users should note that the APIs will probably change.
 
 #pragma once
-#include <stdint.h>
-
+#include <cstdint>
 #include <string>
 
 namespace ONNX_NAMESPACE {
