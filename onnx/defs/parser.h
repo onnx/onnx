@@ -184,10 +184,10 @@ class KeyWordMap {
 
 class ParserBase {
  public:
-  ParserBase(const std::string& str)
+  explicit ParserBase(const std::string& str)
       : start_(str.data()), next_(str.data()), end_(str.data() + str.length()), saved_pos_(next_) {}
 
-  ParserBase(const char* cstr) : start_(cstr), next_(cstr), end_(cstr + strlen(cstr)), saved_pos_(next_) {}
+  explicit ParserBase(const char* cstr) : start_(cstr), next_(cstr), end_(cstr + strlen(cstr)), saved_pos_(next_) {}
 
   void SavePos() {
     saved_pos_ = next_;
@@ -401,7 +401,7 @@ class ParserBase {
 
 class OnnxParser : public ParserBase {
  public:
-  OnnxParser(const char* cstr) : ParserBase(cstr) {}
+  explicit OnnxParser(const char* cstr) : ParserBase(cstr) {}
 
   Status Parse(TensorShapeProto& shape);
 
