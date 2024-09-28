@@ -71,12 +71,12 @@ False instead of True.)DOC";
       if (axes_proto)
         axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
 
-      for (size_t i = 0; i < axes.size(); ++i) {
-        if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
+      for (int64_t& axe : axes) {
+        if (axe < -input_ndim || axe >= input_ndim) {
           fail_shape_inference("axis must be in [-rank, rank-1]. input rank was ", input_ndim);
         }
-        if (axes[i] < 0)
-          axes[i] += input_ndim;
+        if (axe < 0)
+          axe += input_ndim;
       }
       // do we need handle negative axis?
       for (int i = 0; i < input_ndim; ++i) {
@@ -246,9 +246,9 @@ False instead of True.)DOC";
       if (axes_proto)
         axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
 
-      for (size_t i = 0; i < axes.size(); ++i) {
-        if (axes[i] < 0)
-          axes[i] += input_ndim;
+      for (int64_t& axe : axes) {
+        if (axe < 0)
+          axe += input_ndim;
       }
       // do we need handle negative axis?
       for (int i = 0; i < input_ndim; ++i) {

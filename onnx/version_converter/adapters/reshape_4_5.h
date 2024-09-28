@@ -19,7 +19,7 @@ class Reshape_4_5 final : public RemoveConsumedInputs {
  public:
   explicit Reshape_4_5() : RemoveConsumedInputs("Reshape", OpSetID(4), OpSetID(5)) {}
 
-  void adapt_reshape_4_5(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_reshape_4_5(const std::shared_ptr<Graph>& graph, Node* node) const {
     // Create Input from Attribute - add as Initializer
     // Create tensor for value attribute
     Tensor t;

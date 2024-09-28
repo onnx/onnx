@@ -355,7 +355,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 fail_shape_inference("Only supports `int32_t` or `int64_t` inputs for split");
               }
 
-              if (splitSizes.size() == 0) {
+              if (splitSizes.empty()) {
                 fail_shape_inference("Input 'split' can not be empty.");
               }
 

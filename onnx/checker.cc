@@ -514,7 +514,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   for (const auto& sparse_tensor : attr.sparse_tensors()) {
     check_sparse_tensor(sparse_tensor, ctx);
   }
-  if (attr.graphs().size() > 0) {
+  if (!attr.graphs().empty()) {
     CheckerContext subgraph_ctx(ctx);
     subgraph_ctx.set_is_main_graph(false);
     for (const auto& graph : attr.graphs()) {
@@ -611,8 +611,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     lex_ctx.add(value_info.name());
   }
 
-  std::unordered_set<std::reference_wrapper<const std::string>, std::hash<std::string>, std::equal_to<std::string>>
-      initializer_name_checker;
+  std::unordered_set<std::string> initializer_name_checker;
 
   for (const auto& init : graph.initializer()) {
     enforce_has_field(init, name);

@@ -138,8 +138,7 @@ std::vector<NodeProto> FunctionBodyHelper::BuildNodes(const std::vector<NodeDef>
 }
 
 void FunctionBodyHelper::BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs) {
-  for (size_t i = 0; i < node_defs.size(); i++) {
-    const NodeDef& node = node_defs[i];
+  for (const auto& node : node_defs) {
     auto* np = functionProto.add_node();
 
     np->set_op_type(node.op_type);

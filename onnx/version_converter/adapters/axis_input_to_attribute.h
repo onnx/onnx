@@ -62,15 +62,14 @@ class AxisInputToAttribute : public Adapter {
     if (int64s.empty()) {
       std::string raw_data = axis_node->t(kvalue).raw();
       ONNX_ASSERTM(
-          raw_data.size() != 0 && raw_data.size() % 8 == 0,
-          "Raw Data must be non-empty and size must be a multiple of 8");
+          !raw_data.empty() && raw_data.size() % 8 == 0, "Raw Data must be non-empty and size must be a multiple of 8");
       const int64_t* raw = reinterpret_cast<const int64_t*>(raw_data.c_str());
       node->i_(kaxis, raw[0]);
     } else {
       node->i_(kaxis, int64s.at(0));
     }
     node->removeInput(this->axis_index);
-    if (axis_val->uses().size() < 1) {
+    if (axis_val->uses().empty()) {
       axis_node->destroy();
     }
   }
@@ -82,7 +81,7 @@ class AxisInputToAttribute : public Adapter {
         node->i_(kaxis, initializer.int64s().at(0));
         node->removeInput(this->axis_index);
         // Remove initializer
-        if (axis_val->uses().size() < 1)
+        if (axis_val->uses().empty())
           graph->eraseInitializer(initializer_name);
         break;
       }
