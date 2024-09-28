@@ -653,8 +653,6 @@ if(MSVC)
   set_target_properties(onnx
                         PROPERTIES STATIC_LIBRARY_FLAGS
                                    "${onnx_static_library_flags}")
-elseif(APPLE)
-
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
 endif()
