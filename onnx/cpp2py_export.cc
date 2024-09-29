@@ -9,9 +9,10 @@
 #include <limits>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 
 #include "onnx/checker.h"
-#include "onnx/defs/function.h"
+#include "onnx/common/ir_pb_converter.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
@@ -45,13 +46,13 @@ static std::string ProtoBytesToText(const py::bytes& bytes) {
   return ProtoToString(proto);
 }
 
-template <typename T, typename Ts = typename std::remove_const<T>::type>
-std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> ParseProtoFromBytesMap(
-    std::unordered_map<std::string, py::bytes> bytesMap) {
+template <typename T, typename Ts = std::remove_const_t<T>>
+static std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> ParseProtoFromBytesMap(
+    const std::unordered_map<std::string, py::bytes>& bytesMap) {
   std::unique_ptr<Ts[]> values(new Ts[bytesMap.size()]);
   std::unordered_map<std::string, T*> result;
   size_t i = 0;
-  for (auto kv : bytesMap) {
+  for (const auto& kv : bytesMap) {
     ParseProtoFromPyBytes(&values[i], kv.second);
     result[kv.first] = &values[i];
     i++;
@@ -59,12 +60,12 @@ std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> ParseProto
   return std::make_pair(std::move(values), result);
 }
 
-std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
+static std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
     OpSchema* schema,
     const py::bytes& nodeBytes,
-    std::unordered_map<std::string, py::bytes> valueTypesByNameBytes,
-    std::unordered_map<std::string, py::bytes> inputDataByNameBytes,
-    std::unordered_map<std::string, py::bytes> inputSparseDataByNameBytes,
+    const std::unordered_map<std::string, py::bytes>& valueTypesByNameBytes,
+    const std::unordered_map<std::string, py::bytes>& inputDataByNameBytes,
+    const std::unordered_map<std::string, py::bytes>& inputSparseDataByNameBytes,
     std::unordered_map<std::string, int> opsetImports,
     const int irVersion) {
   NodeProto node{};
@@ -244,7 +245,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           py::init([](std::string name,
                       std::string domain,
                       int since_version,
-                      std::string doc,
+                      const std::string& doc,
                       std::vector<OpSchema::FormalParameter> inputs,
                       std::vector<OpSchema::FormalParameter> outputs,
                       std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
@@ -586,7 +587,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   version_converter.doc() = "VersionConverter submodule";
   py::register_exception<ConvertError>(version_converter, "ConvertError");
 
-  version_converter.def("convert_version", [](const py::bytes& bytes, py::int_ target) {
+  version_converter.def("convert_version", [](const py::bytes& bytes, const py::int_& target) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
     shape_inference::InferShapes(proto);
@@ -659,8 +660,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   shape_inference.def(
       "infer_function_output_types",
       [](const py::bytes& function_proto_bytes,
-         const std::vector<py::bytes> input_types_bytes,
-         const std::vector<py::bytes> attributes_bytes) -> std::vector<py::bytes> {
+         const std::vector<py::bytes>& input_types_bytes,
+         const std::vector<py::bytes>& attributes_bytes) -> std::vector<py::bytes> {
         FunctionProto proto{};
         ParseProtoFromPyBytes(&proto, function_proto_bytes);
 
@@ -686,7 +687,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         for (auto& type_proto : output_types) {
           std::string out;
           type_proto.SerializeToString(&out);
-          result.push_back(py::bytes(out));
+          result.emplace_back(out);
         }
         return result;
       });
