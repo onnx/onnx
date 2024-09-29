@@ -5,7 +5,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-void RNNShapeInference(InferenceContext& ctx) {
+static void RNNShapeInference(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
@@ -72,7 +72,7 @@ void RNNShapeInference(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
+static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",

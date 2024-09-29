@@ -72,7 +72,7 @@ inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
 } // namespace
 
 template <class T>
-void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_type) {
+static void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_type) {
   if (inferred_type.elem_type() != TensorProto::UNDEFINED && existing_type.elem_type() != TensorProto::UNDEFINED &&
       existing_type.elem_type() != inferred_type.elem_type()) {
     std::stringstream ss;
@@ -249,7 +249,7 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
   }
 }
 
-std::string GetFunctionIdentifier(const FunctionProto& function) {
+static std::string GetFunctionIdentifier(const FunctionProto& function) {
   // Note: Models with IR version < 10 do not have the overload attribute.
   // However, that will be mapped to an empty identifier.
   const std::string& overload = function.overload();
@@ -259,7 +259,7 @@ std::string GetFunctionIdentifier(const FunctionProto& function) {
   return function.domain() + ":" + function.name() + ":" + overload;
 }
 
-std::string GetFunctionIdentifier(const NodeProto& node) {
+static std::string GetFunctionIdentifier(const NodeProto& node) {
   // Note: Models with IR version < 10 do not have the overload attribute.
   // However, that will be mapped to an empty identifier.
   const std::string& overload = node.overload();
@@ -303,7 +303,7 @@ class InferredTypes {
 };
 
 // Initialize a DataValueMap for a called function from the DataValueMap of the caller
-void BindValuesOnCall(
+static void BindValuesOnCall(
     const DataValueMap& caller_map,
     const NodeProto& caller,
     DataValueMap& callee_map,
@@ -322,7 +322,7 @@ void BindValuesOnCall(
 }
 
 // Update a DataValueMap for a calling function from the DataValueMap of the callee
-void BindValuesOnReturn(
+static void BindValuesOnReturn(
     const DataValueMap& callee_map,
     const FunctionProto& callee,
     DataValueMap& caller_map,
@@ -786,7 +786,7 @@ static void InferShapesImpl(
 
 // Either ModelProto or FunctionProto
 template <class T>
-std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
+static std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : proto.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());

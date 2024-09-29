@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "onnx/common/ir_pb_converter.h"
 #include "onnx/version_converter/convert.h"
 
 #include <memory>

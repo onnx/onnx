@@ -24,7 +24,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceOpDynamicAxes("sum", EMPTY_ZERO)));
 
-const char* reduce_sum_square_func_body = R"ONNX(
+static const char* reduce_sum_square_func_body = R"ONNX(
   {
     data_square = Mul(data, data)
     reduced = ReduceSum<keepdims: int = @keepdims>(data_square, axes)
@@ -40,7 +40,7 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 18, OpSchema().FillUsing(ReduceOpDynamicAxe
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 18, OpSchema().FillUsing(ReduceOpDynamicAxes("product", EMPTY_ONE)));
 
-const char* reduce_log_sum_func_body = R"ONNX(
+static const char* reduce_log_sum_func_body = R"ONNX(
   {
     reduced_sum = ReduceSum<keepdims: int = @keepdims>(data, axes)
     reduced = Log (reduced_sum)
@@ -52,7 +52,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema().FillUsing(ReduceFunctionOp("log sum", EMPTY_MINUS_INF, reduce_log_sum_func_body)));
 
-const char* reduce_log_sum_exp_func_body = R"ONNX(
+static const char* reduce_log_sum_exp_func_body = R"ONNX(
   {
     data_double = Cast<to = 11>(data)
     data_exp = Exp (data_double)
@@ -67,7 +67,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema().FillUsing(ReduceFunctionOp("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body)));
 
-const char* reduce_l1_func_body = R"ONNX(
+static const char* reduce_l1_func_body = R"ONNX(
   {
     data_abs = Abs(data)
     reduced = ReduceSum<keepdims: int = @keepdims>(data_abs, axes)
@@ -79,7 +79,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema().FillUsing(ReduceFunctionOp("L1 norm", EMPTY_ZERO, reduce_l1_func_body)));
 
-const char* reduce_l2_func_body = R"ONNX(
+static const char* reduce_l2_func_body = R"ONNX(
   {
     data_square = Mul(data, data)
     sum_square = ReduceSum<keepdims: int = @keepdims>(data_square, axes)
@@ -94,7 +94,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema().FillUsing(ReduceFunctionOp("L2 norm", EMPTY_ZERO, reduce_l2_func_body)));
 
-std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
+static std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(

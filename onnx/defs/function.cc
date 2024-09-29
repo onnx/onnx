@@ -4,16 +4,14 @@
 
 #include "onnx/defs/function.h"
 
-#include <map>
-
 #include "onnx/defs/schema.h"
 
-namespace ONNX_NAMESPACE {
-std::string InteralTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
+static std::string InteralTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
   std::string new_name = "Func_" + node_name + internal_name;
   return new_name;
 }
 
+namespace ONNX_NAMESPACE {
 void FunctionExpandHelper(
     const NodeProto& node,
     const FunctionProto& func,

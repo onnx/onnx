@@ -607,7 +607,7 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   return Parse(attr, name);
 }
 
-bool IsSingletonAttribute(AttributeProto_AttributeType type) {
+static bool IsSingletonAttribute(AttributeProto_AttributeType type) {
   switch (type) {
     case AttributeProto_AttributeType_FLOAT:
     case AttributeProto_AttributeType_INT:
@@ -622,7 +622,7 @@ bool IsSingletonAttribute(AttributeProto_AttributeType type) {
   }
 }
 
-AttributeProto_AttributeType ToSingletonType(AttributeProto_AttributeType type) {
+static AttributeProto_AttributeType ToSingletonType(AttributeProto_AttributeType type) {
   switch (type) {
     case AttributeProto_AttributeType_FLOATS:
       return AttributeProto_AttributeType_FLOAT;
