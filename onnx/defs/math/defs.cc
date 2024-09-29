@@ -481,30 +481,6 @@ max(0,x) + min(0,alpha*(exp(x/alpha)-1))
 
 static float celu_default_alpha = 1.0;
 
-static TensorProto ToDimensionOneFloatTensor(float value) {
-  auto t = ToTensor(std::vector<float>({value}));
-  t.add_dims(1);
-  return t;
-}
-
-static TensorProto ToDimensionOneTensor(int32_t value) {
-  auto t = ToTensor(std::vector<int32_t>({value}));
-  t.add_dims(1);
-  return t;
-}
-
-static TensorProto ToDimensionOneInt64Tensor(int64_t value) {
-  auto t = ToTensor(std::vector<int64_t>({value}));
-  t.add_dims(1);
-  return t;
-}
-
-static TensorProto ToDimensionOneInt64Tensor(const std::vector<int64_t>& value) {
-  auto t = ToTensor(value);
-  t.add_dims(value.size());
-  return t;
-}
-
 static bool BuildContextDependentFunctionBodyCelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
