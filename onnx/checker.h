@@ -89,7 +89,7 @@ class CheckerContext final {
     check_custom_domain_ = value;
   }
 
-  explicit CheckerContext() {}
+  explicit CheckerContext() = default;
 
  private:
   int ir_version_{-1};
