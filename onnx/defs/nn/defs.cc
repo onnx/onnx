@@ -1215,7 +1215,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       ctx.getInputType(1)->tensor_type().shape().dim(1) * group; // channels should be the second dim of second input
                                                                  // multiply group.
 
-  int size_of_output;
+  int size_of_output = 0;
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
@@ -2349,7 +2349,7 @@ void col2imShapeInference(InferenceContext& ctx) {
   // Image dimensions are dynamic
   for (auto i = 0; i < n_input_dims.dim_value(); ++i) {
     Dim image_dim_i;
-    if (image_shape.size() > 0) {
+    if (!image_shape.empty()) {
       image_dim_i.set_dim_value(image_shape[i]); // Otherwise, spatial dimensions are unknown
     }
     *final_image_shape->add_dim() = image_dim_i;

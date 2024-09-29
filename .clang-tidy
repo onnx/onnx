@@ -4,6 +4,13 @@
 # `clang-analyzer-alpha.deadcode.*` is just too verbose to enable
 Checks: >-
   -*,
+  bugprone-*,
+  -bugprone-branch-clone,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-lambda-function-name,
+  -bugprone-macro-parentheses,
+  -bugprone-narrowing-conversions,
+  -bugprone-reserved-identifier,
   clang-diagnostic-*,
   clang-analyzer-core.*,
   clang-analyzer-cplusplus.*,
@@ -17,6 +24,7 @@ Checks: >-
   clang-analyzer-alpha.security.*,
   cppcoreguidelines-avoid-goto,
   cppcoreguidelines-interfaces-global-init,
+  cppcoreguidelines-init-variables,
   cppcoreguidelines-no-malloc,
   cppcoreguidelines-prefer-member-initializer,
   cppcoreguidelines-pro-type-member-init,
@@ -33,7 +41,14 @@ Checks: >-
   google-default-arguments,
   google-global-names-in-headers,
   google-explicit-constructor,
-  modernize-use-emplace
+  modernize-*,
+  -modernize-concat-nested-namespaces,
+  -modernize-raw-string-literal,
+  -modernize-return-braced-init-list,
+  -modernize-use-auto,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  readability-container-size-empty
 
 CheckOptions:
   # `cppcoreguidelines-special-member-functions` is enabled, refer to https://en.cppreference.com/w/cpp/language/rule_of_three

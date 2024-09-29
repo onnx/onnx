@@ -345,17 +345,17 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               std::vector<int64_t> splitSizes;
               if (splitInitializer->data_type() == TensorProto::INT64) {
-                const auto& data = ParseData<int64_t>(splitInitializer);
+                const auto data = ParseData<int64_t>(splitInitializer);
                 splitSizes.insert(splitSizes.end(), data.begin(), data.end());
               } else if (splitInitializer->data_type() == TensorProto::INT32) {
-                const auto& data = ParseData<int32_t>(splitInitializer);
+                const auto data = ParseData<int32_t>(splitInitializer);
                 splitSizes.insert(splitSizes.end(), data.begin(), data.end());
               } else {
                 // unaccepted data type
                 fail_shape_inference("Only supports `int32_t` or `int64_t` inputs for split");
               }
 
-              if (splitSizes.size() == 0) {
+              if (splitSizes.empty()) {
                 fail_shape_inference("Input 'split' can not be empty.");
               }
 

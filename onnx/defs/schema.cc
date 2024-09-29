@@ -247,7 +247,7 @@ void OpSchema::Verify(const NodeProto& node) const {
     };
 
     const auto& search = attributes_.find(name);
-    AttributeProto::AttributeType expected_type;
+    AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
     } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
@@ -392,17 +392,14 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   // however, if a runtime needs to inline LayerNormalization, the inlined model has a ReduceMean op.
   // ReduceMean in opset 18 is different from opset 17.
   // This requires us to define more than one function body
-  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
-      opset_version_to_function_builder_.find(OpSchema::kUninitializedSinceVersion);
-
-  if (it != opset_version_to_function_builder_.cend()) {
+  auto it = opset_version_to_function_builder_.find(OpSchema::kUninitializedSinceVersion);
+  if (it != opset_version_to_function_builder_.end()) {
     opset_version_to_function_builder_[since_version_] = it->second;
     opset_version_to_function_builder_.erase(it);
   }
 
-  std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it_function_body =
-      opset_version_to_function_body_.find(OpSchema::kUninitializedSinceVersion);
-  if (it_function_body != opset_version_to_function_body_.cend()) {
+  auto it_function_body = opset_version_to_function_body_.find(OpSchema::kUninitializedSinceVersion);
+  if (it_function_body != opset_version_to_function_body_.end()) {
     opset_version_to_function_body_[since_version_] = it_function_body->second;
     UpdateFunctionProtoOpsetImportVersion(*opset_version_to_function_body_[since_version_], since_version_);
     opset_version_to_function_body_.erase(it_function_body);
@@ -416,14 +413,14 @@ OpSchema& OpSchema::Deprecate() {
   return *this;
 }
 
-OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
+OpSchema& OpSchema::NumInputs(std::unordered_set<int> allowed_input_nums) {
   num_inputs_allowed_ = [allowed_input_nums = std::move(allowed_input_nums)](int n) -> bool {
     return allowed_input_nums.count(n);
   };
   return *this;
 }
 
-OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
+OpSchema& OpSchema::NumOutputs(std::unordered_set<int> allowed_output_nums) {
   num_outputs_allowed_ = [allowed_output_nums = std::move(allowed_output_nums)](int n) -> bool {
     return allowed_output_nums.count(n) > 0;
   };
@@ -754,8 +751,7 @@ bool OpSchema::BuildContextDependentFunction(
   if (requested_opset_version == OpSchema::kUninitializedSinceVersion)
     requested_opset_version = since_version_;
 
-  std::map<int, ContextDependentFunctionBodyBuilder>::const_iterator it =
-      opset_version_to_function_builder_.upper_bound(requested_opset_version);
+  auto it = opset_version_to_function_builder_.upper_bound(requested_opset_version);
   if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
     ONNX_THROW_EX(std::out_of_range(
         std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
@@ -802,7 +798,7 @@ OpSchema& OpSchema::FunctionBody(const char* func_body, int opset_version) {
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   OnnxParser parser(func_body);
   auto status = parser.Parse(*function_proto->mutable_node());
   if (!status.IsOK())
@@ -822,7 +818,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int o
   if (opset_version == OpSchema::kUninitializedSinceVersion && since_version_ != OpSchema::kUninitializedSinceVersion) {
     opset_version = since_version_;
   }
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   for (const auto& node : func_nodes) {
     auto new_node = function_proto->add_node();
     new_node->CopyFrom(node);
@@ -831,7 +827,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int o
   // opset import may have been set
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
-  opset_version_to_function_body_.emplace(opset_version, function_proto);
+  opset_version_to_function_body_.emplace(opset_version, std::move(function_proto));
   return *this;
 }
 
@@ -843,7 +839,7 @@ OpSchema& OpSchema::FunctionBody(
     opset_version = since_version_;
   }
 
-  std::shared_ptr<FunctionProto> function_proto(new FunctionProto());
+  auto function_proto = std::make_shared<FunctionProto>();
   for (auto& relied_opset : relied_opsets) {
     *(function_proto->mutable_opset_import()->Add()) = relied_opset;
   }
@@ -855,7 +851,7 @@ OpSchema& OpSchema::FunctionBody(
   // opset import may have been set
   // we may need to update its version with the specified opset_version
   UpdateFunctionProtoOpsetImportVersion(*function_proto, opset_version);
-  opset_version_to_function_body_.emplace(opset_version, function_proto);
+  opset_version_to_function_body_.emplace(opset_version, std::move(function_proto));
   return *this;
 }
 
@@ -866,8 +862,7 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
   if (requested_opset_version == OpSchema::kUninitializedSinceVersion) {
     return opset_version_to_function_body_.rbegin()->second.get();
   }
-  std::map<int, std::shared_ptr<FunctionProto>>::const_iterator it =
-      opset_version_to_function_body_.upper_bound(requested_opset_version);
+  auto it = opset_version_to_function_body_.upper_bound(requested_opset_version);
   if (it != opset_version_to_function_body_.begin()) {
     --it;
     int function_since_version = it->first;
@@ -889,7 +884,7 @@ bool OpSchema::ValidateReferencedOpsInFuncton(
     const FunctionProto* function,
     int requested_opset_version,
     int function_since_version,
-    std::set<std::string>* updated_ops) const {
+    std::unordered_set<std::string>* updated_ops) const {
   bool all_ops_are_invalid = true;
   if (requested_opset_version == function_since_version) {
     return all_ops_are_invalid;
@@ -939,7 +934,7 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   // This is simply for convienince. If any of the function body ops do not belong to same
   // domain as function itself, then the function author needs to explicitly add all the relevant
   // opset imports.
-  if (function_body.opset_import().size() == 0) {
+  if (function_body.opset_import().empty()) {
     auto* schema_opset = function_body.mutable_opset_import()->Add();
     schema_opset->set_domain(domain_);
     schema_opset->set_version(since_version_);

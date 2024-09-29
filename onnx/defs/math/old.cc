@@ -1834,7 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
             TensorShapeProto second_shape;
             if (nullptr != shape_initializer) {
-              const auto& shape_data = ParseData<int64_t>(shape_initializer);
+              const auto shape_data = ParseData<int64_t>(shape_initializer);
 
               for (const auto& e : shape_data) {
                 auto* dim = second_shape.add_dim();
@@ -2073,6 +2073,7 @@ bool BuildContextDependentFunctionBody_opset12(
   std::string reduction_attr =
       reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
   std::vector<FunctionBodyHelper::NodeDef> body;
+  body.reserve(23);
   body.push_back({{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor_old(0))}});
 
   body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor_old(1))}});
@@ -2360,6 +2361,7 @@ bool BuildContextDependentFunctionBodySCE_opset12(
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
+  body.reserve(9);
 
   // Using stable implementation of LogSoftmax
   body.push_back({{"Shape3D"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old({0, 0, -1}))}});
@@ -3579,8 +3581,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Check for compatible matrix multiply dimensions
           {
-            auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-            auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+            auto const& dimL = shapeL.dim(shapeL.dim_size() - 1);
+            auto const& dimR = shapeR.dim(shapeR.dim_size() - 2);
             if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
               fail_shape_inference("Incompatible dimensions for matrix multiplication");
               ;
@@ -3756,7 +3758,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             if (k->data_type() == TensorProto::INT64) {
-              const auto& data = ParseData<int64_t>(k);
+              const auto data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
               fail_shape_inference("K input must be of type int64.");

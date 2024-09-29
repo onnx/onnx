@@ -154,7 +154,7 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, const i
       std::vector<Tensor> tensors;
       tensors.reserve(ap.tensors_size());
       for (int i = 0; i < ap.tensors_size(); i++) {
-        tensors.push_back(tensorProtoToTensor(ap.tensors(i)));
+        tensors.emplace_back(tensorProtoToTensor(ap.tensors(i)));
       }
       n->ts_(sym, std::move(tensors));
       break;
@@ -227,7 +227,7 @@ void createDummyValue(
 }
 
 std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int ir_version) {
-  std::unique_ptr<Graph> g(new Graph());
+  auto g = std::make_unique<Graph>();
 
   if (gp.has_name()) {
     g->setName(gp.name());

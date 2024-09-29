@@ -6,7 +6,8 @@
 
 #include "status.h"
 
-#include <assert.h>
+#include <cassert>
+#include <memory>
 
 #include "onnx/string_utils.h"
 
@@ -15,13 +16,13 @@ namespace Common {
 
 Status::Status(StatusCategory category, int code, const std::string& msg) {
   assert(static_cast<int>(StatusCode::OK) != code);
-  state_.reset(new State(category, code, msg));
+  state_ = std::make_unique<State>(category, code, msg);
 }
 
 Status::Status(StatusCategory category, int code) : Status(category, code, EmptyString()) {}
 
 bool Status::IsOK() const noexcept {
-  return (state_ == NULL);
+  return (state_ == nullptr);
 }
 
 StatusCategory Status::Category() const noexcept {

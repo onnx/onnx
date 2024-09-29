@@ -29,7 +29,7 @@ using DataValueMap = std::unordered_map<std::string, TensorShapeProto>;
 
 class SymbolTableImpl : public SymbolTable {
  public:
-  SymbolTableImpl() : index_(0) {}
+  SymbolTableImpl() {}
 
   void addFromGraph(const GraphProto& g) override {
     AddExistingSymbolicDims(g.input());
@@ -48,7 +48,7 @@ class SymbolTableImpl : public SymbolTable {
   }
 
  private:
-  unsigned int index_;
+  unsigned int index_{0};
   std::unordered_set<std::string> existing_symbols;
 
   // TypeProto_Tensor or TypeProto_SparseTensor
@@ -263,9 +263,8 @@ struct InferenceContextImpl : public InferenceContext {
         fail_type_inference("Attribute ", attr_name, " does not contain a graph.");
       }
 
-      std::unique_ptr<GraphInferencer> new_inferencer{
-          new GraphInferencerImpl(*attrNameToGraphProto->second, *graphInferenceContext_, options_)};
-
+      auto new_inferencer =
+          std::make_unique<GraphInferencerImpl>(*attrNameToGraphProto->second, *graphInferenceContext_, options_);
       inferencer = new_inferencer.get();
       graphAttributeInferencers_.emplace(attr_name, std::move(new_inferencer));
     } else {
@@ -461,20 +460,20 @@ void InferShapes(
     GraphProto* g,
     const std::unordered_map<std::string, int>& opset_imports,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const ShapeInferenceOptions& options = {},
+    const ShapeInferenceOptions& options = ShapeInferenceOptions(),
     const ModelLocalFunctionsMap& in_model_functions = {});
 
 void InferShapes(
     ModelProto& m,
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const ShapeInferenceOptions& options = {},
+    const ShapeInferenceOptions& options = ShapeInferenceOptions(),
     DataValueMap* generated_shape_data_by_name = nullptr);
 
 void InferShapes(
     const std::string& model_path,
     const std::string& save_path = "",
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
-    const ShapeInferenceOptions& options = {},
+    const ShapeInferenceOptions& options = ShapeInferenceOptions(),
     DataValueMap* generated_shape_data_by_name = nullptr);
 
 ///
@@ -485,7 +484,7 @@ void InferShapeForFunctionNode(
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    const ShapeInferenceOptions& options = {},
+    const ShapeInferenceOptions& options = ShapeInferenceOptions(),
     const ModelLocalFunctionsMap& model_local_functions_map = {},
     SymbolTable* symbolTable = nullptr,
     DataValueMap* generated_shape_data_by_name = nullptr);
@@ -499,7 +498,7 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, int>& func_opset_imports,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx,
-    const ShapeInferenceOptions& options = {},
+    const ShapeInferenceOptions& options = ShapeInferenceOptions(),
     const ModelLocalFunctionsMap& model_local_functions_map = {},
     SymbolTable* symbolTable = nullptr,
     DataValueMap* generated_shape_data_by_name = nullptr);
