@@ -4,11 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/common/ir_pb_converter.h"
 #include "onnx/version_converter/convert.h"
 
 #include <memory>
 #include <string>
+
+#include "onnx/common/ir_pb_converter.h"
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
