@@ -8,8 +8,7 @@
 // Adventurous users should note that the APIs will probably change.
 
 #pragma once
-#include <stdint.h>
-
+#include <cstdint>
 #include <string>
 
 namespace ONNX_NAMESPACE {
@@ -200,10 +199,12 @@ enum BuiltinSymbol {
 
 struct Symbol {
   Symbol() = default;
+  // NOLINTNEXTLINE(google-explicit-constructor)
   /*implicit*/ Symbol(BuiltinSymbol value) : value(value) {}
   explicit Symbol(const std::string& s);
   explicit Symbol(uint32_t value) : value(value) {}
 
+  // NOLINTNEXTLINE(google-explicit-constructor)
   operator uint32_t() const {
     return value;
   }

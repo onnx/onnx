@@ -3,7 +3,7 @@
  */
 
 #include <algorithm>
-#include <functional>
+#include <map>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
@@ -956,6 +956,8 @@ static const char* Clip_ver13_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
 specified by the inputs 'min' and 'max'. They default to
 numeric_limits::lowest() and numeric_limits::max(), respectively.
+When 'min' is greater than 'max', the clip operator sets all the 'input' values to
+the value of 'max'. Thus, this is equivalent to 'Min(max, Max(input, min))'.
 )DOC";
 
 bool BuildContextDependentFunctionBodyClip(
@@ -1479,7 +1481,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
             }
             if (k->data_type() == TensorProto::INT64) {
-              const auto& data = ParseData<int64_t>(k);
+              const auto data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
               fail_shape_inference("K input must be of type int64.");
@@ -2519,7 +2521,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
   // Parse the left-hand side
   std::stringstream str(left_equation);
   std::map<char, size_t> label_maps;
-  std::set<char> repeated_labels;
+  std::unordered_set<char> repeated_labels;
   ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
   size_t num_labels = 0;
   bool ellipsis_flag = true;
@@ -2537,8 +2539,8 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
     size_t term_size = 0; // number of legal indices for the current term
     size_t num_illegal_char = 0; // number of illegal char before the current 'index' in the current term
 
-    for (size_t index = 0; index < term.size(); ++index) {
-      if (is_letter(term[index])) {
+    for (char index : term) {
+      if (is_letter(index)) {
         term_size += 1;
       }
     }
