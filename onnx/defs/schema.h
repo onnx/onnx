@@ -11,6 +11,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -21,6 +22,7 @@
 
 #include "onnx/common/common.h"
 #include "onnx/common/constants.h"
+#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {

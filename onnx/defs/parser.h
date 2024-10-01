@@ -7,8 +7,7 @@
 
 #pragma once
 
-#include <ctype.h>
-
+#include <cctype>
 #include <string>
 #include <unordered_map>
 
