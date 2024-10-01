@@ -9,6 +9,6 @@ types-protobuf==5.28.0.20240924
 black==24.8.0
 isort==5.13.2
 # CLANG-FORMAT
-clang-format==17.0.6
+clang-format==19.1.0
 # EDITORCONFIG-CHECKER
 editorconfig-checker==3.0.3
