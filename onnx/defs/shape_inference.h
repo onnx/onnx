@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-#include "onnx/defs/data_type_utils.h"
+#include "onnx/common/common.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
@@ -535,9 +535,17 @@ getOutputShape(InferenceContext& ctx, size_t n, TypeProto::ValueCase default_typ
   }
   const auto output_value_case = output_type->value_case();
   if (output_value_case == TypeProto::kTensorType || output_value_case == TypeProto::kSparseTensorType) {
-    return getTensorMutableShape(output_value_case, *output_type);
+    auto output_shape = getTensorMutableShape(output_value_case, *output_type);
+    if (output_shape == nullptr) {
+      fail_type_inference("Output ", n, " expected to have tensor or sparse type in ", ctx.getDisplayName(), ".");
+    }
+    return output_shape;
   } else if (output_value_case == TypeProto::VALUE_NOT_SET) {
-    return getTensorMutableShape(default_type, *output_type);
+    auto output_shape = getTensorMutableShape(default_type, *output_type);
+    if (output_shape == nullptr) {
+      fail_type_inference("Output ", n, " expected to have tensor or sparse type in ", ctx.getDisplayName(), ".");
+    }
+    return output_shape;
   } else {
     fail_type_inference("Output ", n, " expected to have tensor type in ", ctx.getDisplayName(), ".");
   }
