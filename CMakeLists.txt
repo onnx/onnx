@@ -26,6 +26,7 @@ option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
+option(ONNX_BUILD_SHARED "Build ONNX as a shared library." OFF)
 
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
@@ -517,6 +518,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   # whole-archive linker option not available on AIX.
   # So, create a object library
   add_library(onnx OBJECT ${ONNX_SRCS})
+elseif(ONNX_BUILD_SHARED)
+  add_library(onnx SHARED ${ONNX_SRCS})
 else()
   add_library(onnx ${ONNX_SRCS})
 endif()
