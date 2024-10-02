@@ -26,8 +26,8 @@ option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
-option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 option(ONNX_BUILD_SHARED "Build ONNX as a shared library." OFF)
+option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
