@@ -27,7 +27,6 @@ option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
-option(ONNX_BUILD_SHARED "Build ONNX as a shared library." OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -520,7 +519,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   # whole-archive linker option not available on AIX.
   # So, create a object library
   add_library(onnx OBJECT ${ONNX_SRCS})
-elseif(ONNX_BUILD_SHARED)
+elseif(BUILD_SHARED_LIBS)
   add_library(onnx SHARED ${ONNX_SRCS})
 else()
   add_library(onnx ${ONNX_SRCS})
