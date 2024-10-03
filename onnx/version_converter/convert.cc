@@ -15,9 +15,9 @@ namespace version_conversion {
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   // Get initial_opsetid from mp_in
   OpSetID initial_struct(0);
-  for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
-    if (it->domain().empty() || it->domain() == "ai.onnx") {
-      initial_struct.setVersion(it->version());
+  for (const auto& it : mp_in.opset_import()) {
+    if (it.domain().empty() || it.domain() == "ai.onnx") {
+      initial_struct.setVersion(it.version());
       break;
     }
   }
@@ -58,7 +58,7 @@ void DefaultVersionConverter::convert_graph(
   // Identify index of this domain in g.opset_versions
   unsigned int domain_index = 0;
   for (unsigned int i = 0; i < g->opset_versions_mutable().size(); i++) {
-    if (g->opset_versions_mutable()[i].domain() == "") {
+    if (g->opset_versions_mutable()[i].domain().empty()) {
       domain_index = i;
     }
   }
@@ -83,7 +83,7 @@ void DefaultVersionConverter::convert_graph(
                  "experimental op."
               << std::endl;
         }
-      } else if (cur_op->domain() != "" && cur_op->domain() != "ai.onnx") {
+      } else if (!cur_op->domain().empty() && cur_op->domain() != "ai.onnx") {
         if (DEBUG) {
           std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << std::endl;
         }

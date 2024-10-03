@@ -6,8 +6,7 @@
 
 #include "status.h"
 
-#include <assert.h>
-
+#include <cassert>
 #include <memory>
 
 #include "onnx/string_utils.h"
