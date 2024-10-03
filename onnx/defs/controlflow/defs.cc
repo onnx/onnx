@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <assert.h>
+#include <cassert>
 
 #include "onnx/defs/controlflow/utils.h"
 #include "onnx/defs/schema.h"

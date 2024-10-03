@@ -4,8 +4,6 @@
 
 #include "onnx/checker.h"
 
-#include <functional>
-#include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -516,7 +514,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   for (const auto& sparse_tensor : attr.sparse_tensors()) {
     check_sparse_tensor(sparse_tensor, ctx);
   }
-  if (attr.graphs().size() > 0) {
+  if (!attr.graphs().empty()) {
     CheckerContext subgraph_ctx(ctx);
     subgraph_ctx.set_is_main_graph(false);
     for (const auto& graph : attr.graphs()) {
@@ -613,8 +611,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     lex_ctx.add(value_info.name());
   }
 
-  std::unordered_set<std::reference_wrapper<const std::string>, std::hash<std::string>, std::equal_to<std::string>>
-      initializer_name_checker;
+  std::unordered_set<std::string> initializer_name_checker;
 
   for (const auto& init : graph.initializer()) {
     enforce_has_field(init, name);
@@ -623,7 +620,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       fail_check("Tensor initializers must have a non-empty name");
     }
 
-    if (!initializer_name_checker.insert(std::cref(name)).second) {
+    if (!initializer_name_checker.emplace(name).second) {
       fail_check(name + " initializer name is not unique");
     }
 
@@ -648,7 +645,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     if (name.empty()) {
       fail_check("Sparse tensor initializers must have a non-empty name");
     }
-    if (!initializer_name_checker.insert(std::cref(name)).second) {
+    if (!initializer_name_checker.insert(name).second) {
       fail_check(name + " sparse initializer name is not unique across initializers and sparse_initializers");
     }
     check_sparse_tensor(sparse_init, ctx);
@@ -1065,7 +1062,7 @@ std::string resolve_external_data_location(
 #endif
 }
 
-std::set<std::string> experimental_ops = {
+std::unordered_set<std::string> experimental_ops = {
     "ATen",
     "Affine",
     "ConstantFill",

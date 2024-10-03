@@ -29,6 +29,7 @@ class FunctionBodyHelper {
 
     AttributeProtoWrapper() = default;
 
+    // NOLINTNEXTLINE(google-explicit-constructor)
     AttributeProtoWrapper(AttributeProto attr_prot) : proto(std::move(attr_prot)) {}
 
     template <typename T>
@@ -103,7 +104,7 @@ class FunctionBodyHelper {
 
 class FunctionBuilder {
  public:
-  FunctionBuilder(FunctionProto& funProto_) : funProto(funProto_) {}
+  explicit FunctionBuilder(FunctionProto& funProto_) : funProto(funProto_) {}
 
   FunctionBuilder& Add(const char* nodes_txt) {
     OnnxParser parser(nodes_txt);

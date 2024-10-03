@@ -522,6 +522,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
 else()
   add_library(onnx ${ONNX_SRCS})
 endif()
+set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
@@ -651,8 +653,6 @@ if(MSVC)
   set_target_properties(onnx
                         PROPERTIES STATIC_LIBRARY_FLAGS
                                    "${onnx_static_library_flags}")
-elseif(APPLE)
-
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
 endif()

@@ -42,7 +42,7 @@ struct ExtendSupportedTypes final : public Adapter {
     const ArrayRef<Value*>& outputs = node->outputs();
     const std::string original_output_name = node->output()->uniqueName();
 
-    const int input_type = inputs.size() > 0 ? inputs[0]->elemType() : -1;
+    const int input_type = !inputs.empty() ? inputs[0]->elemType() : -1;
     const int output_type = outputs[0]->elemType();
 
     const std::unordered_set<int>& supported_version8_types = {

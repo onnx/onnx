@@ -4,6 +4,13 @@
 # `clang-analyzer-alpha.deadcode.*` is just too verbose to enable
 Checks: >-
   -*,
+  bugprone-*,
+  -bugprone-branch-clone,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-lambda-function-name,
+  -bugprone-macro-parentheses,
+  -bugprone-narrowing-conversions,
+  -bugprone-reserved-identifier,
   clang-diagnostic-*,
   clang-analyzer-core.*,
   clang-analyzer-cplusplus.*,
@@ -34,14 +41,13 @@ Checks: >-
   google-default-arguments,
   google-global-names-in-headers,
   google-explicit-constructor,
-  modernize-make-shared,
-  modernize-make-unique,
-  modernize-pass-by-value,
-  modernize-use-equals-default,
-  modernize-use-equals-delete,
-  modernize-use-nullptr,
-  modernize-use-override,
-  modernize-use-emplace,
+  modernize-*,
+  -modernize-concat-nested-namespaces,
+  -modernize-raw-string-literal,
+  -modernize-return-braced-init-list,
+  -modernize-use-auto,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
   readability-container-size-empty
 
 CheckOptions:

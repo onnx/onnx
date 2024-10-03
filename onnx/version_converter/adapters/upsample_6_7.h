@@ -20,7 +20,7 @@ namespace version_conversion {
 struct Upsample_6_7 final : public Adapter {
   explicit Upsample_6_7() : Adapter("Upsample", OpSetID(6), OpSetID(7)) {}
 
-  void adapt_upsample_6_7(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_upsample_6_7(const std::shared_ptr<Graph>&, Node* node) const {
     Symbol width_scale_symbol = Symbol("width_scale");
     Symbol height_scale_symbol = Symbol("height_scale");
     ONNX_ASSERTM(

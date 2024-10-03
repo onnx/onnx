@@ -44,7 +44,9 @@ class StringRange final {
  public:
   StringRange();
   StringRange(const char* data, size_t size);
+  // NOLINTNEXTLINE(google-explicit-constructor)
   StringRange(const std::string& str);
+  // NOLINTNEXTLINE(google-explicit-constructor)
   StringRange(const char* data);
   const char* Data() const;
   size_t Size() const;

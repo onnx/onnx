@@ -28,8 +28,10 @@ class Adapter {
  public:
   virtual ~Adapter() noexcept = default;
 
-  explicit Adapter(const std::string& name, const OpSetID& initial_version, const OpSetID& target_version)
-      : name_(name), initial_version_(initial_version), target_version_(target_version) {}
+  Adapter(std::string name, OpSetID initial_version, OpSetID target_version)
+      : name_(std::move(name)),
+        initial_version_(std::move(initial_version)),
+        target_version_(std::move(target_version)) {}
 
   // This will almost always return its own node argument after modifying it in place.
   // The only exception are adapters for deprecated operators: in this case the input

@@ -2040,8 +2040,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           getOutputShape(ctx, 0);
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          for (size_t i = 0; i < perm.size(); ++i) {
-            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(perm[i]));
+          for (int64_t i : perm) {
+            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(i));
           }
         }));
 
@@ -2104,8 +2104,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           getOutputShape(ctx, 0);
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          for (size_t i = 0; i < perm.size(); ++i) {
-            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(perm[i]));
+          for (int64_t i : perm) {
+            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(i));
           }
         }));
 
@@ -2171,8 +2171,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          for (size_t i = 0; i < perm.size(); ++i) {
-            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(perm[i]));
+          for (int64_t i : perm) {
+            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(i));
           }
         }));
 

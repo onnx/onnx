@@ -23,7 +23,7 @@ jobs:
     name: Optional Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
       - name: misspell # Check spellings as well
         uses: reviewdog/action-misspell@ef8b22c1cca06c8d306fc6be302c3dab0f6ca12f # v1.23.0
         with:
@@ -35,14 +35,14 @@ jobs:
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@d99499e855260c9c56f7a1d066933b57326e9e7c # v1.26.0
+        uses: reviewdog/action-shellcheck@ccaafec556ffa154f112bfcb7b9c9574190b7091 # v1.27.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
       - name: cpplint # Static check C++ code
-        uses: reviewdog/action-cpplint@3f691d27ef181edb2a57b6d1edcec63ade34c611 # v1.7.0
+        uses: reviewdog/action-cpplint@cedf4f9bc3a71c4a660a85a53c4bbc08a808db96 # v1.8.0
         with:
           github_token: ${{ secrets.github_token }}
           reporter: github-pr-check
@@ -57,7 +57,7 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
       - name: Setup Python
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
@@ -99,7 +99,7 @@ jobs:
         # To toggle linter comments in the files page, press `i` on the keyboard
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@4dd16135b69a43b6c8efb853346f8437d92d3c93 # v3.26.6
+        uses: github/codeql-action/upload-sarif@e2b3eafc8d227b0241d48be5f425d47c2d750a13 # v3.26.10
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif
