@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import itertools
 import math
-from typing import Sequence
+from typing import Sequence, Optionalt
 
 import numpy as np
 
@@ -51,7 +51,7 @@ def get_pad_with_auto_pad(auto_pad: str, pad_shape: Sequence[int]) -> Sequence[i
 
 
 def get_output_shape_explicit_padding(
-    pads: Sequence[int],
+    pads: Sequence[int] | None,
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
