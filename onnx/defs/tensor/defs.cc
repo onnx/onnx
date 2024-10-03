@@ -790,7 +790,7 @@ result = [
 ```
 )DOC";
 
-inline void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t& step) {
+inline void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t step) {
   auto clamp = [](int64_t val, int64_t min, int64_t max) -> int64_t {
     return (val < min) ? min : (val > max) ? max : val;
   };
@@ -906,10 +906,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto get_initializer_data = [](const TensorProto* initializer) -> std::vector<int64_t> {
             std::vector<int64_t> vec;
             if (initializer->data_type() == TensorProto::INT64) {
-              const auto& data = ParseData<int64_t>(initializer);
+              const auto data = ParseData<int64_t>(initializer);
               vec.insert(vec.end(), data.begin(), data.end());
             } else if (initializer->data_type() == TensorProto::INT32) {
-              const auto& data = ParseData<int32_t>(initializer);
+              const auto data = ParseData<int32_t>(initializer);
               vec.insert(vec.end(), data.begin(), data.end());
             } else {
               // unaccepted data type
@@ -1124,8 +1124,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           getOutputShape(ctx, 0);
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          for (size_t i = 0; i < perm.size(); ++i) {
-            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(perm[i]));
+          for (int64_t i : perm) {
+            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(i));
           }
         }));
 
@@ -2067,7 +2067,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("'Repeats' input must be 1D tensor of type int64");
             }
 
-            const auto& repeats_data = ParseData<int64_t>(repeats_inputs);
+            const auto repeats_data = ParseData<int64_t>(repeats_inputs);
 
             if (repeats_data.size() != static_cast<size_t>(input_rank)) {
               fail_shape_inference(
@@ -3803,10 +3803,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           std::vector<int64_t> shape;
           if (cropShapeInitializer->data_type() == TensorProto::INT64) {
-            const auto& data = ParseData<int64_t>(cropShapeInitializer);
+            const auto data = ParseData<int64_t>(cropShapeInitializer);
             shape.insert(shape.end(), data.begin(), data.end());
           } else if (cropShapeInitializer->data_type() == TensorProto::INT32) {
-            const auto& data = ParseData<int32_t>(cropShapeInitializer);
+            const auto data = ParseData<int32_t>(cropShapeInitializer);
             shape.insert(shape.end(), data.begin(), data.end());
           } else {
             // unaccepted data type

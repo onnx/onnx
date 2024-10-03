@@ -277,8 +277,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         const auto& dims = shape.dim();
         mergeInDimensionInfo(dims.Get(axis), sequence_len_dim, 1);
 
-        temporary_type_protos.push_back(RemoveIthDimensionFromShape(*input_type, axis));
-        subgraph_input_types.push_back(&temporary_type_protos.back());
+        temporary_type_protos.emplace_back(RemoveIthDimensionFromShape(*input_type, axis));
+        subgraph_input_types.emplace_back(&temporary_type_protos.back());
 
       } else {
         subgraph_input_types.push_back(input_type);

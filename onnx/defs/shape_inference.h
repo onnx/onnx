@@ -28,7 +28,7 @@ struct ShapeInferenceOptions {
   // Enables data propagation for limited operators
   // to perform shape computation
   bool enable_data_propagation;
-  ShapeInferenceOptions(bool check_type_val = false, int strict_mode_val = 0, bool data_prop_val = false)
+  explicit ShapeInferenceOptions(bool check_type_val = false, int strict_mode_val = 0, bool data_prop_val = false)
       : check_type(check_type_val), error_mode(strict_mode_val), enable_data_propagation(data_prop_val){};
 };
 
@@ -176,7 +176,9 @@ getAttribute(InferenceContext& ctx, const std::string& attributeName, const std:
   return defaultValue;
 }
 
-inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, TensorShapeProto::Dimension dim2) {
+inline TensorShapeProto::Dimension operator*(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value() && dim2.has_dim_value()) {
     result.set_dim_value(dim1.dim_value() * dim2.dim_value());
@@ -197,7 +199,7 @@ std::pair<int, int> getAttributeElementTypeAndLength(
     const InferenceContext& ctx,
     const std::initializer_list<std::string>& attribute_names);
 
-inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, int64_t dim2) {
+inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
     result.set_dim_value(dim1.dim_value() * dim2);
@@ -207,7 +209,7 @@ inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, i
   return result;
 }
 
-inline TensorShapeProto::Dimension operator/(TensorShapeProto::Dimension dim1, int64_t dim2) {
+inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value()) {
     result.set_dim_value(dim1.dim_value() / dim2);
@@ -613,9 +615,9 @@ inline void multidirectionalBroadcastShapeInference(
     TensorShapeProto& resultShape) {
   int result_shape_size = 0;
   // Get the result shape size.
-  for (size_t i = 0; i < shapes.size(); ++i) {
-    if (shapes[i]->dim_size() > result_shape_size) {
-      result_shape_size = shapes[i]->dim_size();
+  for (auto shape : shapes) {
+    if (shape->dim_size() > result_shape_size) {
+      result_shape_size = shape->dim_size();
     }
   }
 
@@ -623,13 +625,13 @@ inline void multidirectionalBroadcastShapeInference(
     int64_t dim_value = 1;
     TensorShapeProto_Dimension symbolic_dim;
     int num_symbolic_dims = 0;
-    for (size_t j = 0; j < shapes.size(); ++j) {
-      if (i < result_shape_size - shapes[j]->dim_size()) {
+    for (auto shape : shapes) {
+      if (i < result_shape_size - shape->dim_size()) {
         // Shape j will be filled with 1 at dimension i;
         continue;
       }
 
-      auto dim_i_j = shapes[j]->dim(i - result_shape_size + shapes[j]->dim_size());
+      auto dim_i_j = shape->dim(i - result_shape_size + shape->dim_size());
       if (dim_i_j.has_dim_value()) {
         if (dim_i_j.dim_value() != 1) {
           if (dim_value != dim_i_j.dim_value() && dim_value != 1) {
