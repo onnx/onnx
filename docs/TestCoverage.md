@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 179/192 (93.23%, 5 generators excluded) common operators.
+Node tests have covered 180/193 (93.26%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -14641,6 +14641,132 @@ expect(
     outputs=[y],
     name="test_quantizelinear_uint4",
 )
+```
+
+</details>
+
+
+### RMSNormalization
+There are 4 test cases, listed as following:
+<details>
+<summary>d</summary>
+
+```python
+X = np.random.randn(3, 4).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, inv_std_dev = _rms_normalization(X, W, axis=axis)
+
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y", "InvStdDev"],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_2d_axis_negative_{-axis}"
+    else:
+        name = f"test_rms_normalization_2d_axis{axis}"
+
+    expect(node, inputs=[X, W], outputs=[Y, inv_std_dev], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+<details>
+<summary>d_epsilon</summary>
+
+```python
+epsilon = 1e-1
+X = np.random.randn(2, 3, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, inv_std_dev = _rms_normalization(X, W, axis, epsilon)
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y", "InvStdDev"],
+        axis=axis,
+        epsilon=epsilon,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_3d_axis_negative_{-axis}_epsilon"
+    else:
+        name = f"test_rms_normalization_3d_axis{axis}_epsilon"
+
+    expect(node, inputs=[X, W], outputs=[Y, inv_std_dev], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+<details>
+<summary>default_axis</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+# Default axis in LayerNormalization is -1.
+normalized_shape = calculate_normalized_shape(X.shape, -1)
+W = np.random.randn(*normalized_shape).astype(np.float32)
+# Axis is default to -1 in the reference implementation.
+Y, inv_std_dev = _rms_normalization(X, W)
+
+# Not specifying axis attribute means -1.
+node = onnx.helper.make_node(
+    "RMSNormalization",
+    inputs=["X", "W"],
+    outputs=["Y", "InvStdDev"],
+)
+
+expect(
+    node,
+    inputs=[X, W],
+    outputs=[Y, inv_std_dev],
+    name="test_rms_normalization_default_axis",
+)
+```
+
+</details>
+<details>
+<summary>rmsnormalization</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y, inv_std_dev = _rms_normalization(X, W, axis)
+
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y", "InvStdDev"],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_4d_axis_negative_{-axis}"
+    else:
+        name = f"test_rms_normalization_4d_axis{axis}"
+
+    expect(node, inputs=[X, W], outputs=[Y, inv_std_dev], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
 ```
 
 </details>
