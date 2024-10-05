@@ -238,6 +238,24 @@ TEST(ParserTest, OptionalInputTest) {
   EXPECT_EQ(n.input(2), "z");
 }
 
+TEST(ParserTest, LeadingOptionalInputTest) {
+  const char* code = "x = SomeOp( , z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 2);
+  EXPECT_EQ(n.input(0), "");
+  EXPECT_EQ(n.input(1), "z");
+}
+
+TEST(ParserTest, LeadingOptionalInputTest2) {
+  const char* code = "x = SomeOp(\"\" , z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 2);
+  EXPECT_EQ(n.input(0), "");
+  EXPECT_EQ(n.input(1), "z");
+}
+
 TEST(ParserTest, OptionalInputTest2) {
   const char* code = "x = SomeOp(y, \"\", z)";
   NodeProto n;
