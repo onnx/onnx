@@ -104,12 +104,12 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 ```mermaid
 graph TB
     subgraph GitHub GUI
-        A[Trigger: Draft a new Release in Github GUI and select the 1.X.X Branch] --> B[SaveDraft or Publish Release?] 
+        A[Trigger: Draft a new Release at the Github GUI and select the 1.X.X Branch] --> B[SaveDraft or Publish Release?] 
     end
 
     subgraph CI Pipeline
-        B --> D1[create_release.yml is called]
-        D1 --> D{All 4 different OSPipelines were successful?}        
+        B --> D1[create_release.yml is executed]
+        D1 --> D{All 4 different OSPipelines - release_*.yml - were executed successful?}        
         D -->|Yes| E[Job 3: Call prepare-release job]
         D -->|No| F[Job: Send Failure Notification]
         E --> G1{Collect artifacts}
