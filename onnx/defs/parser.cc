@@ -141,15 +141,31 @@ bool ParserBase::NextIsValidFloatString() {
   return false;
 }
 
+// Parsing an IdList (list of identifiers separated by commas, where identifiers are allowed to be empty).
+// Used to represent the list of inputs or outputs of a node.
+// An empty identifier may be represented by an empty string "" or by nothing followed by a single comma.
+// "Op()" has no operands
+// "Op(,x)"" has two operands, the first being empty.
+// 'Op("")' has one operand, which is an empty string.
+// 'Op(,)' has one operand, which is an empty string.
+// Thus, this will also allow a trailing comma after a non-empty identifier with no effect.
+// 'Op(x,)' has one operand, which is 'x'.
+//
+// This is mostly for some backward compatibility. "" is a simpler way to represent an
+// empty identifier that is less confusing and is recommended.
+
 Status OnnxParser::Parse(IdList& idlist) {
   idlist.Clear();
   std::string id;
-  CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id));
-  if (id.empty())
-    return Status::OK(); // Treat as empty list of identifiers
+  bool found;
+  CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found));
+  if (!found)
+    return Status::OK();
   *idlist.Add() = id;
   while (Matches(',')) {
-    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id));
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found));
+    if (!found)
+      break;
     *idlist.Add() = id;
   }
   return Status::OK();

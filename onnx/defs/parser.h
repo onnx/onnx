@@ -376,6 +376,29 @@ class ParserBase {
     return ParseOptionalIdentifier(id);
   }
 
+  // Parse an optional quotable identifier, and return whether an identifier was found
+  // in the output parameter 'id_found'.
+  // A empty string followed by a comma is considered to be a valid, but empty, identifier.
+  // This helps handle the following different cases:
+  // "Op()" has no operands
+  // "Op(,x)"" has two operands, the first being empty.
+  // 'Op("")' has one operand, which is an empty string.
+  // 'Op(,)' has one operand, which is an empty string.
+  // Thus, this will also allow a trailing comma after a non-empty identifier with no effect.
+  // 'Op(x,)' has one operand, which is 'x'.
+  //
+  // This is mostly for some backward compatibility. "" is a simpler way to represent an
+  // empty identifier that is less confusing and is recommended.
+  Status ParseOptionalQuotableIdentifier(std::string& id, bool& id_found) {
+    if (NextChar() == '"') {
+      id_found = true;
+      return Parse(id);
+    }
+    Status status = ParseOptionalIdentifier(id);
+    id_found = !id.empty() || NextChar() == ',';
+    return status;
+  }
+
   Status PeekIdentifier(std::string& id) {
     SavePos();
     ParseOptionalIdentifier(id);
