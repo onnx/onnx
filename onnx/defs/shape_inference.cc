@@ -464,7 +464,7 @@ TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, 
   // First, check initializer.
   const TensorProto* shape_initializer = ctx.getInputData(input_index);
   if (shape_initializer) {
-    const std::vector<int64_t>& shape_data = ParseData<int64_t>(shape_initializer);
+    const std::vector<int64_t> shape_data = ParseData<int64_t>(shape_initializer);
     for (const int64_t& e : shape_data) {
       shape_input.add_dim()->set_dim_value(e);
     }

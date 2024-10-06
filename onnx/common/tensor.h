@@ -23,12 +23,12 @@ namespace ONNX_NAMESPACE {
 
 struct Tensor final {
  private:
-  bool is_segment_;
-  int64_t segment_begin_;
-  int64_t segment_end_;
-  bool has_name_;
+  bool is_segment_{false};
+  int64_t segment_begin_{0};
+  int64_t segment_end_{0};
+  bool has_name_{false};
   std::string name_;
-  int32_t elem_type_;
+  int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
   std::vector<int64_t> sizes_;
 
   std::vector<float> float_data_;
@@ -38,17 +38,11 @@ struct Tensor final {
   std::vector<uint64_t> uint64_data_;
   std::vector<std::string> string_data_;
 
-  bool is_raw_data_;
+  bool is_raw_data_{false};
   std::string raw_data_;
 
  public:
-  Tensor()
-      : is_segment_(false),
-        segment_begin_(0),
-        segment_end_(0),
-        has_name_(false),
-        elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
-        is_raw_data_(false) {}
+  Tensor() = default;
 
   Tensor(const Tensor& other)
       : is_segment_(other.is_segment_),
