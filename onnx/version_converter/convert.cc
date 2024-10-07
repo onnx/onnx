@@ -9,6 +9,8 @@
 #include <memory>
 #include <string>
 
+#include "onnx/common/ir_pb_converter.h"
+
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 

@@ -271,7 +271,7 @@ class OpSchema final {
     std::string description_;
 
     // Formal parameter option.
-    FormalParameterOption param_option_;
+    FormalParameterOption param_option_{};
 
     // For variadic parameters, a flag indicating if all parameters must be of
     // same type
@@ -283,7 +283,7 @@ class OpSchema final {
     // True if this parameter can be an differentiable inputs of Gradient.
     // Otherwise, using this parameter as an differentiable inputs of Gradient
     // is prohibited.
-    DifferentiationCategory differentiation_category_;
+    DifferentiationCategory differentiation_category_{};
   };
 
   enum class SupportType : uint8_t {
