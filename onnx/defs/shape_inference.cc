@@ -44,7 +44,7 @@ void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inpu
   }
 }
 
-void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+static void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type || input_type->value_case() != TypeProto::kSequenceType) {
     fail_type_inference("Input ", inputIndex, " expected to have sequence type");
@@ -58,7 +58,7 @@ void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, size_t in
   output_type->mutable_sequence_type()->mutable_elem_type()->CopyFrom(input_seq_type.elem_type());
 }
 
-void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+static void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type || input_type->value_case() != TypeProto::kOptionalType) {
     fail_type_inference("Input ", inputIndex, " expected to have optional type");
@@ -72,7 +72,7 @@ void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t in
   output_type->mutable_optional_type()->mutable_elem_type()->CopyFrom(input_opt_type.elem_type());
 }
 
-void propagateElemTypeFromMapInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+static void propagateElemTypeFromMapInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type || input_type->value_case() != TypeProto::kMapType) {
     fail_type_inference("Input ", inputIndex, " expected to have map type");
@@ -115,7 +115,7 @@ Merge shape information from a source shape into a target shape.
 * prefer target param over source param if mismatched.
 * Fail if there are mismatches in number of dimensions or dimension values.
 */
-void mergeInShapeInfo(const TensorShapeProto& source, TensorShapeProto& target) {
+static void mergeInShapeInfo(const TensorShapeProto& source, TensorShapeProto& target) {
   auto num_source_dims = source.dim_size();
   auto num_target_dims = target.dim_size();
   if (num_source_dims != num_target_dims) {
@@ -183,7 +183,7 @@ void mergeInShapeInfo(const TypeProto_SparseTensor& source, TypeProto_SparseTens
 /// </summary>
 /// <param name="source_shape"></param>
 /// <param name="target_shape">destination shape</param>
-void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& target_shape) {
+static void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& target_shape) {
   auto source_rank = source_shape.dim_size();
   for (int i = 0; i < source_rank; ++i) {
     const auto& source_dim = source_shape.dim(i);
@@ -214,7 +214,7 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProto& targ
 }
 
 template <typename TENSOR_TYPE>
-void UnionShapeInfoForTensor(const TensorShapeProto& source_shape, TENSOR_TYPE& target_type) {
+static void UnionShapeInfoForTensor(const TensorShapeProto& source_shape, TENSOR_TYPE& target_type) {
   if (target_type.has_shape()) {
     TensorShapeProto* target_shape = target_type.mutable_shape();
 
@@ -233,7 +233,7 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& targ
   UnionShapeInfoForTensor(source_shape, target_type);
 }
 
-void UnionShapeInfo(const TypeProto_Tensor& source_type, TypeProto_Tensor& target_type) {
+static void UnionShapeInfo(const TypeProto_Tensor& source_type, TypeProto_Tensor& target_type) {
   // The union of a tensor of unknown rank and a tensor of known rank is a tensor of unknown rank.
   // Hence, if the source_type had unknown rank, we clear the shape of the target_type.
   // Otherwise, UnionShapeInfoForTensor handles the rest.
@@ -244,7 +244,7 @@ void UnionShapeInfo(const TypeProto_Tensor& source_type, TypeProto_Tensor& targe
   }
 }
 
-void UnionShapeInfo(const TypeProto_SparseTensor& source_type, TypeProto_SparseTensor& target_type) {
+static void UnionShapeInfo(const TypeProto_SparseTensor& source_type, TypeProto_SparseTensor& target_type) {
   // The union of a tensor of unknown rank and a tensor of known rank is a tensor of unknown rank.
   // Hence, if the source_type had unknown rank, we clear the shape of the target_type.
   // Otherwise, UnionShapeInfoForTensor handles the rest.
@@ -342,7 +342,7 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
 // sparse input and outputs dense or vice-versa.
 // If the output value_case is not set, then
 // the input value_case is propagated.
-void propagateTensorElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
+static void propagateTensorElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
   if (nullptr == input_type) {
     fail_type_inference("Input type was null");
   }
@@ -377,7 +377,7 @@ void propagateTensorElemTypeWithValidation(const TypeProto* input_type, TypeProt
   }
 }
 
-void propagateSequenceElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
+static void propagateSequenceElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
   if (nullptr == input_type) {
     fail_type_inference("Input type was null");
   }
@@ -396,7 +396,7 @@ void propagateSequenceElemTypeWithValidation(const TypeProto* input_type, TypePr
   }
 }
 
-void propagateOptionalElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
+static void propagateOptionalElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
   if (nullptr == input_type) {
     fail_type_inference("Input type was null");
   }
@@ -415,7 +415,7 @@ void propagateOptionalElemTypeWithValidation(const TypeProto* input_type, TypePr
   }
 }
 
-void propagateMapElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
+static void propagateMapElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
   if (nullptr == input_type) {
     fail_type_inference("Input type was null");
   }

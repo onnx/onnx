@@ -155,7 +155,7 @@ void resizeShapeInferenceHelper(
   }
 }
 
-void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
+static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_version) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
     return;

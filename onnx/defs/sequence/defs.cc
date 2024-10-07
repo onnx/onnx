@@ -526,7 +526,7 @@ the input.
 This operator assumes that processing each sample is independent and could executed in parallel
 or in any order. Users cannot expect any specific ordering in which each subgraph is computed.)DOC";
 
-void SequenceMapInferenceFunction(InferenceContext& ctx) {
+static void SequenceMapInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   assert(num_inputs > 0);
 
@@ -576,10 +576,8 @@ void SequenceMapInferenceFunction(InferenceContext& ctx) {
   }
 }
 
-bool BuildSequenceMapBodyFunc(
-    const FunctionBodyBuildContext& ctx,
-    const OpSchema& schema,
-    FunctionProto& functionProto) {
+static bool
+BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   schema.BuildFunction(functionProto);
 
   // variadic input/outputs will be expanded
