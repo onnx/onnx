@@ -527,7 +527,7 @@ static void print_warning_if_has_experimental(const std::unordered_set<std::stri
     }
     // Remove the last comma which is unnecessary
     all_experimental_ops.pop_back();
-    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << std::endl;
+    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << '\n';
   }
 }
 
