@@ -10,7 +10,7 @@
 namespace ONNX_NAMESPACE {
 
 // For GlobalPool operations.
-static void globalPoolTypeShapeInference_opset2(InferenceContext& ctx) {
+void globalPoolTypeShapeInference_opset2(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // needs at least one input with shape.
@@ -36,7 +36,7 @@ static void globalPoolTypeShapeInference_opset2(InferenceContext& ctx) {
   }
 }
 
-static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator_opset2(const char* op_type, const char* op) {
+std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator_opset2(const char* op_type, const char* op) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -85,7 +85,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     2,
     OpSchema().FillUsing(GlobalLpPoolingOpSchemaGenerator_opset2("LpPool", "lp pool")));
 
-const static char* pads_doc_opset11 =
+const char* pads_doc_opset11 =
     "Padding for the beginning and ending along each spatial axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
     "and end part of the corresponding axis. `pads` format should be as follow "
@@ -93,7 +93,7 @@ const static char* pads_doc_opset11 =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.";
-const static char* conv_auto_pad_doc_opset19 =
+const char* conv_auto_pad_doc_opset19 =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that "
@@ -101,7 +101,7 @@ const static char* conv_auto_pad_doc_opset19 =
     "The padding is split between the two sides equally or almost equally (depending "
     "on whether it is even or odd). In case the padding is an odd number, the extra "
     "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
-const static char* conv_transpose_auto_pad_doc_opset19 =
+const char* conv_transpose_auto_pad_doc_opset19 =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that "
@@ -110,7 +110,7 @@ const static char* conv_transpose_auto_pad_doc_opset19 =
     "on whether it is even or odd). In case the padding is an odd number, the extra "
     "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
 
-static void convPoolShapeInference_opset19(
+void convPoolShapeInference_opset19(
     InferenceContext& ctx,
     bool use_dilation,
     bool require_kernel_shape,
@@ -448,7 +448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
+void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.
   if (ctx.getNumInputs() != 2 && ctx.getNumInputs() != 3) {
     fail_type_inference("MaxUnpool op must have either two or three inputs.");
@@ -533,7 +533,7 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
 }
 
 // For GlobalPool operations.
-static void globalPoolTypeShapeInference_opset1(InferenceContext& ctx) {
+void globalPoolTypeShapeInference_opset1(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // needs at least one input with shape.
@@ -559,7 +559,7 @@ static void globalPoolTypeShapeInference_opset1(InferenceContext& ctx) {
   }
 }
 
-static std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator_opset1(const char* op_type, const char* op) {
+std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator_opset1(const char* op_type, const char* op) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -612,7 +612,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema().FillUsing(GlobalPoolingOpSchemaGenerator_opset1("MaxPool", "max")));
 
-static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
+void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // we need at least two inputs to have a shape for this inference.
@@ -853,7 +853,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           convPoolShapeInference_opset19(ctx, true, false, 0, 1);
         }));
 
-static std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_opset11(const char* filter_desc) {
+std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_opset11(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -977,7 +977,7 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 11, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator_opset11("a filter")));
 
-static std::function<void(OpSchema&)> ConvOpSchemaGenerator_opset11(const char* filter_desc) {
+std::function<void(OpSchema&)> ConvOpSchemaGenerator_opset11(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1083,7 +1083,7 @@ computes the output.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(Conv, 11, OpSchema().FillUsing(ConvOpSchemaGenerator_opset11("a filter")));
 
-static void roiPoolTypeShapeInference_opset1(InferenceContext& ctx) {
+void roiPoolTypeShapeInference_opset1(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // rois is the second input.
@@ -1122,7 +1122,7 @@ static void roiPoolTypeShapeInference_opset1(InferenceContext& ctx) {
   output_shape->add_dim()->set_dim_value(pooled_shape[1]);
 }
 
-static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator_opset1(const char* name) {
+std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator_opset1(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1180,7 +1180,7 @@ static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator_opset1(const char
 
 ONNX_OPERATOR_SET_SCHEMA(MaxRoiPool, 1, OpSchema().FillUsing(RoiPoolOpSchemaGenerator_opset1("max")));
 
-static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset18(const char* name) {
+std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset18(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1363,14 +1363,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain index tensor to int64")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { maxUnpoolShapeInference_opset11(ctx); }));
 
-static std::vector<std::string> GetSupportedDataTypesForPoolingOps_opset19(bool supports8bit) {
+std::vector<std::string> GetSupportedDataTypesForPoolingOps_opset19(bool supports8bit) {
   if (supports8bit) {
     return {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(int8)", "tensor(uint8)"};
   }
   return {"tensor(float16)", "tensor(float)", "tensor(double)"};
 }
 
-static std::function<void(OpSchema&)> PoolOpSchemaGenerator_opset19(
+std::function<void(OpSchema&)> PoolOpSchemaGenerator_opset19(
     const char* name,
     const char* opName,
     const char* additionalDescription,
@@ -1852,7 +1852,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
              {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
 
-const static char* pads_doc2 =
+const char* pads_doc2 =
     "Padding for the beginning and ending along each spatial axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
     "and end part of the corresponding axis. `pads` format should be as follow "
@@ -1860,13 +1860,13 @@ const static char* pads_doc2 =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.";
-const static char* auto_pad_doc2 =
+const char* auto_pad_doc2 =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output spatial size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
     "beginning for SAME_LOWER. VALID mean no padding.";
-const static char* auto_pad_doc3 =
+const char* auto_pad_doc3 =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that "
@@ -1875,7 +1875,7 @@ const static char* auto_pad_doc3 =
     "on whether it is even or odd). In case the padding is an odd number, the extra "
     "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
 
-static void convPoolShapeInference1(
+void convPoolShapeInference1(
     InferenceContext& ctx,
     bool use_dilation,
     bool require_kernel_shape,
@@ -2032,7 +2032,7 @@ static void convPoolShapeInference1(
   }
 }
 
-static std::function<void(OpSchema&)>
+std::function<void(OpSchema&)>
 PoolOpSchemaGenerator_9(const char* name, const char* opName, const char* additionalDescription) {
   return [=](OpSchema& schema) {
     std::string doc;
@@ -2109,7 +2109,7 @@ PoolOpSchemaGenerator_9(const char* name, const char* opName, const char* additi
   };
 }
 
-static std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
+std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
     const char* name,
     const char* opName,
     const char* additionalDescription,
@@ -2213,14 +2213,14 @@ static std::function<void(OpSchema&)> PoolOpSchemaGenerator_10(
   };
 }
 
-static std::vector<std::string> GetSupportedDataTypesForPoolingOps_1(bool supports8bit) {
+std::vector<std::string> GetSupportedDataTypesForPoolingOps_1(bool supports8bit) {
   if (supports8bit) {
     return {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(int8)", "tensor(uint8)"};
   }
   return {"tensor(float16)", "tensor(float)", "tensor(double)"};
 }
 
-static std::function<void(OpSchema&)> PoolOpSchemaGenerator_11(
+std::function<void(OpSchema&)> PoolOpSchemaGenerator_11(
     const char* name,
     const char* opName,
     const char* additionalDescription,
@@ -2487,7 +2487,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64"));
 
-static void maxUnpoolShapeInference1(InferenceContext& ctx) {
+void maxUnpoolShapeInference1(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.
   if (ctx.getNumInputs() != 2 && ctx.getNumInputs() != 3) {
     fail_type_inference("MaxUnpool op must have either two or three inputs.");
@@ -2642,7 +2642,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain index tensor to int64")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { maxUnpoolShapeInference1(ctx); }));
 
-const static char* pads_doc1 =
+const char* pads_doc1 =
     "Padding for the beginning and ending along each axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
     "and end part of the corresponding axis. `pads` format should be as follow "
@@ -2650,7 +2650,7 @@ const static char* pads_doc1 =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute.";
-const static char* auto_pad_doc1 =
+const char* auto_pad_doc1 =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input."
@@ -2704,7 +2704,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors."));
 
-static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_10(const char* name) {
+std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_10(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2758,7 +2758,7 @@ static const char* GlobalLpPool_ver1_doc = R"DOC(
  the values in the same channel. This is equivalent to LpPool with kernel size
  equal to the spatial dimension of input tensor.)DOC";
 
-static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_11(const char* name) {
+std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_11(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2819,7 +2819,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_11(const char* nam
 
 ONNX_OPERATOR_SET_SCHEMA(LpPool, 11, OpSchema().FillUsing(LpPoolOpSchemaGenerator_11("LpPool")));
 
-static std::function<void(OpSchema&)> ConvOpSchemaGenerator_10(const char* filter_desc) {
+std::function<void(OpSchema&)> ConvOpSchemaGenerator_10(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2894,7 +2894,7 @@ computes the output.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(Conv, 1, OpSchema().FillUsing(ConvOpSchemaGenerator_10("a filter")));
 
-static void convTransposeShapeInference1(InferenceContext& ctx) {
+void convTransposeShapeInference1(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // we need at least two inputs to have a shape for this inference.
@@ -3033,7 +3033,7 @@ static void convTransposeShapeInference1(InferenceContext& ctx) {
   }
 }
 
-static std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_10(const char* filter_desc) {
+std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_10(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(

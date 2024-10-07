@@ -4,6 +4,7 @@
 
 #include "onnx/checker.h"
 
+#include <iostream>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -1034,10 +1035,10 @@ std::string resolve_external_data_location(
   std::string data_path = path_join(base_dir, relative_path);
   // use stat64 to check whether the file exists
 #if defined(__APPLE__) || defined(__wasm__) || !defined(__GLIBC__)
-  struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
+  struct stat buffer;  // APPLE, wasm and non-glic stdlibs do not have stat64
   if (data_path.empty() || (data_path[0] != '#' && stat((data_path).c_str(), &buffer) != 0)) {
 #else
-  struct stat64 buffer{}; // All POSIX under glibc except APPLE and wasm have stat64
+  struct stat64 buffer{};  // All POSIX under glibc except APPLE and wasm have stat64
   if (data_path.empty() || (data_path[0] != '#' && stat64((data_path).c_str(), &buffer) != 0)) {
 #endif
     fail_check(

@@ -6,6 +6,7 @@
 
 #include "onnx/version_converter/convert.h"
 
+#include <iostream>
 #include <memory>
 #include <string>
 
