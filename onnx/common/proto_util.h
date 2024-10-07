@@ -26,17 +26,17 @@ using FunctionSpecId = std::string;
 // A single string representation of (domain, op, overload)
 using FunctionImplId = std::string;
 
-FunctionImplId GetFunctionImplId(const std::string& domain, const std::string& op, const std::string& overload) {
+inline FunctionImplId GetFunctionImplId(const std::string& domain, const std::string& op, const std::string& overload) {
   if (overload.empty())
     return NormalizeDomain(domain) + "::" + op;
   return NormalizeDomain(domain) + "::" + op + "::" + overload;
 }
 
-FunctionImplId GetFunctionImplId(const FunctionProto& function) {
+inline FunctionImplId GetFunctionImplId(const FunctionProto& function) {
   return GetFunctionImplId(function.domain(), function.name(), function.overload());
 }
 
-FunctionImplId GetCalleeId(const NodeProto& node) {
+inline FunctionImplId GetCalleeId(const NodeProto& node) {
   return GetFunctionImplId(node.domain(), node.op_type(), node.overload());
 }
 

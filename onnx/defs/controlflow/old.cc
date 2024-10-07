@@ -804,6 +804,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types_ir4(), "All Tensor types up to IRv4.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
   // NOTE:
   // The first input to Scan is sequence_lens. We skip that when processing
@@ -937,14 +938,14 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
   }
 }
 
-int handle_negative_axis_validate_opset9(const std::string& attrib, int axis, int rank) {
+static int handle_negative_axis_validate_opset9(const std::string& attrib, int axis, int rank) {
   if (!(-rank <= axis && axis < rank)) {
     fail_shape_inference(attrib, " axis value ", axis, " is invalid for a tensor of rank ", rank);
   }
   return (axis >= 0 ? axis : axis + rank);
 }
 
-void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
+static void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_scan_inputs = narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
   auto num_loop_state_vars = num_inputs - num_scan_inputs;
@@ -1037,6 +1038,7 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
+    input_data.reserve(num_inputs);
     for (size_t i = 0; i < num_inputs; ++i) {
       // ctx.getInputData(i), the input to scan, does not represent the input to
       // scan body. So, we pass in null, to represent an unknown value.
@@ -1279,7 +1281,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset8));
 
-void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
+static void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
 
@@ -1550,7 +1552,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset8));
 
-void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
+static void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
 
@@ -2031,7 +2033,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset9));
 
-void IfInferenceFunction1(InferenceContext& ctx) {
+static void IfInferenceFunction1(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
   std::vector<const TypeProto*> subgraph_input_types; // none
@@ -2127,7 +2129,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction1));
 
-void IfInferenceFunction_11(InferenceContext& ctx) {
+static void IfInferenceFunction_11(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
   std::vector<const TypeProto*> subgraph_input_types; // none
@@ -2234,7 +2236,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction_11));
 
-void IfInferenceFunction_13(InferenceContext& ctx) {
+static void IfInferenceFunction_13(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
   std::vector<const TypeProto*> subgraph_input_types; // none
@@ -2334,7 +2336,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction_13));
 
-void LoopInferenceFunction_13(InferenceContext& ctx) {
+static void LoopInferenceFunction_13(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   assert(num_inputs >= 2);
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
