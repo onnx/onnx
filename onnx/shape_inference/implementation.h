@@ -11,8 +11,8 @@
 #include <utility>
 #include <vector>
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
