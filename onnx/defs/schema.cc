@@ -1016,13 +1016,13 @@ void OpSchema::Finalize() {
 
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   if (!schema.attributes_.empty()) {
-    out << "Attributes:" << std::endl;
+    out << "Attributes:" << '\n';
     for (const auto& pair : schema.attributes_) {
-      out << "  " << pair.second.name << " : " << pair.second.description << std::endl;
+      out << "  " << pair.second.name << " : " << pair.second.description << '\n';
     }
   }
   if (schema.max_input_ > 0) {
-    out << "Inputs:" << std::endl;
+    out << "Inputs:" << '\n';
     if (!schema.inputs_.empty()) {
       for (size_t i = 0; i < schema.inputs_.size(); ++i) {
         const auto& p = schema.inputs_[i];
@@ -1031,14 +1031,14 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
             << (!description.empty() ? description : "(no doc)") << " : "
-            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
+            << (!type_str.empty() ? type_str : "(no type)") << '\n';
       }
     } else {
-      out << "  (no explicit description available)" << std::endl;
+      out << "  (no explicit description available)" << '\n';
     }
   }
   if (schema.max_output_ > 0) {
-    out << "Outputs:" << std::endl;
+    out << "Outputs:" << '\n';
     if (!schema.outputs_.empty()) {
       for (size_t i = 0; i < schema.outputs_.size(); ++i) {
         const auto& p = schema.outputs_[i];
@@ -1047,21 +1047,21 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
             << (!description.empty() ? description : "(no doc)") << " : "
-            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
+            << (!type_str.empty() ? type_str : "(no type)") << '\n';
       }
     } else {
-      out << "  (no explicit description available)" << std::endl;
+      out << "  (no explicit description available)" << '\n';
     }
   }
-  out << std::endl;
+  out << '\n';
   if (schema.doc()) {
     out << schema.doc();
   } else {
-    out << "(no documentation yet)" << std::endl;
+    out << "(no documentation yet)" << '\n';
   }
-  out << std::endl;
+  out << '\n';
   if (schema.line_) {
-    out << "Defined at " << schema.file_ << ":" << schema.line_ << std::endl;
+    out << "Defined at " << schema.file_ << ":" << schema.line_ << '\n';
   }
   return out;
 }
