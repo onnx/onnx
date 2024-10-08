@@ -22,7 +22,7 @@ namespace Test {
 
 // Utilities. TODO: Turn them into reusable ONNX utilities for use by
 
-TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
+static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   TensorProto t;
   t.set_data_type(elem_type);
   switch (elem_type) {
@@ -42,9 +42,8 @@ TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   return t;
 }
 
-void BuildNodes(FunctionProto& functionProto, const std::vector<FunctionBodyHelper::NodeDef>& node_defs) {
-  for (size_t i = 0; i < node_defs.size(); i++) {
-    const FunctionBodyHelper::NodeDef& node = node_defs[i];
+static void BuildNodes(FunctionProto& functionProto, const std::vector<FunctionBodyHelper::NodeDef>& node_defs) {
+  for (const auto& node : node_defs) {
     auto* np = functionProto.add_node();
 
     np->set_op_type(node.op_type);
@@ -60,7 +59,7 @@ void BuildNodes(FunctionProto& functionProto, const std::vector<FunctionBodyHelp
   }
 }
 
-bool BuildFunctionProto(
+static bool BuildFunctionProto(
     FunctionProto& functionProto,
     const OpSchema& schema,
     const std::vector<FunctionBodyHelper::NodeDef>& node_defs) {
@@ -71,7 +70,7 @@ bool BuildFunctionProto(
 
 // A monomorphic context-dependent function test-case.
 static bool
-BuildFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+BuildFloatFunctionBody(const FunctionBodyBuildContext& /*ctx*/, const OpSchema& schema, FunctionProto& functionProto) {
   // Create a scalar-tensor constant 2.0 of float type:
   auto two_as_tensor = ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT);
 
@@ -82,7 +81,7 @@ BuildFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& sche
   return BuildFunctionProto(functionProto, schema, body);
 }
 
-void RegisterCustomFuncFloatSchema() {
+static void RegisterCustomFuncFloatSchema() {
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName("CustomFuncFloat")
       .SetDomain(ONNX_DOMAIN)
@@ -141,7 +140,7 @@ BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, F
   return BuildFunctionProto(functionProto, schema, body);
 }
 
-void RegisterCustomFunctionSchema() {
+static void RegisterCustomFunctionSchema() {
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName("CustomFunction")
       .SetDomain(ONNX_DOMAIN)

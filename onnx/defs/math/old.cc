@@ -11,7 +11,7 @@
 
 namespace ONNX_NAMESPACE {
 
-bool BuildContextDependentFunctionBody_opset13(
+static bool BuildContextDependentFunctionBody_opset13(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -983,7 +983,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-std::function<void(OpSchema&)> MathDocGenerator_opset13(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_opset13(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1028,7 +1028,7 @@ ONNX_OPERATOR_SET_SCHEMA(Mul, 13, OpSchema().FillUsing(MathDocGenerator_opset13(
 
 ONNX_OPERATOR_SET_SCHEMA(Div, 13, OpSchema().FillUsing(MathDocGenerator_opset13("division")));
 
-std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1065,7 +1065,7 @@ ONNX_OPERATOR_SET_SCHEMA(Mul, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("
 
 ONNX_OPERATOR_SET_SCHEMA(Div, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("division")));
 
-std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset_11(const char* name, const char* description) {
+static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset_11(const char* name, const char* description) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1529,7 +1529,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_opset8(const char* name) {
+static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_opset8(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1699,7 +1699,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx) {
+static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx) {
   if (!hasInputShape(ctx, input1Idx) || !hasInputShape(ctx, input2Idx)) {
     return;
   }
@@ -2035,31 +2035,31 @@ Example 3:
     // -1.57
 )DOC";
 
-TensorProto ToDimensionOneFloatTensor_old(float value) {
+static TensorProto ToDimensionOneFloatTensor_old(float value) {
   auto t = ToTensor(std::vector<float>({value}));
   t.add_dims(1);
   return t;
 }
 
-TensorProto ToDimensionOneTensor_old(int32_t value) {
+static TensorProto ToDimensionOneTensor_old(int32_t value) {
   auto t = ToTensor(std::vector<int32_t>({value}));
   t.add_dims(1);
   return t;
 }
 
-TensorProto ToDimensionOneInt64Tensor_old(int64_t value) {
+static TensorProto ToDimensionOneInt64Tensor_old(int64_t value) {
   auto t = ToTensor(std::vector<int64_t>({value}));
   t.add_dims(1);
   return t;
 }
 
-TensorProto ToDimensionOneInt64Tensor_old(const std::vector<int64_t>& value) {
+static TensorProto ToDimensionOneInt64Tensor_old(const std::vector<int64_t>& value) {
   auto t = ToTensor(value);
   t.add_dims(value.size());
   return t;
 }
 
-bool BuildContextDependentFunctionBody_opset12(
+static bool BuildContextDependentFunctionBody_opset12(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -2315,7 +2315,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-const char* reduction_doc_sce_opset12 =
+const static char* reduction_doc_sce_opset12 =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
     "'sum': the output will be summed. "
@@ -2356,7 +2356,7 @@ If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is prov
 where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
 )DOC";
 
-bool BuildContextDependentFunctionBodySCE_opset12(
+static bool BuildContextDependentFunctionBodySCE_opset12(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -2478,7 +2478,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(const char* name, const char* description) {
+static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(const char* name, const char* description) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2544,7 +2544,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         SoftmaxFamilyDocGenerator_opset1("hardmax", "1 for the first maximum value, and 0 for all others")));
 
-const char* kBroadcastDoc_old = R"DOC(
+const static char* kBroadcastDoc_old = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second
 tensor can either be of element size 1 (including a scalar tensor and any
@@ -2565,7 +2565,7 @@ For example, the following tensor shapes are supported (with broadcast=1):
 Attribute `broadcast=1` needs to be passed to enable broadcasting.
 )DOC";
 
-std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2597,7 +2597,7 @@ Performs element-wise binary {name} (with limited broadcast support).
   };
 }
 
-std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -3850,7 +3850,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(const char* name) {
+static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
