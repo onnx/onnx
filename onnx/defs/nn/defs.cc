@@ -2891,7 +2891,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "X", "Input data tensor from the previous layer.", "T")
         .Input(1, "scale", "Scale tensor.", "V")
         .Output(0, "Y", "Output data tensor.", "V")
-        .Output(1, "inv_std_var", "Saved inverse standard variance used during training to speed up gradient computation.", "U", OpSchema::Optional)
+        .Output(1, "InvStdVar", "Saved inverse standard variance used during training to speed up gradient computation.", "U", OpSchema::Optional)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
@@ -3013,5 +3013,236 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             schema.BuildFunction(functionProto);
             return true;
+          }));
+
+static const char* SkipLayerNormalization_ver23_doc = R"DOC(
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SkipLayerNormalization,
+    23,
+    OpSchema()
+        .SetDoc(SkipLayerNormalization_ver23_doc)
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, kDefaultSkipLayerNormEpsilon)
+        .Input(0,
+               "X",
+               "3D input tensor with shape (batch_size, sequence_length, hidden_size)"
+               "Or 2D input tensor with shape (token_count, hidden_size)",
+               "T")
+        .Input(1,
+               "S",
+               "3D input tensor with shape (batch_size, sequence_length, hidden_size)"
+               "Or 2D input tensor with shape (token_count, hidden_size)",
+               "T")
+        .Input(2,
+               "gamma",
+               "1D input tensor with shape (hidden_size)",
+               "T")
+        .Input(3, "Scale", "Scale tensor.", "T")
+        .Input(4,
+               "B",
+               "1D bias tensor with shape (hidden_size",
+               "T",
+               OpSchema::Optional)
+        .Output(0,
+                "Y",
+                "3D output tensor with shape (batch_size, sequence_length, hidden_size)"
+                "Or 2D output tensor with shape (token_count, hidden_size)",
+                "T")
+        .Output(1,
+                "Mean",
+                "Saved mean used during training to speed up gradient computation",
+                "U",
+                OpSchema::Optional)
+        .Output(2,
+                "InvStdVar",
+                "Saved inverse standard variance used during training to speed up gradient computation.",
+                "U",
+                OpSchema::Optional)
+        .Output(3,
+                "InputSkipBiasSum",
+                "Sum of the input and skip inputs (and bias if it exists)"
+                "with shape (batch_size, sequence_length, hidden_size) or (token_count, hidden_size).",
+                "T",
+                OpSchema::Optional)
+        .TypeConstraint("T", {"tensor(float)", "tensor(float16)"}, "Constrain input and output types to float or half tensors.")
+        .TypeConstraint("U", {"tensor(float)"}, "Constrain mean and inv_std_var to float tensors.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          auto stash_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+          if (ctx.getNumOutputs() > 1) {
+            auto output_type = ctx.getOutputType(1);
+            output_type->mutable_tensor_type()->set_elem_type(static_cast<int32_t>(stash_type));
+          }
+          if (ctx.getNumOutputs() > 2) {
+            auto output_type = ctx.getOutputType(2);
+            output_type->mutable_tensor_type()->set_elem_type(static_cast<int32_t>(stash_type));
+          }
+          if (ctx.getNumOutputs() > 3) {
+            propagateElemTypeFromInputToOutput(ctx, 0, 3);
+          }
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          int64_t input_ndim = input_shape.dim_size();
+          int axis = static_cast<int>(input_ndim - 1);
+
+          if (ctx.getNumOutputs() > 1) {
+            auto mean_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+            mean_shape->CopyFrom(input_shape);
+            mean_shape->mutable_dim(axis)->set_dim_value(1);
+          }
+
+          if (ctx.getNumOutputs() > 2) {
+            auto inv_std_dev_shape = ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();
+            inv_std_dev_shape->CopyFrom(input_shape);
+            inv_std_dev_shape->mutable_dim(axis)->set_dim_value(1);
+          }
+
+          if (ctx.getNumOutputs() > 3) {
+            propagateShapeFromInputToOutput(ctx, 0, 3);
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+              // SkipLayerNormalization  <epsilon> (input, skip, gamma, bias) => (Y, Mean?, InvStdDev?, InputSkipBiasSum)
+              auto* tp = ctx.getInputType(0);
+              if ((tp == nullptr) || (!tp->has_tensor_type()))
+                return false;
+              int64_t T = tp->tensor_type().elem_type();
+
+              int64_t U = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+              int64_t axis = -1;
+
+              auto* epsilon_attr = ctx.getAttribute("epsilon");
+              float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+
+              FunctionBuilder builder(functionProto);
+              builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
+                .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+                .Add("SkipScaled = Mul (S, gamma)")
+                .Add("InputSkipSum = Add (X, SkipScaled)")
+              if (ctx.hasOutput(3))
+                builder.Add("InputSkipSumBias = Add (InputSkipSum, B)");
+              if (ctx.getNumOutputs() > 2) {
+                builder.Add("Y, Mean = LayerNormalization (X, Scale, B)", "epsilon", epsilon);
+              } if (ctx.getNumOutputs() > 1) {
+                builder.Add("Y, Mean, InvStdDev = LayerNormalization (X, Scale, B)", "epsilon", epsilon);
+              } else {
+                builder.Add("Y = LayerNormalization <axes = -1> (X, Scale, B)", "epsilon", epsilon);
+              }
+              schema.BuildFunction(functionProto);
+              return true;
+          }));
+
+static const char* SkipRMSNormalization_ver23_doc = R"DOC(
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    SkipRMSNormalization,
+    23,
+    OpSchema()
+        .SetDoc(SkipRMSNormalization_ver23_doc)
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, kDefaultSkipLayerNormEpsilon)
+        .Input(0,
+               "X",
+               "3D input tensor with shape (batch_size, sequence_length, hidden_size)"
+               "Or 2D input tensor with shape (token_count, hidden_size)",
+               "T")
+        .Input(1,
+               "S",
+               "3D input tensor with shape (batch_size, sequence_length, hidden_size)"
+               "Or 2D input tensor with shape (token_count, hidden_size)",
+               "T")
+        .Input(2,
+               "gamma",
+               "1D input tensor with shape (hidden_size)",
+               "T")
+        .Input(3, "Scale", "Scale tensor.", "T")
+        .Output(0,
+                "Y",
+                "3D output tensor with shape (batch_size, sequence_length, hidden_size)"
+                "Or 2D output tensor with shape (token_count, hidden_size)",
+                "T")
+        .Output(1,
+                "Mean",
+                "Saved mean used during training to speed up gradient computation",
+                "U",
+                OpSchema::Optional)
+        .Output(2,
+                "InvStdVar",
+                "Saved inverse standard variance used during training to speed up gradient computation.",
+                "U",
+                OpSchema::Optional)
+        .TypeConstraint("T", {"tensor(float)", "tensor(float16)"}, "Constrain input and output types to float or half tensors.")
+        .TypeConstraint("U", {"tensor(float)"}, "Constrain mean and inv_std_var to float tensors.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          auto stash_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+          if (ctx.getNumOutputs() > 1) {
+            auto output_type = ctx.getOutputType(1);
+            output_type->mutable_tensor_type()->set_elem_type(static_cast<int32_t>(stash_type));
+          }
+          if (ctx.getNumOutputs() > 2) {
+            auto output_type = ctx.getOutputType(2);
+            output_type->mutable_tensor_type()->set_elem_type(static_cast<int32_t>(stash_type));
+          }
+          if (ctx.getNumOutputs() > 3) {
+            propagateElemTypeFromInputToOutput(ctx, 0, 3);
+          }
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          int64_t input_ndim = input_shape.dim_size();
+          int axis = static_cast<int>(input_ndim - 1);
+
+          if (ctx.getNumOutputs() > 1) {
+            auto mean_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+            mean_shape->CopyFrom(input_shape);
+            mean_shape->mutable_dim(axis)->set_dim_value(1);
+          }
+
+          if (ctx.getNumOutputs() > 2) {
+            auto inv_std_dev_shape = ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();
+            inv_std_dev_shape->CopyFrom(input_shape);
+            inv_std_dev_shape->mutable_dim(axis)->set_dim_value(1);
+          }
+
+          if (ctx.getNumOutputs() > 3) {
+            propagateShapeFromInputToOutput(ctx, 0, 3);
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+              // SkipLayerNormalization  <epsilon> (input, skip, gamma) => (Y, Mean?, InvStdDev?, InputSkipBiasSum)
+              auto* tp = ctx.getInputType(0);
+              if ((tp == nullptr) || (!tp->has_tensor_type()))
+                return false;
+              int64_t T = tp->tensor_type().elem_type();
+
+              int64_t U = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+              int64_t axis = -1;
+
+              auto* epsilon_attr = ctx.getAttribute("epsilon");
+              float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+
+              FunctionBuilder builder(functionProto);
+              builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
+                .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+                .Add("SkipScaled = Mul (S, gamma)")
+                .Add("InputSkipSum = Add (X, SkipScaled)")
+              if (ctx.getNumOutputs() > 2) {
+                builder.Add("Y, Mean = RMSNormalization (X, Scale)", "epsilon", epsilon);
+              } if (ctx.getNumOutputs() > 1) {
+                builder.Add("Y, Mean, InvStdDev = RMSNormalization (X, Scale)", "epsilon", epsilon);
+              } else {
+                builder.Add("Y = RMSNormalization (X, Scale)", "epsilon", epsilon);
+              }
+              schema.BuildFunction(functionProto);
+              return true;
           }));
 } // namespace ONNX_NAMESPACE
