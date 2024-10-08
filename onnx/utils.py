@@ -73,7 +73,9 @@ class Extractor:
 
             # find nodes connected to this output
             nodes_to_search = [
-                index for index in unreachable if current_output_name in nodes[index].output
+                index
+                for index in unreachable
+                if current_output_name in nodes[index].output
             ]
 
             # add nodes connected to this output to sets
@@ -83,8 +85,7 @@ class Extractor:
 
             # Add inputs of these nodes to the stack for further processing
             for node_index in nodes_to_search:
-                for name in nodes[node_index].input:
-                    stack.append(name)
+                stack += nodes[node_index].input
 
     def _collect_reachable_nodes(
         self,
