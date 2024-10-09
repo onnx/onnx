@@ -38,7 +38,7 @@ class Extractor:
         new_io_tensors = [original_io_map[name] for name in io_names_to_keep]
         # activation become input or output
         new_io_tensors.extend(self.vimap[name] for name in new_io_names_to_add)
-        new_io_tensors = self._add_missing_shape(new_io_tensors)
+        self._add_missing_shape(new_io_tensors)
 
         # adjust sequence
         new_io_tensors_map = self._build_name2obj_dict(new_io_tensors)
