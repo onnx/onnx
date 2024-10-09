@@ -2891,6 +2891,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "X", "Input data tensor from the previous layer.", "T")
         .Input(1, "scale", "Scale tensor.", "V")
         .Output(0, "Y", "Output data tensor.", "V")
+        .Output(1, "Mean", "Saved mean used during training to speed up gradient computation.", "U", OpSchema::Optional)
         .Output(1, "InvStdVar", "Saved inverse standard variance used during training to speed up gradient computation.", "U", OpSchema::Optional)
         .TypeConstraint(
             "T",
@@ -2938,7 +2939,14 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ".");
           }
 
-          if (ctx.getNumOutputs() > 1) {
+           if (ctx.getNumOutputs() > 1) {
+            auto mean_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+            mean_shape->CopyFrom(input_shape);
+            for (int d = static_cast<int>(axis); d < input_ndim; ++d)
+              mean_shape->mutable_dim(d)->set_dim_value(1);
+          }
+
+          if (ctx.getNumOutputs() > 2) {
             auto saved_inv_std_var_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
             saved_inv_std_var_shape->CopyFrom(input_shape);
             saved_inv_std_var_shape->mutable_dim(static_cast<int>(axis))->set_dim_value(1);
@@ -3009,6 +3017,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               builder.Add("Y = Reshape (Scaled, XShape)");
               builder.Add("InvStdDev2D = Reciprocal (StdDev)");
               if (ctx.hasOutput(1))
+                builder.Add("Mean = Reshape (Mean2D, ReducedShape)");
+              if (ctx.hasOutput(2))
                 builder.Add("InvStdDev = Reshape (InvStdDev2D, ReducedShape)");
 
             schema.BuildFunction(functionProto);
@@ -3024,7 +3034,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     23,
     OpSchema()
         .SetDoc(SkipLayerNormalization_ver23_doc)
-        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, kDefaultSkipLayerNormEpsilon)
+        .Attr("epsilon",
+              "The epsilon value to use to avoid division by zero.",
+              AttributeProto::FLOAT, 1e-5f)
         .Input(0,
                "X",
                "3D input tensor with shape (batch_size, sequence_length, hidden_size)"
@@ -3039,10 +3051,14 @@ ONNX_OPERATOR_SET_SCHEMA(
                "gamma",
                "1D input tensor with shape (hidden_size)",
                "T")
-        .Input(3, "Scale", "Scale tensor.", "T")
+        .Input(3,
+               "beta",
+               "1D skip tensor with shape (hidden_size)",
+               "T",
+               OpSchema::Optional)
         .Input(4,
                "B",
-               "1D bias tensor with shape (hidden_size",
+               "1D bias tensor with shape (hidden_size)",
                "T",
                OpSchema::Optional)
         .Output(0,
@@ -3107,32 +3123,37 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              // SkipLayerNormalization  <epsilon> (input, skip, gamma, bias) => (Y, Mean?, InvStdDev?, InputSkipBiasSum)
-              auto* tp = ctx.getInputType(0);
-              if ((tp == nullptr) || (!tp->has_tensor_type()))
-                return false;
-              int64_t T = tp->tensor_type().elem_type();
+              // SkipLayerNormalization  <epsilon> (X, S, gamma, beta, B) => (Y, Mean?, InvStdDev?, InputSkipBiasSum)
 
               int64_t U = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-              int64_t axis = -1;
-
               auto* epsilon_attr = ctx.getAttribute("epsilon");
               float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
 
               FunctionBuilder builder(functionProto);
               builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
                 .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
-                .Add("SkipScaled = Mul (S, gamma)")
-                .Add("InputSkipSum = Add (X, SkipScaled)")
-              if (ctx.hasOutput(3))
-                builder.Add("InputSkipSumBias = Add (InputSkipSum, B)");
-              if (ctx.getNumOutputs() > 2) {
-                builder.Add("Y, Mean = LayerNormalization (X, Scale, B)", "epsilon", epsilon);
-              } if (ctx.getNumOutputs() > 1) {
-                builder.Add("Y, Mean, InvStdDev = LayerNormalization (X, Scale, B)", "epsilon", epsilon);
+              // Check if bias needs to be added to the sum
+              if (ctx.hasInput(4)) {
+                builder.Add("InputSkipSum = Add (X, S)")
+                    .Add("LNInput = Add (InputSkipSum, B)");
               } else {
-                builder.Add("Y = LayerNormalization <axes = -1> (X, Scale, B)", "epsilon", epsilon);
+                builder.Add("LNInput = Add (X, S)")
               }
+              // Check if beta is an input to LayerNormalization
+              if (ctx.hasInput(3)) {
+                builder.Add("Y = LayerNormalization <axes = -1> (X, gamma, beta)", "epsilon", epsilon);
+              } else {
+                builder.Add("Y = LayerNormalization <axes = -1> (X, gamma)", "epsilon", epsilon);
+              }
+              /*
+              if (ctx.hasOutput(1)) {
+                builder.Add("Y, Mean = LayerNormalization (X, Scale, B)", "epsilon", epsilon);
+              } if (ctx.hasOutput(2)) {
+                builder.Add("Y, Mean, InvStdDev = LayerNormalization (X, Scale, B)", "epsilon", epsilon);
+              }*/
+              if (ctx.hasOutput(3)) {
+                builder.Add("InputSkipBiasSum = Identity (LNInput)");
+
               schema.BuildFunction(functionProto);
               return true;
           }));
@@ -3146,7 +3167,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     23,
     OpSchema()
         .SetDoc(SkipRMSNormalization_ver23_doc)
-        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, kDefaultSkipLayerNormEpsilon)
+        .Attr("epsilon",
+              "The epsilon value to use to avoid division by zero.",
+              AttributeProto::FLOAT, 1e-5f)
         .Input(0,
                "X",
                "3D input tensor with shape (batch_size, sequence_length, hidden_size)"
@@ -3161,7 +3184,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                "gamma",
                "1D input tensor with shape (hidden_size)",
                "T")
-        .Input(3, "Scale", "Scale tensor.", "T")
+        .Input(3, "B", "Bias tensor.", "T")
         .Output(0,
                 "Y",
                 "3D output tensor with shape (batch_size, sequence_length, hidden_size)"
@@ -3218,30 +3241,32 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              // SkipLayerNormalization  <epsilon> (input, skip, gamma) => (Y, Mean?, InvStdDev?, InputSkipBiasSum)
-              auto* tp = ctx.getInputType(0);
-              if ((tp == nullptr) || (!tp->has_tensor_type()))
-                return false;
-              int64_t T = tp->tensor_type().elem_type();
+              // SkipRMSNormalization  <epsilon> (X, S, gamma, B) => (Y, Mean?, InvStdDev?, InputSkipBiasSum)
 
               int64_t U = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-              int64_t axis = -1;
-
               auto* epsilon_attr = ctx.getAttribute("epsilon");
               float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
 
               FunctionBuilder builder(functionProto);
               builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
                 .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
-                .Add("SkipScaled = Mul (S, gamma)")
-                .Add("InputSkipSum = Add (X, SkipScaled)")
-              if (ctx.getNumOutputs() > 2) {
-                builder.Add("Y, Mean = RMSNormalization (X, Scale)", "epsilon", epsilon);
-              } if (ctx.getNumOutputs() > 1) {
-                builder.Add("Y, Mean, InvStdDev = RMSNormalization (X, Scale)", "epsilon", epsilon);
+              // Check if bias needs to be added to the sum
+              if (ctx.hasInput(3)) {
+                builder.Add("InputSkipSum = Add (X, S)")
+                    .Add("RMSNInput = Add (InputSkipSum, B)");
               } else {
-                builder.Add("Y = RMSNormalization (X, Scale)", "epsilon", epsilon);
+                builder.Add("RMSNInput = Add (X, S)")
               }
+              builder.Add("Y = RMSNormalization <axes = -1> (X, gamma)", "epsilon", epsilon);
+              /*
+              if (ctx.hasOutput(1)) {
+                builder.Add("Y, Mean = LayerNormalization (X, Scale, B)", "epsilon", epsilon);
+              } if (ctx.hasOutput(2)) {
+                builder.Add("Y, Mean, InvStdDev = LayerNormalization (X, Scale, B)", "epsilon", epsilon);
+              }*/
+              if (ctx.hasOutput(3)) {
+                builder.Add("InputSkipBiasSum = Identity (RMSNInput)");
+
               schema.BuildFunction(functionProto);
               return true;
           }));
