@@ -375,7 +375,7 @@ Optional inputs and outputs of the above kind are referred to as _static-optiona
 in addition to the earlier static-optional version described above. A dynamic-optional INT64
 tensor is a distinct type from an INT64 tensor type. In contrast, a static-optional INT64
 tensor does not have a distinct type, it has the same type as a INT64 tensor.
-The ops _Optional_ and _OptionalGetElement_ MUST be explicitly used to convert between
+The operators `Optional` and `OptionalGetElement` MUST be explicitly used to convert between
 the dynamic-optional type and the underlying non-optional type.
 The dynamic-optional allows for more expressiveness than static-optional.
 
