@@ -1309,6 +1309,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Size);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Squeeze);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Transpose);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Unsqueeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Swish);
 
 // Iterate over schema from ai.onnx version 23
 class OpSet_Onnx_ver23 {
@@ -1332,6 +1333,7 @@ class OpSet_Onnx_ver23 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Squeeze)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Transpose)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Unsqueeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Swish)>());
   }
 };
 
