@@ -3134,13 +3134,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               FunctionBuilder builder(functionProto);
               builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
-                .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+                .Add("Epsilon = Cast (FloatEpsilon)", "to", U);
               // Check if bias needs to be added to the sum
               if (ctx.hasInput(4)) {
                 builder.Add("InputSkipSum = Add (X, S)")
                     .Add("LNInput = Add (InputSkipSum, B)");
               } else {
-                builder.Add("LNInput = Add (X, S)")
+                builder.Add("LNInput = Add (X, S)");
               }
               // Check if beta is an input to LayerNormalization
               if (ctx.hasInput(3)) {
@@ -3156,6 +3156,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }*/
               if (ctx.hasOutput(3)) {
                 builder.Add("InputSkipBiasSum = Identity (LNInput)");
+              }
 
               schema.BuildFunction(functionProto);
               return true;
@@ -3252,13 +3253,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               FunctionBuilder builder(functionProto);
               builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
-                .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+                .Add("Epsilon = Cast (FloatEpsilon)", "to", U);
               // Check if bias needs to be added to the sum
               if (ctx.hasInput(3)) {
                 builder.Add("InputSkipSum = Add (X, S)")
                     .Add("RMSNInput = Add (InputSkipSum, B)");
               } else {
-                builder.Add("RMSNInput = Add (X, S)")
+                builder.Add("RMSNInput = Add (X, S)");
               }
               builder.Add("Y = RMSNormalization <axes = -1> (X, gamma)", "epsilon", epsilon);
               /*
@@ -3269,6 +3270,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }*/
               if (ctx.hasOutput(3)) {
                 builder.Add("InputSkipBiasSum = Identity (RMSNInput)");
+              }
 
               schema.BuildFunction(functionProto);
               return true;
