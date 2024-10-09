@@ -29420,6 +29420,58 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
+### <a name="SkipLayerNormalization-23"></a>**SkipLayerNormalization-23**</a>
+
+
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+</dl>
+
+#### Inputs (3 - 5)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
+<dt><tt>S</tt> : T</dt>
+<dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
+<dt><tt>gamma</tt> : T</dt>
+<dd>1D input tensor with shape (hidden_size)</dd>
+<dt><tt>beta</tt> (optional) : T</dt>
+<dd>1D skip tensor with shape (hidden_size)</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>1D bias tensor with shape (hidden_size)</dd>
+</dl>
+
+#### Outputs (1 - 4)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>3D output tensor with shape (batch_size, sequence_length, hidden_size)Or 2D output tensor with shape (token_count, hidden_size)</dd>
+<dt><tt>Mean</tt> (optional) : U</dt>
+<dd>Saved mean used during training to speed up gradient computation</dd>
+<dt><tt>InvStdVar</tt> (optional) : U</dt>
+<dd>Saved inverse standard variance used during training to speed up gradient computation.</dd>
+<dt><tt>InputSkipBiasSum</tt> (optional) : T</dt>
+<dd>Sum of the input and skip inputs (and bias if it exists)with shape (batch_size, sequence_length, hidden_size) or (token_count, hidden_size).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16)</dt>
+<dd>Constrain input and output types to float or half tensors.</dd>
+<dt><tt>U</tt> : tensor(float)</dt>
+<dd>Constrain mean and inv_std_var to float tensors.</dd>
+</dl>
+
 ### <a name="SkipRMSNormalization-23"></a>**SkipRMSNormalization-23**</a>
 
 
@@ -29444,8 +29496,8 @@ This version of the operator has been available since version 23 of the default 
 <dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
 <dt><tt>gamma</tt> : T</dt>
 <dd>1D input tensor with shape (hidden_size)</dd>
-<dt><tt>Scale</tt> : T</dt>
-<dd>Scale tensor.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Bias tensor.</dd>
 </dl>
 
 #### Outputs (1 - 3)
