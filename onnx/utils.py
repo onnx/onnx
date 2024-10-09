@@ -206,6 +206,7 @@ def extract_model(
     input_names: list[str],
     output_names: list[str],
     check_model: bool = True,
+    infer_shapes: bool = True,
 ) -> None:
     """Extracts sub-model from an ONNX model.
 
@@ -220,7 +221,8 @@ def extract_model(
         output_path (str | os.PathLike): The path to save the extracted ONNX model.
         input_names (list of string): The names of the input tensors that to be extracted.
         output_names (list of string): The names of the output tensors that to be extracted.
-        check_model (bool): Whether to run model checker on the extracted model.
+        check_model (bool): Whether to run model checker on the original model and the extracted model.
+        infer_shapes (bool): Whether to infer the shapes of the original model.
     """
     if not os.path.exists(input_path):
         raise ValueError(f"Invalid input model path: {input_path}")
@@ -231,14 +233,17 @@ def extract_model(
 
     if check_model:
         onnx.checker.check_model(input_path)
+
     model = onnx.load(input_path)
-    if check_model:
+
+    if infer_shapes:
         model = onnx.shape_inference.infer_shapes(model)
 
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)
 
     onnx.save(extracted, output_path)
+
     if check_model:
         onnx.checker.check_model(output_path)
 
