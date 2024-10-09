@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-        architecture: ['x64', 'x86']
+        architecture: ['x64', 'x86','arm64']
     steps:
     - name: Checkout ONNX
       uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
