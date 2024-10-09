@@ -23,6 +23,11 @@ class Extractor:
     def _build_name2obj_dict(objs):  # type: ignore
         return {obj.name: obj for obj in objs}
 
+    def _add_missing_shape(self, new_io_tensors):  # type: ignore
+        for new_io_tensor in new_io_tensors:
+            if not new_io_tensor.type.tensor_type.shape.dim:
+                new_io_tensor.type.tensor_type.shape.dim.add()
+
     def _collect_new_io_core(self, original_io, io_names_to_extract):  # type: ignore
         original_io_map = self._build_name2obj_dict(original_io)
         original_io_names = set(original_io_map)
@@ -33,6 +38,7 @@ class Extractor:
         new_io_tensors = [original_io_map[name] for name in io_names_to_keep]
         # activation become input or output
         new_io_tensors.extend(self.vimap[name] for name in new_io_names_to_add)
+        new_io_tensors = self._add_missing_shape(new_io_tensors)
 
         # adjust sequence
         new_io_tensors_map = self._build_name2obj_dict(new_io_tensors)
