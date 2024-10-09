@@ -82,9 +82,6 @@ class Extractor:
             for node_index in nodes_to_search:
                 reachable.add(node_index)
                 unreachable.remove(node_index)
-
-            # Add inputs of these nodes to the stack for further processing
-            for node_index in nodes_to_search:
                 stack += nodes[node_index].input
 
     def _collect_reachable_nodes(
