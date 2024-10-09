@@ -201,6 +201,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-22">22</a>, <a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|18|
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|17|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|18|
+|<a href="#SkipLayerNormalization">SkipLayerNormalization</a>|<a href="Changelog.md#SkipLayerNormalization-23">23</a>|23|
 |<a href="#SkipRMSNormalization">SkipRMSNormalization</a>|<a href="Changelog.md#SkipRMSNormalization-23">23</a>|23|
 |<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|13, 18|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
@@ -30214,6 +30215,147 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
 </details>
 
 
+### <a name="SkipLayerNormalization"></a><a name="skiplayernormalization">**SkipLayerNormalization**</a>
+
+
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+</dl>
+
+#### Inputs (3 - 5)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
+<dt><tt>S</tt> : T</dt>
+<dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
+<dt><tt>gamma</tt> : T</dt>
+<dd>1D input tensor with shape (hidden_size)</dd>
+<dt><tt>beta</tt> (optional) : T</dt>
+<dd>1D skip tensor with shape (hidden_size)</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>1D bias tensor with shape (hidden_size)</dd>
+</dl>
+
+#### Outputs (1 - 4)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>3D output tensor with shape (batch_size, sequence_length, hidden_size)Or 2D output tensor with shape (token_count, hidden_size)</dd>
+<dt><tt>Mean</tt> (optional) : U</dt>
+<dd>Saved mean used during training to speed up gradient computation</dd>
+<dt><tt>InvStdVar</tt> (optional) : U</dt>
+<dd>Saved inverse standard variance used during training to speed up gradient computation.</dd>
+<dt><tt>InputSkipBiasSum</tt> (optional) : T</dt>
+<dd>Sum of the input and skip inputs (and bias if it exists)with shape (batch_size, sequence_length, hidden_size) or (token_count, hidden_size).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16)</dt>
+<dd>Constrain input and output types to float or half tensors.</dd>
+<dt><tt>U</tt> : tensor(float)</dt>
+<dd>Constrain mean and inv_std_var to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>2d</summary>
+
+```python
+x = np.random.randn(4, 2).astype(np.float32)
+skip = np.random.randn(4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y],
+    name="test_skip_layer_normalization_2d_example",
+)
+```
+
+</details>
+
+
+<details>
+<summary>3d</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y],
+    name="test_skip_layer_normalization_3d_example",
+)
+```
+
+</details>
+
+
+<details>
+<summary>epsilon</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+epsilon = 1e-2
+y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y"],
+    epsilon=epsilon,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y],
+    name="test_skip_layer_normalization_epsilon_example",
+)
+```
+
+</details>
+
+
 ### <a name="SkipRMSNormalization"></a><a name="skiprmsnormalization">**SkipRMSNormalization**</a>
 
 
@@ -30238,8 +30380,8 @@ This version of the operator has been available since version 23 of the default 
 <dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
 <dt><tt>gamma</tt> : T</dt>
 <dd>1D input tensor with shape (hidden_size)</dd>
-<dt><tt>Scale</tt> : T</dt>
-<dd>Scale tensor.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Bias tensor.</dd>
 </dl>
 
 #### Outputs (1 - 3)

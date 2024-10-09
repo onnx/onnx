@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 180/194 (92.78%, 5 generators excluded) common operators.
+Node tests have covered 181/195 (92.82%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -20805,6 +20805,90 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.array(x.size).astype(np.int64)
 
 expect(node, inputs=[x], outputs=[y], name="test_size")
+```
+
+</details>
+
+
+### SkipLayerNormalization
+There are 3 test cases, listed as following:
+<details>
+<summary>2d</summary>
+
+```python
+x = np.random.randn(4, 2).astype(np.float32)
+skip = np.random.randn(4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y],
+    name="test_skip_layer_normalization_2d_example",
+)
+```
+
+</details>
+<details>
+<summary>3d</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y],
+    name="test_skip_layer_normalization_3d_example",
+)
+```
+
+</details>
+<details>
+<summary>epsilon</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+epsilon = 1e-2
+y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y"],
+    epsilon=epsilon,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y],
+    name="test_skip_layer_normalization_epsilon_example",
+)
 ```
 
 </details>
