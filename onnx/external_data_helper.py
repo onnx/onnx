@@ -29,9 +29,7 @@ class ExternalDataInfo:
         self.basepath = ""
 
         for entry in tensor.external_data:
-            setattr(self, entry.key,
-                    
-                    entry.value)
+            setattr(self, entry.key, entry.value)
 
         if self.offset:
             self.offset = int(self.offset)
