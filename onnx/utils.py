@@ -83,9 +83,6 @@ class Extractor:
             for node_index in nodes_to_search:
                 reachable.add(node_index)
                 unreachable.remove(node_index)
-
-            # Add inputs of these nodes to the stack for further processing
-            for node_index in nodes_to_search:
                 stack += nodes[node_index].input
 
     def _collect_reachable_nodes(
@@ -207,6 +204,7 @@ def extract_model(
     input_names: list[str],
     output_names: list[str],
     check_model: bool = True,
+    infer_shapes: bool = True,
 ) -> None:
     """Extracts sub-model from an ONNX model.
 
@@ -221,7 +219,8 @@ def extract_model(
         output_path (str | os.PathLike): The path to save the extracted ONNX model.
         input_names (list of string): The names of the input tensors that to be extracted.
         output_names (list of string): The names of the output tensors that to be extracted.
-        check_model (bool): Whether to run model checker on the extracted model.
+        check_model (bool): Whether to run model checker on the original model and the extracted model.
+        infer_shapes (bool): Whether to infer the shapes of the original model.
     """
     if not os.path.exists(input_path):
         raise ValueError(f"Invalid input model path: {input_path}")
@@ -235,7 +234,7 @@ def extract_model(
 
     model = onnx.load(input_path)
 
-    if check_model:
+    if infer_shapes:
         if model.ByteSize() > MAXIMUM_PROTOBUF:
             onnx.shape_inference.infer_shapes_path(input_path, output_path)
             model = onnx.load(output_path)
