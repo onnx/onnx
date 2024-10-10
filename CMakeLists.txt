@@ -48,16 +48,6 @@ if(NOT DEFINED ONNX_VERIFY_PROTO3)
   option(ONNX_VERIFY_PROTO3 "Generate code by proto3" ${PROTO3_ENABLED})
 endif()
 
-if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-  if(MSVC)
-    #TODO: if ONNX_USE_MSVC_STATIC_RUNTIME is ON, it may not work
-    add_definitions(-DPROTOBUF_USE_DLLS)
-  endif()
-  set(Protobuf_USE_STATIC_LIBS OFF)
-else()
-  set(Protobuf_USE_STATIC_LIBS ON)
-endif()
-
 if(NOT DEFINED CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
@@ -178,6 +168,11 @@ else()
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
               PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
               NO_DEFAULT_PATH)
+    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+      set(Protobuf_USE_STATIC_LIBS OFF)
+    else()
+      set(Protobuf_USE_STATIC_LIBS ON)
+    endif()
     find_package(Protobuf)
     if (Protobuf_FOUND)
       set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
@@ -234,8 +229,9 @@ else()
     set(Build_Protobuf ON)
   endif()
   if (Build_Protobuf)
-    # FetchContent module requires 3.11.
-    cmake_minimum_required(VERSION 3.11)
+    set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
+    set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
+
     include(FetchContent)
     message("Loading Dependencies URLs ...")
     # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.3
