@@ -10,11 +10,8 @@
 #include <unordered_set>
 #include <utility>
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/onnx-data_pb.h"
-#include "onnx/onnx-operators_pb.h"
-#include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -92,10 +89,10 @@ class CheckerContext final {
     check_custom_domain_ = value;
   }
 
-  explicit CheckerContext() : ir_version_(-1) {}
+  explicit CheckerContext() = default;
 
  private:
-  int ir_version_;
+  int ir_version_{-1};
   std::unordered_map<std::string, int> opset_imports_;
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
@@ -107,6 +104,7 @@ class CheckerContext final {
 class LexicalScopeContext final {
  public:
   LexicalScopeContext() = default;
+  ~LexicalScopeContext() = default;
 
   // Construct an instance with the lexical scope from the parent graph to allow
   // lookup of names from that scope via this_or_ancestor_graph_has.
@@ -116,16 +114,21 @@ class LexicalScopeContext final {
   // values from the parent scope so the values are copied instead.
   LexicalScopeContext(const LexicalScopeContext& parent_context) : parent_context_{&parent_context} {}
   LexicalScopeContext& operator=(const LexicalScopeContext& parent_context) {
+    if (this == &parent_context) {
+      return *this;
+    }
     parent_context_ = &parent_context;
     return *this;
   }
+  LexicalScopeContext(LexicalScopeContext&&) = delete;
+  LexicalScopeContext& operator=(LexicalScopeContext&&) = delete;
 
   void add(const std::string& name) {
     output_names.insert(name);
   }
 
   bool this_graph_has(const std::string& name) const {
-    return output_names.find(name) != output_names.cend();
+    return output_names.count(name) > 0;
   }
 
   bool this_or_ancestor_graph_has(const std::string& name) const {

@@ -10,7 +10,7 @@
 
 namespace ONNX_NAMESPACE {
 
-std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit, bool supports_bool) {
+static std::vector<std::string> GetSupportedDataTypesForReductionOps(bool supports8bit, bool supports_bool) {
   auto data_types = OpSchema::numeric_types_for_math_reduction_ir4();
   if (supports8bit) {
     data_types.emplace_back("tensor(uint8)");
@@ -138,12 +138,12 @@ to `False` instead of `True`.)DOC";
       int64_t input_ndim = input_shape.dim_size();
       auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-      for (size_t i = 0; i < axes.size(); ++i) {
-        if (axes[i] < -input_ndim || axes[i] >= input_ndim) {
-          fail_shape_inference("axis must be in [-rank, rank-1]. input rank was ", input_ndim);
+      for (int64_t& axe : axes) {
+        if (axe < -input_ndim || axe >= input_ndim) {
+          fail_shape_inference("axis must be in [-rank, rank-1]. Input rank was ", input_ndim);
         }
-        if (axes[i] < 0)
-          axes[i] += input_ndim;
+        if (axe < 0)
+          axe += input_ndim;
       }
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim

@@ -141,15 +141,31 @@ bool ParserBase::NextIsValidFloatString() {
   return false;
 }
 
+// Parsing an IdList (list of identifiers separated by commas, where identifiers are allowed to be empty).
+// Used to represent the list of inputs or outputs of a node.
+// An empty identifier may be represented by an empty string "" or by nothing followed by a single comma.
+// "Op()" has no operands
+// "Op(,x)"" has two operands, the first being empty.
+// 'Op("")' has one operand, which is an empty string.
+// 'Op(,)' has one operand, which is an empty string.
+// Thus, this will also allow a trailing comma after a non-empty identifier with no effect.
+// 'Op(x,)' has one operand, which is 'x'.
+//
+// This is mostly for some backward compatibility. "" is a simpler way to represent an
+// empty identifier that is less confusing and is recommended.
+
 Status OnnxParser::Parse(IdList& idlist) {
   idlist.Clear();
   std::string id;
-  CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id));
-  if (id.empty())
-    return Status::OK(); // Treat as empty list of identifiers
+  bool found = false;
+  CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found));
+  if (!found)
+    return Status::OK();
   *idlist.Add() = id;
   while (Matches(',')) {
-    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id));
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found));
+    if (!found)
+      break;
     *idlist.Add() = id;
   }
   return Status::OK();
@@ -197,8 +213,7 @@ Status OnnxParser::Parse(TensorShapeProto& shape) {
       shape.add_dim();
     } else {
       // Check for a symbolic identifier ...
-      std::string id;
-      CHECK_PARSER_STATUS(ParseOptionalIdentifier(id));
+      auto id = ParseOptionalIdentifier();
       if (!id.empty()) {
         shape.add_dim()->set_dim_param(id);
       } else {
@@ -421,7 +436,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
   // Parse the concrete tensor-type with numeric dimensions:
   TypeProto typeProto;
   PARSE(typeProto);
-  ParseOptionalIdentifier(*tensorProto.mutable_name());
+  *tensorProto.mutable_name() = ParseOptionalIdentifier();
   (void)Matches('='); // Optional, to unify handling of initializers as well as tensor-protos in other contexts
   return Parse(tensorProto, typeProto);
 }
@@ -444,7 +459,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   // tensorProto.mutable_int64_data()->Reserve(n);
   // Parse the actual values:
 
-  int64_t intval;
+  int64_t intval = 0;
   uint64_t uintval = 0;
   float floatval = 0.0;
   double dblval = 0.0;
@@ -511,14 +526,12 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
 }
 
 bool OnnxParser::NextIsIdentifier() {
-  std::string id("");
-  (void)PeekIdentifier(id);
+  auto id = PeekIdentifier();
   return !(id.empty());
 }
 
 bool OnnxParser::NextIsType() {
-  std::string id("");
-  (void)PeekIdentifier(id);
+  auto id = PeekIdentifier();
   if (PrimitiveTypeNameMap::IsTypeName(id))
     return true;
   switch (KeyWordMap::Lookup(id)) {
@@ -569,6 +582,8 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
     Literal literal;
     PARSE_TOKEN(literal);
     switch (literal.type) {
+      case LiteralType::UNDEFINED:
+        return ParseError("Internal error");
       case LiteralType::INT_LITERAL:
         attr.set_type(AttributeProto_AttributeType_INT);
         attr.set_i(std::stol(literal.value));
@@ -607,7 +622,7 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   return Parse(attr, name);
 }
 
-bool IsSingletonAttribute(AttributeProto_AttributeType type) {
+static bool IsSingletonAttribute(AttributeProto_AttributeType type) {
   switch (type) {
     case AttributeProto_AttributeType_FLOAT:
     case AttributeProto_AttributeType_INT:
@@ -622,7 +637,7 @@ bool IsSingletonAttribute(AttributeProto_AttributeType type) {
   }
 }
 
-AttributeProto_AttributeType ToSingletonType(AttributeProto_AttributeType type) {
+static AttributeProto_AttributeType ToSingletonType(AttributeProto_AttributeType type) {
   switch (type) {
     case AttributeProto_AttributeType_FLOATS:
       return AttributeProto_AttributeType_FLOAT;
@@ -833,7 +848,7 @@ Status OnnxParser::Parse(OpsetIdList& opsets) {
 Status OnnxParser::Parse(ModelProto& model) {
   model.Clear();
   std::string strval;
-  int64_t intval;
+  int64_t intval = 0;
   if (Matches('<')) {
     do {
       KeyWordMap::KeyWord keyword = KeyWordMap::KeyWord::NONE;

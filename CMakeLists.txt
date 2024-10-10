@@ -28,6 +28,8 @@ option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
     set(DEFAULT_ONNX_ML $ENV{ONNX_ML})
@@ -98,6 +100,10 @@ if(ONNX_DISABLE_EXCEPTIONS)
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
   endif()
+endif()
+
+if(DEFINED PYTHON_EXECUTABLE)
+  message(STATUS "Use Python_EXECUTABLE ${Python_EXECUTABLE}")
 endif()
 
 # find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
@@ -275,11 +281,9 @@ endif()
 # abseil build would fail if ONNX_WERROR is on.
 if(ONNX_WERROR)
   if(MSVC)
-    string(APPEND CMAKE_CXX_FLAGS " /WX")
-    string(APPEND CMAKE_C_FLAGS " /WX")
+    add_compile_options("/WX")
   else()
-    string(APPEND CMAKE_CXX_FLAGS " -Werror")
-    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
+    add_compile_options("-Werror")
   endif()
 endif()
 
@@ -476,15 +480,9 @@ target_include_directories(onnx_proto PUBLIC
 if (MSVC)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(EXTRA_FLAGS
-          "-Wno-implicit-function-declaration"
-          "-Wno-undefined-inline"
-          "-Wno-incompatible-pointer-types"
-          "-Wno-dllexport-explicit-instantiation-decl"
           "-Wno-microsoft-unqualified-friend"
           "-Wno-absolute-value"
-          "-Wno-unused-variable"
           "-Wno-unknown-argument"
-          "-Wno-writable-strings"
           "-Qunused-arguments")
   else()
     set(EXTRA_FLAGS "")
@@ -524,6 +522,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
 else()
   add_library(onnx ${ONNX_SRCS})
 endif()
+set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
@@ -543,8 +543,8 @@ if(BUILD_ONNX_PYTHON)
 
   add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
-  set_target_properties(onnx_cpp2py_export
-                        PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  set_target_properties(onnx_cpp2py_export PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -565,7 +565,7 @@ if(BUILD_ONNX_PYTHON)
 
   target_include_directories(onnx_cpp2py_export PUBLIC
     "${pybind11_INCLUDE_DIRS}"
-    "${PYTHON_INCLUDE_DIRS}")
+    "${PYTHON_INCLUDE_DIR}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
@@ -587,7 +587,7 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export
                           PRIVATE "-Wl,--whole-archive" $<TARGET_FILE:onnx>
                                   "-Wl,--no-whole-archive")
-    # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv" 
+    # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
     # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
     if (CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
       target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
@@ -602,20 +602,14 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
+                                   /wd4146 # unary minus operator applied to unsigned type,
+                                           # result still unsigned
                                    /wd4244 # 'argument': conversion from 'google::
                                            # protobuf::uint64' to 'int', possible
                                            # loss of data
                                    /wd4267 # Conversion from 'size_t' to 'int',
                                            # possible loss of data
-                                   /wd4996 # The second parameter is ignored.
                                    ${EXTRA_FLAGS})
-    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_cpp2py_export
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-    endif()
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -631,6 +625,8 @@ endif()
 if(MSVC)
   target_compile_options(onnx_proto
                          PRIVATE /MP
+                                 /wd4146 # unary minus operator applied to unsigned type,
+                                         # result still unsigned
                                  /wd4244 #'argument': conversion from 'google::
                                          #protobuf::uint64' to 'int', possible
                                          # loss of data
@@ -639,25 +635,14 @@ if(MSVC)
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
+                                 /wd4146 # unary minus operator applied to unsigned type,
+                                         # result still unsigned
                                  /wd4244 # 'argument': conversion from 'google::
                                          # protobuf::uint64' to 'int', possible
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
-                                 /wd4996 # The second parameter is ignored.
                                  ${EXTRA_FLAGS})
-  if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_proto
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-      target_compile_options(onnx
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-  endif()
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
@@ -668,8 +653,6 @@ if(MSVC)
   set_target_properties(onnx
                         PROPERTIES STATIC_LIBRARY_FLAGS
                                    "${onnx_static_library_flags}")
-elseif(APPLE)
-
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
 endif()

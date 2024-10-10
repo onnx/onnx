@@ -39,14 +39,15 @@ class Status {
     *this = other;
   }
 
-  void operator=(const Status& other) {
+  Status& operator=(const Status& other) {
     if (&other != this) {
       if (nullptr == other.state_) {
         state_.reset();
       } else if (state_ != other.state_) {
-        state_.reset(new State(*other.state_));
+        state_ = std::make_unique<State>(*other.state_);
       }
     }
+    return *this;
   }
 
   Status(Status&&) = default;

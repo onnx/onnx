@@ -61,26 +61,28 @@ class Extractor:
             reachable (set of int): The set of indexes to reachable nodes in `nodes`
             unreachable (set of int): The set of indexes to unreachable nodes in `nodes`
         """
-        # finish search at inputs
-        if node_output_name in graph_input_names:
-            return
+        # Use a stack to replace the recursion
+        stack = [node_output_name]
 
-        # find nodes connected to this output
-        nodes_to_search = [
-            index for index in unreachable if node_output_name in nodes[index].output
-        ]
+        while stack:
+            current_output_name = stack.pop()
 
-        # add nodes connected to this output to sets
-        for node_index in nodes_to_search:
-            reachable.add(node_index)
-            unreachable.remove(node_index)
+            # finish search at inputs
+            if current_output_name in graph_input_names:
+                continue
 
-        # recurse on inputs
-        for node_index in nodes_to_search:
-            for name in nodes[node_index].input:
-                self._dfs_search_reachable_nodes(
-                    name, graph_input_names, nodes, reachable, unreachable
-                )
+            # find nodes connected to this output
+            nodes_to_search = [
+                index
+                for index in unreachable
+                if current_output_name in nodes[index].output
+            ]
+
+            # add nodes connected to this output to sets
+            for node_index in nodes_to_search:
+                reachable.add(node_index)
+                unreachable.remove(node_index)
+                stack += nodes[node_index].input
 
     def _collect_reachable_nodes(
         self,
@@ -201,6 +203,7 @@ def extract_model(
     input_names: list[str],
     output_names: list[str],
     check_model: bool = True,
+    infer_shapes: bool = True,
 ) -> None:
     """Extracts sub-model from an ONNX model.
 
@@ -215,7 +218,8 @@ def extract_model(
         output_path (str | os.PathLike): The path to save the extracted ONNX model.
         input_names (list of string): The names of the input tensors that to be extracted.
         output_names (list of string): The names of the output tensors that to be extracted.
-        check_model (bool): Whether to run model checker on the extracted model.
+        check_model (bool): Whether to run model checker on the original model and the extracted model.
+        infer_shapes (bool): Whether to infer the shapes of the original model.
     """
     if not os.path.exists(input_path):
         raise ValueError(f"Invalid input model path: {input_path}")
@@ -226,14 +230,17 @@ def extract_model(
 
     if check_model:
         onnx.checker.check_model(input_path)
+
     model = onnx.load(input_path)
-    if check_model:
+
+    if infer_shapes:
         model = onnx.shape_inference.infer_shapes(model)
 
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)
 
     onnx.save(extracted, output_path)
+
     if check_model:
         onnx.checker.check_model(output_path)
 
