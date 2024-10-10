@@ -6,6 +6,7 @@
 
 #include "onnx/version_converter/convert.h"
 
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -83,11 +84,11 @@ void DefaultVersionConverter::convert_graph(
               << "Warning: skipping schema search for experimental op 'ConstantFill' and keeping the op as is. "
                  "Please be advised the converted model may not be working properly if target runtime does not support this "
                  "experimental op."
-              << std::endl;
+              << '\n';
         }
       } else if (!cur_op->domain().empty() && cur_op->domain() != "ai.onnx") {
         if (DEBUG) {
-          std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << std::endl;
+          std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << '\n';
         }
       } else if (op_name != "Undefined" && op_name != "Captured") {
         auto& op_domain_map = all_schemas.at(op_name);
@@ -99,7 +100,7 @@ void DefaultVersionConverter::convert_graph(
           // If adapter_lookup returns null, no adapter is present.
           // Error thrown by adapter_lookup
           if (DEBUG) {
-            std::cerr << "Applying adapter" << std::endl;
+            std::cerr << "Applying adapter" << '\n';
           }
           // adapt should handle replacing node in graph
           cur_op = op_adapter.adapt(g, cur_op);

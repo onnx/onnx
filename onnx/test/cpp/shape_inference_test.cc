@@ -24,7 +24,7 @@ void ScanInferenceFunction(InferenceContext& ctx);
 namespace Test {
 
 template <class Type>
-void CreateDims(Type& proto, int num_dims) {
+static void CreateDims(Type& proto, int num_dims) {
   auto mutable_shape = proto.mutable_shape();
   mutable_shape->clear_dim();
 
@@ -33,7 +33,7 @@ void CreateDims(Type& proto, int num_dims) {
 }
 
 template <class Type>
-void SetDimValues(Type& proto, const std::vector<int>& values) {
+static void SetDimValues(Type& proto, const std::vector<int>& values) {
   auto* mutable_shape = proto.mutable_shape();
   EXPECT_TRUE(mutable_shape->dim_size() == values.size());
 
@@ -46,7 +46,7 @@ void SetDimValues(Type& proto, const std::vector<int>& values) {
 }
 
 template <class Type>
-void SetDimParams(Type& proto, const std::vector<const std::string*>& values) {
+static void SetDimParams(Type& proto, const std::vector<const std::string*>& values) {
   auto mutable_shape = proto.mutable_shape();
   EXPECT_TRUE(mutable_shape->dim_size() == values.size());
 
@@ -59,12 +59,12 @@ void SetDimParams(Type& proto, const std::vector<const std::string*>& values) {
 }
 
 template <class Type>
-void Dump(const Type& t) {
+static void Dump(const Type& t) {
   auto& s_shape = t.shape();
   auto num_dims = s_shape.dim_size();
   std::cout << num_dims << " dims. ";
   for (int i = 0; i < num_dims; ++i) {
-    auto x = s_shape.dim(0);
+    const auto& x = s_shape.dim(0);
     auto y = x.has_dim_value();
     auto z = x.has_dim_param();
 
@@ -507,7 +507,7 @@ TEST(GraphInferencerImplTest, Scan9_BasicTest) {
   doInferencingTest(false);
 }
 
-void ParseAndInfer(ModelProto& model, const char* modelStr) {
+static void ParseAndInfer(ModelProto& model, const char* modelStr) {
   OnnxParser parser(modelStr);
   auto status = parser.Parse(model);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -517,7 +517,7 @@ void ParseAndInfer(ModelProto& model, const char* modelStr) {
   ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
 }
 
-void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {
+static void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {
   ModelProto model;
   ParseAndInfer(model, modelStr);
 

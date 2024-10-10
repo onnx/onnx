@@ -157,7 +157,7 @@ bool ParserBase::NextIsValidFloatString() {
 Status OnnxParser::Parse(IdList& idlist) {
   idlist.Clear();
   std::string id;
-  bool found;
+  bool found = false;
   CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found));
   if (!found)
     return Status::OK();

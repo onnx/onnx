@@ -11,6 +11,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -21,6 +22,7 @@
 
 #include "onnx/common/common.h"
 #include "onnx/common/constants.h"
+#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
@@ -1121,6 +1123,7 @@ class OpSchema final {
 
   std::vector<int> function_opset_versions() const {
     std::vector<int> opset_versions;
+    opset_versions.reserve(opset_version_to_function_body_.size());
     for (const auto& pair : opset_version_to_function_body_) {
       opset_versions.push_back(pair.first);
     }
@@ -1163,6 +1166,7 @@ class OpSchema final {
 
   std::vector<int> context_dependent_function_opset_versions() const {
     std::vector<int> opset_versions;
+    opset_versions.reserve(opset_version_to_function_builder_.size());
     for (const auto& pair : opset_version_to_function_builder_) {
       opset_versions.push_back(pair.first);
     }
@@ -1318,14 +1322,13 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       if (map_.count(domain) != 0) {
         std::stringstream err;
         err << "Trying to add a domain to DomainToVersion map, but the domain is already exist with version range ("
-            << map_.at(domain).first << ", " << map_.at(domain).second << "). domain: \"" << domain << "\""
-            << std::endl;
+            << map_.at(domain).first << ", " << map_.at(domain).second << "). domain: \"" << domain << "\"" << '\n';
         fail_schema(err.str());
       }
       if (last_release_version_map_.count(domain) != 0) {
         std::stringstream err;
         err << "Trying to add a domain to LastReleaseVersion map, but the domain is already exist with last version: "
-            << last_release_version_map_.at(domain) << ", domain: \"" << domain << "\"" << std::endl;
+            << last_release_version_map_.at(domain) << ", domain: \"" << domain << "\"" << '\n';
         fail_schema(err.str());
       }
       map_[domain] = std::make_pair(min_version, max_version);
@@ -1343,13 +1346,13 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       if (map_.count(domain) == 0) {
         std::stringstream err;
         err << "Trying to update a domain in DomainToVersion map, but the domain has not been add. domain: \"" << domain
-            << "\"" << std::endl;
+            << "\"" << '\n';
         fail_schema(err.str());
       }
       if (last_release_version_map_.count(domain) == 0) {
         std::stringstream err;
         err << "Trying to update a domain in LastReleaseVersion map, but the domain has not been add. domain: \""
-            << domain << "\"" << std::endl;
+            << domain << "\"" << '\n';
         fail_schema(err.str());
       }
       map_.at(domain).first = min_version;
@@ -1390,7 +1393,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         OpSchemaRegisterImpl(std::move(op_schema), opset_version_to_load, fail_duplicate_schema);
       }
       ONNX_CATCH(const std::exception& e) {
-        ONNX_HANDLE_EXCEPTION([&]() { std::cerr << "Schema error: " << e.what() << std::endl; });
+        ONNX_HANDLE_EXCEPTION([&]() { std::cerr << "Schema error: " << e.what() << '\n'; });
       }
     }
     static void
@@ -1413,7 +1416,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
           std::stringstream err;
           err << "Trying to register schema with name " << op_name << " (domain: " << op_domain << " version: " << ver
               << ") from file " << op_schema.file() << " line " << op_schema.line()
-              << ", but it is already registered from file " << schema.file() << " line " << schema.line() << std::endl;
+              << ", but it is already registered from file " << schema.file() << " line " << schema.line() << '\n';
           fail_schema(err.str());
         }
         return;
@@ -1464,7 +1467,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         std::stringstream err;
         err << "Trying to register schema with name " << op_name << " (domain: " << op_domain << " version: " << ver
             << ") from file " << op_schema.file() << " line " << op_schema.line() << ", but its domain is not"
-            << " known by the checker." << std::endl;
+            << " known by the checker." << '\n';
 
         fail_schema(err.str());
       }
@@ -1478,7 +1481,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
             << "] (usually, this means you "
             << "bumped the operator version but "
             << "forgot to update the version range in DomainToVersionRange "
-            << "in onnx/defs/schema.h)." << std::endl;
+            << "in onnx/defs/schema.h)." << '\n';
         fail_schema(err.str());
       }
     }
@@ -1492,7 +1495,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     } else {
       std::stringstream err;
       err << "Attempting to deregister an unregistered schema with name: " << op_type << " domain: " << domain
-          << " version: " << version << std::endl;
+          << " version: " << version << '\n';
       fail_schema(err.str());
     }
   }

@@ -11,7 +11,7 @@
 #include <utility>
 #include <vector>
 
-#include "onnx/defs/function.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 void resizeShapeInferenceHelper(
@@ -466,7 +466,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
         std::iota(axes.begin(), axes.end(), 0);
       }
 
-      int num_axes = axes.size();
+      auto num_axes = axes.size();
       auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
       // Populating default dims
@@ -485,7 +485,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
         }
 
         const auto pads_data = ParseData<int64_t>(pads_initializer);
-        if (pads_data.size() != static_cast<size_t>(2 * num_axes)) {
+        if (pads_data.size() != 2 * num_axes) {
           fail_shape_inference(
               "Pads has incorrect number of values. Expected 2 * ",
               num_axes,
@@ -502,7 +502,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
           }
         }
 
-        for (int i = 0; i < num_axes; ++i) {
+        for (size_t i = 0; i < num_axes; ++i) {
           auto axis = axes[i];
           const auto& input_dim = input_shape.dim(axis);
           auto& out_dim = *out_dims[axis];

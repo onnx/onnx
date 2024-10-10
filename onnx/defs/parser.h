@@ -7,8 +7,7 @@
 
 #pragma once
 
-#include <ctype.h>
-
+#include <cctype>
 #include <string>
 #include <unordered_map>
 
@@ -42,6 +41,7 @@ using StringStringList = google::protobuf::RepeatedPtrField<StringStringEntryPro
   }
 
 template <typename Map>
+// NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
 class StringIntMap {
  public:
   static const std::unordered_map<std::string, int32_t>& Instance() {

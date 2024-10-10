@@ -8,7 +8,7 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset12(const char* name) {
+static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset12(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -74,14 +74,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor."));
 
-inline void logicalOpInference_opset1(InferenceContext& ctx) {
+inline static void logicalOpInference_opset1(InferenceContext& ctx) {
   updateOutputElemType(ctx, 0, TensorProto::BOOL);
   if (hasInputShape(ctx, 0)) {
     propagateShapeFromInputToOutput(ctx, 0, 0);
   }
 }
 
-std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset1(const char* name) {
+static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset1(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -103,7 +103,7 @@ detailed description of the broadcasting rules.
   };
 }
 
-std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset7(const char* name) {
+static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset7(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(

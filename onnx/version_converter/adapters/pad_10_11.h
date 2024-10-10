@@ -11,6 +11,8 @@
 #include <memory>
 #include <vector>
 
+#include "onnx/version_converter/adapters/adapter.h"
+
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
@@ -18,7 +20,7 @@ class Pad_10_11 final : public Adapter {
  public:
   explicit Pad_10_11() : Adapter("Pad", OpSetID(10), OpSetID(11)) {}
 
-  void adapt_pad_10_11(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_pad_10_11(const std::shared_ptr<Graph>& graph, Node* node) const {
     // Turn pads attribute into input
     Tensor t_pads;
     t_pads.elem_type() = TensorProto_DataType_INT64;

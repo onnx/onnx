@@ -6,6 +6,7 @@
 
 #include <vector>
 
+#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {

@@ -4,14 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
-
 #include "gtest/gtest.h"
-#include "onnx/checker.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
-#include "onnx/defs/shape_inference.h"
-#include "onnx/onnx_pb.h"
 #include "onnx/shape_inference/implementation.h"
 
 using namespace ONNX_NAMESPACE::shape_inference;
@@ -20,7 +15,7 @@ namespace ONNX_NAMESPACE {
 
 namespace Test {
 
-inline bool CompareShape(
+static bool CompareShape(
     const TensorShapeProto& inferredShape,
     const TensorShapeProto& expectedShape,
     bool checkSameParam = false) {
@@ -43,7 +38,7 @@ inline bool CompareShape(
   return true;
 }
 
-TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 15) {
+static TensorShapeProto RunDataPropagation(const char* graphCode, int domainVersion = 15) {
   // Parses the graph from graphCode
   GraphProto graph;
   OnnxParser parser(graphCode);

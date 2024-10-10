@@ -10,6 +10,8 @@
 
 #include <memory>
 
+#include "onnx/version_converter/adapters/adapter.h"
+
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
@@ -17,7 +19,7 @@ class Scatter_10_11 final : public Adapter {
  public:
   explicit Scatter_10_11() : Adapter("Scatter", OpSetID(10), OpSetID(11)) {}
 
-  Node* adapt_scatter_10_11(std::shared_ptr<Graph> graph, Node* node) const {
+  Node* adapt_scatter_10_11(const std::shared_ptr<Graph>& graph, Node* node) const {
     int axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 0;
 
     // Replace the node with an equivalent ScatterElements node

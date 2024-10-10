@@ -4,6 +4,7 @@
 
 #include "onnx/checker.h"
 
+#include <iostream>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -527,7 +528,7 @@ static void print_warning_if_has_experimental(const std::unordered_set<std::stri
     }
     // Remove the last comma which is unnecessary
     all_experimental_ops.pop_back();
-    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << std::endl;
+    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << '\n';
   }
 }
 
@@ -1037,7 +1038,7 @@ std::string resolve_external_data_location(
   struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
   if (data_path.empty() || (data_path[0] != '#' && stat((data_path).c_str(), &buffer) != 0)) {
 #else
-  struct stat64 buffer; // All POSIX under glibc except APPLE and wasm have stat64
+  struct stat64 buffer {}; // All POSIX under glibc except APPLE and wasm have stat64
   if (data_path.empty() || (data_path[0] != '#' && stat64((data_path).c_str(), &buffer) != 0)) {
 #endif
     fail_check(
