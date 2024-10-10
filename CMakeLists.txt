@@ -22,7 +22,7 @@ option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
-option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
+option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" ON)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
@@ -183,44 +183,47 @@ else()
         find_package(absl REQUIRED)
         find_package(utf8_range REQUIRED)
         message(STATUS "absl_VERSION: ${absl_VERSION}")
-        set(protobuf_ABSL_USED_TARGETS
-          absl::absl_check
-          absl::absl_log
-          absl::algorithm
-          absl::base
-          absl::bind_front
-          absl::bits
-          absl::btree
-          absl::cleanup
-          absl::cord
-          absl::core_headers
-          absl::debugging
-          absl::die_if_null
-          absl::dynamic_annotations
-          absl::flags
-          absl::flat_hash_map
-          absl::flat_hash_set
-          absl::function_ref
-          absl::hash
-          absl::layout
-          absl::log_initialize
-          absl::log_severity
-          absl::memory
-          absl::node_hash_map
-          absl::node_hash_set
-          absl::optional
-          absl::span
-          absl::status
-          absl::statusor
-          absl::strings
-          absl::synchronization
-          absl::time
-          absl::type_traits
-          absl::utility
-          absl::variant
-          utf8_range::utf8_range
-          utf8_range::utf8_validity
-        )
+        set(protobuf_ABSL_USED_TARGETS)
+        if(NOT Protobuf_USE_STATIC_LIBS)
+          set(protobuf_ABSL_USED_TARGETS
+            absl::absl_check
+            absl::absl_log
+            absl::algorithm
+            absl::base
+            absl::bind_front
+            absl::bits
+            absl::btree
+            absl::cleanup
+            absl::cord
+            absl::core_headers
+            absl::debugging
+            absl::die_if_null
+            absl::dynamic_annotations
+            absl::flags
+            absl::flat_hash_map
+            absl::flat_hash_set
+            absl::function_ref
+            absl::hash
+            absl::layout
+            absl::log_initialize
+            absl::log_severity
+            absl::memory
+            absl::node_hash_map
+            absl::node_hash_set
+            absl::optional
+            absl::span
+            absl::status
+            absl::statusor
+            absl::strings
+            absl::synchronization
+            absl::time
+            absl::type_traits
+            absl::utility
+            absl::variant
+            utf8_range::utf8_range
+            utf8_range::utf8_validity
+          )
+        endif()
       endif()
     else()
       set(Build_Protobuf ON)
@@ -498,16 +501,19 @@ target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf-lite PRIVATE ${protobuf_ABSL_USED_TARGETS})
+    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf-lite)
   else()
     target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LITE_LIBRARIES})
   endif()
 else()
   if(TARGET protobuf::libprotobuf)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf PRIVATE ${protobuf_ABSL_USED_TARGETS})
+    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
   else()
     target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
   endif()
+endif()
+if(protobuf_ABSL_USED_TARGETS)
+  target_link_libraries(onnx_proto PRIVATE ${protobuf_ABSL_USED_TARGETS})
 endif()
 add_onnx_global_defines(onnx_proto)
 
