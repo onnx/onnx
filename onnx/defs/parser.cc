@@ -551,14 +551,14 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
   if (isalpha(next) || next == '_') {
     if (NextIsType()) {
       TypeProto typeProto;
-      Parse(typeProto);
+      CHECK_PARSER_STATUS(Parse(typeProto));
       next = NextChar();
       if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
         CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()));
         (void)Matches('='); // Optional, to unify handling of initializers
-        Parse(tensorProto, typeProto);
+        CHECK_PARSER_STATUS(Parse(tensorProto, typeProto));
       } else {
         attr.set_type(AttributeProto_AttributeType_TYPE_PROTO);
         attr.mutable_tp()->CopyFrom(typeProto);
@@ -729,19 +729,19 @@ Status OnnxParser::Parse(NodeProto& node) {
   MATCH('=');
   std::string domain("");
   std::string id;
-  ParseIdentifier(id);
+  (void)(ParseIdentifier(id));
   while (Matches('.')) {
     if (!domain.empty())
       domain += ".";
     domain += id;
-    ParseIdentifier(id);
+    CHECK_PARSER_STATUS(ParseIdentifier(id));
   }
   node.set_domain(domain);
   node.set_op_type(id);
 
   if (Matches(':')) {
     std::string overload;
-    ParseIdentifier(overload);
+    CHECK_PARSER_STATUS(ParseIdentifier(overload));
     node.set_overload(overload);
   }
   PARSE(*node.mutable_attribute());
