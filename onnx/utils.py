@@ -213,6 +213,8 @@ def extract_model(
     which is defined by the input and output tensors, should not _cut through_ the
     subgraph that is connected to the _main graph_ as attributes of these operators.
 
+    Note: When the extracted model size is larger than 2GB, the extra data will be saved in "output_path.data".
+
     Arguments:
         input_path (str | os.PathLike): The path to original ONNX model.
         output_path (str | os.PathLike): The path to save the extracted ONNX model.
