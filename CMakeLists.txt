@@ -16,7 +16,7 @@ cmake_policy(SET CMP0074 NEW)
 
 # Project
 project(onnx C CXX)
-option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag and Protobuf_USE_STATIC_LIBS. " OFF)
+option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
@@ -25,7 +25,7 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
-option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
+option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
