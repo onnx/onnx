@@ -14,8 +14,6 @@ import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
-
-
     GraphProto,
     ModelProto,
     TensorProto,
