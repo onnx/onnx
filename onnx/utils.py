@@ -10,7 +10,6 @@ import onnx.checker
 import onnx.helper
 import onnx.shape_inference
 from onnx import FunctionProto, ModelProto, NodeProto, TensorProto, ValueInfoProto
-from onnx.checker import MAXIMUM_PROTOBUF
 
 
 class Extractor:
@@ -232,7 +231,7 @@ def extract_model(
     if check_model:
         onnx.checker.check_model(input_path)
 
-    if infer_shapes and os.path.getsize(input_path) > MAXIMUM_PROTOBUF:
+    if infer_shapes and os.path.getsize(input_path) > onnx.checker.MAXIMUM_PROTOBUF:
         onnx.shape_inference.infer_shapes_path(input_path, output_path)
         model = onnx.load(output_path)
     else:
@@ -243,8 +242,8 @@ def extract_model(
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)
 
-    if extracted.ByteSize() > MAXIMUM_PROTOBUF:
-        location = os.path.basename(output_path) + "_data"
+    if extracted.ByteSize() > onnx.checker.MAXIMUM_PROTOBUF:
+        location = os.path.basename(output_path) + ".data"
         onnx.save(extracted, output_path, save_as_external_data=True, location=location)
     else:
         onnx.save(extracted, output_path)
