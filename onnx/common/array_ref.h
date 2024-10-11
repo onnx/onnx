@@ -23,9 +23,8 @@
 // removed a bunch of slice variants for simplicity...
 
 #pragma once
-#include <cassert>
-
 #include <array>
+#include <cassert>
 #include <vector>
 
 namespace ONNX_NAMESPACE {
@@ -43,8 +42,8 @@ namespace ONNX_NAMESPACE {
 template <typename T>
 class ArrayRef {
  public:
-  using iterator = const T *;
-  using const_iterator = const T *;
+  using iterator = const T*;
+  using const_iterator = const T*;
   using size_type = size_t;
 
   using reverse_iterator = std::reverse_iterator<iterator>;
