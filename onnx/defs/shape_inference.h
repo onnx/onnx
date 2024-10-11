@@ -154,14 +154,14 @@ inline bool getRepeatedAttribute(InferenceContext& ctx, const std::string& attr_
   }
 }
 
-inline int64_t getAttribute(InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
+inline int64_t getAttribute(const InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
   return defaultValue;
 }
 
-inline int64_t getAttribute(DataPropagationContext& ctx, const std::string& attributeName, int64_t defaultValue) {
+inline int64_t getAttribute(const DataPropagationContext& ctx, const std::string& attributeName, int64_t defaultValue) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
@@ -169,7 +169,7 @@ inline int64_t getAttribute(DataPropagationContext& ctx, const std::string& attr
 }
 
 inline std::string
-getAttribute(InferenceContext& ctx, const std::string& attributeName, const std::string& defaultValue) {
+getAttribute(const InferenceContext& ctx, const std::string& attributeName, const std::string& defaultValue) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_s())
     return attr_proto->s();
@@ -352,7 +352,7 @@ inline const TensorShapeProto& getInputShape(const InferenceContext& ctx, size_t
   }
 }
 
-inline const TensorShapeProto* getOptionalInputShape(InferenceContext& ctx, size_t n) {
+inline const TensorShapeProto* getOptionalInputShape(const InferenceContext& ctx, size_t n) {
   const auto* input_type = ctx.getInputType(n);
 
   if (input_type == nullptr) {
@@ -782,7 +782,7 @@ static constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));
 }
 
-inline void checkInputRank(InferenceContext& ctx, size_t input_index, int expected_rank) {
+inline void checkInputRank(const InferenceContext& ctx, size_t input_index, int expected_rank) {
   // We check the rank only if a rank is known for the input:
   if (hasInputShape(ctx, input_index)) {
     auto rank = getInputShape(ctx, input_index).dim_size();
@@ -842,7 +842,7 @@ inline void unifyDim(const Dim& source_dim, Dim& target_dim) {
   }
 }
 
-inline void unifyInputDim(InferenceContext& ctx, size_t input_index, int dim_index, Dim& dim) {
+inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int dim_index, Dim& dim) {
   // We unify the dimensions only if it is available for specified input:
   if (hasInputShape(ctx, input_index)) {
     auto& input_shape = getInputShape(ctx, input_index);
