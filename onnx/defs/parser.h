@@ -229,8 +229,8 @@ class ParserBase {
   template <typename... Args>
   Status ParseError(const Args&... args) {
     return Status(
-        NONE,
-        FAIL,
+        StatusCategory::NONE,
+        StatusCode::FAIL,
         ONNX_NAMESPACE::MakeString(
             "[ParseError at position ", GetCurrentPos(), "]\n", "Error context: ", GetErrorContext(), "\n", args...));
   }

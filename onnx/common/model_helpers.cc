@@ -15,7 +15,8 @@ Common::Status BuildNode(
     std::vector<std::string> const& outputs,
     NodeProto* node) {
   if (node == nullptr) {
-    return Common::Status(Common::CHECKER, Common::INVALID_ARGUMENT, "node_proto should not be nullptr.");
+    return Common::Status(
+        Common::StatusCategory::CHECKER, Common::StatusCode::INVALID_ARGUMENT, "node_proto should not be nullptr.");
   }
   node->set_name(name);
   node->set_domain(domain);
