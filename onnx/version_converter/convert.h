@@ -139,7 +139,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     // Missing in this group: GRU
 
     /******** 3 -> 4 ********/
-    registerAdapter("Concat", 3, 4, SetAttributeIfAbsent(kaxis, 1));
+    registerAdapter("Concat", 3, 4, SetAttributeIfAbsent(BuiltinSymbol::kaxis, 1));
 
     /******** 4 -> 3 ********/
     std::vector<TensorProto_DataType> concat_unallowed_types = {
@@ -163,7 +163,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 5 -> 6 ********/
     // Missing in this group: Cast, Tile
-    auto removeConsumedInputs = RemoveAttribute(kconsumed_inputs);
+    auto removeConsumedInputs = RemoveAttribute(BuiltinSymbol::kconsumed_inputs);
     registerAdapter("Add", 5, 6, removeConsumedInputs);
     registerAdapter("Mul", 5, 6, removeConsumedInputs);
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(5), OpSetID(6)));
@@ -217,7 +217,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Div", OpSetID(6), OpSetID(5), broadcast_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Abs", OpSetID(6), OpSetID(5), int_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Neg", OpSetID(6), OpSetID(5), neg_unallowed_types));
-    registerAdapter("BatchNormalization", 6, 5, SetAttribute(kconsumed_inputs, std::vector<int64_t>({0, 0})));
+    registerAdapter("BatchNormalization", 6, 5, SetAttribute(BuiltinSymbol::kconsumed_inputs, std::vector<int64_t>({0, 0})));
     registerAdapter(std::make_unique<CompatibleAdapter>("Gemm", OpSetID(6), OpSetID(5)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Relu", OpSetID(6), OpSetID(5)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Sum", OpSetID(6), OpSetID(5)));
@@ -233,8 +233,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("PRelu", OpSetID(6), OpSetID(7)));
     registerAdapter(std::make_unique<BroadcastForwardCompatibility>("Sub", OpSetID(6), OpSetID(7)));
     registerAdapter(std::make_unique<Gemm_6_7>());
-    registerAdapter("BatchNormalization", 6, 7, RemoveAttributeNotEq(kis_test, 0));
-    registerAdapter("Dropout", 6, 7, RemoveAttributeNotEq(kis_test, 0));
+    registerAdapter("BatchNormalization", 6, 7, RemoveAttributeNotEq(BuiltinSymbol::kis_test, 0));
+    registerAdapter("Dropout", 6, 7, RemoveAttributeNotEq(BuiltinSymbol::kis_test, 0));
     registerAdapter(std::make_unique<Upsample_6_7>());
 
     /******** 7 -> 6 ********/
@@ -244,10 +244,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<BroadcastBackwardCompatibility>("Pow", OpSetID(7), OpSetID(6)));
     registerAdapter(std::make_unique<CompatibleAdapter>("PRelu", OpSetID(7), OpSetID(6)));
     registerAdapter(std::make_unique<BroadcastBackwardCompatibility>("Sub", OpSetID(7), OpSetID(6)));
-    registerAdapter("BatchNormalization", 7, 6, SetAttribute(kis_test, 1));
-    registerAdapter("Dropout", 7, 6, SetAttribute(kis_test, 1));
+    registerAdapter("BatchNormalization", 7, 6, SetAttribute(BuiltinSymbol::kis_test, 1));
+    registerAdapter("Dropout", 7, 6, SetAttribute(BuiltinSymbol::kis_test, 1));
     registerAdapter(std::make_unique<Gemm_7_6>());
-    registerAdapter("AveragePool", 7, 6, RemoveAttribute(kcount_include_pad, 0));
+    registerAdapter("AveragePool", 7, 6, RemoveAttribute(BuiltinSymbol::kcount_include_pad, 0));
 
     /******** 7 -> 8 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Max", OpSetID(7), OpSetID(8)));
@@ -272,7 +272,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Greater", OpSetID(8), OpSetID(9)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Less", OpSetID(8), OpSetID(9)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(8), OpSetID(9)));
-    registerAdapter("BatchNormalization", 8, 9, RemoveAttribute(kspatial, 1));
+    registerAdapter("BatchNormalization", 8, 9, RemoveAttribute(BuiltinSymbol::kspatial, 1));
     registerAdapter(std::make_unique<Scan_8_9>());
     registerAdapter(std::make_unique<Upsample_8_9>());
 
@@ -397,8 +397,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 12 -> 11 ********/
     std::vector<TensorProto_DataType> maxpool_unallowed_types = {TensorProto_DataType_UINT8, TensorProto_DataType_INT8};
-    registerAdapter("ArgMax", 12, 11, RemoveAttribute(kselect_last_index, 0));
-    registerAdapter("ArgMin", 12, 11, RemoveAttribute(kselect_last_index, 0));
+    registerAdapter("ArgMax", 12, 11, RemoveAttribute(BuiltinSymbol::kselect_last_index, 0));
+    registerAdapter("ArgMin", 12, 11, RemoveAttribute(BuiltinSymbol::kselect_last_index, 0));
     registerAdapter(std::make_unique<CompatibleAdapter>("BatchNormalization", OpSetID(12), OpSetID(11)));
     registerAdapter(std::make_unique<TypeRestriction>("Clip", OpSetID(12), OpSetID(11), int_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Min", OpSetID(12), OpSetID(11), int_unallowed_types));
@@ -504,15 +504,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Relu", OpSetID(13), OpSetID(14)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(13), OpSetID(14)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Sub", OpSetID(13), OpSetID(14)));
-    registerAdapter("GRU", 13, 14, SetAttribute(klayout, 0));
-    registerAdapter("LSTM", 13, 14, SetAttribute(klayout, 0));
-    registerAdapter("RNN", 13, 14, SetAttribute(klayout, 0));
+    registerAdapter("GRU", 13, 14, SetAttribute(BuiltinSymbol::klayout, 0));
+    registerAdapter("LSTM", 13, 14, SetAttribute(BuiltinSymbol::klayout, 0));
+    registerAdapter("RNN", 13, 14, SetAttribute(BuiltinSymbol::klayout, 0));
     registerAdapter(std::make_unique<BatchNormalization_13_14>());
 
     /******** 14 -> 13 ********/
-    registerAdapter("GRU", 14, 13, RemoveAttribute(klayout, 0));
-    registerAdapter("LSTM", 14, 13, RemoveAttribute(klayout, 0));
-    registerAdapter("RNN", 14, 13, RemoveAttribute(klayout, 0));
+    registerAdapter("GRU", 14, 13, RemoveAttribute(BuiltinSymbol::klayout, 0));
+    registerAdapter("LSTM", 14, 13, RemoveAttribute(BuiltinSymbol::klayout, 0));
+    registerAdapter("RNN", 14, 13, RemoveAttribute(BuiltinSymbol::klayout, 0));
 
     /******** 14 -> 15 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("BatchNormalization", OpSetID(14), OpSetID(15)));
@@ -520,7 +520,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(14), OpSetID(15)));
 
     /******** 15 -> 16 ********/
-    registerAdapter("RoiAlign", 15, 16, SetAttribute(kcoordinate_transformation_mode, "output_half_pixel"));
+    registerAdapter("RoiAlign", 15, 16, SetAttribute(BuiltinSymbol::kcoordinate_transformation_mode, "output_half_pixel"));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterElements", OpSetID(15), OpSetID(16)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(15), OpSetID(16)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(15), OpSetID(16)));
@@ -541,7 +541,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<Split_17_18>());
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterElements", OpSetID(17), OpSetID(18)));
-    registerAdapter("LpPool", 17, 18, SetAttribute(kceil_mode, 0));
+    registerAdapter("LpPool", 17, 18, SetAttribute(BuiltinSymbol::kceil_mode, 0));
     registerAdapter(std::make_unique<AxesAttributeToInput>("ReduceL1", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<AxesAttributeToInput>("ReduceL2", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<AxesAttributeToInput>("ReduceLogSum", OpSetID(17), OpSetID(18)));

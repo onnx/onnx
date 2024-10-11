@@ -190,7 +190,7 @@ namespace ONNX_NAMESPACE {
   _(block_size)                     \
   _(output_dtype)
 
-enum BuiltinSymbol {
+enum class BuiltinSymbol: uint32_t {
 #define DEFINE_SYMBOL(s) k##s,
   FORALL_BUILTIN_SYMBOLS(DEFINE_SYMBOL)
 #undef DEFINE_SYMBOL
@@ -200,7 +200,7 @@ enum BuiltinSymbol {
 struct Symbol {
   Symbol() = default;
   // NOLINTNEXTLINE(google-explicit-constructor)
-  /*implicit*/ Symbol(BuiltinSymbol value) : value(value) {}
+  /*implicit*/ Symbol(BuiltinSymbol value) : value(static_cast<uint32_t>(value)) {}
   explicit Symbol(const std::string& s);
   explicit Symbol(uint32_t value) : value(value) {}
 

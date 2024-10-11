@@ -220,7 +220,7 @@ static void createDummyValue(
     const std::unique_ptr<Graph>& g,
     const std::string& name,
     std::unordered_map<std::string, Value*>& value_by_name_of) {
-  auto* undef = g->create(kCaptured, 1);
+  auto* undef = g->create(BuiltinSymbol::kCaptured, 1);
   g->appendNode(undef);
   undef->outputs()[0]->setUniqueName(name);
   value_by_name_of[name] = undef->outputs()[0];
@@ -263,7 +263,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     //  - OR the empty string is passed as the input name
     // This is to handle that second case, which needs a dummy node to
     // be representable in the graph IR.
-    auto* n = g->create(kUndefined, 1);
+    auto* n = g->create(BuiltinSymbol::kUndefined, 1);
     g->appendNode(n);
     n->outputs()[0]->setUniqueName("");
     value_by_name_of[""] = n->outputs()[0];
@@ -602,14 +602,14 @@ void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
   std::unordered_set<Value*> graph_outputs(g->outputs().begin(), g->outputs().end());
 
   for (auto node : g->nodes()) {
-    if (node->kind() == kUndefined || node->kind() == kCaptured) {
+    if (node->kind() == BuiltinSymbol::kUndefined || node->kind() == BuiltinSymbol::kCaptured) {
       // Undefined nodes are used to represent optional inputs that are not
       // provided.
       continue;
     }
     auto p_n = p_g->add_node();
     for (auto input : node->inputs()) {
-      if (input->node()->kind() == kUndefined) {
+      if (input->node()->kind() == BuiltinSymbol::kUndefined) {
         p_n->add_input("");
       } else {
         p_n->add_input(value_name(input));

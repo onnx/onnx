@@ -21,11 +21,11 @@ class Upsample_9_10 final : public Adapter {
   explicit Upsample_9_10() : Adapter("Upsample", OpSetID(9), OpSetID(10)) {}
 
   Node* adapt_upsample_9_10(const std::shared_ptr<Graph>& graph, Node* node) const {
-    std::string mode = node->hasAttribute(kmode) ? node->s(kmode) : "nearest";
+    std::string mode = node->hasAttribute(BuiltinSymbol::kmode) ? node->s(BuiltinSymbol::kmode) : "nearest";
 
     // Replace the node with an equivalent Resize node
-    Node* resize = graph->create(kResize);
-    resize->s_(kmode, mode);
+    Node* resize = graph->create(BuiltinSymbol::kResize);
+    resize->s_(BuiltinSymbol::kmode, mode);
     resize->addInput(node->inputs()[0]);
     resize->addInput(node->inputs()[1]);
     node->replaceAllUsesWith(resize);

@@ -950,7 +950,7 @@ struct Graph final {
   }
 
  public:
-  Graph() : output_(initOutput(create(kReturn, 0))), input_(create(kParam, 0)), initializer_node_(create(kParam, 0)) {}
+  Graph() : output_(initOutput(create(BuiltinSymbol::kReturn, 0))), input_(create(BuiltinSymbol::kParam, 0)), initializer_node_(create(BuiltinSymbol::kParam, 0)) {}
 
   bool has_doc_string() const {
     return has_doc_string_;
@@ -1287,7 +1287,7 @@ inline Value* Value::setUniqueName(const std::string& name, bool update_related_
         // skip non-subgraph
         return;
       }
-      if (node->kind() == kCaptured) {
+      if (node->kind() == BuiltinSymbol::kCaptured) {
         Value* output = node->output();
         if (output->uniqueName() == old_name) {
           output->setUniqueName(name, false);
@@ -1328,7 +1328,7 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
       // skip non-subgraph
       return;
     }
-    if (node->kind() == kCaptured) {
+    if (node->kind() == BuiltinSymbol::kCaptured) {
       Value* output = node->output();
       if (output->uniqueName() == unique_name) {
         output->setUniqueName(newValue->uniqueName());
@@ -1360,11 +1360,11 @@ inline bool Node::isBefore(const Node* n) {
     return false;
   }
   // return true if node is Param (in initializers)
-  if (kind_ == kParam) {
+  if (kind_ == BuiltinSymbol::kParam) {
     return true;
   }
   // return false if target node is Param (in initializers)
-  if (n->kind() == kParam) {
+  if (n->kind() == BuiltinSymbol::kParam) {
     return false;
   }
   ONNX_ASSERT(n->inGraphList());
@@ -1411,7 +1411,7 @@ inline use_list Value::uses() const {
       // skip non-subgraph
       return;
     }
-    if (node->kind() == kCaptured) {
+    if (node->kind() == BuiltinSymbol::kCaptured) {
       const Value* output = node->outputs()[0];
       if (output->uniqueName() == this->uniqueName()) {
         const auto output_uses = output->uses();

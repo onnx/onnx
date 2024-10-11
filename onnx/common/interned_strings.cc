@@ -21,8 +21,8 @@ namespace ONNX_NAMESPACE {
 struct InternedStrings {
   InternedStrings() {
 #define REGISTER_SYMBOL(s)   \
-  string_to_sym_[#s] = k##s; \
-  sym_to_string_[k##s] = #s;
+  string_to_sym_[#s] = static_cast<uint32_t>(BuiltinSymbol::k##s); \
+  sym_to_string_[static_cast<uint32_t>(BuiltinSymbol::k##s)] = #s;
     FORALL_BUILTIN_SYMBOLS(REGISTER_SYMBOL)
 #undef REGISTER_SYMBOL
   }
@@ -43,7 +43,7 @@ struct InternedStrings {
     // know their string value
     switch (sym) {
 #define DEFINE_CASE(s) \
-  case k##s:           \
+  case static_cast<uint32_t>(BuiltinSymbol::k##s):           \
     return #s;
       FORALL_BUILTIN_SYMBOLS(DEFINE_CASE)
 #undef DEFINE_CASE
@@ -61,7 +61,7 @@ struct InternedStrings {
   }
   std::unordered_map<std::string, uint32_t> string_to_sym_;
   std::unordered_map<uint32_t, std::string> sym_to_string_;
-  uint32_t next_sym{kLastSymbol};
+  uint32_t next_sym{static_cast<uint32_t>(BuiltinSymbol::kLastSymbol)};
   std::mutex mutex_;
 };
 
