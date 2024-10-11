@@ -213,8 +213,7 @@ Status OnnxParser::Parse(TensorShapeProto& shape) {
       shape.add_dim();
     } else {
       // Check for a symbolic identifier ...
-      std::string id;
-      CHECK_PARSER_STATUS(ParseOptionalIdentifier(id));
+      auto id = ParseOptionalIdentifier();
       if (!id.empty()) {
         shape.add_dim()->set_dim_param(id);
       } else {
@@ -437,7 +436,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
   // Parse the concrete tensor-type with numeric dimensions:
   TypeProto typeProto;
   PARSE(typeProto);
-  ParseOptionalIdentifier(*tensorProto.mutable_name());
+  *tensorProto.mutable_name() = ParseOptionalIdentifier();
   (void)Matches('='); // Optional, to unify handling of initializers as well as tensor-protos in other contexts
   return Parse(tensorProto, typeProto);
 }
@@ -527,14 +526,12 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
 }
 
 bool OnnxParser::NextIsIdentifier() {
-  std::string id("");
-  (void)PeekIdentifier(id);
+  auto id = PeekIdentifier();
   return !(id.empty());
 }
 
 bool OnnxParser::NextIsType() {
-  std::string id("");
-  (void)PeekIdentifier(id);
+  auto id = PeekIdentifier();
   if (PrimitiveTypeNameMap::IsTypeName(id))
     return true;
   switch (KeyWordMap::Lookup(id)) {
@@ -585,6 +582,8 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
     Literal literal;
     PARSE_TOKEN(literal);
     switch (literal.type) {
+      case LiteralType::UNDEFINED:
+        return ParseError("Internal error");
       case LiteralType::INT_LITERAL:
         attr.set_type(AttributeProto_AttributeType_INT);
         attr.set_i(std::stol(literal.value));
