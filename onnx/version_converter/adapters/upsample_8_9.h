@@ -19,7 +19,7 @@ namespace version_conversion {
 struct Upsample_8_9 final : public Adapter {
   explicit Upsample_8_9() : Adapter("Upsample", OpSetID(8), OpSetID(9)) {}
 
-  void adapt_upsample_8_9(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_upsample_8_9(const std::shared_ptr<Graph>& graph, Node* node) const {
     Symbol input_dirs = Symbol("scales");
     int dim = (int)(node->fs(kscales).size());
     Tensor t;

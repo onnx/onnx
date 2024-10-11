@@ -7,8 +7,7 @@
 
 #pragma once
 
-#include <ctype.h>
-
+#include <cctype>
 #include <string>
 #include <unordered_map>
 
@@ -42,6 +41,7 @@ using StringStringList = google::protobuf::RepeatedPtrField<StringStringEntryPro
   }
 
 template <typename Map>
+// NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
 class StringIntMap {
  public:
   static const std::unordered_map<std::string, int32_t>& Instance() {
@@ -229,8 +229,8 @@ class ParserBase {
   template <typename... Args>
   Status ParseError(const Args&... args) {
     return Status(
-        NONE,
-        FAIL,
+        StatusCategory::NONE,
+        StatusCode::FAIL,
         ONNX_NAMESPACE::MakeString(
             "[ParseError at position ", GetCurrentPos(), "]\n", "Error context: ", GetErrorContext(), "\n", args...));
   }
@@ -274,10 +274,10 @@ class ParserBase {
     return (next_ >= end_);
   }
 
-  enum class LiteralType { INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
+  enum class LiteralType { UNDEFINED, INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
 
   struct Literal {
-    LiteralType type;
+    LiteralType type{LiteralType::UNDEFINED};
     std::string value;
   };
 
@@ -331,7 +331,7 @@ class ParserBase {
     return Status::OK();
   }
 
-  // Parse a string-literal enclosed within doube-quotes.
+  // Parse a string-literal enclosed within double-quotes.
   Status Parse(std::string& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal));
@@ -343,7 +343,7 @@ class ParserBase {
 
   // Parse an identifier, including keywords. If none found, this will
   // return an empty-string identifier.
-  Status ParseOptionalIdentifier(std::string& id) {
+  std::string ParseOptionalIdentifier() {
     SkipWhiteSpace();
     auto from = next_;
     if ((next_ < end_) && (isalpha(*next_) || (*next_ == '_'))) {
@@ -351,12 +351,11 @@ class ParserBase {
       while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
         ++next_;
     }
-    id = std::string(from, next_ - from);
-    return Status::OK();
+    return std::string(from, next_ - from);
   }
 
   Status ParseIdentifier(std::string& id) {
-    ParseOptionalIdentifier(id);
+    id = ParseOptionalIdentifier();
     if (id.empty())
       return ParseError("Identifier expected but not found.");
     return Status::OK();
@@ -373,14 +372,38 @@ class ParserBase {
     if (NextChar() == '"') {
       return Parse(id);
     }
-    return ParseOptionalIdentifier(id);
+    id = ParseOptionalIdentifier();
+    return Status::OK();
   }
 
-  Status PeekIdentifier(std::string& id) {
-    SavePos();
-    ParseOptionalIdentifier(id);
-    RestorePos();
+  // Parse an optional quotable identifier, and return whether an identifier was found
+  // in the output parameter 'id_found'.
+  // A empty string followed by a comma is considered to be a valid, but empty, identifier.
+  // This helps handle the following different cases:
+  // "Op()" has no operands
+  // "Op(,x)" has two operands, the first being empty.
+  // 'Op("")' has one operand, which is an empty string.
+  // 'Op(,)' has one operand, which is an empty string.
+  // Thus, this will also allow a trailing comma after a non-empty identifier with no effect.
+  // 'Op(x,)' has one operand, which is 'x'.
+  //
+  // This is mostly for some backward compatibility. "" is a simpler way to represent an
+  // empty identifier that is less confusing and is recommended.
+  Status ParseOptionalQuotableIdentifier(std::string& id, bool& id_found) {
+    if (NextChar() == '"') {
+      id_found = true;
+      return Parse(id);
+    }
+    id = ParseOptionalIdentifier();
+    id_found = !id.empty() || NextChar() == ',';
     return Status::OK();
+  }
+
+  std::string PeekIdentifier() {
+    SavePos();
+    auto id = ParseOptionalIdentifier();
+    RestorePos();
+    return id;
   }
 
   Status Parse(KeyWordMap::KeyWord& keyword) {

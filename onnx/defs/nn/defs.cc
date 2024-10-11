@@ -10,7 +10,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-const char* pads_doc =
+static const char* pads_doc =
     "Padding for the beginning and ending along each spatial axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
     "and end part of the corresponding axis. `pads` format should be as follow "
@@ -18,7 +18,7 @@ const char* pads_doc =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.";
-const char* conv_auto_pad_doc =
+static const char* conv_auto_pad_doc =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that "
@@ -26,7 +26,7 @@ const char* conv_auto_pad_doc =
     "The padding is split between the two sides equally or almost equally (depending "
     "on whether it is even or odd). In case the padding is an odd number, the extra "
     "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
-const char* conv_transpose_auto_pad_doc =
+static const char* conv_transpose_auto_pad_doc =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that "
@@ -35,7 +35,7 @@ const char* conv_transpose_auto_pad_doc =
     "on whether it is even or odd). In case the padding is an odd number, the extra "
     "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
 
-void convPoolShapeInference(
+static void convPoolShapeInference(
     InferenceContext& ctx,
     bool use_dilation,
     bool require_kernel_shape,
@@ -193,14 +193,14 @@ void convPoolShapeInference(
   }
 }
 
-std::vector<std::string> GetSupportedDataTypesForPoolingOps(bool supports8bit) {
+static std::vector<std::string> GetSupportedDataTypesForPoolingOps(bool supports8bit) {
   if (supports8bit) {
     return OpSchema::all_float_types_plus_Xint8_ir4();
   }
   return OpSchema::all_float_types_ir4();
 }
 
-std::function<void(OpSchema&)> PoolOpSchemaGenerator(
+static std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
     const char* opName,
     const char* additionalDescription,
@@ -373,7 +373,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64"));
 
-void maxUnpoolShapeInference(InferenceContext& ctx) {
+static void maxUnpoolShapeInference(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.
   if (ctx.getNumInputs() != 2 && ctx.getNumInputs() != 3) {
     fail_type_inference("MaxUnpool op must have either two or three inputs.");
@@ -548,7 +548,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain index tensor to int64")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { maxUnpoolShapeInference(ctx); }));
 
-std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
+static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -635,7 +635,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
 ONNX_OPERATOR_SET_SCHEMA(LpPool, 22, OpSchema().FillUsing(LpPoolOpSchemaGenerator("LpPool")));
 
 // For ROI pool operations.
-void roiPoolTypeShapeInference(InferenceContext& ctx) {
+static void roiPoolTypeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // rois is the second input.
@@ -674,7 +674,7 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
   output_shape->add_dim()->set_dim_value(pooled_shape[1]);
 }
 
-std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
+static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -729,7 +729,7 @@ std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
 
 ONNX_OPERATOR_SET_SCHEMA(MaxRoiPool, 22, OpSchema().FillUsing(RoiPoolOpSchemaGenerator("max")));
 
-std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
+static std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1101,7 +1101,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           convPoolShapeInference(ctx, true, false, 0, 1);
         }));
 
-void convTransposeShapeInference(InferenceContext& ctx) {
+static void convTransposeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // we need at least two inputs to have a shape for this inference.
@@ -1244,7 +1244,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(const char* filter_desc) {
+static std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1461,7 +1461,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 // For GlobalPool operations.
-void globalPoolTypeShapeInference(InferenceContext& ctx) {
+static void globalPoolTypeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // needs at least one input with shape.
@@ -1487,7 +1487,7 @@ void globalPoolTypeShapeInference(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(const char* op_type, const char* op) {
+static std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(const char* op_type, const char* op) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1534,7 +1534,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(GlobalPoolingOpSchemaGenerator("AveragePool", "average")));
 ONNX_OPERATOR_SET_SCHEMA(GlobalMaxPool, 22, OpSchema().FillUsing(GlobalPoolingOpSchemaGenerator("MaxPool", "max")));
 
-std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const char* op_type, const char* op) {
+static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const char* op_type, const char* op) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2265,7 +2265,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-void col2imShapeInference(InferenceContext& ctx) {
+static void col2imShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // All inputs shapes are required
@@ -2494,7 +2494,7 @@ static const char* LayerNormalization_ver17_doc = R"DOC(
       for more details please check [the doc](Broadcasting.md).
 )DOC";
 
-bool BuildContextDependentFunctionBodyLayerNormalization(
+static bool BuildContextDependentFunctionBodyLayerNormalization(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto,
@@ -2584,14 +2584,14 @@ bool BuildContextDependentFunctionBodyLayerNormalization(
   return true;
 }
 
-bool BuildContextDependentFunctionBodyLayerNormalizationVer17(
+static bool BuildContextDependentFunctionBodyLayerNormalizationVer17(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
   return BuildContextDependentFunctionBodyLayerNormalization(ctx, schema, functionProto, 17);
 }
 
-bool BuildContextDependentFunctionBodyLayerNormalizationVer18(
+static bool BuildContextDependentFunctionBodyLayerNormalizationVer18(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {

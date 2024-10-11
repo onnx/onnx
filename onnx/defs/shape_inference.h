@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-#include "onnx/defs/data_type_utils.h"
+#include "onnx/common/common.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
@@ -154,14 +154,14 @@ inline bool getRepeatedAttribute(InferenceContext& ctx, const std::string& attr_
   }
 }
 
-inline int64_t getAttribute(InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
+inline int64_t getAttribute(const InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
   return defaultValue;
 }
 
-inline int64_t getAttribute(DataPropagationContext& ctx, const std::string& attributeName, int64_t defaultValue) {
+inline int64_t getAttribute(const DataPropagationContext& ctx, const std::string& attributeName, int64_t defaultValue) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
@@ -169,7 +169,7 @@ inline int64_t getAttribute(DataPropagationContext& ctx, const std::string& attr
 }
 
 inline std::string
-getAttribute(InferenceContext& ctx, const std::string& attributeName, const std::string& defaultValue) {
+getAttribute(const InferenceContext& ctx, const std::string& attributeName, const std::string& defaultValue) {
   auto attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_s())
     return attr_proto->s();
@@ -352,7 +352,7 @@ inline const TensorShapeProto& getInputShape(const InferenceContext& ctx, size_t
   }
 }
 
-inline const TensorShapeProto* getOptionalInputShape(InferenceContext& ctx, size_t n) {
+inline const TensorShapeProto* getOptionalInputShape(const InferenceContext& ctx, size_t n) {
   const auto* input_type = ctx.getInputType(n);
 
   if (input_type == nullptr) {
@@ -535,9 +535,17 @@ getOutputShape(InferenceContext& ctx, size_t n, TypeProto::ValueCase default_typ
   }
   const auto output_value_case = output_type->value_case();
   if (output_value_case == TypeProto::kTensorType || output_value_case == TypeProto::kSparseTensorType) {
-    return getTensorMutableShape(output_value_case, *output_type);
+    auto output_shape = getTensorMutableShape(output_value_case, *output_type);
+    if (output_shape == nullptr) {
+      fail_type_inference("Output ", n, " expected to have tensor or sparse type in ", ctx.getDisplayName(), ".");
+    }
+    return output_shape;
   } else if (output_value_case == TypeProto::VALUE_NOT_SET) {
-    return getTensorMutableShape(default_type, *output_type);
+    auto output_shape = getTensorMutableShape(default_type, *output_type);
+    if (output_shape == nullptr) {
+      fail_type_inference("Output ", n, " expected to have tensor or sparse type in ", ctx.getDisplayName(), ".");
+    }
+    return output_shape;
   } else {
     fail_type_inference("Output ", n, " expected to have tensor type in ", ctx.getDisplayName(), ".");
   }
@@ -774,7 +782,7 @@ static constexpr T narrow_cast(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));
 }
 
-inline void checkInputRank(InferenceContext& ctx, size_t input_index, int expected_rank) {
+inline void checkInputRank(const InferenceContext& ctx, size_t input_index, int expected_rank) {
   // We check the rank only if a rank is known for the input:
   if (hasInputShape(ctx, input_index)) {
     auto rank = getInputShape(ctx, input_index).dim_size();
@@ -834,7 +842,7 @@ inline void unifyDim(const Dim& source_dim, Dim& target_dim) {
   }
 }
 
-inline void unifyInputDim(InferenceContext& ctx, size_t input_index, int dim_index, Dim& dim) {
+inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int dim_index, Dim& dim) {
   // We unify the dimensions only if it is available for specified input:
   if (hasInputShape(ctx, input_index)) {
     auto& input_shape = getInputShape(ctx, input_index);
