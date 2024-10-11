@@ -145,7 +145,7 @@ bool ParserBase::NextIsValidFloatString() {
 // Used to represent the list of inputs or outputs of a node.
 // An empty identifier may be represented by an empty string "" or by nothing followed by a single comma.
 // "Op()" has no operands
-// "Op(,x)"" has two operands, the first being empty.
+// "Op(,x)" has two operands, the first being empty.
 // 'Op("")' has one operand, which is an empty string.
 // 'Op(,)' has one operand, which is an empty string.
 // Thus, this will also allow a trailing comma after a non-empty identifier with no effect.
@@ -727,7 +727,7 @@ Status OnnxParser::Parse(NodeProto& node) {
   }
   PARSE(*node.mutable_output());
   MATCH('=');
-  std::string domain("");
+  std::string domain;
   std::string id = ParseOptionalIdentifier();
   while (Matches('.')) {
     if (!domain.empty())
