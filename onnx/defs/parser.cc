@@ -728,8 +728,7 @@ Status OnnxParser::Parse(NodeProto& node) {
   PARSE(*node.mutable_output());
   MATCH('=');
   std::string domain("");
-  std::string id;
-  (void)(ParseIdentifier(id));
+  std::string id = ParseOptionalIdentifier();
   while (Matches('.')) {
     if (!domain.empty())
       domain += ".";
