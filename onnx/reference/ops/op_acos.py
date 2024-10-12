@@ -10,4 +10,4 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 class Acos(OpRunUnaryNum):
     def _run(self, x):  # type: ignore
-        return (np.arccos(x),)
+        return (x.acos() if hasattr(x, "acos") else np.arccos(x),)
