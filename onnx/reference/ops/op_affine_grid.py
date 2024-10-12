@@ -7,7 +7,11 @@ from onnx.reference import apimod
 from onnx.reference.op_run import OpRun
 
 
-def construct_original_grid(data_size, align_corners, mod):
+def construct_original_grid(data_size, align_corners, mod=None):
+    if mod is None:
+        import numpy
+
+        mod = numpy
     is_2d = len(data_size) == 2
     size_zeros = mod.zeros(data_size)
     original_grid = [mod.ones(data_size)]
@@ -86,6 +90,8 @@ class AffineGrid(OpRun):
     def _run(self, theta, size, align_corners=None):  # type: ignore
         align_corners = align_corners or self.align_corners  # type: ignore
         _, _, *data_size = size
-        original_grid = construct_original_grid(data_size, align_corners, mod=apimod(theta))
+        original_grid = construct_original_grid(
+            data_size, align_corners, mod=apimod(theta)
+        )
         grid = apply_affine_transform(theta, original_grid)
         return (grid,)
