@@ -29,7 +29,7 @@ struct ShapeInferenceOptions {
   // to perform shape computation
   bool enable_data_propagation;
   explicit ShapeInferenceOptions(bool check_type_val = false, int strict_mode_val = 0, bool data_prop_val = false)
-      : check_type(check_type_val), error_mode(strict_mode_val), enable_data_propagation(data_prop_val){};
+      : check_type(check_type_val), error_mode(strict_mode_val), enable_data_propagation(data_prop_val) {};
 };
 
 // Maintains a SymbolTable for symbolic shape inference
@@ -138,10 +138,10 @@ using DataPropagationFunction = std::function<void(DataPropagationContext&)>;
 
 // This no-op inference function is used for operators without an
 // inference implementation.
-inline void dummyInferenceFunction(InferenceContext&){};
+inline void dummyInferenceFunction(InferenceContext&) {};
 
 // This no-op data propagation function is used for operators without a defined data propagator
-inline void dummyDataPropagationFunction(DataPropagationContext&){};
+inline void dummyDataPropagationFunction(DataPropagationContext&) {};
 
 template <typename T>
 inline bool getRepeatedAttribute(InferenceContext& ctx, const std::string& attr_name, std::vector<T>& values) {
