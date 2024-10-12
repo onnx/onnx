@@ -212,7 +212,6 @@ jobs:
       - name: Run Python tests with numpy<2.0
         if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') &&  (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
         run: |
-          apt-get install libjpeg-dev zlib1g-dev libpng-dev libtiff-dev libfreetype6-dev
           pip install "numpy<2.0" pillow
           pytest -s
 
