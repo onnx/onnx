@@ -70,6 +70,11 @@ jobs:
           python --version
           cmake --version
 
+      - name: Show versions g++
+        if: (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
+        run: |
+          g++ --version          
+
       - name: Install external protobuf - Linux
         if: matrix.protobuf_type == 'External' && (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
         run: |
@@ -99,18 +104,9 @@ jobs:
           git submodule update --init --recursive
 
 
-      - name: Patch protobuf package
-        if: (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
-        run: |
-
-          sed -i '4i include <cstdint>' /home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/protobuf-src/src/google/protobuf/port.h
-          # /home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/protobuf-src/src/google/protobuf/port.h:56:1: note: ‘uint32_t’ is defined in header ‘<cstdint>’; did you forget to ‘#include <cstdint>’?
-
-
       - name: Build and install ONNX - Linux
         if: (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
-        run: |
-          echo "CXX=g++-12" >> $GITHUB_ENV
+        run: |          
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
