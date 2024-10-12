@@ -57,7 +57,7 @@ to `False` instead of `True`.)DOC";
         "Keep the reduced dimension or not, default 1 means keep reduced dimension.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
-    schema.Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
+    schema.Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable);
     if (axes_input) {
       schema.Attr(
           "noop_with_empty_axes",
@@ -77,7 +77,7 @@ to `False` instead of `True`.)DOC";
           OpSchema::Optional,
           true,
           1,
-          OpSchema::NonDifferentiable);
+          OpSchema::DifferentiationCategory::NonDifferentiable);
     } else {
       schema.Attr(
           "axes",
@@ -86,7 +86,7 @@ to `False` instead of `True`.)DOC";
           AttributeProto::INTS,
           OPTIONAL_VALUE);
     }
-    schema.Output(0, "reduced", "Reduced output tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
+    schema.Output(0, "reduced", "Reduced output tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForReductionOps(supports_8bit_datatypes, supports_boolean_datatype),

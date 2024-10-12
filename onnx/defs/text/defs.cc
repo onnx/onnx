@@ -19,9 +19,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
-        .Input(1, "Y", "Tensor to append in concatenation", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Output(0, "Z", "Concatenated string tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Input(1, "Y", "Tensor to append in concatenation", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Output(0, "Z", "Concatenated string tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint("T", {"tensor(string)"}, "Inputs and outputs must be UTF-8 strings")
         .SetDoc(StringConcat_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -39,7 +39,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     RegexFullMatch,
     20,
     OpSchema()
-        .Input(0, "X", "Tensor with strings to match on.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(0, "X", "Tensor with strings to match on.", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
         .Attr("pattern", "Regex pattern to match on. This must be valid RE2 syntax.", AttributeProto::STRING, false)
         .Output(
             0,
@@ -49,7 +49,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint("T1", {"tensor(string)"}, "Inputs must be UTF-8 strings")
         .TypeConstraint(
             "T2",
@@ -72,7 +72,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     StringSplit,
     20,
     OpSchema()
-        .Input(0, "X", "Tensor of strings to split.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(0, "X", "Tensor of strings to split.", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
         .Attr(
             "delimiter",
             "Delimiter to split on. If left unset or set to the empty string (\"\"), the input is split on consecutive whitespace.",
@@ -91,7 +91,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Output(
             1,
             "Z",
@@ -100,7 +100,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint("T1", {"tensor(string)"}, "The input must be a UTF-8 string tensor")
         .TypeConstraint("T2", {"tensor(string)"}, "Tensor of substrings.")
         .TypeConstraint("T3", {"tensor(int64)"}, "The number of substrings generated.")

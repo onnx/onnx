@@ -161,7 +161,7 @@ class OpSchema final {
     // the minimum value N is indicated separately (default value 1).
     Variadic = 2,
   };
-  enum DifferentiationCategory : uint8_t {
+  enum class DifferentiationCategory : uint8_t {
     // Whether this formal parameter is differentiable or not cannot
     // be statically determined. It also covers variadic formal
     // parameters which contain both of differentiable and
@@ -190,7 +190,7 @@ class OpSchema final {
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
         int min_arity = 1,
-        DifferentiationCategory differentiation_category = Unknown)
+        DifferentiationCategory differentiation_category = DifferentiationCategory::Unknown)
         : name_(std::move(name)),
           type_set_(std::move(allowed_type_set)),
           type_str_(std::move(type_str)),
@@ -213,7 +213,7 @@ class OpSchema final {
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
         int min_arity = 1,
-        DifferentiationCategory differentiation_category = Unknown)
+        DifferentiationCategory differentiation_category = DifferentiationCategory::Unknown)
         : name_(std::move(name)),
           type_str_(std::move(type_str)),
 #ifndef __ONNX_NO_DOC_STRINGS
@@ -294,7 +294,7 @@ class OpSchema final {
                   // the future.
   };
 
-  OpSchema() : OpSchema("unknown", "unknown", 0) {}
+  OpSchema() : OpSchema("DifferentiationCategory::unknown", "DifferentiationCategory::unknown", 0) {}
   OpSchema(std::string name, std::string file, int line)
       : name_(std::move(name)), file_(std::move(file)), line_(line), support_(SupportType::COMMON) {}
 
@@ -538,7 +538,7 @@ class OpSchema final {
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
-      DifferentiationCategory differentiation_category = Unknown);
+      DifferentiationCategory differentiation_category = DifferentiationCategory::Unknown);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Input(
@@ -549,7 +549,7 @@ class OpSchema final {
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
-      DifferentiationCategory differentiation_category = Unknown);
+      DifferentiationCategory differentiation_category = DifferentiationCategory::Unknown);
 
   OpSchema& Output(int n, FormalParameter formal_parameter);
 
@@ -561,7 +561,7 @@ class OpSchema final {
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
-      DifferentiationCategory differentiation_category = Unknown);
+      DifferentiationCategory differentiation_category = DifferentiationCategory::Unknown);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Output(
@@ -572,7 +572,7 @@ class OpSchema final {
       FormalParameterOption param_option = Single,
       bool is_homogeneous = true,
       int min_arity = 1,
-      DifferentiationCategory differentiation_category = Unknown);
+      DifferentiationCategory differentiation_category = DifferentiationCategory::Unknown);
 
   OpSchema& TypeConstraint(std::string type_str, std::vector<std::string> constraints, std::string description);
 

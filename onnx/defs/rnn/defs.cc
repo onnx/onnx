@@ -125,7 +125,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Input(
         4,
         "sequence_lens",
@@ -136,7 +136,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Optional,
         true,
         1,
-        OpSchema::NonDifferentiable);
+        OpSchema::DifferentiationCategory::NonDifferentiable);
     schema.Input(
         5,
         "initial_h",
@@ -146,7 +146,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Optional,
         true,
         1,
-        OpSchema::NonDifferentiable);
+        OpSchema::DifferentiationCategory::NonDifferentiable);
     schema.Output(
         0,
         "Y",
@@ -156,7 +156,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Optional,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Output(
         1,
         "Y_h",
@@ -166,7 +166,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         OpSchema::Optional,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference);
@@ -237,7 +237,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             2,
             "R",
@@ -248,7 +248,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             3,
             "B",
@@ -260,7 +260,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
 static const char* GRU_ver22_doc = R"DOC(
@@ -342,7 +342,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             2,
             "R",
@@ -353,7 +353,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             3,
             "B",
@@ -365,7 +365,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
 static const char* LSTM_ver22_doc = R"DOC(
@@ -459,7 +459,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             2,
             "R",
@@ -470,7 +470,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             3,
             "B",
@@ -482,7 +482,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             6,
             "initial_c",
@@ -492,7 +492,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Input(
             7,
             "P",
@@ -504,7 +504,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .FillUsing(RNNDocGenerator("LSTM"))
         .Output(
             2,
@@ -515,5 +515,5 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable));
+            OpSchema::DifferentiationCategory::Differentiable));
 } // namespace ONNX_NAMESPACE

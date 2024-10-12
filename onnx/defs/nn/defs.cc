@@ -281,7 +281,7 @@ static std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -293,7 +293,7 @@ static std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint(
         "T",
         GetSupportedDataTypesForPoolingOps(supports8bit),
@@ -370,7 +370,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64"));
 
 static void maxUnpoolShapeInference(InferenceContext& ctx) {
@@ -509,7 +509,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "I",
@@ -524,7 +524,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Input(
             2,
             "output_shape",
@@ -534,7 +534,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Output(
             0,
             "output",
@@ -543,7 +543,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeConstraint("T2", {"tensor(int64)"}, "Constrain index tensor to int64")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { maxUnpoolShapeInference(ctx); }));
@@ -612,7 +612,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) 
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -623,7 +623,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) 
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -701,7 +701,7 @@ static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name)
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Input(
         1,
         "rois",
@@ -712,7 +712,7 @@ static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name)
         OpSchema::Single,
         true,
         1,
-        OpSchema::NonDifferentiable);
+        OpSchema::DifferentiationCategory::NonDifferentiable);
     schema.Output(
         0,
         "Y",
@@ -721,7 +721,7 @@ static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name)
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { roiPoolTypeShapeInference(ctx); });
   };
@@ -753,7 +753,7 @@ computes the output.)DOC";
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Input(
         1,
         "W",
@@ -779,7 +779,7 @@ computes the output.)DOC";
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Input(
         2,
         "B",
@@ -788,7 +788,7 @@ computes the output.)DOC";
         OpSchema::Optional,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -799,7 +799,7 @@ computes the output.)DOC";
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
     schema.Attr(
         "kernel_shape",
@@ -1275,7 +1275,7 @@ output_shape can also be explicitly specified in which case pads values are auto
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Input(
         1,
         "W",
@@ -1292,7 +1292,7 @@ output_shape can also be explicitly specified in which case pads values are auto
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Input(
         2,
         "B",
@@ -1301,7 +1301,7 @@ output_shape can also be explicitly specified in which case pads values are auto
         OpSchema::Optional,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -1314,7 +1314,7 @@ output_shape can also be explicitly specified in which case pads values are auto
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
     schema.Attr(
         "kernel_shape",
@@ -1511,7 +1511,7 @@ static std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(const char*
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -1523,7 +1523,7 @@ static std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(const char*
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { globalPoolTypeShapeInference(ctx); });
   };
@@ -1560,7 +1560,7 @@ static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const cha
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Output(
         0,
         "Y",
@@ -1572,7 +1572,7 @@ static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const cha
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1656,9 +1656,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
-        .Input(1, "scale", "Scale tensor of shape (C).", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(2, "B", "Bias tensor of shape (C).", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Input(1, "scale", "Scale tensor of shape (C).", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(2, "B", "Bias tensor of shape (C).", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             3,
             "input_mean",
@@ -1667,7 +1667,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             4,
             "input_var",
@@ -1676,7 +1676,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "Y",
@@ -1685,7 +1685,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             1,
             "running_mean",
@@ -1694,7 +1694,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Output(
             2,
             "running_var",
@@ -1704,7 +1704,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
@@ -1793,7 +1793,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "scale",
@@ -1802,7 +1802,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             2,
             "B",
@@ -1811,7 +1811,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -1820,7 +1820,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
@@ -1832,8 +1832,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
     22,
     OpSchema()
-        .Input(0, "input", "Input matrix", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "output", "Matrix after normalization", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "input", "Input matrix", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(0, "output", "Matrix after normalization", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetDoc(LpNormalization_ver22_doc)
         .Attr(
@@ -1872,7 +1872,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::INT,
             OPTIONAL_VALUE)
-        .Input(0, "data", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "data", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "ratio",
@@ -1884,7 +1884,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Input(
             2,
             "training_mode",
@@ -1895,9 +1895,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
-        .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(1, "mask", "The output mask.", "T2", OpSchema::Optional, true, 1, OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(1, "mask", "The output mask.", "T2", OpSchema::Optional, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir10(), "Constrain input and output types to float tensors.")
         .TypeConstraint("T1", OpSchema::all_float_types_ir10(), "Constrain input 'ratio' types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output 'mask' types to boolean tensors.")
@@ -1943,8 +1943,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Shrink_ver9_doc)
         .Attr("lambd", "The lambd value for the Shrink formulation. Default is 0.5.", AttributeProto::FLOAT, 0.5f)
         .Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, 0.0f)
-        .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "input", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
         .FunctionBody(
@@ -1978,7 +1978,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     23,
     OpSchema()
         .SetDoc(Flatten_ver11_doc)
-        .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -1990,7 +1990,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_ir11(),
@@ -2061,7 +2061,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "Y",
@@ -2070,7 +2070,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
@@ -2113,8 +2113,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     TfIdfVectorizer,
     9,
     OpSchema()
-        .Input(0, "X", "Input for n-gram extraction", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Output(0, "Y", "Ngram results", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(0, "X", "Input for n-gram extraction", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Output(0, "Y", "Ngram results", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(string)", "tensor(int32)", "tensor(int64)"},
@@ -2217,8 +2217,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(mvn_ver13_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
         .Attr(
             "axes",
             "A list of integers, along which to reduce. The default is to "
@@ -2411,7 +2411,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "image_shape",
@@ -2422,7 +2422,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Input(
             2,
             "block_shape",
@@ -2434,7 +2434,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Output(
             0,
             "output",
@@ -2443,7 +2443,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types_ir4(),
@@ -2743,9 +2743,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
-        .Input(1, "scale", "Scale tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(2, "bias", "Bias tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Input(1, "scale", "Scale tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(2, "bias", "Bias tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "Y",
@@ -2754,7 +2754,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
