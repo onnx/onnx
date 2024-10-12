@@ -387,7 +387,7 @@ struct Value final {
   //          %5 = h(%6, %6)
   void replaceAllUsesWith(Value* newValue);
 
-  Value* copyMetadata(Value* from) {
+  Value* copyMetadata(const Value* from) {
     setElemType(from->elemType());
     setSizes(from->sizes());
     if (from->has_unique_name()) {
@@ -728,7 +728,7 @@ struct Node : public Attributes<Node> {
   }
 
   // Check whether this node is before node n in the graph.
-  bool isBefore(Node* n);
+  bool isBefore(const Node* n);
 
   // iterators of the node list starting at this node
   // useful for resuming a search starting at this node
@@ -1354,7 +1354,7 @@ inline void Node::eraseOutput(size_t i) {
   }
 }
 
-inline bool Node::isBefore(Node* n) {
+inline bool Node::isBefore(const Node* n) {
   if (n == nullptr || this == n) {
     // Bail out early.
     return false;
