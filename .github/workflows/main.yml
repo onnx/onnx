@@ -108,7 +108,7 @@ jobs:
 
       - name: Build and install ONNX - Linux
         if: (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
-        run: |          
+        run: |
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
@@ -159,7 +159,7 @@ jobs:
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
-        if: (matrix.os == 'ubuntu-latest' || matrix.os == '24.04') || matrix.os == 'macos-latest'
+        if: matrix.os == 'ubuntu-latest' || matrix.os == '24.04' || matrix.os == 'macos-latest'
         run: |
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
@@ -210,8 +210,15 @@ jobs:
         continue-on-error: true
 
       - name: Run Python tests with numpy<2.0
-        if: matrix.python_version == '3.11' || matrix.python_version == '3.12'
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') &&  (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
         run: |
           apt-get install libjpeg-dev zlib1g-dev libpng-dev libtiff-dev libfreetype6-dev
+          pip install "numpy<2.0" pillow
+          pytest -s
+
+      - name: Run Python tests with numpy<2.0 (ubuntu)
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12' ) && (matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-24.04')
+        run: |
+          sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev libtiff-dev libfreetype6-dev
           pip install "numpy<2.0" pillow
           pytest -s
