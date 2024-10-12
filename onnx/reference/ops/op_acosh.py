@@ -10,4 +10,4 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 class Acosh(OpRunUnaryNum):
     def _run(self, x):  # type: ignore
-        return (x.acosh() if hasattr(x, "acos") else np.arccosh(x),)
+        return (x.acosh() if hasattr(x, "acosh") else np.arccosh(x),)
