@@ -213,6 +213,8 @@ def extract_model(
     which is defined by the input and output tensors, should not _cut through_ the
     subgraph that is connected to the _main graph_ as attributes of these operators.
 
+    Note: When the extracted model size is larger than 2GB, the extra data will be saved in "output_path.data".
+
     Arguments:
         input_path (str | os.PathLike): The path to original ONNX model.
         output_path (str | os.PathLike): The path to save the extracted ONNX model.
@@ -231,15 +233,22 @@ def extract_model(
     if check_model:
         onnx.checker.check_model(input_path)
 
-    model = onnx.load(input_path)
-
-    if infer_shapes:
-        model = onnx.shape_inference.infer_shapes(model)
+    if infer_shapes and os.path.getsize(input_path) > onnx.checker.MAXIMUM_PROTOBUF:
+        onnx.shape_inference.infer_shapes_path(input_path, output_path)
+        model = onnx.load(output_path)
+    else:
+        model = onnx.load(input_path)
+        if infer_shapes:
+            model = onnx.shape_inference.infer_shapes(model)
 
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)
 
-    onnx.save(extracted, output_path)
+    if extracted.ByteSize() > onnx.checker.MAXIMUM_PROTOBUF:
+        location = os.path.basename(output_path) + ".data"
+        onnx.save(extracted, output_path, save_as_external_data=True, location=location)
+    else:
+        onnx.save(extracted, output_path)
 
     if check_model:
         onnx.checker.check_model(output_path)
