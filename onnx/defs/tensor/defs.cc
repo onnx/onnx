@@ -99,7 +99,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "All cases are fully described in two tables inserted in the operator description.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor to be cast.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -147,7 +155,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Please refer to operator Cast description for further details.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor to be cast.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "target_type",
@@ -225,7 +241,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "the zero value is honored, similar to NumPy.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "An input tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "shape",
@@ -235,7 +259,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "reshaped", "Reshaped data.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "reshaped",
+            "Reshaped data.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
@@ -406,8 +438,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     23,
     OpSchema()
         .SetDoc(Shape_ver19_doc)
-        .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Input(
+            0,
+            "data",
+            "An input tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Output(
+            0,
+            "shape",
+            "Shape of the input tensor",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Attr(
             "start",
             "(Optional) Starting axis for slicing the shape. Default value is 0."
@@ -472,7 +520,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     23,
     OpSchema()
         .SetDoc(Size_ver19_doc)
-        .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Input(
+            0,
+            "data",
+            "An input tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Output(
             0,
             "size",
@@ -518,7 +574,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "concat_result", "Concatenated tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "concat_result",
+            "Concatenated tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -611,7 +675,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     Split,
     18,
     OpSchema()
-        .Input(0, "input", "The tensor to split", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "The tensor to split",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "split",
@@ -868,7 +940,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "output", "Sliced data tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Sliced data tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -1076,8 +1156,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Its length must be equal to the rank of the input.",
             AttributeProto::INTS,
             OPTIONAL_VALUE)
-        .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "transposed", "Transposed output.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "An input tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "transposed",
+            "Transposed output.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1197,7 +1293,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "indices",
@@ -1328,7 +1432,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'min': reduction using the minimum operation.",
             AttributeProto::STRING,
             std::string("none"))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "indices",
@@ -1347,7 +1459,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "output", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -1442,7 +1562,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "'min': reduction using the minimum operation.",
             AttributeProto::STRING,
             std::string("none"))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "indices",
@@ -1542,7 +1670,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "indices",
@@ -1553,7 +1689,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "output", "Tensor of rank q + (r - 1).", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor of rank q + (r - 1).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to any tensor type.")
         .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -1655,7 +1799,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "indices",
@@ -1806,7 +1958,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     23,
     OpSchema()
         .SetDoc(Unsqueeze_ver13_doc)
-        .Input(0, "data", "Original tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "Original tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "axes",
@@ -2020,7 +2180,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(Tile_ver13_doc)
-        .Input(0, "input", "Input tensor of any shape.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor of any shape.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "repeats",
@@ -2296,7 +2464,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "Y", "N-D tensor after resizing", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "N-D tensor after resizing",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T1",
             OpSchema::all_tensor_types_ir4(),
@@ -2690,8 +2866,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     23,
     OpSchema()
         .SetDoc("Identity operator")
-        .Input(0, "input", "Input tensor", "V", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "output", "Tensor to copy input into.", "V", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "V",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Tensor to copy input into.",
+            "V",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "V",
             []() {
@@ -2723,7 +2915,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "from the back. Accepted range is [-r, r-1] where r = rank(input).",
             AttributeProto::INT,
             OPTIONAL_VALUE)
-        .Input(0, "input", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "condition",
@@ -3064,7 +3264,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(NonZero_ver9_doc)
         .Input(0, "X", "input", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "Y", "output", "tensor(int64)", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "output",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::INT64);
@@ -3488,7 +3696,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The number of batch dimensions. The gather of indexing starts from dimension of data[batch_dims:]",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .Input(0, "data", "Tensor of rank r >= 1.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "Tensor of rank r >= 1.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "indices",
@@ -3769,7 +3985,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "output_data", "Output data.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "output_data",
+            "Output data.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Attr(
             "axes",
             "If provided, it specifies a subset of axes that 'shape' refer to. "

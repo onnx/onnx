@@ -262,7 +262,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "loss", "The negative log likelihood loss", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "loss",
+            "The negative log likelihood loss",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Attr(
             "reduction",
             "Type of reduction to apply to loss: none, sum, mean (default). "
@@ -348,8 +356,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema()
         .SetDoc(Det_ver11_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -408,8 +432,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema()
         .SetDoc(Round_ver11_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -425,7 +465,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .SetDoc(Atanh_ver9_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -451,7 +499,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .SetDoc(Acosh_ver9_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -477,7 +533,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .SetDoc(Asinh_ver9_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -503,7 +567,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .SetDoc(Cosh_ver9_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -529,7 +601,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .SetDoc(Sinh_ver9_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -555,7 +635,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     7,
     OpSchema()
         .SetDoc(Atan_ver7_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -581,7 +669,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     7,
     OpSchema()
         .SetDoc(Acos_ver7_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -607,7 +703,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     7,
     OpSchema()
         .SetDoc(Asin_ver7_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -633,7 +737,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     7,
     OpSchema()
         .SetDoc(Tan_ver7_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -659,7 +771,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     7,
     OpSchema()
         .SetDoc(Cos_ver7_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -685,7 +805,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     7,
     OpSchema()
         .SetDoc(Sin_ver7_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -713,8 +841,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Softplus_ver1_doc)
-        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "1D input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "1D input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -741,7 +885,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Softsign_ver1_doc)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -779,8 +931,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     14,
     OpSchema()
         .SetDoc(HardSwish_ver14_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -806,8 +974,24 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr("alpha", "Value of alpha.", AttributeProto::FLOAT, 0.2f)
         .Attr("beta", "Value of beta.", AttributeProto::FLOAT, 0.5f)
         .SetDoc(HardSigmoid_ver6_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -847,8 +1031,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema()
         .SetDoc(mish_ver18_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -875,8 +1075,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, 1.0f)
         .SetDoc(Elu_ver6_doc)
-        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "1D output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "1D input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "1D output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -924,8 +1140,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             1.05070102214813232421875f)
         .SetDoc(Selu_ver6_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -963,8 +1195,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(ThresholdedRelu_ver10_doc)
         .Attr("alpha", "Threshold value", AttributeProto::FLOAT, 1.0f)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -994,8 +1242,10 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
                         ReplaceAll(doc, "{name}", name);
                         ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
-    schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable);
-    schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable);
+    schema.Input(
+        0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable);
+    schema.Input(
+        1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable);
     schema.Output(
         0,
         "C",
@@ -1339,8 +1589,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(Relu_ver13_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
@@ -1424,7 +1690,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(GET_OP_DOC_STR(std::string(Pow_ver13_doc) + GenerateBroadcastingDocMul()))
-        .Input(0, "X", "First operand, base of the exponent.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "First operand, base of the exponent.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "Y",
@@ -1434,7 +1708,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Z", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Z",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(int32)",
@@ -3900,8 +4182,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr("alpha", "Coefficient of leakage.", AttributeProto::FLOAT, 0.01f)
         .SetDoc(LeakyRelu_ver6_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -3920,7 +4218,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(
             GET_OP_DOC_STR(std::string(PRelu_ver9_doc) + GenerateBroadcastingDocUni("tensor slope", "input tensor X")))
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "X",
+            "Input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "slope",
@@ -3931,7 +4237,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "Y", "Output tensor (same size as X)", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "Output tensor (same size as X)",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)",
@@ -4100,7 +4414,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     10,
     OpSchema()
         .SetDoc(defs::math::utils::QLinearMatMulDoc())
-        .Input(0, "a", "N-dimensional quantized matrix a", "T1", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Input(
+            0,
+            "a",
+            "N-dimensional quantized matrix a",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Input(
             1,
             "a_scale",
@@ -4119,7 +4441,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Input(3, "b", "N-dimensional quantized matrix b", "T2", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Input(
+            3,
+            "b",
+            "N-dimensional quantized matrix b",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Input(
             4,
             "b_scale",

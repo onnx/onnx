@@ -294,7 +294,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
             AttributeProto::INT,
             OPTIONAL_VALUE)
-        .Input(0, "data", "The input data as Tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "data",
+            "The input data as Tensor.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             1,
             "ratio",
@@ -318,8 +326,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::NonDifferentiable)
-        .Output(0, "output", "The output.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(1, "mask", "The output mask.", "T2", OpSchema::Optional, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "The output.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            1,
+            "mask",
+            "The output mask.",
+            "T2",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
@@ -365,8 +389,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
     1,
     OpSchema()
-        .Input(0, "input", "Input matrix", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Output(0, "output", "Matrix after normalization", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "Input matrix",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Matrix after normalization",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -1635,7 +1675,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     21,
     OpSchema()
         .SetDoc(Flatten_ver11_doc)
-        .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "A tensor of rank >= axis.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -1684,7 +1732,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     13,
     OpSchema()
         .SetDoc(Flatten_ver11_doc)
-        .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            0,
+            "input",
+            "A tensor of rank >= axis.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Output(
             0,
             "output",
@@ -3293,8 +3349,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::Differentiable)
-        .Input(1, "scale", "Scale tensor of shape (C).", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Input(2, "B", "Bias tensor of shape (C).", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            1,
+            "scale",
+            "Scale tensor of shape (C).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            2,
+            "B",
+            "Bias tensor of shape (C).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             3,
             "mean",
@@ -3444,8 +3516,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::DifferentiationCategory::Differentiable)
-        .Input(1, "scale", "Scale tensor of shape (C).", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
-        .Input(2, "B", "Bias tensor of shape (C).", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            1,
+            "scale",
+            "Scale tensor of shape (C).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
+        .Input(
+            2,
+            "B",
+            "Bias tensor of shape (C).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             3,
             "input_mean",

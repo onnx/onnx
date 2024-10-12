@@ -122,7 +122,15 @@ The type of the output tensor is integer.)DOC";
         "Whether to select the last index or the first index if the {name} appears in multiple indices, default is False (first index).",
         AttributeProto::INT,
         static_cast<int64_t>(0));
-    schema.Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::DifferentiationCategory::NonDifferentiable);
+    schema.Input(
+        0,
+        "data",
+        "An input tensor.",
+        "T",
+        OpSchema::Single,
+        true,
+        1,
+        OpSchema::DifferentiationCategory::NonDifferentiable);
     schema.Output(
         0,
         "reduced",
