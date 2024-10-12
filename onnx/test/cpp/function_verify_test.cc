@@ -14,8 +14,6 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
-#include "onnx/onnx-operators_pb.h"
-#include "onnx/onnx_pb.h"
 #include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE {
@@ -92,8 +90,13 @@ static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProt
         for (auto& actual_type : iter->second) {
           if (allowed_types.find(actual_type) == allowed_types.end()) {
             fail_check(
-                "Input type " + actual_type + " of parameter " + actual_param_name + " of function " +
-                function_op.Name() + " is not allowed by operator " + op_type);
+                "Input type ",
+                actual_type,
+                " of parameter ",
+                actual_param_name + " of function ",
+                function_op.Name(),
+                " is not allowed by operator ",
+                op_type);
           }
         }
       }
@@ -331,7 +334,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
         VerifyFunction(s, function_body, verified_counter);
       }
     }
-    ONNX_CATCH(ONNX_NAMESPACE::checker::ValidationError e) {
+    ONNX_CATCH(const ONNX_NAMESPACE::checker::ValidationError& e) {
       ONNX_HANDLE_EXCEPTION([&]() { FAIL() << e.what(); });
     }
   }
