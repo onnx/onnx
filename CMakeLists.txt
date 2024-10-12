@@ -259,11 +259,27 @@ else()
     message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
     set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
     set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
-    FetchContent_Declare(
-      Protobuf
-      URL ${ProtobufURL}
-      URL_HASH SHA1=${ProtobufSHA1}
-    )
+        if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      find_program(SED_PATH gsed)
+      if(NOT SED_PATH)
+        find_program(SED_PATH sed)
+      endif()
+    endif()
+
+    if(SED_PATH)
+      FetchContent_Declare(
+        Protobuf
+        URL ${ProtobufURL}
+        URL_HASH SHA1=${ProtobufSHA1}
+        PATCH_COMMAND "${SED_PATH}" -e "s/<stddef>/<cstdint>/" -i "${CMAKE_CURRENT_BINARY_DIR}/_deps/protobuf-src/src/google/protobuf/port.h"
+      )
+    else()
+      FetchContent_Declare(
+        Protobuf
+        URL ${ProtobufURL}
+        URL_HASH SHA1=${ProtobufSHA1}
+      )
+    endif()
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf Abseil)
