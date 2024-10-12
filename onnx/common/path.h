@@ -40,7 +40,8 @@ inline std::wstring utf8str_to_wstring(const std::string& utf8str, bool try_deco
       MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS | MB_PRECOMPOSED, utf8str.c_str(), -1, nullptr, 0);
   if (size_required == 0) {
     if (try_decode) {
-      return std::wstring(utf8str.c_str());
+      return std::wstring(
+          reinterpret_cast<const wchar_t*>(utf8str.c_str()), utf8str.size() / sizeof(std::wstring::value_type));
     }
     auto last_error = GetLastError();
     fail_check("MultiByteToWideChar in utf8str_to_wstring returned error:", last_error);
@@ -51,6 +52,9 @@ inline std::wstring utf8str_to_wstring(const std::string& utf8str, bool try_deco
   if (converted_size == 0) {
     auto last_error = GetLastError();
     fail_check("MultiByteToWideChar in utf8str_to_wstring returned error:", last_error);
+  }
+  if (ws_str.back() == '\0') {
+    ws_str.pop_back();
   }
   return ws_str;
 }
@@ -71,6 +75,9 @@ inline std::string wstring_to_utf8str(const std::wstring& ws_str) {
   if (converted_size == 0) {
     auto last_error = GetLastError();
     fail_check("WideCharToMultiByte in wstring_to_utf8str returned error:", last_error);
+  }
+  if (utf8str.back() == '\0') {
+    utf8str.pop_back();
   }
   return utf8str;
 }
