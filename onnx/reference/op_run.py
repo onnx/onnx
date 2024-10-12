@@ -382,7 +382,11 @@ class OpRun(abc.ABC):
             (np.array(x) if np.isscalar(x) else x) for x in res
         )
         if any(
-            not (isinstance(t, (np.ndarray, list, dict)) or hasattr(t, "todense") or (hasattr(t, "shape") and hasattr(t, "dtype")))
+            not (
+                isinstance(t, (np.ndarray, list, dict))
+                or hasattr(t, "todense")
+                or (hasattr(t, "shape") and hasattr(t, "dtype"))
+            )
             for t in res
         ):
             dtypes = [type(t) for t in res]

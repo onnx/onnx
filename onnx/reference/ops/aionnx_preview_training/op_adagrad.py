@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from onnx.reference import astype, apimod
+from onnx.reference import apimod, astype
 from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
