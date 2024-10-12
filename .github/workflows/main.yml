@@ -28,8 +28,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
-        include:
+        python_version: ['3.13','3.12', '3.11', '3.10', '3.9', '3.8']
+        include:        
+          - python_version: '3.13'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 1
+            protobuf_type: 'Internal'
           - python_version: '3.12'
             onnx_ml: 1
             debug_build: 1
@@ -71,7 +76,7 @@ jobs:
           cmake --version
 
       - name: Install external protobuf - Linux
-        if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest'
+        if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest' 
         run: |
           sudo apt-get install libprotobuf-dev protobuf-compiler
 
@@ -121,7 +126,7 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
-      - name: Build and install ONNX - Windows
+      - name: Build and install ONNX - Windows (setup.py build_ext)
         if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.8' && matrix.python_version != '3.12'
         run: |
           python setup.py build_ext --inplace
@@ -132,7 +137,7 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
-      - name: Build and install ONNX - Windows
+      - name: Build and install ONNX - Windows (pip)
         if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.8' || matrix.python_version == '3.12')
         run: |
           pip install -e . -v
@@ -151,7 +156,7 @@ jobs:
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        if: always() && (matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest')
         run: |
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
@@ -171,7 +176,7 @@ jobs:
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && matrix.os == 'ubuntu-latest'
+        if: always() && matrix.documentation == 1 && matrix.os == 'ubuntu-latest'
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status
@@ -202,7 +207,7 @@ jobs:
         continue-on-error: true
 
       - name: Run Python tests with numpy<2.0
-        if: matrix.python_version == '3.11' || matrix.python_version == '3.12'
+        if: matrix.python_version == '3.11' || matrix.python_version == '3.12' || matrix.python_version == '3.13'
         run: |
           pip install "numpy<2.0" "pillow<10"
           pytest -s
