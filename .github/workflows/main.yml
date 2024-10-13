@@ -147,7 +147,7 @@ jobs:
           pip freeze
 
       - name: Install pytorch
-        if: matrix.os == 'windows-latest' && (matrix.python_version == '3.11')
+        if: matrix.os == 'ubuntu-latest' && (matrix.python_version == '3.11')
         run: |
           pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
         env:

@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from onnx.reference import astype
 from onnx.reference.ops._op import OpRunBinaryNumpy
 
 
@@ -13,5 +14,5 @@ class Div(OpRunBinaryNumpy):
     def _run(self, a, b):  # type: ignore
         res = OpRunBinaryNumpy._run(self, a, b)
         if res[0].dtype != a.dtype:
-            return (res[0].astype(a.dtype),)
+            return (astype(res[0], a.dtype),)
         return res
