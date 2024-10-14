@@ -125,7 +125,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name
         OpSchema::Single,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Input(
         4,
         "sequence_lens",
@@ -136,7 +136,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name
         OpSchema::Optional,
         true,
         1,
-        OpSchema::NonDifferentiable);
+        OpSchema::DifferentiationCategory::NonDifferentiable);
     schema.Input(
         5,
         "initial_h",
@@ -146,7 +146,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name
         OpSchema::Optional,
         true,
         1,
-        OpSchema::NonDifferentiable);
+        OpSchema::DifferentiationCategory::NonDifferentiable);
     schema.Output(
         0,
         "Y",
@@ -156,7 +156,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name
         OpSchema::Optional,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.Output(
         1,
         "Y_h",
@@ -166,7 +166,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name
         OpSchema::Optional,
         true,
         1,
-        OpSchema::Differentiable);
+        OpSchema::DifferentiationCategory::Differentiable);
     schema.TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -255,7 +255,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             2,
             "R",
@@ -266,7 +266,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             3,
             "B",
@@ -278,7 +278,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .FillUsing(RNNDocGenerator_opset14("GRU")));
 
 static const char* LSTM_ver14_doc = R"DOC(
@@ -372,7 +372,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             2,
             "R",
@@ -383,7 +383,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             3,
             "B",
@@ -395,7 +395,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             6,
             "initial_c",
@@ -405,7 +405,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
+            OpSchema::DifferentiationCategory::NonDifferentiable)
         .Input(
             7,
             "P",
@@ -417,7 +417,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .FillUsing(RNNDocGenerator_opset14("LSTM"))
         .Output(
             2,
@@ -428,7 +428,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable));
+            OpSchema::DifferentiationCategory::Differentiable));
 
 static const char* RNN_ver14_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
@@ -494,7 +494,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             2,
             "R",
@@ -505,7 +505,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .Input(
             3,
             "B",
@@ -517,7 +517,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional,
             true,
             1,
-            OpSchema::Differentiable)
+            OpSchema::DifferentiationCategory::Differentiable)
         .FillUsing(RNNDocGenerator_opset14("RNN")));
 
 static std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
