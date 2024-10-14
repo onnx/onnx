@@ -37,7 +37,7 @@ struct Upsample_9_8 final : public Adapter {
         for (float j : value) {
           d_values.push_back(static_cast<double>(j));
         }
-        node->fs_(kscales, const_cast<std::vector<double>&&>(d_values));
+        node->fs_(kscales, std::move(d_values));
 
         node->removeInput(1);
         graph->eraseInitializer(initializer.name());
@@ -59,7 +59,7 @@ struct Upsample_9_8 final : public Adapter {
         for (float j : value) {
           d_values.push_back(static_cast<double>(j));
         }
-        node->fs_(kscales, const_cast<std::vector<double>&&>(d_values));
+        node->fs_(kscales, std::move(d_values));
         node->removeInput(1);
         op->destroy();
         return;

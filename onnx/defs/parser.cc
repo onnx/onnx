@@ -145,7 +145,7 @@ bool ParserBase::NextIsValidFloatString() {
 // Used to represent the list of inputs or outputs of a node.
 // An empty identifier may be represented by an empty string "" or by nothing followed by a single comma.
 // "Op()" has no operands
-// "Op(,x)"" has two operands, the first being empty.
+// "Op(,x)" has two operands, the first being empty.
 // 'Op("")' has one operand, which is an empty string.
 // 'Op(,)' has one operand, which is an empty string.
 // Thus, this will also allow a trailing comma after a non-empty identifier with no effect.
@@ -551,14 +551,14 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
   if (isalpha(next) || next == '_') {
     if (NextIsType()) {
       TypeProto typeProto;
-      Parse(typeProto);
+      CHECK_PARSER_STATUS(Parse(typeProto));
       next = NextChar();
       if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
         CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()));
         (void)Matches('='); // Optional, to unify handling of initializers
-        Parse(tensorProto, typeProto);
+        CHECK_PARSER_STATUS(Parse(tensorProto, typeProto));
       } else {
         attr.set_type(AttributeProto_AttributeType_TYPE_PROTO);
         attr.mutable_tp()->CopyFrom(typeProto);
@@ -727,21 +727,20 @@ Status OnnxParser::Parse(NodeProto& node) {
   }
   PARSE(*node.mutable_output());
   MATCH('=');
-  std::string domain("");
-  std::string id;
-  ParseIdentifier(id);
+  std::string domain;
+  std::string id = ParseOptionalIdentifier();
   while (Matches('.')) {
     if (!domain.empty())
       domain += ".";
     domain += id;
-    ParseIdentifier(id);
+    CHECK_PARSER_STATUS(ParseIdentifier(id));
   }
   node.set_domain(domain);
   node.set_op_type(id);
 
   if (Matches(':')) {
     std::string overload;
-    ParseIdentifier(overload);
+    CHECK_PARSER_STATUS(ParseIdentifier(overload));
     node.set_overload(overload);
   }
   PARSE(*node.mutable_attribute());
