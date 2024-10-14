@@ -1675,39 +1675,77 @@ class TestReferenceEvaluator(unittest.TestCase):
                     got = sess2.run(None, feeds)[0]
                     assert_allclose(expected, got)
 
-        x = np.array(
-            [
-                [255, 174, 162, 25, 203, 168, 58],
-                [15, 59, 237, 95, 129, 0, 64],
-                [56, 242, 153, 221, 168, 12, 166],
-                [232, 178, 186, 195, 237, 162, 237],
-                [188, 39, 124, 77, 80, 102, 43],
-                [127, 230, 21, 83, 41, 40, 134],
-                [255, 154, 92, 141, 42, 148, 247],
-            ],
-            dtype=np.uint8,
-        ).reshape((1, 1, 7, 7))
-        x_scale = np.array([0.00369204697], dtype=np.float32)
-        x_zero_point = np.array([132], dtype=np.uint8)
-        w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
-        w_scale = np.array([0.00172794575], dtype=np.float32)
-        w_zero_point = np.array([255], dtype=np.uint8)
-        y_scale = np.array([0.00162681262], dtype=np.float32)
-        y_zero_point = np.array([123], dtype=np.uint8)
+        with self.subTest("single_channel"):
+            x = np.array(
+                [
+                    [255, 174, 162, 25, 203, 168, 58],
+                    [15, 59, 237, 95, 129, 0, 64],
+                    [56, 242, 153, 221, 168, 12, 166],
+                    [232, 178, 186, 195, 237, 162, 237],
+                    [188, 39, 124, 77, 80, 102, 43],
+                    [127, 230, 21, 83, 41, 40, 134],
+                    [255, 154, 92, 141, 42, 148, 247],
+                ],
+                dtype=np.uint8,
+            ).reshape((1, 1, 7, 7))
+            x_scale = np.array([0.00369204697], dtype=np.float32)
+            x_zero_point = np.array([132], dtype=np.uint8)
+            w = np.array([0], dtype=np.uint8).reshape((1, 1, 1, 1))
+            w_scale = np.array([0.00172794575], dtype=np.float32)
+            w_zero_point = np.array([255], dtype=np.uint8)
+            y_scale = np.array([0.00162681262], dtype=np.float32)
+            y_zero_point = np.array([123], dtype=np.uint8)
 
-        feeds = {
-            "x": x,
-            "x_scale": x_scale,
-            "x_zero_point": x_zero_point,
-            "w": w,
-            "w_scale": w_scale,
-            "w_zero_point": w_zero_point,
-            "y_scale": y_scale,
-            "y_zero_point": y_zero_point,
-        }
-        expected = sess1.run(None, feeds)[0]
-        got = sess2.run(None, feeds)[0]
-        assert_allclose(expected, got)
+            feeds = {
+                "x": x,
+                "x_scale": x_scale,
+                "x_zero_point": x_zero_point,
+                "w": w,
+                "w_scale": w_scale,
+                "w_zero_point": w_zero_point,
+                "y_scale": y_scale,
+                "y_zero_point": y_zero_point,
+            }
+            expected = sess1.run(None, feeds)[0]
+            got = sess2.run(None, feeds)[0]
+            assert_allclose(expected, got)
+
+        with self.subTest("multiple_output_channels"):
+            x = np.array(
+                [
+                    [255, 174, 162, 25, 203, 168, 58],
+                    [15, 59, 237, 95, 129, 0, 64],
+                    [56, 242, 153, 221, 168, 12, 166],
+                    [232, 178, 186, 195, 237, 162, 237],
+                    [188, 39, 124, 77, 80, 102, 43],
+                    [127, 230, 21, 83, 41, 40, 134],
+                    [255, 154, 92, 141, 42, 148, 247],
+                ],
+                dtype=np.uint8,
+            ).reshape((1, 1, 7, 7))
+            x_scale = np.array([0.00390625], dtype=np.float32)
+            x_zero_point = np.array([0], dtype=np.uint8)
+            w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
+            w[0, 0, 1, 2] = 200
+            w[1, 0, 1, 0] = 2.0
+            w_scale = np.array([0.00390625, 0.001953125], dtype=np.float32)
+            w_zero_point = np.array([128, 128], dtype=np.uint8)
+            y_scale = np.array([0.00162681262], dtype=np.float32)
+            y_zero_point = np.array([123], dtype=np.uint8)
+
+            feeds = {
+                "x": x,
+                "x_scale": x_scale,
+                "x_zero_point": x_zero_point,
+                "w": w,
+                "w_scale": w_scale,
+                "w_zero_point": w_zero_point,
+                "y_scale": y_scale,
+                "y_zero_point": y_zero_point,
+            }
+            expected = sess1.run(None, feeds)[0]
+            got = sess2.run(None, feeds)[0]
+            assert_allclose(expected, got)
 
     def common_test_im2col(self, kernel_shape, pads, strides, dilations):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
