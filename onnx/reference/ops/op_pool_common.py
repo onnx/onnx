@@ -51,7 +51,7 @@ def get_pad_with_auto_pad(auto_pad: str, pad_shape: Sequence[int]) -> Sequence[i
 
 
 def get_output_shape_explicit_padding(
-    pads: Sequence[int],
+    pads: Sequence[int] | None,
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
@@ -249,7 +249,7 @@ def pool(
             y[shape] = f(window_vals)
         else:
             y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
-    return y
+    return y.astype(padded.dtype)
 
 
 class CommonPool(OpRun):

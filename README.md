@@ -171,7 +171,7 @@ cd onnx
 git submodule update --init --recursive
 # prefer lite proto
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
+pip install -e . -v
 ```
 
 ### Linux
@@ -231,7 +231,7 @@ cd onnx
 git submodule update --init --recursive
 # Optional: prefer lite proto
 export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
+pip install -e . -v
 ```
 
 ### Mac
@@ -258,7 +258,7 @@ git clone --recursive https://github.com/onnx/onnx.git
 cd onnx
 # Optional: prefer lite proto
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
+pip install -e . -v
 ```
 
 ## Verify Installation

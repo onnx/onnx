@@ -183,7 +183,7 @@ class ReferenceEvaluator:
 
         An operator may have a reference implementation such as `CastLike`
         and still be defined as a function. By default, the reference implementation
-        is used. This behaviour can be changed by adding a class to the list
+        is used. This behavior can be changed by adding a class to the list
         of overwritten operators. It must inherit from :class:`OpRunExpand`.
 
         ::

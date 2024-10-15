@@ -4,7 +4,6 @@
 
 #include <functional>
 
-#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
 #include "onnx/defs/schema.h"
@@ -12,7 +11,7 @@
 
 namespace ONNX_NAMESPACE {
 
-bool BuildContextDependentFunctionBody_opset13(
+static bool BuildContextDependentFunctionBody_opset13(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -984,7 +983,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-std::function<void(OpSchema&)> MathDocGenerator_opset13(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_opset13(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1029,7 +1028,7 @@ ONNX_OPERATOR_SET_SCHEMA(Mul, 13, OpSchema().FillUsing(MathDocGenerator_opset13(
 
 ONNX_OPERATOR_SET_SCHEMA(Div, 13, OpSchema().FillUsing(MathDocGenerator_opset13("division")));
 
-std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1066,7 +1065,7 @@ ONNX_OPERATOR_SET_SCHEMA(Mul, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("
 
 ONNX_OPERATOR_SET_SCHEMA(Div, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("division")));
 
-std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset_11(const char* name, const char* description) {
+static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset_11(const char* name, const char* description) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1530,7 +1529,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_opset8(const char* name) {
+static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_opset8(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1700,7 +1699,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx) {
+static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx) {
   if (!hasInputShape(ctx, input1Idx) || !hasInputShape(ctx, input2Idx)) {
     return;
   }
@@ -1733,8 +1732,8 @@ void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int inp
 
   // Check for compatible matrix multiply dimensions
   {
-    auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-    auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+    const auto& dimL = shapeL.dim(shapeL.dim_size() - 1);
+    const auto& dimR = shapeR.dim(shapeR.dim_size() - 2);
     if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
       fail_shape_inference("Incompatible dimensions for matrix multiplication");
     }
@@ -1769,7 +1768,7 @@ void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int inp
 }
 
 static const char* MatMul_ver9_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1835,7 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
             TensorShapeProto second_shape;
             if (nullptr != shape_initializer) {
-              const auto& shape_data = ParseData<int64_t>(shape_initializer);
+              const auto shape_data = ParseData<int64_t>(shape_initializer);
 
               for (const auto& e : shape_data) {
                 auto* dim = second_shape.add_dim();
@@ -2036,31 +2035,31 @@ Example 3:
     // -1.57
 )DOC";
 
-TensorProto ToDimensionOneFloatTensor_old(float value) {
+static TensorProto ToDimensionOneFloatTensor_old(float value) {
   auto t = ToTensor(std::vector<float>({value}));
   t.add_dims(1);
   return t;
 }
 
-TensorProto ToDimensionOneTensor_old(int32_t value) {
+static TensorProto ToDimensionOneTensor_old(int32_t value) {
   auto t = ToTensor(std::vector<int32_t>({value}));
   t.add_dims(1);
   return t;
 }
 
-TensorProto ToDimensionOneInt64Tensor_old(int64_t value) {
+static TensorProto ToDimensionOneInt64Tensor_old(int64_t value) {
   auto t = ToTensor(std::vector<int64_t>({value}));
   t.add_dims(1);
   return t;
 }
 
-TensorProto ToDimensionOneInt64Tensor_old(std::vector<int64_t> value) {
+static TensorProto ToDimensionOneInt64Tensor_old(const std::vector<int64_t>& value) {
   auto t = ToTensor(value);
   t.add_dims(value.size());
   return t;
 }
 
-bool BuildContextDependentFunctionBody_opset12(
+static bool BuildContextDependentFunctionBody_opset12(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -2074,6 +2073,7 @@ bool BuildContextDependentFunctionBody_opset12(
   std::string reduction_attr =
       reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
   std::vector<FunctionBodyHelper::NodeDef> body;
+  body.reserve(23);
   body.push_back({{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor_old(0))}});
 
   body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor_old(1))}});
@@ -2315,7 +2315,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-const char* reduction_doc_sce_opset12 =
+const static char* reduction_doc_sce_opset12 =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
     "'sum': the output will be summed. "
@@ -2356,11 +2356,12 @@ If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is prov
 where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
 )DOC";
 
-bool BuildContextDependentFunctionBodySCE_opset12(
+static bool BuildContextDependentFunctionBodySCE_opset12(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
+  body.reserve(9);
 
   // Using stable implementation of LogSoftmax
   body.push_back({{"Shape3D"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old({0, 0, -1}))}});
@@ -2387,12 +2388,12 @@ bool BuildContextDependentFunctionBodySCE_opset12(
       MakeRefAttribute("reduction", AttributeProto::STRING)};
   // Add weights as input if needed.
   if (ctx.hasInput(2)) {
-    input_tensor_names.push_back("weights");
+    input_tensor_names.emplace_back("weights");
   }
 
   // add ignore_index attributes if needed.
   if (ctx.getAttribute("ignore_index") != nullptr) {
-    attributes.push_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
+    attributes.emplace_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
   }
 
   body.push_back({{"output"}, "NegativeLogLikelihoodLoss", input_tensor_names, attributes});
@@ -2477,7 +2478,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(const char* name, const char* description) {
+static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(const char* name, const char* description) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2543,7 +2544,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         SoftmaxFamilyDocGenerator_opset1("hardmax", "1 for the first maximum value, and 0 for all others")));
 
-const char* kBroadcastDoc_old = R"DOC(
+const static char* kBroadcastDoc_old = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second
 tensor can either be of element size 1 (including a scalar tensor and any
@@ -2564,7 +2565,7 @@ For example, the following tensor shapes are supported (with broadcast=1):
 Attribute `broadcast=1` needs to be passed to enable broadcasting.
 )DOC";
 
-std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2596,7 +2597,7 @@ Performs element-wise binary {name} (with limited broadcast support).
   };
 }
 
-std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -3304,10 +3305,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto transBAttr = ctx.getAttribute("transB");
             bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
 
+            checkInputRank(ctx, 0, 2);
+            checkInputRank(ctx, 1, 2);
+
+            auto& first_input_shape = getInputShape(ctx, 0);
+            auto& second_input_shape = getInputShape(ctx, 1);
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(0)->tensor_type().shape().dim(transA ? 1 : 0);
+                first_input_shape.dim(transA ? 1 : 0);
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(1)->tensor_type().shape().dim(transB ? 0 : 1);
+                second_input_shape.dim(transB ? 0 : 1);
           } else if (
               hasInputShape(ctx, 2) &&
               (!ctx.getAttribute("broadcast") || static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
@@ -3526,7 +3532,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* MatMul_ver1_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -3575,8 +3581,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Check for compatible matrix multiply dimensions
           {
-            auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-            auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+            auto const& dimL = shapeL.dim(shapeL.dim_size() - 1);
+            auto const& dimR = shapeR.dim(shapeR.dim_size() - 2);
             if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
               fail_shape_inference("Incompatible dimensions for matrix multiplication");
               ;
@@ -3752,7 +3758,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             if (k->data_type() == TensorProto::INT64) {
-              const auto& data = ParseData<int64_t>(k);
+              const auto data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
               fail_shape_inference("K input must be of type int64.");
@@ -3844,7 +3850,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(const char* name) {
+static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(

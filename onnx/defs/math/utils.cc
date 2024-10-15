@@ -11,7 +11,7 @@ namespace defs {
 namespace math {
 namespace utils {
 
-int MathOpTwoIntegers(std::string op_type, int a, int b) {
+int MathOpTwoIntegers(const std::string& op_type, int a, int b) {
   if (op_type == "Add") {
     return a + b;
   } else if (op_type == "Sub") {
@@ -55,8 +55,8 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
 
   // Check for compatible matrix multiply dimensions
   {
-    auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-    auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+    const auto& dimL = shapeL.dim(shapeL.dim_size() - 1);
+    const auto& dimR = shapeR.dim(shapeR.dim_size() - 2);
     if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
       fail_shape_inference("Incompatible dimensions for matrix multiplication");
     }
@@ -117,7 +117,7 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
 
 const char* QLinearMatMulDoc() {
   static const char* QLinearMatMul_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
 and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
 For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
