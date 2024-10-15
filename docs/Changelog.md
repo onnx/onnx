@@ -29059,6 +29059,68 @@ This version of the operator has been available since version 23 of the default 
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
+### <a name="RotaryEmbedding-23"></a>**RotaryEmbedding-23**</a>
+
+  RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
+  The positions are represented as rotation matrices that are multiplied to query and key
+  before the inner product of query and key is taken.
+
+  Rotary embeddings are defined using the below functions:
+
+      def rotate_half(x):
+          """Rotates half the hidden dims of the input."""
+          x1 = x[..., : x.shape[-1] // 2]
+          x2 = x[..., x.shape[-1] // 2 :]
+          return torch.cat((-x2, x1), dim=-1)
+
+      def apply_rope(x, cos, sin, position_ids):
+          cos = cos.squeeze(1).squeeze(0)  # [seq_len, dim]
+          sin = sin.squeeze(1).squeeze(0)  # [seq_len, dim]
+          cos = cos[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
+          sin = sin[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
+          x_embed = (x * cos) + (rotate_half(x) * sin)
+          return x_embed
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>interleaved</tt> : int</dt>
+<dd>Rotate using interleaved pattern. Default value is 0 (False).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>3D tensor with shape (batch_size, sequence_length, hidden_size) or 4D with shape (batch_size, num_heads, sequence_length, head_size)</dd>
+<dt><tt>position_ids</tt> : M</dt>
+<dd>1D tensor with shape (1) or 2D tensor with shape (batch_size, sequence_length)</dd>
+<dt><tt>cos_cache</tt> : T</dt>
+<dd>2D tensor with shape (max_sequence_length, head_size / 2) or (max_sequence_length, rotary_embedding_dim / 2)</dd>
+<dt><tt>sin_cache</tt> : T</dt>
+<dd>2D tensor with shape (max_sequence_length, head_size / 2) or (max_sequence_length, rotary_embedding_dim / 2)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>tensor with same shape as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>M</tt> : tensor(int64)</dt>
+<dd>Constrain input and output types to integer tensors</dd>
+</dl>
+
 ### <a name="Scan-23"></a>**Scan-23**</a>
 
   Scan can be used to iterate over one or more scan_input tensors,
