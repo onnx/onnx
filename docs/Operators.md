@@ -27706,10 +27706,17 @@ expect(
 ### <a name="RotaryEmbedding"></a><a name="rotaryembedding">**RotaryEmbedding**</a>
 
   RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
-  The positions are represented as rotation matrices that are multiplied to query and key
-  before the inner product of query and key is taken.
+  The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
+  between tokens. This is achieved through a rotational mechanism where the extent of rotation is computed based on the token's absolute position (position_ids).
 
-  Rotary embeddings are defined using the below functions:
+  The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
+  For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
+  embedding vector into two halves and applying the rotation matrix to each half of the embedding vector. The rotation matrix is
+  parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated to form the final positional
+  embedding for each token. The rotated positional embeddings are used in the self-attention mechanism. The rotation ensures that the model
+  captures both absolute and relative positional information.
+
+  Rotary embeddings are defined using the following algorithm:
 
       def rotate_half(x):
           """Rotates half the hidden dims of the input."""
@@ -27717,7 +27724,7 @@ expect(
           x2 = x[..., x.shape[-1] // 2 :]
           return torch.cat((-x2, x1), dim=-1)
 
-      def apply_rope(x, cos, sin, position_ids):
+      def rotary_embedding(x, cos, sin, position_ids):
           cos = cos.squeeze(1).squeeze(0)  # [seq_len, dim]
           sin = sin.squeeze(1).squeeze(0)  # [seq_len, dim]
           cos = cos[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
@@ -27739,20 +27746,20 @@ This version of the operator has been available since version 23 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
-<dd>3D tensor with shape (batch_size, sequence_length, hidden_size) or 4D with shape (batch_size, num_heads, sequence_length, head_size)</dd>
+<dt><tt>X</tt> : T</dt>
+<dd>The input tensor representing the token embeddings. 3D tensor with shape (batch_size, sequence_length, head_size), head_size is supposed to be even</dd>
 <dt><tt>position_ids</tt> : M</dt>
-<dd>1D tensor with shape (1) or 2D tensor with shape (batch_size, sequence_length)</dd>
+<dd>The position indices for the tokens. 1D tensor with shape (1) or 2D tensor with shape (batch_size, sequence_length)</dd>
 <dt><tt>cos_cache</tt> : T</dt>
-<dd>2D tensor with shape (max_sequence_length, head_size / 2) or (max_sequence_length, rotary_embedding_dim / 2)</dd>
+<dd>The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)</dd>
 <dt><tt>sin_cache</tt> : T</dt>
-<dd>2D tensor with shape (max_sequence_length, head_size / 2) or (max_sequence_length, rotary_embedding_dim / 2)</dd>
+<dd>The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>tensor with same shape as input.</dd>
 </dl>
 
@@ -27764,6 +27771,66 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>M</tt> : tensor(int64)</dt>
 <dd>Constrain input and output types to integer tensors</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>rotary_embedding</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "position_ids", "sin_cache", "cos_cache"],
+    outputs=["output"]
+)
+
+input_data = np.random.rand(2, 3, 4).astype(np.float32)
+position_ids_data = np.array([[0, 1, 2], [0, 1, 2]], dtype=np.int64)
+sin_cache_data = np.random.rand(3, 4).astype(np.float32)
+cos_cache_data = np.random.rand(3, 4).astype(np.float32)
+
+expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data)
+
+expect(
+    node,
+    inputs=[input_data, position_ids_data, sin_cache_data, cos_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding"
+)
+```
+
+</details>
+
+
+<details>
+<summary>rotary_embedding_with_different_shapes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "position_ids", "sin_cache", "cos_cache"],
+    outputs=["output"]
+)
+
+B, SQ_LEN, dim1 = 3, 5, 6
+np.random.seed(0)
+input_data = np.random.rand(B, SQ_LEN, dim1).astype(np.float32)
+position_ids_data = np.random.randint(0, high=B, size=(B, SQ_LEN)).astype(np.int64)
+sin_cache_data = np.random.rand(SQ_LEN, dim1).astype(np.float32)
+cos_cache_data = np.random.rand(SQ_LEN, dim1).astype(np.float32)
+
+expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data)
+
+expect(
+    node,
+    inputs=[input_data, position_ids_data, sin_cache_data, cos_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_with_different_shapes"
+)
+```
+
+</details>
 
 
 ### <a name="Round"></a><a name="round">**Round**</a>
