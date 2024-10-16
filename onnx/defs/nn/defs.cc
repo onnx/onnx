@@ -2832,10 +2832,17 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* RotaryEmbedding_ver23_doc = R"DOC(
 RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
-The positions are represented as rotation matrices that are multiplied to query and key
-before the inner product of query and key is taken.
+The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
+between tokens. This is achieved through a rotational mechanism where the extent of rotation is computed based on the token's absolute position (position_ids).
 
-Rotary embeddings are defined using the below functions:
+The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
+For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
+embedding vector into two halves and applying the rotation matrix to each half of the embedding vector. The rotation matrix is
+parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated to form the final positional
+embedding for each token. The rotated positional embeddings are used in the self-attention mechanism. The rotation ensures that the model
+captures both absolute and relative positional information.
+
+Rotary embeddings are defined using the following algorithm:
 
     def rotate_half(x):
         """Rotates half the hidden dims of the input."""
@@ -2843,7 +2850,7 @@ Rotary embeddings are defined using the below functions:
         x2 = x[..., x.shape[-1] // 2 :]
         return torch.cat((-x2, x1), dim=-1)
 
-    def apply_rope(x, cos, sin, position_ids):
+    def rotary_embedding(x, cos, sin, position_ids):
         cos = cos.squeeze(1).squeeze(0)  # [seq_len, dim]
         sin = sin.squeeze(1).squeeze(0)  # [seq_len, dim]
         cos = cos[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
@@ -2862,23 +2869,23 @@ ONNX_OPERATOR_SET_SCHEMA(
               AttributeProto::INT,
               OPTIONAL_VALUE)
         .Input(0,
-               "input",
-               "3D tensor with shape (batch_size, sequence_length, hidden_size) or 4D with shape (batch_size, num_heads, sequence_length, head_size)",
+               "X",
+               "The input tensor representing the token embeddings. 3D tensor with shape (batch_size, sequence_length, head_size), head_size is supposed to be even",
                "T")
         .Input(1,
                "position_ids",
-               "1D tensor with shape (1) or 2D tensor with shape (batch_size, sequence_length)",
+               "The position indices for the tokens. 1D tensor with shape (1) or 2D tensor with shape (batch_size, sequence_length)",
                "M")
         .Input(2,
                "cos_cache",
-               "2D tensor with shape (max_sequence_length, head_size / 2) or (max_sequence_length, rotary_embedding_dim / 2)",
+               "The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)",
                "T")
         .Input(3,
                "sin_cache",
-               "2D tensor with shape (max_sequence_length, head_size / 2) or (max_sequence_length, rotary_embedding_dim / 2)",
+               "The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)",
                "T")
         .Output(0,
-                "output",
+                "Y",
                 "tensor with same shape as input.",
                 "T")
         .TypeConstraint("T", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"}, "Constrain input and output types to float tensors.")
@@ -2897,30 +2904,24 @@ ONNX_OPERATOR_SET_SCHEMA(
               };
 
               FunctionBuilder builder(functionProto);
-              builder.Add("SqueezeDims = Constant <value_ints = [0, 1]> ()")
-                .Add("CosCacheSqueezed = Squeeze(cos_cache, SqueezeDims)")
-                .Add("SinCacheSqueezed = Squeeze(sin_cache, SqueezeDims)")
-                .Add("UnqueezeDims = Constant <value_ints = [0]> ()")
-                .Add("CosCacheGather = Gather(CosCacheSqueezed, position_ids)")
-                .Add("CosCacheUnsqueezed = Unsqueeze(cos_cache, UnsqueezeDims)")
-                .Add("CosCacheGather = Gather(CosCacheSqueezed, position_ids)")
-                .Add("SinCacheUnsqueezed = Unsqueeze(sin_cache, UnsqueezeDims)");
+              builder.Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos_matrix: [b, seq_len, dim]
+                .Add("CosCacheUnsqueezed = Unsqueeze(CosCacheGather)") // shape of cos_matrix: [b, 1, seq_len, dim]
+                .Add("CosCacheGather = Gather(CosCacheSqueezed, position_ids)") // shape of sin_matrix: [b, seq_len, dim]
+                .Add("SinCacheUnsqueezed = Unsqueeze(sin_cache, UnsqueezeDims)"); // shape of sin_matrix: [b, 1, seq_len, dim]
 
-              builder.Add("Shape = Shape (input)") // shape of input tensor: 1D tensor
-                  .Add("One1D = Constant()", "value", mktensor(1)) // [1] : 1D tensor
-                  .Add("InputToRotate = Gather(Shape, Zero1D)") // 1D tensor
-                  .Add("RotateEmbedDim = Size(InputToRotate)") // scalar
-                  .Add("Two1D = Constant()", "value", mktensor(2)) // [2] : 1D tensor
-                  .Add("RotateEmbedDimHalf = Div(InputToRotate, Two1D)")
-                  .Add("One1D = Constant()", "value", mktensor(1)) // [1] : 1D tensor
-                  .Add("InputFirstHalf = Slice (input, Zero1D, RotateEmbedDimHalf, Axis1D)")
-                  .Add("InputSecondHalf = Slice (input, RotateEmbedDimHalf, RotateEmbedDim, Axis1D)")
+              builder.Add("Two1D = Constant()", "value", mktensor(2)) // [2] : 1D tensor
+                  .Add("Shape = Shape (X)") // shape of input tensor: 1D tensor
+                  .Add("RotateEmbedDim = Gather(Shape, Two1D)") // 1D tensor
+                  .Add("RotateEmbedDimHalf = Div(RotateEmbedDim, Two1D)")
+                  .Add("ExpandShape = Constant()", "value", mktensor(2))
+                  .Add("SplitTensor = Expand(RotateEmbedDimHalf, ExpandShape)")
+                  .Add("InputFirstHalf, InputSecondHalf = Split <axis = -1> (X, SplitTensor)")
                   .Add("NegInputSecondHalf = Neg(InputSecondHalf)")
                   .Add("ConcatInput = Concat <axis = -1> (NegInputFirstHalf, InputFirstHalf)");
 
-              builder.Add("CosMultiplied = Mul(input, CosCacheUnsqueezed)")
+              builder.Add("CosMultiplied = Mul(X, CosCacheUnsqueezed)")
                   .Add("SinMultiplied = Mul(ConcatInput, SinCacheUnsqueezed)")
-                  .Add("output = Add(CosMultiplied, SinMultiplied)");
+                  .Add("Y = Add(CosMultiplied, SinMultiplied)");
 
               schema.BuildFunction(functionProto);
               return true;
