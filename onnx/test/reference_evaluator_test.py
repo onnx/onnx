@@ -1747,6 +1747,56 @@ class TestReferenceEvaluator(unittest.TestCase):
             got = sess2.run(None, feeds)[0]
             assert_allclose(expected, got)
 
+        with self.subTest("fails_with_w_scale_2D"):
+            x = np.zeros((1, 1, 7, 7), dtype=np.uint8)
+            x_scale = np.array([0.00390625], dtype=np.float32)
+            x_zero_point = np.array([0], dtype=np.uint8)
+            w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
+            w_scale = np.array([[0.00390625, 0.001953125], [1, 1]], dtype=np.float32)
+            w_zero_point = np.array([128, 128], dtype=np.uint8)
+            y_scale = np.array([0.00162681262], dtype=np.float32)
+            y_zero_point = np.array([123], dtype=np.uint8)
+
+            feeds = {
+                "x": x,
+                "x_scale": x_scale,
+                "x_zero_point": x_zero_point,
+                "w": w,
+                "w_scale": w_scale,
+                "w_zero_point": w_zero_point,
+                "y_scale": y_scale,
+                "y_zero_point": y_zero_point,
+            }
+            with self.assertRaisesRegex(
+                ValueError, "w_scale must be a scalar or a 1-D tensor"
+            ):
+                sess2.run(None, feeds)[0]
+
+        with self.subTest("fails_with_w_scale_wrong_length"):
+            x = np.zeros((1, 1, 7, 7), dtype=np.uint8)
+            x_scale = np.array([0.00390625], dtype=np.float32)
+            x_zero_point = np.array([0], dtype=np.uint8)
+            w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
+            w_scale = np.array([0.00390625, 0.001953125, 1], dtype=np.float32)
+            w_zero_point = np.array([128, 128], dtype=np.uint8)
+            y_scale = np.array([0.00162681262], dtype=np.float32)
+            y_zero_point = np.array([123], dtype=np.uint8)
+
+            feeds = {
+                "x": x,
+                "x_scale": x_scale,
+                "x_zero_point": x_zero_point,
+                "w": w,
+                "w_scale": w_scale,
+                "w_zero_point": w_zero_point,
+                "y_scale": y_scale,
+                "y_zero_point": y_zero_point,
+            }
+            with self.assertRaisesRegex(
+                ValueError, "w_scale elements must match output channels"
+            ):
+                sess2.run(None, feeds)[0]
+
     def common_test_im2col(self, kernel_shape, pads, strides, dilations):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         Y1 = make_tensor_value_info("Y1", TensorProto.FLOAT, [None, None, None, None])

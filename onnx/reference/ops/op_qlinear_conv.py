@@ -59,7 +59,7 @@ class QLinearConv(OpRun):
                 )
             if np.size(w_scale) != np.shape(w)[0]:
                 raise ValueError(
-                    f"w_scale elements should match output channels: {np.size(w_scale)} != {np.shape(w)[0]}"
+                    f"w_scale elements must match output channels: {np.size(w_scale)} != {np.shape(w)[0]}"
                 )
             w_scale = np.expand_dims(w_scale, (0, 2, 3))
 
