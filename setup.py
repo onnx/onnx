@@ -158,6 +158,7 @@ class CmakeBuild(setuptools.Command):
     user_options: ClassVar[list] = [
         ("jobs=", "j", "Specifies the number of jobs to use with make")
     ]
+    jobs: None | str | int = None
 
     def initialize_options(self):
         self.jobs = None
@@ -166,7 +167,8 @@ class CmakeBuild(setuptools.Command):
         self.set_undefined_options("build", ("parallel", "jobs"))
         if self.jobs is None and os.getenv("MAX_JOBS") is not None:
             self.jobs = os.getenv("MAX_JOBS")
-        self.jobs = multiprocessing.cpu_count() if self.jobs is None else int(self.jobs)
+        if self.jobs is None:
+            self.jobs = multiprocessing.cpu_count()
 
     def run(self):
         os.makedirs(CMAKE_BUILD_DIR, exist_ok=True)
@@ -191,12 +193,13 @@ class CmakeBuild(setuptools.Command):
                 build_type = "Debug"
             cmake_args.append(f"-DCMAKE_BUILD_TYPE={build_type}")
             if WINDOWS:
+                py_version = sys.version_info[:2]
                 cmake_args.extend(
                     [
                         # we need to link with libpython on windows, so
                         # passing python version to window in order to
                         # find python in cmake
-                        f"-DPY_VERSION={'{}.{}'.format(*sys.version_info[:2])}",
+                        f"-DPY_VERSION='{py_version[0]}.{py_version[1]}'",
                     ]
                 )
                 if USE_MSVC_STATIC_RUNTIME:
@@ -277,9 +280,8 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             fullname = self.get_ext_fullname(ext.name)
             filename = os.path.basename(self.get_ext_filename(fullname))
 
-            if not WINDOWS:
-                lib_dir = CMAKE_BUILD_DIR
-            else:
+            lib_dir = CMAKE_BUILD_DIR
+            if WINDOWS:
                 # Windows compiled extensions are stored in Release/Debug subfolders
                 debug_lib_dir = os.path.join(CMAKE_BUILD_DIR, "Debug")
                 release_lib_dir = os.path.join(CMAKE_BUILD_DIR, "Release")
