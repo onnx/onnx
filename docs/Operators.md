@@ -197,6 +197,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceLogSumExp">ReduceLogSumExp</a>|<a href="Changelog.md#ReduceLogSumExp-18">18</a>, <a href="Changelog.md#ReduceLogSumExp-13">13</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>, <a href="Changelog.md#ReduceLogSumExp-1">1</a>|18|
 |<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-18">18</a>, <a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|18|
 |<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|18|
+|<a href="#RotaryEmbedding">RotaryEmbedding</a>|<a href="Changelog.md#RotaryEmbedding-23">23</a>|23|
 |<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-22">22</a>, <a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|18|
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|17|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|18|
@@ -27304,6 +27305,136 @@ expect(
     inputs=[X, rois, batch_indices],
     outputs=[Y],
     name="test_roialign_mode_max",
+)
+```
+
+</details>
+
+
+### <a name="RotaryEmbedding"></a><a name="rotaryembedding">**RotaryEmbedding**</a>
+
+  RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
+  The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
+  between tokens. This is achieved through a rotational mechanism where the extent of rotation is computed based on the token's absolute position (position_ids).
+
+  The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
+  For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
+  embedding vector into two halves and applying the rotation matrix to each half of the embedding vector. The rotation matrix is
+  parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated to form the final positional
+  embedding for each token. The rotated positional embeddings are used in the self-attention mechanism. The rotation ensures that the model
+  captures both absolute and relative positional information.
+
+  Rotary embeddings are defined using the following algorithm:
+
+      def rotate_half(x):
+          """Rotates half the hidden dims of the input."""
+          x1 = x[..., : x.shape[-1] // 2]
+          x2 = x[..., x.shape[-1] // 2 :]
+          return torch.cat((-x2, x1), dim=-1)
+
+      def rotary_embedding(x, cos, sin, position_ids):
+          cos = cos.squeeze(1).squeeze(0)  # [seq_len, dim]
+          sin = sin.squeeze(1).squeeze(0)  # [seq_len, dim]
+          cos = cos[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
+          sin = sin[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
+          x_embed = (x * cos) + (rotate_half(x) * sin)
+          return x_embed
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>interleaved</tt> : int</dt>
+<dd>Rotate using interleaved pattern. Default value is 0 (False).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input tensor representing the token embeddings. 3D tensor with shape (batch_size, sequence_length, head_size), head_size is supposed to be even</dd>
+<dt><tt>position_ids</tt> : M</dt>
+<dd>The position indices for the tokens. 1D tensor with shape (1) or 2D tensor with shape (batch_size, sequence_length)</dd>
+<dt><tt>cos_cache</tt> : T</dt>
+<dd>The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)</dd>
+<dt><tt>sin_cache</tt> : T</dt>
+<dd>The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>tensor with same shape as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>M</tt> : tensor(int64)</dt>
+<dd>Constrain input and output types to integer tensors</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>rotary_embedding</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "position_ids", "sin_cache", "cos_cache"],
+    outputs=["output"]
+)
+
+input_data = np.random.rand(2, 3, 4).astype(np.float32)
+position_ids_data = np.array([[0, 1, 2], [0, 1, 2]], dtype=np.int64)
+sin_cache_data = np.random.rand(3, 4).astype(np.float32)
+cos_cache_data = np.random.rand(3, 4).astype(np.float32)
+
+expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data)
+
+expect(
+    node,
+    inputs=[input_data, position_ids_data, sin_cache_data, cos_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding"
+)
+```
+
+</details>
+
+
+<details>
+<summary>rotary_embedding_with_different_shapes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "position_ids", "sin_cache", "cos_cache"],
+    outputs=["output"]
+)
+
+B, SQ_LEN, dim1 = 3, 5, 6
+np.random.seed(0)
+input_data = np.random.rand(B, SQ_LEN, dim1).astype(np.float32)
+position_ids_data = np.random.randint(0, high=B, size=(B, SQ_LEN)).astype(np.int64)
+sin_cache_data = np.random.rand(SQ_LEN, dim1).astype(np.float32)
+cos_cache_data = np.random.rand(SQ_LEN, dim1).astype(np.float32)
+
+expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data)
+
+expect(
+    node,
+    inputs=[input_data, position_ids_data, sin_cache_data, cos_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_with_different_shapes"
 )
 ```
 

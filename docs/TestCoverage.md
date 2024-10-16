@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 179/192 (93.23%, 5 generators excluded) common operators.
+Node tests have covered 180/193 (93.26%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -19218,6 +19218,64 @@ expect(
     inputs=[X, rois, batch_indices],
     outputs=[Y],
     name="test_roialign_mode_max",
+)
+```
+
+</details>
+
+
+### RotaryEmbedding
+There are 2 test cases, listed as following:
+<details>
+<summary>rotary_embedding</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "position_ids", "sin_cache", "cos_cache"],
+    outputs=["output"]
+)
+
+input_data = np.random.rand(2, 3, 4).astype(np.float32)
+position_ids_data = np.array([[0, 1, 2], [0, 1, 2]], dtype=np.int64)
+sin_cache_data = np.random.rand(3, 4).astype(np.float32)
+cos_cache_data = np.random.rand(3, 4).astype(np.float32)
+
+expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data)
+
+expect(
+    node,
+    inputs=[input_data, position_ids_data, sin_cache_data, cos_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding"
+)
+```
+
+</details>
+<details>
+<summary>rotary_embedding_with_different_shapes</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "position_ids", "sin_cache", "cos_cache"],
+    outputs=["output"]
+)
+
+B, SQ_LEN, dim1 = 3, 5, 6
+np.random.seed(0)
+input_data = np.random.rand(B, SQ_LEN, dim1).astype(np.float32)
+position_ids_data = np.random.randint(0, high=B, size=(B, SQ_LEN)).astype(np.int64)
+sin_cache_data = np.random.rand(SQ_LEN, dim1).astype(np.float32)
+cos_cache_data = np.random.rand(SQ_LEN, dim1).astype(np.float32)
+
+expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data)
+
+expect(
+    node,
+    inputs=[input_data, position_ids_data, sin_cache_data, cos_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_with_different_shapes"
 )
 ```
 

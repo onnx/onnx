@@ -2832,4 +2832,101 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             }));
+
+static const char* RotaryEmbedding_ver23_doc = R"DOC(
+RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
+The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
+between tokens. This is achieved through a rotational mechanism where the extent of rotation is computed based on the token's absolute position (position_ids).
+
+The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
+For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
+embedding vector into two halves and applying the rotation matrix to each half of the embedding vector. The rotation matrix is
+parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated to form the final positional
+embedding for each token. The rotated positional embeddings are used in the self-attention mechanism. The rotation ensures that the model
+captures both absolute and relative positional information.
+
+Rotary embeddings are defined using the following algorithm:
+
+    def rotate_half(x):
+        """Rotates half the hidden dims of the input."""
+        x1 = x[..., : x.shape[-1] // 2]
+        x2 = x[..., x.shape[-1] // 2 :]
+        return torch.cat((-x2, x1), dim=-1)
+
+    def rotary_embedding(x, cos, sin, position_ids):
+        cos = cos.squeeze(1).squeeze(0)  # [seq_len, dim]
+        sin = sin.squeeze(1).squeeze(0)  # [seq_len, dim]
+        cos = cos[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
+        sin = sin[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
+        x_embed = (x * cos) + (rotate_half(x) * sin)
+        return x_embed
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    RotaryEmbedding,
+    23,
+    OpSchema()
+        .SetDoc(RotaryEmbedding_ver23_doc)
+        .Attr("interleaved",
+              "Rotate using interleaved pattern. Default value is 0 (False).",
+              AttributeProto::INT,
+              OPTIONAL_VALUE)
+        .Input(0,
+               "X",
+               "The input tensor representing the token embeddings. 3D tensor with shape (batch_size, sequence_length, head_size), head_size is supposed to be even",
+               "T")
+        .Input(1,
+               "position_ids",
+               "The position indices for the tokens. 1D tensor with shape (1) or 2D tensor with shape (batch_size, sequence_length)",
+               "M")
+        .Input(2,
+               "cos_cache",
+               "The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)",
+               "T")
+        .Input(3,
+               "sin_cache",
+               "The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)",
+               "T")
+        .Output(0,
+                "Y",
+                "tensor with same shape as input.",
+                "T")
+        .TypeConstraint("T", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"}, "Constrain input and output types to float tensors.")
+        .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+        })
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+
+              auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+                auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+                tp.add_dims(1);
+                return tp;
+              };
+
+              FunctionBuilder builder(functionProto);
+              builder.Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos_matrix: [b, seq_len, dim]
+                .Add("CosCacheUnsqueezed = Unsqueeze(CosCacheGather)") // shape of cos_matrix: [b, 1, seq_len, dim]
+                .Add("CosCacheGather = Gather(CosCacheSqueezed, position_ids)") // shape of sin_matrix: [b, seq_len, dim]
+                .Add("SinCacheUnsqueezed = Unsqueeze(sin_cache, UnsqueezeDims)"); // shape of sin_matrix: [b, 1, seq_len, dim]
+
+              builder.Add("Two1D = Constant()", "value", mktensor(2)) // [2] : 1D tensor
+                  .Add("Shape = Shape (X)") // shape of input tensor: 1D tensor
+                  .Add("RotateEmbedDim = Gather(Shape, Two1D)") // 1D tensor
+                  .Add("RotateEmbedDimHalf = Div(RotateEmbedDim, Two1D)")
+                  .Add("ExpandShape = Constant()", "value", mktensor(2))
+                  .Add("SplitTensor = Expand(RotateEmbedDimHalf, ExpandShape)")
+                  .Add("InputFirstHalf, InputSecondHalf = Split <axis = -1> (X, SplitTensor)")
+                  .Add("NegInputSecondHalf = Neg(InputSecondHalf)")
+                  .Add("ConcatInput = Concat <axis = -1> (NegInputFirstHalf, InputFirstHalf)");
+
+              builder.Add("CosMultiplied = Mul(X, CosCacheUnsqueezed)")
+                  .Add("SinMultiplied = Mul(ConcatInput, SinCacheUnsqueezed)")
+                  .Add("Y = Add(CosMultiplied, SinMultiplied)");
+
+              schema.BuildFunction(functionProto);
+              return true;
+          }));
 } // namespace ONNX_NAMESPACE
