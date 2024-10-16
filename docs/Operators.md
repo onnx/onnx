@@ -4344,12 +4344,18 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
 
   Center crop or pad an input to given dimensions.
 
-  The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
-  cropped or padded.
+  The crop/pad dimensions can be specified for a subset of the `axes`; unspecified dimensions will remain unchanged.
 
-  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
-  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-  so that the input is centered in the output.
+  If the input dimensions are larger than the target crop dimensions, a centered cropping window will be extracted
+  from the input. The starting value for the cropping window is rounded down, which means that if the difference
+  between the input shape and the crop shape is odd, the cropping window will be shifted half a pixel to the left
+  of the input center.
+
+  If the input dimensions are smaller than the target crop dimensions, the input will be padded equally on both sides
+  to center it in the output. In cases where the total number of padding pixels is odd, an additional pixel will be
+  added to the right side.
+
+  The padding value used is zero.
 
 #### Version
 
