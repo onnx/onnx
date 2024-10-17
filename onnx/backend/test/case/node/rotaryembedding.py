@@ -34,8 +34,8 @@ class RotaryEmbedding(Base):
 
         input_data = np.random.rand(2, 3, 4).astype(np.float32)
         position_ids_data = np.array([[0, 1, 2], [0, 1, 2]], dtype=np.int64)
-        sin_cache_data = np.random.rand(3, 4).astype(np.float32)
-        cos_cache_data = np.random.rand(3, 4).astype(np.float32)
+        sin_cache_data = np.random.rand(3, 2).astype(np.float32)
+        cos_cache_data = np.random.rand(3, 2).astype(np.float32)
 
         expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data)
 
