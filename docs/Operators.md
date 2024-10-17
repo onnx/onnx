@@ -30217,7 +30217,20 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
 
 ### <a name="SkipLayerNormalization"></a><a name="skiplayernormalization">**SkipLayerNormalization**</a>
 
+  Applies LayerNormalization to an expanded skip connection as described in the paper https://arxiv.org/pdf/2105.07205v1
+  The expanded skip connection is defined as follows:
+  ```
+  xSkip = (scaling_factor * input) + F(input) + Bias
+  ```
+  where,
+  F(input): denotes the output of a particular layer.
+  scaling_factor: a modulating scalar that adjusts the importance of the skip.
+  Bias: a bias term added to the output of the skip connection.
 
+  LayerNorm is then applied to xSkip as follows:
+  ```
+  output = LayerNormalization(xSkip)
+  ```
 
 #### Version
 
@@ -30226,36 +30239,36 @@ This version of the operator has been available since version 23 of the default 
 #### Attributes
 
 <dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The dimension for layer normalization. If rank(X) is r, axis' allowed range is [-r, r). Negative value means counting dimensions from the back.</dd>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>scaling_factor</tt> : int (default is 1)</dt>
+<dd>Modulating scalar by which the skip input is multiplied.</dd>
 </dl>
 
 #### Inputs (3 - 5)
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
+<dd>The output of the layer for which the skip connection is being created. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels.</dd>
 <dt><tt>S</tt> : T</dt>
-<dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
+<dd>Skip input with same shape as X. This is the input to the layer for which the skip connection is being created.</dd>
 <dt><tt>gamma</tt> : T</dt>
-<dd>1D input tensor with shape (hidden_size)</dd>
+<dd>1D tensor representing scale input of layer normalization with shape of the spatial dimension along which layer normalization is applied.</dd>
 <dt><tt>beta</tt> (optional) : T</dt>
-<dd>1D skip tensor with shape (hidden_size)</dd>
+<dd>1D tensor representing bias input of layer normalization with shape of the spatial dimension along which layer normalization is applied.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
-<dd>1D bias tensor with shape (hidden_size)</dd>
+<dd>1D bias tensor for the skip connection with shape of the spatial dimension along which layer normalization is applied.</dd>
 </dl>
 
-#### Outputs (1 - 4)
+#### Outputs (1 - 2)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>3D output tensor with shape (batch_size, sequence_length, hidden_size)Or 2D output tensor with shape (token_count, hidden_size)</dd>
-<dt><tt>Mean</tt> (optional) : U</dt>
-<dd>Saved mean used during training to speed up gradient computation</dd>
-<dt><tt>InvStdVar</tt> (optional) : U</dt>
-<dd>Saved inverse standard variance used during training to speed up gradient computation.</dd>
+<dd>Output tensor with same shape as X</dd>
 <dt><tt>InputSkipBiasSum</tt> (optional) : T</dt>
-<dd>Sum of the input and skip inputs (and bias if it exists)with shape (batch_size, sequence_length, hidden_size) or (token_count, hidden_size).</dd>
+<dd>Sum of the input and skip inputs (and bias if it exists). Same shape as X</dd>
 </dl>
 
 #### Type Constraints
@@ -30279,18 +30292,20 @@ skip = np.random.randn(4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
-y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
 
 node = onnx.helper.make_node(
     "SkipLayerNormalization",
     inputs=["x", "skip", "gamma", "beta", "bias"],
-    outputs=["y"],
+    outputs=["y", "input_skip_bias_sum"],
 )
 
 expect(
     node,
     inputs=[x, skip, gamma, beta, bias],
-    outputs=[y],
+    outputs=[y, input_skip_bias_sum],
     name="test_skip_layer_normalization_2d_example",
 )
 ```
@@ -30307,18 +30322,20 @@ skip = np.random.randn(3, 4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
-y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
 
 node = onnx.helper.make_node(
     "SkipLayerNormalization",
     inputs=["x", "skip", "gamma", "beta", "bias"],
-    outputs=["y"],
+    outputs=["y", "input_skip_bias_sum"],
 )
 
 expect(
     node,
     inputs=[x, skip, gamma, beta, bias],
-    outputs=[y],
+    outputs=[y, input_skip_bias_sum],
     name="test_skip_layer_normalization_3d_example",
 )
 ```
@@ -30336,20 +30353,54 @@ gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
 epsilon = 1e-2
-y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias, epsilon=epsilon)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
 
 node = onnx.helper.make_node(
     "SkipLayerNormalization",
     inputs=["x", "skip", "gamma", "beta", "bias"],
-    outputs=["y"],
+    outputs=["y", "input_skip_bias_sum"],
     epsilon=epsilon,
 )
 
 expect(
     node,
     inputs=[x, skip, gamma, beta, bias],
-    outputs=[y],
+    outputs=[y, input_skip_bias_sum],
     name="test_skip_layer_normalization_epsilon_example",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scaling_factor</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+scaling_factor = 3
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias, scaling_factor=scaling_factor)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+    scaling_factor=scaling_factor,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_layer_normalization_scaling_factor_example",
 )
 ```
 
@@ -30358,7 +30409,19 @@ expect(
 
 ### <a name="SkipRMSNormalization"></a><a name="skiprmsnormalization">**SkipRMSNormalization**</a>
 
+  Applies RMSNormalization to an expanded skip connection similar to SkipLayerNormalization
+  The expanded skip connection is defined as follows:
+  ```
+  xSkip = (scaling_factor * input) + F(input) + Bias
+  ```
+  where,
+  F(input): denotes the output of a particular layer.
+  scaling_factor: a modulating scalar that adjusts the importance of the skip.
+  Bias: a bias term added to the output of the skip connection.
 
+  RMSNorm is then applied to xSkip as follows:
+  ```
+  output = RMSNormalization(xSkip)
 
 #### Version
 
@@ -30367,32 +30430,34 @@ This version of the operator has been available since version 23 of the default 
 #### Attributes
 
 <dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The dimension for rms normalization. If rank(X) is r, axis' allowed range is [-r, r). Negative value means counting dimensions from the back.</dd>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>scaling_factor</tt> : int (default is 1)</dt>
+<dd>Modulating scalar by which the skip input is multiplied.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (3 - 4)
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
+<dd>The output of the layer for which the skip connection is being created. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels.</dd>
 <dt><tt>S</tt> : T</dt>
-<dd>3D input tensor with shape (batch_size, sequence_length, hidden_size)Or 2D input tensor with shape (token_count, hidden_size)</dd>
+<dd>Skip input with same shape as X. This is the input to the layer for which the skip connection is being created.</dd>
 <dt><tt>gamma</tt> : T</dt>
-<dd>1D input tensor with shape (hidden_size)</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>Bias tensor.</dd>
+<dd>1D tensor representing scale input of rms normalization with shape of the spatial dimension along which rms normalization is applied.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>1D bias tensor for the skip connection with shape of the spatial dimension along which rms normalization is applied.</dd>
 </dl>
 
-#### Outputs (1 - 3)
+#### Outputs (1 - 2)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>3D output tensor with shape (batch_size, sequence_length, hidden_size)Or 2D output tensor with shape (token_count, hidden_size)</dd>
-<dt><tt>Mean</tt> (optional) : U</dt>
-<dd>Saved mean used during training to speed up gradient computation</dd>
-<dt><tt>InvStdVar</tt> (optional) : U</dt>
-<dd>Saved inverse standard variance used during training to speed up gradient computation.</dd>
+<dd>Output tensor with same shape as X</dd>
+<dt><tt>InputSkipBiasSum</tt> (optional) : T</dt>
+<dd>Sum of the input and skip inputs (and bias if it exists). Same shape as X</dd>
 </dl>
 
 #### Type Constraints

@@ -20811,7 +20811,7 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
 
 
 ### SkipLayerNormalization
-There are 3 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>2d</summary>
 
@@ -20821,18 +20821,20 @@ skip = np.random.randn(4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
-y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
 
 node = onnx.helper.make_node(
     "SkipLayerNormalization",
     inputs=["x", "skip", "gamma", "beta", "bias"],
-    outputs=["y"],
+    outputs=["y", "input_skip_bias_sum"],
 )
 
 expect(
     node,
     inputs=[x, skip, gamma, beta, bias],
-    outputs=[y],
+    outputs=[y, input_skip_bias_sum],
     name="test_skip_layer_normalization_2d_example",
 )
 ```
@@ -20847,18 +20849,20 @@ skip = np.random.randn(3, 4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
-y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
 
 node = onnx.helper.make_node(
     "SkipLayerNormalization",
     inputs=["x", "skip", "gamma", "beta", "bias"],
-    outputs=["y"],
+    outputs=["y", "input_skip_bias_sum"],
 )
 
 expect(
     node,
     inputs=[x, skip, gamma, beta, bias],
-    outputs=[y],
+    outputs=[y, input_skip_bias_sum],
     name="test_skip_layer_normalization_3d_example",
 )
 ```
@@ -20874,20 +20878,52 @@ gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
 epsilon = 1e-2
-y = _skip_layer_normalization(x, skip, gamma, beta, bias).astype(np.float32)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias, epsilon=epsilon)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
 
 node = onnx.helper.make_node(
     "SkipLayerNormalization",
     inputs=["x", "skip", "gamma", "beta", "bias"],
-    outputs=["y"],
+    outputs=["y", "input_skip_bias_sum"],
     epsilon=epsilon,
 )
 
 expect(
     node,
     inputs=[x, skip, gamma, beta, bias],
-    outputs=[y],
+    outputs=[y, input_skip_bias_sum],
     name="test_skip_layer_normalization_epsilon_example",
+)
+```
+
+</details>
+<details>
+<summary>scaling_factor</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+scaling_factor = 3
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias, scaling_factor=scaling_factor)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+    scaling_factor=scaling_factor,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_layer_normalization_scaling_factor_example",
 )
 ```
 
