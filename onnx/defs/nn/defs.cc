@@ -2844,19 +2844,18 @@ captures both absolute and relative positional information.
 
 Rotary embeddings are defined using the following algorithm:
 
-    def rotate_half(x):
+    def rotate_half(x: np.ndarray):
         """Rotates half the hidden dims of the input."""
-        x1 = x[..., : x.shape[-1] // 2]
-        x2 = x[..., x.shape[-1] // 2 :]
-        return torch.cat((-x2, x1), dim=-1)
+        x1, x2 = np.split(x, 2, axis=-1)
+        return np.concatenate((-x2, x1), axis=-1)
 
-    def rotary_embedding(x, cos, sin, position_ids):
-        cos = cos.squeeze(1).squeeze(0)  # [seq_len, dim]
-        sin = sin.squeeze(1).squeeze(0)  # [seq_len, dim]
-        cos = cos[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
-        sin = sin[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
-        x_embed = (x * cos) + (rotate_half(x) * sin)
-        return x_embed
+    cos = cos_cache[position_ids]
+    sin = sin_cache[position_ids]
+    cos = np.expand_dims(cos, axis=1)
+    sin = np.expand_dims(sin, axis=1)
+    input_embed = (input * cos) + (rotate_half(input) * sin)
+    return input_embed
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2874,15 +2873,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                "T")
         .Input(1,
                "position_ids",
-               "The position indices for the tokens. 1D tensor with shape (1) or 2D tensor with shape (batch_size, sequence_length)",
+               "The position indices for the tokens. 2D tensor with shape (batch_size, sequence_length)",
                "M")
         .Input(2,
                "cos_cache",
-               "The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)",
+               "The cosine values for the rotation. 2D tensor with shape (sequence_length, head_size / 2)",
                "T")
         .Input(3,
                "sin_cache",
-               "The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)",
+               "The sine values for the rotation. 2D tensor with shape (sequence_length, head_size / 2)",
                "T")
         .Output(0,
                 "Y",
@@ -2904,18 +2903,17 @@ ONNX_OPERATOR_SET_SCHEMA(
               };
 
               FunctionBuilder builder(functionProto);
-              builder.Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos_matrix: [b, seq_len, dim]
+
+              builder.Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos_matrix: [b, seq_len, dim / 2]
                 .Add("CosCacheUnsqueezed = Unsqueeze(CosCacheGather)") // shape of cos_matrix: [b, 1, seq_len, dim]
-                .Add("CosCacheGather = Gather(CosCacheSqueezed, position_ids)") // shape of sin_matrix: [b, seq_len, dim]
-                .Add("SinCacheUnsqueezed = Unsqueeze(sin_cache, UnsqueezeDims)"); // shape of sin_matrix: [b, 1, seq_len, dim]
+                .Add("SinCacheGather = Gather(sin_cache, position_ids)") // shape of sin_matrix: [b, seq_len, dim]
+                .Add("SinCacheUnsqueezed = Unsqueeze(SinCacheGather)"); // shape of sin_matrix: [b, 1, seq_len, dim]
 
               builder.Add("Two1D = Constant()", "value", mktensor(2)) // [2] : 1D tensor
                   .Add("Shape = Shape (X)") // shape of input tensor: 1D tensor
                   .Add("RotateEmbedDim = Gather(Shape, Two1D)") // 1D tensor
                   .Add("RotateEmbedDimHalf = Div(RotateEmbedDim, Two1D)")
-                  .Add("ExpandShape = Constant()", "value", mktensor(2))
-                  .Add("SplitTensor = Expand(RotateEmbedDimHalf, ExpandShape)")
-                  .Add("InputFirstHalf, InputSecondHalf = Split <axis = -1> (X, SplitTensor)")
+                  .Add("InputFirstHalf, InputSecondHalf = Split <axis = -1, num_outputs = 2> (X)")
                   .Add("NegInputSecondHalf = Neg(InputSecondHalf)")
                   .Add("ConcatInput = Concat <axis = -1> (NegInputFirstHalf, InputFirstHalf)");
 
