@@ -6,6 +6,8 @@ from __future__ import annotations
 import os
 import tarfile
 
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+
 import onnx.checker
 import onnx.helper
 import onnx.shape_inference
@@ -23,26 +25,25 @@ class Extractor:
     def _build_name2obj_dict(objs):  # type: ignore
         return {obj.name: obj for obj in objs}
 
-    def _collect_new_io_core(self, original_io, io_names_to_extract):  # type: ignore
+    def _collect_new_io_core(
+        self,
+        original_io: RepeatedCompositeFieldContainer[ValueInfoProto],
+        io_names_to_extract: list[str],
+    ) -> list[ValueInfoProto]:
         original_io_map = self._build_name2obj_dict(original_io)
-        original_io_names = set(original_io_map)
-        s_io_names_to_extract = set(io_names_to_extract)
-        io_names_to_keep = s_io_names_to_extract & original_io_names
-        new_io_names_to_add = s_io_names_to_extract - original_io_names
-
-        new_io_tensors = [original_io_map[name] for name in io_names_to_keep]
-        # activation become input or output
-        new_io_tensors.extend(self.vimap[name] for name in new_io_names_to_add)
-
-        # adjust sequence
-        new_io_tensors_map = self._build_name2obj_dict(new_io_tensors)
-        return [new_io_tensors_map[name] for name in io_names_to_extract]
+        new_io_tensors = []
+        for io_name_to_extract in io_names_to_extract:
+            if io_name_to_extract in original_io_map:
+                new_io_tensors.append(original_io_map[io_name_to_extract])
+            else:
+                new_io_tensors.append(self.vimap[io_name_to_extract])
+        return new_io_tensors  # same order as io_names_to_extract
 
     def _collect_new_inputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.input, names)  # type: ignore
+        return self._collect_new_io_core(self.graph.input, names)
 
     def _collect_new_outputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.output, names)  # type: ignore
+        return self._collect_new_io_core(self.graph.output, names)
 
     def _dfs_search_reachable_nodes(
         self,
@@ -227,8 +228,15 @@ def extract_model(
         raise ValueError(f"Invalid input model path: {input_path}")
     if not output_path:
         raise ValueError("Output model path shall not be empty!")
+    if not input_names:
+        raise ValueError("Input tensor names shall not be empty!")
     if not output_names:
         raise ValueError("Output tensor names shall not be empty!")
+
+    if len(input_names) != len(set(input_names)):
+        raise ValueError("Duplicate names found in the input tensor names.")
+    if len(output_names) != len(set(output_names)):
+        raise ValueError("Duplicate names found in the output tensor names.")
 
     if check_model:
         onnx.checker.check_model(input_path)
