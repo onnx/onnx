@@ -1,0 +1,1 @@
+B	InvStdDevJ"d±?d@J@ ð@XˆA@ùrH@í<@
