@@ -81,7 +81,6 @@ compile_commands.json
 # generated files
 onnx/version.py
 compile_commands.json
-tools/protoc-gen-mypy.sh
 
 # test generated files
 .cache
