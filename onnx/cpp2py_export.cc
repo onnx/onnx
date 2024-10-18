@@ -135,9 +135,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("Variadic", OpSchema::Variadic);
 
   py::enum_<OpSchema::DifferentiationCategory>(op_schema, "DifferentiationCategory")
-      .value("Unknown", OpSchema::Unknown)
-      .value("Differentiable", OpSchema::Differentiable)
-      .value("NonDifferentiable", OpSchema::NonDifferentiable);
+      .value("Unknown", OpSchema::DifferentiationCategory::Unknown)
+      .value("Differentiable", OpSchema::DifferentiationCategory::Differentiable)
+      .value("NonDifferentiable", OpSchema::DifferentiationCategory::NonDifferentiable);
 
   py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
       .value("FLOAT", AttributeProto::FLOAT)
