@@ -23,7 +23,9 @@ class Extractor:
     def _build_name2obj_dict(objs):  # type: ignore
         return {obj.name: obj for obj in objs}
 
-    def _collect_new_io_core(self, original_io, io_names_to_extract):  # type: ignore
+    def _collect_new_io_core(
+        self, original_io, io_names_to_extract
+    ) -> list[ValueInfoProto]:
         if len(io_names_to_extract) != len(set(io_names_to_extract)):
             raise ValueError("Duplicate names found in the io_names_to_extract.")
         original_io_map = self._build_name2obj_dict(original_io)
