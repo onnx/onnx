@@ -26,8 +26,6 @@ class Extractor:
     def _collect_new_io_core(
         self, original_io, io_names_to_extract
     ) -> list[ValueInfoProto]:
-        if len(io_names_to_extract) != len(set(io_names_to_extract)):
-            raise ValueError("Duplicate names found in the io_names_to_extract.")
         original_io_map = self._build_name2obj_dict(original_io)
         new_io_tensors = []
         for io_name_to_extract in io_names_to_extract:  # assume no duplicates
@@ -38,10 +36,10 @@ class Extractor:
         return new_io_tensors  # same order as io_names_to_extract
 
     def _collect_new_inputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.input, names)  # type: ignore
+        return self._collect_new_io_core(self.graph.input, names)
 
     def _collect_new_outputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.output, names)  # type: ignore
+        return self._collect_new_io_core(self.graph.output, names)
 
     def _dfs_search_reachable_nodes(
         self,
@@ -226,8 +224,15 @@ def extract_model(
         raise ValueError(f"Invalid input model path: {input_path}")
     if not output_path:
         raise ValueError("Output model path shall not be empty!")
+    if not input_names:
+        raise ValueError("Input tensor names shall not be empty!")
     if not output_names:
         raise ValueError("Output tensor names shall not be empty!")
+
+    if len(input_names) != len(set(input_names)):
+        raise ValueError("Duplicate names found in the input tensor names.")
+    if len(output_names) != len(set(output_names)):
+        raise ValueError("Duplicate names found in the output tensor names.")
 
     if check_model:
         onnx.checker.check_model(input_path)
