@@ -28,7 +28,7 @@ class Extractor:
     ) -> list[ValueInfoProto]:
         original_io_map = self._build_name2obj_dict(original_io)
         new_io_tensors = []
-        for io_name_to_extract in io_names_to_extract:  # assume no duplicates
+        for io_name_to_extract in io_names_to_extract:
             if io_name_to_extract in original_io_map:
                 new_io_tensors.append(original_io_map[io_name_to_extract])
             else:
