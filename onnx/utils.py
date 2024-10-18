@@ -6,6 +6,8 @@ from __future__ import annotations
 import os
 import tarfile
 
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+
 import onnx.checker
 import onnx.helper
 import onnx.shape_inference
@@ -24,7 +26,9 @@ class Extractor:
         return {obj.name: obj for obj in objs}
 
     def _collect_new_io_core(
-        self, original_io, io_names_to_extract
+        self,
+        original_io: RepeatedCompositeFieldContainer[ValueInfoProto],
+        io_names_to_extract: list[str],
     ) -> list[ValueInfoProto]:
         original_io_map = self._build_name2obj_dict(original_io)
         new_io_tensors = []
