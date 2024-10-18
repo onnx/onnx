@@ -10,17 +10,62 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def compute_rotary_embedding(input: np.ndarray, position_ids: np.ndarray, sin_cache: np.ndarray, cos_cache: np.ndarray):
-    def rotate_half(x: np.ndarray):
-        x1, x2 = np.split(x, 2, axis=-1)
-        return np.concatenate((-x2, x1), axis=-1)
+def compute_rotary_embedding(
+    input: np.ndarray,
+    position_ids: np.ndarray,
+    sin_cache: np.ndarray,
+    cos_cache: np.ndarray,
+    interleaved: int = 0,
+    rotary_embedding_dim: int = 0,
+    num_heads: int = 0,
+) -> np.ndarray:
 
-    cos = cos_cache[position_ids]
-    sin = sin_cache[position_ids]
-    cos = np.expand_dims(cos, axis=1)
-    sin = np.expand_dims(sin, axis=1)
-    input_embed = (input * cos) + (rotate_half(input) * sin)
-    return input_embed
+    # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
+    batch_size = input.shape[0]
+    sequence_length = input.shape[1]
+    if len(input.shape) == 3:
+        hidden_size = input.shape[2]
+        assert num_heads != 0
+        head_size = int(hidden_size / num_heads)
+        new_shape = [batch_size, sequence_length, num_heads, head_size]
+        input = np.reshape(input, new_shape)
+    assert len(input.shape) == 4
+    head_size = input.shape[3]
+
+    # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
+    if rotary_embedding_dim == 0:
+        # If rotary_embedding_dim not provided, perform full rotation by using head_size * 2
+        rotary_embedding_dim = cos_cache.shape[1] * 2
+    x_rotate = input[:, :, :, :rotary_embedding_dim]
+    x_not_rotate = input[:, :, :, rotary_embedding_dim:]
+    rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
+
+    # Retrieve sin and cos caches using position ids
+    cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+    sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+    cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    cos = np.expand_dims(cos, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+    sin = np.expand_dims(sin, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+
+    # Either divide the input in halves or interleave (based on interleaved attribute)
+    if interleaved:
+        x1 = x_rotate[:, :, :, 0::2]
+        x2 = x_rotate[:, :, :, 1::2]
+    else:
+        x1, x2 = np.split(x_rotate, 2, axis=-1)
+
+    # Calculate real and imaginary values
+    real = cos * x1 - sin * x2
+    imag = sin * x1 + cos * x2
+
+    # Inserted rotated embeddings back to the original input
+    if interleaved:
+        x_rotate[:, :, :, 0::2] = real
+        x_rotate[:, :, :, 1::2] = imag
+    else:
+        x_rotate = np.concatenate((real, imag), axis=-1)
+    return np.concatenate((x_rotate, x_not_rotate), axis=-1)
 
 
 class RotaryEmbedding(Base):
@@ -32,10 +77,10 @@ class RotaryEmbedding(Base):
             outputs=["output"]
         )
 
-        input_data = np.random.rand(2, 3, 4).astype(np.float32)
-        position_ids_data = np.array([[0, 1, 2], [0, 1, 2]], dtype=np.int64)
-        sin_cache_data = np.random.rand(3, 2).astype(np.float32)
-        cos_cache_data = np.random.rand(3, 2).astype(np.float32)
+        input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+        position_ids_data = np.random.rand(2, 3).astype(np.int64)
+        sin_cache_data = np.random.rand(50, 4).astype(np.float32)
+        cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
         expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data)
 
@@ -47,25 +92,71 @@ class RotaryEmbedding(Base):
         )
 
     @staticmethod
-    def export_rotary_embedding_with_different_shapes() -> None:
+    def export_rotary_embedding_3d_input() -> None:
+        num_heads = 4
         node = onnx.helper.make_node(
             "RotaryEmbedding",
             inputs=["input", "position_ids", "sin_cache", "cos_cache"],
-            outputs=["output"]
+            outputs=["output"],
+            num_heads=num_heads
         )
 
-        B, SQ_LEN, dim1 = 3, 5, 6
-        np.random.seed(0)
-        input_data = np.random.rand(B, SQ_LEN, dim1).astype(np.float32)
-        position_ids_data = np.random.randint(0, high=B, size=(B, SQ_LEN)).astype(np.int64)
-        sin_cache_data = np.random.rand(SQ_LEN, dim1).astype(np.float32)
-        cos_cache_data = np.random.rand(SQ_LEN, dim1).astype(np.float32)
+        input_data = np.random.rand(2, 3, 32).astype(np.float32)
+        position_ids_data = np.random.rand(2, 3).astype(np.int64)
+        sin_cache_data = np.random.rand(50, 4).astype(np.float32)
+        cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-        expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data)
+        expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data, num_heads=num_heads)
 
         expect(
             node,
             inputs=[input_data, position_ids_data, sin_cache_data, cos_cache_data],
             outputs=[expected_output],
-            name="test_rotary_embedding_with_different_shapes"
+            name="test_rotary_embedding_3d_input"
+        )
+
+    @staticmethod
+    def export_rotary_embedding_interleaved() -> None:
+        node = onnx.helper.make_node(
+            "RotaryEmbedding",
+            inputs=["input", "position_ids", "sin_cache", "cos_cache"],
+            outputs=["output"],
+            interleaved=1
+        )
+
+        input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+        position_ids_data = np.random.rand(2, 3).astype(np.int64)
+        sin_cache_data = np.random.rand(50, 4).astype(np.float32)
+        cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+
+        expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data, interleaved=1)
+
+        expect(
+            node,
+            inputs=[input_data, position_ids_data, sin_cache_data, cos_cache_data],
+            outputs=[expected_output],
+            name="test_rotary_embedding_interleaved"
+        )
+
+    @staticmethod
+    def export_rotary_embedding_with_rotary_dim() -> None:
+        node = onnx.helper.make_node(
+            "RotaryEmbedding",
+            inputs=["input", "position_ids", "sin_cache", "cos_cache"],
+            outputs=["output"],
+            rotary_embedding_dim=4
+        )
+
+        input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+        position_ids_data = np.random.rand(2, 3).astype(np.int64)
+        sin_cache_data = np.random.rand(50, 4).astype(np.float32)
+        cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+
+        expected_output = compute_rotary_embedding(input_data, position_ids_data, sin_cache_data, cos_cache_data, rotary_embedding_dim=4)
+
+        expect(
+            node,
+            inputs=[input_data, position_ids_data, sin_cache_data, cos_cache_data],
+            outputs=[expected_output],
+            name="test_rotary_embedding_with_rotary_dim"
         )

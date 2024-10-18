@@ -29067,26 +29067,51 @@ This version of the operator has been available since version 23 of the default 
 
   The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
   For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
-  embedding vector into two halves and applying the rotation matrix to each half of the embedding vector. The rotation matrix is
-  parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated to form the final positional
-  embedding for each token. The rotated positional embeddings are used in the self-attention mechanism. The rotation ensures that the model
-  captures both absolute and relative positional information.
+  embedding vector either into two halves or interleaving every alternate token and applying the rotation matrix to each half of the embedding vector.
+  The rotation matrix is parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated
+  to form the final positional embedding for each token. The rotated positional embeddings are used in the self-attention mechanism.
+  The rotation ensures that the model captures both absolute and relative positional information.
 
   Rotary embeddings are defined using the following algorithm:
 
-      def rotate_half(x):
-          """Rotates half the hidden dims of the input."""
-          x1 = x[..., : x.shape[-1] // 2]
-          x2 = x[..., x.shape[-1] // 2 :]
-          return torch.cat((-x2, x1), dim=-1)
+      ```
+      def compute_rotary_embedding(input, position_ids, sin_cache, cos_cache, interleaved=0, rotary_embedding_dim=0 ,num_heads=0)
 
-      def rotary_embedding(x, cos, sin, position_ids):
-          cos = cos.squeeze(1).squeeze(0)  # [seq_len, dim]
-          sin = sin.squeeze(1).squeeze(0)  # [seq_len, dim]
-          cos = cos[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
-          sin = sin[position_ids].unsqueeze(1)  # [bs, 1, seq_len, dim]
-          x_embed = (x * cos) + (rotate_half(x) * sin)
-          return x_embed
+        # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
+        if rotary_embedding_dim == 0:
+            # If rotary_embedding_dim not provided, perform full rotation by using head_size * 2
+            rotary_embedding_dim = cos_cache.shape[1] * 2
+        x_rotate = input[:, :, :, :rotary_embedding_dim]
+        x_not_rotate = input[:, :, :, rotary_embedding_dim:]
+        rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
+
+        # Retrieve sin and cos caches using position ids
+        cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+        sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+        cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+        sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+        cos = np.expand_dims(cos, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+        sin = np.expand_dims(sin, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+
+        # Either divide the input in halves or interleave (based on interleaved attribute)
+        if interleaved:
+            x1 = x_rotate[:, :, :, 0::2]
+            x2 = x_rotate[:, :, :, 1::2]
+        else:
+            x1, x2 = np.split(x_rotate, 2, axis=-1)
+
+        # Calculate real and imaginary values
+        real = cos * x1 - sin * x2
+        imag = sin * x1 + cos * x2
+
+        # Inserted rotated embeddings back to the original input
+        if interleaved:
+            x_rotate[:, :, :, 0::2] = real
+            x_rotate[:, :, :, 1::2] = imag
+        else:
+            x_rotate = np.concatenate((real, imag), axis=-1)
+        return np.concatenate((x_rotate, x_not_rotate), axis=-1)
+      ```
 
 #### Version
 
@@ -29097,26 +29122,30 @@ This version of the operator has been available since version 23 of the default 
 <dl>
 <dt><tt>interleaved</tt> : int</dt>
 <dd>Rotate using interleaved pattern. Default value is 0 (False).</dd>
+<dt><tt>num_heads</tt> : int</dt>
+<dd>Number of attention heads. Default value is 0. Must use with `rotary_embedding_dim`. </dd>
+<dt><tt>rotary_embedding_dim</tt> : int</dt>
+<dd>Rotary embedding dimension used to apply partial rotary embeddings. Default value is 0. </dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input tensor representing the token embeddings. 3D tensor with shape (batch_size, sequence_length, head_size), head_size is supposed to be even</dd>
+<dd>The input tensor representing the token embeddings. 4D tensor with shape (batch_size, sequence_length, num_heads, head_size) or 3D tensor with shape (batch_size, sequence_length, hidden_size). For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and `hidden_size` has to be even where `hidden_size = num_heads * head_size`</dd>
 <dt><tt>position_ids</tt> : M</dt>
-<dd>The position indices for the tokens. 1D tensor with shape (1) or 2D tensor with shape (batch_size, sequence_length)</dd>
+<dd>The position indices for the tokens. 2D tensor with shape (batch_size, sequence_length)</dd>
 <dt><tt>cos_cache</tt> : T</dt>
-<dd>The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)</dd>
+<dd>The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation. `max_sequence_length` is a parameter to the model.</dd>
 <dt><tt>sin_cache</tt> : T</dt>
-<dd>The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2)</dd>
+<dd>The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation. `max_sequence_length` is a parameter to the model.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>tensor with same shape as input.</dd>
+<dd>Tensor with same shape as input.</dd>
 </dl>
 
 #### Type Constraints

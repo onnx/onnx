@@ -2837,25 +2837,51 @@ between tokens. This is achieved through a rotational mechanism where the extent
 
 The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
 For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
-embedding vector into two halves and applying the rotation matrix to each half of the embedding vector. The rotation matrix is
-parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated to form the final positional
-embedding for each token. The rotated positional embeddings are used in the self-attention mechanism. The rotation ensures that the model
-captures both absolute and relative positional information.
+embedding vector either into two halves or interleaving every alternate token and applying the rotation matrix to each half of the embedding vector.
+The rotation matrix is parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated
+to form the final positional embedding for each token. The rotated positional embeddings are used in the self-attention mechanism.
+The rotation ensures that the model captures both absolute and relative positional information.
 
 Rotary embeddings are defined using the following algorithm:
 
-    def rotate_half(x: np.ndarray):
-        """Rotates half the hidden dims of the input."""
-        x1, x2 = np.split(x, 2, axis=-1)
-        return np.concatenate((-x2, x1), axis=-1)
+    ```
+    def compute_rotary_embedding(input, position_ids, sin_cache, cos_cache, interleaved=0, rotary_embedding_dim=0 ,num_heads=0)
 
-    cos = cos_cache[position_ids]
-    sin = sin_cache[position_ids]
-    cos = np.expand_dims(cos, axis=1)
-    sin = np.expand_dims(sin, axis=1)
-    input_embed = (input * cos) + (rotate_half(input) * sin)
-    return input_embed
+      # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
+      if rotary_embedding_dim == 0:
+          # If rotary_embedding_dim not provided, perform full rotation by using head_size * 2
+          rotary_embedding_dim = cos_cache.shape[1] * 2
+      x_rotate = input[:, :, :, :rotary_embedding_dim]
+      x_not_rotate = input[:, :, :, rotary_embedding_dim:]
+      rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
 
+      # Retrieve sin and cos caches using position ids
+      cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+      sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+      cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+      sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+      cos = np.expand_dims(cos, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+      sin = np.expand_dims(sin, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+
+      # Either divide the input in halves or interleave (based on interleaved attribute)
+      if interleaved:
+          x1 = x_rotate[:, :, :, 0::2]
+          x2 = x_rotate[:, :, :, 1::2]
+      else:
+          x1, x2 = np.split(x_rotate, 2, axis=-1)
+
+      # Calculate real and imaginary values
+      real = cos * x1 - sin * x2
+      imag = sin * x1 + cos * x2
+
+      # Inserted rotated embeddings back to the original input
+      if interleaved:
+          x_rotate[:, :, :, 0::2] = real
+          x_rotate[:, :, :, 1::2] = imag
+      else:
+          x_rotate = np.concatenate((real, imag), axis=-1)
+      return np.concatenate((x_rotate, x_not_rotate), axis=-1)
+    ```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2867,9 +2893,20 @@ ONNX_OPERATOR_SET_SCHEMA(
               "Rotate using interleaved pattern. Default value is 0 (False).",
               AttributeProto::INT,
               OPTIONAL_VALUE)
+        .Attr("rotary_embedding_dim",
+              "Rotary embedding dimension used to apply partial rotary embeddings. Default value is 0. ",
+              AttributeProto::INT,
+              OPTIONAL_VALUE)
+        .Attr("num_heads",
+              "Number of attention heads. Default value is 0. Must use with `rotary_embedding_dim`. ",
+              AttributeProto::INT,
+              OPTIONAL_VALUE)
         .Input(0,
                "X",
-               "The input tensor representing the token embeddings. 3D tensor with shape (batch_size, sequence_length, head_size), head_size is supposed to be even",
+               "The input tensor representing the token embeddings. "
+               "4D tensor with shape (batch_size, sequence_length, num_heads, head_size) or 3D tensor with shape (batch_size, sequence_length, hidden_size). "
+               "For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and "
+               "`hidden_size` has to be even where `hidden_size = num_heads * head_size`",
                "T")
         .Input(1,
                "position_ids",
@@ -2877,15 +2914,19 @@ ONNX_OPERATOR_SET_SCHEMA(
                "M")
         .Input(2,
                "cos_cache",
-               "The cosine values for the rotation. 2D tensor with shape (sequence_length, head_size / 2)",
+               "The cosine values for the rotation. "
+               "2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation. "
+               "`max_sequence_length` is a parameter to the model.",
                "T")
         .Input(3,
                "sin_cache",
-               "The sine values for the rotation. 2D tensor with shape (sequence_length, head_size / 2)",
+               "The sine values for the rotation. "
+               "2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation. "
+               "`max_sequence_length` is a parameter to the model.",
                "T")
         .Output(0,
                 "Y",
-                "tensor with same shape as input.",
+                "Tensor with same shape as input.",
                 "T")
         .TypeConstraint("T", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"}, "Constrain input and output types to float tensors.")
         .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors")
@@ -2895,32 +2936,93 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+              // RotaryEmbedding <scale, interleaved, rotary_embedding_dim, num_heads> (X, position_ids, cos_cache, sin_cache) => Y
 
-              auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
-                auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
-                tp.add_dims(1);
-                return tp;
-              };
+              int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
+              auto* interleaved_attr = ctx.getAttribute("interleaved");
+              int64_t interleaved = (interleaved_attr != nullptr) ? interleaved_attr->i() : 0;
+              auto* rotary_embedding_dim_attr = ctx.getAttribute("rotary_embedding_dim");
+              int64_t rotary_embedding_dim = (rotary_embedding_dim_attr != nullptr) ? rotary_embedding_dim_attr->i() : 0;
+              auto* num_heads_attr = ctx.getAttribute("num_heads");
+              int64_t num_heads = (num_heads_attr != nullptr) ? num_heads_attr->i() : 0;
 
               FunctionBuilder builder(functionProto);
+              // Set input tensor to the correct shape if input shape is 3D
+              // NewShape = [batch_size, sequence_length, num_heads, head_size]
+              builder.Add("BatchSize = Shape <start = 0, end = 1> (X)") // batch size
+                .Const1D("NumHeads", num_heads) // num_heads
+                .Add("SeqLen = Shape <start = 1, end = 2> (X)") // sequence_length
+                .Const1D("NegOne", (int64_t)(-1)) // head_size, inferred from other dimensions
+                .Add("NewShape = Concat <axis = 0> (BatchSize, SeqLen, NumHeads, NegOne)")
+                .Add("XReshaped = Reshape (X, NewShape)");
 
-              builder.Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos_matrix: [b, seq_len, dim / 2]
-                .Add("CosCacheUnsqueezed = Unsqueeze(CosCacheGather)") // shape of cos_matrix: [b, 1, seq_len, dim]
-                .Add("SinCacheGather = Gather(sin_cache, position_ids)") // shape of sin_matrix: [b, seq_len, dim]
-                .Add("SinCacheUnsqueezed = Unsqueeze(SinCacheGather)"); // shape of sin_matrix: [b, 1, seq_len, dim]
+              // Rotary embedding dimension is the value along which the input is to be split
+              // There are two cases for the rotary embedding dimension:
+              // 1. Complete rotation: rotary embedding dimension defaults to head_size, rotary_embedding_dim = cos.shape[3] * 2 or head_size
+              // 2. Partial rotation: rotary embedding dimension is provided, rotary_embedding_dim = rotary_embedding_dim
+              builder.Add("HeadSizeHalf = Shape <start = 1, end = 2> (cos_cache)") // cos_cache.shape[1] or head_size // 2
+                .Const1D("Two1D", (int64_t)2)
+                .Add("HeadSize = Mul(HeadSizeHalf, Two1D)") // cos.shape[1] * 2 or head_size
+                .Const1D("RotaryEmbedDimParam", rotary_embedding_dim)
+                .Const1D("Zero1D", (int64_t)0)
+                .Add("RotaryDimCond = Greater(RotaryEmbedDimParam, Zero1D)")
+                .Add("RotaryEmbedDim = Where(RotaryDimCond, RotaryEmbedDimParam, HeadSize)")
+                .Add("NoRotateLength = Sub(HeadSize, RotaryEmbedDim)")
+                .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
+              // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
+              // shape of input not to rotate = input[:,:,:,rotary_embedding_dim:]
+              builder.Add("XToRotate, XNoRotate = Split <axis = -1, num_outputs = 2> (XReshaped, RotateSplitLengths)");
 
-              builder.Add("Two1D = Constant()", "value", mktensor(2)) // [2] : 1D tensor
-                  .Add("Shape = Shape (X)") // shape of input tensor: 1D tensor
-                  .Add("RotateEmbedDim = Gather(Shape, Two1D)") // 1D tensor
-                  .Add("RotateEmbedDimHalf = Div(RotateEmbedDim, Two1D)")
-                  .Add("InputFirstHalf, InputSecondHalf = Split <axis = -1, num_outputs = 2> (X)")
-                  .Add("NegInputSecondHalf = Neg(InputSecondHalf)")
-                  .Add("ConcatInput = Concat <axis = -1> (NegInputFirstHalf, InputFirstHalf)");
+              // Gather the cos and sine matrices from the respective caches using position ids.
+              // Unsqueeze applied to make cos and sin matrices have dimensions that are
+              // valid for multiplication with input when is split. For cases where rotary_embedding_dim is provided,
+              // slice the matrix values until that index only
+              builder.Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos matrix: [batch_size, sequence_length, head_size / 2]
+                .Add("SinCacheGather = Gather(sin_cache, position_ids)") // shape of cos matrix: [batch_size, sequence_length, head_size / 2]
+                .Add("RotaryEmbedDimHalf = Div(RotaryEmbedDim, Two1D)")
+                .Add("RotaryEmbedDimHalfInt = Cast (RotaryEmbedDimHalf)", "to", int_type)
+                .Add("CosCacheSliced = Slice(CosCacheGather, Zero1D, RotaryEmbedDimHalfInt, Two1D)") // shape of cos matrix: [batch_size, sequence_length, rotary_embedding_dim / 2]
+                .Add("SinCacheSliced = Slice(SinCacheGather, Zero1D, RotaryEmbedDimHalfInt, Two1D)") // shape of sin matrix: [batch_size, sequence_length, rotary_embedding_dim / 2]
+                .Add("CosCacheUnsqueezed = Unsqueeze <axes = [2]> (CosCacheSliced)") // shape of cos matrix: [batch_size, sequence_length, 1, rotary_embedding_dim / 2]
+                .Add("SinCacheUnsqueezed = Unsqueeze <axes = [2]> (SinCacheSliced)"); // shape of sin matrix: [batch_size, sequence_length, 1, rotary_embedding_dim / 2]
 
-              builder.Add("CosMultiplied = Mul(X, CosCacheUnsqueezed)")
-                  .Add("SinMultiplied = Mul(ConcatInput, SinCacheUnsqueezed)")
-                  .Add("Y = Add(CosMultiplied, SinMultiplied)");
+              // Create slices of inputs to multiply with sin and cos matrices based on interleaved parameter
+              // For non-interleaved (basic) rotation, slices are created as follows,
+              builder.Add("X1Basic, X2Basic = Split <axis = -1, num_outputs = 2> (XToRotate)"); // shape of X1 = input[:,:,:,:rotary_embedding_dim/2], X2 = input[:,:,:,rotary_embedding_dim/2:rotary_embedding_dim]
+              // For interleaved rotation, slices are created as follows,
+              builder.Const1D("One1D", (int64_t)1)
+                .Const1D("AxesRotaryDim", (int64_t)3)
+                .Add("RotaryEmbedDimInclusive = Add(RotaryEmbedDim, One1D)")
+                .Add("X1Interleaved = Slice(XToRotate, Zero1D, RotaryEmbedDim, AxesRotaryDim, Two1D)") // shape of X1 = input[:,:,:,0:rotary_embedding_dim:2]
+                .Add("X2Interleaved = Slice(XToRotate, One1D, RotaryEmbedDimInclusive, AxesRotaryDim, Two1D)"); // shape of X2 = input[:,:,:,1:rotary_embedding_dim:2]
 
+              // Choose the correct slices based on interleaved parameter
+              // real = cos_x * x1 - sin_x * x2
+              // imag = sin_x * x1 + cos_x * x2
+              builder.Const1D("InterleavedParam", interleaved)
+                .Add("InterleaveCond = Equal(InterleavedParam, Zero1D)")
+                .Add("X1 = Where(InterleaveCond, X1Basic, X1Interleaved)")
+                .Add("X2 = Where(InterleaveCond, X2Basic, X2Interleaved)")
+                .Add("CosX1 = Mul(CosCacheUnsqueezed, X1)")
+                .Add("SinX2 = Mul(SinCacheUnsqueezed, X2)")
+                .Add("Real = Sub(CosX1, SinX2)")
+                .Add("SinX1 = Mul(SinCacheUnsqueezed, X1)")
+                .Add("CosX2 = Mul(CosCacheUnsqueezed, X2)")
+                .Add("Imaginary = Add(SinX1, CosX2)");
+
+              // Insert the real and imaginary values into the original input to be rotated based on interleaved parameter
+              builder.Add("XRotatedBasic = Concat <axis = -1> (Real, Imaginary)")
+                .Add("CosShape = Shape(CosCacheUnsqueezed)")
+                .Add("RealInterleaveIndices1D = Range(Zero1D, RotaryEmbedDim, Two1D)") // shape of indices = input[0:rotary_embedding_dim:2]
+                .Add("RealInterleaveIndices = Expand(RealInterleaveIndices1D, CosShape)") // shape of indices = input[:,:,:,0:rotary_embedding_dim:2]
+                .Add("ImaginaryInterleaveIndices1D = Range(One1D, RotaryEmbedDimInclusive, Two1D)")// shape of indices = input[1:rotary_embedding_dim:2]
+                .Add("ImaginaryInterleaveIndices = Expand(ImaginaryInterleaveIndices1D, CosShape)") // shape of indices = input[:,:,:,1:rotary_embedding_dim:2]
+                .Add("XRotatedInterleavedReal = Scatter(XToRotate, RealInterleaveIndices, Real)")
+                .Add("XRotatedInterleaved = Scatter(XRotatedInterleavedReal, ImaginaryInterleaveIndices, Imaginary)")
+                .Add("XRotated = Where(InterleaveCond, XRotatedBasic, XRotatedInterleaved)");
+
+              // Combine rotated parts with non-rotated parts
+              builder.Add("Y = Concat <axis = -1> (XRotated, XNoRotate)");
               schema.BuildFunction(functionProto);
               return true;
           }));
