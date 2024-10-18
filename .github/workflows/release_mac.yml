@@ -6,7 +6,7 @@ name: MacRelease
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
-    inputs:      
+    inputs:
       os:
         required: true
         type: string
@@ -24,7 +24,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
         target-architecture: ['x86_64', 'arm64']
 
     steps:
@@ -72,7 +72,7 @@ jobs:
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-12' || 'macos-14' }}
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
         target-architecture: ['x86_64', 'arm64']
 
     steps:
@@ -119,7 +119,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: always() && (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.8' && matrix.python-version != '3.9'))
+      if: always() && (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.9'))
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt

@@ -6,7 +6,7 @@ name: LinuxRelease_aarch64
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
-    inputs:      
+    inputs:
       os:
         required: true
         type: string
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312]
+        python-version: [cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
@@ -81,7 +81,7 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
-            
+
     - name: Upload wheel to PyPI weekly
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
