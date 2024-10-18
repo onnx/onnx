@@ -904,5 +904,17 @@ Status OnnxParser::Parse(ModelProto& model) {
   }
   return Status::OK();
 }
+const std::unordered_map<std::string, KeyWordMap::KeyWord>& KeyWordMap::Instance() {
+  static KeyWordMap instance;
+  return instance.map_;
+}
 
+const std::string& KeyWordMap::ToString(KeyWord kw) {
+  static std::string undefined("undefined");
+  for (const auto& pair : Instance()) {
+    if (pair.second == kw)
+      return pair.first;
+  }
+  return undefined;
+}
 } // namespace ONNX_NAMESPACE
