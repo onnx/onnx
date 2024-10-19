@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import glob
 import os
-import os.path
 import re
 import subprocess
 from textwrap import dedent
