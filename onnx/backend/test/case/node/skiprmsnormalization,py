@@ -15,7 +15,7 @@ from onnx.backend.test.case.node.rmsnormalization import _rms_normalization
 def _skip_rms_normalization(x, skip, gamma, B, axis=1, epsilon=1e-5, scaling_factor=1):
     input_skip_sum = x + (skip * scaling_factor)
     input_skip_bias_sum = input_skip_sum + B
-    output, _ = _rms_normalization(input_skip_bias_sum, gamma, axis=axis, epsilon=epsilon)
+    output = _rms_normalization(input_skip_bias_sum, gamma, axis=axis, epsilon=epsilon)
     return output, input_skip_bias_sum
 
 
