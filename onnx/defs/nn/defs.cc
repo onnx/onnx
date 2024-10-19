@@ -2831,43 +2831,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             }));
 
 static const char* RMSNormalization_ver23_doc = R"DOC(
-      This is RMS normalization defined in ONNX as function.
-      The overall computation can be split into two stages.
-      The first stage is standardization, which makes the
-      normalized elements have zero mean and unit variances.
-      The computation required by standardization can be
+      This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
+      The overall computation can be split into two stages. The first stage is standardization, which makes the
+      normalized elements have zero mean and unit variances. The root mean squared norm is taken over the last D dimensions,
+      where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+      the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
       described by the following equations.
       ```
-      Mean = ReduceMean<axes=normalized_axes>(X)
-      D = Sub(X, Mean)
-      DD = Mul(D, D)
-      Var = ReduceMean<axes=normalized_axes>(DD)
-      VarEps = Add(Var, epsilon)
-      StdDev = Sqrt(VarEps)
-      InvStdDev = Reciprocal(StdDev)
-      Normalized = Mul(D, InvStdDev)
+      XSquared = Mul(X, X)
+      XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+      RMS = Sqrt(XSquaredMean)
+      RMSEps = Add(RMS, epsilon)
+      SqrtRMS = Sqrt(RMSEps)
+      Normalized = Div(X, SqrtRMS)
       ```
-      where `normalized_axes` is `[axis, ..., rank of X - 1]`.
-      The variables `Var` and `StdDev` stand for variance and
-      standard deviation, respectively. The second output is
-      `Mean` and the last one is `InvStdDev`.
-      Depending on `stash_type` attribute, the actual computation
-      must happen in different floating-point precision.
-      For example, if `stash_type` is 1, this operator casts
-      all input variables to 32-bit float, perform the computation, and
-      finally cast `Normalized` back to the original type of `X`.
-      The second stage then scales and shifts the outcome of the
-      first stage using
+      where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+      The second stage then scales and shifts the outcome of the first stage using:
       ```
       Y= Mul(Normalized, Scale)
       ```
-      The second stage doesn't depends on `stash_type`.
-      All equations are in [this syntax](https://github.com/onnx/onnx/blob/main/docs/Syntax.md).
-      The same variable (i.e., input, output, and attribute) uses
-      the same name in the equations above and this operator's definition.
       Let `d[i]` indicate the i-th dimension of `X`.
       If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
-      the shape of `Mean` and `InvStdDev` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+      the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
       `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
       (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
       for more details please check [the doc](Broadcasting.md).
@@ -2878,21 +2863,35 @@ ONNX_OPERATOR_SET_SCHEMA(
     23,
     OpSchema()
         .SetDoc(RMSNormalization_ver23_doc)
-        .Attr("axis",
-              "The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).",
-              AttributeProto::INT, static_cast<int64_t>(-1))
-        .Attr("epsilon",
-              "The epsilon value to use to avoid division by zero.",
-              AttributeProto::FLOAT, 1e-5f)
-        .Attr("stash_type",
-              "type used for stash mean/inv_std_var",
-              AttributeProto::INT, static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
+        .Attr(
+            "axis",
+            "The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).",
+            AttributeProto::INT, static_cast<int64_t>(-1))
+        .Attr(
+            "epsilon",
+            "The epsilon value to use to avoid division by zero.",
+            AttributeProto::FLOAT, 1e-5f)
+        .Attr(
+            "stash_type",
+            "Type of Mean and InvStdDev. This also specifies stage one's computation precision.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
         .AllowUncheckedAttributes()
-        .Input(0, "X", "Input data tensor from the previous layer.", "T")
-        .Input(1, "scale", "Scale tensor.", "V")
-        .Output(0, "Y", "Output data tensor.", "V")
-        .Output(1, "Mean", "Saved mean used during training to speed up gradient computation.", "U", OpSchema::Optional)
-        .Output(1, "InvStdVar", "Saved inverse standard variance used during training to speed up gradient computation.", "U", OpSchema::Optional)
+        .Input(0,
+               "X",
+               "The output of the layer for which the skip connection is being created. "
+               "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
+               "D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels. "
+               "The root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.",
+               "T")
+        .Input(1,
+               "scale",
+               "Scale tensor.",
+               "V")
+        .Output(0,
+                "Y",
+                "Output data tensor. Same shape as X",
+                "V")
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
@@ -2906,12 +2905,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain output Y and scale type to float tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 1, 0);
-          auto type = ctx.getAttribute("stash_type")->i();
-          if (ctx.getNumOutputs() > 1) {
-            auto output_type = ctx.getOutputType(1);
-            output_type->mutable_tensor_type()->set_elem_type(static_cast<int32_t>(type));
-          }
+          propagateShapeAndTypeFromFirstInput(ctx);
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
@@ -2938,23 +2932,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ctx.getDisplayName(),
                 ".");
           }
-
-           if (ctx.getNumOutputs() > 1) {
-            auto mean_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
-            mean_shape->CopyFrom(input_shape);
-            for (int d = static_cast<int>(axis); d < input_ndim; ++d)
-              mean_shape->mutable_dim(d)->set_dim_value(1);
-          }
-
-          if (ctx.getNumOutputs() > 2) {
-            auto saved_inv_std_var_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
-            saved_inv_std_var_shape->CopyFrom(input_shape);
-            saved_inv_std_var_shape->mutable_dim(static_cast<int>(axis))->set_dim_value(1);
-          }
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              // RMSNormalization <axis, epsilon, stash_type> (X, Scale) => (Y, InvStdDev?)
+              // RMSNormalization <axis, epsilon, stash_type> (X, Scale) => (Y)
               auto* tp = ctx.getInputType(0);
               if ((tp == nullptr) || (!tp->has_tensor_type()))
                 return false;
@@ -3003,26 +2984,19 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("X2D = Flatten (X)", "axis", axis)
                   .Add("XU = Cast (X2D)", "to", U);
               builder.Add("Axes_1 = Constant()", "value", mktensor(1))
-                    .Add("Mean2D = ReduceMean (XU, Axes_1)")
-                    .Add("Exponent = Constant <value = float {2.0}>()")
-                    .Add("Square = Pow (XU, Exponent)")
-                    .Add("MeanOfSquare = ReduceMean (Square, Axes_1)");
-              builder.Add("RMS = Pow (Mean2D, Exponent)")
-                  .Add("RMSPlusEpsilon = Add (RMS, Epsilon)")
-                  .Add("StdDev = Sqrt (VarPlusEpsilon)")
-                  .Add("Normalized = Div (XU, StdDev)")
-                  .Add("NormalizedT = Cast (Normalized)", "to", T)
-                  .Add("Scale2D = Flatten <axis = 0> (Scale)")
-                  .Add("Scaled = Mul (NormalizedT, Scale2D)");
-              builder.Add("Y = Reshape (Scaled, XShape)");
-              builder.Add("InvStdDev2D = Reciprocal (StdDev)");
-              if (ctx.hasOutput(1))
-                builder.Add("Mean = Reshape (Mean2D, ReducedShape)");
-              if (ctx.hasOutput(2))
-                builder.Add("InvStdDev = Reshape (InvStdDev2D, ReducedShape)");
+                    .Add("XSquared = Mul (XU, XU)")
+                    .Add("XSquaredMean = ReduceMean (XSquared, Axes_1)")
+                    .Add("RMS = Sqrt (XSquaredMean)")
+                    .Add("RMSPlusEpsilon = Add (RMS, Epsilon)")
+                    .Add("SqrtRMS = Sqrt (RMSPlusEpsilon)")
+                    .Add("Normalized = Div (XU, SqrtRMS)")
+                    .Add("NormalizedT = Cast (Normalized)", "to", T)
+                    .Add("Scale2D = Flatten <axis = 0> (Scale)")
+                    .Add("Scaled = Mul (NormalizedT, Scale2D)");
 
-            schema.BuildFunction(functionProto);
-            return true;
+              builder.Add("Y = Reshape (Scaled, XShape)");
+              schema.BuildFunction(functionProto);
+              return true;
           }));
 
 static const char* SkipLayerNormalization_ver23_doc = R"DOC(

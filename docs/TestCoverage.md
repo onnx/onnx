@@ -14542,12 +14542,12 @@ X = np.random.randn(3, 4).astype(np.float32)
 def case(axis: int) -> None:
     normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
-    Y, inv_std_dev = _rms_normalization(X, W, axis=axis)
+    Y = _rms_normalization(X, W, axis=axis)
 
     node = onnx.helper.make_node(
         "RMSNormalization",
         inputs=["X", "W"],
-        outputs=["Y", "InvStdDev"],
+        outputs=["Y"],
         axis=axis,
     )
 
@@ -14556,7 +14556,7 @@ def case(axis: int) -> None:
     else:
         name = f"test_rms_normalization_2d_axis{axis}"
 
-    expect(node, inputs=[X, W], outputs=[Y, inv_std_dev], name=name)
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
 
 for i in range(len(X.shape)):
     case(i)
@@ -14574,11 +14574,11 @@ X = np.random.randn(2, 3, 5).astype(np.float32)
 def case(axis: int) -> None:
     normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
-    Y, inv_std_dev = _rms_normalization(X, W, axis, epsilon)
+    Y = _rms_normalization(X, W, axis, epsilon)
     node = onnx.helper.make_node(
         "RMSNormalization",
         inputs=["X", "W"],
-        outputs=["Y", "InvStdDev"],
+        outputs=["Y"],
         axis=axis,
         epsilon=epsilon,
     )
@@ -14588,7 +14588,7 @@ def case(axis: int) -> None:
     else:
         name = f"test_rms_normalization_3d_axis{axis}_epsilon"
 
-    expect(node, inputs=[X, W], outputs=[Y, inv_std_dev], name=name)
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
 
 for i in range(len(X.shape)):
     case(i)
@@ -14602,23 +14602,23 @@ for i in range(len(X.shape)):
 ```python
 X = np.random.randn(2, 3, 4, 5).astype(np.float32)
 
-# Default axis in LayerNormalization is -1.
+# Default axis in RMSNormalization is -1.
 normalized_shape = calculate_normalized_shape(X.shape, -1)
 W = np.random.randn(*normalized_shape).astype(np.float32)
 # Axis is default to -1 in the reference implementation.
-Y, inv_std_dev = _rms_normalization(X, W)
+Y = _rms_normalization(X, W)
 
 # Not specifying axis attribute means -1.
 node = onnx.helper.make_node(
     "RMSNormalization",
     inputs=["X", "W"],
-    outputs=["Y", "InvStdDev"],
+    outputs=["Y"],
 )
 
 expect(
     node,
     inputs=[X, W],
-    outputs=[Y, inv_std_dev],
+    outputs=[Y],
     name="test_rms_normalization_default_axis",
 )
 ```
@@ -14633,12 +14633,12 @@ X = np.random.randn(2, 3, 4, 5).astype(np.float32)
 def case(axis: int) -> None:
     normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
-    Y, inv_std_dev = _rms_normalization(X, W, axis)
+    Y = _rms_normalization(X, W, axis)
 
     node = onnx.helper.make_node(
         "RMSNormalization",
         inputs=["X", "W"],
-        outputs=["Y", "InvStdDev"],
+        outputs=["Y"],
         axis=axis,
     )
 
@@ -14647,7 +14647,7 @@ def case(axis: int) -> None:
     else:
         name = f"test_rms_normalization_4d_axis{axis}"
 
-    expect(node, inputs=[X, W], outputs=[Y, inv_std_dev], name=name)
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
 
 for i in range(len(X.shape)):
     case(i)
