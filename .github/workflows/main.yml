@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-24.04, windows-latest, macos-latest]
         python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
         include:
           - python_version: '3.12'
@@ -70,8 +70,17 @@ jobs:
           python --version
           cmake --version
 
+      # 2024.10.15: This step can be adjusted or even deleted if we decide to use a higher G++ or protobuf version. 
+      # With the current protobuf version, g++13 does not compile due to missing headers
+      - name: Show versions g++
+        if: startsWith(matrix.os,'ubuntu')
+        run: |
+          sudo apt install g++-11
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 12
+          g++ --version          
+
       - name: Install external protobuf - Linux
-        if: matrix.protobuf_type == 'External' && matrix.os == 'ubuntu-latest'
+        if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'ubuntu')
         run: |
           sudo apt-get install libprotobuf-dev protobuf-compiler
 
@@ -98,8 +107,9 @@ jobs:
           python -m pip install protobuf==3.20.2
           git submodule update --init --recursive
 
+
       - name: Build and install ONNX - Linux
-        if: matrix.os == 'ubuntu-latest'
+        if: startsWith(matrix.os,'ubuntu')
         run: |
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
@@ -151,7 +161,7 @@ jobs:
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
-        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
         run: |
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
@@ -171,7 +181,7 @@ jobs:
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && matrix.os == 'ubuntu-latest'
+        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu')
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status
@@ -201,8 +211,16 @@ jobs:
           cd docs/docsgen && make text
         continue-on-error: true
 
-      - name: Run Python tests with numpy<2.0
-        if: matrix.python_version == '3.11' || matrix.python_version == '3.12'
+      - name: Run Python tests with numpy<2.0 (win, mac)
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') &&  (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
         run: |
-          pip install "numpy<2.0" "pillow<10"
+          pip install "numpy<2.0" pillow
+          pytest -s
+
+      - name: Run Python tests with numpy<2.0 (ubuntu)
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12' ) && startsWith(matrix.os,'ubuntu')
+        run: |
+          # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
+          sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
+          pip install --prefer-binary "numpy<2.0" pillow
           pytest -s
