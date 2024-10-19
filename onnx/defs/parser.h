@@ -157,10 +157,7 @@ class KeyWordMap {
     map_["overload"] = KeyWord::OVERLOAD_KW;
   }
 
-  static const std::unordered_map<std::string, KeyWord>& Instance() {
-    static KeyWordMap instance;
-    return instance.map_;
-  }
+  static const std::unordered_map<std::string, KeyWord>& Instance();
 
   static KeyWord Lookup(const std::string& id) {
     auto it = Instance().find(id);
@@ -169,14 +166,7 @@ class KeyWordMap {
     return KeyWord::NONE;
   }
 
-  static const std::string& ToString(KeyWord kw) {
-    static std::string undefined("undefined");
-    for (const auto& pair : Instance()) {
-      if (pair.second == kw)
-        return pair.first;
-    }
-    return undefined;
-  }
+  static const std::string& ToString(KeyWord kw);
 
  private:
   std::unordered_map<std::string, KeyWord> map_;
