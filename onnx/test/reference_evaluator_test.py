@@ -1675,6 +1675,40 @@ class TestReferenceEvaluator(unittest.TestCase):
                     got = sess2.run(None, feeds)[0]
                     assert_allclose(expected, got)
 
+    def test_qlinearconv_w_scale_vector(self):
+        x = make_tensor_value_info("x", TensorProto.UINT8, [None, None, None, None])
+        w = make_tensor_value_info("w", TensorProto.UINT8, [None, None, None, None])
+        y = make_tensor_value_info("y", TensorProto.UINT8, [None, None, None, None])
+        x_scale = make_tensor_value_info("x_scale", TensorProto.FLOAT, [None])
+        w_scale = make_tensor_value_info("w_scale", TensorProto.FLOAT, [None])
+        y_scale = make_tensor_value_info("y_scale", TensorProto.FLOAT, [None])
+        x_zero_point = make_tensor_value_info("x_zero_point", TensorProto.UINT8, [None])
+        w_zero_point = make_tensor_value_info("w_zero_point", TensorProto.UINT8, [None])
+        y_zero_point = make_tensor_value_info("y_zero_point", TensorProto.UINT8, [None])
+
+        node = make_node(
+            "QLinearConv",
+            [
+                "x",
+                "x_scale",
+                "x_zero_point",
+                "w",
+                "w_scale",
+                "w_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ],
+            ["y"],
+        )
+        graph = make_graph(
+            [node],
+            "g",
+            [x, x_scale, x_zero_point, w, w_scale, w_zero_point, y_scale, y_zero_point],
+            [y],
+        )
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 16)])
+        sess = ReferenceEvaluator(onnx_model)
+
         with self.subTest("single_channel"):
             x = np.array(
                 [
@@ -1706,8 +1740,21 @@ class TestReferenceEvaluator(unittest.TestCase):
                 "y_scale": y_scale,
                 "y_zero_point": y_zero_point,
             }
-            expected = sess1.run(None, feeds)[0]
-            got = sess2.run(None, feeds)[0]
+            expected = [
+                [
+                    [
+                        [0, 81, 93, 230, 52, 87, 197],
+                        [240, 196, 18, 160, 126, 255, 191],
+                        [199, 13, 102, 34, 87, 243, 89],
+                        [23, 77, 69, 60, 18, 93, 18],
+                        [67, 216, 131, 178, 175, 153, 212],
+                        [128, 25, 234, 172, 214, 215, 121],
+                        [0, 101, 163, 114, 213, 107, 8],
+                    ]
+                ]
+            ]
+
+            got = sess.run(None, feeds)[0]
             assert_allclose(expected, got)
 
         with self.subTest("multiple_output_channels"):
@@ -1727,7 +1774,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             x_zero_point = np.array([0], dtype=np.uint8)
             w = np.full([2, 1, 3, 3], 128, dtype=np.uint8)
             w[0, 0, 1, 2] = 200
-            w[1, 0, 1, 0] = 2.0
+            w[1, 0, 1, 0] = 2
             w_scale = np.array([0.00390625, 0.001953125], dtype=np.float32)
             w_zero_point = np.array([128, 128], dtype=np.uint8)
             y_scale = np.array([0.00162681262], dtype=np.float32)
@@ -1743,8 +1790,26 @@ class TestReferenceEvaluator(unittest.TestCase):
                 "y_scale": y_scale,
                 "y_zero_point": y_zero_point,
             }
-            expected = sess1.run(None, feeds)[0]
-            got = sess2.run(None, feeds)[0]
+            expected = [
+                [
+                    [
+                        [255, 187, 210, 123, 166],
+                        [226, 255, 236, 131, 235],
+                        [249, 255, 255, 232, 255],
+                        [207, 175, 177, 192, 152],
+                        [137, 179, 151, 150, 213],
+                    ],
+                    [
+                        [114, 88, 0, 67, 47],
+                        [90, 0, 33, 0, 24],
+                        [0, 18, 13, 8, 0],
+                        [12, 100, 50, 77, 76],
+                        [48, 0, 111, 74, 99],
+                    ],
+                ]
+            ]
+
+            got = sess.run(None, feeds)[0]
             assert_allclose(expected, got)
 
         with self.subTest("fails_with_w_scale_2D"):
@@ -1770,7 +1835,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValueError, "w_scale must be a scalar or a 1-D tensor"
             ):
-                sess2.run(None, feeds)[0]
+                sess.run(None, feeds)[0]
 
         with self.subTest("fails_with_w_scale_wrong_length"):
             x = np.zeros((1, 1, 7, 7), dtype=np.uint8)
@@ -1795,7 +1860,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValueError, "w_scale elements must match output channels"
             ):
-                sess2.run(None, feeds)[0]
+                sess.run(None, feeds)[0]
 
     def common_test_im2col(self, kernel_shape, pads, strides, dilations):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
