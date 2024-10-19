@@ -364,7 +364,6 @@ def download_model_with_test_data(
                 "download the model from the model hub."
             )
 
-    # remove ".tar.gz"
     local_model_with_data_dir_path = local_model_with_data_path[
         0 : len(local_model_with_data_path) - len(".tar.gz")
     ]
