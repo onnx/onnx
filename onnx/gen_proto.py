@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import glob
 import os
+import os.path
 import re
 import subprocess
 from textwrap import dedent
@@ -43,7 +44,7 @@ def process_ifs(lines: Iterable[str], onnx_ml: bool) -> Iterable[str]:
             assert in_if == 1
             in_if = 2
         elif ENDIF_ONNX_ML_REGEX.match(line):
-            assert in_if == 1 or in_if == 2  # noqa: PLR1714, PLR2004
+            assert in_if in (1, 2)
             in_if = 0
         else:  # noqa: PLR5501
             if in_if == 0:
@@ -119,7 +120,7 @@ def translate(source: str, proto: int, onnx_ml: bool, package_name: str) -> str:
         lines = convert_to_proto3(lines)
     else:
         assert proto == 2  # noqa: PLR2004
-    return "\n".join(lines)  # TODO: not Windows friendly
+    return os.linesep.join(lines)
 
 
 def qualify(f: str, pardir: str | None = None) -> str:
