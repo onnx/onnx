@@ -386,7 +386,7 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + rounded) >> 16
 
 
-def float32_to_float8e4m3(
+def float32_to_float8e4m3(  # noqa: PLR0911
     fval: float,
     scale: float = 1.0,
     fn: bool = True,
