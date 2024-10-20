@@ -50,6 +50,7 @@ class Extractor:
         node_output_name: str,
         graph_input_names: list[str],
         reachable: set[int],
+        output_to_index_node: dict[str, tuple[int, NodeProto]],
     ) -> None:
         """Helper function to find nodes which are connected to an output
 
@@ -57,13 +58,8 @@ class Extractor:
             node_output_name (str): The name of the output
             graph_input_names (list of string): The names of all inputs of the graph
             reachable (set of int): The set of indexes to reachable nodes in `nodes`
+            output_to_index_node (dict of str to tuple): The dictionary that maps output name to corresponding node index and node.
         """
-        output_to_index_node = {}
-        for index, node in enumerate(self.graph.node):
-            for output_name in node.output:
-                assert output_name not in output_to_index_node
-                output_to_index_node[output_name] = (index, node)
-
         stack = [output_to_index_node[node_output_name]]
         while stack:
             current_index, current_node = stack.pop()
@@ -83,8 +79,15 @@ class Extractor:
         output_names: list[str],
     ) -> list[NodeProto]:
         reachable: set[int] = set()
+        output_to_index_node: dict[str, tuple[int, NodeProto]] = {}
+        for index, node in enumerate(self.graph.node):
+            for output_name in node.output:
+                assert output_name not in output_to_index_node
+                output_to_index_node[output_name] = (index, node)
         for output_name in output_names:
-            self._dfs_search_reachable_nodes(output_name, input_names, reachable)
+            self._dfs_search_reachable_nodes(
+                output_name, input_names, reachable, output_to_index_node
+            )
         # needs to be topologically sorted
         return [self.graph.node[index] for index in sorted(reachable)]
 
