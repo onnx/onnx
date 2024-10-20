@@ -63,19 +63,16 @@ class Extractor:
         stack = [node_output_name]
         while stack:
             current_output_name = stack.pop()
-
             # finish search at inputs
             if current_output_name in graph_input_names:
                 continue
-
             # find nodes connected to this output
             if current_output_name in output_to_index:
                 index = output_to_index[current_output_name]
-                if index in reachable:
-                    continue
-                # add nodes connected to this output to sets
-                reachable.add(index)
-                stack += self.graph.node[index].input
+                if index not in reachable:
+                    # add nodes connected to this output to sets
+                    reachable.add(index)
+                    stack += self.graph.node[index].input
 
     def _collect_reachable_nodes(
         self,
