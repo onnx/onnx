@@ -5,7 +5,6 @@
 #include "onnx/defs/printer.h"
 
 #include <iomanip>
-#include <vector>
 
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -13,7 +12,7 @@ namespace ONNX_NAMESPACE {
 
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
-bool IsValidIdentifier(const std::string& str) {
+static bool IsValidIdentifier(const std::string& str) {
   // Check if str is a valid identifier
   const char* next_ = str.c_str();
   const char* end_ = next_ + str.size();
@@ -107,13 +106,13 @@ class ProtoPrinter {
   template <typename T>
   inline void printKeyValuePair(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
     if (addsep)
-      output_ << "," << std::endl;
+      output_ << "," << '\n';
     output_ << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     print(val);
   }
 
   inline void printKeyValuePair(KeyWordMap::KeyWord key, const std::string& val) {
-    output_ << "," << std::endl;
+    output_ << "," << '\n';
     output_ << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     printQuoted(val);
   }
@@ -373,10 +372,10 @@ void ProtoPrinter::print(const NodeProto& node) {
   }
   printIdSet("", ", ", "", node.output());
   output_ << " = ";
-  if (node.domain() != "")
+  if (!node.domain().empty())
     output_ << node.domain() << ".";
   output_ << node.op_type();
-  if (node.overload() != "")
+  if (!node.overload().empty())
     output_ << ":" << node.overload();
   bool has_subgraph = false;
   for (const auto& attr : node.attribute())
@@ -404,7 +403,7 @@ void ProtoPrinter::print(const GraphProto& graph) {
   printId(graph.name());
   output_ << " " << graph.input() << " => " << graph.output() << " ";
   if ((graph.initializer_size() > 0) || (graph.value_info_size() > 0)) {
-    output_ << std::endl << std::setw(indent_level) << ' ' << '<';
+    output_ << '\n' << std::setw(indent_level) << ' ' << '<';
     const char* sep = "";
     for (auto& init : graph.initializer()) {
       output_ << sep;
@@ -416,7 +415,7 @@ void ProtoPrinter::print(const GraphProto& graph) {
       print(vi);
       sep = ", ";
     }
-    output_ << ">" << std::endl;
+    output_ << ">" << '\n';
   }
   print(graph.node());
 }
@@ -437,11 +436,11 @@ void ProtoPrinter::print(const ModelProto& model) {
     printKeyValuePair(KeyWordMap::KeyWord::DOC_STRING, model.doc_string());
   if (model.metadata_props_size() > 0)
     printKeyValuePair(KeyWordMap::KeyWord::METADATA_PROPS, model.metadata_props());
-  output_ << std::endl << ">" << std::endl;
+  output_ << '\n' << ">" << '\n';
 
   print(model.graph());
   for (const auto& fn : model.functions()) {
-    output_ << std::endl;
+    output_ << '\n';
     print(fn);
   }
 }

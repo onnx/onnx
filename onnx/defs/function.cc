@@ -4,16 +4,14 @@
 
 #include "onnx/defs/function.h"
 
-#include <map>
-
 #include "onnx/defs/schema.h"
 
-namespace ONNX_NAMESPACE {
-std::string InteralTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
+static std::string InteralTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
   std::string new_name = "Func_" + node_name + internal_name;
   return new_name;
 }
 
+namespace ONNX_NAMESPACE {
 void FunctionExpandHelper(
     const NodeProto& node,
     const FunctionProto& func,
@@ -69,7 +67,7 @@ void FunctionExpandHelper(
 
   const OpSchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
   const auto schema = schema_registry->GetSchema(node.op_type(), domain_version, node.domain());
-  std::map<std::string, OpSchema::Attribute> default_attrs = schema->attributes();
+  auto default_attrs = schema->attributes();
 
   for (const auto& pair : default_attrs) {
     const auto& attr_name = pair.first;
@@ -138,8 +136,7 @@ std::vector<NodeProto> FunctionBodyHelper::BuildNodes(const std::vector<NodeDef>
 }
 
 void FunctionBodyHelper::BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs) {
-  for (size_t i = 0; i < node_defs.size(); i++) {
-    const NodeDef& node = node_defs[i];
+  for (const auto& node : node_defs) {
     auto* np = functionProto.add_node();
 
     np->set_op_type(node.op_type);

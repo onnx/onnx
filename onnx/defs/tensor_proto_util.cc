@@ -36,7 +36,7 @@ namespace ONNX_NAMESPACE {
 
 #define DEFINE_PARSE_DATA(type, typed_data_fetch, tensorproto_datatype)                                            \
   template <>                                                                                                      \
-  const std::vector<type> ParseData(const TensorProto* tensor_proto) {                                             \
+  std::vector<type> ParseData(const TensorProto* tensor_proto) {                                                   \
     if (!tensor_proto->has_data_type() || tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {           \
       fail_shape_inference("The type of tensor: ", tensor_proto->name(), " is undefined so it cannot be parsed."); \
     } else if (tensor_proto->data_type() != tensorproto_datatype) {                                                \

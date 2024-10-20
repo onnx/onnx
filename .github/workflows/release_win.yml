@@ -24,7 +24,7 @@ jobs:
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
       with:
          path: ./onnx
          submodules: 'recursive'
@@ -77,7 +77,7 @@ jobs:
         cd onnx
         pytest
 
-    - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a
+    - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./onnx/dist

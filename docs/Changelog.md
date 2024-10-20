@@ -15167,6 +15167,8 @@ This version of the operator has been available since version 13 of the default 
   Clip operator limits the given input within an interval. The interval is
   specified by the inputs 'min' and 'max'. They default to
   numeric_limits::lowest() and numeric_limits::max(), respectively.
+  When 'min' is greater than 'max', the clip operator sets all the 'input' values to
+  the value of 'max'. Thus, this is equivalent to 'Min(max, Max(input, min))'.
 
 #### Version
 
@@ -21381,12 +21383,18 @@ This version of the operator has been available since version 18 of the default 
 
   Center crop or pad an input to given dimensions.
 
-  The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
-  cropped or padded.
+  The crop/pad dimensions can be specified for a subset of the `axes`; unspecified dimensions will remain unchanged.
 
-  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
-  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-  so that the input is centered in the output.
+  If the input dimensions are larger than the target crop dimensions, a centered cropping window will be extracted
+  from the input. The starting value for the cropping window is rounded down, which means that if the difference
+  between the input shape and the crop shape is odd, the cropping window will be shifted half a pixel to the left
+  of the input center.
+
+  If the input dimensions are smaller than the target crop dimensions, the input will be padded equally on both sides
+  to center it in the output. In cases where the total number of padding pixels is odd, an additional pixel will be
+  added to the right side.
+
+  The padding value used is zero.
 
 #### Version
 
