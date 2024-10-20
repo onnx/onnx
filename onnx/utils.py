@@ -69,9 +69,10 @@ class Extractor:
                 continue
             # add nodes connected to this node to stack
             for input_name in current_node.input:
-                next_index, next_node = output_to_index_node[input_name]
-                if next_index not in reachable:
-                    stack.append((next_index, next_node))
+                if input_name in output_to_index_node:
+                    next_index, next_node = output_to_index_node[input_name]
+                    if next_index not in reachable:
+                        stack.append((next_index, next_node))
 
     def _collect_reachable_nodes(
         self,
@@ -85,9 +86,7 @@ class Extractor:
                 assert output_name not in output_to_index_node
                 output_to_index_node[output_name] = (index, node)
         for output_name in output_names:
-            self._dfs_search_reachable_nodes(
-                output_name, input_names, reachable, output_to_index_node
-            )
+            self._dfs_search_reachable_nodes(output_name, input_names, reachable, output_to_index_node)
         # needs to be topologically sorted
         return [self.graph.node[index] for index in sorted(reachable)]
 
@@ -106,11 +105,7 @@ class Extractor:
             for node in nodes:
                 # check if the node is a function op
                 match_function = next(
-                    (
-                        f
-                        for f in self.model.functions
-                        if f.name == node.op_type and f.domain == node.domain
-                    ),
+                    (f for f in self.model.functions if f.name == node.op_type and f.domain == node.domain),
                     None,
                 )
                 if match_function and match_function not in referred_local_functions:
@@ -140,14 +135,10 @@ class Extractor:
         value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_names]
         len_sparse_initializer = len(self.graph.sparse_initializer)
         if len_sparse_initializer != 0:
-            raise ValueError(
-                f"len_sparse_initializer is {len_sparse_initializer}, it must be 0."
-            )
+            raise ValueError(f"len_sparse_initializer is {len_sparse_initializer}, it must be 0.")
         len_quantization_annotation = len(self.graph.quantization_annotation)
         if len_quantization_annotation != 0:
-            raise ValueError(
-                f"len_quantization_annotation is {len_quantization_annotation}, it must be 0."
-            )
+            raise ValueError(f"len_quantization_annotation is {len_quantization_annotation}, it must be 0.")
         return initializer, value_info
 
     def _make_model(
@@ -160,9 +151,7 @@ class Extractor:
         local_functions: list[FunctionProto],
     ) -> ModelProto:
         name = "Extracted from {" + self.graph.name + "}"
-        graph = onnx.helper.make_graph(
-            nodes, name, inputs, outputs, initializer=initializer, value_info=value_info
-        )
+        graph = onnx.helper.make_graph(nodes, name, inputs, outputs, initializer=initializer, value_info=value_info)
 
         meta = {
             "ir_version": self.model.ir_version,
@@ -182,9 +171,7 @@ class Extractor:
         nodes = self._collect_reachable_nodes(input_names, output_names)
         initializer, value_info = self._collect_reachable_tensors(nodes)
         local_functions = self._collect_referred_local_functions(nodes)
-        model = self._make_model(
-            nodes, inputs, outputs, initializer, value_info, local_functions
-        )
+        model = self._make_model(nodes, inputs, outputs, initializer, value_info, local_functions)
 
         return model
 
@@ -230,9 +217,7 @@ def extract_model(
         raise ValueError("Duplicate names found in the output tensor names.")
 
     if set(input_names) & set(output_names):
-        raise ValueError(
-            "Input tensor names shall not be included in the output tensor names."
-        )
+        raise ValueError("Input tensor names shall not be included in the output tensor names.")
 
     if check_model:
         onnx.checker.check_model(input_path)
@@ -258,9 +243,7 @@ def extract_model(
         onnx.checker.check_model(output_path)
 
 
-def _tar_members_filter(
-    tar: tarfile.TarFile, base: str | os.PathLike
-) -> list[tarfile.TarInfo]:
+def _tar_members_filter(tar: tarfile.TarFile, base: str | os.PathLike) -> list[tarfile.TarInfo]:
     """Check that the content of ``tar`` will be extracted safely
 
     Args:
@@ -289,9 +272,7 @@ def _tar_members_filter(
     return result
 
 
-def _extract_model_safe(
-    model_tar_path: str | os.PathLike, local_model_with_data_dir_path: str | os.PathLike
-) -> None:
+def _extract_model_safe(model_tar_path: str | os.PathLike, local_model_with_data_dir_path: str | os.PathLike) -> None:
     """Safely extracts a tar file to a specified directory.
 
     This function ensures that the extraction process mitigates against
@@ -308,13 +289,9 @@ def _extract_model_safe(
     with tarfile.open(model_tar_path) as model_with_data_zipped:
         # Mitigate tarball directory traversal risks
         if hasattr(tarfile, "data_filter"):
-            model_with_data_zipped.extractall(
-                path=local_model_with_data_dir_path, filter="data"
-            )
+            model_with_data_zipped.extractall(path=local_model_with_data_dir_path, filter="data")
         else:
             model_with_data_zipped.extractall(
                 path=local_model_with_data_dir_path,
-                members=_tar_members_filter(
-                    model_with_data_zipped, local_model_with_data_dir_path
-                ),
+                members=_tar_members_filter(model_with_data_zipped, local_model_with_data_dir_path),
             )
