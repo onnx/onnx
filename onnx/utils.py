@@ -60,22 +60,22 @@ class Extractor:
             reachable (set of int): The set of indexes to reachable nodes in `nodes`
             output_to_index (dict of str to int): The dictionary that maps output name to corresponding node index.
         """
-        stack = [output_to_index[node_output_name]]
+        stack = [node_output_name]
         while stack:
-            current_index = stack.pop()
-            if current_index in reachable:
+            current_output_name = stack.pop()
+
+            # finish search at inputs
+            if current_output_name in graph_input_names:
                 continue
-            reachable.add(current_index)
-            # finish search at graph_input_names
-            current_node = self.graph.node[current_index]
-            if set(current_node.input) & graph_input_names:
-                continue
-            # add nodes connected to this node to stack
-            for input_name in current_node.input:
-                if input_name in output_to_index:
-                    next_index = output_to_index[input_name]
-                    if next_index not in reachable:
-                        stack.append(next_index)
+
+            # find nodes connected to this output
+            if current_output_name in output_to_index:
+                index = output_to_index[current_output_name]
+                if index in reachable:
+                    continue
+                # add nodes connected to this output to sets
+                reachable.add(index)
+                stack += self.graph.node[index].input
 
     def _collect_reachable_nodes(
         self,
