@@ -68,7 +68,7 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
         return ReferenceEvaluator(model)
 
     @classmethod
-    def prepare(
+    def prepare(  # type: ignore[override]
         cls, model: Any, device: str = "CPU", **kwargs: Any
     ) -> ReferenceEvaluatorBackendRep:
         # if isinstance(model, ReferenceEvaluatorBackendRep):

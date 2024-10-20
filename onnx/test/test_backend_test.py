@@ -33,7 +33,7 @@ from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 
 class DummyBackend(onnx.backend.base.Backend):
     @classmethod
-    def prepare(
+    def prepare(  # type: ignore[override]
         cls, model: ModelProto, device: str = "CPU", **kwargs: Any
     ) -> onnx.backend.base.BackendRep | None:
         super().prepare(model, device, **kwargs)
@@ -72,8 +72,8 @@ class DummyBackend(onnx.backend.base.Backend):
         device: str = "CPU",
         outputs_info: Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None = None,
         **kwargs: Any,  # noqa: ARG003
-    ) -> tuple[Any, ...] | None:
-        super().run_node(node, inputs, device=device, outputs_info=outputs_info)
+    ) -> None:
+        super().run_node(node, inputs)
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker"
         )
