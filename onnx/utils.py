@@ -48,33 +48,34 @@ class Extractor:
     def _dfs_search_reachable_nodes(
         self,
         node_output_name: str,
-        graph_input_names: list[str],
+        graph_input_names: set[str],
         reachable: set[int],
-        output_to_index_node: dict[str, tuple[int, NodeProto]],
+        output_to_index: dict[str, int],
     ) -> None:
         """Helper function to find nodes which are connected to an output
 
         Arguments:
             node_output_name (str): The name of the output
-            graph_input_names (list of string): The names of all inputs of the graph
+            graph_input_names (set of string): The names of all inputs of the graph
             reachable (set of int): The set of indexes to reachable nodes in `nodes`
-            output_to_index_node (dict of str to tuple): The dictionary that maps output name to corresponding node index and node.
+            output_to_index (dict of str to int): The dictionary that maps output name to corresponding node index.
         """
-        stack = [output_to_index_node[node_output_name]]
+        stack = [output_to_index[node_output_name]]
         while stack:
-            current_index, current_node = stack.pop()
+            current_index = stack.pop()
             if current_index in reachable:
                 continue
             reachable.add(current_index)
             # finish search at graph_input_names
-            if set(current_node.input) & set(graph_input_names):
+            current_node = self.graph.node[current_index]
+            if set(current_node.input) & graph_input_names:
                 continue
             # add nodes connected to this node to stack
             for input_name in current_node.input:
-                if input_name in output_to_index_node:
-                    next_index, next_node = output_to_index_node[input_name]
+                if input_name in output_to_index:
+                    next_index = output_to_index[input_name]
                     if next_index not in reachable:
-                        stack.append((next_index, next_node))
+                        stack.append(next_index)
 
     def _collect_reachable_nodes(
         self,
@@ -82,14 +83,14 @@ class Extractor:
         output_names: list[str],
     ) -> list[NodeProto]:
         reachable: set[int] = set()
-        output_to_index_node: dict[str, tuple[int, NodeProto]] = {}
+        output_to_index: dict[str, int] = {}
         for index, node in enumerate(self.graph.node):
             for output_name in node.output:
-                assert output_name not in output_to_index_node
-                output_to_index_node[output_name] = (index, node)
+                assert output_name not in output_to_index  # output_name is unique
+                output_to_index[output_name] = index
         for output_name in output_names:
             self._dfs_search_reachable_nodes(
-                output_name, input_names, reachable, output_to_index_node
+                output_name, set(input_names), reachable, output_to_index
             )
         # needs to be topologically sorted
         return [self.graph.node[index] for index in sorted(reachable)]
