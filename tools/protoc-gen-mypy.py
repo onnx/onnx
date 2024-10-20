@@ -6,6 +6,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# NOTE: This is deprecated in favor of protogen's own .pyi generation method.
+#       See: https://github.com/onnx/onnx/pull/6096
+
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy
 # (Apache 2.0 License)
 # with own fixes to
