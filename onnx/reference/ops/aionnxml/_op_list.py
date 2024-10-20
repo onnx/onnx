@@ -6,11 +6,9 @@
 from __future__ import annotations
 
 import textwrap
-from typing import Any, Dict
-from typing import Optional as TOptional
-from typing import Union
+from typing import Any
 
-from onnx.reference.op_run import OpFunction
+from onnx.reference.op_run import OpFunction, OpRun
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 from onnx.reference.ops.aionnxml.op_array_feature_extractor import ArrayFeatureExtractor
@@ -31,7 +29,6 @@ from onnx.reference.ops.aionnxml.op_tree_ensemble_classifier import (
     TreeEnsembleClassifier,
 )
 from onnx.reference.ops.aionnxml.op_tree_ensemble_regressor import TreeEnsembleRegressor
-from onnx.reference.op_run import OpRun
 
 
 def _build_registered_operators() -> dict[str, dict[int | None, type[OpRun]]]:
@@ -57,12 +54,12 @@ def load_op(
     """
     global _registered_operators  # noqa: PLW0603
     if _registered_operators is None:
-        _registered_operators = _build_registered_operators()  # type: ignore[assignment]
+        _registered_operators = _build_registered_operators()
     if custom is not None:
         return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
     if domain != "ai.onnx.ml":
         raise ValueError(f"Domain must be '' not {domain!r}.")
-    if op_type not in _registered_operators:  # type: ignore
+    if op_type not in _registered_operators:
         available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
         raise NotImplementedError(
             f"No registered implementation for operator {op_type!r} "
@@ -100,4 +97,4 @@ def load_op(
     return cl
 
 
-_registered_operators: dict[str, dict[int | None, OpRunAiOnnxMl]] | None = None
+_registered_operators: dict[str, dict[int | None, type[OpRun]]] | None = None
