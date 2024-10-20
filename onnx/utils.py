@@ -22,7 +22,7 @@ class Extractor:
         self.vimap = self._build_name2obj_dict(self.graph.value_info)
 
     @staticmethod
-    def _build_name2obj_dict(objs):  # type: ignore
+    def _build_name2obj_dict(objs) -> dict:
         return {obj.name: obj for obj in objs}
 
     def _collect_new_io_core(
@@ -48,59 +48,45 @@ class Extractor:
     def _dfs_search_reachable_nodes(
         self,
         node_output_name: str,
-        graph_input_names: set[str],
-        nodes: list[NodeProto],
+        graph_input_names: list[str],
         reachable: set[int],
-        unreachable: set[int],
     ) -> None:
         """Helper function to find nodes which are connected to an output
 
         Arguments:
             node_output_name (str): The name of the output
-            graph_input_names (set of string): The names of all inputs of the graph
-            nodes (list of nodes): The list of all nodes of the graph
+            graph_input_names (list of string): The names of all inputs of the graph
             reachable (set of int): The set of indexes to reachable nodes in `nodes`
-            unreachable (set of int): The set of indexes to unreachable nodes in `nodes`
         """
-        # Use a stack to replace the recursion
-        stack = [node_output_name]
+        output_to_index_node = {}
+        for index, node in enumerate(self.graph.node):
+            for output_name in node.output:
+                assert output_name not in output_to_index_node
+                output_to_index_node[output_name] = (index, node)
 
+        stack = [output_to_index_node[node_output_name]]
         while stack:
-            current_output_name = stack.pop()
-
-            # finish search at inputs
-            if current_output_name in graph_input_names:
+            current_index, current_node = stack.pop()
+            reachable.add(current_index)
+            # finish search at graph_input_names
+            if set(current_node.input) & set(graph_input_names):
                 continue
-
-            # find nodes connected to this output
-            nodes_to_search = [
-                index
-                for index in unreachable
-                if current_output_name in nodes[index].output
-            ]
-
-            # add nodes connected to this output to sets
-            for node_index in nodes_to_search:
-                reachable.add(node_index)
-                unreachable.remove(node_index)
-                stack += nodes[node_index].input
+            # add nodes connected to this node to stack
+            for input_name in current_node.input:
+                next_index, next_node = output_to_index_node[input_name]
+                if next_index not in reachable:
+                    stack.append((next_index, next_node))
 
     def _collect_reachable_nodes(
         self,
         input_names: list[str],
         output_names: list[str],
     ) -> list[NodeProto]:
-        _input_names = set(input_names)
-        nodes = list(self.graph.node)
         reachable: set[int] = set()
-        unreachable: set[int] = set(range(len(nodes)))
-        for name in output_names:
-            self._dfs_search_reachable_nodes(
-                name, _input_names, nodes, reachable, unreachable
-            )
+        for output_name in output_names:
+            self._dfs_search_reachable_nodes(output_name, input_names, reachable)
         # needs to be topologically sorted
-        nodes = [nodes[node_index] for node_index in sorted(reachable)]
-        return nodes
+        return [self.graph.node[index] for index in sorted(reachable)]
 
     def _collect_referred_local_functions(
         self,
@@ -237,6 +223,11 @@ def extract_model(
         raise ValueError("Duplicate names found in the input tensor names.")
     if len(output_names) != len(set(output_names)):
         raise ValueError("Duplicate names found in the output tensor names.")
+
+    if set(input_names) & set(output_names):
+        raise ValueError(
+            "Input tensor names shall not be included in the output tensor names."
+        )
 
     if check_model:
         onnx.checker.check_model(input_path)
