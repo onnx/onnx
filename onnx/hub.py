@@ -5,6 +5,7 @@
 
 This implements the python client for the ONNX model hub.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -363,10 +364,8 @@ def download_model_with_test_data(
                 "download the model from the model hub."
             )
 
-    # FIXME: Avoid index manipulation with magic numbers,
-    # remove ".tar.gz"
     local_model_with_data_dir_path = local_model_with_data_path[
-        0 : len(local_model_with_data_path) - 7
+        0 : len(local_model_with_data_path) - len(".tar.gz")
     ]
     onnx.utils._extract_model_safe(
         local_model_with_data_path, local_model_with_data_dir_path
