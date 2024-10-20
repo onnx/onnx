@@ -131,8 +131,8 @@ class ModelContainer:
             if not ext_data.uses_external_data(tensor):
                 continue
             prop: onnx.StringStringEntryProto | None = None
-            for ext in tensor.external_data:  # type: ignore[assignment]
-                if ext.key == "location":  # type: ignore[attr-defined]
+            for ext in tensor.external_data:
+                if ext.key == "location":
                     prop = ext
             if prop is None:
                 raise RuntimeError(
@@ -195,9 +195,9 @@ class ModelContainer:
             if not ext_data.uses_external_data(tensor):
                 continue
             prop: onnx.StringStringEntryProto | None = None
-            for ext in tensor.external_data:  # type: ignore[assignment]
-                if ext.key == "location":  # type: ignore[attr-defined]
-                    prop = ext  # type: ignore[assignment]
+            for ext in tensor.external_data:
+                if ext.key == "location":
+                    prop = ext
             if prop is None:
                 raise RuntimeError(
                     f"No location found for tensor name {tensor.name!r}."

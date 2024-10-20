@@ -6,8 +6,6 @@ from __future__ import annotations
 from collections import namedtuple
 from typing import Any, NewType, Sequence
 
-import numpy
-
 import onnx.checker
 import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx import IR_VERSION, ModelProto, NodeProto
@@ -83,11 +81,9 @@ class Backend:
 
     @classmethod
     def prepare(
-        cls, model: ModelProto, device: str = "CPU", **kwargs: Any  # noqa: ARG003
-    ) -> BackendRep | None:
-        # TODO Remove Optional from return type
+        cls, model: ModelProto, *args: Any, **kwargs: Any  # noqa: ARG003
+    ) -> None:
         onnx.checker.check_model(model)
-        return None
 
     @classmethod
     def run_model(
@@ -101,26 +97,16 @@ class Backend:
     def run_node(
         cls,
         node: NodeProto,
-        inputs: Any,  # noqa: ARG003
-        device: str = "CPU",  # noqa: ARG003
-        outputs_info: (  # noqa: ARG003
-            Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None
-        ) = None,
+        *args: Any,  # noqa: ARG003
         **kwargs: dict[str, Any],
-    ) -> tuple[Any, ...] | None:
+    ) -> None:
         """Simple run one operator and return the results.
 
         Args:
             node: The node proto.
-            inputs: Inputs to the node.
-            device: The device to run on.
-            outputs_info: a list of tuples, which contains the element type and
-                shape of each output. First element of the tuple is the dtype, and
-                the second element is the shape. More use case can be found in
-                https://github.com/onnx/onnx/blob/main/onnx/backend/test/runner/__init__.py
+            args: Other arguments.
             kwargs: Other keyword arguments.
         """
-        # TODO Remove Optional from return type
         if "opset_version" in kwargs:
             special_context = c_checker.CheckerContext()
             special_context.ir_version = IR_VERSION
@@ -128,8 +114,6 @@ class Backend:
             onnx.checker.check_node(node, special_context)
         else:
             onnx.checker.check_node(node)
-
-        return None
 
     @classmethod
     def supports_device(cls, device: str) -> bool:  # noqa: ARG003
