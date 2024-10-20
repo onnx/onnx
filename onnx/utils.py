@@ -88,9 +88,9 @@ class Extractor:
             for output_name in node.output:
                 assert output_name not in output_to_index  # output_name is unique
                 output_to_index[output_name] = index
-        for output_name in output_names:
+        for name in output_names:
             self._dfs_search_reachable_nodes(
-                output_name, set(input_names), reachable, output_to_index
+                name, set(input_names), reachable, output_to_index
             )
         # needs to be topologically sorted
         return [self.graph.node[index] for index in sorted(reachable)]
