@@ -82,6 +82,7 @@ class Extractor:
         input_names: list[str],
         output_names: list[str],
     ) -> list[NodeProto]:
+        _input_names = set(input_names)
         reachable: set[int] = set()
         output_to_index: dict[str, int] = {}
         for index, node in enumerate(self.graph.node):
@@ -90,7 +91,7 @@ class Extractor:
                 output_to_index[output_name] = index
         for name in output_names:
             self._dfs_search_reachable_nodes(
-                name, set(input_names), reachable, output_to_index
+                name, _input_names, reachable, output_to_index
             )
         # needs to be topologically sorted
         return [self.graph.node[index] for index in sorted(reachable)]
