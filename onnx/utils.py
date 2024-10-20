@@ -231,11 +231,6 @@ def extract_model(
     if len(output_names) != len(set(output_names)):
         raise ValueError("Duplicate names found in the output tensor names.")
 
-    if set(input_names) & set(output_names):
-        raise ValueError(
-            "Input tensor names shall not be included in the output tensor names."
-        )
-
     if check_model:
         onnx.checker.check_model(input_path)
 
