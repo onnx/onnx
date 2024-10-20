@@ -240,7 +240,7 @@ from onnx.reference.ops.op_where import Where
 from onnx.reference.ops.op_xor import Xor
 
 
-def _build_registered_operators() -> dict[str, dict[int | None, OpRun]]:
+def _build_registered_operators() -> dict[str, dict[int | None, type[OpRun]]]:
     return build_registered_operators_any_domain(globals().copy())
 
 

@@ -31,10 +31,11 @@ from onnx.reference.ops.aionnxml.op_tree_ensemble_classifier import (
     TreeEnsembleClassifier,
 )
 from onnx.reference.ops.aionnxml.op_tree_ensemble_regressor import TreeEnsembleRegressor
+from onnx.reference.op_run import OpRun
 
 
-def _build_registered_operators() -> dict[str, dict[int | None, OpRunAiOnnxMl]]:
-    return build_registered_operators_any_domain(globals().copy())  # type: ignore[return-value]
+def _build_registered_operators() -> dict[str, dict[int | None, type[OpRun]]]:
+    return build_registered_operators_any_domain(globals().copy())
 
 
 def load_op(
@@ -42,7 +43,6 @@ def load_op(
     op_type: str,
     version: None | int,
     custom: Any = None,
-    evaluator_cls: type | None = None,  # noqa: ARG001
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -51,7 +51,6 @@ def load_op(
         op_type: oprator type
         version: requested version
         custom: custom implementation (like a function)
-        evaluator_cls: unused
 
     Returns:
         class
