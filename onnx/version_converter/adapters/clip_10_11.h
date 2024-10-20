@@ -10,6 +10,8 @@
 #include <limits>
 #include <memory>
 
+#include "onnx/version_converter/adapters/adapter.h"
+
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
@@ -17,7 +19,7 @@ class Clip_10_11 final : public Adapter {
  public:
   explicit Clip_10_11() : Adapter("Clip", OpSetID(10), OpSetID(11)) {}
 
-  void adapt_clip_10_11(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_clip_10_11(const std::shared_ptr<Graph>& graph, Node* node) const {
     bool has_min = node->hasAttribute(kmin);
     bool has_max = node->hasAttribute(kmax);
 
@@ -35,7 +37,7 @@ class Clip_10_11 final : public Adapter {
     }
   }
 
-  void attrToInput(std::shared_ptr<Graph> graph, Node* node, float val) const {
+  void attrToInput(const std::shared_ptr<Graph>& graph, Node* node, float val) const {
     Tensor t;
     t.elem_type() = TensorProto_DataType_FLOAT;
     auto& data = t.floats();

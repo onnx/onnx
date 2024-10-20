@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <stdint.h>
-
 #include <algorithm>
 #include <cstdint>
 #include <functional>
@@ -63,11 +61,11 @@ struct Value;
 
 class ResourceGuard final {
   std::function<void()> destructor_;
-  bool released_;
+  bool released_{false};
 
  public:
   ONNX_DISALLOW_COPY_AND_ASSIGN(ResourceGuard);
-  explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)), released_(false) {}
+  explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)) {}
   ResourceGuard(ResourceGuard&& other) = default;
   ResourceGuard& operator=(ResourceGuard&& other) = default;
 
@@ -182,6 +180,7 @@ using TypeProtosAttr = VectorAttributeValue<TypeProto, AttributeKind::tps>;
 template <typename Derived>
 struct Attributes {
   Attributes() = default;
+
   void copyAttributes(const Attributes& rhs) {
     values_.clear();
     values_.reserve(rhs.values_.size());
@@ -314,10 +313,10 @@ struct Value final {
   size_t unique_ = 0; // unique id
   size_t stage_ = 0; // 0-forward, 1-backward, 2-double-backward,...
   use_list uses_in_current_graph_;
-  bool has_unique_name_;
+  bool has_unique_name_{false};
   std::string unique_name_;
-  int32_t elem_type_;
-  bool has_sizes_;
+  int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
+  bool has_sizes_{false};
   std::vector<Dimension> sizes_;
 
  public:
@@ -388,7 +387,7 @@ struct Value final {
   //          %5 = h(%6, %6)
   void replaceAllUsesWith(Value* newValue);
 
-  Value* copyMetadata(Value* from) {
+  Value* copyMetadata(const Value* from) {
     setElemType(from->elemType());
     setSizes(from->sizes());
     if (from->has_unique_name()) {
@@ -435,13 +434,13 @@ struct Node : public Attributes<Node> {
   std::vector<Value*> outputs_;
   Graph* graph_;
   size_t stage_;
-  bool has_name_;
+  bool has_name_{false};
   std::string name_;
-  bool has_domain_;
+  bool has_domain_{false};
   std::string domain_;
-  bool has_doc_string_;
+  bool has_doc_string_{false};
   std::string doc_string_;
-  bool has_overload_;
+  bool has_overload_{false};
   std::string overload_;
 
  protected:
@@ -729,7 +728,7 @@ struct Node : public Attributes<Node> {
   }
 
   // Check whether this node is before node n in the graph.
-  bool isBefore(Node* n);
+  bool isBefore(const Node* n);
 
   // iterators of the node list starting at this node
   // useful for resuming a search starting at this node
@@ -895,9 +894,9 @@ struct Graph final {
 
   std::unordered_set<const Node*> all_nodes;
   std::unordered_set<const Value*> all_values;
-  size_t next_unique_;
+  size_t next_unique_{0};
 
-  size_t new_node_stage_;
+  size_t new_node_stage_{0};
 
   // holds outputs in a way that can be reflected
   // as a Use object
@@ -911,9 +910,9 @@ struct Graph final {
   std::vector<Tensor> initializers_;
   std::vector<std::string> initializer_names_;
 
-  bool has_name_;
+  bool has_name_{false};
   std::string name_;
-  bool has_doc_string_;
+  bool has_doc_string_{false};
   std::string doc_string_;
 
   std::vector<OpSetID> opset_versions_;
@@ -951,14 +950,7 @@ struct Graph final {
   }
 
  public:
-  Graph()
-      : next_unique_(0),
-        new_node_stage_(0),
-        output_(initOutput(create(kReturn, 0))),
-        input_(create(kParam, 0)),
-        initializer_node_(create(kParam, 0)),
-        has_name_(false),
-        has_doc_string_(false) {}
+  Graph() : output_(initOutput(create(kReturn, 0))), input_(create(kParam, 0)), initializer_node_(create(kParam, 0)) {}
 
   bool has_doc_string() const {
     return has_doc_string_;
@@ -1262,13 +1254,7 @@ struct Graph final {
 };
 
 inline Value::Value(Node* node_, size_t offset_)
-    : node_(node_),
-      offset_(offset_),
-      unique_(node_->graph_->getNextUnique()),
-      stage_(node_->graph_->new_node_stage_),
-      has_unique_name_(false),
-      elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
-      has_sizes_(false) {
+    : node_(node_), offset_(offset_), unique_(node_->graph_->getNextUnique()), stage_(node_->graph_->new_node_stage_) {
   node_->graph_->all_values.emplace(this);
 }
 
@@ -1353,14 +1339,7 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
   assert(this->uses().empty());
 }
 
-inline Node::Node(Graph* graph_, NodeKind kind_)
-    : kind_(kind_),
-      graph_(graph_),
-      stage_(graph_->new_node_stage_),
-      has_name_(false),
-      has_domain_(false),
-      has_doc_string_(false),
-      has_overload_(false) {
+inline Node::Node(Graph* graph_, NodeKind kind_) : kind_(kind_), graph_(graph_), stage_(graph_->new_node_stage_) {
   graph_->all_nodes.emplace(this);
 }
 
@@ -1375,7 +1354,7 @@ inline void Node::eraseOutput(size_t i) {
   }
 }
 
-inline bool Node::isBefore(Node* n) {
+inline bool Node::isBefore(const Node* n) {
   if (n == nullptr || this == n) {
     // Bail out early.
     return false;

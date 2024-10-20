@@ -790,7 +790,7 @@ result = [
 ```
 )DOC";
 
-inline void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t step) {
+static void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t step) {
   auto clamp = [](int64_t val, int64_t min, int64_t max) -> int64_t {
     return (val < min) ? min : (val > max) ? max : val;
   };
@@ -1124,8 +1124,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           getOutputShape(ctx, 0);
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          for (size_t i = 0; i < perm.size(); ++i) {
-            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(perm[i]));
+          for (int64_t i : perm) {
+            appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(i));
           }
         }));
 
@@ -3738,12 +3738,18 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* CenterCropPad_ver18_doc = R"DOC(
 Center crop or pad an input to given dimensions.
 
-The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
-cropped or padded.
+The crop/pad dimensions can be specified for a subset of the `axes`; unspecified dimensions will remain unchanged.
 
-If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
-If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-so that the input is centered in the output.
+If the input dimensions are larger than the target crop dimensions, a centered cropping window will be extracted
+from the input. The starting value for the cropping window is rounded down, which means that if the difference
+between the input shape and the crop shape is odd, the cropping window will be shifted half a pixel to the left
+of the input center.
+
+If the input dimensions are smaller than the target crop dimensions, the input will be padded equally on both sides
+to center it in the output. In cases where the total number of padding pixels is odd, an additional pixel will be
+added to the right side.
+
+The padding value used is zero.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

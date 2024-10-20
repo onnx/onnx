@@ -4,8 +4,7 @@
 
 #include "onnx/checker.h"
 
-#include <functional>
-#include <set>
+#include <iostream>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -312,10 +311,8 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 1-dimensional tensor; indices[i] represents the
 // linearized index value for the i-th nonzero value.
-void check_sparse_tensor_indices_1(
-    const TensorProto& indices,
-    const SparseTensorProto& sparse_tensor_proto,
-    size_t nnz) {
+static void
+check_sparse_tensor_indices_1(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
   int64_t dense_size = 1;
   for (int i = 0; i < dense_rank; ++i)
@@ -352,10 +349,8 @@ void check_sparse_tensor_indices_1(
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 2-dimensional tensor; indices[i,j] represents the j-th
 // index value for the i-th nonzero value.
-void check_sparse_tensor_indices_2(
-    const TensorProto& indices,
-    const SparseTensorProto& sparse_tensor_proto,
-    size_t nnz) {
+static void
+check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
   if (static_cast<size_t>(indices.dims(0)) != nnz) {
     fail_check("Sparse tensor indices (", indices.name(), ") first dimension size does not equal NNZ.");
@@ -516,7 +511,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   for (const auto& sparse_tensor : attr.sparse_tensors()) {
     check_sparse_tensor(sparse_tensor, ctx);
   }
-  if (attr.graphs().size() > 0) {
+  if (!attr.graphs().empty()) {
     CheckerContext subgraph_ctx(ctx);
     subgraph_ctx.set_is_main_graph(false);
     for (const auto& graph : attr.graphs()) {
@@ -525,7 +520,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   }
 }
 
-void print_warning_if_has_experimental(const std::unordered_set<std::string>& used_experimental_ops) {
+static void print_warning_if_has_experimental(const std::unordered_set<std::string>& used_experimental_ops) {
   if (!used_experimental_ops.empty()) {
     std::string all_experimental_ops;
     for (const auto& op : used_experimental_ops) {
@@ -533,7 +528,7 @@ void print_warning_if_has_experimental(const std::unordered_set<std::string>& us
     }
     // Remove the last comma which is unnecessary
     all_experimental_ops.pop_back();
-    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << std::endl;
+    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << '\n';
   }
 }
 
@@ -613,8 +608,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     lex_ctx.add(value_info.name());
   }
 
-  std::unordered_set<std::reference_wrapper<const std::string>, std::hash<std::string>, std::equal_to<std::string>>
-      initializer_name_checker;
+  std::unordered_set<std::string> initializer_name_checker;
 
   for (const auto& init : graph.initializer()) {
     enforce_has_field(init, name);
@@ -623,7 +617,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       fail_check("Tensor initializers must have a non-empty name");
     }
 
-    if (!initializer_name_checker.insert(std::cref(name)).second) {
+    if (!initializer_name_checker.emplace(name).second) {
       fail_check(name + " initializer name is not unique");
     }
 
@@ -648,7 +642,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     if (name.empty()) {
       fail_check("Sparse tensor initializers must have a non-empty name");
     }
-    if (!initializer_name_checker.insert(std::cref(name)).second) {
+    if (!initializer_name_checker.insert(name).second) {
       fail_check(name + " sparse initializer name is not unique across initializers and sparse_initializers");
     }
     check_sparse_tensor(sparse_init, ctx);
@@ -719,7 +713,9 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
 
 // Utilify function to get the imported version of domain from opset imports
 // Returns -1 if requested domain is not found in the opset_imports
-int get_version_for_domain(const std::string& domain, const std::unordered_map<std::string, int>& opset_imports) {
+static int get_version_for_domain(
+    const std::string& domain,
+    const std::unordered_map<std::string, int>& opset_imports) {
   auto it = opset_imports.find(domain);
   if (it == opset_imports.end()) {
     return -1;
@@ -893,7 +889,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   print_warning_if_has_experimental(used_experimental_ops);
 }
 
-void check_model(const ModelProto& model, CheckerContext& ctx) {
+static void check_model(const ModelProto& model, CheckerContext& ctx) {
   if (!model.ir_version()) {
     fail_check("The model does not have an ir_version set properly.");
   }
@@ -1042,7 +1038,7 @@ std::string resolve_external_data_location(
   struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
   if (data_path.empty() || (data_path[0] != '#' && stat((data_path).c_str(), &buffer) != 0)) {
 #else
-  struct stat64 buffer; // All POSIX under glibc except APPLE and wasm have stat64
+  struct stat64 buffer{}; // All POSIX under glibc except APPLE and wasm have stat64
   if (data_path.empty() || (data_path[0] != '#' && stat64((data_path).c_str(), &buffer) != 0)) {
 #endif
     fail_check(
@@ -1065,7 +1061,7 @@ std::string resolve_external_data_location(
 #endif
 }
 
-std::set<std::string> experimental_ops = {
+static std::unordered_set<std::string> experimental_ops = {
     "ATen",
     "Affine",
     "ConstantFill",

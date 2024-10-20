@@ -6,6 +6,8 @@ from __future__ import annotations
 import os
 import tarfile
 
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+
 import onnx.checker
 import onnx.helper
 import onnx.shape_inference
@@ -20,29 +22,28 @@ class Extractor:
         self.vimap = self._build_name2obj_dict(self.graph.value_info)
 
     @staticmethod
-    def _build_name2obj_dict(objs):  # type: ignore
+    def _build_name2obj_dict(objs) -> dict:
         return {obj.name: obj for obj in objs}
 
-    def _collect_new_io_core(self, original_io, io_names_to_extract):  # type: ignore
+    def _collect_new_io_core(
+        self,
+        original_io: RepeatedCompositeFieldContainer[ValueInfoProto],
+        io_names_to_extract: list[str],
+    ) -> list[ValueInfoProto]:
         original_io_map = self._build_name2obj_dict(original_io)
-        original_io_names = set(original_io_map)
-        s_io_names_to_extract = set(io_names_to_extract)
-        io_names_to_keep = s_io_names_to_extract & original_io_names
-        new_io_names_to_add = s_io_names_to_extract - original_io_names
-
-        new_io_tensors = [original_io_map[name] for name in io_names_to_keep]
-        # activation become input or output
-        new_io_tensors.extend(self.vimap[name] for name in new_io_names_to_add)
-
-        # adjust sequence
-        new_io_tensors_map = self._build_name2obj_dict(new_io_tensors)
-        return [new_io_tensors_map[name] for name in io_names_to_extract]
+        new_io_tensors = []
+        for io_name_to_extract in io_names_to_extract:
+            if io_name_to_extract in original_io_map:
+                new_io_tensors.append(original_io_map[io_name_to_extract])
+            else:
+                new_io_tensors.append(self.vimap[io_name_to_extract])
+        return new_io_tensors  # same order as io_names_to_extract
 
     def _collect_new_inputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.input, names)  # type: ignore
+        return self._collect_new_io_core(self.graph.input, names)
 
     def _collect_new_outputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.output, names)  # type: ignore
+        return self._collect_new_io_core(self.graph.output, names)
 
     def _dfs_search_reachable_nodes(
         self,
@@ -61,26 +62,28 @@ class Extractor:
             reachable (set of int): The set of indexes to reachable nodes in `nodes`
             unreachable (set of int): The set of indexes to unreachable nodes in `nodes`
         """
-        # finish search at inputs
-        if node_output_name in graph_input_names:
-            return
+        # Use a stack to replace the recursion
+        stack = [node_output_name]
 
-        # find nodes connected to this output
-        nodes_to_search = [
-            index for index in unreachable if node_output_name in nodes[index].output
-        ]
+        while stack:
+            current_output_name = stack.pop()
 
-        # add nodes connected to this output to sets
-        for node_index in nodes_to_search:
-            reachable.add(node_index)
-            unreachable.remove(node_index)
+            # finish search at inputs
+            if current_output_name in graph_input_names:
+                continue
 
-        # recurse on inputs
-        for node_index in nodes_to_search:
-            for name in nodes[node_index].input:
-                self._dfs_search_reachable_nodes(
-                    name, graph_input_names, nodes, reachable, unreachable
-                )
+            # find nodes connected to this output
+            nodes_to_search = [
+                index
+                for index in unreachable
+                if current_output_name in nodes[index].output
+            ]
+
+            # add nodes connected to this output to sets
+            for node_index in nodes_to_search:
+                reachable.add(node_index)
+                unreachable.remove(node_index)
+                stack += nodes[node_index].input
 
     def _collect_reachable_nodes(
         self,
@@ -101,13 +104,15 @@ class Extractor:
 
     def _collect_referred_local_functions(
         self,
-        nodes,  # type: list[NodeProto]
-    ):  # type: (...) -> list[FunctionProto]
+        nodes: list[NodeProto],
+    ) -> list[FunctionProto]:
         # a node in a model graph may refer a function.
         # a function contains nodes, some of which may in turn refer a function.
         # we need to find functions referred by graph nodes and
         # by nodes used to define functions.
-        def find_referred_funcs(nodes, referred_local_functions):  # type: ignore
+        def find_referred_funcs(
+            nodes: list[NodeProto], referred_local_functions: list[FunctionProto]
+        ) -> list[NodeProto]:
             new_nodes = []  # type: list[NodeProto]
             for node in nodes:
                 # check if the node is a function op
@@ -201,6 +206,7 @@ def extract_model(
     input_names: list[str],
     output_names: list[str],
     check_model: bool = True,
+    infer_shapes: bool = True,
 ) -> None:
     """Extracts sub-model from an ONNX model.
 
@@ -210,30 +216,50 @@ def extract_model(
     which is defined by the input and output tensors, should not _cut through_ the
     subgraph that is connected to the _main graph_ as attributes of these operators.
 
+    Note: When the extracted model size is larger than 2GB, the extra data will be saved in "output_path.data".
+
     Arguments:
         input_path (str | os.PathLike): The path to original ONNX model.
         output_path (str | os.PathLike): The path to save the extracted ONNX model.
         input_names (list of string): The names of the input tensors that to be extracted.
         output_names (list of string): The names of the output tensors that to be extracted.
-        check_model (bool): Whether to run model checker on the extracted model.
+        check_model (bool): Whether to run model checker on the original model and the extracted model.
+        infer_shapes (bool): Whether to infer the shapes of the original model.
     """
     if not os.path.exists(input_path):
         raise ValueError(f"Invalid input model path: {input_path}")
     if not output_path:
         raise ValueError("Output model path shall not be empty!")
+    if not input_names:
+        raise ValueError("Input tensor names shall not be empty!")
     if not output_names:
         raise ValueError("Output tensor names shall not be empty!")
 
+    if len(input_names) != len(set(input_names)):
+        raise ValueError("Duplicate names found in the input tensor names.")
+    if len(output_names) != len(set(output_names)):
+        raise ValueError("Duplicate names found in the output tensor names.")
+
     if check_model:
         onnx.checker.check_model(input_path)
-    model = onnx.load(input_path)
-    if check_model:
-        model = onnx.shape_inference.infer_shapes(model)
+
+    if infer_shapes and os.path.getsize(input_path) > onnx.checker.MAXIMUM_PROTOBUF:
+        onnx.shape_inference.infer_shapes_path(input_path, output_path)
+        model = onnx.load(output_path)
+    else:
+        model = onnx.load(input_path)
+        if infer_shapes:
+            model = onnx.shape_inference.infer_shapes(model)
 
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)
 
-    onnx.save(extracted, output_path)
+    if extracted.ByteSize() > onnx.checker.MAXIMUM_PROTOBUF:
+        location = os.path.basename(output_path) + ".data"
+        onnx.save(extracted, output_path, save_as_external_data=True, location=location)
+    else:
+        onnx.save(extracted, output_path)
+
     if check_model:
         onnx.checker.check_model(output_path)
 
@@ -260,7 +286,7 @@ def _tar_members_filter(
                 f"The tarball member {member_path} in downloading model contains "
                 f"directory traversal sequence which may contain harmful payload."
             )
-        elif member.issym() or member.islnk():
+        if member.issym() or member.islnk():
             raise RuntimeError(
                 f"The tarball member {member_path} in downloading model contains "
                 f"symbolic links which may contain harmful payload."
