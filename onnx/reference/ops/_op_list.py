@@ -14,9 +14,7 @@ did not change the implementation.
 from __future__ import annotations
 
 import textwrap
-from typing import Any, Dict, List
-from typing import Optional as TOptional
-from typing import Union
+from typing import Any
 
 from onnx import FunctionProto, NodeProto, TypeProto
 from onnx.defs import get_schema, onnx_opset_version
@@ -26,7 +24,6 @@ from onnx.reference.op_run import (
     OpRun,
     RuntimeContextError,
     RuntimeImplementationError,
-    _split_class_name,
 )
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
 from onnx.reference.ops.op_abs import Abs
