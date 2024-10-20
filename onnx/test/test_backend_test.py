@@ -7,9 +7,7 @@ import itertools
 import os
 import platform
 import unittest
-from typing import Any, Sequence
-
-import numpy
+from typing import Any
 
 import onnx.backend.base
 import onnx.backend.test
@@ -68,12 +66,10 @@ class DummyBackend(onnx.backend.base.Backend):
     def run_node(
         cls,
         node: NodeProto,
-        inputs: Any,
-        device: str = "CPU",
-        outputs_info: Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None = None,
-        **kwargs: Any,  # noqa: ARG003
+        *args: Any,  # noqa: ARG003
+        **kwargs: dict[str, Any],  # noqa: ARG003
     ) -> None:
-        super().run_node(node, inputs)
+        super().run_node(node)
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker"
         )
