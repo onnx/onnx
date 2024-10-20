@@ -63,6 +63,8 @@ class Extractor:
         stack = [output_to_index_node[node_output_name]]
         while stack:
             current_index, current_node = stack.pop()
+            if current_index in reachable:
+                continue
             reachable.add(current_index)
             # finish search at graph_input_names
             if set(current_node.input) & set(graph_input_names):
