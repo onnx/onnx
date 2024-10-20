@@ -90,13 +90,15 @@ class Extractor:
 
     def _collect_referred_local_functions(
         self,
-        nodes,  # type: list[NodeProto]
-    ):  # type: (...) -> list[FunctionProto]
+        nodes: list[NodeProto],
+    ) -> list[FunctionProto]:
         # a node in a model graph may refer a function.
         # a function contains nodes, some of which may in turn refer a function.
         # we need to find functions referred by graph nodes and
         # by nodes used to define functions.
-        def find_referred_funcs(nodes, referred_local_functions):  # type: ignore
+        def find_referred_funcs(
+            nodes: list[NodeProto], referred_local_functions: list[FunctionProto]
+        ) -> list[NodeProto]:
             new_nodes = []  # type: list[NodeProto]
             for node in nodes:
                 # check if the node is a function op
@@ -275,7 +277,7 @@ def _tar_members_filter(
                 f"The tarball member {member_path} in downloading model contains "
                 f"directory traversal sequence which may contain harmful payload."
             )
-        elif member.issym() or member.islnk():
+        if member.issym() or member.islnk():
             raise RuntimeError(
                 f"The tarball member {member_path} in downloading model contains "
                 f"symbolic links which may contain harmful payload."
