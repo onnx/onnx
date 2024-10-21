@@ -237,6 +237,8 @@ def extract_model(
     if infer_shapes:
         onnx.shape_inference.infer_shapes(input_path, output_path=output_path)
         model = onnx.load(output_path)
+    else:
+        model = onnx.load(input_path)
 
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)
