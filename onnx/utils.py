@@ -111,10 +111,9 @@ class Extractor:
             node = queue.popleft()
             # check if the node is a function op
             if (node.op_type, node.domain) in function_map:
-                function = function_map[(node.op_type, node.domain)]
-                if function not in referred_local_functions:
-                    referred_local_functions.append(function)
-                    queue.extend(function.node)
+                function = function_map.pop((node.op_type, node.domain))
+                referred_local_functions.append(function)
+                queue.extend(function.node)
         # needs to be topologically sorted
         return referred_local_functions
 
