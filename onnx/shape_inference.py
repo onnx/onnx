@@ -10,6 +10,7 @@ complete.
 from __future__ import annotations
 
 import os
+import sys
 from typing import Sequence
 
 import onnx
@@ -17,11 +18,12 @@ import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
 from onnx import AttributeProto, FunctionProto, ModelProto, TypeProto
 
 
-def infer_shapes(
-    model: ModelProto | bytes,
+def infer_shapes(  # type: ignore[return]
+    model: ModelProto | bytes | str | os.PathLike,
     check_type: bool = False,
     strict_mode: bool = False,
     data_prop: bool = False,
+    output_path: str | os.PathLike = "",
 ) -> ModelProto:
     """Apply shape inference to the provided ModelProto.
 
@@ -32,68 +34,33 @@ def infer_shapes(
     bug in shape inference), and the result is unspecified.
 
     Arguments:
-        model: ModelProto.
+        model: ModelProto. If the model bytes size is larger than 2GB, function
+            should be called using model path.
+        output_path: Used only if `model` is a path. The original model path
+    is used if not specified.
         check_type: Checks the type-equality for input and output.
         strict_mode: Stricter shape inference, it will throw errors if any;
             Otherwise, simply stop if any error.
         data_prop: Enables data propagation for limited operators to perform shape computation.
 
     Returns:
-        (ModelProto) model with inferred shape information
+        (ModelProto) model with inferred shape information. Return None if `model` is a path.
     """
-    if isinstance(model, (ModelProto, bytes)):
-        model_str = model if isinstance(model, bytes) else model.SerializeToString()
-        inferred_model_str = C.infer_shapes(
-            model_str, check_type, strict_mode, data_prop
-        )
+    # If model is a path instead of ModelProto
+    if isinstance(model, (str, os.PathLike)):
+        model_path = os.fspath(model)
+        output_path = model_path if output_path == "" else os.fspath(output_path)
+        C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
+    else:
+        protobuf_string = model if isinstance(model, bytes) else model.SerializeToString()
+        # If the protobuf is larger than 2GB,
+        # remind users should use the model path to check
+        if sys.getsizeof(protobuf_string) > onnx.checker.MAXIMUM_PROTOBUF:
+            raise ValueError(
+                "This protobuf of onnx model is too large (>2GB). Call infer_shapes with model path instead."
+            )
+        inferred_model_str = C.infer_shapes(protobuf_string, check_type, strict_mode, data_prop)
         return onnx.load_from_string(inferred_model_str)
-    if isinstance(model, str):
-        raise TypeError(
-            "infer_shapes only accepts ModelProto or bytes,"
-            "you can use infer_shapes_path for the model path (String)."
-        )
-
-    raise TypeError(
-        f"infer_shapes only accepts ModelProto or bytes, incorrect type: {type(model)}"
-    )
-
-
-def infer_shapes_path(
-    model_path: str | os.PathLike,
-    output_path: str | os.PathLike = "",
-    check_type: bool = False,
-    strict_mode: bool = False,
-    data_prop: bool = False,
-) -> None:
-    """Take model path for shape_inference.
-
-    This function is the same as :func:`infer_shape` but supports >2GB models.
-    The function outputs the inferred model to the `output_path`. The original model path
-    is used if not specified.
-    """
-    if isinstance(model_path, ModelProto):
-        raise TypeError(
-            "infer_shapes_path only accepts model Path (String),"
-            "you can use infer_shapes for the ModelProto."
-        )
-    try:
-        model_path = os.fspath(model_path)
-    except TypeError as exp:
-        raise TypeError(
-            "infer_shapes_path only accepts model path as a string or PathLike, "
-            f"incorrect model path type: {type(model_path)}"
-        ) from exp
-    try:
-        output_path = os.fspath(output_path)
-    except TypeError as exp:
-        raise TypeError(
-            "infer_shapes_path only accepts output path as a string or PathLike, "
-            f"incorrect output path type: {type(output_path)}"
-        ) from exp
-
-    if output_path == "":
-        output_path = model_path
-    C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
 
 
 def infer_node_outputs(
@@ -117,22 +84,14 @@ def infer_node_outputs(
         passed_opset_imports = {opset.domain: opset.version for opset in opset_imports}
 
     # catch KeyError if node's input does not exist in input_types
-    passed_input_types = {
-        key: input_types[key].SerializeToString() for key in node.input if key != ""
-    }
+    passed_input_types = {key: input_types[key].SerializeToString() for key in node.input if key != ""}
     # input_types will also be used as outer_scope_value_types so do not filter by node's input here
     for key in input_types:
         if key not in passed_input_types:
             passed_input_types[key] = input_types[key].SerializeToString()
-    passed_input_data = {
-        key: input_data[key].SerializeToString()
-        for key in node.input
-        if key in input_data
-    }
+    passed_input_data = {key: input_data[key].SerializeToString() for key in node.input if key in input_data}
     passed_sparse_input_data = {
-        key: input_sparse_data[key].SerializeToString()
-        for key in node.input
-        if key in input_sparse_data
+        key: input_sparse_data[key].SerializeToString() for key in node.input if key in input_sparse_data
     }
 
     outputs = schema._infer_node_outputs(
