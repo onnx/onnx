@@ -49,41 +49,30 @@ class Extractor:
         self,
         node_output_name: str,
         graph_input_names: set[str],
-        nodes: list[NodeProto],
         reachable: set[int],
-        unreachable: set[int],
+        output_to_index: dict[str, int],
     ) -> None:
         """Helper function to find nodes which are connected to an output
 
         Arguments:
             node_output_name (str): The name of the output
             graph_input_names (set of string): The names of all inputs of the graph
-            nodes (list of nodes): The list of all nodes of the graph
             reachable (set of int): The set of indexes to reachable nodes in `nodes`
-            unreachable (set of int): The set of indexes to unreachable nodes in `nodes`
+            output_to_index (dict of str to int): The dictionary that maps output name to corresponding node index.
         """
-        # Use a stack to replace the recursion
         stack = [node_output_name]
-
         while stack:
             current_output_name = stack.pop()
-
             # finish search at inputs
             if current_output_name in graph_input_names:
                 continue
-
             # find nodes connected to this output
-            nodes_to_search = [
-                index
-                for index in unreachable
-                if current_output_name in nodes[index].output
-            ]
-
-            # add nodes connected to this output to sets
-            for node_index in nodes_to_search:
-                reachable.add(node_index)
-                unreachable.remove(node_index)
-                stack += nodes[node_index].input
+            if current_output_name in output_to_index:
+                index = output_to_index[current_output_name]
+                if index not in reachable:
+                    # add nodes connected to this output to sets
+                    reachable.add(index)
+                    stack += self.graph.node[index].input
 
     def _collect_reachable_nodes(
         self,
@@ -91,16 +80,18 @@ class Extractor:
         output_names: list[str],
     ) -> list[NodeProto]:
         _input_names = set(input_names)
-        nodes = list(self.graph.node)
         reachable: set[int] = set()
-        unreachable: set[int] = set(range(len(nodes)))
+        output_to_index: dict[str, int] = {}
+        for index, node in enumerate(self.graph.node):
+            for output_name in node.output:
+                assert output_name not in output_to_index  # output_name is unique
+                output_to_index[output_name] = index
         for name in output_names:
             self._dfs_search_reachable_nodes(
-                name, _input_names, nodes, reachable, unreachable
+                name, _input_names, reachable, output_to_index
             )
         # needs to be topologically sorted
-        nodes = [nodes[node_index] for node_index in sorted(reachable)]
-        return nodes
+        return [self.graph.node[index] for index in sorted(reachable)]
 
     def _collect_referred_local_functions(
         self,
