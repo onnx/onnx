@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import unittest
 
-# TODO: remove the following ignore after mypy upgrade in ONNX
 from shape_inference_test import TestShapeInferenceHelper
 
 import onnx.parser
@@ -54,7 +53,7 @@ class TestDataPropagation(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.INT32, (3, 4, 5)),
             ],
             data_prop=True,
-        )  # type: ignore
+        )
 
     def test_model_data_propagation(self) -> None:
         """Infer the shape of z by propagating the value of xshape."""
