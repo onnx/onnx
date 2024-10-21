@@ -53,28 +53,20 @@ def load_op(
             f"{', '.join(map(str, impl))}."
         )
     if version is None or len(impl) == 1:
-        cl = impl[None]
-    else:
-        best = -1
-        for v in impl:
-            if v is None:
-                continue
-            if best < v <= version:
-                best = v
-        if best == -1:
-            raise RuntimeError(
-                f"No implementation for operator {op_type!r} "
-                f"domain {domain!r} and version {version!r}, found "
-                f"{', '.join(map(str, impl))}."
-            )
-        cl = impl[best]
-    if cl is None:
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
-        raise ValueError(
-            f"Not registered implementation for operator {op_type!r}, "
-            f"domain {domain!r}, and {version!r} in\n{available}"
+        return impl[None]
+    best = -1
+    for v in impl:
+        if v is None:
+            continue
+        if best < v <= version:
+            best = v
+    if best == -1:
+        raise RuntimeError(
+            f"No implementation for operator {op_type!r} "
+            f"domain {domain!r} and version {version!r}, found "
+            f"{', '.join(map(str, impl))}."
         )
-    return cl
+    return impl[best]
 
 
 _registered_operators: dict[str, dict[int | None, type[OpRun]]] | None = None
