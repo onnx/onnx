@@ -31,16 +31,18 @@ def build_registered_operators_any_domain(
             continue
         if isinstance(class_type, type(build_registered_operators_any_domain)):
             continue
+        issub: bool = False
         try:
-            if issubclass(class_type, OpRun):
-                op_type, op_version = _split_class_name(class_name)
-                if op_type not in reg_ops:
-                    reg_ops[op_type] = {}
-                reg_ops[op_type][op_version] = class_type
+            issub = issubclass(class_type, OpRun)
         except TypeError as e:
             raise TypeError(
                 f"Unexpected variable type {class_type!r} and class_name={class_name!r}."
             ) from e
+        if issub:
+            op_type, op_version = _split_class_name(class_name)
+            if op_type not in reg_ops:
+                reg_ops[op_type] = {}
+            reg_ops[op_type][op_version] = class_type
     if not reg_ops:
         raise RuntimeError(
             "No registered operator. This error happens when no implementation "
