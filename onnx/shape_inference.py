@@ -34,13 +34,11 @@ def infer_shapes(  # type: ignore[return]
     bug in shape inference), and the result is unspecified.
 
     Arguments:
-        model: ModelProto. If the model bytes size is larger than 2GB, function
-            should be called using model path.
+        model: ModelProto. If the model bytes size is larger than 2GB, function should be called using model path.
         check_type: Checks the type-equality for input and output.
-        strict_mode: Stricter shape inference, it will throw errors if any;
-            Otherwise, simply stop if any error.
+        strict_mode: Stricter shape inference, it will throw errors if any; Otherwise, simply stop if any error.
         data_prop: Enables data propagation for limited operators to perform shape computation.
-        output_path: Used only if `model` is a path. The original model path is used if not specified.
+        output_path: Must provide `output_path` if `model` is a path.
 
     Returns:
         (ModelProto) model with inferred shape information. Return None if `model` is a path.
@@ -48,7 +46,9 @@ def infer_shapes(  # type: ignore[return]
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):
         model_path = os.fspath(model)
-        output_path = model_path if output_path == "" else os.fspath(output_path)
+        if output_path == "":
+            raise ValueError("output_path must be provided when input is a path.")
+        output_path = os.fspath(output_path)
         C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
     else:
         protobuf_string = (
