@@ -10,15 +10,16 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
-#include "onnx/onnx_pb.h"
 #include "onnx/shape_inference/implementation.h"
 
 using namespace ONNX_NAMESPACE::shape_inference;
 
 namespace ONNX_NAMESPACE {
 // onnx/defs/controlflow/old.cc
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 void ScanInferenceFunctionOpset8(InferenceContext& ctx);
 // onnx/defs/controlflow/defs.cc
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 void ScanInferenceFunction(InferenceContext& ctx);
 
 namespace Test {

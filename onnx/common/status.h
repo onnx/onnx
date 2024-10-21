@@ -14,13 +14,13 @@
 namespace ONNX_NAMESPACE {
 namespace Common {
 
-enum StatusCategory {
+enum class StatusCategory {
   NONE = 0,
   CHECKER = 1,
   OPTIMIZER = 2,
 };
 
-enum StatusCode {
+enum class StatusCode {
   OK = 0,
   FAIL = 1,
   INVALID_ARGUMENT = 2,
@@ -31,9 +31,9 @@ class Status {
  public:
   Status() noexcept = default;
 
-  Status(StatusCategory category, int code, const std::string& msg);
+  Status(StatusCategory category, StatusCode code, const std::string& msg);
 
-  Status(StatusCategory category, int code);
+  Status(StatusCategory category, StatusCode code);
 
   Status(const Status& other) {
     *this = other;
@@ -56,7 +56,7 @@ class Status {
 
   bool IsOK() const noexcept;
 
-  int Code() const noexcept;
+  StatusCode Code() const noexcept;
 
   StatusCategory Category() const noexcept;
 
@@ -76,10 +76,11 @@ class Status {
 
  private:
   struct State {
-    State(StatusCategory cat_, int code_, std::string msg_) : category(cat_), code(code_), msg(std::move(msg_)) {}
+    State(StatusCategory cat_, StatusCode code_, std::string msg_)
+        : category(cat_), code(code_), msg(std::move(msg_)) {}
 
     StatusCategory category = StatusCategory::NONE;
-    int code = 0;
+    StatusCode code{};
     std::string msg;
   };
 
