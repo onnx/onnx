@@ -17,14 +17,6 @@
 
 namespace ONNX_NAMESPACE {
 
-
-#ifdef _WIN32
-constexpr const char k_preferred_path_separator = '\\';
-#else // POSIX
-constexpr const char k_preferred_path_separator = '/';
-#endif
-
-#ifdef _WIN32
 inline std::wstring path_join(const std::wstring& origin, const std::wstring& append) {
   return (std::filesystem::path(origin) / std::filesystem::path(append)).wstring();
 }
