@@ -15,19 +15,10 @@
 #endif
 #include <windows.h>
 
+#include "onnx/checker.h"
+
 namespace ONNX_NAMESPACE {
 
-
-#ifdef _WIN32
-constexpr const char k_preferred_path_separator = '\\';
-#else // POSIX
-constexpr const char k_preferred_path_separator = '/';
-#endif
-
-#ifdef _WIN32
-inline std::wstring path_join(const std::wstring& origin, const std::wstring& append) {
-  return (std::filesystem::path(origin) / std::filesystem::path(append)).wstring();
-}
 inline std::wstring utf8str_to_wstring(const std::string& utf8str, bool try_decode = false) {
   if (utf8str.empty()) {
     return std::wstring();
