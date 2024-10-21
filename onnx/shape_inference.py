@@ -36,12 +36,11 @@ def infer_shapes(  # type: ignore[return]
     Arguments:
         model: ModelProto. If the model bytes size is larger than 2GB, function
             should be called using model path.
-        output_path: Used only if `model` is a path. The original model path
-    is used if not specified.
         check_type: Checks the type-equality for input and output.
         strict_mode: Stricter shape inference, it will throw errors if any;
             Otherwise, simply stop if any error.
         data_prop: Enables data propagation for limited operators to perform shape computation.
+        output_path: Used only if `model` is a path. The original model path is used if not specified.
 
     Returns:
         (ModelProto) model with inferred shape information. Return None if `model` is a path.
@@ -52,14 +51,18 @@ def infer_shapes(  # type: ignore[return]
         output_path = model_path if output_path == "" else os.fspath(output_path)
         C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
     else:
-        protobuf_string = model if isinstance(model, bytes) else model.SerializeToString()
+        protobuf_string = (
+            model if isinstance(model, bytes) else model.SerializeToString()
+        )
         # If the protobuf is larger than 2GB,
         # remind users should use the model path to check
         if sys.getsizeof(protobuf_string) > onnx.checker.MAXIMUM_PROTOBUF:
             raise ValueError(
                 "This protobuf of onnx model is too large (>2GB). Call infer_shapes with model path instead."
             )
-        inferred_model_str = C.infer_shapes(protobuf_string, check_type, strict_mode, data_prop)
+        inferred_model_str = C.infer_shapes(
+            protobuf_string, check_type, strict_mode, data_prop
+        )
         return onnx.load_from_string(inferred_model_str)
 
 
@@ -84,14 +87,22 @@ def infer_node_outputs(
         passed_opset_imports = {opset.domain: opset.version for opset in opset_imports}
 
     # catch KeyError if node's input does not exist in input_types
-    passed_input_types = {key: input_types[key].SerializeToString() for key in node.input if key != ""}
+    passed_input_types = {
+        key: input_types[key].SerializeToString() for key in node.input if key != ""
+    }
     # input_types will also be used as outer_scope_value_types so do not filter by node's input here
     for key in input_types:
         if key not in passed_input_types:
             passed_input_types[key] = input_types[key].SerializeToString()
-    passed_input_data = {key: input_data[key].SerializeToString() for key in node.input if key in input_data}
+    passed_input_data = {
+        key: input_data[key].SerializeToString()
+        for key in node.input
+        if key in input_data
+    }
     passed_sparse_input_data = {
-        key: input_sparse_data[key].SerializeToString() for key in node.input if key in input_sparse_data
+        key: input_sparse_data[key].SerializeToString()
+        for key in node.input
+        if key in input_sparse_data
     }
 
     outputs = schema._infer_node_outputs(
