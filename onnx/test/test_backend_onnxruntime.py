@@ -88,7 +88,7 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
         return False
 
     @classmethod
-    def prepare(
+    def prepare(  # type: ignore[override]
         cls, model: onnx.ModelProto, device: str = "CPU", **kwargs: Any
     ) -> InferenceSessionBackendRep:
         del kwargs  # Unused

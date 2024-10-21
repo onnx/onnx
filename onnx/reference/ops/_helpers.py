@@ -12,8 +12,8 @@ from onnx.reference.op_run import OpRun, _split_class_name
 
 def build_registered_operators_any_domain(
     module_context: dict[str, Any],
-) -> dict[str, dict[int | None, OpRun]]:
-    reg_ops: dict[str, dict[int | None, OpRun]] = {}
+) -> dict[str, dict[int | None, type[OpRun]]]:
+    reg_ops: dict[str, dict[int | None, type[OpRun]]] = {}
     for class_name, class_type in module_context.items():
         if class_name.startswith("_") or class_name in {
             "Any",
@@ -32,16 +32,15 @@ def build_registered_operators_any_domain(
         if isinstance(class_type, type(build_registered_operators_any_domain)):
             continue
         try:
-            issub = issubclass(class_type, OpRun)
+            if issubclass(class_type, OpRun):
+                op_type, op_version = _split_class_name(class_name)
+                if op_type not in reg_ops:
+                    reg_ops[op_type] = {}
+                reg_ops[op_type][op_version] = class_type
         except TypeError as e:
             raise TypeError(
                 f"Unexpected variable type {class_type!r} and class_name={class_name!r}."
             ) from e
-        if issub:
-            op_type, op_version = _split_class_name(class_name)
-            if op_type not in reg_ops:
-                reg_ops[op_type] = {}
-            reg_ops[op_type][op_version] = class_type
     if not reg_ops:
         raise RuntimeError(
             "No registered operator. This error happens when no implementation "

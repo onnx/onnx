@@ -693,7 +693,7 @@ def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
         array_flat = np.append(array_flat, np.array([0]))
 
     arr = subbyte.float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
-    return arr.astype(np.uint8)  # type: ignore[no-any-return]
+    return arr.astype(np.uint8)
 
 
 def make_tensor(
@@ -726,7 +726,7 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     # Check number of vals specified equals tensor size
-    expected_size = 1
+    expected_size: float = 1
     if raw:
         # NumPy doesn't have BFLOAT16. TENSOR_TYPE_MAP maps it to float32, which has the wrong itemsize.
         if data_type == TensorProto.BFLOAT16:
@@ -740,7 +740,7 @@ def make_tensor(
             expected_size = 1
         # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
         elif data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
-            expected_size = 0.5  # type: ignore[assignment]
+            expected_size = 0.5
         else:
             expected_size = np_dtype.itemsize
 
@@ -850,16 +850,17 @@ def make_sequence(
 
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
+    attribute: Sequence | None = None
     if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
+        attribute = sequence.sparse_tensor_values
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values  # type: ignore[assignment]
+        attribute = sequence.sequence_values
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values  # type: ignore[assignment]
+        attribute = sequence.map_values
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values  # type: ignore[assignment]
+        attribute = sequence.optional_values
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
@@ -894,7 +895,7 @@ def make_map(
         map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
         map_proto.keys.extend(keys)
-    map_proto.values.CopyFrom(values)  # type: ignore[arg-type]
+    map_proto.values.CopyFrom(values)
     return map_proto
 
 
@@ -910,16 +911,17 @@ def make_optional(
 
     if elem_type == OptionalProto.UNDEFINED:
         return optional
+    attribute: google.protobuf.message.Message | None = None
     if elem_type == OptionalProto.TENSOR:
         attribute = optional.tensor_value
     elif elem_type == OptionalProto.SPARSE_TENSOR:
-        attribute = optional.sparse_tensor_value  # type: ignore[assignment]
+        attribute = optional.sparse_tensor_value
     elif elem_type == OptionalProto.SEQUENCE:
-        attribute = optional.sequence_value  # type: ignore[assignment]
+        attribute = optional.sequence_value
     elif elem_type == OptionalProto.MAP:
-        attribute = optional.map_value  # type: ignore[assignment]
+        attribute = optional.map_value
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = optional.optional_value  # type: ignore[assignment]
+        attribute = optional.optional_value
     else:
         raise TypeError("The element type in the input optional is not supported.")
 
@@ -988,7 +990,7 @@ def make_attribute(
                 (GraphProto, AttributeProto.GRAPHS),
                 (TypeProto, AttributeProto.TYPE_PROTOS),
             ):
-                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
+                if all(issubclass(t, exp_t) for t in types):
                     attr_type = exp_enum
                     break
             if attr_type is None:
@@ -1389,7 +1391,7 @@ def printable_type(t: TypeProto) -> str:
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
             else:
                 s += ", scalar"
-        return s  # type: ignore[no-any-return]
+        return s
     if t.WhichOneof("value") is None:
         return ""
     return f"Unknown type {t.WhichOneof('value')}"

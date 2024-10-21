@@ -51,7 +51,7 @@ def float32x2_to_4bitx2(
     """
     i8_high = float32_to_4bit_unpacked(val_high, signed)
     i8_low = float32_to_4bit_unpacked(val_low, signed)
-    return i8_high << 4 | i8_low & 0x0F  # type: ignore[operator]
+    return i8_high << 4 | i8_low & 0x0F
 
 
 def unpack_4bitx2(
@@ -84,7 +84,9 @@ def unpack_4bitx2(
 def unpack_single_4bitx2(
     x: np.ndarray | np.dtype | float, signed: bool
 ) -> tuple[np.ndarray, np.ndarray]:
-    unpack_signed = lambda x: np.where((x >> 3) == 0, x, x | 0xF0)  # noqa: E731
+    def unpack_signed(x):
+        return np.where((x >> 3) == 0, x, x | 0xF0)
+
     """Unpack a single byte 4bitx2 to two 4 bit elements
     Args:
         x: Input data
@@ -137,4 +139,4 @@ def float32x2_to_float4e2m1x2(val_low: np.ndarray, val_high: np.ndarray) -> np.n
     """
     i8_high = float32_to_float4e2m1_unpacked(val_high)
     i8_low = float32_to_float4e2m1_unpacked(val_low)
-    return i8_high << 4 | i8_low & 0x0F  # type: ignore[operator]
+    return i8_high << 4 | i8_low & 0x0F
