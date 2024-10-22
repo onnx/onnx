@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import tarfile
+from collections import deque
 
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
@@ -49,41 +50,30 @@ class Extractor:
         self,
         node_output_name: str,
         graph_input_names: set[str],
-        nodes: list[NodeProto],
         reachable: set[int],
-        unreachable: set[int],
+        output_to_index: dict[str, int],
     ) -> None:
         """Helper function to find nodes which are connected to an output
 
         Arguments:
             node_output_name (str): The name of the output
             graph_input_names (set of string): The names of all inputs of the graph
-            nodes (list of nodes): The list of all nodes of the graph
             reachable (set of int): The set of indexes to reachable nodes in `nodes`
-            unreachable (set of int): The set of indexes to unreachable nodes in `nodes`
+            output_to_index (dict of str to int): The dictionary that maps output name to corresponding node index.
         """
-        # Use a stack to replace the recursion
         stack = [node_output_name]
-
         while stack:
             current_output_name = stack.pop()
-
             # finish search at inputs
             if current_output_name in graph_input_names:
                 continue
-
             # find nodes connected to this output
-            nodes_to_search = [
-                index
-                for index in unreachable
-                if current_output_name in nodes[index].output
-            ]
-
-            # add nodes connected to this output to sets
-            for node_index in nodes_to_search:
-                reachable.add(node_index)
-                unreachable.remove(node_index)
-                stack += nodes[node_index].input
+            if current_output_name in output_to_index:
+                index = output_to_index[current_output_name]
+                if index not in reachable:
+                    # add nodes connected to this output to sets
+                    reachable.add(index)
+                    stack += self.graph.node[index].input
 
     def _collect_reachable_nodes(
         self,
@@ -91,16 +81,18 @@ class Extractor:
         output_names: list[str],
     ) -> list[NodeProto]:
         _input_names = set(input_names)
-        nodes = list(self.graph.node)
         reachable: set[int] = set()
-        unreachable: set[int] = set(range(len(nodes)))
+        output_to_index: dict[str, int] = {}
+        for index, node in enumerate(self.graph.node):
+            for output_name in node.output:
+                assert output_name not in output_to_index  # output_name is unique
+                output_to_index[output_name] = index
         for name in output_names:
             self._dfs_search_reachable_nodes(
-                name, _input_names, nodes, reachable, unreachable
+                name, _input_names, reachable, output_to_index
             )
         # needs to be topologically sorted
-        nodes = [nodes[node_index] for node_index in sorted(reachable)]
-        return nodes
+        return [self.graph.node[index] for index in sorted(reachable)]
 
     def _collect_referred_local_functions(
         self,
@@ -110,31 +102,19 @@ class Extractor:
         # a function contains nodes, some of which may in turn refer a function.
         # we need to find functions referred by graph nodes and
         # by nodes used to define functions.
-        def find_referred_funcs(
-            nodes: list[NodeProto], referred_local_functions: list[FunctionProto]
-        ) -> list[NodeProto]:
-            new_nodes = []  # type: list[NodeProto]
-            for node in nodes:
-                # check if the node is a function op
-                match_function = next(
-                    (
-                        f
-                        for f in self.model.functions
-                        if f.name == node.op_type and f.domain == node.domain
-                    ),
-                    None,
-                )
-                if match_function and match_function not in referred_local_functions:
-                    referred_local_functions.append(match_function)
-                    new_nodes.extend(match_function.node)
-
-            return new_nodes
-
-        referred_local_functions = []  # type: list[FunctionProto]
-        new_nodes = find_referred_funcs(nodes, referred_local_functions)
-        while new_nodes:
-            new_nodes = find_referred_funcs(new_nodes, referred_local_functions)
-
+        function_map: dict[tuple[str, str], FunctionProto] = {}
+        for function in self.model.functions:
+            function_map[(function.name, function.domain)] = function
+        referred_local_functions: list[FunctionProto] = []
+        queue = deque(nodes)
+        while queue:
+            node = queue.popleft()
+            # check if the node is a function op
+            if (node.op_type, node.domain) in function_map:
+                function = function_map.pop((node.op_type, node.domain))
+                referred_local_functions.append(function)
+                queue.extend(function.node)
+        # needs to be topologically sorted
         return referred_local_functions
 
     def _collect_reachable_tensors(
@@ -142,11 +122,9 @@ class Extractor:
         nodes: list[NodeProto],
     ) -> tuple[list[TensorProto], list[ValueInfoProto]]:
         all_tensors_names: set[str] = set()
-
         for node in nodes:
             all_tensors_names.update(node.input)
             all_tensors_names.update(node.output)
-
         initializer = [self.wmap[t] for t in self.wmap if t in all_tensors_names]
         value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_names]
         len_sparse_initializer = len(self.graph.sparse_initializer)
@@ -174,7 +152,6 @@ class Extractor:
         graph = onnx.helper.make_graph(
             nodes, name, inputs, outputs, initializer=initializer, value_info=value_info
         )
-
         meta = {
             "ir_version": self.model.ir_version,
             "opset_imports": self.model.opset_import,
@@ -196,7 +173,6 @@ class Extractor:
         model = self._make_model(
             nodes, inputs, outputs, initializer, value_info, local_functions
         )
-
         return model
 
 
