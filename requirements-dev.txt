@@ -1,6 +1,6 @@
 build
-jupyter; python_version<"3.13"
-nbval; python_version<"3.13"
+jupyter
+nbval
 numpy
 parameterized
 protobuf
