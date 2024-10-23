@@ -19,9 +19,9 @@ class Extractor:
     def __init__(self, model: ModelProto) -> None:
         self.model = model
         self.graph = self.model.graph
-        self.outmap = self._build_output_dict(self.graph)
         self.wmap = self._build_name2obj_dict(self.graph.initializer)
         self.vimap = self._build_name2obj_dict(self.graph.value_info)
+        self.outmap = self._build_output_dict(self.graph)
 
     @staticmethod
     def _build_name2obj_dict(objs) -> dict:
