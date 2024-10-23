@@ -12,8 +12,8 @@ from onnx.reference.op_run import OpRun, _split_class_name
 
 def build_registered_operators_any_domain(
     module_context: dict[str, Any],
-) -> dict[str, dict[int | None, OpRun]]:
-    reg_ops: dict[str, dict[int | None, OpRun]] = {}
+) -> dict[str, dict[int | None, type[OpRun]]]:
+    reg_ops: dict[str, dict[int | None, type[OpRun]]] = {}
     for class_name, class_type in module_context.items():
         if class_name.startswith("_") or class_name in {
             "Any",
@@ -31,6 +31,7 @@ def build_registered_operators_any_domain(
             continue
         if isinstance(class_type, type(build_registered_operators_any_domain)):
             continue
+        issub: bool = False
         try:
             issub = issubclass(class_type, OpRun)
         except TypeError as e:
