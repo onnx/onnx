@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <iostream>
 #include <map>
 #include <memory>
 #include <string>
@@ -79,7 +80,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
   void debug(const std::string& str) const {
     if (DEBUG)
-      std::cerr << str << std::endl;
+      std::cerr << str << '\n';
   }
 
   void assertInVersionRange(int64_t version) const {
