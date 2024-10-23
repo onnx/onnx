@@ -6053,6 +6053,33 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"data": data, "indices": indices, "updates": updates})
         assert_allclose(y, got[0])
 
+    def test_sequence_axis(self):
+        model = self._load_model("""
+        <
+            ir_version: 8,
+            opset_import: [ "" : 21 ]
+        >
+        preprocess (seq(float[X, Y]) images) => (float[N, 5, 5] preprocessed)
+        {
+            seq = SequenceMap<
+                body=preprocess_single(float[X, Y] image) => (float[5, 5] resized)
+                {
+                    size = Constant<value=int64[2] {5, 5}>()
+
+                    resized = Resize<
+                        mode=\"linear\",
+                        axes=[0, 1]
+                    >(image, , , size)
+                }
+            >(images)
+            preprocessed = ConcatFromSequence<axis=0, new_axis=1>(seq)
+        }
+        """)
+        evaluator = ReferenceEvaluator(model)
+        imageIn = np.zeros((10, 10), dtype=np.dtype("float32"))
+        output = evaluator.run(["preprocessed"], {"images": [imageIn]})[0]
+        self.assertEqual((1, 5, 5), output.shape)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
