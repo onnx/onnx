@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from onnx.reference import astype
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 def compute_binarizer(x, threshold=None):
-    return ((x > threshold).astype(x.dtype),)
+    return (astype(x > threshold, x.dtype),)
 
 
 class Binarizer(OpRunAiOnnxMl):

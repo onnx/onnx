@@ -29,6 +29,7 @@ from onnx.numpy_helper import (
     unpacked_float4e2m1_to_float32,
 )
 from onnx.onnx_pb import TensorProto
+from onnx.reference import astype
 from onnx.reference.op_run import OpRun
 
 
@@ -42,7 +43,7 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
             el = bfloat16_to_float32(xr[i])
             xf[i] = el
         dtype = tensor_dtype_to_np_dtype(to)
-        return xf.astype(dtype).reshape(x.shape)
+        return astype(xf, dtype).reshape(x.shape)
 
     f8 = {
         (float8e4m3fn, "e4m3fn", TensorProto.FLOAT8E4M3FN): float8e4m3_to_float32,
@@ -69,10 +70,10 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
                 el = cvt(xr[i])
                 xf[i] = el
             dtype = tensor_dtype_to_np_dtype(to)
-            return xf.astype(dtype).reshape(x.shape)
+            return astype(xf, dtype).reshape(x.shape)
 
     if to == TensorProto.BFLOAT16:
-        xf = x.astype(np.float32).ravel()
+        xf = astype(x, np.float32).ravel()
         y = np.empty(xf.shape, dtype=bfloat16).ravel()
         for i in range(y.shape[0]):
             el = float32_to_bfloat16(xf[i], truncate=True)  # type: ignore[assignment]
@@ -88,10 +89,10 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
             if to == tensor_type:
                 return x
             to_type = tensor_dtype_to_np_dtype(to)
-            return x.astype(to_type)
+            return astype(x, to_type)
 
         if to == tensor_type:
-            xf = x.astype(np.float32).ravel()
+            xf = astype(x, np.float32).ravel()
             y = np.empty(xf.shape, dtype=np_type).ravel()
             for i in range(y.shape[0]):
                 el = subbyte.float32_to_4bit_unpacked(xf[i], signed=signed)
@@ -121,7 +122,7 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
     }
     for dt, (npdt, cvt) in f8back.items():
         if to == dt:
-            xf = x.astype(np.float32).ravel()
+            xf = astype(x, np.float32).ravel()
             y = np.empty(xf.shape, dtype=npdt).ravel()
             for i in range(y.shape[0]):
                 el = cvt(xf[i])  # type: ignore[assignment]
@@ -133,20 +134,20 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
             return x
         res = unpacked_float4e2m1_to_float32(x)
         if to == TensorProto.FLOAT:
-            return res.astype(np.float32)
+            return astype(res, np.float32)
         elif to == TensorProto.FLOAT16:
-            return res.astype(np.float16)
+            return astype(res, np.float16)
 
     if to == TensorProto.FLOAT4E2M1:
-        xf = x.astype(np.float32)
-        y = subbyte.float32_to_float4e2m1_unpacked(xf).astype(float4e2m1)
+        xf = astype(x, np.float32)
+        y = astype(subbyte.float32_to_float4e2m1_unpacked(xf), float4e2m1)
         return y.reshape(x.shape)
 
     if to == TensorProto.STRING:
-        return x.astype(np.str_)
+        return astype(x, np.str_)
 
     dtype = tensor_dtype_to_np_dtype(to)
-    return x.astype(dtype)
+    return astype(x, dtype)
 
 
 class Cast_1(OpRun):
