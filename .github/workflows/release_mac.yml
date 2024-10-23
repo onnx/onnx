@@ -45,7 +45,7 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
 
-    - name: Build wheel and install
+    - name: Build wheel, create source-dist and install
       env:
         CC: "clang"
         CXX: "clang++"
@@ -60,12 +60,19 @@ jobs:
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1
         fi
-        python -m build --wheel
+        python -m build --wheel --sdist
 
-    - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
+    - name: Upload wheel artifacts
+      uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.target-architecture }}
         path: dist/*.whl
+
+    - name: Upload source distribution
+      uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
+      with:
+        name: sdist-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.target-architecture }}
+        path: dist/*.tar.gz
 
   test:
     needs: build
