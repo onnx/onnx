@@ -79,6 +79,10 @@ def infer_shapes_path(
     The function outputs the inferred model to the `output_path`. The original model path
     is used if not specified.
     """
+    raise DeprecationWarning(
+        "This function will be removed in version v1.19.0."
+        "Please use infer_shapes instead."
+    )
     if isinstance(model_path, ModelProto):
         raise TypeError(
             "infer_shapes_path only accepts model Path (String),"
