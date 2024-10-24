@@ -30,6 +30,7 @@ else()
 endif()
 
 option(ONNX_BUILD_PYTHON "Build Python binaries" ${ONNX_BUILD_PYTHON_DEFAULT})
+option(ONNX_BUILD_CUSTOM_PROTOBUF "Build and use ONNX's own protobuf" OFF)
 option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
@@ -140,6 +141,7 @@ if(ONNX_BUILD_TESTS)
   set(googletest_STATIC_LIBRARIES GTest::gtest)
 endif()
 
+if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
 if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
   # Sometimes we need to use protoc compiled for host architecture while linking
   # libprotobuf against target architecture. See https://github.com/caffe2/caffe
@@ -240,13 +242,12 @@ else()
           utf8_range::utf8_validity
         )
       endif()
-    else()
-      set(Build_Protobuf ON)
     endif()
-  else()  # Protobuf_PROTOC_EXECUTABLE not found.
-    set(Build_Protobuf ON)
   endif()
-  if (Build_Protobuf)
+endif()
+endif()
+if(NOT ONNX_PROTOC_EXECUTABLE)
+    set(Build_Protobuf ON)
     set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
     set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
 
@@ -286,9 +287,6 @@ else()
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
     set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
-  endif()
-  message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
-  message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 endif()
 
 # abseil build would fail if ONNX_WERROR is on.
