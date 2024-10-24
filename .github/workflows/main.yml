@@ -70,14 +70,14 @@ jobs:
           python --version
           cmake --version
 
-      # 2024.10.15: This step can be adjusted or even deleted if we decide to use a higher G++ or protobuf version. 
+      # 2024.10.15: This step can be adjusted or even deleted if we decide to use a higher G++ or protobuf version.
       # With the current protobuf version, g++13 does not compile due to missing headers
       - name: Show versions g++
         if: startsWith(matrix.os,'ubuntu')
         run: |
           sudo apt install g++-11
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 12
-          g++ --version          
+          g++ --version
 
       - name: Install external protobuf - Linux
         if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'ubuntu')
@@ -104,7 +104,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-release.txt
-          python -m pip install protobuf==3.20.2
+          python -m pip install protobuf==5.28.3
           git submodule update --init --recursive
 
 
