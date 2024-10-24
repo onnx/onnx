@@ -21,10 +21,20 @@ class Extractor:
         self.graph = self.model.graph
         self.wmap = self._build_name2obj_dict(self.graph.initializer)
         self.vimap = self._build_name2obj_dict(self.graph.value_info)
+        self.outmap = self._build_output_dict(self.graph)
 
     @staticmethod
     def _build_name2obj_dict(objs) -> dict:
         return {obj.name: obj for obj in objs}
+
+    @staticmethod
+    def _build_output_dict(graph) -> dict[str, int]:
+        output_to_index: dict[str, int] = {}
+        for index, node in enumerate(graph.node):
+            for output_name in node.output:
+                assert output_name not in output_to_index  # output_name is unique
+                output_to_index[output_name] = index
+        return output_to_index
 
     def _collect_new_io_core(
         self,
@@ -51,7 +61,6 @@ class Extractor:
         node_output_name: str,
         graph_input_names: set[str],
         reachable: set[int],
-        output_to_index: dict[str, int],
     ) -> None:
         """Helper function to find nodes which are connected to an output
 
@@ -59,7 +68,6 @@ class Extractor:
             node_output_name (str): The name of the output
             graph_input_names (set of string): The names of all inputs of the graph
             reachable (set of int): The set of indexes to reachable nodes in `nodes`
-            output_to_index (dict of str to int): The dictionary that maps output name to corresponding node index.
         """
         stack = [node_output_name]
         while stack:
@@ -68,8 +76,8 @@ class Extractor:
             if current_output_name in graph_input_names:
                 continue
             # find nodes connected to this output
-            if current_output_name in output_to_index:
-                index = output_to_index[current_output_name]
+            if current_output_name in self.outmap:
+                index = self.outmap[current_output_name]
                 if index not in reachable:
                     # add nodes connected to this output to sets
                     reachable.add(index)
@@ -82,15 +90,8 @@ class Extractor:
     ) -> list[NodeProto]:
         _input_names = set(input_names)
         reachable: set[int] = set()
-        output_to_index: dict[str, int] = {}
-        for index, node in enumerate(self.graph.node):
-            for output_name in node.output:
-                assert output_name not in output_to_index  # output_name is unique
-                output_to_index[output_name] = index
         for name in output_names:
-            self._dfs_search_reachable_nodes(
-                name, _input_names, reachable, output_to_index
-            )
+            self._dfs_search_reachable_nodes(name, _input_names, reachable)
         # needs to be topologically sorted
         return [self.graph.node[index] for index in sorted(reachable)]
 
