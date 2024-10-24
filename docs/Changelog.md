@@ -29079,8 +29079,8 @@ This version of the operator has been available since version 23 of the default 
 
         # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
         if rotary_embedding_dim == 0:
-            # If rotary_embedding_dim not provided, perform full rotation by using head_size * 2
-            rotary_embedding_dim = cos_cache.shape[1] * 2
+            # If rotary_embedding_dim not provided, perform full rotation by using head_size
+            rotary_embedding_dim = head_size * 2
         x_rotate = input[:, :, :, :rotary_embedding_dim]
         x_not_rotate = input[:, :, :, rotary_embedding_dim:]
         rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
@@ -29123,9 +29123,9 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>interleaved</tt> : int</dt>
 <dd>Rotate using interleaved pattern. Default value is 0 (False).</dd>
 <dt><tt>num_heads</tt> : int</dt>
-<dd>Number of attention heads. Default value is 0. Must use with `rotary_embedding_dim`. </dd>
+<dd>Number of attention heads. Must use with `rotary_embedding_dim`. </dd>
 <dt><tt>rotary_embedding_dim</tt> : int</dt>
-<dd>Rotary embedding dimension used to apply partial rotary embeddings. Default value is 0. </dd>
+<dd>Rotary embedding dimension used to apply partial rotary embeddings.</dd>
 </dl>
 
 #### Inputs

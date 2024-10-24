@@ -2849,8 +2849,8 @@ Rotary embeddings are defined using the following algorithm:
 
       # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
       if rotary_embedding_dim == 0:
-          # If rotary_embedding_dim not provided, perform full rotation by using head_size * 2
-          rotary_embedding_dim = cos_cache.shape[1] * 2
+          # If rotary_embedding_dim not provided, perform full rotation by using head_size
+          rotary_embedding_dim = head_size * 2
       x_rotate = input[:, :, :, :rotary_embedding_dim]
       x_not_rotate = input[:, :, :, rotary_embedding_dim:]
       rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
@@ -2894,11 +2894,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               AttributeProto::INT,
               OPTIONAL_VALUE)
         .Attr("rotary_embedding_dim",
-              "Rotary embedding dimension used to apply partial rotary embeddings. Default value is 0. ",
+              "Rotary embedding dimension used to apply partial rotary embeddings.",
               AttributeProto::INT,
               OPTIONAL_VALUE)
         .Attr("num_heads",
-              "Number of attention heads. Default value is 0. Must use with `rotary_embedding_dim`. ",
+              "Number of attention heads. Must use with `rotary_embedding_dim`. ",
               AttributeProto::INT,
               OPTIONAL_VALUE)
         .Input(0,
@@ -2931,6 +2931,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"}, "Constrain input and output types to float tensors.")
         .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+          if (input_shape.dim_size() < 3) {
+            return; // Input tensor should have at least three dimensions.
+          }
+
+          auto* num_heads_attr = ctx.getAttribute("num_heads");
+          if ((input_shape.dim_size() == 3) && (num_heads_attr == nullptr)) {
+            fail_shape_inference("Input shape is 3D, num_heads attribute must be provided");
+          }
+
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           propagateShapeFromInputToOutput(ctx, 0, 0);
         })
@@ -2960,9 +2970,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               // There are two cases for the rotary embedding dimension:
               // 1. Complete rotation: rotary embedding dimension defaults to head_size, rotary_embedding_dim = cos.shape[3] * 2 or head_size
               // 2. Partial rotation: rotary embedding dimension is provided, rotary_embedding_dim = rotary_embedding_dim
-              builder.Add("HeadSizeHalf = Shape <start = 1, end = 2> (cos_cache)") // cos_cache.shape[1] or head_size // 2
+              builder.Add("HeadSize = Shape <start = 3, end = 4> (XReshaped)") // head_size
                 .Const1D("Two1D", (int64_t)2)
-                .Add("HeadSize = Mul(HeadSizeHalf, Two1D)") // cos.shape[1] * 2 or head_size
                 .Const1D("RotaryEmbedDimParam", rotary_embedding_dim)
                 .Const1D("Zero1D", (int64_t)0)
                 .Add("RotaryDimCond = Greater(RotaryEmbedDimParam, Zero1D)")

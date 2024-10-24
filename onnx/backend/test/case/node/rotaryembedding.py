@@ -34,8 +34,8 @@ def compute_rotary_embedding(
 
     # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
     if rotary_embedding_dim == 0:
-        # If rotary_embedding_dim not provided, perform full rotation by using head_size * 2
-        rotary_embedding_dim = cos_cache.shape[1] * 2
+        # If rotary_embedding_dim not provided, perform full rotation by using head_size
+        rotary_embedding_dim = head_size
     x_rotate = input[:, :, :, :rotary_embedding_dim]
     x_not_rotate = input[:, :, :, rotary_embedding_dim:]
     rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
