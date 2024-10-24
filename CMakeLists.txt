@@ -76,8 +76,8 @@ endif()
 
 if(MSVC)
   if(NOT ONNX_DISABLE_EXCEPTIONS)
-    string(APPEND CMAKE_CXX_FLAGS " /EHsc")
-    string(APPEND CMAKE_C_FLAGS " /EHsc")
+    string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
+    string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
 endif()
 
@@ -252,8 +252,8 @@ else()
     # ABSL_ROOT_DIR is required by Protobuf.
     set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
     message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v28.2/protobuf-28.2.tar.gz)
-    set(ProtobufSHA1 d1ab1adb95890d7621efe79debff3996d6c174f4)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v28.3/protobuf-28.3.tar.gz)
+    set(ProtobufSHA1 269759bed3ef7fa7f04648bacdcfd3c26e3e50a8)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -263,7 +263,7 @@ else()
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf Abseil)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "5.28.2")
+    set(Protobuf_VERSION "5.28.3")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
