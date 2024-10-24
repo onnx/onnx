@@ -26,7 +26,7 @@ Every PR
 
   * (1) When the release CIs will run:
     * After a PR has been merged into main/rel-* branch
-    * Run weekly (Sunday midnight) and release Python wheel to [onnx-weekly](https://pypi.org/project/onnx-weekly/) package on PyPI.
+    * Run weekly (Sunday midnight) and publish Python wheel to [onnx-weekly](https://pypi.org/project/onnx-weekly/) package on PyPI [2024.10.23: The current consideration is to delete the packages on pypi only due to running out of disk space. Starting with the oldest packages.]
     * Any PR targeting rel-* branch
     * To manually run them, add a PR label "run release CIs" (only maintainers have permission).
   * (2) Minimum supported versions are listed [here](/requirements.txt).
