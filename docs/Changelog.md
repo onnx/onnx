@@ -28982,6 +28982,71 @@ This version of the operator has been available since version 23 of the default 
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
+### <a name="RMSNormalization-23"></a>**RMSNormalization-23**</a>
+
+  This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
+        The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
+        where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+        the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
+        described by the following equations.
+        ```
+        XSquared = Mul(X, X)
+        XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+        RMS = Sqrt(XSquaredMean)
+        RMSEps = Add(RMS, epsilon)
+        SqrtRMS = Sqrt(RMSEps)
+        Normalized = Div(X, SqrtRMS)
+        ```
+        where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+        The second stage then scales the outcome of the first stage using:
+        ```
+        Y= Mul(Normalized, Scale)
+        ```
+        Let `d[i]` indicate the i-th dimension of `X`.
+        If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+        the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+        `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+        (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
+        for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The output of the layer for which the skip connection is being created. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels. The root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
+<dt><tt>scale</tt> : V</dt>
+<dd>Scale tensor. Shape is the normalized shape ([axis, .., Dn]) or a scalar (which will be broadcasted to the normalized shape.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : V</dt>
+<dd>Output data tensor. Same shape as X</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input X type to float tensors.</dd>
+<dt><tt>V</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output Y and scale type to float tensors.</dd>
+</dl>
+
 ### <a name="Reshape-23"></a>**Reshape-23**</a>
 
   Reshape the input tensor similar to numpy.reshape.
@@ -29304,6 +29369,133 @@ This version of the operator has been available since version 23 of the default 
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
+</dl>
+
+### <a name="SkipLayerNormalization-23"></a>**SkipLayerNormalization-23**</a>
+
+  Applies LayerNormalization to an expanded skip connection as described in the paper https://arxiv.org/pdf/2105.07205v1
+  The expanded skip connection is defined as follows:
+  ```
+  xSkip = (scaling_factor * input) + F(input) + Bias
+  ```
+  where,
+  F(input): denotes the output of a particular layer.
+  scaling_factor: a modulating scalar that adjusts the importance of the skip.
+  Bias: a bias term added to the output of the skip connection.
+
+  LayerNorm is then applied to xSkip as follows:
+  ```
+  output = LayerNormalization(xSkip)
+  ```
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The dimension for layer normalization. If rank(X) is r, axis' allowed range is [-r, r). Negative value means counting dimensions from the back.</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>scaling_factor</tt> : int (default is 1)</dt>
+<dd>Modulating scalar by which the skip input is multiplied.</dd>
+</dl>
+
+#### Inputs (3 - 5)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The output of the layer for which the skip connection is being created. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels.</dd>
+<dt><tt>S</tt> : T</dt>
+<dd>Skip input with same shape as X. This is the input to the layer for which the skip connection is being created.</dd>
+<dt><tt>gamma</tt> : T</dt>
+<dd>1D tensor representing scale input of layer normalization with shape of the spatial dimension along which layer normalization is applied.</dd>
+<dt><tt>beta</tt> (optional) : T</dt>
+<dd>1D tensor representing bias input of layer normalization with shape of the spatial dimension along which layer normalization is applied.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>1D bias tensor for the skip connection with shape of the spatial dimension along which layer normalization is applied.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor with same shape as X</dd>
+<dt><tt>InputSkipBiasSum</tt> (optional) : T</dt>
+<dd>Sum of the input and skip inputs (and bias if it exists). Same shape as X</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16)</dt>
+<dd>Constrain input and output types to float or half tensors.</dd>
+<dt><tt>U</tt> : tensor(float)</dt>
+<dd>Constrain mean and inv_std_var to float tensors.</dd>
+</dl>
+
+### <a name="SkipRMSNormalization-23"></a>**SkipRMSNormalization-23**</a>
+
+  Applies RMSNormalization to an expanded skip connection similar to SkipLayerNormalization
+  The expanded skip connection is defined as follows:
+  ```
+  xSkip = (scaling_factor * input) + F(input) + Bias
+  ```
+  where,
+  F(input): denotes the output of a particular layer.
+  scaling_factor: a modulating scalar that adjusts the importance of the skip.
+  Bias: a bias term added to the output of the skip connection.
+
+  RMSNorm is then applied to xSkip as follows:
+  ```
+  output = RMSNormalization(xSkip)
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The dimension for rms normalization. If rank(X) is r, axis' allowed range is [-r, r). Negative value means counting dimensions from the back.</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>scaling_factor</tt> : int (default is 1)</dt>
+<dd>Modulating scalar by which the skip input is multiplied.</dd>
+</dl>
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The output of the layer for which the skip connection is being created. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels.</dd>
+<dt><tt>S</tt> : T</dt>
+<dd>Skip input with same shape as X. This is the input to the layer for which the skip connection is being created.</dd>
+<dt><tt>gamma</tt> : T</dt>
+<dd>1D tensor representing scale input of rms normalization with shape of the spatial dimension along which rms normalization is applied.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>1D bias tensor for the skip connection with shape of the spatial dimension along which rms normalization is applied.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor with same shape as X</dd>
+<dt><tt>InputSkipBiasSum</tt> (optional) : T</dt>
+<dd>Sum of the input and skip inputs (and bias if it exists). Same shape as X</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16)</dt>
+<dd>Constrain input and output types to float or half tensors.</dd>
+<dt><tt>U</tt> : tensor(float)</dt>
+<dd>Constrain mean and inv_std_var to float tensors.</dd>
 </dl>
 
 ### <a name="Squeeze-23"></a>**Squeeze-23**</a>
