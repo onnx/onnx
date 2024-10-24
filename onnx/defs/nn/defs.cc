@@ -3275,4 +3275,198 @@ ONNX_OPERATOR_SET_SCHEMA(
           schema.BuildFunction(functionProto);
           return true;
         }));
+
+static const char* ScalarDotProductAttention_ver23_doc = R"DOC(
+
+Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScalarDotProductAttention,
+    23,
+    OpSchema()
+        .SetDoc(ScalarDotProductAttention_ver23_doc)
+        .Attr(
+            "scale",
+            "Scaling factor applied prior to softmax. Default value is 1/sqrt(head_size)",
+            AttributeProto::FLOAT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "is_causal",
+            "If set to true, the attention masking is a lower triangular matrix when the mask is a square matrix. "
+            "The attention masking has the form of the upper left causal bias due to the alignment.",
+            AttributeProto::INT,
+            true)
+        .Attr(
+            "q_num_heads",
+            "Number of heads of query. Must use with for 3D inputs of Q, K and V. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "kv_num_heads",
+            "Number of heads of key and value. Must use with for 3D inputs of Q, K and V. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Input(
+            0,
+            "Q",
+            "Query tensor. "
+            "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, head_size) or 3D tensor with shape (batch_size, q_sequence_length, q_hidden_size). "
+            "For cases with a 3D input tensor, q_hidden_size = q_num_heads * head_size",
+            "T")
+        .Input(
+            1,
+            "K",
+            "Key tensor. "
+            "4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, head_size) or 3D tensor with shape (batch_size, kv_sequence_length, k_hidden_size). "
+            "For cases with a 3D input tensor, k_hidden_size = kv_num_heads * head_size",
+            "T")
+        .Input(
+            2,
+            "V",
+            "Value tensor. "
+            "4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size) or 3D tensor with shape (batch_size, kv_sequence_length, v_hidden_size). "
+            "For cases with a 3D input tensor, v_hidden_size = kv_num_heads * v_head_size",
+            "T")
+        .Input(
+            3,
+            "attn_mask",
+            "Attention mask. "
+            "Shape must be broadcastable to "
+            "4D tensor with shape (batch_size, kv_num_heads, q_sequence_length, kv_sequence_length) or "
+            "3D tensor with shape (batch_size, q_sequence_length, kv_sequence_length). "
+            "Two types of masks are supported. A boolean mask where a value of True indicates that the element should take part in attention. "
+            "Also supports a float mask of the same type as query, key, value that is added to the attention score.",
+            "U")
+        .Input(
+            4,
+            "past_key",
+            "past state cache for key with shape (batch_size, kv_num_heads, max_sequence_length, head_size)",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            5,
+            "past_value",
+            "past state cache for value with shape (batch_size, kv_num_heads, max_sequence_length, v_head_size)",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "Y",
+            "The output tensor . "
+            "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, v_head_size) or 3D tensor with shape (batch_size, q_sequence_length, hidden_size). "
+            "For cases with a 3D input tensor, hidden_size = q_num_heads * v_head_size",
+            "T")
+        .Output(
+            1,
+            "present_key",
+            "Updated key cache with shape (batch_size, kv_num_heads, max_sequence_length, head_size).",
+            "T")
+        .Output(
+            2,
+            "present_value",
+            "Updated value cache with shape (batch_size, kv_num_heads, max_sequence_length, v_head_size).",
+            "T")
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .TypeConstraint("U", OpSchema::all_non_complex_numeric_types_plus_bool_ir4(), "Constrain output 'mask' types to boolean tensors and input types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          int64_t kv_sequence_length = -1;
+          if (hasInputShape(ctx, 0)) {
+            auto& query_shape = getInputShape(ctx, 0);
+            auto& query_dims = query_shape.dim();
+            if ((query_dims.size() != 3) || (query_dims.size() != 4)) {
+              fail_shape_inference("Inputs 0 (query) shall be 3 or 4 dimensions");
+            }
+
+            ONNX_NAMESPACE::TensorShapeProto output_shape;
+            *output_shape.add_dim() = query_dims[0];  // batch_size
+            *output_shape.add_dim() = query_dims[1];  // num_heads for 4D, sequence_length for 3D
+
+            if (hasInputShape(ctx, 1)) {
+              auto& key_shape = getInputShape(ctx, 1);
+              auto& key_dims = key_shape.dim();
+              if ((key_dims.size() != 3) || (key_dims.size() != 4)) {
+                fail_shape_inference("Inputs 1 (key) shall be 3 or 4 dimensions");
+              }
+            }
+
+            if (hasInputShape(ctx, 2)) {
+              auto& value_shape = getInputShape(ctx, 2);
+              auto& value_dims = value_shape.dim();
+              if ((value_dims.size() != 3) || (value_dims.size() != 4)) {
+                fail_shape_inference("Inputs 2 (value) shall be 3 or 4 dimensions");
+              }
+
+              // Update Output Shape for 4D inputs
+              // Input 0 (query) has shape (batch_size, q_num_heads, q_sequence_length, head_size)
+              // Input 1 (key) has shape (batch_size, kv_num_heads, kv_sequence_length, head_size)
+              // Input 2 (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
+              // Output 0 has shape (batch_size, q_num_heads, q_sequence_length, v_head_size)
+              if (value_dims.size() == 4 && query_dims.size() == 4) {
+                kv_sequence_length = value_dims[2].dim_value();
+                *output_shape.add_dim() = query_dims[2];  // sequence_length
+                *output_shape.add_dim() = value_dims[3];  // head_size
+                updateOutputShape(ctx, 0, output_shape);
+              }
+
+              // Update Output Shape for 3D inputs
+              // Input 0 (query) has shape (batch_size, q_sequence_length, q_hidden_size), q_hidden_size = q_num_heads * head_size
+              // Input 1 (key) has shape (batch_size, kv_sequence_length, k_hidden_size), k_hidden_size = kv_num_heads * head_size
+              // Input 2 (value) has shape (batch_size, kv_sequence_length, v_hidden_size), v_hidden_size = kv_num_heads * v_head_size
+              // Output 0 has shape (batch_size, q_sequence_length, hidden_size), hidden_size = q_num_heads * v_head_size
+              if (value_dims.size() == 3 && query_dims.size() == 3) {
+                kv_sequence_length = value_dims[1].dim_value();
+                auto* num_heads_attr = ctx.getAttribute("q_num_heads");
+                if (num_heads_attr == nullptr) {
+                  fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+                }
+                int64_t num_heads = num_heads_attr->i();
+                int64_t hidden_size = value_dims[2].dim_value();
+                output_shape.add_dim()->set_dim_value(hidden_size / num_heads);
+                updateOutputShape(ctx, 0, output_shape);
+              }
+            }
+          }
+
+          if (ctx.getNumOutputs() > 1) {  // has present output
+            // copy the type from query to present key and value
+            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+            propagateElemTypeFromInputToOutput(ctx, 0, 2);
+
+            if (hasInputShape(ctx, 4)) {
+              auto& past_shape = getInputShape(ctx, 4);
+              auto& past_dims = past_shape.dim();
+
+              // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
+              if (past_dims.size() != 4) {
+                fail_shape_inference("The past_key input shall be 4 dimensions");
+              }
+
+              if (kv_sequence_length > 0 && past_dims[2].has_dim_value()) {
+                int64_t total_sequence_length = kv_sequence_length + past_dims[2].dim_value();
+
+                ONNX_NAMESPACE::TensorShapeProto present_shape;
+                for (auto& dim : past_dims) {
+                  *present_shape.add_dim() = dim;
+                }
+
+                // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
+                present_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+
+                updateOutputShape(ctx, 1, present_shape);
+                updateOutputShape(ctx, 2, present_shape);
+              }
+            }
+          }
+
+        })
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+
+              return true;
+            }));
+
 } // namespace ONNX_NAMESPACE
