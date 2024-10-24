@@ -21290,8 +21290,7 @@ expect(
 ### <a name="RMSNormalization"></a><a name="rmsnormalization">**RMSNormalization**</a>
 
   This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
-        The overall computation can be split into two stages. The first stage is standardization, which makes the
-        normalized elements have zero mean and unit variances. The root mean squared norm is taken over the last D dimensions,
+        The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
         where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
         the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
         described by the following equations.
@@ -21304,7 +21303,7 @@ expect(
         Normalized = Div(X, SqrtRMS)
         ```
         where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
-        The second stage then scales and shifts the outcome of the first stage using:
+        The second stage then scales the outcome of the first stage using:
         ```
         Y= Mul(Normalized, Scale)
         ```
@@ -21326,8 +21325,6 @@ This version of the operator has been available since version 23 of the default 
 <dd>The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).</dd>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>stash_type</tt> : int (default is 1)</dt>
-<dd>Type of Mean and InvStdDev. This also specifies stage one's computation precision.</dd>
 </dl>
 
 #### Inputs
@@ -21336,7 +21333,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>X</tt> : T</dt>
 <dd>The output of the layer for which the skip connection is being created. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels. The root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
 <dt><tt>scale</tt> : V</dt>
-<dd>Scale tensor.</dd>
+<dd>Scale tensor. Shape is the normalized shape ([axis, .., Dn]) or a scalar (which will be broadcasted to the normalized shape.</dd>
 </dl>
 
 #### Outputs
@@ -21351,8 +21348,6 @@ This version of the operator has been available since version 23 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input X type to float tensors.</dd>
-<dt><tt>U</tt> : tensor(float), tensor(double)</dt>
-<dd>Constrain mean and inv_std_var to be float tensors.</dd>
 <dt><tt>V</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output Y and scale type to float tensors.</dd>
 </dl>

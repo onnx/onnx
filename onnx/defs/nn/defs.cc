@@ -2832,8 +2832,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* RMSNormalization_ver23_doc = R"DOC(
       This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
-      The overall computation can be split into two stages. The first stage is standardization, which makes the
-      normalized elements have zero mean and unit variances. The root mean squared norm is taken over the last D dimensions,
+      The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
       where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
       the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
       described by the following equations.
@@ -2846,7 +2845,7 @@ static const char* RMSNormalization_ver23_doc = R"DOC(
       Normalized = Div(X, SqrtRMS)
       ```
       where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
-      The second stage then scales and shifts the outcome of the first stage using:
+      The second stage then scales the outcome of the first stage using:
       ```
       Y= Mul(Normalized, Scale)
       ```
@@ -2871,11 +2870,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
             AttributeProto::FLOAT, 1e-5f)
-        .Attr(
-            "stash_type",
-            "Type of Mean and InvStdDev. This also specifies stage one's computation precision.",
-            AttributeProto::INT,
-            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
         .AllowUncheckedAttributes()
         .Input(0,
                "X",
@@ -2886,7 +2880,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                "T")
         .Input(1,
                "scale",
-               "Scale tensor.",
+               "Scale tensor. Shape is the normalized shape ([axis, .., Dn]) or a scalar (which will be broadcasted to "
+               "the normalized shape.",
                "V")
         .Output(0,
                 "Y",
@@ -2896,10 +2891,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input X type to float tensors.")
-        .TypeConstraint(
-            "U",
-            {"tensor(float)", "tensor(double)"},
-            "Constrain mean and inv_std_var to be float tensors.")
         .TypeConstraint(
             "V",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
@@ -2957,44 +2948,28 @@ ONNX_OPERATOR_SET_SCHEMA(
                 tp.add_dims(1);
                 return tp;
               };
-              // The treatment of "axis" is different in "RMSNormalization" and in Reduction operations.
-              // This complicates the function definition, requiring reshaping inputs/outputs.
-              // Input X shape: [d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]
-              // This is treated as a 2D shape [d[0] * ... * d[axis-1], d[axis] * ... * d[rank-1]]
-              // Normalization is applied to the second dimension.
-              // Output Y has same shape as X
-              // Outputs InvStdDev have shape: [d[0], ..., d[axis-1], 1, ..., 1]
+
               FunctionBuilder builder(functionProto);
               builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
                   .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
                   .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
                   .Add("Rank = Size (XShape)") // rank of input tensor: scalar
-                  .Add("Zero1D = Constant()", "value", mktensor(0)) // [0] : 1D tensor
                   .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
-                  .Add("PrefixShape = Slice (XShape, Zero1D, Axis1D)") // [d[0], ..., d[axis-1]]
                   .Add(
                       axis >= 0 // number of axes that are reduced =
-                          ? "NumReducedAxes = Sub (Rank, Axis1D)" // [rank - axis]: 1D tensor
-                          : "NumReducedAxes = Neg (Axis1D)") // [-axis] : 1D tensor
-                  .Add(
-                      "SuffixShape = ConstantOfShape (NumReducedAxes)",
-                      "value",
-                      mktensor(1)) // [1, ..., 1] for reduced axes
-                  .Add("ReducedShape = Concat <axis = 0> (PrefixShape, SuffixShape)") // [d[0], ..., d[axis-1], 1, ..., 1]
-                  .Add("X2D = Flatten (X)", "axis", axis)
-                  .Add("XU = Cast (X2D)", "to", U);
-              builder.Add("Axes_1 = Constant()", "value", mktensor(1))
-                    .Add("XSquared = Mul (XU, XU)")
-                    .Add("XSquaredMean = ReduceMean (XSquared, Axes_1)")
+                          ? "PosAxis1D = Identity (Axis1D)" // [axis]: 1D tensor
+                          : "PosAxis1D = Sub (Rank, Axis1D)") // [rank - axis] : 1D tensor
+                  .Add("ReduceAxes = Range(PosAxis1D, Rank)")
+                  .Add("XU = Cast (X)", "to", U);
+              builder.Add("XSquared = Mul (XU, XU)")
+                    .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
                     .Add("RMS = Sqrt (XSquaredMean)")
                     .Add("RMSPlusEpsilon = Add (RMS, Epsilon)")
                     .Add("SqrtRMS = Sqrt (RMSPlusEpsilon)")
                     .Add("Normalized = Div (XU, SqrtRMS)")
-                    .Add("NormalizedT = Cast (Normalized)", "to", T)
-                    .Add("Scale2D = Flatten <axis = 0> (Scale)")
-                    .Add("Scaled = Mul (NormalizedT, Scale2D)");
+                    .Add("NormalizedT = Cast (Normalized)", "to", T);
+              builder.Add("Y = Mul (NormalizedT, Scale)");
 
-              builder.Add("Y = Reshape (Scaled, XShape)");
               schema.BuildFunction(functionProto);
               return true;
           }));

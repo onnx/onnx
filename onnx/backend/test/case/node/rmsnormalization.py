@@ -20,26 +20,18 @@ def _rms_normalization(X, W, axis=-1, epsilon=1e-5):  # type: ignore
         # which means the last axis.
         axis = axis + rank
 
-    # Parameter used to convert N-D tensor RMS normalization to equivalent 2-D matirx operations.
-    row_number = np.prod(shape[:axis]).astype(np.int64)
-    col_number = np.prod(shape[axis:]).astype(np.int64)
-
-    # After reshaping input tensor X into a matrix,
-    # RMS normalization is equivalent to conducting
-    # standardization on each column vector (s.t. each
-    # column has zero mean and unit variance).
-    x_mat = np.reshape(X, (row_number, col_number))
     # This computes RMS for every x_mat's column.
-    x_squared = np.power(x_mat, 2)
-    x_squared_mean = np.sum(x_squared, axis=1, keepdims=True) / col_number
+    x_squared = np.power(X, 2)
+    x_squared_mean = np.mean(x_squared, axis=tuple(range(axis, len(shape))), keepdims=True)
     rms = np.sqrt(x_squared_mean)
+    # epsilon adjustment to avoid divide-by-zero.
     rms_plus_epsilon = rms + epsilon
     rms_plus_epsilon_sqrt = np.sqrt(rms_plus_epsilon)
     rms_reciprocal = np.reciprocal(rms_plus_epsilon_sqrt)
-    # Standardization step. y_mat is zero-mean and unit-variance.
-    y_mat = x_mat * rms_reciprocal
-    # Apply affine transform on normalization outcome. W is linear coefficient.
-    Y = np.reshape(y_mat, shape) * W
+
+    y_mat = X * rms_reciprocal
+    # W is linear coefficient.
+    Y = y_mat * W
 
     return Y
 
