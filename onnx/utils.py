@@ -130,14 +130,10 @@ class Extractor:
         value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_names]
         len_sparse_initializer = len(self.graph.sparse_initializer)
         if len_sparse_initializer != 0:
-            raise ValueError(
-                f"len_sparse_initializer is {len_sparse_initializer}, it must be 0."
-            )
+            raise ValueError(f"len_sparse_initializer is {len_sparse_initializer}, it must be 0.")
         len_quantization_annotation = len(self.graph.quantization_annotation)
         if len_quantization_annotation != 0:
-            raise ValueError(
-                f"len_quantization_annotation is {len_quantization_annotation}, it must be 0."
-            )
+            raise ValueError(f"len_quantization_annotation is {len_quantization_annotation}, it must be 0.")
         return initializer, value_info
 
     def _make_model(
@@ -150,9 +146,7 @@ class Extractor:
         local_functions: list[FunctionProto],
     ) -> ModelProto:
         name = "Extracted from {" + self.graph.name + "}"
-        graph = onnx.helper.make_graph(
-            nodes, name, inputs, outputs, initializer=initializer, value_info=value_info
-        )
+        graph = onnx.helper.make_graph(nodes, name, inputs, outputs, initializer=initializer, value_info=value_info)
         meta = {
             "ir_version": self.model.ir_version,
             "opset_imports": self.model.opset_import,
@@ -171,12 +165,10 @@ class Extractor:
         nodes = self._collect_reachable_nodes(input_names, output_names)
         initializer, value_info = self._collect_reachable_tensors(nodes)
         local_functions = self._collect_referred_local_functions(nodes)
-        model = self._make_model(
-            nodes, inputs, outputs, initializer, value_info, local_functions
-        )
+        model = self._make_model(nodes, inputs, outputs, initializer, value_info, local_functions)
         return model
 
-    def _bfs_search_nodes_at_layer(self) -> dict[int, list[int]]:
+    def _bfs_collect_nodes_at_layer(self) -> dict[int, list[int]]:
         visited = set()
         nodes_at_layer: dict[int, list[int]] = defaultdict(list)
         queue: deque[tuple[int, int]] = deque()
@@ -196,19 +188,13 @@ class Extractor:
                     if index not in visited:
                         queue.append((index, current_layer + 1))
 
-        nodes_at_layer = {
-            len(nodes_at_layer) - 1 - k: v for k, v in nodes_at_layer.items()
-        }
+        nodes_at_layer = {len(nodes_at_layer) - 1 - k: v for k, v in nodes_at_layer.items()}
 
         return nodes_at_layer
 
     def split_model(self, layer: int) -> tuple[ModelProto, ModelProto]:
-        nodes_at_layer = self._bfs_search_nodes_at_layer()
-        outputs_M1 = [
-            output
-            for index in nodes_at_layer[layer]
-            for output in self.graph.node[index].output
-        ]
+        nodes_at_layer = self._bfs_collect_nodes_at_layer()
+        outputs_M1 = [output for index in nodes_at_layer[layer] for output in self.graph.node[index].output]
         assert len(outputs_M1) == len(set(outputs_M1))
         model_1 = self.extract_model(
             input_names=[input.name for input in self.graph.input],
@@ -285,9 +271,7 @@ def extract_model(
         onnx.checker.check_model(output_path)
 
 
-def _tar_members_filter(
-    tar: tarfile.TarFile, base: str | os.PathLike
-) -> list[tarfile.TarInfo]:
+def _tar_members_filter(tar: tarfile.TarFile, base: str | os.PathLike) -> list[tarfile.TarInfo]:
     """Check that the content of ``tar`` will be extracted safely
 
     Args:
@@ -316,9 +300,7 @@ def _tar_members_filter(
     return result
 
 
-def _extract_model_safe(
-    model_tar_path: str | os.PathLike, local_model_with_data_dir_path: str | os.PathLike
-) -> None:
+def _extract_model_safe(model_tar_path: str | os.PathLike, local_model_with_data_dir_path: str | os.PathLike) -> None:
     """Safely extracts a tar file to a specified directory.
 
     This function ensures that the extraction process mitigates against
@@ -335,13 +317,9 @@ def _extract_model_safe(
     with tarfile.open(model_tar_path) as model_with_data_zipped:
         # Mitigate tarball directory traversal risks
         if hasattr(tarfile, "data_filter"):
-            model_with_data_zipped.extractall(
-                path=local_model_with_data_dir_path, filter="data"
-            )
+            model_with_data_zipped.extractall(path=local_model_with_data_dir_path, filter="data")
         else:
             model_with_data_zipped.extractall(
                 path=local_model_with_data_dir_path,
-                members=_tar_members_filter(
-                    model_with_data_zipped, local_model_with_data_dir_path
-                ),
+                members=_tar_members_filter(model_with_data_zipped, local_model_with_data_dir_path),
             )
