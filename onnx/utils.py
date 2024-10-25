@@ -182,7 +182,6 @@ class Extractor:
         queue: deque[tuple[str, int]] = deque()
 
         queue.extend([(output.name, 0) for output in self.graph.output])
-
         while queue:
             current_output_name, current_layer = queue.popleft()
             if current_output_name in self.outmap:
@@ -200,11 +199,12 @@ class Extractor:
         nodes_at_layer = {
             len(nodes_at_layer) - 1 - k: v for k, v in nodes_at_layer.items()
         }
-
         return nodes_at_layer
 
-    def split_model(self, layer: int) -> tuple[ModelProto, ModelProto]:
+    def split_model(self, ratio: float) -> tuple[ModelProto, ModelProto]:
+        assert 0 < ratio < 1
         nodes_at_layer = self._bfs_collect_nodes_at_layer()
+        layer = round(len(nodes_at_layer) * ratio)
         outputs_M1 = [
             output
             for index in nodes_at_layer[layer]
