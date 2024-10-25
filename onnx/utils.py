@@ -204,7 +204,7 @@ class Extractor:
 
         return nodes_at_depth
 
-    def split_at_depth(self, depth: int) -> tuple[ModelProto, ModelProto]:
+    def split_model(self, depth: int) -> tuple[ModelProto, ModelProto]:
         nodes_at_depth = self._find_nodes_at_layer()
         outputs_M1 = [
             output
