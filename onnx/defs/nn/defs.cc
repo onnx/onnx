@@ -3565,7 +3565,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               //gqa
 
               // Describe logic
+              builder.Add("KTranspose = <perm = [0, 1 ,3, 2]> Transpose(KReshaped)")
+                .Add("QKAttnWeight = MatMul(QReshaped, KTranspose)")
+                .Add("QKAttnWeightWithBias = Mul(QKAttnWeight, ScaleFactorF)")
+                .Add("AttnWeightSoftmax = Softmax(QKAttnWeightWithBias)")
+                .Add("Y = MatMul(AttnWeightSoftmax, VReshaped)");
 
+              schema.BuildFunction(functionProto);
               return true;
             }));
 
