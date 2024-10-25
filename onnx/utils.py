@@ -176,7 +176,7 @@ class Extractor:
         )
         return model
 
-    def _find_nodes_at_layer(self):
+    def _find_nodes_at_layer(self) -> dict[int, list[int]]:
         visited = set()
         nodes_at_depth: dict[int, list[int]] = {}
         queue: deque[tuple[int, int]] = deque()
