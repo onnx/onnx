@@ -3294,10 +3294,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "is_causal",
-            "If set to true, the attention masking is a lower triangular matrix when the mask is a square matrix. "
+            "If set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. "
             "The attention masking has the form of the upper left causal bias due to the alignment.",
             AttributeProto::INT,
-            true)
+            static_cast<int64_t>(0))
         .Attr(
             "q_num_heads",
             "Number of heads of query. Must use with for 3D inputs of Q, K and V. ",
@@ -3334,7 +3334,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "attn_mask",
             "Attention mask. "
             "Shape must be broadcastable to "
-            "4D tensor with shape (batch_size, kv_num_heads, q_sequence_length, kv_sequence_length) or "
             "3D tensor with shape (batch_size, q_sequence_length, kv_sequence_length). "
             "Two types of masks are supported. A boolean mask where a value of True indicates that the element should take part in attention. "
             "Also supports a float mask of the same type as query, key, value that is added to the attention score.",
@@ -3379,6 +3378,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto& query_dims = query_shape.dim();
             if ((query_dims.size() != 3) || (query_dims.size() != 4)) {
               fail_shape_inference("Inputs 0 (query) shall be 3 or 4 dimensions");
+            }
+
+            if (query_dims.size() == 3) {
+              auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+              if (q_num_heads_attr == nullptr) {
+                fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+              }
+              auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+              if (kv_num_heads_attr == nullptr) {
+                fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+              }
             }
 
             ONNX_NAMESPACE::TensorShapeProto output_shape;
@@ -3431,6 +3441,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
+          // Check is_causal
+
+          // Check GQA conditions
+
           if (ctx.getNumOutputs() > 1) {  // has present output
             // copy the type from query to present key and value
             propagateElemTypeFromInputToOutput(ctx, 0, 1);
@@ -3465,6 +3479,92 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+              // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads> (Q, K, V, attn_mask, past_key, past_value)
+              // => (Y, present_key?, present_value?)
+              auto* tp = ctx.getInputType(0);
+              if ((tp == nullptr) || (!tp->has_tensor_type()))
+                return false;
+              int64_t T = tp->tensor_type().elem_type();
+
+              auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+                auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+                tp.add_dims(1);
+                return tp;
+              };
+
+              // If shape is 3D, q_num_heads and kv_num_heads is provided,
+              // for 4D cases, set num_heads to zero for reshape purposes
+              auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+              int64_t q_num_heads = (q_num_heads_attr != nullptr) ? q_num_heads_attr->i() : 0;
+              auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+              int64_t kv_num_heads = (kv_num_heads_attr != nullptr) ? kv_num_heads_attr->i() : 0;
+
+              FunctionBuilder builder(functionProto);
+              // Set input tensors (Q, K, V) to the correct shape if input shape is 3D
+              // NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
+              // NewShapeK  (batch_size, kv_num_heads, kv_sequence_length, head_size)
+              // NewShapeV (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
+              builder.Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
+                .Const1D("QNumHeads", q_num_heads) // q_num_heads
+                .Const1D("KVNumHeads", kv_num_heads) // kv_num_heads
+                .Add("QSeqLen = Shape <start = 1, end = 2> (Q)") // q_sequence_length
+                .Add("KVSeqLen = Shape <start = 1, end = 2> (K)") // kv_sequence_length
+                .Const1D("NegOne", (int64_t)(-1)) // head_size, inferred from other dimensions
+                .Add("QNewShape = Concat <axis = 0> (BatchSize, QNumHeads, QSeqLen, NegOne)")
+                .Add("KVNewShape = Concat <axis = 0> (BatchSize, KVNumHeads, KVSeqLen, NegOne)")
+                .Add("QReshaped = Reshape (Q, QNewShape)")
+                .Add("KReshaped = Reshape (K, KVNewShape)")
+                .Add("VReshaped = Reshape (V, KVNewShape)");
+
+              // Calculate scaling factor if scale attribute not provided
+              auto scale_attr = ctx.getAttribute("scale");
+              float scale = (scale_attr != nullptr) ? scale_attr->f() : (float)0;
+              builder.Add("QKHiddenSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
+                .Add("SqrtHiddenSize = Sqrt(QKHiddenSize)")
+                .Const1D("One1D", (int64_t)(1))
+                .Add("CalculatedScale = Div(One1D, SqrtHiddenSize)")
+                .Const("ScaleF", ToTensor<float>(scale))
+                .Add(
+                    scale_attr != nullptr
+                        ? "ScaleFactor = Identity(ScaleF)"
+                        : "ScaleFactor = Identity(CalculatedScale)")
+                .Add("ScaleFactorF = Cast (ScaleFactor)", "to", T);
+
+              // Create a attn_bias filled with zeros of shape (q_sequence_length, kv_sequence_length)
+              builder.Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, KVSeqLen)")
+                .Add("AttnBiasZeros = ConstantOfShape(AttnBiasShape)");
+
+              // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
+              // is a square matrix. The attention masking has the form of the upper left causal bias due to
+              // the alignment when the mask is a non-square matrix.
+              // An error is thrown if both attn_mask and is_causal are set.
+              auto* is_causal_attr = ctx.getAttribute("is_causal");
+              int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+              builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mktensor(1))
+                .Const1D("Zero1D", (int64_t)(0))
+                .Add("TempMaskTri = <upper = 0> Trilu(TempMask, Zero1D)")
+                .Const1D("FloatInf", float('-inf'))
+                .Add("CasualAttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)")
+                .Add("CasualAttnBiasT = Cast (CasualAttnBias)", "to", T);
+
+              // If attn_mask is provided
+              auto* up = ctx.getInputType(3);
+              if ((up == nullptr) || (!up->has_tensor_type()))
+                return false;
+              int64_t U = up->tensor_type().elem_type();
+              builder.Add(
+                        U == ONNX_NAMESPACE::TensorProto_DataType_BOOL
+                            ? "MaskedAttnBias = Where(attn_mask, AttnBiasZeros, FloatInf)"
+                            : "MaskedAttnBias = Add(attn_mask, AttnBiasZeros)")
+                      .Add("MaskedAttnBiasT = Cast (MaskedAttnBias)", "to", T);
+              builder.Const("IsCasual", is_causal)
+                .Add("AttnMask = Where(IsCausal, CasualAttnBiasT, MaskedAttnBiasT)");
+
+
+
+              //gqa
+
+              // Describe logic
 
               return true;
             }));
