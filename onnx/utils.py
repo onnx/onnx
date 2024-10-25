@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import os
 import tarfile
-from collections import deque
+from collections import defaultdict, deque
 
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
@@ -176,39 +176,37 @@ class Extractor:
         )
         return model
 
-    def _find_nodes_at_layer(self) -> dict[int, list[int]]:
+    def _bfs_search_nodes_at_layer(self) -> dict[int, list[int]]:
         visited = set()
-        nodes_at_depth: dict[int, list[int]] = {}
+        nodes_at_layer: dict[int, list[int]] = defaultdict(list)
         queue: deque[tuple[int, int]] = deque()
 
         for output in self.graph.output:
             queue.append((self.outmap[output.name], 0))
 
         while queue:
-            current_index, current_depth = queue.popleft()
+            current_index, current_layer = queue.popleft()
             if current_index in visited:
                 continue
             visited.add(current_index)
-            if current_depth not in nodes_at_depth:
-                nodes_at_depth[current_depth] = []
-            nodes_at_depth[current_depth].append(current_index)
+            nodes_at_layer[current_layer].append(current_index)
             for input_name in self.graph.node[current_index].input:
                 if input_name in self.outmap:
                     index = self.outmap[input_name]
                     if index not in visited:
-                        queue.append((index, current_depth + 1))
+                        queue.append((index, current_layer + 1))
 
-        nodes_at_depth = {
-            len(nodes_at_depth) - 1 - k: v for k, v in nodes_at_depth.items()
+        nodes_at_layer = {
+            len(nodes_at_layer) - 1 - k: v for k, v in nodes_at_layer.items()
         }
 
-        return nodes_at_depth
+        return nodes_at_layer
 
-    def split_model(self, depth: int) -> tuple[ModelProto, ModelProto]:
-        nodes_at_depth = self._find_nodes_at_layer()
+    def split_model(self, layer: int) -> tuple[ModelProto, ModelProto]:
+        nodes_at_layer = self._bfs_search_nodes_at_layer()
         outputs_M1 = [
             output
-            for index in nodes_at_depth[depth]
+            for index in nodes_at_layer[layer]
             for output in self.graph.node[index].output
         ]
         assert len(outputs_M1) == len(set(outputs_M1))
