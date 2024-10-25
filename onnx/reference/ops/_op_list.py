@@ -136,6 +136,7 @@ from onnx.reference.ops.op_lrn import LRN
 from onnx.reference.ops.op_lstm import LSTM
 from onnx.reference.ops.op_matmul import MatMul
 from onnx.reference.ops.op_matmul_integer import MatMulInteger
+from onnx.reference.ops.op_matmulnbits import MatMulNBits
 from onnx.reference.ops.op_max import Max
 from onnx.reference.ops.op_max_pool import MaxPool
 from onnx.reference.ops.op_max_unpool import MaxUnpool
@@ -332,7 +333,7 @@ def load_op(
             f"and domain {domain!r}, schema.has_function is {has_function}, "
             f"schema.has_context_dependent_function is {has_context_dependent_function}. "
             f"You may either add one or skip the test in "
-            f"'reference_evaluator_bakcend_test.py'. Available implementations:\n{available}"
+            f"'reference_evaluator_backend_test.py'. Available implementations:\n{available}"
         )
     impl = _registered_operators[op_type]  # type: ignore
     if None not in impl:
