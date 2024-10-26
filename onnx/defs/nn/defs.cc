@@ -3337,7 +3337,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "3D tensor with shape (batch_size, q_sequence_length, kv_sequence_length). "
             "Two types of masks are supported. A boolean mask where a value of True indicates that the element should take part in attention. "
             "Also supports a float mask of the same type as query, key, value that is added to the attention score.",
-            "U")
+            "U",
+            OpSchema::Optional)
         .Input(
             4,
             "past_key",
@@ -3361,12 +3362,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "present_key",
             "Updated key cache with shape (batch_size, kv_num_heads, max_sequence_length, head_size).",
-            "T")
+            "T",
+            OpSchema::Optional)
         .Output(
             2,
             "present_value",
             "Updated value cache with shape (batch_size, kv_num_heads, max_sequence_length, v_head_size).",
-            "T")
+            "T",
+            OpSchema::Optional)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeConstraint("U", OpSchema::all_non_complex_numeric_types_plus_bool_ir4(), "Constrain output 'mask' types to boolean tensors and input types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -3441,10 +3444,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          // Check is_causal
-
-          // Check GQA conditions
-
           if (ctx.getNumOutputs() > 1) {  // has present output
             // copy the type from query to present key and value
             propagateElemTypeFromInputToOutput(ctx, 0, 1);
@@ -3481,6 +3480,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads> (Q, K, V, attn_mask, past_key, past_value)
               // => (Y, present_key?, present_value?)
+              int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
               auto* tp = ctx.getInputType(0);
               if ((tp == nullptr) || (!tp->has_tensor_type()))
                 return false;
@@ -3507,8 +3507,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               builder.Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
                 .Const1D("QNumHeads", q_num_heads) // q_num_heads
                 .Const1D("KVNumHeads", kv_num_heads) // kv_num_heads
-                .Add("QSeqLen = Shape <start = 1, end = 2> (Q)") // q_sequence_length
-                .Add("KVSeqLen = Shape <start = 1, end = 2> (K)") // kv_sequence_length
+                .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
+                .Add("KVSeqLen = Shape <start = 2, end = -1> (K)") // kv_sequence_length
                 .Const1D("NegOne", (int64_t)(-1)) // head_size, inferred from other dimensions
                 .Add("QNewShape = Concat <axis = 0> (BatchSize, QNumHeads, QSeqLen, NegOne)")
                 .Add("KVNewShape = Concat <axis = 0> (BatchSize, KVNumHeads, KVSeqLen, NegOne)")
@@ -3518,17 +3518,33 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               // Calculate scaling factor if scale attribute not provided
               auto scale_attr = ctx.getAttribute("scale");
-              float scale = (scale_attr != nullptr) ? scale_attr->f() : (float)0;
-              builder.Add("QKHiddenSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
-                .Add("SqrtHiddenSize = Sqrt(QKHiddenSize)")
+              float scale = (scale_attr != nullptr) ? scale_attr->f() : (float)1;
+              builder.Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
+                .Add("SqrtHeadnSize = Sqrt(QKHeadSize)")
                 .Const1D("One1D", (int64_t)(1))
-                .Add("CalculatedScale = Div(One1D, SqrtHiddenSize)")
+                .Add("CalculatedScale = Div(One1D, SqrtHeadSize)")
                 .Const("ScaleF", ToTensor<float>(scale))
                 .Add(
                     scale_attr != nullptr
                         ? "ScaleFactor = Identity(ScaleF)"
                         : "ScaleFactor = Identity(CalculatedScale)")
                 .Add("ScaleFactorF = Cast (ScaleFactor)", "to", T);
+
+              // Update key and value caches for past and present states
+              if (ctx.hasOutput(1)) {
+                if (ctx.hasInput(4)) {
+                  builder.Add("present_key = Concat <axis = 2> (past_key, KReshaped)");
+                } else {
+                  builder.Add("present_key = Identity (KReshaped)");
+                }
+              }
+              if (ctx.hasOutput(2)) {
+                if (ctx.hasInput(5)) {
+                  builder.Add("present_value = Concat <axis = 2> (past_value, VReshaped)");
+                } else {
+                  builder.Add("present_value = Identity (VReshaped)");
+                }
+              }
 
               // Create a attn_bias filled with zeros of shape (q_sequence_length, kv_sequence_length)
               builder.Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, KVSeqLen)")
@@ -3542,7 +3558,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
               builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mktensor(1))
                 .Const1D("Zero1D", (int64_t)(0))
-                .Add("TempMaskTri = <upper = 0> Trilu(TempMask, Zero1D)")
+                .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
                 .Const1D("FloatInf", float('-inf'))
                 .Add("CasualAttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)")
                 .Add("CasualAttnBiasT = Cast (CasualAttnBias)", "to", T);
@@ -3560,19 +3576,46 @@ ONNX_OPERATOR_SET_SCHEMA(
               builder.Const("IsCasual", is_causal)
                 .Add("AttnMask = Where(IsCausal, CasualAttnBiasT, MaskedAttnBiasT)");
 
+              // Group Query Attention is applied if the following are satisfied
+              // 1) q_num_heads != kv_num_heads
+              // 2) q_num_heads % kv_num_heads == 0
+              // 3) kv_num_heads == k_num_heads == v_num_heads
+              builder.Add("NGQACond1 = Equal(QNumHeads, KVNumHeads)")
+                .Add("GQACond1 = Not(NGQACond1)")
+                .Add("DivNumHeads = Div(QNumHeads, KVNumHeads)")
+                .Add("IDivNumHeads = Cast(QNumHeads)", "to", int_type)
+                .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
+                .Add("GQACond = And(GQACond1, GQACond2)")
+                .Add("InterleaveShape = Concat <axis = 0> (One1D, IDivNumHeads, One1D, One1D)")
+                .Add("KInterleaved = Tile(KReshaped, InterleaveShape)")
+                .Add("VInterleaved = Tile(VReshaped, InterleaveShape)")
+                .Add("KAttentionInput = Where(GQACond, KInterleaved, KReshaped)")
+                .Add("VAttentionInput = Where(GQACond, VInterleaved, VReshaped)");
 
-
-              //gqa
-
-              // Describe logic
-              builder.Add("KTranspose = <perm = [0, 1 ,3, 2]> Transpose(KReshaped)")
+              // The following pattern is applied
+              //      Q          K          V
+              //      |          |          |
+              //      |      Transpose      |
+              //      |          |          |
+              //      ---MatMul---          |
+              //            |               |
+              //   scale---Mul              |
+              //            |               |
+              // at_bias---Add              |
+              //            |               |
+              //         Softmax            |
+              //            |               |
+              //            -----MatMul------
+              //                    |
+              //                    Y
+              builder.Add("KTranspose = <perm = [0, 1 ,3, 2]> Transpose(KAttentionInput)")
                 .Add("QKAttnWeight = MatMul(QReshaped, KTranspose)")
-                .Add("QKAttnWeightWithBias = Mul(QKAttnWeight, ScaleFactorF)")
+                .Add("QKAttnWeightWithScale = Mul(QKAttnWeight, ScaleFactorF)")
+                .Add("QKAttnWeightWithBias = Add(QKAttnWeightWithScale, AttnMask)")
                 .Add("AttnWeightSoftmax = Softmax(QKAttnWeightWithBias)")
-                .Add("Y = MatMul(AttnWeightSoftmax, VReshaped)");
+                .Add("Y = MatMul(AttnWeightSoftmax, VAttentionInput)");
 
               schema.BuildFunction(functionProto);
               return true;
             }));
-
 } // namespace ONNX_NAMESPACE
