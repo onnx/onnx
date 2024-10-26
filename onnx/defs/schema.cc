@@ -1578,6 +1578,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
     }
 
    private:
+#ifndef NDEBUG
     static size_t GetRegisteredSchemaCount() {
       size_t count = 0;
       for (auto& x : GetMapWithoutEnsuringRegistration()) {
@@ -1587,6 +1588,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       }
       return count;
     }
+#endif
   };
 
 #ifndef __ONNX_DISABLE_STATIC_REGISTRATION
