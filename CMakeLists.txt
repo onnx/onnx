@@ -16,7 +16,7 @@ cmake_policy(SET CMP0074 NEW)
 
 # Project
 project(onnx C CXX)
-option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag and Protobuf_USE_STATIC_LIBS. " OFF)
+option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
@@ -25,7 +25,7 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
-option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
+option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -46,16 +46,6 @@ if(NOT DEFINED ONNX_VERIFY_PROTO3)
     set(PROTO3_ENABLED OFF)
   endif()
   option(ONNX_VERIFY_PROTO3 "Generate code by proto3" ${PROTO3_ENABLED})
-endif()
-
-if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-  if(MSVC)
-    #TODO: if ONNX_USE_MSVC_STATIC_RUNTIME is ON, it may not work
-    add_definitions(-DPROTOBUF_USE_DLLS)
-  endif()
-  set(Protobuf_USE_STATIC_LIBS OFF)
-else()
-  set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
@@ -178,6 +168,11 @@ else()
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
               PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
               NO_DEFAULT_PATH)
+    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+      set(Protobuf_USE_STATIC_LIBS OFF)
+    else()
+      set(Protobuf_USE_STATIC_LIBS ON)
+    endif()
     find_package(Protobuf)
     if (Protobuf_FOUND)
       set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
@@ -234,13 +229,13 @@ else()
     set(Build_Protobuf ON)
   endif()
   if (Build_Protobuf)
-    # FetchContent module requires 3.11.
-    cmake_minimum_required(VERSION 3.11)
+    set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
+    set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
+
     include(FetchContent)
     message("Loading Dependencies URLs ...")
-    # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.3
-    set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.tar.gz)
-    set(AbseilSHA1 e21faa0de5afbbf8ee96398ef0ef812daf416ad8)
+    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240116.2/abseil-cpp-20240116.2.tar.gz)
+    set(AbseilSHA1 bb8a766f3aef8e294a864104b8ff3fc37b393210)
     FetchContent_Declare(
       Abseil
       URL ${AbseilURL}
@@ -257,8 +252,8 @@ else()
     # ABSL_ROOT_DIR is required by Protobuf.
     set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
     message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
-    set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v28.3/protobuf-28.3.tar.gz)
+    set(ProtobufSHA1 269759bed3ef7fa7f04648bacdcfd3c26e3e50a8)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -268,7 +263,7 @@ else()
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf Abseil)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "4.22.3")
+    set(Protobuf_VERSION "5.28.3")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -716,9 +711,6 @@ install(TARGETS
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
-
-# Support older g++ to use PRId64
-add_definitions(-D__STDC_FORMAT_MACROS)
 
 include(cmake/summary.cmake)
 onnx_print_configuration_summary()
