@@ -29,7 +29,7 @@ struct ShapeInferenceOptions {
   // to perform shape computation
   bool enable_data_propagation;
   explicit ShapeInferenceOptions(bool check_type_val = false, int strict_mode_val = 0, bool data_prop_val = false)
-      : check_type(check_type_val), error_mode(strict_mode_val), enable_data_propagation(data_prop_val) {};
+      : check_type(check_type_val), error_mode(strict_mode_val), enable_data_propagation(data_prop_val) {}
 };
 
 // Maintains a SymbolTable for symbolic shape inference
@@ -918,9 +918,9 @@ void checkAxesRange(Axes& axes, int rank) {
 // checkDuplicateAxes: Check that there are no duplicated axes
 template <typename Axes>
 void checkDuplicateAxes(Axes& axes, int rank) {
-  std::vector<bool> tmp(rank, false);
+  std::vector<bool> tmp(static_cast<size_t>(rank), false);
   for (auto axis : axes) {
-    int actual_axis = axis < 0 ? axis + rank : axis;
+    size_t actual_axis = static_cast<size_t>(axis < 0 ? axis + rank : axis);
     if (tmp[actual_axis])
       fail_shape_inference("Axis ", axis, " is referred to more than once.");
     tmp[actual_axis] = true;
