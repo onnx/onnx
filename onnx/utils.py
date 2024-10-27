@@ -176,51 +176,6 @@ class Extractor:
         )
         return model
 
-    def _bfs_collect_nodes_at_layer(self) -> dict[int, list[int]]:
-        visited = set()
-        nodes_at_layer: dict[int, list[int]] = defaultdict(list)
-        queue: deque[tuple[str, int]] = deque()
-
-        queue.extend([(output.name, 0) for output in self.graph.output])
-        while queue:
-            current_output_name, current_layer = queue.popleft()
-            if current_output_name in self.outmap:
-                current_index = self.outmap[current_output_name]
-                if current_index not in visited:
-                    visited.add(current_index)
-                    nodes_at_layer[current_layer].append(current_index)
-                    queue.extend(
-                        [
-                            (input, current_layer + 1)
-                            for input in self.graph.node[current_index].input
-                        ]
-                    )
-
-        nodes_at_layer = {
-            len(nodes_at_layer) - 1 - k: v for k, v in nodes_at_layer.items()
-        }
-        return nodes_at_layer
-
-    def split_model(self, ratio: float) -> tuple[ModelProto, ModelProto]:
-        assert 0 < ratio < 1
-        nodes_at_layer = self._bfs_collect_nodes_at_layer()
-        layer = round(len(nodes_at_layer) * ratio)
-        outputs_M1 = [
-            output
-            for index in nodes_at_layer[layer]
-            for output in self.graph.node[index].output
-        ]
-        assert len(outputs_M1) == len(set(outputs_M1))
-        model_1 = self.extract_model(
-            input_names=[input.name for input in self.graph.input],
-            output_names=outputs_M1,
-        )
-        model_2 = self.extract_model(
-            input_names=outputs_M1,
-            output_names=[output.name for output in self.graph.output],
-        )
-        return model_1, model_2
-
 
 def extract_model(
     input_path: str | os.PathLike,
@@ -284,6 +239,58 @@ def extract_model(
 
     if check_model:
         onnx.checker.check_model(output_path)
+
+
+class Splitter:
+    def __init__(self, model: ModelProto) -> None:
+        self.model = model
+        self.graph = self.model.graph
+        self.extractor = Extractor(self.model)
+        self.nodes_at_layer = self._bfs_collect_nodes_at_layer()
+
+    def _bfs_collect_nodes_at_layer(self) -> dict[int, list[int]]:
+        visited = set()
+        nodes_at_layer: dict[int, list[int]] = defaultdict(list)
+        queue: deque[tuple[str, int]] = deque()
+
+        queue.extend([(output.name, 0) for output in self.graph.output])
+        while queue:
+            current_output_name, current_layer = queue.popleft()
+            if current_output_name in self.extractor.outmap:
+                current_index = self.extractor.outmap[current_output_name]
+                if current_index not in visited:
+                    visited.add(current_index)
+                    nodes_at_layer[current_layer].append(current_index)
+                    queue.extend(
+                        [
+                            (input, current_layer + 1)
+                            for input in self.graph.node[current_index].input
+                        ]
+                    )
+
+        nodes_at_layer = {
+            len(nodes_at_layer) - 1 - k: v for k, v in nodes_at_layer.items()
+        }
+        return nodes_at_layer
+
+    def split_model(self, layer: int) -> tuple[ModelProto, ModelProto]:
+        assert 0 < layer < len(self.nodes_at_layer)
+        outputs_M1 = [
+            output
+            for index in self.nodes_at_layer[layer]
+            for output in self.graph.node[index].output
+        ]
+        assert len(outputs_M1) == len(set(outputs_M1))
+
+        model_1 = self.extractor.extract_model(
+            input_names=[input.name for input in self.graph.input],
+            output_names=outputs_M1,
+        )
+        model_2 = self.extractor.extract_model(
+            input_names=outputs_M1,
+            output_names=[output.name for output in self.graph.output],
+        )
+        return model_1, model_2
 
 
 def _tar_members_filter(
