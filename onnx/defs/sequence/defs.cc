@@ -188,7 +188,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const auto input0_type = ctx.getInputType(0);
           if (nullptr == input0_type) {
-            fail_type_inference("Input type for input at index 0 is null. Type info is expected.")
+            fail_type_inference("Input type for input at index 0 is null. Type info is expected.");
           }
           ctx.getOutputType(0)->CopyFrom(input0_type->sequence_type().elem_type());
         }));
