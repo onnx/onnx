@@ -175,7 +175,6 @@ lint.ignore = [
     "SIM116", # Don't use dict lookup to replace if-else
     "TRY003", # Messages can be constructed in the exception
 ]
-lint.ignore-init-module-imports = false
 lint.unfixable = [
     "SIM112", # Envvars should not be modified
 ]
