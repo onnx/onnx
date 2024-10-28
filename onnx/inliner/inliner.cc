@@ -17,6 +17,7 @@
 #include "onnx/common/constants.h"
 #include "onnx/common/proto_util.h"
 #include "onnx/common/visitor.h"
+#include "onnx/defs/parser.h"
 #include "onnx/shape_inference/attribute_binder.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
@@ -85,11 +86,11 @@ using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 class NameGenerator : private Visitor {
  public:
   explicit NameGenerator(const GraphProto& graph) : index_(0) {
-    VisitGraph(graph);
+    NameGenerator::VisitGraph(graph);
   }
 
   explicit NameGenerator(const FunctionProto& function) : index_(0) {
-    VisitFunction(function);
+    NameGenerator::VisitFunction(function);
   }
 
   // Creates a new unique name, based on a suggested name, and adds it to the set
@@ -329,7 +330,7 @@ class ComputeInputs : private Visitor {
 
   explicit ComputeInputs(const NodeProto& node) {
     result.reserve(node.input_size());
-    VisitNode(node);
+    ComputeInputs::VisitNode(node);
   }
 };
 
@@ -578,8 +579,7 @@ class VectorSet : public FunctionIdSet {
 std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::Create(
     FunctionIdVector&& function_ids,
     bool invert) {
-  auto* p = new VectorSet(std::move(function_ids), invert);
-  return std::unique_ptr<FunctionIdSet>(p);
+  return std::make_unique<VectorSet>(std::move(function_ids), invert);
 }
 
 void InlineLocalFunctions(ModelProto& model, bool convert_version) {

@@ -16,7 +16,7 @@ cmake_policy(SET CMP0074 NEW)
 
 # Project
 project(onnx C CXX)
-option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library. Sets PROTOBUF_USE_DLLS CMAKE Flag and Protobuf_USE_STATIC_LIBS. " OFF)
+option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
@@ -25,8 +25,10 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
-option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for onnx operator schemas." OFF)
+option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT DEFINED ONNX_ML)
   if(DEFINED ENV{ONNX_ML})
@@ -44,16 +46,6 @@ if(NOT DEFINED ONNX_VERIFY_PROTO3)
     set(PROTO3_ENABLED OFF)
   endif()
   option(ONNX_VERIFY_PROTO3 "Generate code by proto3" ${PROTO3_ENABLED})
-endif()
-
-if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-  if(MSVC)
-    #TODO: if ONNX_USE_MSVC_STATIC_RUNTIME is ON, it may not work
-    add_definitions(-DPROTOBUF_USE_DLLS)
-  endif()
-  set(Protobuf_USE_STATIC_LIBS OFF)
-else()
-  set(Protobuf_USE_STATIC_LIBS ON)
 endif()
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
@@ -100,10 +92,16 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
+if(DEFINED PYTHON_EXECUTABLE)
+  message(STATUS "Use Python_EXECUTABLE ${Python_EXECUTABLE}")
+endif()
+
+# find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
+# Use the following command in the future; now this is only compatible with the latest pybind11
+# find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
+find_package(PythonInterp ${PY_VERSION} REQUIRED)
 if(BUILD_ONNX_PYTHON)
-  find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
-else()
-  find_package(Python ${PY_VERSION} COMPONENTS Interpreter REQUIRED)
+  find_package(PythonLibs ${PY_VERSION})
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
@@ -170,6 +168,11 @@ else()
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
               PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
               NO_DEFAULT_PATH)
+    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+      set(Protobuf_USE_STATIC_LIBS OFF)
+    else()
+      set(Protobuf_USE_STATIC_LIBS ON)
+    endif()
     find_package(Protobuf)
     if (Protobuf_FOUND)
       set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
@@ -226,13 +229,13 @@ else()
     set(Build_Protobuf ON)
   endif()
   if (Build_Protobuf)
-    # FetchContent module requires 3.11.
-    cmake_minimum_required(VERSION 3.11)
+    set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
+    set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
+
     include(FetchContent)
     message("Loading Dependencies URLs ...")
-    # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.3
-    set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.tar.gz)
-    set(AbseilSHA1 e21faa0de5afbbf8ee96398ef0ef812daf416ad8)
+    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240116.2/abseil-cpp-20240116.2.tar.gz)
+    set(AbseilSHA1 bb8a766f3aef8e294a864104b8ff3fc37b393210)
     FetchContent_Declare(
       Abseil
       URL ${AbseilURL}
@@ -249,8 +252,8 @@ else()
     # ABSL_ROOT_DIR is required by Protobuf.
     set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
     message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
-    set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v28.3/protobuf-28.3.tar.gz)
+    set(ProtobufSHA1 269759bed3ef7fa7f04648bacdcfd3c26e3e50a8)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -260,7 +263,7 @@ else()
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf Abseil)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "4.22.3")
+    set(Protobuf_VERSION "5.28.3")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -273,11 +276,9 @@ endif()
 # abseil build would fail if ONNX_WERROR is on.
 if(ONNX_WERROR)
   if(MSVC)
-    string(APPEND CMAKE_CXX_FLAGS " /WX")
-    string(APPEND CMAKE_C_FLAGS " /WX")
+    add_compile_options("/WX")
   else()
-    string(APPEND CMAKE_CXX_FLAGS " -Werror")
-    string(APPEND CMAKE_C_FLAGS " -Werror -Wno-error=incompatible-pointer-types")
+    add_compile_options("-Werror")
   endif()
 endif()
 
@@ -358,7 +359,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND Python::Interpreter "${GEN_PROTO_PY}"
+                       COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -474,15 +475,9 @@ target_include_directories(onnx_proto PUBLIC
 if (MSVC)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(EXTRA_FLAGS
-          "-Wno-implicit-function-declaration"
-          "-Wno-undefined-inline"
-          "-Wno-incompatible-pointer-types"
-          "-Wno-dllexport-explicit-instantiation-decl"
           "-Wno-microsoft-unqualified-friend"
           "-Wno-absolute-value"
-          "-Wno-unused-variable"
           "-Wno-unknown-argument"
-          "-Wno-writable-strings"
           "-Qunused-arguments")
   else()
     set(EXTRA_FLAGS "")
@@ -522,6 +517,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
 else()
   add_library(onnx ${ONNX_SRCS})
 endif()
+set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
@@ -541,8 +538,8 @@ if(BUILD_ONNX_PYTHON)
 
   add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
-  set_target_properties(onnx_cpp2py_export
-                        PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  set_target_properties(onnx_cpp2py_export PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -563,7 +560,7 @@ if(BUILD_ONNX_PYTHON)
 
   target_include_directories(onnx_cpp2py_export PUBLIC
     "${pybind11_INCLUDE_DIRS}"
-    "${PYTHON_INCLUDE_DIRS}")
+    "${PYTHON_INCLUDE_DIR}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
@@ -600,20 +597,14 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
+                                   /wd4146 # unary minus operator applied to unsigned type,
+                                           # result still unsigned
                                    /wd4244 # 'argument': conversion from 'google::
                                            # protobuf::uint64' to 'int', possible
                                            # loss of data
                                    /wd4267 # Conversion from 'size_t' to 'int',
                                            # possible loss of data
-                                   /wd4996 # The second parameter is ignored.
                                    ${EXTRA_FLAGS})
-    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_cpp2py_export
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-    endif()
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -629,6 +620,8 @@ endif()
 if(MSVC)
   target_compile_options(onnx_proto
                          PRIVATE /MP
+                                 /wd4146 # unary minus operator applied to unsigned type,
+                                         # result still unsigned
                                  /wd4244 #'argument': conversion from 'google::
                                          #protobuf::uint64' to 'int', possible
                                          # loss of data
@@ -637,25 +630,14 @@ if(MSVC)
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
+                                 /wd4146 # unary minus operator applied to unsigned type,
+                                         # result still unsigned
                                  /wd4244 # 'argument': conversion from 'google::
                                          # protobuf::uint64' to 'int', possible
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
-                                 /wd4996 # The second parameter is ignored.
                                  ${EXTRA_FLAGS})
-  if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      target_compile_options(onnx_proto
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-      target_compile_options(onnx
-                             PRIVATE /wd4251 # 'identifier' : class 'type1' needs to
-                                             # have dll-interface to be used by
-                                             # clients of class 'type2'
-                            )
-  endif()
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
@@ -666,8 +648,6 @@ if(MSVC)
   set_target_properties(onnx
                         PROPERTIES STATIC_LIBRARY_FLAGS
                                    "${onnx_static_library_flags}")
-elseif(APPLE)
-
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
 endif()
@@ -749,9 +729,6 @@ install(TARGETS
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
-
-# Support older g++ to use PRId64
-add_definitions(-D__STDC_FORMAT_MACROS)
 
 include(cmake/summary.cmake)
 onnx_print_configuration_summary()

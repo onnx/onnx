@@ -89,10 +89,10 @@ class CheckerContext final {
     check_custom_domain_ = value;
   }
 
-  explicit CheckerContext() : ir_version_(-1) {}
+  explicit CheckerContext() = default;
 
  private:
-  int ir_version_;
+  int ir_version_{-1};
   std::unordered_map<std::string, int> opset_imports_;
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
@@ -114,6 +114,9 @@ class LexicalScopeContext final {
   // values from the parent scope so the values are copied instead.
   LexicalScopeContext(const LexicalScopeContext& parent_context) : parent_context_{&parent_context} {}
   LexicalScopeContext& operator=(const LexicalScopeContext& parent_context) {
+    if (this == &parent_context) {
+      return *this;
+    }
     parent_context_ = &parent_context;
     return *this;
   }
@@ -125,7 +128,7 @@ class LexicalScopeContext final {
   }
 
   bool this_graph_has(const std::string& name) const {
-    return output_names.find(name) != output_names.cend();
+    return output_names.count(name) > 0;
   }
 
   bool this_or_ancestor_graph_has(const std::string& name) const {
