@@ -3278,7 +3278,39 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* ScalarDotProductAttention_ver23_doc = R"DOC(
 
-Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed
+Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
+
+This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
+For self attention, kv_sequence_length equals to q_sequence_length.
+For cross attention, query and key might have different lengths.
+
+This operator also covers the 3 following variants based on the number of heads:
+1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, q_num_heads = kv_num_heads.
+2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, q_num_heads > kv_num_heads.
+3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, q_num_heads > kv_num_heads, q_num_heads=1.
+
+Attention bias to be added is calculated based on attn_mask input and is_causal attribute, only one of which can be provided.
+1) If is_causal is set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
+2) attn_mask: A boolean mask where a value of True indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+
+Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
+The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
+
+          Q          K          V
+          |          |          |
+          |      Transpose      |
+          |          |          |
+          ---MatMul---          |
+                |               |
+       scale---Mul              |
+                |               |
+     at_bias---Add              |
+                |               |
+             Softmax            |
+                |               |
+                -----MatMul------
+                        |
+                        Y
 
 )DOC";
 
@@ -3334,7 +3366,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "attn_mask",
             "Attention mask. "
             "Shape must be broadcastable to "
-            "3D tensor with shape (batch_size, q_sequence_length, kv_sequence_length). "
+            "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, total_sequence_length). "
+            "total_sequence_length is past_sequence_length + kv_sequence_length. "
             "Two types of masks are supported. A boolean mask where a value of True indicates that the element should take part in attention. "
             "Also supports a float mask of the same type as query, key, value that is added to the attention score.",
             "U",
@@ -3361,13 +3394,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             1,
             "present_key",
-            "Updated key cache with shape (batch_size, kv_num_heads, max_sequence_length, head_size).",
+            "Updated key cache with shape (batch_size, kv_num_heads, total_sequence_length, head_size). "
+            "total_sequence_length is past_sequence_length + kv_sequence_length.",
             "T",
             OpSchema::Optional)
         .Output(
             2,
             "present_value",
-            "Updated value cache with shape (batch_size, kv_num_heads, max_sequence_length, v_head_size).",
+            "Updated value cache with shape (batch_size, kv_num_heads, total_sequence_length, v_head_size). "
+            "total_sequence_length is past_sequence_length + kv_sequence_length.",
             "T",
             OpSchema::Optional)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
@@ -3534,20 +3569,23 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (ctx.hasOutput(1)) {
                 if (ctx.hasInput(4)) {
                   builder.Add("present_key = Concat <axis = 2> (past_key, KReshaped)");
-                } else {
-                  builder.Add("present_key = Identity (KReshaped)");
                 }
+              } else {
+                builder.Add("present_key = Identity (KReshaped)");
               }
+
               if (ctx.hasOutput(2)) {
                 if (ctx.hasInput(5)) {
                   builder.Add("present_value = Concat <axis = 2> (past_value, VReshaped)");
-                } else {
-                  builder.Add("present_value = Identity (VReshaped)");
                 }
+              } else {
+                builder.Add("present_value = Identity (VReshaped)");
               }
 
+
               // Create a attn_bias filled with zeros of shape (q_sequence_length, kv_sequence_length)
-              builder.Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, KVSeqLen)")
+              builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (present_key)")
+                .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
                 .Add("AttnBiasZeros = ConstantOfShape(AttnBiasShape)");
 
               // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
@@ -3587,10 +3625,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
                 .Add("GQACond = And(GQACond1, GQACond2)")
                 .Add("InterleaveShape = Concat <axis = 0> (One1D, IDivNumHeads, One1D, One1D)")
-                .Add("KInterleaved = Tile(KReshaped, InterleaveShape)")
-                .Add("VInterleaved = Tile(VReshaped, InterleaveShape)")
-                .Add("KAttentionInput = Where(GQACond, KInterleaved, KReshaped)")
-                .Add("VAttentionInput = Where(GQACond, VInterleaved, VReshaped)");
+                .Add("KInterleaved = Tile(present_key, InterleaveShape)")
+                .Add("VInterleaved = Tile(present_value, InterleaveShape)")
+                .Add("KAttentionInput = Where(GQACond, KInterleaved, present_key)")
+                .Add("VAttentionInput = Where(GQACond, VInterleaved, present_value)");
 
               // The following pattern is applied
               //      Q          K          V

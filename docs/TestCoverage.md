@@ -20084,7 +20084,7 @@ expect(
 
 
 ### ScalarDotProductAttention
-There are 36 test cases, listed as following:
+There are 30 test cases, listed as following:
 <details>
 <summary>scalar_dot_product_attention</summary>
 
@@ -20347,7 +20347,7 @@ past_sequence_length = 12
 q_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
 k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
 v_data = np.random.rand(2, 3, 6, 10).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
 
@@ -20363,38 +20363,6 @@ expect(
     inputs=[q_data, k_data, v_data, attn_mask, past_key, past_value],
     outputs=[expected_output, present_key, present_value],
     name="test_scalar_dot_product_attention_3d_diff_heads_with_past_and_present"
-)
-```
-
-</details>
-<details>
-<summary>scalar_dot_product_attention_3d_diff_head_sizes_with_present</summary>
-
-```python
-q_num_heads, kv_num_heads = 3, 3
-node = onnx.helper.make_node(
-    "ScalarDotProductAttention",
-    inputs=["Q", "K", "V", "attn_mask"],
-    outputs=["output", "present_key", "present_value"],
-    q_num_heads=q_num_heads, kv_num_heads=kv_num_heads,
-)
-
-q_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
-k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-v_data = np.random.rand(2, 3, 6, 10).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
-
-expected_output, present_key, present_value = compute_scalar_dot_product_attention(
-    q_data, k_data, v_data,
-    attn_mask=attn_mask,
-    q_num_heads=q_num_heads, kv_num_heads=kv_num_heads,
-)
-
-expect(
-    node,
-    inputs=[q_data, k_data, v_data, attn_mask],
-    outputs=[expected_output, present_key, present_value],
-    name="test_scalar_dot_product_attention_3d_diff_heads_with_present"
 )
 ```
 
@@ -20542,7 +20510,7 @@ past_sequence_length = 12
 q_data = np.random.rand(2, 9, 4, 8).astype(np.float32)
 k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
 v_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
@@ -20558,38 +20526,6 @@ expect(
     inputs=[q_data, k_data, v_data, attn_mask, past_key, past_value],
     outputs=[expected_output, present_key, present_value],
     name="test_scalar_dot_product_attention_3d_gqa_with_past_and_present"
-)
-```
-
-</details>
-<details>
-<summary>scalar_dot_product_attention_3d_gqa_with_present</summary>
-
-```python
-q_num_heads, kv_num_heads = 9, 3
-node = onnx.helper.make_node(
-    "ScalarDotProductAttention",
-    inputs=["Q", "K", "V", "attn_mask"],
-    outputs=["output", "present_key", "present_value"],
-    q_num_heads=q_num_heads, kv_num_heads=kv_num_heads,
-)
-
-q_data = np.random.rand(2, 9, 4, 8).astype(np.float32)
-k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-v_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
-
-expected_output, present_key, present_value = compute_scalar_dot_product_attention(
-    q_data, k_data, v_data,
-    attn_mask=attn_mask,
-    q_num_heads=q_num_heads, kv_num_heads=kv_num_heads,
-)
-
-expect(
-    node,
-    inputs=[q_data, k_data, v_data, attn_mask],
-    outputs=[expected_output, present_key, present_value],
-    name="test_scalar_dot_product_attention_3d_gqa_with_present"
 )
 ```
 
@@ -20643,7 +20579,7 @@ past_sequence_length = 12
 q_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
 k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
 v_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
@@ -20660,38 +20596,6 @@ expect(
     inputs=[q_data, k_data, v_data, attn_mask, past_key, past_value],
     outputs=[expected_output, present_key, present_value],
     name="test_scalar_dot_product_attention_3d_with_past_and_present"
-)
-```
-
-</details>
-<details>
-<summary>scalar_dot_product_attention_3d_with_present</summary>
-
-```python
-q_num_heads, kv_num_heads = 3, 3
-node = onnx.helper.make_node(
-    "ScalarDotProductAttention",
-    inputs=["Q", "K", "V", "attn_mask"],
-    outputs=["output", "present_key", "present_value"],
-    q_num_heads=q_num_heads, kv_num_heads=kv_num_heads,
-)
-
-q_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
-k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-v_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
-
-expected_output, present_key, present_value = compute_scalar_dot_product_attention(
-    q_data, k_data, v_data,
-    attn_mask=attn_mask,
-    q_num_heads=q_num_heads, kv_num_heads=kv_num_heads,
-)
-
-expect(
-    node,
-    inputs=[q_data, k_data, v_data, attn_mask],
-    outputs=[expected_output, present_key, present_value],
-    name="test_scalar_dot_product_attention_3d_with_present"
 )
 ```
 
@@ -20881,7 +20785,7 @@ past_sequence_length = 12
 q_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
 k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
 v_data = np.random.rand(2, 3, 6, 10).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
 
@@ -20896,35 +20800,6 @@ expect(
     inputs=[q_data, k_data, v_data, attn_mask, past_key, past_value],
     outputs=[expected_output, present_key, present_value],
     name="test_scalar_dot_product_attention_4d_diff_heads_with_past_and_present"
-)
-```
-
-</details>
-<details>
-<summary>scalar_dot_product_attention_diff_head_sizes_with_present</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ScalarDotProductAttention",
-    inputs=["Q", "K", "V", "attn_mask"],
-    outputs=["output", "present_key", "present_value"],
-)
-
-q_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
-k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-v_data = np.random.rand(2, 3, 6, 10).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
-
-expected_output, present_key, present_value = compute_scalar_dot_product_attention(
-    q_data, k_data, v_data,
-    attn_mask=attn_mask,
-)
-
-expect(
-    node,
-    inputs=[q_data, k_data, v_data, attn_mask],
-    outputs=[expected_output, present_key, present_value],
-    name="test_scalar_dot_product_attention_4d_diff_heads_with_present"
 )
 ```
 
@@ -21056,7 +20931,7 @@ past_sequence_length = 12
 q_data = np.random.rand(2, 9, 4, 8).astype(np.float32)
 k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
 v_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
@@ -21071,35 +20946,6 @@ expect(
     inputs=[q_data, k_data, v_data, attn_mask, past_key, past_value],
     outputs=[expected_output, present_key, present_value],
     name="test_scalar_dot_product_attention_4d_gqa_with_past_and_present"
-)
-```
-
-</details>
-<details>
-<summary>scalar_dot_product_attention_gqa_with_present</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ScalarDotProductAttention",
-    inputs=["Q", "K", "V", "attn_mask"],
-    outputs=["output", "present_key", "present_value"],
-)
-
-q_data = np.random.rand(2, 9, 4, 8).astype(np.float32)
-k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-v_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
-
-expected_output, present_key, present_value = compute_scalar_dot_product_attention(
-    q_data, k_data, v_data,
-    attn_mask=attn_mask,
-)
-
-expect(
-    node,
-    inputs=[q_data, k_data, v_data, attn_mask],
-    outputs=[expected_output, present_key, present_value],
-    name="test_scalar_dot_product_attention_4d_gqa_with_present"
 )
 ```
 
@@ -21148,7 +20994,7 @@ past_sequence_length = 12
 q_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
 k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
 v_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
@@ -21164,35 +21010,6 @@ expect(
     inputs=[q_data, k_data, v_data, attn_mask, past_key, past_value],
     outputs=[expected_output, present_key, present_value],
     name="test_scalar_dot_product_attention_4d_with_past_and_present"
-)
-```
-
-</details>
-<details>
-<summary>scalar_dot_product_attention_with_present</summary>
-
-```python
-node = onnx.helper.make_node(
-    "ScalarDotProductAttention",
-    inputs=["Q", "K", "V", "attn_mask"],
-    outputs=["output", "present_key", "present_value"],
-)
-
-q_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
-k_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-v_data = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.float32)
-
-expected_output, present_key, present_value = compute_scalar_dot_product_attention(
-    q_data, k_data, v_data,
-    attn_mask=attn_mask,
-)
-
-expect(
-    node,
-    inputs=[q_data, k_data, v_data, attn_mask],
-    outputs=[expected_output, present_key, present_value],
-    name="test_scalar_dot_product_attention_4d_with_present"
 )
 ```
 
