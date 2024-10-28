@@ -139,6 +139,8 @@ def convert_model_to_external_data(
                 raise ValueError(
                     "location must be a relative path that is relative to the model path."
                 )
+            if os.path.exists(location):
+                raise FileExistsError(f"File exists in {location}.")
             file_name = location
         for tensor in tensors:
             if (

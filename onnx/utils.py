@@ -232,10 +232,7 @@ def extract_model(
     extracted = e.extract_model(input_names, output_names)
 
     if extracted.ByteSize() > onnx.checker.MAXIMUM_PROTOBUF:
-        output_data_path = f"{output_path}.data"
-        if os.path.exists(output_data_path):
-            os.remove(output_data_path)
-        location = os.path.basename(output_data_path)
+        location = os.path.basename(output_path) + ".data"
         onnx.save(extracted, output_path, save_as_external_data=True, location=location)
     else:
         onnx.save(extracted, output_path)
