@@ -50,6 +50,19 @@ class QLinearConv(OpRun):
             X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
         ).astype(np.int32)
 
+        # w_scale could be a scalar or a 1-D tensor. A 1-D tensor means a per
+        # output channel quantization.
+        if np.size(w_scale) > 1:
+            if np.ndim(w_scale) != 1:
+                raise ValueError(
+                    f"w_scale must be a scalar or a 1-D tensor. Got shape {np.shape(w_scale)}."
+                )
+            if np.size(w_scale) != np.shape(w)[0]:
+                raise ValueError(
+                    f"w_scale elements must match output channels: {np.size(w_scale)} != {np.shape(w)[0]}"
+                )
+            w_scale = np.expand_dims(w_scale, (0, 2, 3))
+
         R = res * (x_scale * w_scale / y_scale)
         if y_zero_point is not None:
             R += y_zero_point
