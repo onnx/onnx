@@ -133,7 +133,7 @@ def convert_model_to_external_data(
         tensors = _get_all_tensors(model)
 
     if all_tensors_to_one_file:
-        file_name = str(uuid.uuid1())
+        file_name = f"{uuid.uuid1()}.data"
         if location:
             if os.path.isabs(location):
                 raise ValueError(
