@@ -3288,16 +3288,16 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(ScalarDotProductAttention_ver23_doc)
         .Attr(
-            "scale",
-            "Scaling factor applied prior to softmax. Default value is 1/sqrt(head_size)",
-            AttributeProto::FLOAT,
-            OPTIONAL_VALUE)
-        .Attr(
             "is_causal",
             "If set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. "
             "The attention masking has the form of the upper left causal bias due to the alignment.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr(
+            "scale",
+            "Scaling factor applied prior to softmax. Default value is 1/sqrt(head_size)",
+            AttributeProto::FLOAT,
+            OPTIONAL_VALUE)
         .Attr(
             "q_num_heads",
             "Number of heads of query. Must use with for 3D inputs of Q, K and V. ",
@@ -3342,13 +3342,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             4,
             "past_key",
-            "past state cache for key with shape (batch_size, kv_num_heads, max_sequence_length, head_size)",
+            "past state cache for key with shape (batch_size, kv_num_heads, past_sequence_length, head_size)",
             "T",
             OpSchema::Optional)
         .Input(
             5,
             "past_value",
-            "past state cache for value with shape (batch_size, kv_num_heads, max_sequence_length, v_head_size)",
+            "past state cache for value with shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)",
             "T",
             OpSchema::Optional)
         .Output(
@@ -3608,7 +3608,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               //            -----MatMul------
               //                    |
               //                    Y
-              builder.Add("KTranspose = <perm = [0, 1 ,3, 2]> Transpose(KAttentionInput)")
+              builder.Add("KTranspose = Transpose <perm = [0, 1 ,3, 2]> (KAttentionInput)")
                 .Add("QKAttnWeight = MatMul(QReshaped, KTranspose)")
                 .Add("QKAttnWeightWithScale = Mul(QKAttnWeight, ScaleFactorF)")
                 .Add("QKAttnWeightWithBias = Add(QKAttnWeightWithScale, AttnMask)")
