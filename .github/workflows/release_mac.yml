@@ -60,7 +60,14 @@ jobs:
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1
         fi
-        python -m build --wheel --sdist
+        python -m build --wheel 
+
+    - name: Build the source distribution
+      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+      run: |        
+        git clean -xdf
+        sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+        ONNX_PREVIEW_BUILD=1 python -m build --sdist
 
     - name: Upload wheel artifacts
       uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
@@ -69,6 +76,7 @@ jobs:
         path: dist/*.whl
 
     - name: Upload source distribution
+      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
       uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
       with:
         name: sdist
@@ -128,15 +136,10 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
-    # Only triggered by weekly event on certain CI
-    - name: Build and upload source distribution to PyPI weekly
+    - name: Upload source distribution to PyPI weekly
       if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
-      run: |
-        # Build and upload source distribution to PyPI
-        git clean -xdf
-        sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-        ONNX_PREVIEW_BUILD=1 python -m build --sdist
-        twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
+      run: |        
+        twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}  
 
         # Test weekly source distribution from PyPI
         python -m pip uninstall -y onnx-weekly
