@@ -84,6 +84,14 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        if: (github.event_name == 'schedule') && ((needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success'))
+        with:
+          pattern: sdist 
+          path: dist
+          merge-multiple: true
+
+
       - name: Publish onnx-weekly to PyPI
         if: (github.event_name == 'schedule') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@f7600683efdcb7656dec5b29656edb7bc586e597
