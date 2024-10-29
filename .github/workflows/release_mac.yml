@@ -60,7 +60,7 @@ jobs:
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1
         fi
-        python -m build --wheel 
+        python -m build --wheel
 
     - name: Upload wheel artifacts
       uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
