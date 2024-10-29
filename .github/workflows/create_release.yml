@@ -61,6 +61,16 @@ jobs:
       os: "macos"
     secrets: inherit
 
+  call-workflow-sdist:
+    strategy:
+      matrix:
+        os: ['mac-latest']    
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    uses: ./.github/workflows/release_sdist.yml
+    with:            
+      os: "macos"
+    secrets: inherit
+
   publish_to_pypi-onnx-weekly: 
     name: Publish to pypi-onnx-weekly
     runs-on: ubuntu-latest

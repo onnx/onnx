@@ -45,7 +45,7 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
 
-    - name: Build wheel, create source-dist and install
+    - name: Build wheel
       env:
         CC: "clang"
         CXX: "clang++"
@@ -62,25 +62,11 @@ jobs:
         fi
         python -m build --wheel 
 
-    - name: Build the source distribution
-      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
-      run: |        
-        git clean -xdf
-        sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-        ONNX_PREVIEW_BUILD=1 python -m build --sdist
-
     - name: Upload wheel artifacts
       uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.target-architecture }}
         path: dist/*.whl
-
-    - name: Upload source distribution
-      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
-      uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
-      with:
-        name: sdist
-        path: dist/*.tar.gz
 
   test:
     needs: build
@@ -136,16 +122,17 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
-    - name: Upload source distribution to PyPI weekly
-      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
-      run: |        
-        twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}  
+    # reactive in separate workflow step
+    # - name: Upload source distribution to PyPI weekly
+    #   if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+    #   run: |        
+    #     twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}  
 
-        # Test weekly source distribution from PyPI
-        python -m pip uninstall -y onnx-weekly
-        python -m pip install setuptools
-        python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-        pytest
+    #     # Test weekly source distribution from PyPI
+    #     python -m pip uninstall -y onnx-weekly
+    #     python -m pip install setuptools
+    #     python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
+    #     pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != '3.12'
