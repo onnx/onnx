@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
@@ -3610,9 +3611,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             // An error is thrown if both attn_mask and is_causal are set.
             auto* is_causal_attr = ctx.getAttribute("is_causal");
             int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+            float neg_inf = -std::numeric_limits<float>::infinity();
             builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mktensor(1))
                 .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
-                .Const1D("FloatInf", static_cast<float>('-inf'))
+                .Const1D("FloatInf", neg_inf)
                 .Add("CasualAttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)")
                 .Const("IsCasual", is_causal)
                 .Add("AttnBias = Where(IsCausal, CasualAttnBias, AttnBiasZeros)")
@@ -3627,6 +3629,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("GQACond1 = Not(NGQACond1)")
               .Add("DivNumHeads = Div(QNumHeads, KVNumHeads)")
               .Add("IDivNumHeads = Cast(DivNumHeads)", "to", int_type)
+              .Add("RemainderNumHeads = Mod(QNumHeads, KVNumHeads)")
               .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
               .Add("GQACond = And(GQACond1, GQACond2)")
               .Add("InterleaveShape = Concat <axis = 0> (One1D, IDivNumHeads, One1D, One1D)")
