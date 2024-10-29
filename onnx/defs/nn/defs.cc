@@ -3518,8 +3518,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {
           // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads> (Q, K, V, attn_mask, past_key,
-          // past_value)
-          // => (Y, present_key?, present_value?)
+          // past_value) => (Y, present_key?, present_value?)
           int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
           auto* tp = ctx.getInputType(0);
           if ((tp == nullptr) || (!tp->has_tensor_type()))
@@ -3564,6 +3563,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
               .Add("SqrtHeadSize = Sqrt(QKHeadSize)")
               .Const1D("One1D", static_cast<int64_t>(1))
+              .Const1D("Zero1D", static_cast<int64_t>(0))
               .Add("CalculatedScale = Div(One1D, SqrtHeadSize)")
               .Const("ScaleF", ToTensor<float>(scale))
               .Add(scale_attr != nullptr ? "ScaleFactor = Identity(ScaleF)" : "ScaleFactor = Identity(CalculatedScale)")
@@ -3591,31 +3591,33 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
               .Add("AttnBiasZeros = ConstantOfShape(AttnBiasShape)");
 
-          // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
-          // is a square matrix. The attention masking has the form of the upper left causal bias due to
-          // the alignment when the mask is a non-square matrix.
-          // An error is thrown if both attn_mask and is_causal are set.
-          auto* is_causal_attr = ctx.getAttribute("is_causal");
-          int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
-          builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mktensor(1))
-              .Const1D("Zero1D", static_cast<int64_t>(0))
-              .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
-              .Const1D("FloatInf", float('-inf'))
-              .Add("CasualAttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)")
-              .Add("CasualAttnBiasT = Cast (CasualAttnBias)", "to", T);
-
           // If attn_mask is provided
-          auto* up = ctx.getInputType(3);
-          if ((up == nullptr) || (!up->has_tensor_type()))
-            return false;
-          int64_t U = up->tensor_type().elem_type();
-          builder
-              .Add(
-                  U == ONNX_NAMESPACE::TensorProto_DataType_BOOL
-                      ? "MaskedAttnBias = Where(attn_mask, AttnBiasZeros, FloatInf)"
-                      : "MaskedAttnBias = Add(attn_mask, AttnBiasZeros)")
-              .Add("MaskedAttnBiasT = Cast (MaskedAttnBias)", "to", T);
-          builder.Const("IsCasual", is_causal).Add("AttnMask = Where(IsCausal, CasualAttnBiasT, MaskedAttnBiasT)");
+          if (ctx.hasInput(3)) {
+            auto* up = ctx.getInputType(3);
+            if ((up == nullptr) || (!up->has_tensor_type()))
+              return false;
+            int64_t U = up->tensor_type().elem_type();
+            builder
+                .Add(
+                    U == ONNX_NAMESPACE::TensorProto_DataType_BOOL
+                        ? "MaskedAttnBias = Where(attn_mask, AttnBiasZeros, FloatInf)"
+                        : "MaskedAttnBias = Add(attn_mask, AttnBiasZeros)")
+                .Add("AttnBiasT = Cast (MaskedAttnBias)", "to", T);
+          } else {
+            // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
+            // is a square matrix. The attention masking has the form of the upper left causal bias due to
+            // the alignment when the mask is a non-square matrix.
+            // An error is thrown if both attn_mask and is_causal are set.
+            auto* is_causal_attr = ctx.getAttribute("is_causal");
+            int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+            builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mktensor(1))
+                .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
+                .Const1D("FloatInf", static_cast<float>('-inf'))
+                .Add("CasualAttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)")
+                .Const("IsCasual", is_causal)
+                .Add("AttnBias = Where(IsCausal, CasualAttnBias, AttnBiasZeros)")
+                .Add("AttnBiasT = Cast (AttnBias)", "to", T);
+          }
 
           // Group Query Attention is applied if the following are satisfied
           // 1) q_num_heads != kv_num_heads
@@ -3624,7 +3626,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           builder.Add("NGQACond1 = Equal(QNumHeads, KVNumHeads)")
               .Add("GQACond1 = Not(NGQACond1)")
               .Add("DivNumHeads = Div(QNumHeads, KVNumHeads)")
-              .Add("IDivNumHeads = Cast(QNumHeads)", "to", int_type)
+              .Add("IDivNumHeads = Cast(DivNumHeads)", "to", int_type)
               .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
               .Add("GQACond = And(GQACond1, GQACond2)")
               .Add("InterleaveShape = Concat <axis = 0> (One1D, IDivNumHeads, One1D, One1D)")
@@ -3652,7 +3654,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           builder.Add("KTranspose = Transpose <perm = [0, 1 ,3, 2]> (KAttentionInput)")
               .Add("QKAttnWeight = MatMul(QReshaped, KTranspose)")
               .Add("QKAttnWeightWithScale = Mul(QKAttnWeight, ScaleFactorF)")
-              .Add("QKAttnWeightWithBias = Add(QKAttnWeightWithScale, AttnMask)")
+              .Add("QKAttnWeightWithBias = Add(QKAttnWeightWithScale, AttnBiasT)")
               .Add("AttnWeightSoftmax = Softmax(QKAttnWeightWithBias)")
               .Add("Y = MatMul(AttnWeightSoftmax, VAttentionInput)");
 
