@@ -88,7 +88,7 @@ jobs:
     steps:
 
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        if: (github.event_name == 'schedule') && ((needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success')) 
+        if: (github.event_name == 'schedule') && ((needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success'))
         with:
           pattern: wheels* 
           path: dist
