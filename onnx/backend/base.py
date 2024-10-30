@@ -77,8 +77,8 @@ class Backend:
     @classmethod
     def is_compatible(
         cls,
-        model: ModelProto,
-        device: str = "CPU",
+        model: ModelProto,  # noqa: ARG003
+        device: str = "CPU",  # noqa: ARG003
         **kwargs: Any,  # noqa: ARG003
     ) -> bool:
         # Return whether the model is compatible with the backend.
@@ -88,7 +88,7 @@ class Backend:
     def prepare(
         cls,
         model: ModelProto,
-        device: str = "CPU",
+        device: str = "CPU",  # noqa: ARG003
         **kwargs: Any,  # noqa: ARG003
     ) -> BackendRep | None:
         # TODO Remove Optional from return type

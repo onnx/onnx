@@ -252,7 +252,7 @@ def gen_model_test_coverage(
 
 
 def gen_overall_test_coverage(
-    schemas: Sequence[defs.OpSchema],
+    schemas: Sequence[defs.OpSchema],  # noqa: ARG001
     f: IO[Any],
     ml: bool,  # noqa: ARG001
 ) -> None:

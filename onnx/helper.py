@@ -13,6 +13,7 @@ from typing import (
     Dict,
     KeysView,
     List,
+    MutableSequence,
     Sequence,
     Tuple,
     TypeVar,
@@ -850,7 +851,8 @@ def make_sequence(
 
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
-    attribute: Sequence | None = None
+
+    attribute: MutableSequence | None = None
     if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
@@ -864,6 +866,7 @@ def make_sequence(
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
+    assert attribute is not None
     attribute.extend(values)
     return sequence
 
@@ -1385,7 +1388,7 @@ def printable_dim(dim: TensorShapeProto.Dimension) -> str:
 
 def printable_type(t: TypeProto) -> str:
     if t.WhichOneof("value") == "tensor_type":
-        s = TensorProto.DataType.Name(t.tensor_type.elem_type)
+        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)
         if t.tensor_type.HasField("shape"):
             if len(t.tensor_type.shape.dim):
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
@@ -1636,7 +1639,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
         )
 
     if np.issubdtype(np_dtype, np.str_):
-        return TensorProto.STRING
+        return TensorProto.STRING  # type: ignore[no-any-return]
 
     if np_dtype in {
         custom_np_types.bfloat16,
@@ -1648,7 +1651,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
         custom_np_types.uint4,
         custom_np_types.float4e2m1,
     }:
-        return custom_np_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
+        return custom_np_types.mapping_name_to_data_type[np_dtype.descr[0][0]]  # type: ignore[no-any-return]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."
@@ -1680,4 +1683,4 @@ def _attr_type_to_str(attr_type: int) -> str:
     """
     if attr_type in AttributeProto.AttributeType.values():
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]
+    return AttributeProto.AttributeType.keys()[0]  # type: ignore[no-any-return]
