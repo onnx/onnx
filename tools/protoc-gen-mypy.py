@@ -18,6 +18,7 @@
 
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
+
 from __future__ import annotations
 
 import sys
