@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   
-  test:
+  test_sdist_weekly:
   
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-12' || 'macos-14' }}
     strategy:
