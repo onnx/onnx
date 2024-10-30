@@ -21,30 +21,21 @@ concurrency:
 
 jobs: 
 
-  call-workflow-ubuntu_x86:    
-    strategy:
-      matrix:
-        os: ['ubuntu-latest']    
+  call-workflow-ubuntu_x86:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:            
       os: "linux_x86_64" 
     secrets: inherit
 
-  call-workflow-ubuntu_aarch64:    
-    strategy:
-      matrix:
-        os: ['ubuntu-latest'] 
+  call-workflow-ubuntu_aarch64:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_aarch64.yml
     with:            
       os: "linux_aarch64"      
     secrets: inherit
 
-  call-workflow-win:    
-    strategy:
-      matrix:
-        os: ['windows-latest']
+  call-workflow-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win.yml
     with:      
@@ -52,9 +43,6 @@ jobs:
     secrets: inherit
 
   call-workflow-mac:
-    strategy:
-      matrix:
-        os: ['mac-latest']    
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
     with:            
@@ -62,9 +50,6 @@ jobs:
     secrets: inherit
 
   call-workflow-sdist:
-    strategy:
-      matrix:
-        os: ['mac-latest']    
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_sdist.yml
     with:            
@@ -111,10 +96,7 @@ jobs:
 
 
   test_src_dist:    
-    needs: [publish_to_pypi-onnx-weekly]
-    strategy:
-      matrix:
-        os: ['mac-latest'] 
+    needs: [publish_to_pypi-onnx-weekly]    
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_test_weekly_srcdist.yml
     with:            
