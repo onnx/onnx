@@ -926,7 +926,7 @@ def make_optional(
         raise TypeError("The element type in the input optional is not supported.")
 
     assert value is not None
-    attribute.CopyFrom(value)
+    attribute.CopyFrom(value)  # type: ignore[arg-type]
     return optional
 
 
