@@ -23,7 +23,7 @@
     jobs:
       build:
         if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs') 
-        runs-on: macos-latest
+        runs-on: ubuntu-24.04
         strategy:
           matrix:
             python-version: ['3.10']
