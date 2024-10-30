@@ -36,7 +36,7 @@ namespace ONNX_NAMESPACE {
 
 #define DEFINE_PARSE_DATA(type, typed_data_fetch, tensorproto_datatype)                                            \
   template <>                                                                                                      \
-  const std::vector<type> ParseData(const TensorProto* tensor_proto) {                                             \
+  std::vector<type> ParseData(const TensorProto* tensor_proto) {                                                   \
     if (!tensor_proto->has_data_type() || tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {           \
       fail_shape_inference("The type of tensor: ", tensor_proto->name(), " is undefined so it cannot be parsed."); \
     } else if (tensor_proto->data_type() != tensorproto_datatype) {                                                \
@@ -86,7 +86,7 @@ namespace ONNX_NAMESPACE {
       return res;                                                                                                  \
     }                                                                                                              \
     /* okay to remove const qualifier as we have already made a copy */                                            \
-    char* bytes = const_cast<char*>(raw_data.c_str());                                                             \
+    char* bytes = raw_data.data();                                                                                 \
     /* onnx is little endian serialized always-tweak byte order if needed */                                       \
     if (!is_processor_little_endian()) {                                                                           \
       const size_t element_size = sizeof(type);                                                                    \

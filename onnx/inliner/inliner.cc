@@ -15,9 +15,9 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"
-#include "onnx/common/interned_strings.h"
 #include "onnx/common/proto_util.h"
 #include "onnx/common/visitor.h"
+#include "onnx/defs/parser.h"
 #include "onnx/shape_inference/attribute_binder.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
@@ -66,7 +66,6 @@ struct OpsetMap : public OpsetMapBase {
   }
 
   bool Add(const google::protobuf::RepeatedPtrField<OperatorSetIdProto>& list) {
-    OpsetMapBase result;
     for (const auto& pair : list) {
       auto domain = NormalizeDomain(pair.domain());
       auto version = pair.version();
@@ -87,11 +86,11 @@ using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 class NameGenerator : private Visitor {
  public:
   explicit NameGenerator(const GraphProto& graph) : index_(0) {
-    VisitGraph(graph);
+    NameGenerator::VisitGraph(graph);
   }
 
   explicit NameGenerator(const FunctionProto& function) : index_(0) {
-    VisitFunction(function);
+    NameGenerator::VisitFunction(function);
   }
 
   // Creates a new unique name, based on a suggested name, and adds it to the set
@@ -218,7 +217,7 @@ class InliningRenamer : private MutableVisitor {
     }
     for (; i < formals.size(); ++i) {
       std::string& formal = *formals.Mutable(i);
-      std::string rename_as = isOutput ? MakeUnique(formal) : std::string("");
+      std::string rename_as = isOutput ? MakeUnique(formal) : std::string();
       current_scope[formal] = rename_as;
       if (!rename_as.empty())
         formal = rename_as;
@@ -329,9 +328,9 @@ class ComputeInputs : private Visitor {
  public:
   std::vector<std::string> result;
 
-  ComputeInputs(const NodeProto& node) {
+  explicit ComputeInputs(const NodeProto& node) {
     result.reserve(node.input_size());
-    VisitNode(node);
+    ComputeInputs::VisitNode(node);
   }
 };
 
@@ -351,7 +350,7 @@ ConstNodeMap FindConstantNodes(const GraphProto& graph) {
   return result;
 }
 
-const TypeProto& GetType(const ModelProto& model, std::string var) {
+const TypeProto& GetType(const ModelProto& model, const std::string& var) {
   for (auto& vi : model.graph().value_info()) {
     if (vi.name() == var)
       return vi.type();
@@ -580,8 +579,7 @@ class VectorSet : public FunctionIdSet {
 std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::Create(
     FunctionIdVector&& function_ids,
     bool invert) {
-  auto* p = new VectorSet(std::move(function_ids), invert);
-  return std::unique_ptr<FunctionIdSet>(p);
+  return std::make_unique<VectorSet>(std::move(function_ids), invert);
 }
 
 void InlineLocalFunctions(ModelProto& model, bool convert_version) {

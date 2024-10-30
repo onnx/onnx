@@ -83,7 +83,7 @@ class InferenceSessionBackend(onnx.backend.base.Backend):
         d = Device(device)
         if d.type == DeviceType.CPU and "CPUExecutionProvider" in providers:
             return True
-        if d.type == DeviceType.CUDA and "CUDAExecutionProvider" in providers:
+        elif d.type == DeviceType.CUDA and "CUDAExecutionProvider" in providers:
             return True
         return False
 
@@ -163,6 +163,10 @@ if ort is not None:
         "|test_cast_INT4_to_FLOAT"  # No corresponding Numpy type for Tensor Type.
         "|test_cast_UINT4_to_FLOAT16"  # No corresponding Numpy type for Tensor Type.
         "|test_cast_INT4_to_FLOAT16"  # No corresponding Numpy type for Tensor Type.
+        "|test_quantizelinear_float4e2m1"  # No corresponding Numpy type for Tensor Type.
+        "|test_dequantizelinear_float4e2m1"  # No corresponding Numpy type for Tensor Type.
+        "|test_cast_FLOAT4E2M1_to_"  # No corresponding Numpy type for Tensor Type.
+        "|_to_FLOAT4E2M1"  # No corresponding Numpy type for Tensor Type.
         "|test_maxpool_2d_ceil_output_size_reduce_by_one"  # TODO: remove after https://github.com/microsoft/onnxruntime/pull/18377 in Ort release.
         ")"
     )
@@ -581,7 +585,7 @@ if ort is not None:
             ")"
         )
 
-    if ort_version is not None and ort_version < Version("1.19"):
+    if ort_version is not None and ort_version < Version("1.20"):
         backend_test.exclude(
             "("
             "tree_ensemble_set_membership"

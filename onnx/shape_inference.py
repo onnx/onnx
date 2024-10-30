@@ -105,7 +105,7 @@ def infer_node_outputs(
     opset_imports: list[onnx.OperatorSetIdProto] | None = None,
     ir_version: int = onnx.IR_VERSION,
 ) -> dict[str, onnx.TypeProto]:
-    if not schema.has_type_and_shape_inference_function:  # type: ignore
+    if not schema.has_type_and_shape_inference_function:
         return {}
     if input_data is None:
         input_data = {}

@@ -357,25 +357,25 @@ For each variadic operator input, N or more node inputs must be specified where 
 
 #### Optional Inputs and Outputs
 
-**Pre IR-8**
+##### Static Optional
 
 Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
 Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs.
 
-There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
+There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input or output; the second method is to use an empty string in place of an input or output name.
 
 Each node referring to an operator with optional outputs MUST provide a name for each output that is computed and MUST NOT provide names for outputs that are not computed.
 
 Optional inputs and outputs of the above kind are referred to as _static-optional_.
 
-**IR-8 Version and Later**
+##### Dynamic Optional (since IR-8)
 
-IR-8 introduced a new type-constructor to represent _dynamic-optional_ inputs and outputs,
+**IR-8 Version** introduced a new type-constructor to represent _dynamic-optional_ inputs and outputs,
 in addition to the earlier static-optional version described above. A dynamic-optional INT64
 tensor is a distinct type from an INT64 tensor type. In contrast, a static-optional INT64
 tensor does not have a distinct type, it has the same type as a INT64 tensor.
-The ops _Optional_ and _OptionalGetElement_ must be explicitly used to convert between
+The operators `Optional` and `OptionalGetElement` MUST be explicitly used to convert between
 the dynamic-optional type and the underlying non-optional type.
 The dynamic-optional allows for more expressiveness than static-optional.
 
@@ -421,7 +421,7 @@ It is common to represent a tensor as a nested list. This generally works fine, 
 
 |Group|Types|Description|
 |---|---|---|
-Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433) and [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915)
+Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz, float4e2m1|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433), [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915), and the [Open Compute Project](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)
 Signed Integer Types|int4, int8, int16, int32, int64|Signed integers are supported for 4-64 bit widths.
 Unsigned Integer Types|uint4, uint8, uint16, uint32, uint64|Unsigned integers are supported for 4-64 bit widths.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.

@@ -11,6 +11,7 @@ import numpy as np
 from onnx import TensorProto
 from onnx._custom_element_types import (
     bfloat16,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
@@ -603,12 +604,7 @@ class OpRun(abc.ABC):
 class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
-    def __init__(
-        self,
-        onnx_node: NodeProto,  # noqa: ARG002
-        run_params: dict[str, Any],  # noqa: ARG002
-        impl: Any = None,  # noqa: ARG002
-    ):
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -628,7 +624,7 @@ class OpFunction(OpRun):
         run_params: dict[str, Any] | None,
         impl: Any = None,
         attributes: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         if impl is None:
             raise RuntimeError(
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
@@ -705,6 +701,8 @@ class OpFunctionContextDependant(OpFunction):
                     ttype = TensorProto.UINT4  # type: ignore[attr-defined]
                 elif t.dtype == int4:
                     ttype = TensorProto.INT4  # type: ignore[attr-defined]
+                elif t.dtype == float4e2m1:
+                    ttype = TensorProto.FLOAT4E2M1  # type: ignore[attr-defined]
                 else:
                     raise
             types.append(make_tensor_type_proto(ttype, t.shape))

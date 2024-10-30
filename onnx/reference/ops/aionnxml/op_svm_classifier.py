@@ -40,8 +40,7 @@ def multiclass_probability(k, R):
         max_error = 0
         for t in range(k):
             error = np.abs(Qp[t] - pQp)
-            if error > max_error:
-                max_error = error
+            max_error = max(error, max_error)
         if max_error < eps:
             break
 

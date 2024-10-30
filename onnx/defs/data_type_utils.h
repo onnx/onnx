@@ -8,7 +8,6 @@
 #include <mutex>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 
 #include "onnx/common/common.h"
 #include "onnx/onnx_pb.h"
@@ -53,7 +52,7 @@ class DataTypeUtils final {
  private:
   static void FromString(const std::string& type_str, TypeProto& type_proto);
 
-  static void FromDataTypeString(const std::string& type_str, int32_t& tensor_data_type);
+  static int32_t FromDataTypeString(const std::string& type_str);
 
   static std::string ToString(const TypeProto& type_proto, const std::string& left = "", const std::string& right = "");
 

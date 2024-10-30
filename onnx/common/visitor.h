@@ -67,7 +67,7 @@ struct Visitor {
     return true;
   }
 
-  virtual ~Visitor() {}
+  virtual ~Visitor() = default;
 };
 
 // MutableVisitor: A version of Visitor that allows mutation of the visited objects.
@@ -122,7 +122,7 @@ struct MutableVisitor {
     return true;
   }
 
-  virtual ~MutableVisitor() {}
+  virtual ~MutableVisitor() = default;
 };
 
 } // namespace internal

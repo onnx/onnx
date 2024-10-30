@@ -89,7 +89,7 @@ pip install onnx  # or pip install onnx[reference] for optional reference implem
 
 ## vcpkg packages
 
-onnx is in the maintenance list of [vcpkg](https://github.com/microsoft/vcpkg), you can easily use vcpkg to build and install it.
+ONNX is in the maintenance list of [vcpkg](https://github.com/microsoft/vcpkg), you can easily use vcpkg to build and install it.
 
 ```sh
 git clone https://github.com/microsoft/vcpkg.git
@@ -109,9 +109,9 @@ conda install -c conda-forge onnx
 
 ## Build ONNX from Source
 
-Before building from source uninstall any existing versions of onnx `pip uninstall onnx`.
+Before building from source uninstall any existing versions of ONNX `pip uninstall onnx`.
 
-c++17 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
+C++17 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
 
 If you don't have protobuf installed, ONNX will internally download and build protobuf for ONNX build.
 
@@ -277,21 +277,21 @@ For full list refer to CMakeLists.txt
 
 ### Environment variables
 
-* `USE_MSVC_STATIC_RUNTIME` should be 1 or 0, not ON or OFF. When set to 1 onnx links statically to runtime library.
+* `USE_MSVC_STATIC_RUNTIME` should be 1 or 0, not ON or OFF. When set to 1 ONNX links statically to runtime library.
 **Default**: `USE_MSVC_STATIC_RUNTIME=0`
 
-* `DEBUG` should be 0 or 1. When set to 1 onnx is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/main/CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
+* `DEBUG` should be 0 or 1. When set to 1 ONNX is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/main/CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 **Default**: `Debug=0`
 
 ### CMake variables
 
 * `ONNX_USE_PROTOBUF_SHARED_LIBS` should be `ON` or `OFF`.
 **Default**: `ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=0`
-`ONNX_USE_PROTOBUF_SHARED_LIBS` determines how onnx links to protobuf libraries.
-  * When set to `ON` - onnx will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/main/cmake/README.md#dlls-vs-static-linking), Protobuf_USE_STATIC_LIBS will be set to `OFF` and `USE_MSVC_STATIC_RUNTIME` must be 0.
-  * When set to `OFF` - onnx will link statically to protobuf, and Protobuf_USE_STATIC_LIBS will be set to `ON` (to force the use of the static libraries) and `USE_MSVC_STATIC_RUNTIME` can be `0` or `1`.
+`ONNX_USE_PROTOBUF_SHARED_LIBS` determines how ONNX links to protobuf libraries.
+  * When set to `ON` - ONNX will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/main/cmake/README.md#dlls-vs-static-linking).
+  * When set to `OFF` - ONNX will link statically to protobuf.
 
-* `ONNX_USE_LITE_PROTO` should be `ON` or `OFF`. When set to `ON` onnx uses lite protobuf instead of full protobuf.
+* `ONNX_USE_LITE_PROTO` should be `ON` or `OFF`. When set to `ON` ONNX uses lite protobuf instead of full protobuf.
 **Default**: `ONNX_USE_LITE_PROTO=OFF`
 
 * `ONNX_WERROR` should be `ON` or `OFF`. When set to `ON` warnings are treated as errors.

@@ -6,7 +6,7 @@
 
 namespace ONNX_NAMESPACE {
 
-void RNNShapeInference_opset14(InferenceContext& ctx) {
+static void RNNShapeInference_opset14(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
@@ -72,7 +72,7 @@ void RNNShapeInference_opset14(InferenceContext& ctx) {
     }
   }
 }
-std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name*/) {
+static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",
@@ -520,7 +520,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator_opset14("RNN")));
 
-std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
+static std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",
@@ -713,7 +713,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 // Versions 1 to 6 of RNN/LSTM and versions 3 to 6 of GRU:
 
-void RNNShapeInference1(InferenceContext& ctx) {
+static void RNNShapeInference1(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
@@ -764,7 +764,7 @@ void RNNShapeInference1(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
+static std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",
@@ -1219,7 +1219,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 // Versions 7 to 13 of RNN/LSTM/GRU
 
 namespace ONNX_NAMESPACE {
-void RNNShapeInference2(InferenceContext& ctx) {
+static void RNNShapeInference2(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
@@ -1263,7 +1263,7 @@ void RNNShapeInference2(InferenceContext& ctx) {
   }
 }
 
-std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
+static std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",

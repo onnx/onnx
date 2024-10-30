@@ -3,10 +3,9 @@
  */
 
 #include <algorithm>
-#include <functional>
+#include <map>
 
 #include "onnx/common/assertions.h"
-#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
 #include "onnx/defs/schema.h"
@@ -14,7 +13,7 @@
 
 namespace ONNX_NAMESPACE {
 
-inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_type) {
+static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string& op_type) {
   const auto input_0 = ctx.getInputData(0);
   const auto input_1 = ctx.getInputData(1);
   if (input_0 == nullptr || input_1 == nullptr) {
@@ -27,7 +26,8 @@ inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_typ
     fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (", size_0, ") vs (", size_1, ").");
   }
   TensorShapeProto tsp;
-  for (int i = 0; i < std::max(size_0, size_1); ++i) {
+  int size_out = size_0 == 1 ? size_1 : size_0;
+  for (int i = 0; i < size_out; ++i) {
     auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
     auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
     if (input_dim_0.has_dim_value() && input_dim_1.has_dim_value()) {
@@ -41,7 +41,7 @@ inline void MathOpDataPropagator(DataPropagationContext& ctx, std::string op_typ
   ctx.addOutputData(0, std::move(tsp));
 }
 
-std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -481,31 +481,7 @@ max(0,x) + min(0,alpha*(exp(x/alpha)-1))
 
 static float celu_default_alpha = 1.0;
 
-TensorProto ToDimensionOneFloatTensor(float value) {
-  auto t = ToTensor(std::vector<float>({value}));
-  t.add_dims(1);
-  return t;
-}
-
-TensorProto ToDimensionOneTensor(int32_t value) {
-  auto t = ToTensor(std::vector<int32_t>({value}));
-  t.add_dims(1);
-  return t;
-}
-
-TensorProto ToDimensionOneInt64Tensor(int64_t value) {
-  auto t = ToTensor(std::vector<int64_t>({value}));
-  t.add_dims(1);
-  return t;
-}
-
-TensorProto ToDimensionOneInt64Tensor(std::vector<int64_t> value) {
-  auto t = ToTensor(value);
-  t.add_dims(value.size());
-  return t;
-}
-
-bool BuildContextDependentFunctionBodyCelu(
+static bool BuildContextDependentFunctionBodyCelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -549,7 +525,7 @@ to the tensor elementwise.
 
 static std::string gelu_default_approx = "none";
 
-bool BuildContextDependentFunctionBodyGelu(
+static bool BuildContextDependentFunctionBodyGelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -873,7 +849,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
+static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -956,9 +932,11 @@ static const char* Clip_ver13_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
 specified by the inputs 'min' and 'max'. They default to
 numeric_limits::lowest() and numeric_limits::max(), respectively.
+When 'min' is greater than 'max', the clip operator sets all the 'input' values to
+the value of 'max'. Thus, this is equivalent to 'Min(max, Max(input, min))'.
 )DOC";
 
-bool BuildContextDependentFunctionBodyClip(
+static bool BuildContextDependentFunctionBodyClip(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -1035,7 +1013,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyClip)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-std::function<void(OpSchema&)>
+static std::function<void(OpSchema&)>
 SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {
   return [=](OpSchema& schema) {
     std::string doc;
@@ -1479,7 +1457,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
             }
             if (k->data_type() == TensorProto::INT64) {
-              const auto& data = ParseData<int64_t>(k);
+              const auto data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
               fail_shape_inference("K input must be of type int64.");
@@ -2158,7 +2136,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-bool BuildContextDependentFunctionBody(
+static bool BuildContextDependentFunctionBody(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -2491,12 +2469,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
+static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
   // Only accept letters for indices
   auto is_letter = [](char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); };
 
   const size_t num_inputs = ctx.getNumInputs();
-  if (num_inputs < 1 || !hasNInputShapes(ctx, static_cast<int>(num_inputs))) {
+  if (num_inputs < 1 || !hasNInputShapes(ctx, num_inputs)) {
     return;
   }
   ONNX_NAMESPACE::TensorShapeProto output_shape;
@@ -2519,7 +2497,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
   // Parse the left-hand side
   std::stringstream str(left_equation);
   std::map<char, size_t> label_maps;
-  std::set<char> repeated_labels;
+  std::unordered_set<char> repeated_labels;
   ONNX_NAMESPACE::TensorShapeProto dims_value, ellipsis_dims_value;
   size_t num_labels = 0;
   bool ellipsis_flag = true;
@@ -2537,8 +2515,8 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
     size_t term_size = 0; // number of legal indices for the current term
     size_t num_illegal_char = 0; // number of illegal char before the current 'index' in the current term
 
-    for (size_t index = 0; index < term.size(); ++index) {
-      if (is_letter(term[index])) {
+    for (char index : term) {
+      if (is_letter(index)) {
         term_size += 1;
       }
     }
@@ -2571,7 +2549,7 @@ void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string con
         continue;
       }
 
-      const auto inserted = label_maps.insert({term[index], num_labels}).second;
+      const auto inserted = label_maps.emplace(term[index], num_labels).second;
       if (inserted) {
         *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
         ++num_labels;
@@ -2697,7 +2675,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           einsumShapeInference(ctx, equation);
         }));
 
-const char* reduction_doc_sce =
+static const char* reduction_doc_sce =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
     "'sum': the output will be summed. "
@@ -2747,7 +2725,7 @@ Finally, L is optionally reduced:
   where tensor W is of shape `(N, D1, D2, ..., Dk)` and `W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]]`.
 )DOC";
 
-bool BuildContextDependentFunctionBodySCE(
+static bool BuildContextDependentFunctionBodySCE(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -3082,7 +3060,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, output_index, result_shape_proto);
         }));
 
-std::function<void(OpSchema&)> CosineSumWindowOpDocGenerator(const char* name) {
+static std::function<void(OpSchema&)> CosineSumWindowOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(

@@ -8,11 +8,8 @@
 // Adventurous users should note that the APIs will probably change.
 
 #pragma once
-#include <stdint.h>
-
+#include <cstdint>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace ONNX_NAMESPACE {
 
@@ -201,18 +198,20 @@ enum BuiltinSymbol {
 };
 
 struct Symbol {
-  Symbol() {}
+  Symbol() = default;
+  // NOLINTNEXTLINE(google-explicit-constructor)
   /*implicit*/ Symbol(BuiltinSymbol value) : value(value) {}
   explicit Symbol(const std::string& s);
   explicit Symbol(uint32_t value) : value(value) {}
 
+  // NOLINTNEXTLINE(google-explicit-constructor)
   operator uint32_t() const {
     return value;
   }
   const char* toString() const;
 
  private:
-  uint32_t value;
+  uint32_t value{0};
 };
 
 static inline bool operator==(Symbol lhs, Symbol rhs) {
