@@ -6,10 +6,10 @@ name: LinuxRelease_x86_64
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
-    inputs:      
+    inputs:
       os:
         required: true
-        type: string  
+        type: string
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -63,7 +63,7 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
-        
+
 
     - name: TEST_HUB=1 pytest
       if: (github.event_name == 'schedule') # Only triggered by weekly event

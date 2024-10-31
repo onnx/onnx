@@ -6,7 +6,7 @@ name: Test_src_weekly
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
-    inputs:      
+    inputs:
       os:
         required: true
         type: string
@@ -18,9 +18,9 @@ permissions:
   contents: read
 
 jobs:
-  
+
   test_sdist_weekly:
-  
+
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-12' || 'macos-14' }}
     strategy:
       matrix:
@@ -28,7 +28,7 @@ jobs:
         target-architecture: ['arm64']
 
     steps:
-   
+
         - name: Test weekly source distribution from PyPI
           if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
           run: |

@@ -6,7 +6,7 @@ name: MacRelease
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
-    inputs:      
+    inputs:
       os:
         required: true
         type: string
@@ -96,7 +96,7 @@ jobs:
     - name: Test the wheel
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
-        arch -${{ matrix.target-architecture }} pytest   
+        arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
