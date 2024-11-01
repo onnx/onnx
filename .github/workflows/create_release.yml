@@ -95,10 +95,10 @@ jobs:
           print-hash: true  
 
 
-  test_src_dist:    
+  test_sdist:    
     needs: [publish_to_pypi-onnx-weekly]    
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_test_weekly_srcdist.yml
+    uses: ./.github/workflows/release_test_weekly_sdist.yml
     with:            
       os: "macos"      
     secrets: inherit
