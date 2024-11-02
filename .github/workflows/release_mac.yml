@@ -6,7 +6,7 @@ name: MacRelease
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
-    inputs:      
+    inputs:
       os:
         required: true
         type: string
@@ -28,7 +28,7 @@ jobs:
         target-architecture: ['x86_64', 'arm64']
 
     steps:
-    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
     - name: Checkout submodules
       shell: bash
       run: |
@@ -36,7 +36,7 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -45,7 +45,7 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
 
-    - name: Build wheel and install
+    - name: Build wheel
       env:
         CC: "clang"
         CXX: "clang++"
@@ -62,7 +62,8 @@ jobs:
         fi
         python -m build --wheel
 
-    - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
+    - name: Upload wheel artifacts
+      uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.target-architecture }}
         path: dist/*.whl
@@ -76,9 +77,9 @@ jobs:
         target-architecture: ['x86_64', 'arm64']
 
     steps:
-    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -95,7 +96,7 @@ jobs:
     - name: Test the wheel
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
-        arch -${{ matrix.target-architecture }} pytest   
+        arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
@@ -120,22 +121,6 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
-
-    # Only triggered by weekly event on certain CI
-    - name: Build and upload source distribution to PyPI weekly
-      if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
-      run: |
-        # Build and upload source distribution to PyPI
-        git clean -xdf
-        sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-        ONNX_PREVIEW_BUILD=1 python -m build --sdist
-        twine upload dist/* --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-
-        # Test weekly source distribution from PyPI
-        python -m pip uninstall -y onnx-weekly
-        python -m pip install setuptools
-        python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-        pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
       if: matrix.python-version != '3.12'

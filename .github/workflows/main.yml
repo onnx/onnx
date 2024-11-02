@@ -58,10 +58,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Set up Python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: ${{ matrix.python_version }}
 
@@ -209,7 +209,7 @@ jobs:
         run: |
           pip install -r docs/docsgen/source/requirements.txt
           cd docs/docsgen && make text
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Run Python tests with numpy<2.0 (win, mac)
         if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') &&  (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
