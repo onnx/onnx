@@ -215,6 +215,7 @@ jobs:
         if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') &&  (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
         run: |
           pip install "numpy<2.0" pillow
+          python onnx/backend/test/cmd_tools.py generate-data --clean
           pytest -s
 
       - name: Run Python tests with numpy<2.0 (ubuntu)
@@ -223,4 +224,5 @@ jobs:
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           pip install --prefer-binary "numpy<2.0" pillow
+          python onnx/backend/test/cmd_tools.py generate-data --clean
           pytest -s
