@@ -213,10 +213,22 @@ jobs:
           pip install "numpy<2.0" pillow
           pytest -s
 
-      - name: Run Python tests with numpy<2.0 (ubuntu)
-        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12' || matrix.python_version == '3.13') && startsWith(matrix.os,'ubuntu')
+      - name: Run Python tests with numpy<2.0 (python<3.13)
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') && startsWith(matrix.os,'ubuntu')
         run: |
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
+          pip install --prefer-binary "numpy<2.0" pillow
+          pytest -s
+
+
+      - name: Run Python tests with numpy<2.0 (python==3.13)
+        if: (matrix.python_version == '3.13') && startsWith(matrix.os,'ubuntu')
+        run: |
+          # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
+          sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev 
+          # 2024.11.03: no binaries exist for python 3.13, https://github.com/google/re2/issues/516
+          sudo apt-get install -y --no-install-recommends libabsl-dev libre2-dev pybind11-dev
+          pip install google-re2
           pip install --prefer-binary "numpy<2.0" pillow
           pytest -s
