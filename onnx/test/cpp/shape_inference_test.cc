@@ -344,7 +344,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
 
 // Check subgraph inferencing via GraphInferencer using a Scan
 static void doInferencingTest(bool use_scan_opset8) {
-  auto* schemaRegistry = OpSchemaRegistry::Instance();
+  OpSchemaRegistry::Instance();
   GraphProto subgraph;
 
   // simple tensor without shape info

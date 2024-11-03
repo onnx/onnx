@@ -307,8 +307,9 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     model.ir_version = IR_VERSION
     model.graph.CopyFrom(graph)
 
-    opset_imports: Sequence[OperatorSetIdProto] | None = None
-    opset_imports = kwargs.pop("opset_imports", None)  # type: ignore
+    opset_imports: Sequence[OperatorSetIdProto] | None = kwargs.pop(
+        "opset_imports", None
+    )
     if opset_imports is not None:
         model.opset_import.extend(opset_imports)
     else:
@@ -316,8 +317,7 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
         imp = model.opset_import.add()
         imp.version = defs.onnx_opset_version()
 
-    functions: Sequence[FunctionProto] | None = None
-    functions = kwargs.pop("functions", None)  # type: ignore
+    functions: Sequence[FunctionProto] | None = kwargs.pop("functions", None)
     if functions is not None:
         model.functions.extend(functions)
 
@@ -665,11 +665,13 @@ def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarr
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
 
-    single_func = lambda x, y: subbyte.float32x2_to_4bitx2(x, y, signed)  # noqa: E731
+    def single_func(x, y) -> np.ndarray:
+        return subbyte.float32x2_to_4bitx2(x, y, signed)
+
     func = np.frompyfunc(single_func, 2, 1)
 
-    arr = func(array_flat[0::2], array_flat[1::2])
-    return arr.astype(np.uint8)  # type: ignore[no-any-return]
+    arr: np.ndarray = func(array_flat[0::2], array_flat[1::2])
+    return arr.astype(np.uint8)
 
 
 def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
@@ -691,7 +693,7 @@ def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
         array_flat = np.append(array_flat, np.array([0]))
 
     arr = subbyte.float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
-    return arr.astype(np.uint8)  # type: ignore[no-any-return]
+    return arr.astype(np.uint8)
 
 
 def make_tensor(
@@ -724,7 +726,7 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     # Check number of vals specified equals tensor size
-    expected_size = 1
+    expected_size: float = 1
     if raw:
         # NumPy doesn't have BFLOAT16. TENSOR_TYPE_MAP maps it to float32, which has the wrong itemsize.
         if data_type == TensorProto.BFLOAT16:
@@ -738,11 +740,11 @@ def make_tensor(
             expected_size = 1
         # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
         elif data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
-            expected_size = 0.5  # type: ignore[assignment]
+            expected_size = 0.5
         else:
             expected_size = np_dtype.itemsize
 
-    if type(vals) is np.ndarray and len(vals.shape) > 1:
+    if isinstance(vals, np.ndarray) and len(vals.shape) > 1:
         vals = vals.flatten()
     for d in dims:
         expected_size *= d
@@ -848,16 +850,17 @@ def make_sequence(
 
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
+    attribute: Sequence | None = None
     if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
+        attribute = sequence.sparse_tensor_values
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values  # type: ignore[assignment]
+        attribute = sequence.sequence_values
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values  # type: ignore[assignment]
+        attribute = sequence.map_values
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values  # type: ignore[assignment]
+        attribute = sequence.optional_values
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
@@ -899,7 +902,7 @@ def make_map(
 def make_optional(
     name: str,
     elem_type: OptionalProto.DataType,
-    value: Any | None,
+    value: google.protobuf.message.Message | None,
 ) -> OptionalProto:
     """Make an Optional with specified value arguments."""
     optional = OptionalProto()
@@ -908,26 +911,30 @@ def make_optional(
 
     if elem_type == OptionalProto.UNDEFINED:
         return optional
+    attribute: google.protobuf.message.Message | None = None
     if elem_type == OptionalProto.TENSOR:
         attribute = optional.tensor_value
     elif elem_type == OptionalProto.SPARSE_TENSOR:
-        attribute = optional.sparse_tensor_value  # type: ignore[assignment]
+        attribute = optional.sparse_tensor_value
     elif elem_type == OptionalProto.SEQUENCE:
-        attribute = optional.sequence_value  # type: ignore[assignment]
+        attribute = optional.sequence_value
     elif elem_type == OptionalProto.MAP:
-        attribute = optional.map_value  # type: ignore[assignment]
+        attribute = optional.map_value
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = optional.optional_value  # type: ignore[assignment]
+        attribute = optional.optional_value
     else:
         raise TypeError("The element type in the input optional is not supported.")
 
-    attribute.CopyFrom(value)  # type: ignore[arg-type]
+    assert value is not None
+    attribute.CopyFrom(value)
     return optional
 
 
 def _to_bytes(value: str | bytes) -> bytes:
     """Coerce a string (or bytes) value into UTF-8 bytes."""
-    return value if isinstance(value, bytes) else value.encode("utf-8")
+    if isinstance(value, str):
+        return value.encode("utf-8")
+    return value
 
 
 def make_attribute(
@@ -983,7 +990,7 @@ def make_attribute(
                 (GraphProto, AttributeProto.GRAPHS),
                 (TypeProto, AttributeProto.TYPE_PROTOS),
             ):
-                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
+                if all(issubclass(t, exp_t) for t in types):
                     attr_type = exp_enum
                     break
             if attr_type is None:
@@ -1384,7 +1391,7 @@ def printable_type(t: TypeProto) -> str:
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
             else:
                 s += ", scalar"
-        return s  # type: ignore[no-any-return]
+        return s
     if t.WhichOneof("value") is None:
         return ""
     return f"Unknown type {t.WhichOneof('value')}"
@@ -1462,7 +1469,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     if len(graph.input):
         header.append("(")
         in_strs = []  # required inputs
-        in_with_init_strs = (
+        in_with_init_strs: list = (
             []
         )  # optional inputs with initializer providing default value
         for inp in graph.input:
@@ -1659,7 +1666,9 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     return mapping.TENSOR_TYPE_MAP.keys()
 
 
-_ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
+_ATTRIBUTE_TYPE_TO_STR: dict[int, str] = {
+    k: v for v, k in AttributeProto.AttributeType.items()
+}
 
 
 def _attr_type_to_str(attr_type: int) -> str:
@@ -1672,5 +1681,5 @@ def _attr_type_to_str(attr_type: int) -> str:
         String representing the supplied attr_type.
     """
     if attr_type in AttributeProto.AttributeType.values():
-        return _ATTRIBUTE_TYPE_TO_STR[attr_type]  # type: ignore[no-any-return]
-    return AttributeProto.AttributeType.keys()[0]  # type: ignore[no-any-return]
+        return _ATTRIBUTE_TYPE_TO_STR[attr_type]
+    return AttributeProto.AttributeType.keys()[0]

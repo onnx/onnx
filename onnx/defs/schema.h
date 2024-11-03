@@ -818,14 +818,14 @@ class OpSchema final {
   /**
    * @brief Verifies if the input number matches the pattern specified in the schema.
    * @param input_num The number of inputs to be verified against the schema.
-   * @param node_info The prefix string used if the check fails.
+   * @param node_name The prefix string used if the check fails.
    */
   void VerifyInputNum(int input_num, std::string_view node_name = "") const;
 
   /**
    * @brief Verifies if the output number matches the pattern specified in the schema.
    * @param output_num The number of outputs to be verified against the schema.
-   * @param node_info The prefix string used if the check fails.
+   * @param node_name The prefix string used if the check fails.
    */
   void VerifyOutputNum(int output_num, std::string_view node_name = "") const;
 
