@@ -88,7 +88,7 @@ jobs:
 
       - name: Publish onnx-weekly to PyPI
         if: (github.event_name == 'schedule') && (github.repository_owner == 'onnx')
-        uses: pypa/gh-action-pypi-publish@f7600683efdcb7656dec5b29656edb7bc586e597
+        uses: pypa/gh-action-pypi-publish@fb13cb306901256ace3dab689990e13a5550ffaa
         with:   
           repository-url: https://pypi.org/legacy/
           verbose: true     

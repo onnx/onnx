@@ -390,29 +390,11 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         --cpp_out
         ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
     if(ONNX_BUILD_PYTHON)
-      list(APPEND PROTOC_ARGS --python_out
-                  ${CMAKE_CURRENT_BINARY_DIR})
+      list(APPEND PROTOC_ARGS --python_out)
       if(ONNX_GEN_PB_TYPE_STUBS)
-        if(NOT WIN32)
-          # use Python3_EXECUTABLE to python protoc-gen-mypy.py
-          configure_file(
-            ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
-            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh
-            @ONLY)
-          execute_process(COMMAND chmod +x ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
-          configure_file(
-            ${ROOT_DIR}/tools/protoc-gen-mypy.py
-            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.py
-            COPYONLY)
-          set(PROTOC_MYPY_PLUGIN_FILE ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
-        else()
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
-        endif()
-        list(APPEND PROTOC_ARGS
-                    --plugin
-                    protoc-gen-mypy=${PROTOC_MYPY_PLUGIN_FILE}
-                    --mypy_out
-                    ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
+        list(APPEND PROTOC_ARGS pyi_out:${CMAKE_CURRENT_BINARY_DIR})
+      else()
+        list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
     if(NOT ONNX_PROTOC_EXECUTABLE)
@@ -669,6 +651,10 @@ if(MSVC)
                                    "${onnx_static_library_flags}")
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
+  if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+    target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
+    target_compile_options(onnx_proto PRIVATE "-Wno-stringop-overflow")
+  endif()
 endif()
 
 if(APPLE)
