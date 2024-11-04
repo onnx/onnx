@@ -15,7 +15,7 @@ cmake_policy(SET CMP0063 NEW)
 cmake_policy(SET CMP0074 NEW)
 
 # Project
-project(onnx C CXX)
+project(onnx LANGUAGES C CXX)
 option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
