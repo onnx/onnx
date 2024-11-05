@@ -15,7 +15,7 @@ cmake_policy(SET CMP0063 NEW)
 cmake_policy(SET CMP0074 NEW)
 
 # Project
-project(onnx C CXX)
+project(onnx LANGUAGES C CXX)
 option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
@@ -372,29 +372,11 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         --cpp_out
         ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
     if(BUILD_ONNX_PYTHON)
-      list(APPEND PROTOC_ARGS --python_out
-                  ${CMAKE_CURRENT_BINARY_DIR})
+      list(APPEND PROTOC_ARGS --python_out)
       if(ONNX_GEN_PB_TYPE_STUBS)
-        if(NOT WIN32)
-          # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
-          configure_file(
-            ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
-            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh
-            @ONLY)
-          execute_process(COMMAND chmod +x ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
-          configure_file(
-            ${ROOT_DIR}/tools/protoc-gen-mypy.py
-            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.py
-            COPYONLY)
-          set(PROTOC_MYPY_PLUGIN_FILE ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
-        else()
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
-        endif()
-        list(APPEND PROTOC_ARGS
-                    --plugin
-                    protoc-gen-mypy=${PROTOC_MYPY_PLUGIN_FILE}
-                    --mypy_out
-                    ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
+        list(APPEND PROTOC_ARGS pyi_out:${CMAKE_CURRENT_BINARY_DIR})
+      else()
+        list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
     if(NOT ONNX_PROTOC_EXECUTABLE)
