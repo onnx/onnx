@@ -6207,7 +6207,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(y, got[0])
 
     def test_sequence_axis(self):
-        model = self._load_model("""
+        model = self._load_model(
+            """
         <
             ir_version: 8,
             opset_import: [ "" : 21 ]
@@ -6227,7 +6228,8 @@ class TestReferenceEvaluator(unittest.TestCase):
             >(images)
             preprocessed = ConcatFromSequence<axis=0, new_axis=1>(seq)
         }
-        """)
+        """
+        )
         evaluator = ReferenceEvaluator(model)
         imageIn = np.zeros((10, 10), dtype=np.dtype("float32"))
         output = evaluator.run(["preprocessed"], {"images": [imageIn]})[0]
