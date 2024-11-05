@@ -1,14 +1,14 @@
 # This file is auto updated by dependabot
 lintrunner-adapters>=0.12.3
 # RUFF
-ruff==0.7.0
+ruff==0.7.2
 # MYPY
-mypy==1.11.2
+mypy==1.13.0
 types-protobuf==5.28.0.20240924
 # BLACK-ISORT
 black==24.8.0
 isort==5.13.2
 # CLANG-FORMAT
-clang-format==19.1.1
+clang-format==19.1.3
 # EDITORCONFIG-CHECKER
 editorconfig-checker==3.0.3
