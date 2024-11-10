@@ -35,8 +35,10 @@ jobs:
         CURRENT_DATE=$(date +'%Y%m%d')
         echo "Current date is: $CURRENT_DATE"
 
-        # Set output variable for the job
-        echo "::set-output name=current_date::$CURRENT_DATE"
+        # Set output variable for the job; deprecated
+        # echo "::set-output name=current_date::$CURRENT_DATE"
+       
+        echo "current_date=$CURRENT_DATE" >> $GITHUB_STATE
 
   call-workflow-ubuntu_x86:
     needs: set-date 
