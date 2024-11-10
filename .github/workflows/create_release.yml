@@ -21,6 +21,17 @@ concurrency:
 
 jobs: 
 
+  set-date:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set current date
+      id: set-date
+      run: |
+        # Get the current date in the format YYYY-MM-DD
+        CURRENT_DATE=$(date +'%Y%m%d')
+        echo "Current date is: $CURRENT_DATE"
+
   call-workflow-ubuntu_x86:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_x86_64.yml
