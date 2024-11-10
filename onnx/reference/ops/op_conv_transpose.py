@@ -107,9 +107,7 @@ class ConvTranspose(OpRun):
             for group_id in range(group):
                 group_X = X[:, group_id * C // group : (group_id + 1) * C // group, ...]
                 group_W = W[
-                    group_id
-                    * num_output_channels
-                    // group : (group_id + 1)
+                    group_id * num_output_channels // group : (group_id + 1)
                     * num_output_channels
                     // group,
                     ...,
