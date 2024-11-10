@@ -11,8 +11,8 @@ on:  # Specifies the event triggering the workflow
         required: true
         type: string
       currdate: # for weekly / dev build
-          required: true
-          type: string
+        required: true
+        type: string
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
