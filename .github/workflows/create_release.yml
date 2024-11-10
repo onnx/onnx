@@ -41,7 +41,7 @@ jobs:
   call-workflow-ubuntu_x86:
     needs: set-date 
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_linux_x86_64.yml
+    uses: ./.github/workflows/release_linux_x86_64.yml@andife-patch-7
     with:            
       os: "linux_x86_64"
       current_date: ${{ needs.set-date.outputs.current_date }} 
