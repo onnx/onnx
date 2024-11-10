@@ -19,10 +19,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
   cancel-in-progress: true
 
-jobs: 
+jobs:
 
   set-date:
+    # define time for dev build, weekly at the moment
     runs-on: ubuntu-latest
+    outputs:
+      current_date: ${{ steps.set-date.outputs.current_date }}
 
     steps:
     - name: Set current date
@@ -32,39 +35,52 @@ jobs:
         CURRENT_DATE=$(date +'%Y%m%d')
         echo "Current date is: $CURRENT_DATE"
 
+        # Set output variable for the job
+        echo "::set-output name=current_date::$CURRENT_DATE"
+
   call-workflow-ubuntu_x86:
+    needs: set-date 
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:            
-      os: "linux_x86_64" 
+      os: "linux_x86_64"
+      current_date: ${{ needs.set-date.outputs.current_date }} 
     secrets: inherit
 
   call-workflow-ubuntu_aarch64:
+    needs: set-date
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_aarch64.yml
     with:            
       os: "linux_aarch64"      
+      current_date: ${{ needs.set-date.outputs.current_date }}
     secrets: inherit
 
   call-workflow-win:
+    needs: set-date
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win.yml
     with:      
-      os: "win"
+      os: "win"      
+      current_date: ${{ needs.set-date.outputs.current_date }}
     secrets: inherit
 
   call-workflow-mac:
+    needs: set-date
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
     with:            
-      os: "macos"
+      os: "macos"      
+      current_date: ${{ needs.set-date.outputs.current_date }}
     secrets: inherit
 
   call-workflow-sdist:
+    needs: set-date
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_sdist.yml
     with:            
-      os: "macos"
+      os: "macos"      
+      current_date: ${{ needs.set-date.outputs.current_date }}
     secrets: inherit
 
   publish_to_testpypi-onnx-weekly: 
