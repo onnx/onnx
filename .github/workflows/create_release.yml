@@ -44,8 +44,7 @@ jobs:
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:            
       os: "linux_x86_64"
-      currdate: ${{ needs.set-date.outputs.current_date }} 
-      ref: refs/heads/andife-patch-7      
+      currdate: ${{ needs.set-date.outputs.current_date }}       
     secrets: inherit
     
   call-workflow-ubuntu_aarch64:
