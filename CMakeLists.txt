@@ -20,7 +20,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 # Project
-project(onnx C CXX)
+project(onnx LANGUAGES C CXX)
 
 if(DEFINED BUILD_ONNX_PYTHON)
   message(WARNING "'BUILD_ONNX_PYTHON' is deprecated. Please, use 'ONNX_BUILD_PYTHON' instead")
