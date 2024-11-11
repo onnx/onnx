@@ -204,7 +204,7 @@ if sys.platform == "win32":
     backend_test.exclude("test_image_decoder_decode_")
 
 if sys.version_info > (3, 12):
-    # 2024.11.11 re2 not compatible with python 3.13 , https://github.com/google/re2/issues/516
+    # TODO(https://github.com/google/re2/issues/516): Remove the skips
     backend_test.exclude("test_regex_full_match_basic_cpu")
     backend_test.exclude("test_regex_full_match_email_domain_cpu")
     backend_test.exclude("test_regex_full_match_empty_cpu")
