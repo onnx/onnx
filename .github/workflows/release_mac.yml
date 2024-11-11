@@ -10,9 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-      currdate: # for weekly / dev build
-          required: true
-          type: string
 
 # Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
 env:
