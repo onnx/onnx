@@ -26,7 +26,6 @@ jobs:
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:            
       os: "linux_x86_64"
-      currdate: ${{ needs.set-date.outputs.current_date }}       
     secrets: inherit
     
   call-workflow-ubuntu_aarch64:
@@ -34,7 +33,6 @@ jobs:
     uses: ./.github/workflows/release_linux_aarch64.yml
     with:            
       os: "linux_aarch64"      
-      currdate: ${{ needs.set-date.outputs.current_date }}
     secrets: inherit
 
   call-workflow-win:
@@ -42,7 +40,6 @@ jobs:
     uses: ./.github/workflows/release_win.yml
     with:      
       os: "win"      
-      currdate: ${{ needs.set-date.outputs.current_date }}
     secrets: inherit
 
   call-workflow-mac:
@@ -50,7 +47,6 @@ jobs:
     uses: ./.github/workflows/release_mac.yml
     with:            
       os: "macos"      
-      currdate: ${{ needs.set-date.outputs.current_date }}
     secrets: inherit
 
   call-workflow-sdist:
@@ -72,7 +68,7 @@ jobs:
        
       permissions:
         contents: write  # IMPORTANT: mandatory for making GitHub Releases
-        id-token: write  # IMPORTANT: mandatory for sigstore     
+        id-token: write      
   
       steps:
 
