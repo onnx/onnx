@@ -10,7 +10,6 @@ set -e -x
 PY_VERSION=$1
 PLAT=$2
 GITHUB_EVENT_NAME=$3
-CURR_DATE=$4
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
