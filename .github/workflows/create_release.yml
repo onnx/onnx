@@ -105,7 +105,7 @@ jobs:
             merge-multiple: true
   
         - name: Publish dev-build to test.pypi
-          if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ) && (github.repository_owner == 'onnx')
+          if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ) && (github.repository_owner == 'onnx')
           uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc
           with:   
             repository-url: https://test.pypi.org/legacy/
@@ -142,8 +142,8 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish onnx-weekly to PyPI
-        if: (github.event_name == 'schedule') && (github.repository_owner == 'onnx')
+      - name: Publish devbuild to pypi
+        if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc
         with:   
           repository-url: https://pypi.org/legacy/
