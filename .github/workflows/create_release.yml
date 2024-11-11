@@ -82,7 +82,6 @@ jobs:
     uses: ./.github/workflows/release_sdist.yml
     with:            
       os: "macos"      
-      currdate: ${{ needs.set-date.outputs.current_date }}
     secrets: inherit
 
   publish_to_testpypi-onnx-weekly: 

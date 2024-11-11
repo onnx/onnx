@@ -10,9 +10,7 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-      currdate: # for weekly / dev build
-        required: true
-        type: string
+      
 
 permissions:
   contents: read
@@ -49,7 +47,7 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
 
-    - name: Build source distribution (weekly)
+    - name: Build source distribution (devbuild / weekly)
       if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       run: |
         git clean -xdf
@@ -62,9 +60,9 @@ jobs:
         git clean -xdf
         python -m build --sdist
 
-    - name: Upload srcdist
+    - name: Upload sdist
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
       with:
-        name: srcdist
+        name: sdist
         path: |
             ./dist/*.tar.gz
