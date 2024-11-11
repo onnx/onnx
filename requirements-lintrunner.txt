@@ -6,7 +6,7 @@ ruff==0.7.2
 mypy==1.13.0
 types-protobuf==5.28.0.20240924
 # BLACK-ISORT
-black==24.8.0
+black==24.10.0
 isort==5.13.2
 # CLANG-FORMAT
 clang-format==19.1.3
