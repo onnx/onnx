@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_wheel_pypi:
-        description: 'Decide if the wheel should be published to pypi'
+        description: 'Publish wheel to pypi'
         required: true
         type: choice
         options:
@@ -24,7 +24,7 @@ on:
           - 'no'
         default: 'no'
       publish_wheel_testpypi:
-          description: 'Decide if the wheel should be published to testpypi'
+          description: 'Publish wheel to to testpypi'
           required: true
           type: choice
           options:
@@ -152,7 +152,7 @@ jobs:
 
 
   test_sdist:    
-    needs: [publish_to_pypi-onnx-weekly]    
+    needs: [publish_devbuild_to_pypi]    
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_test_weekly_sdist.yml
     with:            
