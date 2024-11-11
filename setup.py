@@ -178,10 +178,8 @@ class CmakeBuild(setuptools.Command):
             # configure
             cmake_args = [
                 CMAKE,
-                f"-DPYTHON_INCLUDE_DIR={sysconfig.get_path('include')}",
-                f"-DPYTHON_EXECUTABLE={get_python_execute()}",
-                "-DBUILD_ONNX_PYTHON=ON",
-                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                f"-DPython3_EXECUTABLE={get_python_execute()}",
+                "-DONNX_BUILD_PYTHON=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
                 f"-DPY_EXT_SUFFIX={get_ext_suffix() or ''}",
             ]
@@ -193,15 +191,6 @@ class CmakeBuild(setuptools.Command):
                 build_type = "Debug"
             cmake_args.append(f"-DCMAKE_BUILD_TYPE={build_type}")
             if WINDOWS:
-                py_version = sys.version_info[:2]
-                cmake_args.extend(
-                    [
-                        # we need to link with libpython on windows, so
-                        # passing python version to window in order to
-                        # find python in cmake
-                        f"-DPY_VERSION='{py_version[0]}.{py_version[1]}'",
-                    ]
-                )
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append("-DONNX_USE_MSVC_STATIC_RUNTIME=ON")
                 if platform.architecture()[0] == "64bit":
@@ -240,7 +229,7 @@ class CmakeBuild(setuptools.Command):
 
             build_args = [CMAKE, "--build", os.curdir]
             if WINDOWS:
-                build_args.extend(["--config", build_type])
+                build_args.extend(["--config", build_type, "--verbose"])
                 build_args.extend(["--", f"/maxcpucount:{self.jobs}"])
             else:
                 build_args.extend(["--", "-j", str(self.jobs)])
