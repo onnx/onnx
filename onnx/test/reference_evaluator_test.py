@@ -81,6 +81,19 @@ ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
     getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
 )
 
+def skip_if_no_re2(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            import re2
+
+            del re2
+        except ImportError:
+            raise unittest.SkipTest("google-re2 not installed") from None
+        fn(*args, **kwargs)
+
+    return wrapper
+
 
 def skip_if_no_onnxruntime(fn):
     @wraps(fn)
@@ -5713,9 +5726,12 @@ class TestReferenceEvaluator(unittest.TestCase):
             ),
         ]
     )
-    @unittest.skipIf(
-        sys.platform == "win32", "google-re2 package is not built for win32"
-    )
+    
+
+    #@unittest.skipIf(
+    #    sys.platform == "win32", "google-re2 package is not built for win32"
+    #)
+    @skip_if_no_re2
     def test_regex_full_match(self, x, pattern, expected, expected_shape):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
         Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
@@ -5727,9 +5743,10 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(result.dtype.kind, "b")
         self.assertEqual(result.shape, expected_shape)
 
-    @unittest.skipIf(
-        sys.platform == "win32", "google-re2 package is not built for win32"
-    )
+    #@unittest.skipIf(
+    #    sys.platform == "win32", "google-re2 package is not built for win32"
+    #)
+    @skip_if_no_re2
     def test_regex_invalid_pattern(self):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
         Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
