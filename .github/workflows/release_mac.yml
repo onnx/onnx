@@ -38,6 +38,7 @@ jobs:
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
