@@ -5727,10 +5727,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         ]
     )
     
-
-    #@unittest.skipIf(
-    #    sys.platform == "win32", "google-re2 package is not built for win32"
-    #)
     @skip_if_no_re2
     def test_regex_full_match(self, x, pattern, expected, expected_shape):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
@@ -5743,9 +5739,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(result.dtype.kind, "b")
         self.assertEqual(result.shape, expected_shape)
 
-    #@unittest.skipIf(
-    #    sys.platform == "win32", "google-re2 package is not built for win32"
-    #)
     @skip_if_no_re2
     def test_regex_invalid_pattern(self):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
