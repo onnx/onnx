@@ -80,6 +80,7 @@ ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
     getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
 )
 
+
 def skip_if_no_re2(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
