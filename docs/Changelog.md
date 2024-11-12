@@ -28805,8 +28805,7 @@ This version of the operator has been available since version 23 of the default 
      number and must be a power of 2 and not smaller than 16, like 16, 32, 64, 128,..
   3. Input `B`'s scale and zero point are specified by input scales and zero_points.
 
-      Input `B` is stored as uint8_t with shape: `[N][n_blocks_per_col][blob_size]` or
-      `[N][n_blocks_per_col * blob_size]`
+      Input `B` is stored as uint8_t with shape: `[N][n_blocks_per_col][blob_size]`
 
       in which:
         - `n_blocks_per_col` = `(K + block_size - 1) / block_size`
@@ -28826,6 +28825,7 @@ This version of the operator has been available since version 23 of the default 
           Byte 0: [ B B B B A A A A ] -> A[0:3], B[4:7]
           Byte 1: [ . . . .  C C C C] -> C[0:3]
         ```
+
       - for 3,5,6,7 bits, 32x3bit,32x5bit,16x6bit,32x7bit are stored in 12x`uint8_t`, 20x`uint8_t`, 12x`uint8_t`,
         28x`uint8_t` separately. no bits are wasted.
         ```
@@ -28838,7 +28838,6 @@ This version of the operator has been available since version 23 of the default 
           Byte 1: [ . . . . . . . C ] -> C[0]
         ```
     The last `uint_8` byte may have some bits unused.
-
 
   Input `scales` is stored in same type as original type of B(`float32`, `float16`) with shape like:
   `[N * n_blocks_per_col]`

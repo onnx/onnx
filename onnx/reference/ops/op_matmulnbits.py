@@ -160,9 +160,11 @@ class MatMulNBits(OpRun):
         block_size: int | None = None) -> tuple[np.ndarray,]:
         # validate ndim of required inputs
         if A.ndim != 2:
-            raise ValueError("Input A must be a 2-dimensional tensor of shape.")
-        if B.ndim < 2 or B.ndim > 3:
-            raise ValueError("Input B must be a 2-dimensional or 3-dimensional tensor.")
+            raise ValueError("Input A must be a 2-dimensional tensor of shape [M,K].")
+        if B.ndim != 3:
+            raise ValueError("Input B must be a 3-dimensional tensor [N][n_blocks_per_col][blob_size]. "
+                             "Where n_blocks_per_col = (K + block_size - 1) / block_size and "
+                             "blob_size = CeilDiv((block_size * bits),8).")
         if scales.ndim != 1:
             raise ValueError("Scales must be a 1-dimensional tensor.")
         if zero_points is not None and zero_points.ndim != 1:
@@ -193,7 +195,7 @@ class MatMulNBits(OpRun):
             raise ValueError("N must be equal to the number of rows in B.")
         n_blocks_per_col = (K + block_size - 1) // block_size
         blob_size = ceil((block_size * bits)/8)
-        b_shape_error = ("B must have the shape [N][n_blocks_per_col][blob_size] or [N][n_blocks_per_col * blob_size]. "
+        b_shape_error = ("B must have the shape [N][n_blocks_per_col][blob_size]. "
                         "Where n_blocks_per_col = (K + block_size - 1) / block_size and "
                         "blob_size = CeilDiv((block_size * bits),8).")
         if B.ndim == 2:

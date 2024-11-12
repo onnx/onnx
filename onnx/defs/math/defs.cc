@@ -2018,12 +2018,11 @@ MatMulNBits is a MatMul with weight quantized with N bits (e.g., 2, 3, 4, 5, 6, 
     number and must be a power of 2 and not smaller than 16, like 16, 32, 64, 128,..
 3. Input `B`'s scale and zero point are specified by input scales and zero_points.
 
-    Input `B` is stored as uint8_t with shape: `[N][n_blocks_per_col][blob_size]` or
-    `[N][n_blocks_per_col * blob_size]`
+    Input `B` is stored as uint8_t with shape: `[N][n_blocks_per_col][blob_size]`
 
     in which:
       - `n_blocks_per_col` = `(K + block_size - 1) / block_size`
-      - `blob_size` = `CeilDiv(block_size * bits, bitsof(uint8_t)<8>)`
+      - `blob_size` = `CeilDiv(block_size * bits, 8)`
 
     For all bits from 2-8, a row of data is tightly packed and represented by uint8_t.
     The bit packing specified for [4 bit integer types](https://onnx.ai/onnx/technical/int4.html) is followed.
@@ -2128,10 +2127,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T1", {"tensor(float)", "tensor(float16)"},
-                        "Constrain input and output type to float/half_float tensors.")
-        .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain quantized weight types to uint8/int32.")
+                        "Constrain input and output type to float/float16 tensors.")
+        .TypeConstraint("T2", {"tensor(uint8)"}, "Constrain quantized weight types to uint8.")
         .TypeConstraint("T3", {"tensor(uint8)", "tensor(float16)", "tensor(float)"},
-                        "Constrain quantized zero point types to uint8.int32/float16/float.")
+                        "Constrain quantized zero point types to uint8/float16/float.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto k_attr = ctx.getAttribute("K");
           int64_t K = (k_attr != nullptr) ? k_attr->i() : -1;
@@ -2187,7 +2186,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Input B is stored as uint8_t with shape: `[N][n_blocks_per_col][blob_size]`
           // in which:
           //  - `n_blocks_per_col` = `(K + block_size - 1) / block_size`
-          //  - `blob_size` = `CeilDiv(block_size * bits, bitsof(uint8_t)<8>)`
+          //  - `blob_size` = `CeilDiv(block_size * bits, 8)`
           // intput shape A{M, K} B{N, n_blocks_per_col, blob_size}
           if (a_shape.dim(1).has_dim_value() && a_shape.dim(1).dim_value() != K) {
             fail_shape_inference("Incompatible dimensions for matrix multiplication. "
@@ -2201,16 +2200,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           int64_t n_blocks_per_col = (K + block_size - 1) / block_size;
           int64_t blob_size = ceil(static_cast<float>(block_size * bits) / 8.0);
-          // B input must be of shape [N][n_blocks_per_col][blob_size] or [N][n_blocks_per_col * blob_size]
-          if (b_shape.dim_size() == 2) {
-            if (b_shape.dim(1).has_dim_value() && b_shape.dim(1).dim_value() != (n_blocks_per_col * blob_size)) {
-              fail_shape_inference("Input B dimensions is incompatible with the MatMulNBits specification.");
-            }
+          // B input must be of shape [N][n_blocks_per_col][blob_size]
+          if (b_shape.dim_size() != 3) {
+            fail_shape_inference("Input B dimensions is incompatible with the MatMulNBits specification expected "
+                                 "3 dimensional input with [N][n_blocks_per_col][blob_size] shape.");
           }
           if (b_shape.dim_size() == 3) {
             if (b_shape.dim(1).has_dim_value() && b_shape.dim(2).has_dim_value() &&
                 !(b_shape.dim(1).dim_value() == n_blocks_per_col && b_shape.dim(2).dim_value() == blob_size)) {
-              fail_shape_inference("Input B dimensions is incompatible with the MatMulNBits specification.");
+              fail_shape_inference("Input B dimensions is incompatible with the MatMulNBits specification expected "
+                                   "input with [N][n_blocks_per_col][blob_size] shape.");
             }
           }
 
