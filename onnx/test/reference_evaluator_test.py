@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import itertools
 import math
-import sys
 import unittest
 from contextlib import redirect_stdout
 from functools import wraps
@@ -5726,7 +5725,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             ),
         ]
     )
-    
     @skip_if_no_re2
     def test_regex_full_match(self, x, pattern, expected, expected_shape):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
