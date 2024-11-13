@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import importlib
 import itertools
 import math
 import unittest
