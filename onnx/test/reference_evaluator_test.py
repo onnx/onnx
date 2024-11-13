@@ -22,8 +22,6 @@ from io import StringIO
 from os import getenv
 from textwrap import dedent
 from typing import Sequence
-import importlib
-
 
 import numpy as np
 import parameterized
