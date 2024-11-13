@@ -84,12 +84,10 @@ ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
 def skip_if_no_re2(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        try:
-            import re2
 
-            del re2
-        except ImportError:
-            raise unittest.SkipTest("google-re2 not installed") from None
+        spec = importlib.util.find_spec("re2")
+        if spec is None:
+            raise unittest.SkipTest("google-re2 not installed")        
         fn(*args, **kwargs)
 
     return wrapper
