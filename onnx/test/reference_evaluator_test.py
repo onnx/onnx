@@ -88,7 +88,7 @@ def skip_if_no_re2(fn):
 
         spec = importlib.util.find_spec("re2")
         if spec is None:
-            raise unittest.SkipTest("google-re2 not installed")        
+            raise unittest.SkipTest("google-re2 not installed")
         fn(*args, **kwargs)
 
     return wrapper
