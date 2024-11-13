@@ -228,7 +228,6 @@ jobs:
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev 
           # 2024.11.03: no binaries exist for python 3.13, https://github.com/google/re2/issues/516
-          # sudo apt-get install -y --no-install-recommends libabsl-dev libre2-dev pybind11-dev
-          # pip install google-re2
           pip install --prefer-binary "numpy<2.0" pillow
+          pip list
           pytest -s
