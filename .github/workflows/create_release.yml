@@ -129,7 +129,7 @@ jobs:
         if: (github.event_name == 'schedule') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc
         with:   
-          repository-url: https://pypi.org/legacy/
+          repository-url: https://upload.pypi.org/legacy/
           verbose: true     
           print-hash: true  
 
