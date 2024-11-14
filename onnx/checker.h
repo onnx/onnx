@@ -89,7 +89,7 @@ class CheckerContext final {
     check_custom_domain_ = value;
   }
 
-  explicit CheckerContext() {}
+  explicit CheckerContext() = default;
 
  private:
   int ir_version_{-1};
@@ -114,6 +114,9 @@ class LexicalScopeContext final {
   // values from the parent scope so the values are copied instead.
   LexicalScopeContext(const LexicalScopeContext& parent_context) : parent_context_{&parent_context} {}
   LexicalScopeContext& operator=(const LexicalScopeContext& parent_context) {
+    if (this == &parent_context) {
+      return *this;
+    }
     parent_context_ = &parent_context;
     return *this;
   }

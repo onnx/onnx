@@ -11,8 +11,8 @@
 #include <utility>
 #include <vector>
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -29,7 +29,7 @@ using DataValueMap = std::unordered_map<std::string, TensorShapeProto>;
 
 class SymbolTableImpl : public SymbolTable {
  public:
-  SymbolTableImpl() {}
+  SymbolTableImpl() = default;
 
   void addFromGraph(const GraphProto& g) override {
     AddExistingSymbolicDims(g.input());
