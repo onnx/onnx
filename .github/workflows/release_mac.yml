@@ -70,7 +70,7 @@ jobs:
 
   test:
     needs: build
-    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-12' || 'macos-14' }}
+    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
