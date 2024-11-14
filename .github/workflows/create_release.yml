@@ -145,11 +145,10 @@ jobs:
       - name: Publish devbuild to pypi
         if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc
-        with:
-          repository-url: https://pypi.org/legacy/
-          verbose: true
-          print-hash: true
-
+        with:   
+          repository-url: https://upload.pypi.org/legacy/
+          verbose: true     
+          print-hash: true  
 
   test_sdist:
     needs: [publish_devbuild_to_pypi]
