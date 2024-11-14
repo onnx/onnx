@@ -10,7 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-     
 permissions:
   contents: read
 
