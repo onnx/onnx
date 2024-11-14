@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
         architecture: ['x64']
 
     steps:
@@ -92,7 +92,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.12'
+      if: (matrix.python-version != '3.12') && (matrix.python-version != '3.13')
       run: |
         python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
         python -m pip install -q onnxruntime==1.17.3
