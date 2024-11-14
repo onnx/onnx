@@ -4,7 +4,7 @@
 
 name: LinuxRelease_aarch64
 
-on:  # Specifies the event triggering the workflow
+on:
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:
       os:
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: [cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312]
+        python-version: [cp38-cp38, cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312, cp313-cp313]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
@@ -107,7 +107,7 @@ jobs:
           deactivate'
 
     - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != 'cp312-cp312'
+      if: (matrix.python-version != 'cp312-cp312') && (matrix.python-version != 'cp313-cp313')      
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
