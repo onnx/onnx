@@ -4,7 +4,8 @@ markupsafe
 matplotlib
 myst-parser[linkify]
 onnx
-onnxruntime<1.20
+onnxruntime<1.20;python_version<"3.13"
+onnxruntime;python_version>="3.13"
 pillow
 pydot
 sphinx-copybutton
