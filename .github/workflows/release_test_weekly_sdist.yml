@@ -21,7 +21,7 @@ jobs:
 
   test_sdist_weekly:
 
-    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-12' || 'macos-14' }}
+    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
         python-version: ['3.10']
