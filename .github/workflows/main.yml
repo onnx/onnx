@@ -215,7 +215,7 @@ jobs:
           pytest -s
 
       - name: Run Python tests with numpy<2.0 (ubuntu, python<3.13)
-        # 2024.11.13: python 3.13 support was added at numpy 2.1.0 
+        # python 3.13 support was added at numpy 2.1.0 
         if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') && startsWith(matrix.os,'ubuntu')
         run: |
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
