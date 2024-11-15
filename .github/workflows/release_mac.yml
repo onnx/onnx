@@ -24,7 +24,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
         target-architecture: ['x86_64', 'arm64']
 
     steps:
@@ -35,6 +35,7 @@ jobs:
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
@@ -56,7 +57,7 @@ jobs:
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-        if [ '${{ github.event_name }}' == 'schedule' ]; then
+        if [ '${{ github.event_name }}' == 'schedule' ] || [ '${{ github.event_name }}' == 'workflow_dispatch' ]; then
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1
         fi
@@ -70,7 +71,7 @@ jobs:
 
   test:
     needs: build
-    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-12' || 'macos-14' }}
+    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']

@@ -28,8 +28,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
-        python_version: ['3.12', '3.11', '3.10', '3.9', '3.8']
-        include:
+        python_version: ['3.13', '3.12', '3.11', '3.10', '3.9', '3.8']
+        include:        
+          - python_version: '3.13'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 1
+            protobuf_type: 'Internal'
           - python_version: '3.12'
             onnx_ml: 1
             debug_build: 1
@@ -122,7 +127,7 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
-      - name: Build and install ONNX - Windows
+      - name: Build and install ONNX - Windows (setup.py build_ext)
         if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.8' && matrix.python_version != '3.12'
         run: |
           python setup.py build_ext --inplace
@@ -133,7 +138,7 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
-      - name: Build and install ONNX - Windows
+      - name: Build and install ONNX - Windows (pip)
         if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.8' || matrix.python_version == '3.12')
         run: |
           pip install -e . -v
@@ -203,15 +208,19 @@ jobs:
         continue-on-error: false
 
       - name: Run Python tests with numpy<2.0 (win, mac)
+        # Python 3.13 support was added at numpy 2.1.0 
         if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') &&  (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
         run: |
           pip install "numpy<2.0" pillow
           pytest -s
 
-      - name: Run Python tests with numpy<2.0 (ubuntu)
-        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12' ) && startsWith(matrix.os,'ubuntu')
+      - name: Run Python tests with numpy<2.0 (ubuntu, python<3.13)
+        # python 3.13 support was added at numpy 2.1.0 
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') && startsWith(matrix.os,'ubuntu')
         run: |
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           pip install --prefer-binary "numpy<2.0" pillow
           pytest -s
+
+
