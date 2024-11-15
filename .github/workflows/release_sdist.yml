@@ -10,7 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-
 permissions:
   contents: read
 
@@ -46,21 +45,22 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
 
-    - name: Build source distribution (weekly)
-      if: github.event_name == 'schedule'
+    - name: Build source distribution (devbuild / weekly)
+      if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       run: |
         git clean -xdf
         sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
         ONNX_PREVIEW_BUILD=1 python -m build --sdist
 
     - name: Build source distribution (for release)
+      if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
       run: |
         git clean -xdf
         python -m build --sdist
 
-    - name: Upload srcdist
+    - name: Upload sdist
       uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
       with:
-        name: srcdist
+        name: sdist
         path: |
             ./dist/*.tar.gz

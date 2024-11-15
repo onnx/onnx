@@ -10,7 +10,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
@@ -65,13 +64,14 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
-        if ('${{ github.event_name }}' -eq 'schedule') {
+        if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
           echo "Build weekly PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+ 
     - name: Test the installed wheel
       run: |
         cd onnx
