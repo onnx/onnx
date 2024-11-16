@@ -81,7 +81,7 @@ jobs:
       # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#example-not-requiring-successful-dependent-jobs
 
       environment:
-        name: testpypi
+        name: testpypi_onnxweekly
         url: https://test.pypi.org/p/onnx-weekly
 
       permissions:
