@@ -15,16 +15,16 @@ on:
       - labeled  # Trigger when a label is added to a PR, more information: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request
   workflow_dispatch:
     inputs:
-      publish_wheel_pypi:
-        description: 'Publish wheel to pypi'
+      publish_pypi_onnxweekly:
+        description: 'Publish to pypi_onnxweekly'
         required: true
         type: choice
         options:
           - 'yes'
           - 'no'
         default: 'no'
-      publish_wheel_testpypi:
-        description: 'Publish wheel to to testpypi'
+      publish_testpypi_onnxweekly:
+        description: 'Publish to testpypi_onnxweekly'
         required: true
         type: choice
         options:
@@ -91,21 +91,22 @@ jobs:
       steps:
 
         - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-          if: (github.event_name == 'schedule') && ((needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success'))
+          if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ) && ((needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success'))
           with:
             pattern: wheels*
             path: dist
             merge-multiple: true
 
         - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-          if: (github.event_name == 'schedule') && (needs.call-workflow-sdist.result == 'success')
+          if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ) && (needs.call-workflow-sdist.result == 'success')
           with:
             pattern: sdist
             path: dist
             merge-multiple: true
 
         - name: Publish dev-build to test.pypi
-          if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ) && (github.repository_owner == 'onnx')
+          if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event.inputs.publish_testpypi_onnxweekly == 'yes') && (github.repository_owner == 'onnx')
+          
           uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc
           with:
             repository-url: https://test.pypi.org/legacy/
@@ -136,14 +137,14 @@ jobs:
           merge-multiple: true
 
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        if: (github.event_name == 'schedule') && (needs.call-workflow-sdist.result == 'success')
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (needs.call-workflow-sdist.result == 'success')
         with:
           pattern: sdist
           path: dist
           merge-multiple: true
 
       - name: Publish devbuild to pypi
-        if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (github.repository_owner == 'onnx')
+        if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_onnxweekly  == 'yes') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc
         with:   
           repository-url: https://upload.pypi.org/legacy/
