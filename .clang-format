@@ -89,5 +89,6 @@ SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
+StatementMacros:    [define_data]
 TabWidth:        8
 UseTab:          Never
