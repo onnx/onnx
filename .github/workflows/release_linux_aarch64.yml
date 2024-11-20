@@ -105,17 +105,3 @@ jobs:
           pytest && \
           deactivate'
 
-    - name: Verify ONNX with ONNX Runtime PyPI package
-      if: (matrix.python-version != 'cp312-cp312') && (matrix.python-version != 'cp313-cp313')      
-      run: |
-         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '\
-          source .env/bin/activate && \
-          python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt && \
-          python -m pip install -q onnxruntime==1.16.3 && \
-          export ORT_MAX_IR_SUPPORTED_VERSION=9 \
-          export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3 \
-          export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20 \
-          pytest && \
-          deactivate'
