@@ -1236,7 +1236,7 @@ void RegisterOpSetSchema(int opset_version_to_load = 0, bool fail_duplicate_sche
   T::ForEachSchema([opset_version_to_load, fail_duplicate_schema](OpSchema&& schema) {
     RegisterSchema(std::move(schema), opset_version_to_load, fail_duplicate_schema);
   });
-};
+}
 
 // Forward declaration for the non-specialized GetOpSchema method.  This
 // enforces a consistent signature on functions that query individual schema,
