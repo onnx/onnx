@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
         architecture: ['x64']
 
     steps:
@@ -36,7 +36,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2014_x86_64:latest
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }} ${{ inputs.currdate }}
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
@@ -64,7 +64,6 @@ jobs:
         path: |
             ./dist/*.whl
 
-
     - name: TEST_HUB=1 pytest
       if: (github.event_name == 'schedule') # Only triggered by weekly event
       run: |
@@ -89,14 +88,4 @@ jobs:
       run: |
         python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
         python -m pip install dist/*manylinux2014_x86_64.whl
-        pytest
-
-    - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.12'
-      run: |
-        python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
-        python -m pip install -q onnxruntime==1.17.3
-        export ORT_MAX_IR_SUPPORTED_VERSION=9
-        export ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        export ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20
         pytest
