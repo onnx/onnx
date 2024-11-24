@@ -413,7 +413,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
         return &(result.first->second);
       }
     }
-    
+
     // If X has a known rank N, then X's value can be represented as an array
     // of N unknown values (represented as a TensorShapeProto).
     const TypeProto* type = getInputType(index);

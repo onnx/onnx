@@ -575,10 +575,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   checker.def(
       "check_model_path",
       (void (*)(
-          const std::string& path,
-          bool full_check,
-          bool skip_opset_compatibility_check,
-          bool check_custom_domain))&checker::check_model,
+          const std::string& path, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)) &
+          checker::check_model,
       "path"_a,
       "full_check"_a = false,
       "skip_opset_compatibility_check"_a = false,
