@@ -145,7 +145,7 @@ bool ParserBase::NextIsValidFloatString() {
 // Used to represent the list of inputs or outputs of a node.
 // An empty identifier may be represented by an empty string "" or by nothing followed by a single comma.
 // "Op()" has no operands
-// "Op(,x)"" has two operands, the first being empty.
+// "Op(,x)" has two operands, the first being empty.
 // 'Op("")' has one operand, which is an empty string.
 // 'Op(,)' has one operand, which is an empty string.
 // Thus, this will also allow a trailing comma after a non-empty identifier with no effect.
@@ -213,8 +213,7 @@ Status OnnxParser::Parse(TensorShapeProto& shape) {
       shape.add_dim();
     } else {
       // Check for a symbolic identifier ...
-      std::string id;
-      CHECK_PARSER_STATUS(ParseOptionalIdentifier(id));
+      auto id = ParseOptionalIdentifier();
       if (!id.empty()) {
         shape.add_dim()->set_dim_param(id);
       } else {
@@ -437,7 +436,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
   // Parse the concrete tensor-type with numeric dimensions:
   TypeProto typeProto;
   PARSE(typeProto);
-  ParseOptionalIdentifier(*tensorProto.mutable_name());
+  *tensorProto.mutable_name() = ParseOptionalIdentifier();
   (void)Matches('='); // Optional, to unify handling of initializers as well as tensor-protos in other contexts
   return Parse(tensorProto, typeProto);
 }
@@ -527,14 +526,12 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
 }
 
 bool OnnxParser::NextIsIdentifier() {
-  std::string id("");
-  (void)PeekIdentifier(id);
+  auto id = PeekIdentifier();
   return !(id.empty());
 }
 
 bool OnnxParser::NextIsType() {
-  std::string id("");
-  (void)PeekIdentifier(id);
+  auto id = PeekIdentifier();
   if (PrimitiveTypeNameMap::IsTypeName(id))
     return true;
   switch (KeyWordMap::Lookup(id)) {
@@ -554,14 +551,14 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
   if (isalpha(next) || next == '_') {
     if (NextIsType()) {
       TypeProto typeProto;
-      Parse(typeProto);
+      CHECK_PARSER_STATUS(Parse(typeProto));
       next = NextChar();
       if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
         CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()));
         (void)Matches('='); // Optional, to unify handling of initializers
-        Parse(tensorProto, typeProto);
+        CHECK_PARSER_STATUS(Parse(tensorProto, typeProto));
       } else {
         attr.set_type(AttributeProto_AttributeType_TYPE_PROTO);
         attr.mutable_tp()->CopyFrom(typeProto);
@@ -585,6 +582,8 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
     Literal literal;
     PARSE_TOKEN(literal);
     switch (literal.type) {
+      case LiteralType::UNDEFINED:
+        return ParseError("Internal error");
       case LiteralType::INT_LITERAL:
         attr.set_type(AttributeProto_AttributeType_INT);
         attr.set_i(std::stol(literal.value));
@@ -728,21 +727,20 @@ Status OnnxParser::Parse(NodeProto& node) {
   }
   PARSE(*node.mutable_output());
   MATCH('=');
-  std::string domain("");
-  std::string id;
-  ParseIdentifier(id);
+  std::string domain;
+  std::string id = ParseOptionalIdentifier();
   while (Matches('.')) {
     if (!domain.empty())
       domain += ".";
     domain += id;
-    ParseIdentifier(id);
+    CHECK_PARSER_STATUS(ParseIdentifier(id));
   }
   node.set_domain(domain);
   node.set_op_type(id);
 
   if (Matches(':')) {
     std::string overload;
-    ParseIdentifier(overload);
+    CHECK_PARSER_STATUS(ParseIdentifier(overload));
     node.set_overload(overload);
   }
   PARSE(*node.mutable_attribute());
@@ -906,5 +904,17 @@ Status OnnxParser::Parse(ModelProto& model) {
   }
   return Status::OK();
 }
+const std::unordered_map<std::string, KeyWordMap::KeyWord>& KeyWordMap::Instance() {
+  static KeyWordMap instance;
+  return instance.map_;
+}
 
+const std::string& KeyWordMap::ToString(KeyWord kw) {
+  static std::string undefined("undefined");
+  for (const auto& pair : Instance()) {
+    if (pair.second == kw)
+      return pair.first;
+  }
+  return undefined;
+}
 } // namespace ONNX_NAMESPACE

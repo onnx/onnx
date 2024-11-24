@@ -6,11 +6,10 @@ name: WindowsRelease
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
-    inputs:      
+    inputs:
       os:
         required: true
         type: string
-
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
@@ -20,17 +19,17 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
          path: ./onnx
          submodules: 'recursive'
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -65,27 +64,23 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
-        if ('${{ github.event_name }}' -eq 'schedule') {
+        if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
           echo "Build weekly PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+ 
     - name: Test the installed wheel
       run: |
         cd onnx
         pytest
 
-    - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
+    - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./onnx/dist
-
-    - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
-      if: (github.event_name == 'schedule') # Only triggered by weekly event
-      run: |
-        twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
@@ -112,16 +107,4 @@ jobs:
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest
-
-    - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.12'
-      run: |
-        cd onnx
-        python -m pip uninstall -y protobuf numpy
-        python -m pip install -q -r requirements-release.txt
-        python -m pip install -q onnxruntime==1.17.3
-        $Env:ORT_MAX_IR_SUPPORTED_VERSION=9
-        $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20
         pytest
