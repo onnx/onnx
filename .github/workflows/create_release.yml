@@ -116,12 +116,6 @@ jobs:
             verbose: true
             print-hash: true
 
-
-    - uses: actions/upload-artifact@v4
-      with:
-        name: combined_artifacts_prebuild
-        path: dist
-
   ##########################################################################################################################
 
   publish_devbuild_to_pypi:
