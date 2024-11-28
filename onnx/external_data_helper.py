@@ -127,18 +127,24 @@ def convert_model_to_external_data(
             it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
         convert_attribute (bool): If true, convert all tensors to external data
                        If false, convert only non-attribute tensors to external data
+
+    Raise:
+        ValueError: If location is not a relative path.
+        FileExistsError: If a file already exists in location.
     """
     tensors = _get_initializer_tensors(model)
     if convert_attribute:
         tensors = _get_all_tensors(model)
 
     if all_tensors_to_one_file:
-        file_name = str(uuid.uuid1())
+        file_name = str(uuid.uuid1()) + ".data"
         if location:
             if os.path.isabs(location):
                 raise ValueError(
                     "location must be a relative path that is relative to the model path."
                 )
+            if os.path.exists(location):
+                raise FileExistsError(f"External data file exists in {location}.")
             file_name = location
         for tensor in tensors:
             if (

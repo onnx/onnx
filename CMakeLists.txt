@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.18)
 include(cmake/Utils.cmake)
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -14,11 +14,23 @@ endif()
 cmake_policy(SET CMP0063 NEW)
 cmake_policy(SET CMP0074 NEW)
 
-# Project
-project(onnx C CXX)
-option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
+if(NOT BUILD_SHARED_LIBS)
+  # by default, cmake builds static libraries
+  set(BUILD_SHARED_LIBS OFF)
+endif()
 
-option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
+# Project
+project(onnx LANGUAGES C CXX)
+
+if(DEFINED BUILD_ONNX_PYTHON)
+  message(WARNING "'BUILD_ONNX_PYTHON' is deprecated. Please, use 'ONNX_BUILD_PYTHON' instead")
+  set(ONNX_BUILD_PYTHON_DEFAULT ${BUILD_ONNX_PYTHON})
+else()
+  set(ONNX_BUILD_PYTHON_DEFAULT OFF)
+endif()
+
+option(ONNX_BUILD_PYTHON "Build Python binaries" ${ONNX_BUILD_PYTHON_DEFAULT})
+option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
@@ -27,6 +39,9 @@ option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
+if(WIN32)
+  option(ONNX_USE_MSVC_STATIC_RUNTIME "Buil with MSVC static runtime" OFF)
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -54,10 +69,10 @@ endif()
 
 include(GNUInstallDirs)
 
-set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
+set(ONNX_ROOT ${onnx_SOURCE_DIR})
 
 # Read ONNX version
-file(READ "${PROJECT_SOURCE_DIR}/VERSION_NUMBER" ONNX_VERSION)
+file(READ "${ONNX_ROOT}/VERSION_NUMBER" ONNX_VERSION)
 string(STRIP "${ONNX_VERSION}" ONNX_VERSION)
 
 if(NOT MSVC)
@@ -92,17 +107,20 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
-if(DEFINED PYTHON_EXECUTABLE)
-  message(STATUS "Use Python_EXECUTABLE ${Python_EXECUTABLE}")
+if(ONNX_BUILD_PYTHON)
+  set(python_dev_component Development.Module)
 endif()
 
-# find_package Python has replaced PythonInterp and PythonLibs since cmake 3.12
-# Use the following command in the future; now this is only compatible with the latest pybind11
-# find_package(Python ${PY_VERSION} COMPONENTS Interpreter Development REQUIRED)
-find_package(PythonInterp ${PY_VERSION} REQUIRED)
-if(BUILD_ONNX_PYTHON)
-  find_package(PythonLibs ${PY_VERSION})
+# explicitly configure FindPython3.cmake to find python3 in virtual environment first
+if(NOT DEFINED Python3_FIND_VIRTUALENV)
+  set(Python3_FIND_VIRTUALENV FIRST)
 endif()
+
+if(NOT DEFINED Python3_FIND_STRATEGY)
+  set(Python3_FIND_STRATEGY LOCATION)
+endif()
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
@@ -234,9 +252,8 @@ else()
 
     include(FetchContent)
     message("Loading Dependencies URLs ...")
-    # Reference: https://github.com/abseil/abseil-cpp/releases/tag/20230125.3
-    set(AbseilURL https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.3.tar.gz)
-    set(AbseilSHA1 e21faa0de5afbbf8ee96398ef0ef812daf416ad8)
+    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240116.2/abseil-cpp-20240116.2.tar.gz)
+    set(AbseilSHA1 bb8a766f3aef8e294a864104b8ff3fc37b393210)
     FetchContent_Declare(
       Abseil
       URL ${AbseilURL}
@@ -253,8 +270,8 @@ else()
     # ABSL_ROOT_DIR is required by Protobuf.
     set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
     message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v22.3/protobuf-22.3.tar.gz)
-    set(ProtobufSHA1 310938afea334b98d7cf915b099ec5de5ae3b5c5)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v28.3/protobuf-28.3.tar.gz)
+    set(ProtobufSHA1 269759bed3ef7fa7f04648bacdcfd3c26e3e50a8)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -264,7 +281,7 @@ else()
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf Abseil)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "4.22.3")
+    set(Protobuf_VERSION "5.28.3")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -360,7 +377,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
+                       COMMAND "${Python3_EXECUTABLE}" "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -372,30 +389,12 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         ${CMAKE_CURRENT_BINARY_DIR}
         --cpp_out
         ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
-    if(BUILD_ONNX_PYTHON)
-      list(APPEND PROTOC_ARGS --python_out
-                  ${CMAKE_CURRENT_BINARY_DIR})
+    if(ONNX_BUILD_PYTHON)
+      list(APPEND PROTOC_ARGS --python_out)
       if(ONNX_GEN_PB_TYPE_STUBS)
-        if(NOT WIN32)
-          # use PYTHON_EXECUTABLE to python protoc-gen-mypy.py
-          configure_file(
-            ${ROOT_DIR}/tools/protoc-gen-mypy.sh.in
-            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh
-            @ONLY)
-          execute_process(COMMAND chmod +x ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
-          configure_file(
-            ${ROOT_DIR}/tools/protoc-gen-mypy.py
-            ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.py
-            COPYONLY)
-          set(PROTOC_MYPY_PLUGIN_FILE ${PROJECT_BINARY_DIR}/tools/protoc-gen-mypy.sh)
-        else()
-          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
-        endif()
-        list(APPEND PROTOC_ARGS
-                    --plugin
-                    protoc-gen-mypy=${PROTOC_MYPY_PLUGIN_FILE}
-                    --mypy_out
-                    ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
+        list(APPEND PROTOC_ARGS pyi_out:${CMAKE_CURRENT_BINARY_DIR})
+      else()
+        list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
     if(NOT ONNX_PROTOC_EXECUTABLE)
@@ -473,17 +472,15 @@ target_include_directories(onnx_proto PUBLIC
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
 
-if (MSVC)
-  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if(MSVC)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(EXTRA_FLAGS
           "-Wno-microsoft-unqualified-friend"
           "-Wno-absolute-value"
           "-Wno-unknown-argument"
           "-Qunused-arguments")
-  else()
-    set(EXTRA_FLAGS "")
   endif()
-  if (BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
+  if(BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
     set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
   else()
     set(ONNX_API_DEFINE "-DONNX_API=")
@@ -519,7 +516,7 @@ else()
   add_library(onnx ${ONNX_SRCS})
 endif()
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
@@ -528,9 +525,9 @@ target_include_directories(onnx PUBLIC
 target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
-if(BUILD_ONNX_PYTHON)
-  if("${PY_EXT_SUFFIX}" STREQUAL "")
-    if(MSVC)
+if(ONNX_BUILD_PYTHON)
+  if(NOT PY_EXT_SUFFIX)
+    if(WIN32)
       set(PY_EXT_SUFFIX ".pyd")
     else()
       set(PY_EXT_SUFFIX ".so")
@@ -540,7 +537,7 @@ if(BUILD_ONNX_PYTHON)
   add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
   set_target_properties(onnx_cpp2py_export PROPERTIES CXX_VISIBILITY_PRESET hidden)
-  set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+  set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -549,8 +546,11 @@ if(BUILD_ONNX_PYTHON)
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
                              $<INSTALL_INTERFACE:include>)
 
+  # search for FindPython3.cmake instead of legacy modules
+  set(PYBIND11_FINDPYTHON ON)
+
   # pybind11 is a header only lib
-  find_package(pybind11 2.2 CONFIG)
+  find_package(pybind11 2.12 CONFIG)
   if(NOT pybind11_FOUND)
     if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
       add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
@@ -561,7 +561,7 @@ if(BUILD_ONNX_PYTHON)
 
   target_include_directories(onnx_cpp2py_export PUBLIC
     "${pybind11_INCLUDE_DIRS}"
-    "${PYTHON_INCLUDE_DIR}")
+    "${Python3_INCLUDE_DIRS}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
@@ -595,7 +595,7 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
+    target_link_libraries(onnx_cpp2py_export PRIVATE ${Python3_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
                                    /wd4146 # unary minus operator applied to unsigned type,
@@ -651,6 +651,10 @@ if(MSVC)
                                    "${onnx_static_library_flags}")
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
+  if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+    target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
+    target_compile_options(onnx_proto PRIVATE "-Wno-stringop-overflow")
+  endif()
 endif()
 
 if(APPLE)
