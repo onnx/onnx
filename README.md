@@ -75,7 +75,7 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 A roadmap process takes place every year. More details can be found [here](https://github.com/onnx/steering-committee/tree/main/roadmap)
 
-# Install
+# Installation
 
 Detailed install instructions, including Common Build Options and Common Errors can be found [here](https://github.com/onnx/onnx/blob/main/INSTALLL.md)
 
