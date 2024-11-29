@@ -149,7 +149,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish releasebuild to pypi
-        if: (github.repository_owner == 'onnx') && startsWith(github.ref, 'rel-') && (github.event_name == 'release')
+        if: (github.repository_owner == 'onnx') && startsWith(github.ref, 'rel-') && (github.event_name == 'release') && startsWith(github.ref, 'refs/tags/')
         uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc
         with:   
           repository-url: https://upload.pypi.org/legacy/
