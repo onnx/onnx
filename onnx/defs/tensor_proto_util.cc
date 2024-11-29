@@ -69,6 +69,12 @@ namespace ONNX_NAMESPACE {
             " does not match the actual size",                                                                     \
             data.size());                                                                                          \
       }                                                                                                            \
+      if (tensor_proto->dims_size() != 0 && data.size() == 0) {                                                    \
+        for (int i = 0; i < tensor_proto->dims_size(); ++i) {                                                      \
+          res.push_back(0);                                                                                        \
+        }                                                                                                          \
+        return res;                                                                                                \
+      }                                                                                                            \
       res.insert(res.end(), data.begin(), data.end());                                                             \
       return res;                                                                                                  \
     }                                                                                                              \
