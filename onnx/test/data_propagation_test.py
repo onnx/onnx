@@ -228,6 +228,24 @@ class TestDataPropagation(TestShapeInferenceHelper):
         output = inferred_model.graph.output[0]
         self.assertEqual(output.type.tensor_type.shape.dim[0].dim_value, 256)
 
+    def test_empty_tensor_negative_axis(self) -> None:
+        """Test that a Concat with an empty tensor as input is handled correctly by data-propagation.
+        This time with a negative axis.
+        """
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 7, opset_import: [ "" : 17]>
+            agraph (float[256] y) => (float[N] z)
+            <float[0] x = {}>
+            {
+                z = Concat <axis=-1> (x, y)
+            }
+        """
+        )
+        inferred_model = onnx.shape_inference.infer_shapes(model, True, True, True)
+        output = inferred_model.graph.output[0]
+        self.assertEqual(output.type.tensor_type.shape.dim[0].dim_value, 256)
+
 
 if __name__ == "__main__":
     unittest.main()
