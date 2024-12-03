@@ -28809,7 +28809,7 @@ This version of the operator has been available since version 23 of the default 
 
       in which:
         - `n_blocks_per_col` = `(K + block_size - 1) / block_size`
-        - `blob_size` = `CeilDiv(block_size * bits, bitsof(uint8_t)<8>)`
+        - `blob_size` = `CeilDiv(block_size * bits, 8)`
 
       For all bits from 2-8, a row of data is tightly packed and represented by uint8_t.
       The bit packing specified for [4 bit integer types](https://onnx.ai/onnx/technical/int4.html) is followed.
@@ -28842,10 +28842,10 @@ This version of the operator has been available since version 23 of the default 
   Input `scales` is stored in same type as original type of B(`float32`, `float16`) with shape like:
   `[N * n_blocks_per_col]`
 
-  Input `zero_points` is stored as `uint8_t` or the same type as `A`. It has the same packing method as input `B`.
-    - `[N * CeilDiv(n_blocks_per_col * bits, 8)]`
-    If `zero_points` has same type as `A`, it's not packed and has the same shape as `scales`.
-    If `zero_points` is not provided then zero_points will be set to `2^(bits - 1)`.
+Input `zero_points` is stored as `uint8_t` or the same type as `A`. It has the same packing method as input `B`.
+  - If `zero_points` type is `uint8_t`, its shape is `[N * CeilDiv(n_blocks_per_col * bits, 8)]`.
+  - If `zero_points` has same type as `A`, it's not packed and has the same shape as `scales`, `[N * n_blocks_per_col]`.
+  - If `zero_points` is not provided then zero_points will be set to `2^(bits - 1)`.
 
 #### Version
 
@@ -28870,13 +28870,13 @@ This version of the operators has been available since version 23 of the default
 
 <dl>
 <dt><tt>A</tt> : T1</dt>
-<dd>The input tensor, not quantized</dd>
+<dd>A 2 dimensional input tensor, not quantized, with shape [M,K]</dd>
 <dt><tt>B</tt> : T2</dt>
-<dd>is a data blob containing the packed B bits.</dd>
+<dd>A 3 dimensional input tensor of shape [N][n_blocks_per_col][blob_size], i.e. an N by 2 dimensional data blob containing the packed B bits</dd>
 <dt><tt>scales</tt> : T1</dt>
-<dd>quantization scale</dd>
+<dd>Tensor of quantization scales. It should have shape [N * n_blocks_per_col]</dd>
 <dt><tt>zero_points</tt> (optional) : T3</dt>
-<dd>quantization zero points</dd>
+<dd>Tensor of quantization zero points. If T3 is the same as T1 it should have shape [N * n_blocks_per_col]. If T3 is the same as T2 is should have shape [N * CeilDiv(n_blocks_per_col * bits, 8)]</dd>
 <dt><tt>bias</tt> (optional) : T1</dt>
 <dd>Bias to add to result. It should have shape [N].</dd>
 </dl>

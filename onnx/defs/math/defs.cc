@@ -2056,9 +2056,9 @@ Input `scales` is stored in same type as original type of B(`float32`, `float16`
 `[N * n_blocks_per_col]`
 
 Input `zero_points` is stored as `uint8_t` or the same type as `A`. It has the same packing method as input `B`.
-  - `[N * CeilDiv(n_blocks_per_col * bits, 8)]`
-  If `zero_points` has same type as `A`, it's not packed and has the same shape as `scales`.
-  If `zero_points` is not provided then zero_points will be set to `2^(bits - 1)`.
+  - If `zero_points` is type `uint8_t` it shape is `[N * CeilDiv(n_blocks_per_col * bits, 8)]`
+  - If `zero_points` has same type as `A`, it's not packed and has the same shape as `scales` `[N * n_blocks_per_col]`.
+  - If `zero_points` is not provided then zero_points will be set to `2^(bits - 1)`.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2096,13 +2096,40 @@ ONNX_OPERATOR_SET_SCHEMA(
             "It needs to be a power of 2 and not smaller than 16",
             AttributeProto::INT,
             static_cast<int64_t>(128))
-        .Input(0, "A", "The input tensor, not quantized", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Input(1, "B", "1 or 2 dimensional data blob", "T2", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Input(2, "scales", "quantization scales", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(
+            0,
+            "A",
+            "A 2 dimensional input tensor, not quantized, with shape [M][K]",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "B",
+            "A 3 dimensional input tensor of shape [N][n_blocks_per_col][blob_size], "
+            "i.e. an N by 2 dimensional data blob containing the packed B bits",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "scales",
+            "Tensor of quantization scales. It should have shape [N * n_blocks_per_col]",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Input(
             3,
             "zero_points",
-            "quantization zero points",
+            "Tensor of quantization zero points. "
+            "If T3 is the same as T1 it should have shape [N * n_blocks_per_col]. "
+            "If T3 is the same as T2 is should have shape [N * CeilDiv(n_blocks_per_col * bits, 8)]",
             "T3",
             OpSchema::Optional,
             true,
