@@ -2056,8 +2056,8 @@ Input `scales` is stored in same type as original type of B(`float32`, `float16`
 `[N * n_blocks_per_col]`
 
 Input `zero_points` is stored as `uint8_t` or the same type as `A`. It has the same packing method as input `B`.
-  - If `zero_points` is type `uint8_t` it shape is `[N * CeilDiv(n_blocks_per_col * bits, 8)]`
-  - If `zero_points` has same type as `A`, it's not packed and has the same shape as `scales` `[N * n_blocks_per_col]`.
+  - If `zero_points` type is `uint8_t`, its shape is `[N * CeilDiv(n_blocks_per_col * bits, 8)]`.
+  - If `zero_points` has same type as `A`, it's not packed and has the same shape as `scales`, `[N * n_blocks_per_col]`.
   - If `zero_points` is not provided then zero_points will be set to `2^(bits - 1)`.
 )DOC";
 
@@ -2176,6 +2176,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("block_size attribute must be a a power of 2 and not smaller than 16.");
           }
 
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
           auto a_type = ctx.getInputType(0);
           auto b_type = ctx.getInputType(1);
           auto scales_type = ctx.getInputType(2);
@@ -2186,6 +2188,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               scales_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
             fail_type_inference("inputs are expected to have tensor type and output type should not be null.");
           }
+
+          if (!hasNInputShapes(ctx, 3)) { return; }
 
           const auto a_shape = a_type->tensor_type().shape();
           const auto b_shape = b_type->tensor_type().shape();
@@ -2246,7 +2250,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                                   scales_shape.dim(0).dim_value(), "].");
           }
 
-          if (ctx.hasInput(3)) {  // has zero_points
+          if (ctx.hasInput(3) && hasInputShape(ctx, 3)) {  // has zero_points
             auto zero_points_type = ctx.getInputType(3);
             if (nullptr == zero_points_type ||
                 zero_points_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
@@ -2276,7 +2280,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          if (ctx.hasInput(4)) {  // has bias
+          if (ctx.hasInput(4) && hasInputShape(ctx, 4)) {  // has bias
             auto bias_type = ctx.getInputType(4);
             if (nullptr == bias_type || bias_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
               fail_type_inference("inputs zero_points is expected to have a tensor type.");
@@ -2291,8 +2295,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Input bias dimensions is incompatible for MatMulNBits.");
             }
           }
-
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           ONNX_NAMESPACE::TensorShapeProto resultShape;
           *resultShape.add_dim() = a_shape.dim(0);  // M

@@ -5321,6 +5321,58 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._make_matmulinteger_test((5, 1, 4, 2), (1, 3, 2, 3))
         self._make_matmulinteger_test((4, 2), (3, 2, 3))
 
+    def _make_matmulnbits_test(
+            self,
+            shape1: Any,
+            shape2: Any,
+            bits: int = 4,
+            block_size: int = 128
+        ) -> None:
+            expected_out_shape = np.matmul(
+                np.arange(np.prod(shape1)).reshape(shape1),
+                np.arange(np.prod((shape1[1],shape2[0]))).reshape((shape1[1],shape2[0])),
+            ).shape
+            graph = self._make_graph(
+                [
+                    ("a", TensorProto.FLOAT, shape1),
+                    ("b", TensorProto.UINT8, shape2),
+                    ("scales", TensorProto.FLOAT, [shape2[0] * shape2[1]]),
+                ],
+                [
+                    make_node(
+                        "MatMulNBits",
+                        ["a", "b", "scales"],
+                        ["y"],
+                        bits=bits,
+                        block_size=block_size
+                        )
+                ],
+                [],
+            )
+            self._assert_inferred(
+                graph, [make_tensor_value_info("y", TensorProto.FLOAT, expected_out_shape)]
+            )
+
+    def matmulnbits_b_shape(self, K: int, N: int, bits: int = 4, block_size: int = 128
+        ) -> Sequence[int]:
+        n_blocks_per_col = (K + block_size - 1) // block_size
+        blob_size = (block_size * bits + 7) // 8
+        return (N, n_blocks_per_col, blob_size)
+
+    def test_matmulnbits(self) -> None:
+                                   # MxK                             KxN
+        self._make_matmulnbits_test((2, 3), self.matmulnbits_b_shape(3, 2))
+        self._make_matmulnbits_test((1, 3), self.matmulnbits_b_shape(3, 4))
+        self._make_matmulnbits_test((3, 155), self.matmulnbits_b_shape(155,8))
+        self._make_matmulnbits_test((3, 5), self.matmulnbits_b_shape(5, 8, 2, 16), 2, 16)
+        self._make_matmulnbits_test((3, 5), self.matmulnbits_b_shape(5, 8, 3, 16), 3, 16)
+        self._make_matmulnbits_test((3, 5), self.matmulnbits_b_shape(5, 8, 5, 32), 5, 32)
+        self._make_matmulnbits_test((3, 5), self.matmulnbits_b_shape(5, 8, 6, 64), 6, 64)
+        self._make_matmulnbits_test((3, 5), self.matmulnbits_b_shape(5, 8, 7), 7)
+
+
+
+
     @parameterized.expand(
         [onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16, onnx.TensorProto.BFLOAT16]
     )
