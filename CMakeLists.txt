@@ -609,6 +609,15 @@ if(ONNX_BUILD_PYTHON)
       protobuf::libprotobuf
       pybind11::pybind11
     )
+    if (MSVC)
+      set(IGNORE_DEPRECATED_FLAG "/wd4996")
+    else()
+      set(IGNORE_DEPRECATED_FLAG "-Wno-deprecated-declarations")
+    endif()
+    # caution
+    target_compile_options(pybind11_native_proto_caster PUBLIC
+      ${IGNORE_DEPRECATED_FLAG}
+    )
   else()
     message(FATAL_ERROR "cannot find pybind11_protobuf at '${PYBIND11_PROTOBUF_DIR}'")
   endif()
