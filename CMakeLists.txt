@@ -158,11 +158,27 @@ else()
   find_program(Protobuf_PROTOC_EXECUTABLE
                NAMES protoc
                DOC "The Google Protocol Buffers Compiler")
+  
+  set(Build_Protobuf OFF)
+  if(Protobuf_PROTOC_EXECUTABLE)
+    message(STATUS "Protobuf_PROTOC_EXECUTABLE: ${Protobuf_PROTOC_EXECUTABLE}")
+    execute_process(
+        COMMAND ${Protobuf_PROTOC_EXECUTABLE} --version
+        OUTPUT_VARIABLE Protoc_Version_Output
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    message(STATUS "Protoc_Version_Output: ${Protoc_Version_Output}")
+    string(REGEX REPLACE "libprotoc [0-9]+\\.([0-9]+)\\.[0-9]+.*" "\\1" PROTOC_VERSION_MINOR ${Protoc_Version_Output})
+    if ("${PROTOC_VERSION_MINOR}" LESS "22")
+      message(WARNING "Local Protoc is lower than x.22.y try to build protobuf")
+      set(Build_Protobuf ON)
+    endif()
+  endif()
 
   # Only if protoc was found, seed the include directories and libraries. We
   # assume that protoc is installed at PREFIX/bin. We use get_filename_component
   # to resolve PREFIX.
-  if(Protobuf_PROTOC_EXECUTABLE)
+  if(NOT Build_Protobuf AND Protobuf_PROTOC_EXECUTABLE)
     set(ONNX_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE})
     get_filename_component(_PROTOBUF_INSTALL_PREFIX
                            ${Protobuf_PROTOC_EXECUTABLE} DIRECTORY)
@@ -195,7 +211,6 @@ else()
     if (Protobuf_FOUND)
       set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
       set(PROTOBUF_INCLUDE_DIR "${_PROTOBUF_INSTALL_PREFIX}/include")
-      set(Build_Protobuf OFF)
       if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
         # There are extra dependencies for protobuf.
         find_package(absl REQUIRED)
@@ -246,50 +261,63 @@ else()
   else()  # Protobuf_PROTOC_EXECUTABLE not found.
     set(Build_Protobuf ON)
   endif()
-  if (Build_Protobuf)
-    set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
-    set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
-
-    include(FetchContent)
-    message("Loading Dependencies URLs ...")
-    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240116.2/abseil-cpp-20240116.2.tar.gz)
-    set(AbseilSHA1 bb8a766f3aef8e294a864104b8ff3fc37b393210)
-    FetchContent_Declare(
-      Abseil
-      URL ${AbseilURL}
-      URL_HASH SHA1=${AbseilSHA1}
-    )
-    set(ABSL_PROPAGATE_CXX_STD 1)
-    set(abseil_BUILD_TESTING 0)
-    set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-    # Use this setting to build thirdparty libs.
-    set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    message(STATUS "Download and build Abseil from ${AbseilURL}")
-    FetchContent_Populate(Abseil)
-    FetchContent_GetProperties(Abseil)
-    # ABSL_ROOT_DIR is required by Protobuf.
-    set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
-    message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v28.3/protobuf-28.3.tar.gz)
-    set(ProtobufSHA1 269759bed3ef7fa7f04648bacdcfd3c26e3e50a8)
-    FetchContent_Declare(
-      Protobuf
-      URL ${ProtobufURL}
-      URL_HASH SHA1=${ProtobufSHA1}
-    )
-    set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
-    message(STATUS "Download and build Protobuf from ${ProtobufURL}")
-    FetchContent_MakeAvailable(Protobuf Abseil)
-    set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "5.28.3")
-    # Change back the BUILD_SHARED_LIBS to control the onnx project.
-    set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
-    set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
-    set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
-  endif()
-  message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
-  message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 endif()
+
+if (Build_Protobuf OR ONNX_BUILD_PYTHON)
+  # Absl is required by protobuf and pybind_protobuf
+  set(Build_Abseil ON)
+endif()
+
+include(FetchContent)
+
+if (Build_Abseil)
+  message(STATUS "Build Abseil")
+  set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
+  set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240116.2/abseil-cpp-20240116.2.tar.gz)
+  set(AbseilSHA1 bb8a766f3aef8e294a864104b8ff3fc37b393210)
+  FetchContent_Declare(
+    Abseil
+    URL ${AbseilURL}
+    URL_HASH SHA1=${AbseilSHA1}
+  )
+  set(ABSL_PROPAGATE_CXX_STD 1)
+  set(abseil_BUILD_TESTING 0)
+  set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+  set(BUILD_SHARED_LIBS OFF)
+  message(STATUS "Download and build Abseil from ${AbseilURL}")
+  FetchContent_Populate(Abseil)
+  # FetchContent_GetProperties(Abseil)
+  FetchContent_MakeAvailable(Abseil)
+  # ABSL_ROOT_DIR is required by Protobuf.
+  set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
+  set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
+endif()
+
+if (Build_Protobuf)
+  message(STATUS "Build Protobuf")
+  set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
+  set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v28.3/protobuf-28.3.tar.gz)
+  set(ProtobufSHA1 269759bed3ef7fa7f04648bacdcfd3c26e3e50a8)
+  FetchContent_Declare(
+    Protobuf
+    URL ${ProtobufURL}
+    URL_HASH SHA1=${ProtobufSHA1}
+  )
+  message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
+  set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+  set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+  set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
+  message(STATUS "Download and build Protobuf from ${ProtobufURL}")
+  FetchContent_MakeAvailable(Protobuf)
+  set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+  set(Protobuf_VERSION "5.28.3")
+  set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
+  set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
+  set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
+endif()
+
+message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
+message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 
 # abseil build would fail if ONNX_WERROR is on.
 if(ONNX_WERROR)
@@ -559,9 +587,41 @@ if(ONNX_BUILD_PYTHON)
     endif()
   endif()
 
+  set(PYBIND11_PROTOBUF_DIR "${ONNX_ROOT}/third_party/pybind11_protobuf")
+  if(EXISTS "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf")
+    add_library(pybind11_native_proto_caster STATIC
+      "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/native_proto_caster.h"
+      "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/enum_type_caster.h"
+      "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_cast_util.cc"
+      "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_cast_util.h"
+      "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_caster_impl.h"
+    )
+    target_include_directories(pybind11_native_proto_caster PUBLIC
+      "${PROTOBUF_INCLUDE_DIR}"
+      "${PYBIND11_PROTOBUF_DIR}"
+    )
+    target_link_libraries(pybind11_native_proto_caster PUBLIC
+      absl::flat_hash_map
+      absl::flat_hash_set
+      absl::hash
+      absl::strings
+      absl::optional
+      protobuf::libprotobuf
+      pybind11::pybind11
+    )
+  else()
+    message(FATAL_ERROR "cannot find pybind11_protobuf at '${PYBIND11_PROTOBUF_DIR}'")
+  endif()
+
   target_include_directories(onnx_cpp2py_export PUBLIC
     "${pybind11_INCLUDE_DIRS}"
-    "${Python3_INCLUDE_DIRS}")
+    "${Python3_INCLUDE_DIRS}"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf"
+  )
+
+  target_link_libraries(onnx_cpp2py_export PUBLIC
+    pybind11_native_proto_caster
+  )
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
