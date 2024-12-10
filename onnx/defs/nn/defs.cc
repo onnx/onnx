@@ -3053,12 +3053,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               // Insert the real and imaginary values into the original input to be rotated based on interleaved parameter
               builder.Add("XRotatedBasic = Concat <axis = -1> (Real, Imaginary)")
                 .Add("CosShape = Shape(CosCacheUnsqueezed)")
-                .Add("RealInterleaveIndices1D = Range(Zero1D, RotaryEmbedDim, Two1D)") // shape of indices = input[0:rotary_embedding_dim:2]
-                .Add("RealInterleaveIndices = Expand(RealInterleaveIndices1D, CosShape)") // shape of indices = input[:,:,:,0:rotary_embedding_dim:2]
-                .Add("ImaginaryInterleaveIndices1D = Range(One1D, RotaryEmbedDimInclusive, Two1D)") // shape of indices = input[1:rotary_embedding_dim:2]
-                .Add("ImaginaryInterleaveIndices = Expand(ImaginaryInterleaveIndices1D, CosShape)") // shape of indices = input[:,:,:,1:rotary_embedding_dim:2]
-                .Add("XRotatedInterleavedReal = ScatterElements <axis = -1> (XToRotate, RealInterleaveIndices, Real)")
-                .Add("XRotatedInterleaved = ScatterElements <axis = -1> (XRotatedInterleavedReal, ImaginaryInterleaveIndices, Imaginary)")
+                .Add("RealInterleaveIndices1D = Range(Zero1D, RotaryEmbedDim, Two1D)") // shape of indices = [0:rotary_embedding_dim:2]
+                .Add("ImaginaryInterleaveIndices1D = Range(One1D, RotaryEmbedDimInclusive, Two1D)") // shape of indices = [1:rotary_embedding_dim:2]
+                .Add("XRotatedInterleavedReal = ScatterND(XToRotate, RealInterleaveIndices1D, Real)")
+                .Add("XRotatedInterleaved = ScatterND(XRotatedInterleavedReal, ImaginaryInterleaveIndices1D, Imaginary)")
                 .Add("XRotated = Where(InterleaveCond, XRotatedBasic, XRotatedInterleaved)");
 
               // Combine rotated parts with non-rotated parts
