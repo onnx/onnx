@@ -3055,10 +3055,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("CosShape = Shape(CosCacheUnsqueezed)")
                 .Add("RealInterleaveIndices1D = Range(Zero1D, RotaryEmbedDim, Two1D)") // shape of indices = input[0:rotary_embedding_dim:2]
                 .Add("RealInterleaveIndices = Expand(RealInterleaveIndices1D, CosShape)") // shape of indices = input[:,:,:,0:rotary_embedding_dim:2]
-                .Add("ImaginaryInterleaveIndices1D = Range(One1D, RotaryEmbedDimInclusive, Two1D)")// shape of indices = input[1:rotary_embedding_dim:2]
+                .Add("ImaginaryInterleaveIndices1D = Range(One1D, RotaryEmbedDimInclusive, Two1D)") // shape of indices = input[1:rotary_embedding_dim:2]
                 .Add("ImaginaryInterleaveIndices = Expand(ImaginaryInterleaveIndices1D, CosShape)") // shape of indices = input[:,:,:,1:rotary_embedding_dim:2]
-                .Add("XRotatedInterleavedReal = ScatterElements(XToRotate, RealInterleaveIndices, Real)")
-                .Add("XRotatedInterleaved = ScatterElements(XRotatedInterleavedReal, ImaginaryInterleaveIndices, Imaginary)")
+                .Add("XRotatedInterleavedReal = ScatterElements <axis = -1> (XToRotate, RealInterleaveIndices, Real)")
+                .Add("XRotatedInterleaved = ScatterElements <axis = -1> (XRotatedInterleavedReal, ImaginaryInterleaveIndices, Imaginary)")
                 .Add("XRotated = Where(InterleaveCond, XRotatedBasic, XRotatedInterleaved)");
 
               // Combine rotated parts with non-rotated parts
