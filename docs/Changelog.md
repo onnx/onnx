@@ -29074,20 +29074,36 @@ This version of the operator has been available since version 23 of the default 
 
   Rotary embeddings are defined using the following algorithm:
 
-      ```
+      ```python
       def compute_rotary_embedding(input, position_ids, sin_cache, cos_cache, interleaved=0, rotary_embedding_dim=0 ,num_heads=0)
+
+        # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
+        batch_size = input.shape[0]
+        sequence_length = input.shape[1]
+        if len(input.shape) == 3:
+            hidden_size = input.shape[2]
+            assert num_heads != 0
+            head_size = int(hidden_size / num_heads)
+            new_shape = [batch_size, sequence_length, num_heads, head_size]
+            input = np.reshape(input, new_shape)
+        assert len(input.shape) == 4
+        head_size = input.shape[3]
 
         # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
         if rotary_embedding_dim == 0:
             # If rotary_embedding_dim not provided, perform full rotation by using head_size
-            rotary_embedding_dim = head_size * 2
+            rotary_embedding_dim = head_size
         x_rotate = input[:, :, :, :rotary_embedding_dim]
         x_not_rotate = input[:, :, :, rotary_embedding_dim:]
         rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
 
         # Retrieve sin and cos caches using position ids
-        cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-        sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+        if position_ids is not None:
+            cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+            sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+        else:
+            cos = cos_cache
+            sin = sin_cache
         cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
         sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
         cos = np.expand_dims(cos, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
@@ -29110,7 +29126,10 @@ This version of the operator has been available since version 23 of the default 
             x_rotate[:, :, :, 1::2] = imag
         else:
             x_rotate = np.concatenate((real, imag), axis=-1)
-        return np.concatenate((x_rotate, x_not_rotate), axis=-1)
+        output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+        if len(input.shape) == 3:
+            output = np.reshape(output, input.shape)
+        return output
       ```
 
 #### Version
@@ -29128,17 +29147,17 @@ This version of the operator has been available since version 23 of the default 
 <dd>Rotary embedding dimension used to apply partial rotary embeddings.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (3 - 4)
 
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>The input tensor representing the token embeddings. 4D tensor with shape (batch_size, sequence_length, num_heads, head_size) or 3D tensor with shape (batch_size, sequence_length, hidden_size). For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and `hidden_size` has to be even where `hidden_size = num_heads * head_size`</dd>
-<dt><tt>position_ids</tt> : M</dt>
-<dd>The position indices for the tokens. 2D tensor with shape (batch_size, sequence_length)</dd>
 <dt><tt>cos_cache</tt> : T</dt>
-<dd>The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation. `max_sequence_length` is a parameter to the model.</dd>
+<dd>The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. `max_sequence_length` is a parameter to the model.</dd>
 <dt><tt>sin_cache</tt> : T</dt>
-<dd>The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation. `max_sequence_length` is a parameter to the model.</dd>
+<dd>The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. `max_sequence_length` is a parameter to the model.</dd>
+<dt><tt>position_ids</tt> (optional) : M</dt>
+<dd>The position indices for the tokens. 2D tensor with shape (batch_size, sequence_length)</dd>
 </dl>
 
 #### Outputs

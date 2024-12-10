@@ -2844,20 +2844,36 @@ The rotation ensures that the model captures both absolute and relative position
 
 Rotary embeddings are defined using the following algorithm:
 
-    ```
+    ```python
     def compute_rotary_embedding(input, position_ids, sin_cache, cos_cache, interleaved=0, rotary_embedding_dim=0 ,num_heads=0)
+
+      # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
+      batch_size = input.shape[0]
+      sequence_length = input.shape[1]
+      if len(input.shape) == 3:
+          hidden_size = input.shape[2]
+          assert num_heads != 0
+          head_size = int(hidden_size / num_heads)
+          new_shape = [batch_size, sequence_length, num_heads, head_size]
+          input = np.reshape(input, new_shape)
+      assert len(input.shape) == 4
+      head_size = input.shape[3]
 
       # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
       if rotary_embedding_dim == 0:
           # If rotary_embedding_dim not provided, perform full rotation by using head_size
-          rotary_embedding_dim = head_size * 2
+          rotary_embedding_dim = head_size
       x_rotate = input[:, :, :, :rotary_embedding_dim]
       x_not_rotate = input[:, :, :, rotary_embedding_dim:]
       rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
 
       # Retrieve sin and cos caches using position ids
-      cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-      sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+      if position_ids is not None:
+          cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+          sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+      else:
+          cos = cos_cache
+          sin = sin_cache
       cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
       sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
       cos = np.expand_dims(cos, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
@@ -2880,7 +2896,10 @@ Rotary embeddings are defined using the following algorithm:
           x_rotate[:, :, :, 1::2] = imag
       else:
           x_rotate = np.concatenate((real, imag), axis=-1)
-      return np.concatenate((x_rotate, x_not_rotate), axis=-1)
+      output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+      if len(input.shape) == 3:
+          output = np.reshape(output, input.shape)
+      return output
     ```
 )DOC";
 
@@ -2909,21 +2928,26 @@ ONNX_OPERATOR_SET_SCHEMA(
                "`hidden_size` has to be even where `hidden_size = num_heads * head_size`",
                "T")
         .Input(1,
-               "position_ids",
-               "The position indices for the tokens. 2D tensor with shape (batch_size, sequence_length)",
-               "M")
-        .Input(2,
                "cos_cache",
                "The cosine values for the rotation. "
-               "2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation. "
+               "2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) "
+               "for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) "
+               "for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. "
+               "`max_sequence_length` is a parameter to the model.",
+               "T")
+        .Input(2,
+               "sin_cache",
+               "The sine values for the rotation. "
+               "2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) "
+               "for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) "
+               "for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. "
                "`max_sequence_length` is a parameter to the model.",
                "T")
         .Input(3,
-               "sin_cache",
-               "The sine values for the rotation. "
-               "2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation. "
-               "`max_sequence_length` is a parameter to the model.",
-               "T")
+               "position_ids",
+               "The position indices for the tokens. 2D tensor with shape (batch_size, sequence_length)",
+               "M",
+               OpSchema::Optional)
         .Output(0,
                 "Y",
                 "Tensor with same shape as input.",
@@ -2982,18 +3006,25 @@ ONNX_OPERATOR_SET_SCHEMA(
               // shape of input not to rotate = input[:,:,:,rotary_embedding_dim:]
               builder.Add("XToRotate, XNoRotate = Split <axis = -1, num_outputs = 2> (XReshaped, RotateSplitLengths)");
 
-              // Gather the cos and sine matrices from the respective caches using position ids.
+              // Gather the cos and sine matrices from the respective caches using position ids if provided.
+              // Otherwise Gather op functions as an Identity op.
               // Unsqueeze applied to make cos and sin matrices have dimensions that are
               // valid for multiplication with input when is split. For cases where rotary_embedding_dim is provided,
               // slice the matrix values until that index only
-              builder.Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos matrix: [batch_size, sequence_length, head_size / 2]
-                .Add("SinCacheGather = Gather(sin_cache, position_ids)") // shape of cos matrix: [batch_size, sequence_length, head_size / 2]
-                .Add("RotaryEmbedDimHalf = Div(RotaryEmbedDim, Two1D)")
+              if (ctx.hasInput(3)) {
+                builder.Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos matrix: [batch_size, sequence_length, head_size / 2]
+                  .Add("SinCacheGather = Gather(sin_cache, position_ids)"); // shape of cos matrix: [batch_size, sequence_length, head_size / 2]
+              } else {
+                builder.Add("CosCacheGather = Identity(cos_cache)") // shape of cos matrix: [batch_size, sequence_length, head_size / 2]
+                  .Add("SinCacheGather = Identity(sin_cache)"); // shape of cos matrix: [batch_size, sequence_length, head_size / 2]
+              }
+
+              builder.Add("RotaryEmbedDimHalf = Div(RotaryEmbedDim, Two1D)")
                 .Add("RotaryEmbedDimHalfInt = Cast (RotaryEmbedDimHalf)", "to", int_type)
                 .Add("CosCacheSliced = Slice(CosCacheGather, Zero1D, RotaryEmbedDimHalfInt, Two1D)") // shape of cos matrix: [batch_size, sequence_length, rotary_embedding_dim / 2]
                 .Add("SinCacheSliced = Slice(SinCacheGather, Zero1D, RotaryEmbedDimHalfInt, Two1D)") // shape of sin matrix: [batch_size, sequence_length, rotary_embedding_dim / 2]
-                .Add("CosCacheUnsqueezed = Unsqueeze <axes = [2]> (CosCacheSliced)") // shape of cos matrix: [batch_size, sequence_length, 1, rotary_embedding_dim / 2]
-                .Add("SinCacheUnsqueezed = Unsqueeze <axes = [2]> (SinCacheSliced)"); // shape of sin matrix: [batch_size, sequence_length, 1, rotary_embedding_dim / 2]
+                .Add("CosCacheUnsqueezed = Unsqueeze(CosCacheSliced, Two1D)") // shape of cos matrix: [batch_size, sequence_length, 1, rotary_embedding_dim / 2]
+                .Add("SinCacheUnsqueezed = Unsqueeze(SinCacheSliced, Two1D)"); // shape of sin matrix: [batch_size, sequence_length, 1, rotary_embedding_dim / 2]
 
               // Create slices of inputs to multiply with sin and cos matrices based on interleaved parameter
               // For non-interleaved (basic) rotation, slices are created as follows,
@@ -3026,12 +3057,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("RealInterleaveIndices = Expand(RealInterleaveIndices1D, CosShape)") // shape of indices = input[:,:,:,0:rotary_embedding_dim:2]
                 .Add("ImaginaryInterleaveIndices1D = Range(One1D, RotaryEmbedDimInclusive, Two1D)")// shape of indices = input[1:rotary_embedding_dim:2]
                 .Add("ImaginaryInterleaveIndices = Expand(ImaginaryInterleaveIndices1D, CosShape)") // shape of indices = input[:,:,:,1:rotary_embedding_dim:2]
-                .Add("XRotatedInterleavedReal = Scatter(XToRotate, RealInterleaveIndices, Real)")
-                .Add("XRotatedInterleaved = Scatter(XRotatedInterleavedReal, ImaginaryInterleaveIndices, Imaginary)")
+                .Add("XRotatedInterleavedReal = ScatterElements(XToRotate, RealInterleaveIndices, Real)")
+                .Add("XRotatedInterleaved = ScatterElements(XRotatedInterleavedReal, ImaginaryInterleaveIndices, Imaginary)")
                 .Add("XRotated = Where(InterleaveCond, XRotatedBasic, XRotatedInterleaved)");
 
               // Combine rotated parts with non-rotated parts
-              builder.Add("Y = Concat <axis = -1> (XRotated, XNoRotate)");
+              builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)");
+              // Reshape back to 3D shape if input is a 3D tensor
+              builder.Add("XShape = Shape(X)")
+                .Add("Y = Reshape(XConcat, XShape)");
               schema.BuildFunction(functionProto);
               return true;
           }));
