@@ -27443,7 +27443,7 @@ This version of the operator has been available since version 23 of the default 
 ```python
 node = onnx.helper.make_node(
     "RotaryEmbedding",
-    inputs=["input", "sin_cache", "cos_cache", "position_ids"],
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
     outputs=["output"]
 )
 
@@ -27452,11 +27452,11 @@ position_ids_data = np.random.rand(2, 3).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(input_data, sin_cache_data, cos_cache_data, position_ids_data)
+expected_output = compute_rotary_embedding(input_data, cos_cache_data, sin_cache_data, position_ids=position_ids_data)
 
 expect(
     node,
-    inputs=[input_data, sin_cache_data, cos_cache_data, position_ids_data],
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
     outputs=[expected_output],
     name="test_rotary_embedding"
 )
@@ -27472,7 +27472,7 @@ expect(
 num_heads = 4
 node = onnx.helper.make_node(
     "RotaryEmbedding",
-    inputs=["input", "sin_cache", "cos_cache", "position_ids"],
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
     outputs=["output"],
     num_heads=num_heads
 )
@@ -27482,11 +27482,11 @@ position_ids_data = np.random.rand(2, 3).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(input_data, sin_cache_data, cos_cache_data, position_ids_data, num_heads=num_heads)
+expected_output = compute_rotary_embedding(input_data, cos_cache_data, sin_cache_data, position_ids=position_ids_data, num_heads=num_heads)
 
 expect(
     node,
-    inputs=[input_data, sin_cache_data, cos_cache_data, position_ids_data],
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
     outputs=[expected_output],
     name="test_rotary_embedding_3d_input"
 )
@@ -27501,7 +27501,7 @@ expect(
 ```python
 node = onnx.helper.make_node(
     "RotaryEmbedding",
-    inputs=["input", "sin_cache", "cos_cache", "position_ids"],
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
     outputs=["output"],
     interleaved=1
 )
@@ -27511,11 +27511,11 @@ position_ids_data = np.random.rand(2, 3).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(input_data, sin_cache_data, cos_cache_data, position_ids_data, interleaved=1)
+expected_output = compute_rotary_embedding(input_data, cos_cache_data, sin_cache_data, position_ids=position_ids_data, interleaved=1)
 
 expect(
     node,
-    inputs=[input_data, sin_cache_data, cos_cache_data, position_ids_data],
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
     outputs=[expected_output],
     name="test_rotary_embedding_interleaved"
 )
@@ -27530,19 +27530,20 @@ expect(
 ```python
 node = onnx.helper.make_node(
     "RotaryEmbedding",
-    inputs=["input", "sin_cache", "cos_cache"],
-    outputs=["output"]
+    inputs=["input", "cos_cache", "sin_cache", ""],
+    outputs=["output"],
+    interleaved=1,
 )
 
 input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
 sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(input_data, sin_cache_data, cos_cache_data, None)
+expected_output = compute_rotary_embedding(input_data, cos_cache_data, sin_cache_data, interleaved=1)
 
 expect(
     node,
-    inputs=[input_data, sin_cache_data, cos_cache_data],
+    inputs=[input_data, cos_cache_data, sin_cache_data],
     outputs=[expected_output],
     name="test_rotary_embedding_no_position_ids"
 )
@@ -27557,7 +27558,7 @@ expect(
 ```python
 node = onnx.helper.make_node(
     "RotaryEmbedding",
-    inputs=["input", "sin_cache", "cos_cache", "position_ids"],
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
     outputs=["output"],
     rotary_embedding_dim=4,
     interleaved=1,
@@ -27568,11 +27569,11 @@ position_ids_data = np.random.rand(2, 3).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(input_data, sin_cache_data, cos_cache_data, position_ids_data, interleaved=1, rotary_embedding_dim=4)
+expected_output = compute_rotary_embedding(input_data, cos_cache_data, sin_cache_data, position_ids=position_ids_data, interleaved=1, rotary_embedding_dim=4)
 
 expect(
     node,
-    inputs=[input_data, sin_cache_data, cos_cache_data, position_ids_data],
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
     outputs=[expected_output],
     name="test_rotary_embedding_with_interleaved_rotary_dim"
 )
@@ -27587,7 +27588,7 @@ expect(
 ```python
 node = onnx.helper.make_node(
     "RotaryEmbedding",
-    inputs=["input", "sin_cache", "cos_cache", "position_ids"],
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
     outputs=["output"],
     rotary_embedding_dim=4
 )
@@ -27597,11 +27598,11 @@ position_ids_data = np.random.rand(2, 3).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(input_data, sin_cache_data, cos_cache_data, position_ids_data, rotary_embedding_dim=4)
+expected_output = compute_rotary_embedding(input_data, cos_cache_data, sin_cache_data, position_ids=position_ids_data, rotary_embedding_dim=4)
 
 expect(
     node,
-    inputs=[input_data, sin_cache_data, cos_cache_data, position_ids_data],
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
     outputs=[expected_output],
     name="test_rotary_embedding_with_rotary_dim"
 )
