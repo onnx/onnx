@@ -29122,8 +29122,12 @@ This version of the operator has been available since version 23 of the default 
 
         # Inserted rotated embeddings back to the original input
         if interleaved:
-            x_rotate[:, :, :, 0::2] = real
-            x_rotate[:, :, :, 1::2] = imag
+            # x_rotate[:, :, :, 0::2] = real
+            # x_rotate[:, :, :, 1::2] = imag
+            real = np.expand_dims(real, axis=-1)
+            imag = np.expand_dims(imag, axis=-1)
+            x_rotate_concat = np.concatenate((real, imag), axis=-1)
+            x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
         else:
             x_rotate = np.concatenate((real, imag), axis=-1)
         output = np.concatenate((x_rotate, x_not_rotate), axis=-1)

@@ -649,7 +649,7 @@ class OpFunction(OpRun):
         if len(impl.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(impl.inputs)} "
+                f"and the expected number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         feeds = dict(zip(impl.input_names, inputs))
