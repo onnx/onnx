@@ -1485,7 +1485,15 @@ Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
 
-If `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
+The following few examples illustrate how `Gather` works for specific shapes of `data`,
+`indices`, and given value of `axis`:
+| data shape | indices shape | axis | output shape | output equation |
+| --- | --- | --- | --- | --- |
+| (P, Q) | (R, S) | 0 | (R, S, Q) | output[r, s, q] = data[ [indices[r, s], q] |
+| (P, Q) | (R, S) | 1 | (P, R, S) | output[p, r, s] = data[ p, indices[r, s]] |
+| (P, Q) | ( )  (a scalar)   | 0 | (Q)       | output[q] = data[indices, q] |
+
+More generally, if `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
 then `output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]`:
 
 ```
