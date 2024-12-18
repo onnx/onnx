@@ -21303,6 +21303,11 @@ expect(
         Normalized = Div(X, SqrtRMS)
         ```
         where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+        Depending on `stash_type` attribute, the actual computation
+        must happen in different floating-point precision.
+        For example, if `stash_type` is 1, this operator casts
+        all input variables to 32-bit float, perform the computation, and
+        finally cast `Normalized` back to the original type of `X`.
         The second stage then scales the outcome of the first stage using:
         ```
         Y= Mul(Normalized, Scale)
@@ -21325,6 +21330,8 @@ This version of the operator has been available since version 23 of the default 
 <dd>The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).</dd>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in stage one of the computation.</dd>
 </dl>
 
 #### Inputs

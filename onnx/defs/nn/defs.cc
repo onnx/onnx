@@ -2845,6 +2845,11 @@ static const char* RMSNormalization_ver23_doc = R"DOC(
       Normalized = Div(X, SqrtRMS)
       ```
       where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+      Depending on `stash_type` attribute, the actual computation
+      must happen in different floating-point precision.
+      For example, if `stash_type` is 1, this operator casts
+      all input variables to 32-bit float, perform the computation, and
+      finally cast `Normalized` back to the original type of `X`.
       The second stage then scales the outcome of the first stage using:
       ```
       Y= Mul(Normalized, Scale)
@@ -2870,6 +2875,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
             AttributeProto::FLOAT, 1e-5f)
+        .Attr(
+            "stash_type",
+            "The floating-point precision used in stage one of the computation.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
         .AllowUncheckedAttributes()
         .Input(0,
                "X",
@@ -2935,7 +2945,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto type_attr = ctx.getAttribute("stash_type");
               int64_t U =
                   (type_attr != nullptr) ? type_attr->i() : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-              if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) && (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16))
+              if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+                  (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+                  (U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+                  (U != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
                 return false; // Error
 
               auto* axis_attr = ctx.getAttribute("axis");
@@ -2958,8 +2971,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add(
                       axis >= 0 // number of axes that are reduced =
                           ? "PosAxis1D = Identity (Axis1D)" // [axis]: 1D tensor
-                          : "PosAxis1D = Sub (Rank, Axis1D)") // [rank - axis] : 1D tensor
-                  .Add("ReduceAxes = Range(PosAxis1D, Rank)")
+                          : "PosAxis1D = Add (Rank, Axis1D)") // [rank + axis] : 1D tensor
+                  .Const1D("One1D", (int64_t)1)
+                  .Add("ReduceAxes = Range(PosAxis1D, Rank, One1D)")
                   .Add("XU = Cast (X)", "to", U);
               builder.Add("XSquared = Mul (XU, XU)")
                     .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
@@ -2968,7 +2982,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                     .Add("SqrtRMS = Sqrt (RMSPlusEpsilon)")
                     .Add("Normalized = Div (XU, SqrtRMS)")
                     .Add("NormalizedT = Cast (Normalized)", "to", T);
-              builder.Add("Y = Mul (NormalizedT, Scale)");
+              builder.Add("Y = Mul (NormalizedT, scale)");
 
               schema.BuildFunction(functionProto);
               return true;
@@ -3104,7 +3118,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
                 .Add("Epsilon = Cast (FloatEpsilon)", "to", T)
                 .Const("ScalingFactorTensor", ToTensor<int>(scaling_factor))
-                .Add("ScalingFactor = Cast (ScalingFactor)", "to", T)
+                .Add("ScalingFactor = Cast (ScalingFactorTensor)", "to", T)
                 .Add("ScaledSkip = Mul(S, ScalingFactor)");
 
               // Check if bias needs to be added to the sum of inputs and skip
@@ -3116,10 +3130,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
 
               if (ctx.hasInput(3)) {
-                builder.Add("Y = LayerNormalization (LNInput, gamma, beta)", "epsilon", epsilon);
+                builder.Add("Y = LayerNormalization (LNInput, gamma, beta)", "axis", axis, "epsilon", epsilon);
               }
               else {
-                builder.Add("Y = LayerNormalization (LNInput, gamma)", "epsilon", epsilon);
+                builder.Add("Y = LayerNormalization (LNInput, gamma)", "axis", axis, "epsilon", epsilon);
               }
 
               if (ctx.hasOutput(1)) {
@@ -3252,7 +3266,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
                 .Add("Epsilon = Cast (FloatEpsilon)", "to", T)
                 .Const("ScalingFactorTensor", ToTensor<int>(scaling_factor))
-                .Add("ScalingFactor = Cast (ScalingFactor)", "to", T)
+                .Add("ScalingFactor = Cast (ScalingFactorTensor)", "to", T)
                 .Add("ScaledSkip = Mul(S, ScalingFactor)");
 
               // Check if bias needs to be added to the sum of inputs and skip
@@ -3263,7 +3277,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 builder.Add("RMSInput = Add (X, ScaledSkip)");
               }
 
-              builder.Add("Y = RMSNormalization (RMSInput, gamma)", "epsilon", epsilon);
+              builder.Add("Y = RMSNormalization (RMSInput, gamma)", "axis", axis, "epsilon", epsilon);
               if (ctx.hasOutput(1)) {
                 builder.Add("InputSkipBiasSum = Identity (LNInput)");
               }

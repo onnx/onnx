@@ -141,6 +141,22 @@ class FunctionBuilder {
     return Add(node_txt, MakeAttribute(attr_name, attr_value));
   }
 
+  template <typename... Args>
+  FunctionBuilder& Add(const char* node_txt, Args... args) {
+    if constexpr (sizeof...(args) % 2 == 0) {
+      return AddAttributes(node_txt, args...);
+    }
+  }
+
+  template <typename T, typename... Args>
+  FunctionBuilder& AddAttributes(const char* node_txt, const std::string& attr_name, const T& attr_value, Args... args) {
+    Add(node_txt, MakeAttribute(attr_name, attr_value));
+    if constexpr (sizeof...(args) > 0) {
+      AddAttributes(node_txt, args...);
+    }
+    return *this;
+  }
+
   FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {
     std::string constant_op(name);
     constant_op += " = Constant()";
