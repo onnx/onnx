@@ -2924,7 +2924,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "num_heads",
-            "Number of attention heads. Must use with `rotary_embedding_dim`. ",
+            "Number of attention heads. Must be provided when input is a 3D tensor. ",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
@@ -3070,32 +3070,31 @@ ONNX_OPERATOR_SET_SCHEMA(
                                                                              // / 2]
 
           // Create slices of inputs to multiply with sin and cos matrices based on interleaved parameter
-          // For non-interleaved (basic) rotation, slices are created as follows,
-          builder.Add(
-              "X1Basic, X2Basic = Split <axis = -1, num_outputs = 2> (XToRotate)"); // shape of X1 =
-                                                                                    // input[:,:,:,:rotary_embedding_dim/2],
-                                                                                    // X2 =
-                                                                                    // input[:,:,:,rotary_embedding_dim/2:rotary_embedding_dim]
-          // For interleaved rotation, slices are created as follows,
-          builder.Const1D("One1D", (int64_t)1)
-              .Const1D("AxesRotaryDim", (int64_t)3)
-              .Add("RotaryEmbedDimInclusive = Add(RotaryEmbedDim, One1D)")
-              .Add(
-                  "X1Interleaved = Slice(XToRotate, Zero1D, RotaryEmbedDim, AxesRotaryDim, Two1D)") // shape of X1 =
-                                                                                                    // input[:,:,:,0:rotary_embedding_dim:2]
-              .Add(
-                  "X2Interleaved = Slice(XToRotate, One1D, RotaryEmbedDimInclusive, AxesRotaryDim, Two1D)"); // shape of
-                                                                                                             // X2 =
-                                                                                                             // input[:,:,:,1:rotary_embedding_dim:2]
-
           // Choose the correct slices based on interleaved parameter
           // real = cos_x * x1 - sin_x * x2
           // imag = sin_x * x1 + cos_x * x2
-          builder.Const1D("InterleavedParam", interleaved)
-              .Add("InterleaveCond = Equal(InterleavedParam, Zero1D)")
-              .Add("X1 = Where(InterleaveCond, X1Basic, X1Interleaved)")
-              .Add("X2 = Where(InterleaveCond, X2Basic, X2Interleaved)")
-              .Add("CosX1 = Mul(CosCacheUnsqueezed, X1)")
+          if (interleaved == 0) {
+            // For non-interleaved (basic) rotation, slices are created as follows,
+            builder.Add(
+                "X1, X2 = Split <axis = -1, num_outputs = 2> (XToRotate)"); // shape of X1 =
+                                                                            // input[:,:,:,:rotary_embedding_dim/2],
+                                                                            // X2 =
+                                                                            // input[:,:,:,rotary_embedding_dim/2:rotary_embedding_dim]
+          } else {
+            // For interleaved rotation, slices are created as follows,
+            builder.Const1D("One1D", (int64_t)1)
+                .Const1D("AxesRotaryDim", (int64_t)3)
+                .Add("RotaryEmbedDimInclusive = Add(RotaryEmbedDim, One1D)")
+                .Add(
+                    "X1 = Slice(XToRotate, Zero1D, RotaryEmbedDim, AxesRotaryDim, Two1D)") // shape of X1 =
+                                                                                           // input[:,:,:,0:rotary_embedding_dim:2]
+                .Add(
+                    "X2 = Slice(XToRotate, One1D, RotaryEmbedDimInclusive, AxesRotaryDim, Two1D)"); // shape of
+                                                                                                    // X2 =
+                                                                                                    // input[:,:,:,1:rotary_embedding_dim:2]
+          }
+
+          builder.Add("CosX1 = Mul(CosCacheUnsqueezed, X1)")
               .Add("SinX2 = Mul(SinCacheUnsqueezed, X2)")
               .Add("Real = Sub(CosX1, SinX2)")
               .Add("SinX1 = Mul(SinCacheUnsqueezed, X1)")
@@ -3103,20 +3102,24 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("Imaginary = Add(SinX1, CosX2)");
 
           // Insert the real and imaginary values into the original input to be rotated based on interleaved parameter
-          builder.Add("XRotatedBasic = Concat <axis = -1> (Real, Imaginary)")
-              .Add("RealInterleave = Unsqueeze(Real, NegOne)") // shape of indices =
-                                                               // input[:,:,:,0:rotary_embedding_dim:2, 1]
-              .Add("ImaginaryInterleave = Unsqueeze(Imaginary, NegOne)") // shape of indices =
-                                                                         // input[:,:,:,1:rotary_embedding_dim+1:2, 1]
-              .Add("XRotatedInterleavedConcat = Concat <axis = -1> (RealInterleave, ImaginaryInterleave)")
-              .Add("XRotatedShape = Shape(XRotatedBasic)")
-              .Add("XRotatedInterleaved = Reshape(XRotatedInterleavedConcat, XRotatedShape)")
-              .Add("XRotated = Where(InterleaveCond, XRotatedBasic, XRotatedInterleaved)");
+          if (interleaved == 0) {
+            builder.Add("XRotated = Concat <axis = -1> (Real, Imaginary)");
+          } else {
+            builder
+                .Add("RealInterleave = Unsqueeze(Real, NegOne)") // shape of indices =
+                                                                 // input[:,:,:,0:rotary_embedding_dim:2, 1]
+                .Add("ImaginaryInterleave = Unsqueeze(Imaginary, NegOne)") // shape of indices =
+                                                                           // input[:,:,:,1:rotary_embedding_dim+1:2, 1]
+                .Add("XRotatedInterleavedConcat = Concat <axis = -1> (RealInterleave, ImaginaryInterleave)")
+                .Add("XRotatedShape = Shape(XToRotate)")
+                .Add("XRotated = Reshape(XRotatedInterleavedConcat, XRotatedShape)");
+          }
 
           // Combine rotated parts with non-rotated parts
           builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)");
           // Reshape back to 3D shape if input is a 3D tensor
           builder.Add("XShape = Shape(X)").Add("Y = Reshape(XConcat, XShape)");
+
           schema.BuildFunction(functionProto);
           return true;
         }));
