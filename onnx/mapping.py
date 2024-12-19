@@ -94,7 +94,7 @@ TENSOR_TYPE_MAP = {
 }
 
 
-class DeprecatedWarningDict(dict):  # type: ignore
+class DeprecatedWarningDict(dict):
     def __init__(
         self,
         dictionary: dict[int, int | str | np.dtype],

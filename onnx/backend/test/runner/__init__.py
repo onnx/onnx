@@ -226,27 +226,21 @@ class Runner:
     def download_model(
         cls,
         model_test: TestCase,
-        model_dir: str,
         models_dir: str,
     ) -> None:
-        # On Windows, NamedTemporaryFile can not be opened for a
-        # second time
-        del model_dir
-        download_file = tempfile.NamedTemporaryFile(delete=False)
-        try:
-            download_file.close()
-            assert model_test.url
-            print(
-                f"Start downloading model {model_test.model_name} from {model_test.url}"
-            )
-            urlretrieve(model_test.url, download_file.name)
-            print("Done")
-            onnx.utils._extract_model_safe(download_file.name, models_dir)
-        except Exception as e:
-            print(f"Failed to prepare data for model {model_test.model_name}: {e}")
-            raise
-        finally:
-            os.remove(download_file.name)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                assert model_test.url
+                print(
+                    f"Start downloading model {model_test.model_name} from {model_test.url}"
+                )
+                filename = os.path.join(tmpdir, "file")
+                urlretrieve(model_test.url, filename)
+                print("Done")
+                onnx.utils._extract_model_safe(filename, models_dir)
+            except Exception as e:
+                print(f"Failed to prepare data for model {model_test.model_name}: {e}")
+                raise
 
     @classmethod
     def prepare_model_data(cls, model_test: TestCase) -> str:
@@ -267,9 +261,7 @@ class Runner:
                     break
             os.makedirs(model_dir)
 
-            cls.download_model(
-                model_test=model_test, model_dir=model_dir, models_dir=models_dir
-            )
+            cls.download_model(model_test=model_test, models_dir=models_dir)
         return model_dir
 
     def _add_test(

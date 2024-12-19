@@ -203,6 +203,12 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
 
+if sys.version_info > (3, 12):
+    # TODO(https://github.com/google/re2/issues/516): Remove the skips
+    backend_test.exclude("test_regex_full_match_basic_cpu")
+    backend_test.exclude("test_regex_full_match_email_domain_cpu")
+    backend_test.exclude("test_regex_full_match_empty_cpu")
+
 if sys.version_info <= (3, 10):
     #  AttributeError: module 'numpy.typing' has no attribute 'NDArray'
     backend_test.exclude("test_image_decoder_decode_")

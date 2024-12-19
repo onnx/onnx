@@ -2,12 +2,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 
-inline void unaryLogicalOpInference(InferenceContext& ctx) {
+inline static void unaryLogicalOpInference(InferenceContext& ctx) {
   // Type inference
   updateOutputElemType(ctx, 0, TensorProto::BOOL);
   // Shape inference
@@ -16,6 +15,7 @@ inline void unaryLogicalOpInference(InferenceContext& ctx) {
   }
 }
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
@@ -244,7 +244,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input/output to integer tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-std::function<void(OpSchema&)> BinaryBitwiseDocGenerator(const char* name) {
+static std::function<void(OpSchema&)> BinaryBitwiseDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(

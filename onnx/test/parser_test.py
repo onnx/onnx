@@ -220,6 +220,28 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertEqual(node.domain, "SomeDomain")
         self.assertEqual(node.op_type, "SomeOp")
 
+    def test_missing_identifier(self):
+        node = onnx.parser.parse_node("= SomeOp ()")
+        self.assertEqual(list(node.input), [])
+        self.assertEqual(list(node.output), [])
+        node = onnx.parser.parse_node(", = SomeOp (,)")
+        self.assertEqual(list(node.input), [""])
+        self.assertEqual(list(node.output), [""])
+        node = onnx.parser.parse_node("x, = SomeOp (y,)")
+        self.assertEqual(list(node.input), ["y"])
+        self.assertEqual(list(node.output), ["x"])
+        node = onnx.parser.parse_node(",x = SomeOp (,y)")
+        self.assertEqual(list(node.input), ["", "y"])
+        self.assertEqual(list(node.output), ["", "x"])
+
+    def test_quoted_empty_identifier(self):
+        node = onnx.parser.parse_node('"" = SomeOp ("")')
+        self.assertEqual(list(node.input), [""])
+        self.assertEqual(list(node.output), [""])
+        node = onnx.parser.parse_node('"",x = SomeOp ("",y)')
+        self.assertEqual(list(node.input), ["", "y"])
+        self.assertEqual(list(node.output), ["", "x"])
+
     @parameterized.expand(
         [
             ("not_a_good_float", True),

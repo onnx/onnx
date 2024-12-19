@@ -17,6 +17,7 @@
 #include "onnx/common/constants.h"
 #include "onnx/common/proto_util.h"
 #include "onnx/common/visitor.h"
+#include "onnx/defs/parser.h"
 #include "onnx/shape_inference/attribute_binder.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"

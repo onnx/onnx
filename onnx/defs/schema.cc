@@ -941,6 +941,466 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   }
 }
 
+const std::vector<std::string>& OpSchema::numeric_types_for_math_reduction_ir9() {
+  static const std::vector<std::string> numeric_types_for_math_reduction_ir9 = {
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(bfloat16)",
+      "tensor(float8e4m3fn)",
+      "tensor(float8e4m3fnuz)",
+      "tensor(float8e5m2)",
+      "tensor(float8e5m2fnuz)"};
+  return numeric_types_for_math_reduction_ir9;
+}
+
+const std::vector<std::string>& OpSchema::numeric_types_for_math_reduction_ir4() {
+  static const std::vector<std::string> numeric_types_for_math_reduction_ir4 = {
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(bfloat16)"};
+  return numeric_types_for_math_reduction_ir4;
+}
+
+const std::vector<std::string>& OpSchema::numeric_types_for_math_reduction() {
+  static const std::vector<std::string> numeric_types_for_math_reduction = {
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)"};
+  return numeric_types_for_math_reduction;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir11() {
+  static const std::vector<std::string> all_numeric_types_ir11 = {
+      "tensor(uint8)",
+      "tensor(uint16)",
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int8)",
+      "tensor(int16)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(bfloat16)",
+      "tensor(float8e4m3fn)",
+      "tensor(float8e4m3fnuz)",
+      "tensor(float8e5m2)",
+      "tensor(float8e5m2fnuz)",
+      "tensor(uint4)",
+      "tensor(int4)",
+      "tensor(float4e2m1)"};
+  return all_numeric_types_ir11;
+}
+const std::vector<std::string>& OpSchema::all_numeric_types_ir10() {
+  static const std::vector<std::string> all_numeric_types_ir10 = {
+      "tensor(uint8)",
+      "tensor(uint16)",
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int8)",
+      "tensor(int16)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(bfloat16)",
+      "tensor(float8e4m3fn)",
+      "tensor(float8e4m3fnuz)",
+      "tensor(float8e5m2)",
+      "tensor(float8e5m2fnuz)",
+      "tensor(uint4)",
+      "tensor(int4)"};
+  return all_numeric_types_ir10;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir9() {
+  static const std::vector<std::string> all_numeric_types_ir9 = {
+      "tensor(uint8)",
+      "tensor(uint16)",
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int8)",
+      "tensor(int16)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(bfloat16)",
+      "tensor(float8e4m3fn)",
+      "tensor(float8e4m3fnuz)",
+      "tensor(float8e5m2)",
+      "tensor(float8e5m2fnuz)"};
+  return all_numeric_types_ir9;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir4() {
+  static const std::vector<std::string> all_numeric_types_ir4 = {
+      "tensor(uint8)",
+      "tensor(uint16)",
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int8)",
+      "tensor(int16)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(bfloat16)"};
+  return all_numeric_types_ir4;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types() {
+  static const std::vector<std::string> all_numeric_types = {
+      "tensor(uint8)",
+      "tensor(uint16)",
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int8)",
+      "tensor(int16)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)"};
+  return all_numeric_types;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_sequence_types() {
+  static const std::vector<std::string> all_numeric_sequence_types = {
+      "seq(tensor(uint8))",
+      "seq(tensor(uint16))",
+      "seq(tensor(uint32))",
+      "seq(tensor(uint64))",
+      "seq(tensor(int8))",
+      "seq(tensor(int16))",
+      "seq(tensor(int32))",
+      "seq(tensor(int64))",
+      "seq(tensor(float16))",
+      "seq(tensor(float))",
+      "seq(tensor(double))"};
+  return all_numeric_sequence_types;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types() {
+  static const std::vector<std::string> all_tensor_types = {
+      "tensor(uint8)",
+      "tensor(uint16)",
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int8)",
+      "tensor(int16)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(string)",
+      "tensor(bool)",
+      "tensor(complex64)",
+      "tensor(complex128)"};
+  return all_tensor_types;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir4() {
+  static const std::vector<std::string> all_tensor_types_ir4 = {
+      "tensor(uint8)",
+      "tensor(uint16)",
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int8)",
+      "tensor(int16)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(bfloat16)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(string)",
+      "tensor(bool)",
+      "tensor(complex64)",
+      "tensor(complex128)"};
+  return all_tensor_types_ir4;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_numeric_types_plus_bool_ir4() {
+  static const std::vector<std::string> all_non_complex_numeric_types_plus_bool_ir4 = {
+      "tensor(uint8)",
+      "tensor(uint16)",
+      "tensor(uint32)",
+      "tensor(uint64)",
+      "tensor(int8)",
+      "tensor(int16)",
+      "tensor(int32)",
+      "tensor(int64)",
+      "tensor(bfloat16)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(bool)"};
+  return all_non_complex_numeric_types_plus_bool_ir4;
+}
+
+const std::vector<std::string>& OpSchema::all_float_types_ir4() {
+  static const std::vector<std::string> all_float_types_ir4 = {
+      "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"};
+  return all_float_types_ir4;
+}
+
+const std::vector<std::string>& OpSchema::all_float_types_plus_Xint8_ir4() {
+  static const std::vector<std::string> all_float_types_ir4 = {
+      "tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(int8)", "tensor(uint8)"};
+  return all_float_types_ir4;
+}
+
+const std::vector<std::string>& OpSchema::all_float_types_ir9() {
+  static const std::vector<std::string> all_float_types_ir9 = {
+      "tensor(bfloat16)",
+      "tensor(float16)",
+      "tensor(float)",
+      "tensor(double)",
+      "tensor(float8e4m3fn)",
+      "tensor(float8e4m3fnuz)",
+      "tensor(float8e5m2)",
+      "tensor(float8e5m2fnuz)"};
+  return all_float_types_ir9;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir9() {
+  static const std::vector<std::string> all_tensor_types_ir9 = {
+      "tensor(uint8)",        "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",
+      "tensor(int8)",         "tensor(int16)",          "tensor(int32)",      "tensor(int64)",
+      "tensor(bfloat16)",     "tensor(float16)",        "tensor(float)",      "tensor(double)",
+      "tensor(string)",       "tensor(bool)",           "tensor(complex64)",  "tensor(complex128)",
+      "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)"};
+  return all_tensor_types_ir9;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir10() {
+  static const std::vector<std::string> all_tensor_types_ir10 = {
+      "tensor(uint8)",      "tensor(uint16)",         "tensor(uint32)",
+      "tensor(uint64)",     "tensor(int8)",           "tensor(int16)",
+      "tensor(int32)",      "tensor(int64)",          "tensor(bfloat16)",
+      "tensor(float16)",    "tensor(float)",          "tensor(double)",
+      "tensor(string)",     "tensor(bool)",           "tensor(complex64)",
+      "tensor(complex128)", "tensor(float8e4m3fn)",   "tensor(float8e4m3fnuz)",
+      "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",
+      "tensor(int4)"};
+  return all_tensor_types_ir10;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir10() {
+  static const std::vector<std::string> all_non_complex_tensor_types_ir10 = {
+      "tensor(uint8)",      "tensor(uint16)",         "tensor(uint32)",       "tensor(uint64)",
+      "tensor(int8)",       "tensor(int16)",          "tensor(int32)",        "tensor(int64)",
+      "tensor(bfloat16)",   "tensor(float16)",        "tensor(float)",        "tensor(double)",
+      "tensor(string)",     "tensor(bool)",           "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
+      "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",        "tensor(int4)"};
+  return all_non_complex_tensor_types_ir10;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_types_ir11() {
+  static const std::vector<std::string> all_tensor_types_ir11 = {
+      "tensor(uint8)",        "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",
+      "tensor(int8)",         "tensor(int16)",          "tensor(int32)",      "tensor(int64)",
+      "tensor(bfloat16)",     "tensor(float16)",        "tensor(float)",      "tensor(double)",
+      "tensor(string)",       "tensor(bool)",           "tensor(complex64)",  "tensor(complex128)",
+      "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)",
+      "tensor(uint4)",        "tensor(int4)",           "tensor(float4e2m1)"};
+  return all_tensor_types_ir11;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir11() {
+  static const std::vector<std::string> all_non_complex_tensor_types_ir11 = {
+      "tensor(uint8)",      "tensor(uint16)",         "tensor(uint32)",       "tensor(uint64)",
+      "tensor(int8)",       "tensor(int16)",          "tensor(int32)",        "tensor(int64)",
+      "tensor(bfloat16)",   "tensor(float16)",        "tensor(float)",        "tensor(double)",
+      "tensor(string)",     "tensor(bool)",           "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
+      "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",        "tensor(int4)",
+      "tensor(float4e2m1)"};
+  return all_non_complex_tensor_types_ir11;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types() {
+  static const std::vector<std::string> all_tensor_sequence_types = {
+      "seq(tensor(uint8))",
+      "seq(tensor(uint16))",
+      "seq(tensor(uint32))",
+      "seq(tensor(uint64))",
+      "seq(tensor(int8))",
+      "seq(tensor(int16))",
+      "seq(tensor(int32))",
+      "seq(tensor(int64))",
+      "seq(tensor(float16))",
+      "seq(tensor(float))",
+      "seq(tensor(double))",
+      "seq(tensor(string))",
+      "seq(tensor(bool))",
+      "seq(tensor(complex64))",
+      "seq(tensor(complex128))"};
+  return all_tensor_sequence_types;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir4() {
+  static const std::vector<std::string> all_tensor_sequence_types_ir4 = {
+      "seq(tensor(uint8))",
+      "seq(tensor(uint16))",
+      "seq(tensor(uint32))",
+      "seq(tensor(uint64))",
+      "seq(tensor(int8))",
+      "seq(tensor(int16))",
+      "seq(tensor(int32))",
+      "seq(tensor(int64))",
+      "seq(tensor(bfloat16))",
+      "seq(tensor(float16))",
+      "seq(tensor(float))",
+      "seq(tensor(double))",
+      "seq(tensor(string))",
+      "seq(tensor(bool))",
+      "seq(tensor(complex64))",
+      "seq(tensor(complex128))"};
+  return all_tensor_sequence_types_ir4;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir9() {
+  static const std::vector<std::string> all_tensor_sequence_types_ir9 = {
+      "seq(tensor(uint8))",      "seq(tensor(uint16))",        "seq(tensor(uint32))",
+      "seq(tensor(uint64))",     "seq(tensor(int8))",          "seq(tensor(int16))",
+      "seq(tensor(int32))",      "seq(tensor(int64))",         "seq(tensor(bfloat16))",
+      "seq(tensor(float16))",    "seq(tensor(float))",         "seq(tensor(double))",
+      "seq(tensor(string))",     "seq(tensor(bool))",          "seq(tensor(complex64))",
+      "seq(tensor(complex128))", "seq(tensor(float8e4m3fn))",  "seq(tensor(float8e4m3fnuz))",
+      "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))"};
+  return all_tensor_sequence_types_ir9;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir10() {
+  static const std::vector<std::string> all_tensor_sequence_types_ir10 = {
+      "seq(tensor(uint8))",      "seq(tensor(uint16))",         "seq(tensor(uint32))",
+      "seq(tensor(uint64))",     "seq(tensor(int8))",           "seq(tensor(int16))",
+      "seq(tensor(int32))",      "seq(tensor(int64))",          "seq(tensor(bfloat16))",
+      "seq(tensor(float16))",    "seq(tensor(float))",          "seq(tensor(double))",
+      "seq(tensor(string))",     "seq(tensor(bool))",           "seq(tensor(complex64))",
+      "seq(tensor(complex128))", "seq(tensor(float8e4m3fn))",   "seq(tensor(float8e4m3fnuz))",
+      "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))", "seq(tensor(uint4))",
+      "seq(tensor(int4))"};
+  return all_tensor_sequence_types_ir10;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir11() {
+  static const std::vector<std::string> all_tensor_sequence_types_ir11 = {
+      "seq(tensor(uint8))",      "seq(tensor(uint16))",         "seq(tensor(uint32))",
+      "seq(tensor(uint64))",     "seq(tensor(int8))",           "seq(tensor(int16))",
+      "seq(tensor(int32))",      "seq(tensor(int64))",          "seq(tensor(bfloat16))",
+      "seq(tensor(float16))",    "seq(tensor(float))",          "seq(tensor(double))",
+      "seq(tensor(string))",     "seq(tensor(bool))",           "seq(tensor(complex64))",
+      "seq(tensor(complex128))", "seq(tensor(float8e4m3fn))",   "seq(tensor(float8e4m3fnuz))",
+      "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))", "seq(tensor(uint4))",
+      "seq(tensor(int4))",       "seq(tensor(float4e2m1))"};
+  return all_tensor_sequence_types_ir11;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types() {
+  static const std::vector<std::string> all_optional_types = {
+      "optional(seq(tensor(uint8)))",  "optional(seq(tensor(uint16)))",    "optional(seq(tensor(uint32)))",
+      "optional(seq(tensor(uint64)))", "optional(seq(tensor(int8)))",      "optional(seq(tensor(int16)))",
+      "optional(seq(tensor(int32)))",  "optional(seq(tensor(int64)))",     "optional(seq(tensor(float16)))",
+      "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",    "optional(seq(tensor(string)))",
+      "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))", "optional(seq(tensor(complex128)))",
+      "optional(tensor(uint8))",       "optional(tensor(uint16))",         "optional(tensor(uint32))",
+      "optional(tensor(uint64))",      "optional(tensor(int8))",           "optional(tensor(int16))",
+      "optional(tensor(int32))",       "optional(tensor(int64))",          "optional(tensor(float16))",
+      "optional(tensor(float))",       "optional(tensor(double))",         "optional(tensor(string))",
+      "optional(tensor(bool))",        "optional(tensor(complex64))",      "optional(tensor(complex128))"};
+  return all_optional_types;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir4() {
+  static const std::vector<std::string> all_optional_types = {
+      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
+      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
+      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
+      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
+      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
+      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
+      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
+      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
+      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
+      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
+      "optional(tensor(complex64))",       "optional(tensor(complex128))"};
+  return all_optional_types;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir9() {
+  static const std::vector<std::string> all_optional_types = {
+      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
+      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
+      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
+      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
+      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
+      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
+      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
+      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
+      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
+      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
+      "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
+      "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))"};
+  return all_optional_types;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir10() {
+  static const std::vector<std::string> all_optional_types = {
+      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
+      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
+      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
+      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
+      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
+      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
+      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
+      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
+      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
+      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
+      "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
+      "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))",
+      "optional(tensor(uint4))",           "optional(tensor(int4))"};
+  return all_optional_types;
+}
+
+const std::vector<std::string>& OpSchema::all_optional_types_ir11() {
+  static const std::vector<std::string> all_optional_types = {
+      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
+      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
+      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
+      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
+      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
+      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
+      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
+      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
+      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
+      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
+      "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
+      "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))",
+      "optional(tensor(uint4))",           "optional(tensor(int4))",        "optional(tensor(float4e2m1))"};
+  return all_optional_types;
+}
+
 void OpSchema::Finalize() {
 #define ENFORCE(x)                                                                                      \
   do {                                                                                                  \
@@ -1016,13 +1476,13 @@ void OpSchema::Finalize() {
 
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   if (!schema.attributes_.empty()) {
-    out << "Attributes:" << std::endl;
+    out << "Attributes:" << '\n';
     for (const auto& pair : schema.attributes_) {
-      out << "  " << pair.second.name << " : " << pair.second.description << std::endl;
+      out << "  " << pair.second.name << " : " << pair.second.description << '\n';
     }
   }
   if (schema.max_input_ > 0) {
-    out << "Inputs:" << std::endl;
+    out << "Inputs:" << '\n';
     if (!schema.inputs_.empty()) {
       for (size_t i = 0; i < schema.inputs_.size(); ++i) {
         const auto& p = schema.inputs_[i];
@@ -1031,14 +1491,14 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
             << (!description.empty() ? description : "(no doc)") << " : "
-            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
+            << (!type_str.empty() ? type_str : "(no type)") << '\n';
       }
     } else {
-      out << "  (no explicit description available)" << std::endl;
+      out << "  (no explicit description available)" << '\n';
     }
   }
   if (schema.max_output_ > 0) {
-    out << "Outputs:" << std::endl;
+    out << "Outputs:" << '\n';
     if (!schema.outputs_.empty()) {
       for (size_t i = 0; i < schema.outputs_.size(); ++i) {
         const auto& p = schema.outputs_[i];
@@ -1047,21 +1507,21 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << (!name.empty() ? name : "(unnamed)") << " : "
             << (!description.empty() ? description : "(no doc)") << " : "
-            << (!type_str.empty() ? type_str : "(no type)") << std::endl;
+            << (!type_str.empty() ? type_str : "(no type)") << '\n';
       }
     } else {
-      out << "  (no explicit description available)" << std::endl;
+      out << "  (no explicit description available)" << '\n';
     }
   }
-  out << std::endl;
+  out << '\n';
   if (schema.doc()) {
     out << schema.doc();
   } else {
-    out << "(no documentation yet)" << std::endl;
+    out << "(no documentation yet)" << '\n';
   }
-  out << std::endl;
+  out << '\n';
   if (schema.line_) {
-    out << "Defined at " << schema.file_ << ":" << schema.line_ << std::endl;
+    out << "Defined at " << schema.file_ << ":" << schema.line_ << '\n';
   }
   return out;
 }
@@ -1118,6 +1578,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
     }
 
    private:
+#ifndef NDEBUG
     static size_t GetRegisteredSchemaCount() {
       size_t count = 0;
       for (auto& x : GetMapWithoutEnsuringRegistration()) {
@@ -1127,6 +1588,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       }
       return count;
     }
+#endif
   };
 
 #ifndef __ONNX_DISABLE_STATIC_REGISTRATION

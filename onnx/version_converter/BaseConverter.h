@@ -8,19 +8,14 @@
 
 #pragma once
 
-#include <stdlib.h>
-
-#include <iostream>
-#include <map>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 
 #include "onnx/common/ir.h"
-#include "onnx/common/ir_pb_converter.h"
 #include "onnx/defs/schema.h"
-#include "onnx/proto_utils.h"
 #include "onnx/version_converter/adapters/adapter.h"
 
 namespace ONNX_NAMESPACE {

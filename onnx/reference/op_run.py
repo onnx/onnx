@@ -604,12 +604,7 @@ class OpRun(abc.ABC):
 class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
-    def __init__(
-        self,
-        onnx_node: NodeProto,  # noqa: ARG002
-        run_params: dict[str, Any],  # noqa: ARG002
-        impl: Any = None,  # noqa: ARG002
-    ):
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -629,7 +624,7 @@ class OpFunction(OpRun):
         run_params: dict[str, Any] | None,
         impl: Any = None,
         attributes: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         if impl is None:
             raise RuntimeError(
                 f"impl cannot be None for node type {onnx_node.op_type!r} "

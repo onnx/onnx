@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
+#include <stdexcept>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
@@ -14,15 +14,12 @@
 
 using namespace ONNX_NAMESPACE::checker;
 
-#pragma warning(push)
-#pragma warning(disable : 4530)
-
 namespace ONNX_NAMESPACE {
 namespace Test {
 
 // Utilities. TODO: Turn them into reusable ONNX utilities for use by
 
-TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
+static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   TensorProto t;
   t.set_data_type(elem_type);
   switch (elem_type) {
@@ -42,9 +39,8 @@ TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   return t;
 }
 
-void BuildNodes(FunctionProto& functionProto, const std::vector<FunctionBodyHelper::NodeDef>& node_defs) {
-  for (size_t i = 0; i < node_defs.size(); i++) {
-    const FunctionBodyHelper::NodeDef& node = node_defs[i];
+static void BuildNodes(FunctionProto& functionProto, const std::vector<FunctionBodyHelper::NodeDef>& node_defs) {
+  for (const auto& node : node_defs) {
     auto* np = functionProto.add_node();
 
     np->set_op_type(node.op_type);
@@ -60,7 +56,7 @@ void BuildNodes(FunctionProto& functionProto, const std::vector<FunctionBodyHelp
   }
 }
 
-bool BuildFunctionProto(
+static bool BuildFunctionProto(
     FunctionProto& functionProto,
     const OpSchema& schema,
     const std::vector<FunctionBodyHelper::NodeDef>& node_defs) {
@@ -71,7 +67,7 @@ bool BuildFunctionProto(
 
 // A monomorphic context-dependent function test-case.
 static bool
-BuildFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+BuildFloatFunctionBody(const FunctionBodyBuildContext& /*ctx*/, const OpSchema& schema, FunctionProto& functionProto) {
   // Create a scalar-tensor constant 2.0 of float type:
   auto two_as_tensor = ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT);
 
@@ -82,7 +78,7 @@ BuildFloatFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& sche
   return BuildFunctionProto(functionProto, schema, body);
 }
 
-void RegisterCustomFuncFloatSchema() {
+static void RegisterCustomFuncFloatSchema() {
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName("CustomFuncFloat")
       .SetDomain(ONNX_DOMAIN)
@@ -141,7 +137,7 @@ BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, F
   return BuildFunctionProto(functionProto, schema, body);
 }
 
-void RegisterCustomFunctionSchema() {
+static void RegisterCustomFunctionSchema() {
   ONNX_NAMESPACE::OpSchema schema;
   schema.SetName("CustomFunction")
       .SetDomain(ONNX_DOMAIN)
@@ -220,7 +216,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
-    try {
+    ONNX_TRY {
       bool validate = true;
       const FunctionProto* function = schema2->GetFunction(model_opset_import, validate);
       if (model_opset_import >= 6) { // function body should be updated at opset 6 where Sub is updated
@@ -228,19 +224,23 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
       } else {
         ASSERT_TRUE(function);
       }
-    } catch (std::runtime_error err) {
-      ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8);
+    }
+    ONNX_CATCH(const std::runtime_error&) {
+      ONNX_HANDLE_EXCEPTION(
+          [&]() { ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8); });
     }
   }
 
   const auto* schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
-    try {
+    ONNX_TRY {
       const FunctionProto* function = schema9->GetFunction(model_opset_import);
       ASSERT_TRUE(function);
-    } catch (std::runtime_error err) {
-      ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15);
+    }
+    ONNX_CATCH(const std::runtime_error&) {
+      ONNX_HANDLE_EXCEPTION(
+          [&]() { ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15); });
     }
   }
 }
@@ -276,4 +276,3 @@ TEST(FunctionAPITest, TypeContextTest) {
 
 } // namespace Test
 } // namespace ONNX_NAMESPACE
-#pragma warning(pop)

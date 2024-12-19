@@ -15,7 +15,7 @@ template <typename Proto>
 bool ParseProtoFromPyBytes(Proto* proto, const py::bytes& bytes) {
   // Get the buffer from Python bytes object
   char* buffer = nullptr;
-  Py_ssize_t length;
+  Py_ssize_t length = 0;
   PyBytes_AsStringAndSize(bytes.ptr(), &buffer, &length);
 
   return ParseProtoFromBytes(proto, buffer, length);

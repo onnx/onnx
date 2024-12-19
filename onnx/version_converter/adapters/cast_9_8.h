@@ -19,7 +19,7 @@ class Cast_9_8 final : public Adapter {
  public:
   explicit Cast_9_8() : Adapter("Cast", OpSetID(9), OpSetID(8)) {}
 
-  void adapt_cast_9_8(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_cast_9_8(const std::shared_ptr<Graph>&, Node* node) const {
     if (node->inputs()[0]->elemType() == TensorProto_DataType_STRING || node->i(kto) == TensorProto_DataType_STRING)
       ONNX_ASSERTM(false, "Casting From/To STRING data type is not supported")
   }

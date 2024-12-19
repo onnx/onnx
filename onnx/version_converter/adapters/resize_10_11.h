@@ -11,6 +11,8 @@
 #include <memory>
 #include <vector>
 
+#include "onnx/version_converter/adapters/adapter.h"
+
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
@@ -18,7 +20,7 @@ class Resize_10_11 final : public Adapter {
  public:
   explicit Resize_10_11() : Adapter("Resize", OpSetID(10), OpSetID(11)) {}
 
-  void adapt_resize_10_11(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_resize_10_11(const std::shared_ptr<Graph>& graph, Node* node) const {
     int input_rank = node->inputs()[0]->sizes().size();
 
     Value* scales_input = node->inputs()[1];
