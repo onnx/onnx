@@ -8,15 +8,7 @@ import numpy as np
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.backend.test.case.node.rmsnormalization import _rms_normalization
-
-
-# Skip rms normalization's reference implementation
-def _skip_rms_normalization(x, skip, gamma, B, axis=1, epsilon=1e-5, scaling_factor=1):
-    input_skip_sum = x + (skip * scaling_factor)
-    input_skip_bias_sum = input_skip_sum + B
-    output = _rms_normalization(input_skip_bias_sum, gamma, axis=axis, epsilon=epsilon)
-    return output, input_skip_bias_sum
+from onnx.reference.ops.op_skip_rms_normalization import _skip_rms_normalization
 
 
 class SkipRMSNormalization(Base):
@@ -26,7 +18,7 @@ class SkipRMSNormalization(Base):
         skip = np.random.randn(3, 4, 2).astype(np.float32)
         gamma = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
-        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, bias)
+        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias)
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
@@ -49,7 +41,7 @@ class SkipRMSNormalization(Base):
         skip = np.random.randn(4, 2).astype(np.float32)
         gamma = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
-        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, bias)
+        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias)
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
@@ -73,7 +65,7 @@ class SkipRMSNormalization(Base):
         gamma = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
         epsilon = 1e-2
-        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, bias, epsilon=epsilon)
+        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, epsilon=epsilon)
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
@@ -98,13 +90,13 @@ class SkipRMSNormalization(Base):
         gamma = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
         scaling_factor = 3
-        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, bias, scaling_factor=scaling_factor)
+        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, scaling_factor=scaling_factor)
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
         node = onnx.helper.make_node(
             "SkipRMSNormalization",
-            inputs=["x", "skip", "gamma", "beta", "bias"],
+            inputs=["x", "skip", "gamma", "bias"],
             outputs=["y", "input_skip_bias_sum"],
             scaling_factor=scaling_factor,
         )
