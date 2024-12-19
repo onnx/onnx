@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 179/192 (93.23%, 5 generators excluded) common operators.
+Node tests have covered 181/195 (92.82%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -14499,6 +14499,132 @@ expect(
 </details>
 
 
+### RMSNormalization
+There are 4 test cases, listed as following:
+<details>
+<summary>d</summary>
+
+```python
+X = np.random.randn(3, 4).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y = _rms_normalization(X, W, axis=axis)
+
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y"],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_2d_axis_negative_{-axis}"
+    else:
+        name = f"test_rms_normalization_2d_axis{axis}"
+
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+<details>
+<summary>d_epsilon</summary>
+
+```python
+epsilon = 1e-1
+X = np.random.randn(2, 3, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y = _rms_normalization(X, W, axis=axis, epsilon=epsilon)
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y"],
+        axis=axis,
+        epsilon=epsilon,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_3d_axis_negative_{-axis}_epsilon"
+    else:
+        name = f"test_rms_normalization_3d_axis{axis}_epsilon"
+
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+<details>
+<summary>default_axis</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+# Default axis in RMSNormalization is -1.
+normalized_shape = calculate_normalized_shape(X.shape, -1)
+W = np.random.randn(*normalized_shape).astype(np.float32)
+# Axis is default to -1 in the reference implementation.
+Y = _rms_normalization(X, W)
+
+# Not specifying axis attribute means -1.
+node = onnx.helper.make_node(
+    "RMSNormalization",
+    inputs=["X", "W"],
+    outputs=["Y"],
+)
+
+expect(
+    node,
+    inputs=[X, W],
+    outputs=[Y],
+    name="test_rms_normalization_default_axis",
+)
+```
+
+</details>
+<details>
+<summary>rmsnormalization</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y = _rms_normalization(X, W, axis=axis)
+
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y"],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_4d_axis_negative_{-axis}"
+    else:
+        name = f"test_rms_normalization_4d_axis{axis}"
+
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+
+
 ### RNN
 There are 4 test cases, listed as following:
 <details>
@@ -20537,6 +20663,126 @@ expect(node, inputs=[x], outputs=[y], name="test_size")
 </details>
 
 
+### SkipLayerNormalization
+There are 4 test cases, listed as following:
+<details>
+<summary>2d</summary>
+
+```python
+x = np.random.randn(4, 2).astype(np.float32)
+skip = np.random.randn(4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_layer_normalization_2d_example",
+)
+```
+
+</details>
+<details>
+<summary>3d</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_layer_normalization_3d_example",
+)
+```
+
+</details>
+<details>
+<summary>epsilon</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+epsilon = 1e-2
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias, epsilon=epsilon)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+    epsilon=epsilon,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_layer_normalization_epsilon_example",
+)
+```
+
+</details>
+<details>
+<summary>scaling_factor</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+beta = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+scaling_factor = 3
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias, scaling_factor=scaling_factor)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipLayerNormalization",
+    inputs=["x", "skip", "gamma", "beta", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+    scaling_factor=scaling_factor,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, beta, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_layer_normalization_scaling_factor_example",
+)
+```
+
+</details>
+
+
 ### Slice
 There are 8 test cases, listed as following:
 <details>
@@ -24750,6 +24996,9 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 
 
 ### SequenceLength (call for test cases)
+
+
+### SkipRMSNormalization (call for test cases)
 
 
 <br/>
