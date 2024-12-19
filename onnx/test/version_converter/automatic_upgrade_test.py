@@ -1242,7 +1242,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_SkipRMSNormalization(self) -> None:
         self._test_op_upgrade(
-            "RMSNormalization",
+            "SkipRMSNormalization",
             23,
             [[2, 3, 4, 5], [2, 3, 4, 5], [4, 5]],
             [[2, 3, 4, 5]],

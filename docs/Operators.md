@@ -21288,7 +21288,7 @@ X = np.random.randn(2, 3, 5).astype(np.float32)
 def case(axis: int) -> None:
     normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
-    Y = _rms_normalization(X, W, axis, epsilon)
+    Y = _rms_normalization(X, W, axis=axis, epsilon=epsilon)
     node = onnx.helper.make_node(
         "RMSNormalization",
         inputs=["X", "W"],
@@ -21351,7 +21351,7 @@ X = np.random.randn(2, 3, 4, 5).astype(np.float32)
 def case(axis: int) -> None:
     normalized_shape = calculate_normalized_shape(X.shape, axis)
     W = np.random.randn(*normalized_shape).astype(np.float32)
-    Y = _rms_normalization(X, W, axis)
+    Y = _rms_normalization(X, W, axis=axis)
 
     node = onnx.helper.make_node(
         "RMSNormalization",
@@ -30160,7 +30160,7 @@ skip = np.random.randn(4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
-y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 
@@ -30190,7 +30190,7 @@ skip = np.random.randn(3, 4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
-y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 
@@ -30221,7 +30221,7 @@ gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
 epsilon = 1e-2
-y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias, epsilon=epsilon)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias, epsilon=epsilon)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 
@@ -30253,7 +30253,7 @@ gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
 scaling_factor = 3
-y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias, scaling_factor=scaling_factor)
+y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias, scaling_factor=scaling_factor)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 

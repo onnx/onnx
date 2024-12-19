@@ -8,15 +8,7 @@ import numpy as np
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.backend.test.case.node.layernormalization import _layer_normalization
-
-
-# Skip layer normalization's reference implementation
-def _skip_layer_normalization(x, skip, gamma, beta, B, axis=-1, epsilon=1e-5, scaling_factor=1):
-    input_skip_sum = x + (skip * scaling_factor)
-    input_skip_bias_sum = input_skip_sum + B
-    output, _, _ = _layer_normalization(input_skip_bias_sum, gamma, beta, epsilon=epsilon, axis=axis)
-    return output, input_skip_bias_sum
+from onnx.reference.ops.op_skip_layer_normalization import _skip_layer_normalization
 
 
 class SkipLayerNormalization(Base):
@@ -27,7 +19,7 @@ class SkipLayerNormalization(Base):
         gamma = np.random.randn(2).astype(np.float32)
         beta = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
-        y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias)
+        y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias)
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
@@ -51,7 +43,7 @@ class SkipLayerNormalization(Base):
         gamma = np.random.randn(2).astype(np.float32)
         beta = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
-        y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias)
+        y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias)
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
@@ -76,7 +68,7 @@ class SkipLayerNormalization(Base):
         beta = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
         epsilon = 1e-2
-        y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias, epsilon=epsilon)
+        y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias, epsilon=epsilon)
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
@@ -102,7 +94,7 @@ class SkipLayerNormalization(Base):
         beta = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
         scaling_factor = 3
-        y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta, bias, scaling_factor=scaling_factor)
+        y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias, scaling_factor=scaling_factor)
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
