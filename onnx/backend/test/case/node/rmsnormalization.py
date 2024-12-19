@@ -8,32 +8,7 @@ import numpy as np
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-
-
-# RMS normalization's reference implementation
-def _rms_normalization(X, W, axis=-1, epsilon=1e-5):  # type: ignore
-    shape = X.shape
-    rank = len(shape)
-    if axis < 0:
-        # If axis = -1 and rank of X is 4,
-        # the axis is changed to -1 + 4 = 3,
-        # which means the last axis.
-        axis = axis + rank
-
-    # This computes RMS for every x_mat's column.
-    x_squared = np.power(X, 2)
-    x_squared_mean = np.mean(x_squared, axis=tuple(range(axis, len(shape))), keepdims=True)
-    rms = np.sqrt(x_squared_mean)
-    # epsilon adjustment to avoid divide-by-zero.
-    rms_plus_epsilon = rms + epsilon
-    rms_plus_epsilon_sqrt = np.sqrt(rms_plus_epsilon)
-    rms_reciprocal = np.reciprocal(rms_plus_epsilon_sqrt)
-
-    y_mat = X * rms_reciprocal
-    # W is linear coefficient.
-    Y = y_mat * W
-
-    return Y
+from onnx.reference.ops.op_rms_normalization import _rms_normalization
 
 
 def calculate_normalized_shape(x_shape, axis):  # type: ignore
@@ -51,7 +26,7 @@ class RMSNormalization(Base):
         def case(axis: int) -> None:
             normalized_shape = calculate_normalized_shape(X.shape, axis)
             W = np.random.randn(*normalized_shape).astype(np.float32)
-            Y = _rms_normalization(X, W, axis)
+            Y = _rms_normalization(X, W, axis=axis)
 
             node = onnx.helper.make_node(
                 "RMSNormalization",
@@ -130,7 +105,7 @@ class RMSNormalization(Base):
         def case(axis: int) -> None:
             normalized_shape = calculate_normalized_shape(X.shape, axis)
             W = np.random.randn(*normalized_shape).astype(np.float32)
-            Y = _rms_normalization(X, W, axis, epsilon)
+            Y = _rms_normalization(X, W, axis=axis, epsilon=epsilon)
             node = onnx.helper.make_node(
                 "RMSNormalization",
                 inputs=["X", "W"],

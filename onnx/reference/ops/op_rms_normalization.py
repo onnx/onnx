@@ -27,9 +27,9 @@ def _rms_normalization(
     x_squared_mean = np.mean(x_squared, axis=tuple(range(axis, len(shape))), keepdims=True)
     rms = np.sqrt(x_squared_mean)
     # epsilon adjustment to avoid divide-by-zero.
-    rms_plus_epsilon = rms + epsilon
-    rms_plus_epsilon_sqrt = np.sqrt(rms_plus_epsilon)
-    rms_reciprocal = np.reciprocal(rms_plus_epsilon_sqrt)
+    rms = rms + epsilon
+    rms_sqrt = np.sqrt(rms)
+    rms_reciprocal = np.reciprocal(rms_sqrt)
 
     y_mat = X * rms_reciprocal
     # W is linear coefficient.
@@ -45,4 +45,4 @@ class RMSNormalization(OpRun):
                 f"RMSNormalization not implemented for stash_type={stash_type} != 1."
             )
         res = _rms_normalization(X, Scale, axis=axis, epsilon=epsilon)
-        return res
+        return (res,)  # type: ignore

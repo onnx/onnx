@@ -3130,15 +3130,17 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
 
               if (ctx.hasInput(3)) {
-                builder.Add("Y = LayerNormalization (LNInput, gamma, beta)", "axis", axis, "epsilon", epsilon);
+                builder.Add("LNOutput = LayerNormalization (LNInput, gamma, beta)", "axis", axis, "epsilon", epsilon);
               }
               else {
-                builder.Add("Y = LayerNormalization (LNInput, gamma)", "axis", axis, "epsilon", epsilon);
+                builder.Add("LNOutput = LayerNormalization (LNInput, gamma)", "axis", axis, "epsilon", epsilon);
               }
 
+              builder.Add("Y = Identity (LNOutput)");
               if (ctx.hasOutput(1)) {
                 builder.Add("InputSkipBiasSum = Identity (LNInput)");
               }
+
               schema.BuildFunction(functionProto);
               return true;
           }));

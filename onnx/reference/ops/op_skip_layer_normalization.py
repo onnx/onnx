@@ -31,4 +31,4 @@ def _skip_layer_normalization(
 class SkipLayerNormalization(OpRun):
     def _run(self, X, S, Scale, beta=None, B=None, axis=None, epsilon=None, scaling_factor=None):  # type: ignore
         res = _skip_layer_normalization(X, S, Scale, beta, B, axis=axis, epsilon=epsilon, scaling_factor=scaling_factor)
-        return res
+        return res  # type: ignore
