@@ -29146,7 +29146,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>interleaved</tt> : int (default is 0)</dt>
 <dd>Rotate using interleaved pattern. Default value is 0 (False).</dd>
 <dt><tt>num_heads</tt> : int (default is 0)</dt>
-<dd>Number of attention heads. Must use with `rotary_embedding_dim`. </dd>
+<dd>Number of attention heads. Must be provided when input is a 3D tensor. </dd>
 <dt><tt>rotary_embedding_dim</tt> : int (default is 0)</dt>
 <dd>Rotary embedding dimension used to apply partial rotary embeddings.</dd>
 </dl>
