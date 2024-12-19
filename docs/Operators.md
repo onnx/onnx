@@ -27787,11 +27787,11 @@ This version of the operator has been available since version 23 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>interleaved</tt> : int</dt>
+<dt><tt>interleaved</tt> : int (default is 0)</dt>
 <dd>Rotate using interleaved pattern. Default value is 0 (False).</dd>
-<dt><tt>num_heads</tt> : int</dt>
+<dt><tt>num_heads</tt> : int (default is 0)</dt>
 <dd>Number of attention heads. Must use with `rotary_embedding_dim`. </dd>
-<dt><tt>rotary_embedding_dim</tt> : int</dt>
+<dt><tt>rotary_embedding_dim</tt> : int (default is 0)</dt>
 <dd>Rotary embedding dimension used to apply partial rotary embeddings.</dd>
 </dl>
 
@@ -27799,7 +27799,7 @@ This version of the operator has been available since version 23 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input tensor representing the token embeddings. 4D tensor with shape (batch_size, sequence_length, num_heads, head_size) or 3D tensor with shape (batch_size, sequence_length, hidden_size). For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and `hidden_size` has to be even where `hidden_size = num_heads * head_size`</dd>
+<dd>The input tensor representing the token embeddings. 4D tensor with shape (batch_size, sequence_length, num_heads, head_size) or 3D tensor with shape (batch_size, sequence_length, hidden_size). For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and hidden_size must be an even multiple of num_heads where `hidden_size = num_heads * head_size`</dd>
 <dt><tt>cos_cache</tt> : T</dt>
 <dd>The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. `max_sequence_length` is a parameter to the model.</dd>
 <dt><tt>sin_cache</tt> : T</dt>
@@ -27838,11 +27838,11 @@ node = onnx.helper.make_node(
 )
 
 input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
-position_ids_data = np.random.rand(2, 3).astype(np.int64)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(
+expected_output = rotary_embedding(
     input_data, cos_cache_data, sin_cache_data, position_ids=position_ids_data
 )
 
@@ -27870,11 +27870,11 @@ node = onnx.helper.make_node(
 )
 
 input_data = np.random.rand(2, 3, 32).astype(np.float32)
-position_ids_data = np.random.rand(2, 3).astype(np.int64)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(
+expected_output = rotary_embedding(
     input_data,
     cos_cache_data,
     sin_cache_data,
@@ -27905,11 +27905,11 @@ node = onnx.helper.make_node(
 )
 
 input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
-position_ids_data = np.random.rand(2, 3).astype(np.int64)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(
+expected_output = rotary_embedding(
     input_data,
     cos_cache_data,
     sin_cache_data,
@@ -27942,7 +27942,7 @@ input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
 sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(
+expected_output = rotary_embedding(
     input_data, cos_cache_data, sin_cache_data
 )
 
@@ -27951,6 +27951,66 @@ expect(
     inputs=[input_data, cos_cache_data, sin_cache_data],
     outputs=[expected_output],
     name="test_rotary_embedding_no_position_ids",
+)
+```
+
+</details>
+
+
+<details>
+<summary>rotary_embedding_no_position_ids_interleaved</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache"],
+    outputs=["output"],
+    interleaved=1,
+)
+
+input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+
+expected_output = rotary_embedding(
+    input_data, cos_cache_data, sin_cache_data, interleaved=1,
+)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_no_position_ids_interleaved",
+)
+```
+
+</details>
+
+
+<details>
+<summary>rotary_embedding_no_position_ids_rotary_dim</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache"],
+    outputs=["output"],
+    rotary_embedding_dim=4,
+)
+
+input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+
+expected_output = rotary_embedding(
+    input_data, cos_cache_data, sin_cache_data, rotary_embedding_dim=4,
+)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_no_position_ids_rotary_dim",
 )
 ```
 
@@ -27970,11 +28030,11 @@ node = onnx.helper.make_node(
 )
 
 input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
-position_ids_data = np.random.rand(2, 3).astype(np.int64)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(
+expected_output = rotary_embedding(
     input_data,
     cos_cache_data,
     sin_cache_data,
@@ -28006,11 +28066,11 @@ node = onnx.helper.make_node(
 )
 
 input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
-position_ids_data = np.random.rand(2, 3).astype(np.int64)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
 
-expected_output = compute_rotary_embedding(
+expected_output = rotary_embedding(
     input_data,
     cos_cache_data,
     sin_cache_data,

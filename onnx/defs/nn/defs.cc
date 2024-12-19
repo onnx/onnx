@@ -2916,24 +2916,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             "interleaved",
             "Rotate using interleaved pattern. Default value is 0 (False).",
             AttributeProto::INT,
-            OPTIONAL_VALUE)
+            static_cast<int64_t>(0))
         .Attr(
             "rotary_embedding_dim",
             "Rotary embedding dimension used to apply partial rotary embeddings.",
             AttributeProto::INT,
-            OPTIONAL_VALUE)
+            static_cast<int64_t>(0))
         .Attr(
             "num_heads",
             "Number of attention heads. Must use with `rotary_embedding_dim`. ",
             AttributeProto::INT,
-            OPTIONAL_VALUE)
+            static_cast<int64_t>(0))
         .Input(
             0,
             "X",
             "The input tensor representing the token embeddings. "
             "4D tensor with shape (batch_size, sequence_length, num_heads, head_size) or 3D tensor with shape (batch_size, sequence_length, hidden_size). "
             "For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and "
-            "`hidden_size` has to be even where `hidden_size = num_heads * head_size`",
+            "hidden_size must be an even multiple of num_heads where `hidden_size = num_heads * head_size`",
             "T")
         .Input(
             1,
@@ -2966,18 +2966,23 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          // we need at least one input to have a shape for this inference.
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
           auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-          if (input_shape.dim_size() < 3) {
-            return; // Input tensor should have at least three dimensions.
+          if ((input_shape.dim_size() < 3) || (input_shape.dim_size() > 4)) {
+            fail_shape_inference("Input tensor must have at least 3 and at most 4 dimensions");
           }
 
           auto* num_heads_attr = ctx.getAttribute("num_heads");
           if ((input_shape.dim_size() == 3) && (num_heads_attr == nullptr)) {
             fail_shape_inference("Input shape is 3D, num_heads attribute must be provided");
           }
-
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          propagateShapeFromInputToOutput(ctx, 0, 0);
         })
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,

@@ -13,9 +13,9 @@ def rotary_embedding(
     cos_cache: np.ndarray,
     sin_cache: np.ndarray,
     position_ids: np.ndarray | None = None,
-    interleaved: int = 0,
-    rotary_embedding_dim: int = 0,
-    num_heads: int = 0,
+    interleaved=None,
+    rotary_embedding_dim=None,
+    num_heads=None,
 ) -> np.ndarray:
 
     original_input_shape = input.shape
@@ -32,7 +32,7 @@ def rotary_embedding(
     head_size = input.shape[3]
 
     # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
-    if rotary_embedding_dim == 0:
+    if rotary_embedding_dim is None or rotary_embedding_dim == 0:
         # If rotary_embedding_dim not provided, perform full rotation by using head_size
         rotary_embedding_dim = head_size
     x_rotate = input[:, :, :, :rotary_embedding_dim]
@@ -96,14 +96,15 @@ class RotaryEmbedding(OpRun):
         cos_cache: np.ndarray,
         sin_cache: np.ndarray,
         position_ids: np.ndarray | None = None,
-        interleaved: int = 0,
-        rotary_embedding_dim: int = 0,
-        num_heads: int = 0,
+        interleaved=None,
+        rotary_embedding_dim=None,
+        num_heads=None,
     ) -> np.ndarray:
-        return rotary_embedding(
+
+        return (rotary_embedding(
             input, cos_cache, sin_cache,
             position_ids=position_ids,
             interleaved=interleaved,
             rotary_embedding_dim=rotary_embedding_dim,
             num_heads=num_heads,
-        )
+        ),)  # type: ignore
