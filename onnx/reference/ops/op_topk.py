@@ -24,7 +24,7 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
     if largest:
         ind_axis = -ind_axis
     sorted_indices = np.lexsort((ind_axis, X), axis=axis)
-    sorted_values = np.sort(X, axis=axis)
+    sorted_values = np.take_along_axis(X, sorted_indices, axis=axis)
     if largest:
         sorted_indices = np.flip(sorted_indices, axis=axis)
         sorted_values = np.flip(sorted_values, axis=axis)
