@@ -7,6 +7,7 @@
 
 #include <climits>
 #include <limits>
+#include <string>
 #include <tuple>
 #include <unordered_map>
 #include <utility>
@@ -47,9 +48,9 @@ static std::string ProtoBytesToText(const py::bytes& bytes) {
 }
 
 template <typename T, typename Ts = std::remove_const_t<T>>
-static std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> ParseProtoFromBytesMap(
+static std::pair<std::vector<Ts>, std::unordered_map<std::string, T*>> ParseProtoFromBytesMap(
     const std::unordered_map<std::string, py::bytes>& bytesMap) {
-  std::unique_ptr<Ts[]> values(new Ts[bytesMap.size()]);
+  std::vector<Ts> values(bytesMap.size());
   std::unordered_map<std::string, T*> result;
   size_t i = 0;
   for (const auto& kv : bytesMap) {
@@ -57,6 +58,7 @@ static std::pair<std::unique_ptr<Ts[]>, std::unordered_map<std::string, T*>> Par
     result[kv.first] = &values[i];
     i++;
   }
+  // C++ guarantees that the pointers remain valid after std::vector<Ts> is moved.
   return std::make_pair(std::move(values), result);
 }
 
@@ -573,8 +575,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   checker.def(
       "check_model_path",
       (void (*)(
-          const std::string& path, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)) &
-          checker::check_model,
+          const std::string& path,
+          bool full_check,
+          bool skip_opset_compatibility_check,
+          bool check_custom_domain))&checker::check_model,
       "path"_a,
       "full_check"_a = false,
       "skip_opset_compatibility_check"_a = false,
