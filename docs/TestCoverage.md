@@ -23641,7 +23641,10 @@ values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 # [0 1 2]
 
 expect(
-    node, inputs=[X, K], outputs=[values_ref, indices_ref], name="test_top_k_same_values"
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values",
 )
 ```
 
@@ -23658,11 +23661,7 @@ node = onnx.helper.make_node(
     "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
 )
 X = np.array(
-    [
-        [0, 0, 0, 0],
-        [1, 1, 1, 1],
-        [2, 2, 1, 1]
-    ],
+    [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 1, 1]],
     dtype=np.int64,
 )
 K = np.array([k], dtype=np.int64)
@@ -23670,15 +23669,18 @@ values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 
 # print(values_ref)
 # [[0 0 0]
-#  [1 1 1]
-#  [1 1 2]]
+# [1 1 1]
+# [1 1 2]]
 # print(indices_ref)
 # [[0 1 2]
-#  [0 1 2]
-#  [2 3 0]]
+# [0 1 2]
+# [2 3 0]]
 
 expect(
-    node, inputs=[X, K], outputs=[values_ref, indices_ref], name="test_top_k_same_values_2d"
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values_2d",
 )
 ```
 
@@ -23707,7 +23709,10 @@ values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 # [0 1 2]
 
 expect(
-    node, inputs=[X, K], outputs=[values_ref, indices_ref], name="test_top_k_same_values_largest"
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values_largest",
 )
 ```
 
@@ -23791,7 +23796,10 @@ values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 # [3 2 1]]
 
 expect(
-    node, inputs=[X, K], outputs=[values_ref, indices_ref], name="test_top_k_uint64"
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_uint64",
 )
 ```
 
