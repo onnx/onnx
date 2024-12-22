@@ -15,7 +15,7 @@ from onnx._custom_element_types import (
     int4,
     uint4,
 )
-from onnx.helper import np_dtype_to_tensor_dtype
+from onnx.helper import np_dtype_to_tensor_dtype, tensor_dtype_to_np_dtype
 from onnx.numpy_helper import (
     float8e4m3_to_float32,
     float8e5m2_to_float32,
@@ -53,6 +53,7 @@ class _CommonDequantizeLinear(OpRun):
         x_zero_point: np.ndarray | None = None,
         axis: int | None = None,
         block_size: int | None = None,
+        output_dtype: int | None = None,
     ):  # type: ignore
         x_type = self.get_x_type(x)
         fp8_type = x_type in {
@@ -97,7 +98,13 @@ class _CommonDequantizeLinear(OpRun):
             else:
                 dx = x.astype(np.float32)
         y = dx * reshape_input(x_scale, x.shape, axis, block_size)
-        return (y.astype(x_scale.dtype),)
+        return (
+            y.astype(
+                tensor_dtype_to_np_dtype(output_dtype)
+                if output_dtype
+                else x_scale.dtype
+            ),
+        )
 
 
 class DequantizeLinear_19(_CommonDequantizeLinear):
@@ -111,3 +118,9 @@ class DequantizeLinear_21(_CommonDequantizeLinear):
     def _run(self, *args, axis=None, block_size=None):  # type: ignore
         # args: x, y_scale, zero_point
         return super()._run(*args, axis=axis, block_size=block_size)  # type: ignore
+
+
+class DequantizeLinear_23(_CommonDequantizeLinear):
+    def _run(self, *args, axis=None, block_size=None, output_dtype=None):  # type: ignore
+        # args: x, y_scale, zero_point
+        return super()._run(*args, axis=axis, block_size=block_size, output_dtype=output_dtype)  # type: ignore
