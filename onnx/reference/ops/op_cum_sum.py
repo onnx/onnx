@@ -9,12 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class CumSum(OpRun):
-    def _run(self, x, *axis, exclusive=None, reverse=None):  # type: ignore
-        axis = None if not axis else axis[0]  # type: ignore
-        if axis is None:  # type: ignore
-            if reverse or exclusive:
-                raise NotImplementedError("reverse=1 or exclusive=1 not implemented")
-            return np.cumsum(x, dtype=x.dtype)
+    def _run(self, x, axis, exclusive=None, reverse=None):  # type: ignore
         if not isinstance(axis, (np.int32, np.int64)):
             if len(axis.shape) > 1 or (len(axis.shape) > 0 and axis.shape[0] != 1):  # type: ignore
                 raise RuntimeError(
