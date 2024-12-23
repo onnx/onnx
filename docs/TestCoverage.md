@@ -4956,7 +4956,9 @@ node = onnx.helper.make_node(
 x = np.array([1, 2, 3, 4, 5]).astype(np.int32)
 axis = np.int32(0)
 y = np.array([0, 1, 3, 6, 10]).astype(np.int32)
-expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_1d_int32_exclusive")
+expect(
+    node, inputs=[x, axis], outputs=[y], name="test_cumsum_1d_int32_exclusive"
+)
 ```
 
 </details>
