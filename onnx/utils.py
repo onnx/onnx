@@ -83,9 +83,11 @@ class Extractor:
                 if index not in reachable:
                     # add nodes connected to this output to sets
                     reachable.add(index)
-                    for input_name in self.graph.node[index].input:
-                        if input_name != "":
-                            stack.append(input_name)
+                    stack += [
+                        input_name
+                        for input_name in self.graph.node[index].input
+                        if input_name != ""
+                    ]
 
     def _collect_reachable_nodes(
         self,
