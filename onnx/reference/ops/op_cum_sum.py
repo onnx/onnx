@@ -14,7 +14,7 @@ class CumSum(OpRun):
         if axis is None:  # type: ignore
             if reverse or exclusive:
                 raise NotImplementedError("reverse=1 or exclusive=1 not implemented")
-            return (np.cumsum(x),)
+            return np.cumsum(x, dtype=x.dtype)
         if not isinstance(axis, (np.int32, np.int64)):
             if len(axis.shape) > 1 or (len(axis.shape) > 0 and axis.shape[0] != 1):  # type: ignore
                 raise RuntimeError(
@@ -34,7 +34,7 @@ class CumSum(OpRun):
             res = np.zeros(x.shape, dtype=x.dtype)
             np.cumsum(x[tuple(indices_c)], axis=axis, out=res[tuple(indices_d)])  # type: ignore
         else:
-            res = np.cumsum(x, axis=axis)  # type: ignore
+            res = np.cumsum(x, axis=axis, dtype=x.dtype)  # type: ignore
         if reverse:
             res = res[tuple(rev_indices)]
         return (res,)
