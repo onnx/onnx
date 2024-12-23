@@ -39,7 +39,6 @@ class Unique(OpRun):
             )
             counts = counts[argsorted_indices]
 
-        print("-----------------------------------------------", inverse_indices)
         indices, inverse_indices, counts = _specify_int64(
             indices, inverse_indices, counts
         )
