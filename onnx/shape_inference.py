@@ -10,7 +10,7 @@ complete.
 from __future__ import annotations
 
 import os
-from typing import Sequence
+from collections.abc import Sequence
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
