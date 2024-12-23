@@ -21,7 +21,7 @@ from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import parameterized

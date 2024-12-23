@@ -6,7 +6,8 @@ from __future__ import annotations
 
 import itertools
 import unittest
-from typing import Any, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 import numpy as np
 import pytest

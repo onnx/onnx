@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import sys
-from typing import Any, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 import numpy as np
 import numpy.typing as npt

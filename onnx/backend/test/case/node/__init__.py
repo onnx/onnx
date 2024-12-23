@@ -7,7 +7,8 @@ import subprocess
 import sys
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Callable
+from collections.abc import Sequence
 
 import numpy as np
 
