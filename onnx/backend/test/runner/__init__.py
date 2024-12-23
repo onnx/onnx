@@ -213,12 +213,13 @@ class Runner:
                     if ref_outputs[i].tolist() != outputs[i].tolist():
                         raise AssertionError(f"{ref_outputs[i]} != {outputs[i]}")
                     continue
-                np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
                 if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
-                    np.testing.assert_array_equal(outputs[i], ref_outputs[i])
+                    np.testing.assert_array_equal(
+                        outputs[i], ref_outputs[i], strict=True
+                    )
                 else:
                     np.testing.assert_allclose(
-                        outputs[i], ref_outputs[i], rtol=rtol, atol=atol
+                        outputs[i], ref_outputs[i], rtol=rtol, atol=atol, strict=True
                     )
 
     @classmethod
