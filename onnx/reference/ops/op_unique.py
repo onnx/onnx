@@ -43,7 +43,7 @@ class Unique(OpRun):
             indices, inverse_indices, counts
         )
         # numpy 2.0 has a different behavior than numpy 1.x.
-        inverse_indices = inverse_indices.squeeze()
+        inverse_indices = inverse_indices.reshape(-1)
         if len(self.onnx_node.output) == 2:
             return (y, indices)
         if len(self.onnx_node.output) == 3:
