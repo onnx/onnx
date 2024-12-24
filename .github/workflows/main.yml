@@ -147,6 +147,16 @@ jobs:
         run: |
           pip freeze
 
+      - name: Install pytorch
+        if: matrix.os == 'ubuntu-latest' && (matrix.python_version == '3.11')
+        run: |
+          pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+
       - name: Run Python tests
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
