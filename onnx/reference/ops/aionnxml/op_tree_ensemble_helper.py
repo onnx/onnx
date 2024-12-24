@@ -43,7 +43,8 @@ class TreeEnsemble:
 
         self.tree_ids = sorted(set(self.atts.nodes_treeids))  # type: ignore
         self.root_index = {
-            tid: len(self.atts.nodes_treeids) for tid in self.tree_ids  # type: ignore
+            tid: len(self.atts.nodes_treeids)
+            for tid in self.tree_ids  # type: ignore
         }
         for index, tree_id in enumerate(self.atts.nodes_treeids):  # type: ignore
             self.root_index[tree_id] = min(self.root_index[tree_id], index)

@@ -40,7 +40,7 @@ CLIP_SCHEMA = max(
 
 
 def _to_tensor_types(
-    tensor_types: dict[str, tuple[int, tuple[int | str | None, ...]]]
+    tensor_types: dict[str, tuple[int, tuple[int | str | None, ...]]],
 ) -> dict[str, TypeProto]:
     return {key: make_tensor_type_proto(*value) for key, value in tensor_types.items()}
 
@@ -99,7 +99,12 @@ class TestInferenceFunctionCall(unittest.TestCase):
             ),
         ]
         for ins, outs in cases:
-            assert _run_case(ADD_SCHEMA, ["A", "B"], ["C"], _to_tensor_types(ins)) == _to_tensor_types(outs)  # type: ignore
+            assert _run_case(
+                ADD_SCHEMA,
+                ["A", "B"],
+                ["C"],
+                _to_tensor_types(ins),  # type: ignore[arg-type]
+            ) == _to_tensor_types(outs)  # type: ignore[arg-type]
 
     def test_clip_inference_with_optional_input(self) -> None:
         # Test case where the second input is optional
