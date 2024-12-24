@@ -9,7 +9,8 @@ import pathlib
 import tempfile
 import unittest
 import uuid
-from typing import Any, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 import numpy as np
 import parameterized

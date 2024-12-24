@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, ClassVar, Iterable
+from typing import Any, ClassVar
+from collections.abc import Iterable
 
 import numpy as np
 
