@@ -34937,6 +34937,44 @@ This version of the operator has been available since version 11 of the default 
 #### Examples
 
 <details>
+<summary>length_1</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=1,
+)
+
+x = np.array([0], dtype=np.int64)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+indices, inverse_indices, counts = specify_int64(
+    indices, inverse_indices, counts
+)
+# behavior changed with numpy >= 2.0
+inverse_indices = inverse_indices.reshape(-1)
+# print(y)
+# [0]
+# print(indices)
+# [0]
+# print(inverse_indices)
+# [0]
+# print(counts)
+# [1]
+
+expect(
+    node_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_length_1",
+)
+```
+
+</details>
+
+
+<details>
 <summary>not_sorted_without_axis</summary>
 
 ```python
@@ -35005,7 +35043,7 @@ indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
 # behavior changed with numpy >= 2.0
-inverse_indices = inverse_indices.squeeze()
+inverse_indices = inverse_indices.reshape(-1)
 # print(y)
 # [[1. 0. 0.]
 #  [2. 3. 4.]]
@@ -35051,7 +35089,7 @@ indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
 # behavior changed with numpy >= 2.0
-inverse_indices = inverse_indices.squeeze()
+inverse_indices = inverse_indices.reshape(-1)
 # print(y)
 # [[[0. 1.]
 #  [1. 1.]
@@ -35094,7 +35132,7 @@ indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
 # behavior changed with numpy >= 2.0
-inverse_indices = inverse_indices.squeeze()
+inverse_indices = inverse_indices.reshape(-1)
 # print(y)
 # [[0. 1.]
 #  [0. 1.]
