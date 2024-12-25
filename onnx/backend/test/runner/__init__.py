@@ -14,7 +14,9 @@ import tempfile
 import time
 import unittest
 from collections import defaultdict
-from typing import Any, Callable, Iterable, Pattern, Sequence
+from collections.abc import Iterable, Sequence
+from re import Pattern
+from typing import Any, Callable
 from urllib.request import urlretrieve
 
 import numpy as np

@@ -25,8 +25,9 @@ from __future__ import annotations
 
 import sys
 from collections import defaultdict
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Callable, Generator, cast
+from typing import Any, Callable, cast
 
 try:
     import google.protobuf.descriptor_pb2 as d_typed
