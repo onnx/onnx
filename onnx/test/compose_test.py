@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import unittest
-from typing import Callable
 from collections.abc import Sequence
+from typing import Callable
 
 import numpy as np
 

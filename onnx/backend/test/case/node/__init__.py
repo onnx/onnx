@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Callable
-from collections.abc import Sequence
 
 import numpy as np
 

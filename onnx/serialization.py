@@ -11,8 +11,8 @@ __all__ = [
 ]
 
 import typing
-from typing import Any, Optional, Protocol, TypeVar
 from collections.abc import Collection
+from typing import Any, Optional, Protocol, TypeVar
 
 import google.protobuf.json_format
 import google.protobuf.message

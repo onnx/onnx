@@ -16,12 +16,12 @@ import importlib
 import itertools
 import math
 import unittest
+from collections.abc import Sequence
 from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
-from collections.abc import Sequence
 
 import numpy as np
 import parameterized
@@ -85,7 +85,6 @@ ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
 def skip_if_no_re2(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-
         spec = importlib.util.find_spec("re2")
         if spec is None:
             raise unittest.SkipTest("google-re2 not installed")

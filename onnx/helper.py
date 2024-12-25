@@ -7,14 +7,8 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
-from typing import (
-    Any,
-    Callable,
-    TypeVar,
-    Union,
-    cast,
-)
 from collections.abc import KeysView, Sequence
+from typing import Any, Callable, TypeVar, Union, cast
 
 import google.protobuf.message
 import numpy as np

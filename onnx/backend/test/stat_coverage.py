@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 import os
-from typing import IO, Any
 from collections.abc import Sequence
+from typing import IO, Any
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets

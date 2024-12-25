@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from typing import Any, NewType
 from collections.abc import Sequence
+from typing import Any, NewType
 
 import numpy
 
