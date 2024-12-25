@@ -7,7 +7,8 @@ import itertools
 import os
 import platform
 import unittest
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy
 
