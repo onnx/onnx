@@ -6938,6 +6938,24 @@ expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_1d_exclusive")
 
 
 <details>
+<summary>cumsum_1d_int32_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumSum", inputs=["x", "axis"], outputs=["y"], exclusive=1
+)
+x = np.array([1, 2, 3, 4, 5]).astype(np.int32)
+axis = np.int32(0)
+y = np.array([0, 1, 3, 6, 10]).astype(np.int32)
+expect(
+    node, inputs=[x, axis], outputs=[y], name="test_cumsum_1d_int32_exclusive"
+)
+```
+
+</details>
+
+
+<details>
 <summary>cumsum_1d_reverse</summary>
 
 ```python
@@ -7002,6 +7020,24 @@ x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
 axis = np.int32(1)
 y = np.array([1.0, 3.0, 6.0, 4.0, 9.0, 15.0]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_axis_1")
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_2d_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumSum",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.int32).reshape((2, 3))
+axis = np.int32(0)
+y = np.array([1, 2, 3, 5, 7, 9]).astype(np.int32).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_int32")
 ```
 
 </details>
