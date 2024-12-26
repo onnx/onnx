@@ -121,9 +121,9 @@ def infer_node_outputs(
         key: input_types[key].SerializeToString() for key in node.input if key != ""
     }
     # input_types will also be used as outer_scope_value_types so do not filter by node's input here
-    for key in input_types:
+    for key, values in input_types.items():
         if key not in passed_input_types:
-            passed_input_types[key] = input_types[key].SerializeToString()
+            passed_input_types[key] = values.SerializeToString()
     passed_input_data = {
         key: input_data[key].SerializeToString()
         for key in node.input
