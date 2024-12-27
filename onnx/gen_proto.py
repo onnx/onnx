@@ -8,8 +8,8 @@ import glob
 import os
 import re
 import subprocess
+from collections.abc import Iterable
 from textwrap import dedent
-from typing import Iterable
 
 autogen_header = """\
 //
