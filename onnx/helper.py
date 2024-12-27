@@ -14,6 +14,7 @@ from typing import (
     Union,
     cast,
 )
+from collections.abc import KeysView, MutableSequence, Sequence
 
 import google.protobuf.message
 import numpy as np
