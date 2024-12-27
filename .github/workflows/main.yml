@@ -28,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
-        python_version: ['3.13', '3.12', '3.11', '3.10', '3.9', '3.8']
+        python_version: ['3.13', '3.12', '3.11', '3.10', '3.9']
         include:        
           - python_version: '3.13'
             onnx_ml: 1
@@ -55,11 +55,6 @@ jobs:
             debug_build: 0
             documentation: 0
             protobuf_type: 'External'
-          - python_version: '3.8'
-            onnx_ml: 0
-            debug_build: 0
-            documentation: 0
-            protobuf_type: 'Internal'
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -127,8 +122,8 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
-      - name: Build and install ONNX - Windows (setup.py build_ext)
-        if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.8' && matrix.python_version != '3.12'
+      - name: Build and install ONNX - Windows
+        if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.12'
         run: |
           python setup.py build_ext --inplace
           python setup.py install
@@ -138,8 +133,8 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
-      - name: Build and install ONNX - Windows (pip)
-        if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.8' || matrix.python_version == '3.12')
+      - name: Build and install ONNX - Windows
+        if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.12')
         run: |
           pip install -e . -v
         env:
@@ -164,7 +159,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238
+        uses: codecov/codecov-action@015f24e6818733317a2da2edd6290ab26238649a
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 

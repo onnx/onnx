@@ -7,18 +7,8 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    KeysView,
-    List,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-    cast,
-)
+from collections.abc import KeysView, Sequence
+from typing import Any, Callable, TypeVar, Union, cast
 
 import google.protobuf.message
 import numpy as np
@@ -46,9 +36,9 @@ from onnx import (
     subbyte,
 )
 
-VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
-VersionTableType = List[VersionRowType]
-AssignmentBindingType = List[Tuple[str, str]]
+VersionRowType = Union[tuple[str, int, int, int], tuple[str, int, int, int, int]]
+VersionTableType = list[VersionRowType]
+AssignmentBindingType = list[tuple[str, str]]
 
 # This is a copy of the documented version in https://github.com/onnx/onnx/blob/main/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
@@ -80,7 +70,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.17.0", 10, 22, 5, 1),
 ]
 
-VersionMapType = Dict[Tuple[str, int], int]
+VersionMapType = dict[tuple[str, int], int]
 
 
 def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
