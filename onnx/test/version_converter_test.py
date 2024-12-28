@@ -1440,7 +1440,6 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 12
 
     def test_split_with_optional_input(self) -> None:
-
         nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], axis=1)]
         graph = helper.make_graph(
             nodes,
