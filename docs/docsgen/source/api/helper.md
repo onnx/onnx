@@ -137,7 +137,7 @@
 
 ## make function
 
-All functions uses to create an ONNX graph.
+All functions used to create an ONNX graph.
 
 ```{eval-rst}
 .. autofunction:: onnx.helper.make_attribute
