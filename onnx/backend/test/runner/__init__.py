@@ -218,9 +218,7 @@ class Runner:
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
                 np.testing.assert_array_equal(outputs[i].shape, ref_outputs[i].shape)
                 if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
-                    np.testing.assert_array_equal(
-                        outputs[i], ref_outputs[i]
-                    )
+                    np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
                     np.testing.assert_allclose(
                         outputs[i], ref_outputs[i], rtol=rtol, atol=atol
