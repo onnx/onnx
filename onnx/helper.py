@@ -849,15 +849,15 @@ def make_sequence(
 
     attribute: MutableSequence | None = None
     if elem_type == SequenceProto.TENSOR:
-        attribute = sequence.tensor_values
+        attribute = sequence.tensor_values  # type: ignore[assignment]
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values
+        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values
+        attribute = sequence.sequence_values  # type: ignore[assignment]
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values
+        attribute = sequence.map_values  # type: ignore[assignment]
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values
+        attribute = sequence.optional_values  # type: ignore[assignment]
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
