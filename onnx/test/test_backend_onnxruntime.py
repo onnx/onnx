@@ -168,6 +168,7 @@ if ort is not None:
         "|test_cast_FLOAT4E2M1_to_"  # No corresponding Numpy type for Tensor Type.
         "|_to_FLOAT4E2M1"  # No corresponding Numpy type for Tensor Type.
         "|test_maxpool_2d_ceil_output_size_reduce_by_one"  # TODO: remove after https://github.com/microsoft/onnxruntime/pull/18377 in Ort release.
+        "|test_top_k_uint64"
         ")"
     )
 

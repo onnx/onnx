@@ -34100,6 +34100,112 @@ expect(
 
 
 <details>
+<summary>top_k_same_values</summary>
+
+```python
+axis = 0
+largest = 0
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [0, 0, 0, 0],
+    dtype=np.int64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# (Pdb) print(values_ref)
+# [0 0 0]
+# (Pdb) print(indices_ref)
+# [0 1 2]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values",
+)
+```
+
+</details>
+
+
+<details>
+<summary>top_k_same_values_2d</summary>
+
+```python
+axis = 1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 1, 1]],
+    dtype=np.int64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+# [[0 0 0]
+# [1 1 1]
+# [1 1 2]]
+# print(indices_ref)
+# [[0 1 2]
+# [0 1 2]
+# [2 3 0]]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values_2d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>top_k_same_values_largest</summary>
+
+```python
+axis = 0
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [0, 0, 0, 0],
+    dtype=np.int64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+# [0 0 0]
+# print(indices_ref)
+# [0 1 2]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values_largest",
+)
+```
+
+</details>
+
+
+<details>
 <summary>top_k_smallest</summary>
 
 ```python
@@ -34142,6 +34248,48 @@ expect(
     inputs=[X, K],
     outputs=[values_ref, indices_ref],
     name="test_top_k_smallest",
+)
+```
+
+</details>
+
+
+<details>
+<summary>top_k_uint64</summary>
+
+```python
+axis = 1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [
+        [0, 1, 2, 3],
+        [4, 5, 6, 7],
+        [8, 9, 10, 11],
+    ],
+    dtype=np.uint64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+# [[ 3  2  1]
+# [ 7  6  5]
+# [11 10  9]]
+# print(indices_ref)
+# [[3 2 1]
+# [3 2 1]
+# [3 2 1]]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_uint64",
 )
 ```
 
