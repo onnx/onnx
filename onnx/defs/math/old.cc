@@ -2471,7 +2471,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           std::string reduction = getAttribute(ctx, "reduction", "mean");
-          if (reduction.compare("none") == 0) {
+          if (reduction == "none") {
             if (hasInputShape(ctx, 1)) {
               propagateShapeFromInputToOutput(ctx, 1, 0);
             }
@@ -4046,6 +4046,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (rank < 2) {
             fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
           }
+          // NOLINTNEXTLINE(readability-simplify-boolean-expr)
           if (!(-rank <= axis && axis != -1 && axis < rank - 1)) {
             fail_shape_inference(
                 "axis attribute value ",
