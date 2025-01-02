@@ -29145,7 +29145,7 @@ This version of the operator has been available since version 23 of the default 
 <dl>
 <dt><tt>interleaved</tt> : int (default is 0)</dt>
 <dd>Rotate using interleaved pattern. Default value is 0 (False).</dd>
-<dt><tt>num_heads</tt> : int (default is 0)</dt>
+<dt><tt>num_heads</tt> : int</dt>
 <dd>Number of attention heads. Must be provided when input is a 3D tensor. </dd>
 <dt><tt>rotary_embedding_dim</tt> : int (default is 0)</dt>
 <dd>Rotary embedding dimension used to apply partial rotary embeddings.</dd>
@@ -29157,9 +29157,9 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>X</tt> : T</dt>
 <dd>The input tensor representing the token embeddings. 4D tensor with shape (batch_size, sequence_length, num_heads, head_size) or 3D tensor with shape (batch_size, sequence_length, hidden_size). For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and hidden_size must be an even multiple of num_heads where `hidden_size = num_heads * head_size`</dd>
 <dt><tt>cos_cache</tt> : T</dt>
-<dd>The cosine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. `max_sequence_length` is a parameter to the model.</dd>
+<dd>The cosine values for the rotation. 2D tensor with shape (max_position_id_plus_1, head_size / 2) for full rotation or (max_position_id_plus_1, rotary_embedding_dim / 2) for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
 <dt><tt>sin_cache</tt> : T</dt>
-<dd>The sine values for the rotation. 2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. `max_sequence_length` is a parameter to the model.</dd>
+<dd>The sine values for the rotation. 2D tensor with shape (max_position_id_plus_1, head_size / 2) for full rotation or (max_position_id_plus_1, rotary_embedding_dim / 2) for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
 <dt><tt>position_ids</tt> (optional) : M</dt>
 <dd>The position indices for the tokens. 2D tensor with shape (batch_size, sequence_length)</dd>
 </dl>
