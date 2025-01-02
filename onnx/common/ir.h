@@ -10,6 +10,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <functional>
 #include <iostream>
@@ -415,7 +416,7 @@ struct Node : public Attributes<Node> {
   // using an array to allow the same iterator class for forward and reverse node lists
   // This list represents a topological sort
 
-  Node* next_in_graph[2] = {nullptr, nullptr};
+  std::array<Node*, 2> next_in_graph{nullptr, nullptr};
   Node*& next() {
     return next_in_graph[kNextDirection];
   }
