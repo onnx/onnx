@@ -2926,7 +2926,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "num_heads",
             "Number of attention heads. Must be provided when input is a 3D tensor. ",
             AttributeProto::INT,
-            static_cast<int64_t>(0))
+            OPTIONAL_VALUE)
         .Input(
             0,
             "X",
@@ -2939,19 +2939,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "cos_cache",
             "The cosine values for the rotation. "
-            "2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) "
+            "2D tensor with shape (max_position_id_plus_1, head_size / 2) for full rotation or (max_position_id_plus_1, rotary_embedding_dim / 2) "
             "for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) "
             "for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. "
-            "`max_sequence_length` is a parameter to the model.",
+            "`max_position_id_plus_1` is a parameter to the model.",
             "T")
         .Input(
             2,
             "sin_cache",
             "The sine values for the rotation. "
-            "2D tensor with shape (max_sequence_length, head_size / 2) for full rotation or (max_sequence_length, rotary_embedding_dim / 2) "
+            "2D tensor with shape (max_position_id_plus_1, head_size / 2) for full rotation or (max_position_id_plus_1, rotary_embedding_dim / 2) "
             "for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) "
             "for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. "
-            "`max_sequence_length` is a parameter to the model.",
+            "`max_position_id_plus_1` is a parameter to the model.",
             "T")
         .Input(
             3,
@@ -3014,13 +3014,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           // 1. Complete rotation: rotary embedding dimension defaults to head_size, rotary_embedding_dim = cos.shape[3]
           // * 2 or head_size
           // 2. Partial rotation: rotary embedding dimension is provided, rotary_embedding_dim = rotary_embedding_dim
-          builder
-              .Add("HeadSize = Shape <start = 3, end = 4> (XReshaped)") // head_size
-              .Const1D("Two1D", (int64_t)2)
-              .Const1D("RotaryEmbedDimParam", rotary_embedding_dim)
+
+          builder.Add("HeadSize = Shape <start = 3, end = 4> (XReshaped)");
+          if (rotary_embedding_dim > 0) {
+            builder.Const1D("RotaryEmbedDim", rotary_embedding_dim);
+          } else {
+            builder.Add("RotaryEmbedDim = Identity(HeadSize)");
+          }
+          builder.Const1D("Two1D", (int64_t)2)
               .Const1D("Zero1D", (int64_t)0)
-              .Add("RotaryDimCond = Greater(RotaryEmbedDimParam, Zero1D)")
-              .Add("RotaryEmbedDim = Where(RotaryDimCond, RotaryEmbedDimParam, HeadSize)")
               .Add("NoRotateLength = Sub(HeadSize, RotaryEmbedDim)")
               .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
           // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
