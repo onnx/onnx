@@ -995,7 +995,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ("S", TensorProto.FLOAT, ("N", "C", "H", "W")),
                 ("gamma", TensorProto.FLOAT, ("H", "W")),
             ],
-            [make_node("RMSNormalization", ["X", "S", "gamma"], ["y"], axis=2)],
+            [make_node("SkipRMSNormalization", ["X", "S", "gamma"], ["y"], axis=2)],
             [],
         )
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))])  # type: ignore
@@ -1008,7 +1008,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ("gamma", TensorProto.FLOAT, ("H", "W")),
                 ("beta", TensorProto.FLOAT, ("H", "W")),
             ],
-            [make_node("RMSNormalization", ["X", "S", "gamma", "beta"], ["y"], axis=2)],
+            [make_node("SkipLayerNormalization", ["X", "S", "gamma", "beta"], ["y"], axis=2)],
             [],
         )
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))])  # type: ignore
