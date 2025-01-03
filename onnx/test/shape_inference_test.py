@@ -10025,6 +10025,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             ["x"],
             ["y"],
             domain=ONNX_ML_DOMAIN,
+            cats_int64s=[1, 2, 3],
+            cats_strings=["1", "2", "3"],
         )
         graph_int = self._make_graph(
             [("x", TensorProto.INT64, (30, 4, 5))],
@@ -10047,6 +10049,41 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph_str,
             [make_tensor_value_info("y", TensorProto.INT64, (30, 5, 4))],
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 1),
+                make_opsetid(ONNX_DOMAIN, 11),
+            ],
+        )
+
+    @parameterized.expand(
+        [
+            ([1, 2, 3], ["1", "2"]),
+            ([1, 2, 3], None),
+            (None, ["1", "2", "3"]),
+            (None, None),
+        ]
+    )
+    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    def test_category_mapper_fails_if_invalid_attributes(
+        self, cats_int64s, cats_strings
+    ) -> None:
+        cat = make_node(
+            "CategoryMapper",
+            ["x"],
+            ["y"],
+            domain=ONNX_ML_DOMAIN,
+            cats_int64s=cats_int64s,
+            cats_strings=cats_strings,
+        )
+        graph = self._make_graph(
+            [("x", TensorProto.INT64, (30, 4, 5))],
+            [cat],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
             opset_imports=[
                 make_opsetid(ONNX_ML_DOMAIN, 1),
                 make_opsetid(ONNX_DOMAIN, 11),
@@ -10132,42 +10169,26 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(
         [
-            {
-                "nodes_truenodeids": [0] * 6,
-                "leaf_weights": make_tensor(
-                    "leaf_weights", TensorProto.DOUBLE, (9,), [1] * 9
-                ),
-                "nodes_splits": make_tensor(
-                    "nodes_splits", TensorProto.DOUBLE, (5,), [1] * 5
-                ),
-            },
-            {
-                "nodes_truenodeids": [0] * 5,
-                "leaf_weights": make_tensor(
-                    "leaf_weights", TensorProto.FLOAT, (9,), [1] * 9
-                ),
-                "nodes_splits": make_tensor(
-                    "nodes_splits", TensorProto.DOUBLE, (5,), [1] * 5
-                ),
-            },
-            {
-                "nodes_truenodeids": [0] * 5,
-                "leaf_weights": make_tensor(
-                    "leaf_weights", TensorProto.DOUBLE, (18,), [1] * 18
-                ),
-                "nodes_splits": make_tensor(
-                    "nodes_splits", TensorProto.DOUBLE, (5,), [1] * 5
-                ),
-            },
-            {
-                "nodes_truenodeids": [0] * 5,
-                "leaf_weights": make_tensor(
-                    "leaf_weights", TensorProto.DOUBLE, (9,), [1] * 9
-                ),
-                "nodes_splits": make_tensor(
-                    "nodes_splits", TensorProto.FLOAT, (5,), [1] * 5
-                ),
-            },
+            (
+                [0] * 6,
+                make_tensor("leaf_weights", TensorProto.DOUBLE, (9,), [1] * 9),
+                make_tensor("nodes_splits", TensorProto.DOUBLE, (5,), [1] * 5),
+            ),
+            (
+                [0] * 5,
+                make_tensor("leaf_weights", TensorProto.FLOAT, (9,), [1] * 9),
+                make_tensor("nodes_splits", TensorProto.DOUBLE, (5,), [1] * 5),
+            ),
+            (
+                [0] * 5,
+                make_tensor("leaf_weights", TensorProto.DOUBLE, (18,), [1] * 18),
+                make_tensor("nodes_splits", TensorProto.DOUBLE, (5,), [1] * 5),
+            ),
+            (
+                [0] * 5,
+                make_tensor("leaf_weights", TensorProto.DOUBLE, (9,), [1] * 9),
+                make_tensor("nodes_splits", TensorProto.FLOAT, (5,), [1] * 5),
+            ),
         ]
     )
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
@@ -10207,7 +10228,15 @@ class TestShapeInference(TestShapeInferenceHelper):
             [tree],
             [],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 5),
+                make_opsetid(ONNX_DOMAIN, 11),
+            ],
+        )
 
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_tree_ensemble_classifier(self) -> None:
