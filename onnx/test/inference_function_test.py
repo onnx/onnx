@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Copyright (c) ONNX Project Contributors
+from __future__ import annotations
 
 import unittest
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -33,21 +33,25 @@ RESHAPE_SCHEMA = max(
     ),
     key=lambda s: s.since_version,
 )
+CLIP_SCHEMA = max(
+    (s for s in get_all_schemas_with_history() if s.name == "Clip" and s.domain == ""),
+    key=lambda s: s.since_version,
+)
 
 
 def _to_tensor_types(
-    tensor_types: Dict[str, Tuple[int, Tuple[Union[int, str, None], ...]]]
-) -> Dict[str, TypeProto]:
+    tensor_types: dict[str, tuple[int, tuple[int | str | None, ...]]],
+) -> dict[str, TypeProto]:
     return {key: make_tensor_type_proto(*value) for key, value in tensor_types.items()}
 
 
 def _run_case(
     schema: OpSchema,
-    input_names: List[str],
-    output_names: List[str],
-    input_types: Dict[str, TypeProto],
-    input_data: Optional[Dict[str, np.ndarray]] = None,
-) -> Dict[str, TypeProto]:
+    input_names: list[str],
+    output_names: list[str],
+    input_types: dict[str, TypeProto],
+    input_data: dict[str, np.ndarray] | None = None,
+) -> dict[str, TypeProto]:
     if input_data is None:
         input_data = {}
     return infer_node_outputs(
@@ -95,7 +99,25 @@ class TestInferenceFunctionCall(unittest.TestCase):
             ),
         ]
         for ins, outs in cases:
-            assert _run_case(ADD_SCHEMA, ["A", "B"], ["C"], _to_tensor_types(ins)) == _to_tensor_types(outs)  # type: ignore
+            assert _run_case(
+                ADD_SCHEMA,
+                ["A", "B"],
+                ["C"],
+                _to_tensor_types(ins),  # type: ignore[arg-type]
+            ) == _to_tensor_types(outs)  # type: ignore[arg-type]
+
+    def test_clip_inference_with_optional_input(self) -> None:
+        # Test case where the second input is optional
+        input_names = ["X", "", "max"]
+        output_names = ["Y"]
+        input_types = _to_tensor_types(
+            {"X": (TensorProto.FLOAT, (3, 4)), "max": (TensorProto.FLOAT, ())}
+        )
+        expected_output_types = _to_tensor_types({"Y": (TensorProto.FLOAT, (3, 4))})
+        assert (
+            _run_case(CLIP_SCHEMA, input_names, output_names, input_types)
+            == expected_output_types
+        )
 
     def test_add_inference_raises_errors(self) -> None:
         with self.assertRaises(ValidationError):

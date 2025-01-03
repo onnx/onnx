@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -192,7 +193,7 @@ class ReduceSum(Base):
             node,
             inputs=[data, axes],
             outputs=[reduced],
-            name="test_reduce_sum_negative_axes_keepdims_random",
+            name="test_reduce_sum_empty_axes_input_noop",
         )
 
     @staticmethod

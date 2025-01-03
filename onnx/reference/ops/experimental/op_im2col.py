@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 from onnx.reference.ops.experimental._op_run_experimental import OpRunExperimental
 from onnx.reference.ops_optimized.op_conv_optimized import im2col_fast

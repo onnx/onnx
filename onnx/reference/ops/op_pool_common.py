@@ -1,10 +1,11 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import itertools
 import math
-from typing import Sequence, Tuple, Union
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -50,13 +51,13 @@ def get_pad_with_auto_pad(auto_pad: str, pad_shape: Sequence[int]) -> Sequence[i
 
 
 def get_output_shape_explicit_padding(
-    pads: Sequence[int],
+    pads: Sequence[int] | None,
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
-    dilations: Union[Sequence[int], None] = None,
+    dilations: Sequence[int] | None = None,
     ceil_mode: bool = False,
-) -> Tuple[Sequence[int], Sequence[int]]:
+) -> tuple[Sequence[int], Sequence[int]]:
     """Compute output shape according to:
     https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html?highlight=max+pool#torch.nn.MaxPool1d
     Pads are used to calculate output shape. Use output shape in turn to calculate the actual pads
@@ -165,8 +166,8 @@ def pool(
     strides: Sequence[int],
     out_shape: Sequence[int],
     pooling_type: str,
-    pads: Union[Sequence[int], None] = None,
-    dilations: Union[Sequence[int], None] = None,
+    pads: Sequence[int] | None = None,
+    dilations: Sequence[int] | None = None,
     count_include_pad: int = 0,
     p: int = 1,
 ) -> np.ndarray:
@@ -248,7 +249,7 @@ def pool(
             y[shape] = f(window_vals)
         else:
             y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
-    return y
+    return y.astype(padded.dtype)
 
 
 class CommonPool(OpRun):

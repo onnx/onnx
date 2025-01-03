@@ -33,6 +33,9 @@
 .. autofunction:: onnx.numpy_helper.to_array
 ```
 
+As numpy does not support all the types defined in ONNX (float 8 types, blofat16, int4, uint4, float4e2m1),
+these two functions use a custom dtype defined in :mod:`onnx._custom_element_types`.
+
 ## sequence
 
 ```{eval-rst}
@@ -75,6 +78,10 @@
 
 ```{eval-rst}
 .. autofunction:: onnx.numpy_helper.create_random_int
+```
+
+```{eval-rst}
+.. autofunction:: onnx.numpy_helper.unpack_int4
 ```
 
 ## cast

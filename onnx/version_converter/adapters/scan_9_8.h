@@ -20,7 +20,7 @@ namespace version_conversion {
 struct Scan_9_8 final : public Adapter {
   explicit Scan_9_8() : Adapter("Scan", OpSetID(9), OpSetID(8)) {}
 
-  void adapt_scan_9_8(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_scan_9_8(const std::shared_ptr<Graph>&, Node* node) const {
     const std::vector<Value*> inputs(node->inputs().vec());
     const std::vector<Value*> outputs(node->outputs().vec());
 
@@ -28,7 +28,7 @@ struct Scan_9_8 final : public Adapter {
 
     Symbol input_dirs = Symbol("scan_input_directions");
     if (node->hasAttribute(input_dirs)) {
-      const std::vector<int64_t> scan_input_directions(node->is(input_dirs));
+      std::vector<int64_t> scan_input_directions(node->is(input_dirs));
       node->removeAttribute(input_dirs);
       node->is_(Symbol("directions"), std::move(scan_input_directions));
     }

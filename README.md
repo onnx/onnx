@@ -1,21 +1,18 @@
 <!--
 Copyright (c) ONNX Project Contributors
--->
 
-<!--- SPDX-License-Identifier: Apache-2.0 -->
+SPDX-License-Identifier: Apache-2.0
+-->
 
 <p align="center"><img width="40%" src="https://github.com/onnx/onnx/raw/main/docs/onnx-horizontal-color.png" /></p>
 
 [![PyPI - Version](https://img.shields.io/pypi/v/onnx.svg)](https://pypi.org/project/onnx)
-[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Windows-CI?branchName=main&label=Windows)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=5&branchName=main)
-[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/Linux-CI?branchName=main&label=Linux)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=7&branchName=main)
-[![Build Status](https://dev.azure.com/onnx-pipelines/onnx/_apis/build/status/MacOS-CI?branchName=main&label=MacOS)](https://dev.azure.com/onnx-pipelines/onnx/_build/latest?definitionId=6&branchName=main)
+[![CI](https://github.com/onnx/onnx/actions/workflows/main.yml/badge.svg)](https://github.com/onnx/onnx/actions/workflows/main.yml)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3313/badge)](https://bestpractices.coreinfrastructure.org/projects/3313)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/onnx/onnx/badge)](https://api.securityscorecards.dev/projects/github.com/onnx/onnx)
 [![REUSE compliant](https://api.reuse.software/badge/github.com/onnx/onnx)](https://api.reuse.software/info/github.com/onnx/onnx)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
@@ -92,7 +89,7 @@ pip install onnx  # or pip install onnx[reference] for optional reference implem
 
 ## vcpkg packages
 
-onnx is in the maintenance list of [vcpkg](https://github.com/microsoft/vcpkg), you can easily use vcpkg to build and install it.
+ONNX is in the maintenance list of [vcpkg](https://github.com/microsoft/vcpkg), you can easily use vcpkg to build and install it.
 
 ```sh
 git clone https://github.com/microsoft/vcpkg.git
@@ -112,9 +109,9 @@ conda install -c conda-forge onnx
 
 ## Build ONNX from Source
 
-Before building from source uninstall any existing versions of onnx `pip uninstall onnx`.
+Before building from source uninstall any existing versions of ONNX `pip uninstall onnx`.
 
-c++17 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
+C++17 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
 
 If you don't have protobuf installed, ONNX will internally download and build protobuf for ONNX build.
 
@@ -155,7 +152,7 @@ msbuild INSTALL.vcxproj /p:Configuration=Release
 Then it will be built as a static library and installed to <protobuf_install_dir>. Please add the bin directory(which contains protoc.exe) to your PATH.
 
 ```bat
-set PATH=<protobuf_install_dir>/bin;%PATH%
+set CMAKE_PREFIX_PATH=<protobuf_install_dir>;%CMAKE_PREFIX_PATH%
 ```
 
 Please note: if your protobuf_install_dir contains spaces, **do not** add quotation marks around it.
@@ -174,7 +171,7 @@ cd onnx
 git submodule update --init --recursive
 # prefer lite proto
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
+pip install -e . -v
 ```
 
 ### Linux
@@ -234,7 +231,7 @@ cd onnx
 git submodule update --init --recursive
 # Optional: prefer lite proto
 export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
+pip install -e . -v
 ```
 
 ### Mac
@@ -261,7 +258,7 @@ git clone --recursive https://github.com/onnx/onnx.git
 cd onnx
 # Optional: prefer lite proto
 set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-pip install -e .
+pip install -e . -v
 ```
 
 ## Verify Installation
@@ -280,21 +277,21 @@ For full list refer to CMakeLists.txt
 
 ### Environment variables
 
-* `USE_MSVC_STATIC_RUNTIME` should be 1 or 0, not ON or OFF. When set to 1 onnx links statically to runtime library.
+* `USE_MSVC_STATIC_RUNTIME` should be 1 or 0, not ON or OFF. When set to 1 ONNX links statically to runtime library.
 **Default**: `USE_MSVC_STATIC_RUNTIME=0`
 
-* `DEBUG` should be 0 or 1. When set to 1 onnx is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/main/CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
+* `DEBUG` should be 0 or 1. When set to 1 ONNX is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/main/CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 **Default**: `Debug=0`
 
 ### CMake variables
 
 * `ONNX_USE_PROTOBUF_SHARED_LIBS` should be `ON` or `OFF`.
 **Default**: `ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=0`
-`ONNX_USE_PROTOBUF_SHARED_LIBS` determines how onnx links to protobuf libraries.
-  * When set to `ON` - onnx will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/main/cmake/README.md#dlls-vs-static-linking), Protobuf_USE_STATIC_LIBS will be set to `OFF` and `USE_MSVC_STATIC_RUNTIME` must be 0.
-  * When set to `OFF` - onnx will link statically to protobuf, and Protobuf_USE_STATIC_LIBS will be set to `ON` (to force the use of the static libraries) and `USE_MSVC_STATIC_RUNTIME` can be `0` or `1`.
+`ONNX_USE_PROTOBUF_SHARED_LIBS` determines how ONNX links to protobuf libraries.
+  * When set to `ON` - ONNX will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/main/cmake/README.md#dlls-vs-static-linking).
+  * When set to `OFF` - ONNX will link statically to protobuf.
 
-* `ONNX_USE_LITE_PROTO` should be `ON` or `OFF`. When set to `ON` onnx uses lite protobuf instead of full protobuf.
+* `ONNX_USE_LITE_PROTO` should be `ON` or `OFF`. When set to `ON` ONNX uses lite protobuf instead of full protobuf.
 **Default**: `ONNX_USE_LITE_PROTO=OFF`
 
 * `ONNX_WERROR` should be `ON` or `OFF`. When set to `ON` warnings are treated as errors.

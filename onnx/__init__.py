@@ -17,6 +17,7 @@ __all__ = [
     "IR_VERSION_2020_5_8",
     "IR_VERSION_2021_7_30",
     "IR_VERSION_2023_5_5",
+    "IR_VERSION_2024_3_25",
     "EXPERIMENTAL",
     "STABLE",
     # Modules
@@ -95,6 +96,7 @@ from onnx.onnx_pb import (
     IR_VERSION_2020_5_8,
     IR_VERSION_2021_7_30,
     IR_VERSION_2023_5_5,
+    IR_VERSION_2024_3_25,
     ModelProto,
     NodeProto,
     OperatorSetIdProto,
@@ -134,7 +136,9 @@ from onnx import (
 # Supported model formats that can be loaded from and saved to
 # The literals are formats with built-in support. But we also allow users to
 # register their own formats. So we allow str as well.
-_SupportedFormat = Union[Literal["protobuf", "textproto"], str]
+_SupportedFormat = Union[
+    Literal["protobuf", "textproto", "onnxtxt", "json"], str  # noqa: PYI051
+]
 # Default serialization format
 _DEFAULT_FORMAT = "protobuf"
 

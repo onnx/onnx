@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -30,7 +31,9 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
     def make_indices_for_duplicate(idx):  # type: ignore
         final_idx = []
         for i in range(len(idx[0])):
-            final_idx.append(tuple(idx_element[i] for idx_element in idx))
+            final_idx.append(  # noqa: PERF401
+                tuple(idx_element[i] for idx_element in idx)
+            )
         return list(final_idx)
 
     # We use indices and axis parameters to create idx
@@ -56,8 +59,9 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
     if reduction == "none":
         scattered[tuple(idx)] = updates[tuple(updates_idx)]
     else:
-        idx, updates_idx = make_indices_for_duplicate(idx), make_indices_for_duplicate(
-            updates_idx
+        idx, updates_idx = (
+            make_indices_for_duplicate(idx),
+            make_indices_for_duplicate(updates_idx),
         )
         for iter, idx_set in enumerate(idx):  # noqa: A001
             if reduction == "add":

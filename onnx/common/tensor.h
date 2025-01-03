@@ -18,18 +18,17 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/onnx_pb.h"
-#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 
 struct Tensor final {
  private:
-  bool is_segment_;
-  int64_t segment_begin_;
-  int64_t segment_end_;
-  bool has_name_;
+  bool is_segment_{false};
+  int64_t segment_begin_{0};
+  int64_t segment_end_{0};
+  bool has_name_{false};
   std::string name_;
-  int32_t elem_type_;
+  int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
   std::vector<int64_t> sizes_;
 
   std::vector<float> float_data_;
@@ -39,66 +38,10 @@ struct Tensor final {
   std::vector<uint64_t> uint64_data_;
   std::vector<std::string> string_data_;
 
-  bool is_raw_data_;
+  bool is_raw_data_{false};
   std::string raw_data_;
 
  public:
-  Tensor()
-      : is_segment_(false),
-        segment_begin_(0),
-        segment_end_(0),
-        has_name_(false),
-        elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
-        is_raw_data_(false) {}
-
-  Tensor(const Tensor& other)
-      : is_segment_(other.is_segment_),
-        segment_begin_(other.segment_begin_),
-        segment_end_(other.segment_end_),
-        has_name_(other.has_name_),
-        elem_type_(other.elem_type_),
-        sizes_(other.sizes_),
-        float_data_(other.float_data_),
-        double_data_(other.double_data_),
-        int32_data_(other.int32_data_),
-        int64_data_(other.int64_data_),
-        uint64_data_(other.uint64_data_),
-        is_raw_data_(other.is_raw_data_) {
-    // Deep copy. Avoid copy on write when using gcc<5.0
-    string_data_.resize(other.string_data_.size());
-    for (unsigned int i = 0; i < other.string_data_.size(); ++i) {
-      string_data_[i] = std::string(other.string_data_[i].data(), other.string_data_[i].size());
-    }
-    name_ = std::string(other.name_.data(), other.name_.size());
-    raw_data_ = std::string(other.raw_data_.data(), other.raw_data_.size());
-  }
-  Tensor(Tensor&&) = default;
-  ~Tensor() = default;
-
-  friend void swap(Tensor& first, Tensor& second) {
-    using std::swap;
-    swap(first.is_segment_, second.is_segment_);
-    swap(first.segment_begin_, second.segment_begin_);
-    swap(first.segment_end_, second.segment_end_);
-    swap(first.has_name_, second.has_name_);
-    swap(first.name_, second.name_);
-    swap(first.elem_type_, second.elem_type_);
-    swap(first.sizes_, second.sizes_);
-    swap(first.float_data_, second.float_data_);
-    swap(first.double_data_, second.double_data_);
-    swap(first.int32_data_, second.int32_data_);
-    swap(first.int64_data_, second.int64_data_);
-    swap(first.uint64_data_, second.uint64_data_);
-    swap(first.is_raw_data_, second.is_raw_data_);
-    swap(first.string_data_, second.string_data_);
-    swap(first.raw_data_, second.raw_data_);
-  }
-
-  Tensor& operator=(Tensor other) noexcept {
-    swap(*this, other);
-    return *this;
-  }
-
   const std::vector<int64_t>& sizes() const {
     return sizes_;
   }
@@ -242,30 +185,30 @@ inline const std::string* Tensor::data<std::string>() const {
   return string_data_.data();
 }
 
-#define define_data(type, field)                             \
-  template <>                                                \
-  inline type* Tensor::data<type>() {                        \
-    if (is_raw_data_) {                                      \
-      return (type*)const_cast<char*>(&raw_data_.data()[0]); \
-    } else {                                                 \
-      return field.data();                                   \
-    }                                                        \
-  }                                                          \
-                                                             \
-  template <>                                                \
-  inline const type* Tensor::data<type>() const {            \
-    if (is_raw_data_) {                                      \
-      return (const type*)(raw_data_.data());                \
-    } else {                                                 \
-      return field.data();                                   \
-    }                                                        \
+#define define_data(type, field)                              \
+  template <>                                                 \
+  inline type* Tensor::data<type>() {                         \
+    if (is_raw_data_) {                                       \
+      return reinterpret_cast<type*>(raw_data_.data());       \
+    } else {                                                  \
+      return field.data();                                    \
+    }                                                         \
+  }                                                           \
+                                                              \
+  template <>                                                 \
+  inline const type* Tensor::data<type>() const {             \
+    if (is_raw_data_) {                                       \
+      return reinterpret_cast<const type*>(raw_data_.data()); \
+    } else {                                                  \
+      return field.data();                                    \
+    }                                                         \
   }
 
-define_data(float, float_data_);
-define_data(double, double_data_);
-define_data(int32_t, int32_data_);
-define_data(int64_t, int64_data_);
-define_data(uint64_t, uint64_data_);
+define_data(float, float_data_)
+define_data(double, double_data_)
+define_data(int32_t, int32_data_)
+define_data(int64_t, int64_data_)
+define_data(uint64_t, uint64_data_)
 #undef define_data
 
 } // namespace ONNX_NAMESPACE

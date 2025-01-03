@@ -10,11 +10,8 @@
 #include <unordered_set>
 #include <utility>
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/onnx-data_pb.h"
-#include "onnx/onnx-operators_pb.h"
-#include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
@@ -84,20 +81,30 @@ class CheckerContext final {
     skip_opset_compatibility_check_ = value;
   }
 
-  explicit CheckerContext() : ir_version_(-1) {}
+  bool check_custom_domain() const {
+    return check_custom_domain_;
+  }
+
+  void set_check_custom_domain(bool value) {
+    check_custom_domain_ = value;
+  }
+
+  explicit CheckerContext() = default;
 
  private:
-  int ir_version_;
+  int ir_version_{-1};
   std::unordered_map<std::string, int> opset_imports_;
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
   std::string model_dir_;
   bool skip_opset_compatibility_check_ = false;
+  bool check_custom_domain_ = false;
 };
 
 class LexicalScopeContext final {
  public:
   LexicalScopeContext() = default;
+  ~LexicalScopeContext() = default;
 
   // Construct an instance with the lexical scope from the parent graph to allow
   // lookup of names from that scope via this_or_ancestor_graph_has.
@@ -107,16 +114,21 @@ class LexicalScopeContext final {
   // values from the parent scope so the values are copied instead.
   LexicalScopeContext(const LexicalScopeContext& parent_context) : parent_context_{&parent_context} {}
   LexicalScopeContext& operator=(const LexicalScopeContext& parent_context) {
+    if (this == &parent_context) {
+      return *this;
+    }
     parent_context_ = &parent_context;
     return *this;
   }
+  LexicalScopeContext(LexicalScopeContext&&) = delete;
+  LexicalScopeContext& operator=(LexicalScopeContext&&) = delete;
 
   void add(const std::string& name) {
     output_names.insert(name);
   }
 
   bool this_graph_has(const std::string& name) const {
-    return output_names.find(name) != output_names.cend();
+    return output_names.count(name) > 0;
   }
 
   bool this_or_ancestor_graph_has(const std::string& name) const {
@@ -158,9 +170,20 @@ void check_model_local_functions(
     const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex);
 
-void check_model(const ModelProto& model, bool full_check = false, bool skip_opset_compatibility_check = false);
-void check_model(const std::string& model_path, bool full_check = false, bool skip_opset_compatibility_check = false);
-
+void check_model(
+    const ModelProto& model,
+    bool full_check = false,
+    bool skip_opset_compatibility_check = false,
+    bool check_custom_domain = false);
+void check_model(
+    const std::string& model_path,
+    bool full_check = false,
+    bool skip_opset_compatibility_check = false,
+    bool check_custom_domain = false);
+std::string resolve_external_data_location(
+    const std::string& base_dir,
+    const std::string& location,
+    const std::string& tensor_name);
 bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace checker

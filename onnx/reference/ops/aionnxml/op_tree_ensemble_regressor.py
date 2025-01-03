@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -80,14 +80,16 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
                 for its in t_index:
                     for it in its:
                         res[i, target_ids[it]] = min(
-                            res[i, target_ids[it]], tr.atts.target_weights[it]  # type: ignore
+                            res[i, target_ids[it]],
+                            tr.atts.target_weights[it],  # type: ignore
                         )
             elif aggregate_function == "MAX":
                 res[i, :] = np.finfo(res.dtype).min
                 for its in t_index:
                     for it in its:
                         res[i, target_ids[it]] = max(
-                            res[i, target_ids[it]], tr.atts.target_weights[it]  # type: ignore
+                            res[i, target_ids[it]],
+                            tr.atts.target_weights[it],  # type: ignore
                         )
             else:
                 raise NotImplementedError(

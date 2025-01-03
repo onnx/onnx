@@ -4,17 +4,20 @@
 """Implements function make_large_model to easily create and save models
 bigger than 2 Gb.
 """
+
 from __future__ import annotations
 
 import os
 import sys
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import numpy as np
 
 import onnx
 import onnx.external_data_helper as ext_data
 import onnx.helper
+import onnx.onnx_cpp2py_export.checker as c_checker
 
 
 def _set_external_data(
@@ -130,8 +133,8 @@ class ModelContainer:
             if not ext_data.uses_external_data(tensor):
                 continue
             prop: onnx.StringStringEntryProto | None = None
-            for ext in tensor.external_data:  # type: ignore[assignment]
-                if ext.key == "location":  # type: ignore[attr-defined]
+            for ext in tensor.external_data:
+                if ext.key == "location":
                     prop = ext
             if prop is None:
                 raise RuntimeError(
@@ -194,9 +197,9 @@ class ModelContainer:
             if not ext_data.uses_external_data(tensor):
                 continue
             prop: onnx.StringStringEntryProto | None = None
-            for ext in tensor.external_data:  # type: ignore[assignment]
-                if ext.key == "location":  # type: ignore[attr-defined]
-                    prop = ext  # type: ignore[assignment]
+            for ext in tensor.external_data:
+                if ext.key == "location":
+                    prop = ext
             if prop is None:
                 raise RuntimeError(
                     f"No location found for tensor name {tensor.name!r}."
@@ -288,8 +291,9 @@ class ModelContainer:
                 continue
 
             info = ext_data.ExternalDataInfo(tensor)
-            file_location = ext_data._sanitize_path(info.location)
-            external_data_file_path = os.path.join(base_dir, file_location)
+            external_data_file_path = c_checker._resolve_external_data_location(  # type: ignore[attr-defined]
+                base_dir, info.location, tensor.name
+            )
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
 

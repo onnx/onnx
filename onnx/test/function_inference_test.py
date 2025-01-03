@@ -1,8 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 import unittest
-from typing import Sequence
+from collections.abc import Sequence
 
 from shape_inference_test import TestShapeInferenceHelper
 

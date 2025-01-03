@@ -2,7 +2,7 @@
 
 # SPDX-License-Identifier: Apache-2.0
 # type: ignore
-
+from __future__ import annotations
 
 import itertools
 import unittest
@@ -52,10 +52,9 @@ def has_onnxruntime():
         import onnxruntime
 
         del onnxruntime
-
-        return True
     except ImportError:
         return False
+    return True
 
 
 def skip_if_no_onnxruntime(fn):

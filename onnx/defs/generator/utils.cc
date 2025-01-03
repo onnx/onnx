@@ -45,7 +45,7 @@ void ConstantOpInference(InferenceContext& ctx) {
   if (nullptr != value_int) {
     // OpSchema::Verify check ensures that the attribute value has_i():
     if (!value_int->has_i()) {
-      fail_shape_inference("Attribute 'value_int' expect an integer.")
+      fail_shape_inference("Attribute 'value_int' expect an integer.");
     }
     updateOutputElemType(ctx, 0, TensorProto::INT64);
     updateOutputShape(ctx, 0, TensorShapeProto());

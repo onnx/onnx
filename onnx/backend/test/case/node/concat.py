@@ -1,8 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Dict, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 
@@ -14,7 +16,7 @@ from onnx.backend.test.case.node import expect
 class Concat(Base):
     @staticmethod
     def export() -> None:
-        test_cases: Dict[str, Sequence[Any]] = {
+        test_cases: dict[str, Sequence[Any]] = {
             "1d": ([1, 2], [3, 4]),
             "2d": ([[1, 2], [3, 4]], [[5, 6], [7, 8]]),
             "3d": (

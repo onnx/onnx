@@ -4,6 +4,10 @@
 from __future__ import annotations
 
 import os
+import tarfile
+from collections import deque
+
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
 import onnx.checker
 import onnx.helper
@@ -13,102 +17,111 @@ from onnx import FunctionProto, ModelProto, NodeProto, TensorProto, ValueInfoPro
 
 class Extractor:
     def __init__(self, model: ModelProto) -> None:
-        self.model = onnx.shape_inference.infer_shapes(model)
+        self.model = model
         self.graph = self.model.graph
         self.wmap = self._build_name2obj_dict(self.graph.initializer)
         self.vimap = self._build_name2obj_dict(self.graph.value_info)
+        self.outmap = self._build_output_dict(self.graph)
 
     @staticmethod
-    def _build_name2obj_dict(objs):  # type: ignore
+    def _build_name2obj_dict(objs) -> dict:
         return {obj.name: obj for obj in objs}
 
-    def _collect_new_io_core(self, original_io, io_names_to_extract):  # type: ignore
+    @staticmethod
+    def _build_output_dict(graph) -> dict[str, int]:
+        output_to_index: dict[str, int] = {}
+        for index, node in enumerate(graph.node):
+            for output_name in node.output:
+                if output_name == "":
+                    continue
+                assert output_name not in output_to_index  # output_name is unique
+                output_to_index[output_name] = index
+        return output_to_index
+
+    def _collect_new_io_core(
+        self,
+        original_io: RepeatedCompositeFieldContainer[ValueInfoProto],
+        io_names_to_extract: list[str],
+    ) -> list[ValueInfoProto]:
         original_io_map = self._build_name2obj_dict(original_io)
-        original_io_names = set(original_io_map)
-        s_io_names_to_extract = set(io_names_to_extract)
-        io_names_to_keep = s_io_names_to_extract & original_io_names
-        new_io_names_to_add = s_io_names_to_extract - original_io_names
-
         new_io_tensors = []
-        for name in io_names_to_keep:
-            new_io_tensors.append(original_io_map[name])
-        for name in new_io_names_to_add:
-            # activation become input or output
-            new_io_tensors.append(self.vimap[name])
-
-        # adjust sequence
-        new_io_tensors_map = self._build_name2obj_dict(new_io_tensors)
-        return [new_io_tensors_map[name] for name in io_names_to_extract]
+        for io_name_to_extract in io_names_to_extract:
+            if io_name_to_extract in original_io_map:
+                new_io_tensors.append(original_io_map[io_name_to_extract])
+            else:
+                new_io_tensors.append(self.vimap[io_name_to_extract])
+        return new_io_tensors  # same order as io_names_to_extract
 
     def _collect_new_inputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.input, names)  # type: ignore
+        return self._collect_new_io_core(self.graph.input, names)
 
     def _collect_new_outputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.output, names)  # type: ignore
+        return self._collect_new_io_core(self.graph.output, names)
 
     def _dfs_search_reachable_nodes(
         self,
         node_output_name: str,
-        graph_input_names: list[str],
-        reachable_nodes: list[NodeProto],
+        graph_input_names: set[str],
+        reachable: set[int],
     ) -> None:
-        if node_output_name in graph_input_names:
-            return
-        for node in self.graph.node:
-            # check output_name first to reduce run time
-            if node_output_name not in node.output:
+        """Helper function to find nodes which are connected to an output
+
+        Arguments:
+            node_output_name (str): The name of the output
+            graph_input_names (set of string): The names of all inputs of the graph
+            reachable (set of int): The set of indexes to reachable nodes in `nodes`
+        """
+        stack = [node_output_name]
+        while stack:
+            current_output_name = stack.pop()
+            # finish search at inputs
+            if current_output_name in graph_input_names:
                 continue
-            if node in reachable_nodes:
-                continue
-            reachable_nodes.append(node)
-            for name in node.input:
-                self._dfs_search_reachable_nodes(
-                    name, graph_input_names, reachable_nodes
-                )
+            # find nodes connected to this output
+            if current_output_name in self.outmap:
+                index = self.outmap[current_output_name]
+                if index not in reachable:
+                    # add nodes connected to this output to sets
+                    reachable.add(index)
+                    stack += [
+                        input_name
+                        for input_name in self.graph.node[index].input
+                        if input_name != ""
+                    ]
 
     def _collect_reachable_nodes(
         self,
         input_names: list[str],
         output_names: list[str],
     ) -> list[NodeProto]:
-        reachable_nodes = []  # type: ignore[var-annotated]
+        _input_names = set(input_names)
+        reachable: set[int] = set()
         for name in output_names:
-            self._dfs_search_reachable_nodes(name, input_names, reachable_nodes)
-        # needs to be topology sorted.
-        nodes = [n for n in self.graph.node if n in reachable_nodes]
-        return nodes
+            self._dfs_search_reachable_nodes(name, _input_names, reachable)
+        # needs to be topologically sorted
+        return [self.graph.node[index] for index in sorted(reachable)]
 
     def _collect_referred_local_functions(
         self,
-        nodes,  # type: list[NodeProto]
-    ):  # type: (...) -> list[FunctionProto]
+        nodes: list[NodeProto],
+    ) -> list[FunctionProto]:
         # a node in a model graph may refer a function.
         # a function contains nodes, some of which may in turn refer a function.
         # we need to find functions referred by graph nodes and
         # by nodes used to define functions.
-        def find_referred_funcs(nodes, referred_local_functions):  # type: ignore
-            new_nodes = []  # type: list[NodeProto]
-            for node in nodes:
-                # check if the node is a function op
-                match_function = next(
-                    (
-                        f
-                        for f in self.model.functions
-                        if f.name == node.op_type and f.domain == node.domain
-                    ),
-                    None,
-                )
-                if match_function and match_function not in referred_local_functions:
-                    referred_local_functions.append(match_function)
-                    new_nodes.extend(match_function.node)
-
-            return new_nodes
-
-        referred_local_functions = []  # type: list[FunctionProto]
-        new_nodes = find_referred_funcs(nodes, referred_local_functions)
-        while new_nodes:
-            new_nodes = find_referred_funcs(new_nodes, referred_local_functions)
-
+        function_map: dict[tuple[str, str], FunctionProto] = {}
+        for function in self.model.functions:
+            function_map[(function.name, function.domain)] = function
+        referred_local_functions: list[FunctionProto] = []
+        queue = deque(nodes)
+        while queue:
+            node = queue.popleft()
+            # check if the node is a function op
+            if (node.op_type, node.domain) in function_map:
+                function = function_map.pop((node.op_type, node.domain))
+                referred_local_functions.append(function)
+                queue.extend(function.node)
+        # needs to be topologically sorted
         return referred_local_functions
 
     def _collect_reachable_tensors(
@@ -116,11 +129,9 @@ class Extractor:
         nodes: list[NodeProto],
     ) -> tuple[list[TensorProto], list[ValueInfoProto]]:
         all_tensors_names: set[str] = set()
-
         for node in nodes:
             all_tensors_names.update(node.input)
             all_tensors_names.update(node.output)
-
         initializer = [self.wmap[t] for t in self.wmap if t in all_tensors_names]
         value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_names]
         len_sparse_initializer = len(self.graph.sparse_initializer)
@@ -148,7 +159,6 @@ class Extractor:
         graph = onnx.helper.make_graph(
             nodes, name, inputs, outputs, initializer=initializer, value_info=value_info
         )
-
         meta = {
             "ir_version": self.model.ir_version,
             "opset_imports": self.model.opset_import,
@@ -170,7 +180,6 @@ class Extractor:
         model = self._make_model(
             nodes, inputs, outputs, initializer, value_info, local_functions
         )
-
         return model
 
 
@@ -180,6 +189,7 @@ def extract_model(
     input_names: list[str],
     output_names: list[str],
     check_model: bool = True,
+    infer_shapes: bool = True,
 ) -> None:
     """Extracts sub-model from an ONNX model.
 
@@ -189,26 +199,114 @@ def extract_model(
     which is defined by the input and output tensors, should not _cut through_ the
     subgraph that is connected to the _main graph_ as attributes of these operators.
 
+    Note: When the extracted model size is larger than 2GB, the extra data will be saved in "output_path.data".
+
     Arguments:
         input_path (str | os.PathLike): The path to original ONNX model.
         output_path (str | os.PathLike): The path to save the extracted ONNX model.
         input_names (list of string): The names of the input tensors that to be extracted.
         output_names (list of string): The names of the output tensors that to be extracted.
-        check_model (bool): Whether to run model checker on the extracted model.
+        check_model (bool): Whether to run model checker on the original model and the extracted model.
+        infer_shapes (bool): Whether to infer the shapes of the original model.
     """
     if not os.path.exists(input_path):
         raise ValueError(f"Invalid input model path: {input_path}")
     if not output_path:
         raise ValueError("Output model path shall not be empty!")
+    if not input_names:
+        raise ValueError("Input tensor names shall not be empty!")
     if not output_names:
         raise ValueError("Output tensor names shall not be empty!")
 
-    onnx.checker.check_model(input_path)
-    model = onnx.load(input_path)
+    if len(input_names) != len(set(input_names)):
+        raise ValueError("Duplicate names found in the input tensor names.")
+    if len(output_names) != len(set(output_names)):
+        raise ValueError("Duplicate names found in the output tensor names.")
+
+    if check_model:
+        onnx.checker.check_model(input_path)
+
+    if infer_shapes and os.path.getsize(input_path) > onnx.checker.MAXIMUM_PROTOBUF:
+        onnx.shape_inference.infer_shapes_path(input_path, output_path)
+        model = onnx.load(output_path)
+    elif infer_shapes:
+        model = onnx.load(input_path, load_external_data=False)
+        model = onnx.shape_inference.infer_shapes(model)
+        base_dir = os.path.dirname(input_path)
+        onnx.load_external_data_for_model(model, base_dir)
+    else:
+        model = onnx.load(input_path)
 
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)
 
-    onnx.save(extracted, output_path)
+    if extracted.ByteSize() > onnx.checker.MAXIMUM_PROTOBUF:
+        location = os.path.basename(output_path) + ".data"
+        onnx.save(extracted, output_path, save_as_external_data=True, location=location)
+    else:
+        onnx.save(extracted, output_path)
+
     if check_model:
         onnx.checker.check_model(output_path)
+
+
+def _tar_members_filter(
+    tar: tarfile.TarFile, base: str | os.PathLike
+) -> list[tarfile.TarInfo]:
+    """Check that the content of ``tar`` will be extracted safely
+
+    Args:
+        tar: The tarball file
+        base: The directory where the tarball will be extracted
+
+    Returns:
+        list of tarball members
+    """
+    result = []
+    for member in tar:
+        member_path = os.path.join(base, member.name)
+        abs_base = os.path.abspath(base)
+        abs_member = os.path.abspath(member_path)
+        if not abs_member.startswith(abs_base):
+            raise RuntimeError(
+                f"The tarball member {member_path} in downloading model contains "
+                f"directory traversal sequence which may contain harmful payload."
+            )
+        if member.issym() or member.islnk():
+            raise RuntimeError(
+                f"The tarball member {member_path} in downloading model contains "
+                f"symbolic links which may contain harmful payload."
+            )
+        result.append(member)
+    return result
+
+
+def _extract_model_safe(
+    model_tar_path: str | os.PathLike, local_model_with_data_dir_path: str | os.PathLike
+) -> None:
+    """Safely extracts a tar file to a specified directory.
+
+    This function ensures that the extraction process mitigates against
+    directory traversal vulnerabilities by validating or sanitizing paths
+    within the tar file. It also provides compatibility for different versions
+    of the tarfile module by checking for the availability of certain attributes
+    or methods before invoking them.
+
+    Args:
+        model_tar_path: The path to the tar file to be extracted.
+        local_model_with_data_dir_path: The directory path where the tar file
+      contents will be extracted to.
+    """
+    with tarfile.open(model_tar_path) as model_with_data_zipped:
+        # Mitigate tarball directory traversal risks
+        if hasattr(tarfile, "data_filter"):
+            model_with_data_zipped.extractall(
+                path=local_model_with_data_dir_path, filter="data"
+            )
+        else:
+            model_with_data_zipped.extractall(
+                path=local_model_with_data_dir_path,
+                members=_tar_members_filter(
+                    model_with_data_zipped, local_model_with_data_dir_path
+                ),
+            )

@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -16,10 +16,12 @@ class Scan(OpRun):
                 f"Parameter 'body' must have a method 'run', type {type(self.body)}."  # type: ignore
             )
         self.input_directions_ = [
-            0
-            if self.scan_input_directions is None  # type: ignore
-            or i >= len(self.scan_input_directions)  # type: ignore
-            else self.scan_input_directions[i]  # type: ignore
+            (
+                0
+                if self.scan_input_directions is None  # type: ignore
+                or i >= len(self.scan_input_directions)  # type: ignore
+                else self.scan_input_directions[i]
+            )  # type: ignore
             for i in range(self.num_scan_inputs)  # type: ignore
         ]
         max_dir_in = max(self.input_directions_)
@@ -28,9 +30,11 @@ class Scan(OpRun):
                 "Scan is not implemented for other output input_direction than 0."
             )
         self.input_axes_ = [
-            0
-            if self.scan_input_axes is None or i >= len(self.scan_input_axes)  # type: ignore
-            else self.scan_input_axes[i]  # type: ignore
+            (
+                0
+                if self.scan_input_axes is None or i >= len(self.scan_input_axes)  # type: ignore
+                else self.scan_input_axes[i]
+            )  # type: ignore
             for i in range(self.num_scan_inputs)  # type: ignore
         ]
         max_axe_in = max(self.input_axes_)
@@ -44,10 +48,12 @@ class Scan(OpRun):
         num_scan_outputs = len(args) - num_loop_state_vars
 
         output_directions = [
-            0
-            if self.scan_output_directions is None  # type: ignore
-            or i >= len(self.scan_output_directions)  # type: ignore
-            else self.scan_output_directions[i]  # type: ignore
+            (
+                0
+                if self.scan_output_directions is None  # type: ignore
+                or i >= len(self.scan_output_directions)  # type: ignore
+                else self.scan_output_directions[i]
+            )  # type: ignore
             for i in range(num_scan_outputs)
         ]
         max_dir_out = max(output_directions)
@@ -56,9 +62,11 @@ class Scan(OpRun):
                 "Scan is not implemented for other output output_direction than 0."
             )
         output_axes = [
-            0
-            if self.scan_output_axes is None or i >= len(self.scan_output_axes)  # type: ignore
-            else self.scan_output_axes[i]  # type: ignore
+            (
+                0
+                if self.scan_output_axes is None or i >= len(self.scan_output_axes)  # type: ignore
+                else self.scan_output_axes[i]
+            )  # type: ignore
             for i in range(num_scan_outputs)
         ]
         max_axe_out = max(output_axes)
@@ -91,13 +99,13 @@ class Scan(OpRun):
     def _run(  # type:ignore
         self,
         *args,
-        body=None,
-        num_scan_inputs=None,
-        scan_input_axes=None,
-        scan_input_directions=None,
-        scan_output_axes=None,
-        scan_output_directions=None,
-        attributes=None,
+        body=None,  # noqa: ARG002
+        num_scan_inputs=None,  # noqa: ARG002
+        scan_input_axes=None,  # noqa: ARG002
+        scan_input_directions=None,  # noqa: ARG002
+        scan_output_axes=None,  # noqa: ARG002
+        scan_output_directions=None,  # noqa: ARG002
+        attributes=None,  # noqa: ARG002
     ):
         # TODO: support overridden attributes.
         (
@@ -119,11 +127,10 @@ class Scan(OpRun):
         results = [[] for _ in scan_names_out]  # type: ignore
 
         for it in range(max_iter):
-            inputs = {}
-            for name, value in zip(state_names_in, states):
-                inputs[name] = value
-            for name, value in zip(scan_names_in, scan_values):
-                inputs[name] = value[it]
+            inputs = dict(zip(state_names_in, states))
+            inputs.update(
+                {name: value[it] for name, value in zip(scan_names_in, scan_values)}
+            )
 
             try:
                 outputs_list = self._run_body(inputs)  # type: ignore

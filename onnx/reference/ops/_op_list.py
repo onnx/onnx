@@ -10,10 +10,11 @@ with `_`, it means the implementation is valid for every opset.
 The operator may have been updated to support more types but that
 did not change the implementation.
 """
+
+from __future__ import annotations
+
 import textwrap
-from typing import Any, Dict, List
-from typing import Optional as TOptional
-from typing import Union
+from typing import Any
 
 from onnx import FunctionProto, NodeProto, TypeProto
 from onnx.defs import get_schema, onnx_opset_version
@@ -23,7 +24,6 @@ from onnx.reference.op_run import (
     OpRun,
     RuntimeContextError,
     RuntimeImplementationError,
-    _split_class_name,
 )
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
 from onnx.reference.ops.op_abs import Abs
@@ -240,18 +240,19 @@ from onnx.reference.ops.op_where import Where
 from onnx.reference.ops.op_xor import Xor
 
 
-def _build_registered_operators() -> Dict[str, Dict[Union[int, None], OpRun]]:
+def _build_registered_operators() -> dict[str, dict[int | None, type[OpRun]]]:
     return build_registered_operators_any_domain(globals().copy())
 
 
 def load_op(
     domain: str,
     op_type: str,
-    version: Union[None, int] = None,
+    version: None | int = None,
     custom: Any = None,
-    node: Union[None, NodeProto] = None,
-    input_types: Union[None, List[TypeProto]] = None,
+    node: None | NodeProto = None,
+    input_types: None | list[TypeProto] = None,
     expand: bool = False,
+    evaluator_cls: type | None = None,
 ) -> Any:
     """Loads the implemented for a specified operator.
 
@@ -266,6 +267,7 @@ def load_op(
             operator defines a function which is context dependant
         expand: use the function implemented in the schema instead of
             its reference implementation
+        evaluator_cls: evaluator to use
 
     Returns:
         class
@@ -274,6 +276,7 @@ def load_op(
     schema = None
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]
+    assert _registered_operators is not None
     if custom is not None:
         return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
     if version is None:
@@ -283,7 +286,7 @@ def load_op(
     if op_type in _registered_operators and not expand:  # type: ignore
         found = True
     else:
-        # maybe the operator can be replacted by a function
+        # maybe the operator can be replaced by a function
         try:
             schema = get_schema(op_type, version, domain)  # type: ignore
         except SchemaError:
@@ -292,10 +295,11 @@ def load_op(
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             ) from None
         if schema.has_function:  # type: ignore
-            from onnx.reference import ReferenceEvaluator
-
             body = schema.function_body  # type: ignore
-            sess = ReferenceEvaluator(body)
+            assert (
+                evaluator_cls is not None
+            ), f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
+            sess = evaluator_cls(body)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         if schema.has_context_dependent_function:  # type: ignore
             if node is None or input_types is None:
@@ -304,14 +308,15 @@ def load_op(
                     f"and domain {domain!r}, the operator has a context dependent function. "
                     f"but argument node or input_types is not defined (input_types={input_types})."
                 )
-            from onnx.reference import ReferenceEvaluator
-
             body = schema.get_context_dependent_function(  # type: ignore
                 node.SerializeToString(), [it.SerializeToString() for it in input_types]
             )
             proto = FunctionProto()
             proto.ParseFromString(body)
-            sess = ReferenceEvaluator(proto)
+            assert (
+                evaluator_cls is not None
+            ), f"evaluator_cls must be specified to evaluate function {proto.name!r}"
+            sess = evaluator_cls(proto)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         found = False
     if not found:
@@ -327,7 +332,7 @@ def load_op(
             f"You may either add one or skip the test in "
             f"'reference_evaluator_bakcend_test.py'. Available implementations:\n{available}"
         )
-    impl = _registered_operators[op_type]  # type: ignore
+    impl = _registered_operators[op_type]
     if None not in impl:
         raise RuntimeError(
             f"No default implementation for operator {op_type!r} "
@@ -359,4 +364,4 @@ def load_op(
     return cl
 
 
-_registered_operators: TOptional[Dict[str, Dict[Union[int, None], OpRun]]] = None
+_registered_operators: dict[str, dict[int | None, OpRun]] | None = None

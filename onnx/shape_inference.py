@@ -10,7 +10,7 @@ complete.
 from __future__ import annotations
 
 import os
-from typing import Sequence
+from collections.abc import Sequence
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
@@ -105,7 +105,7 @@ def infer_node_outputs(
     opset_imports: list[onnx.OperatorSetIdProto] | None = None,
     ir_version: int = onnx.IR_VERSION,
 ) -> dict[str, onnx.TypeProto]:
-    if not schema.has_type_and_shape_inference_function:  # type: ignore
+    if not schema.has_type_and_shape_inference_function:
         return {}
     if input_data is None:
         input_data = {}
@@ -118,12 +118,12 @@ def infer_node_outputs(
 
     # catch KeyError if node's input does not exist in input_types
     passed_input_types = {
-        key: input_types[key].SerializeToString() for key in node.input
+        key: input_types[key].SerializeToString() for key in node.input if key != ""
     }
     # input_types will also be used as outer_scope_value_types so do not filter by node's input here
-    for key in input_types:
+    for key, value in input_types.items():
         if key not in passed_input_types:
-            passed_input_types[key] = input_types[key].SerializeToString()
+            passed_input_types[key] = value.SerializeToString()
     passed_input_data = {
         key: input_data[key].SerializeToString()
         for key in node.input

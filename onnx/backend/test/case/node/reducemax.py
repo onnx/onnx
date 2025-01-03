@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -226,5 +227,5 @@ class ReduceMax(Base):
             node,
             inputs=[data, axes],
             outputs=[reduced],
-            name="test_reduce_min_empty_set",
+            name="test_reduce_max_empty_set",
         )

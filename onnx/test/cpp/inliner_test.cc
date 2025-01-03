@@ -172,6 +172,41 @@ foo (x) => (y) {
   InlineFunctions(model, code);
 }
 
+TEST(FunctionInliner, ValueInfoPropagation) {
+  const char* code = R"ONNX(
+<ir_version: 10, opset_import: [ "" : 17, "local" : 1 ]>
+agraph (float[N] X) => (float[N] Y)
+{
+  result = local.foo (X)
+  Y = Abs (result)
+}
+
+<opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+foo (x) => (y)
+<float[N] temp> {
+  temp = Add(x, x)
+  y = Neg (temp)
+}
+)ONNX";
+
+  ModelProto model;
+  InlineFunctions(model, code);
+  // Check that valueinfo is propagated fron function to main graph.
+  auto& graph = model.graph();
+  auto& temp_new_name = graph.node(0).output(0);
+  auto& valueinfos = graph.value_info();
+  for (auto& valueinfo : valueinfos) {
+    if (valueinfo.name() == temp_new_name) {
+      ASSERT_TRUE(valueinfo.has_type());
+      ASSERT_TRUE(valueinfo.type().has_tensor_type());
+      ASSERT_TRUE(valueinfo.type().tensor_type().has_shape());
+      ASSERT_TRUE(valueinfo.type().tensor_type().shape().dim_size() == 1);
+      return;
+    }
+  }
+  ASSERT_TRUE(false) << "ValueInfo not found";
+}
+
 TEST(FunctionInliner, TwoCallsToSameFunction) {
   const char* code = R"ONNX(
 <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>

@@ -1,7 +1,6 @@
 """Submodule containing all the ONNX schema definitions."""
-from __future__ import annotations
-
-from typing import Sequence, overload
+from typing import overload
+from collections.abc import Sequence
 
 from onnx import AttributeProto, FunctionProto
 
@@ -150,7 +149,7 @@ class OpSchema:
         def __init__(
             self,
             name: str,
-            type: OpSchema.AttrType,  # noqa: A002
+            type: OpSchema.AttrType,
             description: str = "",
             *,
             required: bool = True,
@@ -182,7 +181,12 @@ class OpSchema:
         CONSUME_ALLOWED: OpSchema.UseType = ...
         CONSUME_ENFORCED: OpSchema.UseType = ...
 
-def has_schema(op_type: str) -> bool: ...
+@overload
+def has_schema(op_type: str, domain: str = "") -> bool: ...
+@overload
+def has_schema(
+    op_type: str, max_inclusive_version: int, domain: str = ""
+) -> bool: ...
 def schema_version_map() -> dict[str, tuple[int, int]]: ...
 @overload
 def get_schema(
@@ -192,3 +196,6 @@ def get_schema(
 def get_schema(op_type: str, domain: str = "") -> OpSchema: ...
 def get_all_schemas() -> Sequence[OpSchema]: ...
 def get_all_schemas_with_history() -> Sequence[OpSchema]: ...
+def set_domain_to_version(domain: str, min_version: int, max_version: int, last_release_version: int = -1) -> None: ...
+def register_schema(schema: OpSchema) -> None: ...
+def deregister_schema(op_type: str, version: int, domain: str) -> None: ...

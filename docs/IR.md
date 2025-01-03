@@ -201,7 +201,8 @@ input|string[]|The input parameters of the function
 output|string[]|The output parameters of the function.
 node|Node[]|A list of nodes, forming a partially ordered computation graph. It must be in topological order.
 |opset_import|OperatorSetId|A collection of operator set identifiers used by the function implementation.
-value_info|ValueInfo[]|Used to store the type and shape information of values used in the function.
+|value_info|ValueInfo[]| (IR version >= 10) Used to store the type and shape information of values used in the function.
+|metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
 
 The name and domain serve to identify the operator uniquely in IR versions upto 9. IR version 10 adds the
 field overload, and the triple (name, domain, overload) acts as a unique-id across functions stored in
@@ -235,6 +236,7 @@ doc_string|string|Human-readable documentation for this model. Markdown is allow
 input|ValueInfo[]|The input parameters of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo[]|Used to store the type and shape information of values that are not inputs or outputs.
+|metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
 
 ValueInfo has the following properties:
 
@@ -291,6 +293,7 @@ domain|string|The domain of the operator set that contains the operator named by
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
 doc_string|string|Human-readable documentation for this value. Markdown is allowed.
 overload|string|Part of unique id of function (added in IR version 10)
+|metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
 
 A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, a graph initializer, or as a node output is said to be a definition and the occurrence of a name as a node input or as a graph output is said to be a use.
 
@@ -354,25 +357,25 @@ For each variadic operator input, N or more node inputs must be specified where 
 
 #### Optional Inputs and Outputs
 
-**Pre IR-8**
+##### Static Optional
 
 Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
 Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs.
 
-There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
+There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input or output; the second method is to use an empty string in place of an input or output name.
 
 Each node referring to an operator with optional outputs MUST provide a name for each output that is computed and MUST NOT provide names for outputs that are not computed.
 
 Optional inputs and outputs of the above kind are referred to as _static-optional_.
 
-**IR-8 Version and Later**
+##### Dynamic Optional (since IR-8)
 
-IR-8 introduced a new type-constructor to represent _dynamic-optional_ inputs and outputs,
+**IR-8 Version** introduced a new type-constructor to represent _dynamic-optional_ inputs and outputs,
 in addition to the earlier static-optional version described above. A dynamic-optional INT64
 tensor is a distinct type from an INT64 tensor type. In contrast, a static-optional INT64
 tensor does not have a distinct type, it has the same type as a INT64 tensor.
-The ops _Optional_ and _OptionalGetElement_ must be explicitly used to convert between
+The operators `Optional` and `OptionalGetElement` MUST be explicitly used to convert between
 the dynamic-optional type and the underlying non-optional type.
 The dynamic-optional allows for more expressiveness than static-optional.
 
@@ -418,7 +421,7 @@ It is common to represent a tensor as a nested list. This generally works fine, 
 
 |Group|Types|Description|
 |---|---|---|
-Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433) and [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915)
+Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz, float4e2m1|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433), [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915), and the [Open Compute Project](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)
 Signed Integer Types|int4, int8, int16, int32, int64|Signed integers are supported for 4-64 bit widths.
 Unsigned Integer Types|uint4, uint8, uint16, uint32, uint64|Unsigned integers are supported for 4-64 bit widths.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
@@ -490,6 +493,14 @@ _Historical Notes_: The following extensions were considered early on, but were 
 ### Attribute Types
 
 The type system used for attributes is related to but slightly different from that used for of inputs and outputs. Attribute values may be a dense tensor, sparse tensor, a scalar numerical value, a string, a graph, or repeated values of one of the above mentioned types.
+
+## Other Metadata
+
+The ModelProto structure, and in IR versions >= 10, various other structures (GraphProto, FunctionProto, NodeProto)
+contain a metadata_props field allowing users to store other metadata in the form of key-value pairs.
+It is recommended that users use key names qualified with a reverse-DNS name as prefix
+(such as "ai.onnxruntime.key1") to avoid conflicts between different uses.
+Unqualified names may be used in the future by the ONNX standard.
 
 ## Training Related Information
 

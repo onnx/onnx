@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -11,7 +11,7 @@ from onnx.reference.op_run import OpRun
 
 
 class EyeLike(OpRun):
-    def _run(self, data, *args, dtype=None, k=None):
+    def _run(self, data, *args, dtype=None, k=None):  # noqa: ARG002
         if dtype is None:
             if data is None:
                 _dtype = np.float32

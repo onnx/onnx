@@ -1,8 +1,9 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -30,9 +31,9 @@ class GRUHelper:
         self.num_directions = params[W].shape[0]
 
         if self.num_directions == 1:
-            for k in params:
+            for k, v in params.items():
                 if k != X:
-                    params[k] = np.squeeze(params[k], axis=0)
+                    params[k] = np.squeeze(v, axis=0)
 
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
@@ -65,7 +66,7 @@ class GRUHelper:
     def g(self, x: np.ndarray) -> np.ndarray:
         return np.tanh(x)
 
-    def step(self) -> Tuple[np.ndarray, np.ndarray]:
+    def step(self) -> tuple[np.ndarray, np.ndarray]:
         seq_length = self.X.shape[0]
         hidden_size = self.H_0.shape[-1]
         batch_size = self.X.shape[1]

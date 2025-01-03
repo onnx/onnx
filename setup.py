@@ -4,6 +4,7 @@
 
 # NOTE: Put all metadata in pyproject.toml.
 # Set the environment variable `ONNX_PREVIEW_BUILD=1` to build the dev preview release.
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -50,8 +51,8 @@ USE_MSVC_STATIC_RUNTIME = os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1"
 DEBUG = os.getenv("DEBUG", "0") == "1"
 COVERAGE = os.getenv("COVERAGE", "0") == "1"
 
-# Customize the wheel plat-name, usually needed for MacOS builds.
-# See usage in .github/workflows/release_mac.yml
+# Customize the wheel plat-name; sometimes useful for MacOS builds.
+# See https://github.com/onnx/onnx/pull/6117
 ONNX_WHEEL_PLATFORM_NAME = os.getenv("ONNX_WHEEL_PLATFORM_NAME")
 
 ################################################################################
@@ -76,7 +77,7 @@ except (OSError, subprocess.CalledProcessError):
 with open(os.path.join(TOP_DIR, "VERSION_NUMBER"), encoding="utf-8") as version_file:
     _version = version_file.read().strip()
     if ONNX_PREVIEW_BUILD:
-        # Create the dev build for weekly releases
+        # Create the dev build for weekly releases / dev build
         todays_date = datetime.date.today().strftime("%Y%m%d")
         _version += ".dev" + todays_date
     VERSION_INFO = {"version": _version, "git_version": _git_version}
@@ -100,6 +101,24 @@ def cd(path):
 
 def get_ext_suffix():
     return sysconfig.get_config_var("EXT_SUFFIX")
+
+
+def get_python_execute():
+    if WINDOWS:
+        return sys.executable
+    # Try to search more accurate path, because sys.executable may return a wrong one,
+    # as discussed in https://github.com/python/cpython/issues/84399
+    python_dir = os.path.abspath(
+        os.path.join(sysconfig.get_path("include"), "..", "..")
+    )
+    if os.path.isdir(python_dir):
+        python_bin = os.path.join(python_dir, "bin", "python3")
+        if os.path.isfile(python_bin):
+            return python_bin
+        python_bin = os.path.join(python_dir, "bin", "python")
+        if os.path.isfile(python_bin):
+            return python_bin
+    return sys.executable
 
 
 ################################################################################
@@ -139,6 +158,7 @@ class CmakeBuild(setuptools.Command):
     user_options: ClassVar[list] = [
         ("jobs=", "j", "Specifies the number of jobs to use with make")
     ]
+    jobs: None | str | int = None
 
     def initialize_options(self):
         self.jobs = None
@@ -147,7 +167,8 @@ class CmakeBuild(setuptools.Command):
         self.set_undefined_options("build", ("parallel", "jobs"))
         if self.jobs is None and os.getenv("MAX_JOBS") is not None:
             self.jobs = os.getenv("MAX_JOBS")
-        self.jobs = multiprocessing.cpu_count() if self.jobs is None else int(self.jobs)
+        if self.jobs is None:
+            self.jobs = multiprocessing.cpu_count()
 
     def run(self):
         os.makedirs(CMAKE_BUILD_DIR, exist_ok=True)
@@ -157,10 +178,8 @@ class CmakeBuild(setuptools.Command):
             # configure
             cmake_args = [
                 CMAKE,
-                f"-DPYTHON_INCLUDE_DIR={sysconfig.get_path('include')}",
-                f"-DPYTHON_EXECUTABLE={sys.executable}",
-                "-DBUILD_ONNX_PYTHON=ON",
-                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                f"-DPython3_EXECUTABLE={get_python_execute()}",
+                "-DONNX_BUILD_PYTHON=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
                 f"-DPY_EXT_SUFFIX={get_ext_suffix() or ''}",
             ]
@@ -172,14 +191,6 @@ class CmakeBuild(setuptools.Command):
                 build_type = "Debug"
             cmake_args.append(f"-DCMAKE_BUILD_TYPE={build_type}")
             if WINDOWS:
-                cmake_args.extend(
-                    [
-                        # we need to link with libpython on windows, so
-                        # passing python version to window in order to
-                        # find python in cmake
-                        f"-DPY_VERSION={'{}.{}'.format(*sys.version_info[:2])}",
-                    ]
-                )
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append("-DONNX_USE_MSVC_STATIC_RUNTIME=ON")
                 if platform.architecture()[0] == "64bit":
@@ -214,26 +225,22 @@ class CmakeBuild(setuptools.Command):
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."
                 )
-            if (
-                "PYTHONPATH" in os.environ
-                and "pip-build-env" in os.environ["PYTHONPATH"]
-            ):
-                # When the users use `pip install -e .` to install onnx and
-                # the cmake executable is a python entry script, there will be
-                # `Fix ModuleNotFoundError: No module named 'cmake'` from the cmake script.
-                # This is caused by the additional PYTHONPATH environment variable added by pip,
-                # which makes cmake python entry script not able to find correct python cmake packages.
-                # Actually, sys.path is well enough for `pip install -e .`.
-                # Therefore, we delete the PYTHONPATH variable.
-                del os.environ["PYTHONPATH"]
             subprocess.check_call(cmake_args)
 
-            build_args = [CMAKE, "--build", os.curdir]
+            build_args = [
+                CMAKE,
+                "--build",
+                os.curdir,
+                f"--parallel {self.jobs}",
+            ]
             if WINDOWS:
-                build_args.extend(["--config", build_type])
-                build_args.extend(["--", f"/maxcpucount:{self.jobs}"])
-            else:
-                build_args.extend(["--", "-j", str(self.jobs)])
+                build_args.extend(
+                    [
+                        "--config",
+                        build_type,
+                        "--verbose",
+                    ]
+                )
             subprocess.check_call(build_args)
 
 
@@ -270,9 +277,8 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             fullname = self.get_ext_fullname(ext.name)
             filename = os.path.basename(self.get_ext_filename(fullname))
 
-            if not WINDOWS:
-                lib_dir = CMAKE_BUILD_DIR
-            else:
+            lib_dir = CMAKE_BUILD_DIR
+            if WINDOWS:
                 # Windows compiled extensions are stored in Release/Debug subfolders
                 debug_lib_dir = os.path.join(CMAKE_BUILD_DIR, "Debug")
                 release_lib_dir = os.path.join(CMAKE_BUILD_DIR, "Release")
@@ -322,7 +328,9 @@ setuptools.setup(
     ext_modules=EXT_MODULES,
     cmdclass=CMD_CLASS,
     version=VERSION_INFO["version"],
-    options={"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
-    if ONNX_WHEEL_PLATFORM_NAME is not None
-    else {},
+    options=(
+        {"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
+        if ONNX_WHEEL_PLATFORM_NAME is not None
+        else {}
+    ),
 )

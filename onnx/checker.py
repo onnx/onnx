@@ -42,8 +42,8 @@ from onnx import (
     ValueInfoProto,
 )
 
-# Limitation of single protobuf file is 2GB
-MAXIMUM_PROTOBUF = 2000000000
+# Limitation of single protobuf file is 2GiB
+MAXIMUM_PROTOBUF = 2147483648
 
 # TODO: This thing where we reserialize the protobuf back into the
 # string, only to deserialize it at the call site, is really goofy.
@@ -137,6 +137,7 @@ def check_model(
     model: ModelProto | str | bytes | os.PathLike,
     full_check: bool = False,
     skip_opset_compatibility_check: bool = False,
+    check_custom_domain: bool = False,
 ) -> None:
     """Check the consistency of a model.
 
@@ -154,21 +155,33 @@ def check_model(
         full_check: If True, the function also runs shape inference check.
         skip_opset_compatibility_check: If True, the function skips the check for
             opset compatibility.
+        check_custom_domain: If True, the function will check all domains. Otherwise
+            only check built-in domains.
     """
     # If model is a path instead of ModelProto
     if isinstance(model, (str, os.PathLike)):
-        C.check_model_path(os.fspath(model), full_check, skip_opset_compatibility_check)
+        C.check_model_path(
+            os.fspath(model),
+            full_check,
+            skip_opset_compatibility_check,
+            check_custom_domain,
+        )
     else:
         protobuf_string = (
             model if isinstance(model, bytes) else model.SerializeToString()
         )
-        # If the protobuf is larger than 2GB,
+        # If the protobuf is larger than 2GiB,
         # remind users should use the model path to check
         if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
             raise ValueError(
-                "This protobuf of onnx model is too large (>2GB). Call check_model with model path instead."
+                "This protobuf of onnx model is too large (>2GiB). Call check_model with model path instead."
             )
-        C.check_model(protobuf_string, full_check, skip_opset_compatibility_check)
+        C.check_model(
+            protobuf_string,
+            full_check,
+            skip_opset_compatibility_check,
+            check_custom_domain,
+        )
 
 
 ValidationError = C.ValidationError

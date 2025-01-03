@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -42,6 +42,8 @@ class Unique(OpRun):
         indices, inverse_indices, counts = _specify_int64(
             indices, inverse_indices, counts
         )
+        # numpy 2.0 has a different behavior than numpy 1.x.
+        inverse_indices = inverse_indices.reshape(-1)
         if len(self.onnx_node.output) == 2:
             return (y, indices)
         if len(self.onnx_node.output) == 3:

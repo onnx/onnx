@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -14,6 +14,9 @@ class Hardmax(OpRunUnaryNum):
         x_argmax = np.argmax(x, axis=axis)  # type: ignore
         y = np.zeros_like(x)
         np.put_along_axis(
-            y, np.expand_dims(x_argmax, axis=axis), 1, axis=axis  # type: ignore
+            y,
+            np.expand_dims(x_argmax, axis=axis),
+            1,
+            axis=axis,  # type: ignore
         )
         return (y,)

@@ -10,12 +10,13 @@ import os
 import re
 import shutil
 import sys
-import tarfile
 import tempfile
 import time
 import unittest
 from collections import defaultdict
-from typing import Any, Callable, Iterable, Pattern, Sequence
+from collections.abc import Iterable, Sequence
+from re import Pattern
+from typing import Any, Callable
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -42,7 +43,7 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
             for i in range(1, times + 1):
                 try:
                     return func(*args, **kwargs)
-                except Exception:
+                except Exception:  # noqa: PERF203
                     print(f"{i} times tried")
                     if i == times:
                         raise
@@ -197,7 +198,7 @@ class Runner:
         for i in range(len(outputs)):
             if isinstance(outputs[i], (list, tuple)):
                 if not isinstance(ref_outputs[i], (list, tuple)):
-                    raise AssertionError(
+                    raise AssertionError(  # noqa: TRY004
                         f"Unexpected type {type(outputs[i])} for outputs[{i}]. Expected "
                         f"type is {type(ref_outputs[i])} (known test={model_dir or '?'!r})."
                     )
@@ -215,6 +216,11 @@ class Runner:
                         raise AssertionError(f"{ref_outputs[i]} != {outputs[i]}")
                     continue
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
+                np.testing.assert_array_equal(
+                    outputs[i].shape,
+                    ref_outputs[i].shape,
+                    err_msg=f"Output {i} has incorrect shape",
+                )
                 if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
@@ -225,26 +231,23 @@ class Runner:
     @classmethod
     @retry_execute(3)
     def download_model(
-        cls, model_test: TestCase, model_dir: str, models_dir: str
+        cls,
+        model_test: TestCase,
+        models_dir: str,
     ) -> None:
-        # On Windows, NamedTemporaryFile can not be opened for a
-        # second time
-        download_file = tempfile.NamedTemporaryFile(delete=False)
-        try:
-            download_file.close()
-            assert model_test.url
-            print(
-                f"Start downloading model {model_test.model_name} from {model_test.url}"
-            )
-            urlretrieve(model_test.url, download_file.name)
-            print("Done")
-            with tarfile.open(download_file.name) as t:
-                t.extractall(models_dir)
-        except Exception as e:
-            print(f"Failed to prepare data for model {model_test.model_name}: {e}")
-            raise
-        finally:
-            os.remove(download_file.name)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                assert model_test.url
+                print(
+                    f"Start downloading model {model_test.model_name} from {model_test.url}"
+                )
+                filename = os.path.join(tmpdir, "file")
+                urlretrieve(model_test.url, filename)
+                print("Done")
+                onnx.utils._extract_model_safe(filename, models_dir)
+            except Exception as e:
+                print(f"Failed to prepare data for model {model_test.model_name}: {e}")
+                raise
 
     @classmethod
     def prepare_model_data(cls, model_test: TestCase) -> str:
@@ -265,9 +268,7 @@ class Runner:
                     break
             os.makedirs(model_dir)
 
-            cls.download_model(
-                model_test=model_test, model_dir=model_dir, models_dir=models_dir
-            )
+            cls.download_model(model_test=model_test, models_dir=models_dir)
         return model_dir
 
     def _add_test(
@@ -341,7 +342,7 @@ class Runner:
         # never loaded if the test skipped
         model_marker: list[ModelProto | NodeProto | None] = [None]
 
-        def run(test_self: Any, device: str, **kwargs) -> None:
+        def run(test_self: Any, device: str, **kwargs) -> None:  # noqa: ARG001
             if model_test.url is not None and model_test.url.startswith(
                 "onnx/backend/test/data/light/"
             ):
@@ -459,8 +460,8 @@ class Runner:
                     self.assert_similar_outputs(
                         ref_outputs,
                         outputs,
-                        rtol=model_test.rtol,
-                        atol=model_test.atol,
+                        rtol=kwargs.get("rtol", model_test.rtol),
+                        atol=kwargs.get("atol", model_test.atol),
                         model_dir=model_dir,
                     )
 
@@ -483,8 +484,8 @@ class Runner:
                 self.assert_similar_outputs(
                     ref_outputs,
                     outputs,
-                    rtol=model_test.rtol,
-                    atol=model_test.atol,
+                    rtol=kwargs.get("rtol", model_test.rtol),
+                    atol=kwargs.get("atol", model_test.atol),
                     model_dir=model_dir,
                 )
 

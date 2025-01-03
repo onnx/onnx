@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -38,4 +38,6 @@ class LpPool(CommonPool):
         )
 
         kernel_element_count = np.prod(kernel_shape)
-        return (np.power(kernel_element_count * power_average[0], 1.0 / p),)
+        return (
+            np.power(kernel_element_count * power_average[0], 1.0 / p).astype(x.dtype),
+        )

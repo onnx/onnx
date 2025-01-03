@@ -22,6 +22,10 @@
 .. autofunction:: onnx.defs.get_all_schemas_with_history
 
 .. autofunction:: onnx.defs.get_function_ops
+
+.. autofunction:: onnx.defs.register_schema
+
+.. autofunction:: onnx.defs.deregister_schema
 ```
 
 ## class `OpSchema`

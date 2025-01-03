@@ -12,7 +12,7 @@ The linear regression is the most simple model
 in machine learning described by the following expression
 $Y = XA + B$. We can see it as a function of three
 variables $Y = f(X, A, B)$ decomposed into
-`y = Add(MatMul(X, A), B)`. That what's we need to represent
+`y = Add(MatMul(X, A), B)`. That's what we need to represent
 with ONNX operators. The first thing is to implement a function
 with {ref}`ONNX operators <l-onnx-operators>`.
 ONNX is strongly typed. Shape and type must be defined for both
@@ -25,7 +25,7 @@ to build the graph among the {ref}`l-onnx-make-function`:
   (an operator type), its inputs and outputs
 - `make_graph`: a function to create an ONNX graph with
   the objects created by the two previous functions
-- `make_model`: a last function with merges the graph and
+- `make_model`: a last function which merges the graph and
   additional metadata
 
 All along the creation, we need to give a name to every input,
@@ -1500,7 +1500,7 @@ object of type `ModelProto`. But it is not. According to
 [Protobuf 4, changes](https://developers.google.com/protocol-buffers/docs/news/2022-05-06),
 this is no longer possible after version 4 and it is safer to assume the
 only way to get a hold on the content is to serialize the model
-into bytes, give it the C function, then deserialize it.
+into bytes, give it to the C function, then deserialize it.
 Functions like `check_model` or
 `shape_inference` are calling `SerializeToString` then
 `ParseFromString` before checking the model with a C code.

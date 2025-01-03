@@ -1,22 +1,25 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
-
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 
 from onnx import TensorProto
-from onnx.helper import np_dtype_to_tensor_dtype
-from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32
-from onnx.reference.custom_element_types import (
+from onnx._custom_element_types import (
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
     int4,
     uint4,
+)
+from onnx.helper import np_dtype_to_tensor_dtype, tensor_dtype_to_np_dtype
+from onnx.numpy_helper import (
+    float8e4m3_to_float32,
+    float8e5m2_to_float32,
+    unpacked_float4e2m1_to_float32,
 )
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_quantize_linear import reshape_input
@@ -37,6 +40,8 @@ class _CommonDequantizeLinear(OpRun):
             tensor_dtype = TensorProto.UINT4
         elif x.dtype == int4 and x.dtype.descr[0][0] == "int4":
             tensor_dtype = TensorProto.INT4
+        elif x.dtype == float4e2m1 and x.dtype.descr[0][0] == "float4e2m1":
+            tensor_dtype = TensorProto.FLOAT4E2M1
         else:
             tensor_dtype = np_dtype_to_tensor_dtype(x.dtype)
         return tensor_dtype
@@ -45,9 +50,10 @@ class _CommonDequantizeLinear(OpRun):
         self,
         x: np.ndarray,
         x_scale: np.ndarray,
-        x_zero_point: Optional[np.ndarray] = None,
-        axis: Optional[int] = None,
-        block_size: Optional[int] = None,
+        x_zero_point: np.ndarray | None = None,
+        axis: int | None = None,
+        block_size: int | None = None,
+        output_dtype: int | None = None,
     ):  # type: ignore
         x_type = self.get_x_type(x)
         fp8_type = x_type in {
@@ -56,7 +62,11 @@ class _CommonDequantizeLinear(OpRun):
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
         }
-        if x_zero_point is not None and not fp8_type:
+        if (
+            x_zero_point is not None
+            and not fp8_type
+            and x_type != TensorProto.FLOAT4E2M1
+        ):
             zero_type = self.get_x_type(x_zero_point)
             if x_type != zero_type:
                 raise ValueError(
@@ -83,10 +93,18 @@ class _CommonDequantizeLinear(OpRun):
                 dx = float8e5m2_to_float32(x)
             elif x_type == TensorProto.FLOAT8E5M2FNUZ:
                 dx = float8e5m2_to_float32(x, fn=True, uz=True)
+            elif x_type == TensorProto.FLOAT4E2M1:
+                dx = unpacked_float4e2m1_to_float32(x)
             else:
                 dx = x.astype(np.float32)
         y = dx * reshape_input(x_scale, x.shape, axis, block_size)
-        return (y.astype(x_scale.dtype),)
+        return (
+            y.astype(
+                tensor_dtype_to_np_dtype(output_dtype)
+                if output_dtype
+                else x_scale.dtype
+            ),
+        )
 
 
 class DequantizeLinear_19(_CommonDequantizeLinear):
@@ -100,3 +118,11 @@ class DequantizeLinear_21(_CommonDequantizeLinear):
     def _run(self, *args, axis=None, block_size=None):  # type: ignore
         # args: x, y_scale, zero_point
         return super()._run(*args, axis=axis, block_size=block_size)  # type: ignore
+
+
+class DequantizeLinear_23(_CommonDequantizeLinear):
+    def _run(self, *args, axis=None, block_size=None, output_dtype=None):  # type: ignore
+        # args: x, y_scale, zero_point
+        return super()._run(
+            *args, axis=axis, block_size=block_size, output_dtype=output_dtype
+        )  # type: ignore

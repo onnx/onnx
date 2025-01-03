@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import os
 import platform
@@ -26,7 +27,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
     def __init__(self, session):
         self._session = session
 
-    def run(self, inputs, **kwargs):
+    def run(self, inputs, **kwargs):  # noqa: ARG002
         if isinstance(inputs, numpy.ndarray):
             inputs = [inputs]
         if isinstance(inputs, list):
@@ -54,7 +55,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     @classmethod
-    def is_opset_supported(cls, model):
+    def is_opset_supported(cls, model):  # noqa: ARG003
         return True, ""
 
     @classmethod
@@ -89,7 +90,19 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
         raise NotImplementedError("Unable to run the model node by node.")
 
 
-backend_test = onnx.backend.test.BackendTest(ReferenceEvaluatorBackend, __name__)
+dft_atol = 1e-3 if sys.platform != "linux" else 1e-6
+backend_test = onnx.backend.test.BackendTest(
+    ReferenceEvaluatorBackend,
+    __name__,
+    test_kwargs={
+        "test_dft": {"atol": dft_atol},
+        "test_dft_axis": {"atol": dft_atol},
+        "test_dft_axis_opset19": {"atol": dft_atol},
+        "test_dft_inverse": {"atol": dft_atol},
+        "test_dft_inverse_opset19": {"atol": dft_atol},
+        "test_dft_opset19": {"atol": dft_atol},
+    },
+)
 
 if os.getenv("APPVEYOR"):
     backend_test.exclude("(test_vgg19|test_zfnet)")
@@ -128,10 +141,13 @@ backend_test.exclude(
     "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
     "|test_cast_BFLOAT16_to_FLOAT"
     "|test_castlike_BFLOAT16_to_FLOAT"
+    "|test_cast_FLOAT_to_FLOAT4"
+    "|test_cast_FLOAT16_to_FLOAT4"
     "|test_quantizelinear_e4m3"
     "|test_quantizelinear_e5m2"
     "|test_quantizelinear_uint4"
     "|test_quantizelinear_int4"
+    "|test_quantizelinear_float4e2m1"
     ")"
 )
 
@@ -187,6 +203,16 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
 
+if sys.version_info > (3, 12):
+    # TODO(https://github.com/google/re2/issues/516): Remove the skips
+    backend_test.exclude("test_regex_full_match_basic_cpu")
+    backend_test.exclude("test_regex_full_match_email_domain_cpu")
+    backend_test.exclude("test_regex_full_match_empty_cpu")
+
+if sys.version_info <= (3, 10):
+    #  AttributeError: module 'numpy.typing' has no attribute 'NDArray'
+    backend_test.exclude("test_image_decoder_decode_")
+
 if sys.platform == "darwin":
     # FIXME: https://github.com/onnx/onnx/issues/5792
     backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
@@ -203,6 +229,10 @@ if version_utils.numpy_older_than("1.21.5"):
     backend_test.exclude("test_dft_opset19")
     backend_test.exclude("test_dft_axis_opset19")
     backend_test.exclude("test_dft_inverse_opset19")
+
+if version_utils.pillow_older_than("10.0"):
+    backend_test.exclude("test_image_decoder_decode_webp_rgb")
+    backend_test.exclude("test_image_decoder_decode_jpeg2k_rgb")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

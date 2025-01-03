@@ -8,15 +8,9 @@
 #include "onnx/defs/parser.h"
 
 #include <cctype>
-#include <iostream>
-#include <stdexcept>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 #include "onnx/common/common.h"
-#include "onnx/onnx_pb.h"
-#include "onnx/string_utils.h"
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
 #define PARSE(...) CHECK_PARSER_STATUS(Parse(__VA_ARGS__))
@@ -147,15 +141,31 @@ bool ParserBase::NextIsValidFloatString() {
   return false;
 }
 
+// Parsing an IdList (list of identifiers separated by commas, where identifiers are allowed to be empty).
+// Used to represent the list of inputs or outputs of a node.
+// An empty identifier may be represented by an empty string "" or by nothing followed by a single comma.
+// "Op()" has no operands
+// "Op(,x)" has two operands, the first being empty.
+// 'Op("")' has one operand, which is an empty string.
+// 'Op(,)' has one operand, which is an empty string.
+// Thus, this will also allow a trailing comma after a non-empty identifier with no effect.
+// 'Op(x,)' has one operand, which is 'x'.
+//
+// This is mostly for some backward compatibility. "" is a simpler way to represent an
+// empty identifier that is less confusing and is recommended.
+
 Status OnnxParser::Parse(IdList& idlist) {
   idlist.Clear();
   std::string id;
-  ParseOptionalIdentifier(id);
-  if (id.empty())
-    return Status::OK(); // Treat as empty list of identifiers
+  bool found = false;
+  CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found));
+  if (!found)
+    return Status::OK();
   *idlist.Add() = id;
   while (Matches(',')) {
-    ParseOptionalIdentifier(id);
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found));
+    if (!found)
+      break;
     *idlist.Add() = id;
   }
   return Status::OK();
@@ -175,7 +185,7 @@ Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
   attrlist.Clear();
   do {
     std::string id;
-    ParseIdentifier(id);
+    CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
     auto next = NextChar();
     if (next == ':' || next == '=')
       Parse(*attrlist.Add(), id);
@@ -203,8 +213,7 @@ Status OnnxParser::Parse(TensorShapeProto& shape) {
       shape.add_dim();
     } else {
       // Check for a symbolic identifier ...
-      std::string id;
-      CHECK_PARSER_STATUS(ParseOptionalIdentifier(id));
+      auto id = ParseOptionalIdentifier();
       if (!id.empty()) {
         shape.add_dim()->set_dim_param(id);
       } else {
@@ -311,7 +320,7 @@ Status OnnxParser::Parse(ValueInfoProto& valueinfo) {
   if (NextIsType())
     PARSE(*valueinfo.mutable_type());
   std::string name;
-  CHECK_PARSER_STATUS(ParseIdentifier(name));
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(name));
   valueinfo.set_name(name);
   return Status::OK();
 }
@@ -351,7 +360,7 @@ Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilis
         vi = vilist.Add();
         PARSE(*(vi->mutable_type()));
       }
-      CHECK_PARSER_STATUS(ParseIdentifier(*name));
+      CHECK_PARSER_STATUS(ParseQuotableIdentifier(*name));
       if (vi != nullptr)
         vi->set_name(*name);
     } while (Matches(','));
@@ -427,7 +436,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
   // Parse the concrete tensor-type with numeric dimensions:
   TypeProto typeProto;
   PARSE(typeProto);
-  ParseOptionalIdentifier(*tensorProto.mutable_name());
+  *tensorProto.mutable_name() = ParseOptionalIdentifier();
   (void)Matches('='); // Optional, to unify handling of initializers as well as tensor-protos in other contexts
   return Parse(tensorProto, typeProto);
 }
@@ -450,7 +459,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   // tensorProto.mutable_int64_data()->Reserve(n);
   // Parse the actual values:
 
-  int64_t intval;
+  int64_t intval = 0;
   uint64_t uintval = 0;
   float floatval = 0.0;
   double dblval = 0.0;
@@ -459,12 +468,21 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
     if (!Matches('}')) {
       do {
         switch (static_cast<TensorProto::DataType>(elem_type)) {
+          case TensorProto::DataType::TensorProto_DataType_INT4:
           case TensorProto::DataType::TensorProto_DataType_INT8:
           case TensorProto::DataType::TensorProto_DataType_INT16:
           case TensorProto::DataType::TensorProto_DataType_INT32:
+          case TensorProto::DataType::TensorProto_DataType_UINT4:
           case TensorProto::DataType::TensorProto_DataType_UINT8:
           case TensorProto::DataType::TensorProto_DataType_UINT16:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+          case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FN:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
           case TensorProto::DataType::TensorProto_DataType_BOOL:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:
             PARSE_TOKEN(intval);
             // TODO: check values are in the correct range.
             tensorProto.add_int32_data(intval);
@@ -478,10 +496,12 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
             PARSE_TOKEN(uintval);
             tensorProto.add_uint64_data(uintval);
             break;
+          case TensorProto::DataType::TensorProto_DataType_COMPLEX64:
           case TensorProto::DataType::TensorProto_DataType_FLOAT:
             PARSE_TOKEN(floatval);
             tensorProto.add_float_data(floatval);
             break;
+          case TensorProto::DataType::TensorProto_DataType_COMPLEX128:
           case TensorProto::DataType::TensorProto_DataType_DOUBLE:
             PARSE_TOKEN(dblval);
             tensorProto.add_double_data(dblval);
@@ -506,14 +526,12 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
 }
 
 bool OnnxParser::NextIsIdentifier() {
-  std::string id("");
-  (void)PeekIdentifier(id);
+  auto id = PeekIdentifier();
   return !(id.empty());
 }
 
 bool OnnxParser::NextIsType() {
-  std::string id("");
-  (void)PeekIdentifier(id);
+  auto id = PeekIdentifier();
   if (PrimitiveTypeNameMap::IsTypeName(id))
     return true;
   switch (KeyWordMap::Lookup(id)) {
@@ -533,14 +551,14 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
   if (isalpha(next) || next == '_') {
     if (NextIsType()) {
       TypeProto typeProto;
-      Parse(typeProto);
+      CHECK_PARSER_STATUS(Parse(typeProto));
       next = NextChar();
       if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
-        ParseOptionalIdentifier(*tensorProto.mutable_name());
+        CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()));
         (void)Matches('='); // Optional, to unify handling of initializers
-        Parse(tensorProto, typeProto);
+        CHECK_PARSER_STATUS(Parse(tensorProto, typeProto));
       } else {
         attr.set_type(AttributeProto_AttributeType_TYPE_PROTO);
         attr.mutable_tp()->CopyFrom(typeProto);
@@ -558,12 +576,14 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
     }
   } else if (Matches('@')) {
     std::string name;
-    CHECK_PARSER_STATUS(ParseIdentifier(name));
+    CHECK_PARSER_STATUS(ParseQuotableIdentifier(name));
     attr.set_ref_attr_name(name);
   } else {
     Literal literal;
     PARSE_TOKEN(literal);
     switch (literal.type) {
+      case LiteralType::UNDEFINED:
+        return ParseError("Internal error");
       case LiteralType::INT_LITERAL:
         attr.set_type(AttributeProto_AttributeType_INT);
         attr.set_i(std::stol(literal.value));
@@ -602,7 +622,7 @@ Status OnnxParser::Parse(AttributeProto& attr) {
   return Parse(attr, name);
 }
 
-bool IsSingletonAttribute(AttributeProto_AttributeType type) {
+static bool IsSingletonAttribute(AttributeProto_AttributeType type) {
   switch (type) {
     case AttributeProto_AttributeType_FLOAT:
     case AttributeProto_AttributeType_INT:
@@ -617,7 +637,7 @@ bool IsSingletonAttribute(AttributeProto_AttributeType type) {
   }
 }
 
-AttributeProto_AttributeType ToSingletonType(AttributeProto_AttributeType type) {
+static AttributeProto_AttributeType ToSingletonType(AttributeProto_AttributeType type) {
   switch (type) {
     case AttributeProto_AttributeType_FLOATS:
       return AttributeProto_AttributeType_FLOAT;
@@ -653,7 +673,6 @@ Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   if (NextChar() == '[') {
     // Parse a list of values. For an empty list, the type MUST be specified
     // using the type-annotation syntax of ": type".
-    std::vector<Literal> vals;
     MATCH('[');
     if (NextChar() != ']') {
       do {
@@ -702,23 +721,26 @@ Status OnnxParser::Parse(AttrList& attrlist) {
 }
 
 Status OnnxParser::Parse(NodeProto& node) {
+  if (Matches('[')) {
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*node.mutable_name()));
+    MATCH(']');
+  }
   PARSE(*node.mutable_output());
   MATCH('=');
-  std::string domain("");
-  std::string id;
-  ParseIdentifier(id);
+  std::string domain;
+  std::string id = ParseOptionalIdentifier();
   while (Matches('.')) {
     if (!domain.empty())
       domain += ".";
     domain += id;
-    ParseIdentifier(id);
+    CHECK_PARSER_STATUS(ParseIdentifier(id));
   }
   node.set_domain(domain);
   node.set_op_type(id);
 
   if (Matches(':')) {
     std::string overload;
-    ParseIdentifier(overload);
+    CHECK_PARSER_STATUS(ParseIdentifier(overload));
     node.set_overload(overload);
   }
   PARSE(*node.mutable_attribute());
@@ -743,7 +765,7 @@ Status OnnxParser::Parse(NodeList& nodelist) {
 
 Status OnnxParser::Parse(GraphProto& graph) {
   std::string id;
-  ParseIdentifier(id);
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
   return Parse(id, graph);
 }
 
@@ -789,7 +811,7 @@ Status OnnxParser::Parse(FunctionProto& fn) {
     MATCH('>');
   }
   std::string id;
-  ParseIdentifier(id);
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
   fn.set_name(id);
 
   PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>');
@@ -825,7 +847,7 @@ Status OnnxParser::Parse(OpsetIdList& opsets) {
 Status OnnxParser::Parse(ModelProto& model) {
   model.Clear();
   std::string strval;
-  int64_t intval;
+  int64_t intval = 0;
   if (Matches('<')) {
     do {
       KeyWordMap::KeyWord keyword = KeyWordMap::KeyWord::NONE;
@@ -882,5 +904,17 @@ Status OnnxParser::Parse(ModelProto& model) {
   }
   return Status::OK();
 }
+const std::unordered_map<std::string, KeyWordMap::KeyWord>& KeyWordMap::Instance() {
+  static KeyWordMap instance;
+  return instance.map_;
+}
 
+const std::string& KeyWordMap::ToString(KeyWord kw) {
+  static std::string undefined("undefined");
+  for (const auto& pair : Instance()) {
+    if (pair.second == kw)
+      return pair.first;
+  }
+  return undefined;
+}
 } // namespace ONNX_NAMESPACE

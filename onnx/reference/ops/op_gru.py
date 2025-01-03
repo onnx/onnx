@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -77,14 +77,14 @@ class CommonGRU(OpRun):
         B=None,
         sequence_lens=None,
         initial_h=None,
-        activation_alpha=None,
-        activation_beta=None,
-        activations=None,
-        clip=None,
-        direction=None,
+        activation_alpha=None,  # noqa: ARG002
+        activation_beta=None,  # noqa: ARG002
+        activations=None,  # noqa: ARG002
+        clip=None,  # noqa: ARG002
+        direction=None,  # noqa: ARG002
         hidden_size=None,
         layout=None,
-        linear_before_reset=None,
+        linear_before_reset=None,  # noqa: ARG002
     ):
         # TODO: support overridden attributes.
         num_directions = W.shape[0]

@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -36,11 +36,11 @@ class Imputer(OpRunAiOnnxMl):
             )
         x = x.copy()
         if np.isnan(replace):
-            for i in range(0, x.shape[1]):
+            for i in range(x.shape[1]):
                 val = values[min(i, values.shape[0] - 1)]
                 x[np.isnan(x[:, i]), i] = val
         else:
-            for i in range(0, x.shape[1]):
+            for i in range(x.shape[1]):
                 val = values[min(i, values.shape[0] - 1)]
                 x[x[:, i] == replace, i] = val
 

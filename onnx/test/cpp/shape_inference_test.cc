@@ -10,21 +10,22 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
-#include "onnx/onnx_pb.h"
 #include "onnx/shape_inference/implementation.h"
 
 using namespace ONNX_NAMESPACE::shape_inference;
 
 namespace ONNX_NAMESPACE {
 // onnx/defs/controlflow/old.cc
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 void ScanInferenceFunctionOpset8(InferenceContext& ctx);
 // onnx/defs/controlflow/defs.cc
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 void ScanInferenceFunction(InferenceContext& ctx);
 
 namespace Test {
 
 template <class Type>
-void CreateDims(Type& proto, int num_dims) {
+static void CreateDims(Type& proto, int num_dims) {
   auto mutable_shape = proto.mutable_shape();
   mutable_shape->clear_dim();
 
@@ -33,9 +34,9 @@ void CreateDims(Type& proto, int num_dims) {
 }
 
 template <class Type>
-void SetDimValues(Type& proto, const std::vector<int>& values) {
+static void SetDimValues(Type& proto, const std::vector<int>& values) {
   auto* mutable_shape = proto.mutable_shape();
-  EXPECT_TRUE(mutable_shape->dim_size() == values.size());
+  EXPECT_TRUE(static_cast<size_t>(mutable_shape->dim_size()) == values.size());
 
   int idx = 0;
   for (auto value : values) {
@@ -46,9 +47,9 @@ void SetDimValues(Type& proto, const std::vector<int>& values) {
 }
 
 template <class Type>
-void SetDimParams(Type& proto, const std::vector<const std::string*>& values) {
+static void SetDimParams(Type& proto, const std::vector<const std::string*>& values) {
   auto mutable_shape = proto.mutable_shape();
-  EXPECT_TRUE(mutable_shape->dim_size() == values.size());
+  EXPECT_TRUE(static_cast<size_t>(mutable_shape->dim_size()) == values.size());
 
   int idx = 0;
   for (auto value : values) {
@@ -59,12 +60,12 @@ void SetDimParams(Type& proto, const std::vector<const std::string*>& values) {
 }
 
 template <class Type>
-void Dump(const Type& t) {
+static void Dump(const Type& t) {
   auto& s_shape = t.shape();
   auto num_dims = s_shape.dim_size();
   std::cout << num_dims << " dims. ";
   for (int i = 0; i < num_dims; ++i) {
-    auto x = s_shape.dim(0);
+    const auto& x = s_shape.dim(0);
     auto y = x.has_dim_value();
     auto z = x.has_dim_param();
 
@@ -343,7 +344,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
 
 // Check subgraph inferencing via GraphInferencer using a Scan
 static void doInferencingTest(bool use_scan_opset8) {
-  auto* schemaRegistry = OpSchemaRegistry::Instance();
+  OpSchemaRegistry::Instance();
   GraphProto subgraph;
 
   // simple tensor without shape info
@@ -507,8 +508,7 @@ TEST(GraphInferencerImplTest, Scan9_BasicTest) {
   doInferencingTest(false);
 }
 
-void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {
-  ModelProto model;
+static void ParseAndInfer(ModelProto& model, const char* modelStr) {
   OnnxParser parser(modelStr);
   auto status = parser.Parse(model);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -516,6 +516,11 @@ void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShap
 
   ShapeInferenceOptions options{true, 1, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
+}
+
+static void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
 
   const auto inferredShape = model.graph().output(0).type().tensor_type().shape();
   EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size());
@@ -618,6 +623,38 @@ TEST(ShapeInferenceTest, CheckShapesAndTypesTest) {
 
   EXPECT_THROW(checkShapesAndTypes(tensor_infer, tensor_exist), ONNX_NAMESPACE::InferenceError);
 #endif
+}
+
+TEST(ShapeInferenceTest, CustomOpTest) {
+  const char* modelStr = R"ONNX(
+<ir_version: 8,  opset_import: ["" : 15, "custom.domain" : 1]>
+agraph (float[256, 768, 3] x) => (z1, z2)
+{
+    z1 = custom.domain.CustomOp (x)
+    # Inference cannot determine the type/shape of z1
+    z2 = Abs(x)
+    # Inference SHOULD determine the type/shape of z2 (same as that of x)
+}
+)ONNX";
+
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
+
+  auto& z1_value_info = model.graph().output(0);
+  // Check no inferred type for z1 (It's a quirk of the implementation that it
+  // has a dummy TypeProto, but it should have no values filled in.)
+  ASSERT_TRUE(z1_value_info.has_type());
+  ASSERT_FALSE(z1_value_info.type().has_tensor_type());
+
+  // Check inferred type for z2:
+  auto& z2_value_info = model.graph().output(1);
+  ASSERT_TRUE(z2_value_info.has_type());
+  ASSERT_TRUE(z2_value_info.type().has_tensor_type());
+  EXPECT_EQ(z2_value_info.type().tensor_type().elem_type(), TensorProto_DataType_FLOAT);
+  EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim_size(), 3);
+  EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim(0).dim_value(), 256);
+  EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim(1).dim_value(), 768);
+  EXPECT_EQ(z2_value_info.type().tensor_type().shape().dim(2).dim_value(), 3);
 }
 
 } // namespace Test

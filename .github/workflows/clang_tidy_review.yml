@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Optional_Clang_Tidy_Review
 
 on:
@@ -19,14 +23,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       # Pleaes note that it won't cause any failure here; it will only post comments in PRs
       - name: clang-tidy review
-        uses: ZedThree/clang-tidy-review@246fe91b9849a61f5db473ef7a9e1120e860fd68 # v0.14.0
+        uses: ZedThree/clang-tidy-review@e005a6ddf5cc4884b4bcab9930df255438183fd1 # v0.20.1
         with:
           apt_packages: "libprotobuf-dev,protobuf-compiler"
-          cmake_command: "cmake -S . -B .setuptools-cmake-build -DCMAKE_EXPORT_COMPILE_COMMANDS=on -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          cmake_command: "cmake -S . -B .setuptools-cmake-build -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           build_dir: ".setuptools-cmake-build"
           exclude: "/third_party/*"
           split_workflow: true
-      - uses: ZedThree/clang-tidy-review/upload@246fe91b9849a61f5db473ef7a9e1120e860fd68 # v0.14.0
+      - uses: ZedThree/clang-tidy-review/upload@e005a6ddf5cc4884b4bcab9930df255438183fd1 # v0.20.1

@@ -11,7 +11,8 @@ __all__ = [
 ]
 
 import typing
-from typing import Any, Collection, Optional, Protocol, TypeVar
+from collections.abc import Collection
+from typing import Any, Optional, Protocol, TypeVar
 
 import google.protobuf.json_format
 import google.protobuf.message
@@ -171,7 +172,7 @@ class _TextualSerializer(ProtoSerializer):
     """Serialize and deserialize the ONNX textual representation."""
 
     supported_format = "onnxtxt"
-    file_extensions = frozenset({".onnxtxt"})
+    file_extensions = frozenset({".onnxtxt", ".onnxtext"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         text = onnx.printer.to_text(proto)  # type: ignore[arg-type]

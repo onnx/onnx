@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -57,7 +57,7 @@ class Adam(OpRunTraining):
         xs = []
         vs = []
         hs = []
-        for i in range(0, n):
+        for i in range(n):
             a, b, c = self._run1(  # type: ignore
                 *data[:2],
                 data[2 + i],

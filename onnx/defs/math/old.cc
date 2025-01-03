@@ -11,7 +11,979 @@
 
 namespace ONNX_NAMESPACE {
 
-std::function<void(OpSchema&)> MathDocGenerator_opset13(const char* name) {
+static bool BuildContextDependentFunctionBody_opset13(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  if (ctx.getInputType(0) == nullptr) {
+    // we cannot create a correct function body without knowing the input type
+    return false;
+  }
+  auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
+  bool float_input = input_type == TensorProto_DataType_FLOAT;
+  auto reduction_attr_proto = ctx.getAttribute("reduction");
+  std::string reduction_attr =
+      reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
+
+  FunctionBuilder builder(functionProto);
+  builder.Const1D("const_zero", int64_t(0))
+      .Const1D("const_one", int64_t(1))
+      .Const1D("axes", int64_t(1))
+      .Add("expanded_target = Unsqueeze (target, axes)");
+
+  if (ctx.getAttribute("ignore_index") == nullptr) {
+    builder.Add(R"(
+      input_gather_element = GatherElements <axis = 1> (input, expanded_target)
+      loss_NCdd = Neg (input_gather_element)
+      loss_N1dd = Slice (loss_NCdd, const_zero, const_one, const_one)
+    )");
+
+    if (!ctx.hasInput(2)) {
+      if (reduction_attr == "none") {
+        builder.Add("loss = Squeeze (loss_N1dd, axes)");
+      } else {
+        builder.Add("loss_Ndd = Squeeze (loss_N1dd, axes)");
+        if (reduction_attr == "mean") {
+          builder.Add("loss = ReduceMean <keepdims = 0> (loss_Ndd)");
+        } else {
+          builder.Add("loss = ReduceSum <keepdims = 0> (loss_Ndd)");
+        }
+      }
+    } else {
+      builder.Add("weight_gather = Gather (weight, target)");
+      builder.Add("loss_unweighted = Squeeze (loss_N1dd, axes)");
+      if (reduction_attr == "none") {
+        builder.Add("loss = Mul (loss_unweighted, weight_gather)");
+      } else {
+        builder.Add("loss_Ndd = Mul (loss_unweighted, weight_gather)");
+        if (reduction_attr == "mean") {
+          builder.Add(R"(
+            loss_sum = ReduceSum <keepdims = 0> (loss_Ndd)
+            weight_gather_sum = ReduceSum <keepdims = 0> (weight_gather)
+            loss = Div (loss_sum, weight_gather_sum)
+          )");
+        } else {
+          builder.Add("loss = ReduceSum <keepdims = 0> (loss_Ndd)");
+        }
+      }
+    }
+  } else {
+    builder.Const1D("const_ignore_index", ctx.getAttribute("ignore_index")->i());
+    builder.Add(R"(
+      const_zero_target_typed = Sub (expanded_target, expanded_target)
+      expanded_target_int64 = Cast <to = 7> (expanded_target)
+      mask = Equal (expanded_target_int64, const_ignore_index)
+      transform_targets = Where (mask, const_zero_target_typed, expanded_target)
+    )");
+    builder.Add("input_gather_element = GatherElements <axis = 1> (input, transform_targets)");
+    builder.Const1D("const_zero_float", 0.0f);
+    if (!float_input) {
+      builder.Add("const_zero_casted = Cast (const_zero_float)", "to", static_cast<int64_t>(input_type))
+          .Add("input_gather_element_transform = Where (mask, const_zero_casted, input_gather_element)");
+    } else
+      builder.Add("input_gather_element_transform = Where (mask, const_zero_float, input_gather_element)");
+    builder.Add("loss_NCdd = Neg (input_gather_element_transform)");
+    builder.Add("loss_N1dd = Slice (loss_NCdd, const_zero, const_one, const_one)");
+
+    if (!ctx.hasInput(2)) {
+      builder.Add("squeeze_mask = Squeeze (mask, axes)");
+      builder.Const1D("const_one_float", 1.0f);
+      if (!float_input) {
+        builder.Add("const_one_casted = Cast (const_one_float)", "to", static_cast<int64_t>(input_type))
+            .Add("weight_gather = Where (squeeze_mask, const_zero_casted, const_one_casted)");
+      } else
+        builder.Add("weight_gather = Where (squeeze_mask, const_zero_float, const_one_float)");
+
+    } else {
+      builder.Add("weight_gather_temp = Gather (weight, transform_targets)");
+      builder.Add(
+          float_input ? "weight_gather_temp_1 = Where (mask, const_zero_float, weight_gather_temp)"
+                      : "weight_gather_temp_1 = Where (mask, const_zero_casted, weight_gather_temp)");
+      builder.Add("weight_gather = Squeeze (weight_gather_temp_1, axes)");
+    }
+
+    builder.Add("loss_unweighted = Squeeze (loss_N1dd, axes)");
+    if (reduction_attr == "none") {
+      builder.Add("loss = Mul (loss_unweighted, weight_gather)");
+    } else {
+      builder.Add("loss_Ndd = Mul (loss_unweighted, weight_gather)");
+      if (reduction_attr == "mean") {
+        builder.Add(R"(
+            loss_sum = ReduceSum <keepdims = 0> (loss_Ndd)
+            weight_gather_sum = ReduceSum <keepdims = 0> (weight_gather)
+            loss = Div (loss_sum, weight_gather_sum)
+        )");
+      } else {
+        builder.Add("loss = ReduceSum <keepdims = 0> (loss_Ndd)");
+      }
+    }
+  }
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static const char* NegativeLogLikelihoodLoss_ver13_doc = R"DOC(
+A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
+Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
+The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
+The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes)
+or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
+The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
+
+```
+loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
+```
+
+When an optional "weight" is provided, the sample loss is calculated as:
+
+```
+loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
+```
+
+loss is zero for the case when target-value equals ignore_index.
+
+```
+loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
+```
+
+If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
+If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
+
+```
+mean(loss), if "weight" is not provided,
+```
+
+or if weight is provided,
+
+```
+sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
+```
+
+If "reduction" attribute is set to "sum", the output is a scalar: `sum(loss)`.
+
+See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
+
+Example 1:
+
+```
+// negative log likelihood loss, "none" reduction
+N, C, d1 = 2, 3, 2
+input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+          [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+target = [[2, 1], [0, 2]]
+
+loss = np.zeros((N, d1))
+for n in range(N):
+    for d_1 in range(d1):
+        c = target[n][d_1]
+        loss[n][d_1] = -input[n][c][d_1]
+
+// print(loss)
+// [[-3. -2.]
+//  [-0. -2.]]
+```
+
+Example 2:
+
+```
+// weighted negative log likelihood loss, sum reduction
+N, C, d1 = 2, 3, 2
+input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+        [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+target = [[2, 1], [0, 2]]
+weight = [0.2, 0.3, 0.1]
+loss = np.zeros((N, d1))
+for n in range(N):
+    for d_1 in range(d1):
+        c = target[n][d_1]
+        loss[n][d_1] = -input[n][c][d_1] * weight[c]
+
+loss = np.sum(loss)
+// print(loss)
+// -1.1
+```
+
+Example 3:
+
+```
+// weighted negative log likelihood loss, mean reduction
+N, C, d1 = 2, 3, 2
+input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
+        [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
+target = [[2, 1], [0, 2]]
+weight = [0.2, 0.3, 0.1]
+loss = np.zeros((N, d1))
+weight_total = 0
+for n in range(N):
+    for d_1 in range(d1):
+        c = target[n][d_1]
+        loss[n][d_1] = -input[n][c][d_1] * weight[c]
+        weight_total = weight_total + weight[c]
+
+loss = np.sum(loss) / weight_total
+// print(loss)
+// -1.57
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NegativeLogLikelihoodLoss,
+    13,
+    OpSchema()
+        .SetDoc(NegativeLogLikelihoodLoss_ver13_doc)
+        .Input(
+            0,
+            "input",
+            "Input tensor of shape (N, C) or (N, C, d1, d2, ..., dk).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "target",
+            "Target tensor of shape (N) or (N, d1, d2, ..., dk). Target element value shall be in range of [0, C). "
+            "If ignore_index is specified, it may have a value outside [0, C) and the target values should either be "
+            "in the range [0, C) or have the value ignore_index.",
+            "Tind",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            2,
+            "weight",
+            "Optional rescaling weight tensor. "
+            "If given, it has to be a tensor of size C. Otherwise, it is treated as if having all ones.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(0, "loss", "The negative log likelihood loss", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Attr(
+            "reduction",
+            "Type of reduction to apply to loss: none, sum, mean (default). "
+            "'none': the output is the loss for each sample. "
+            "'sum': the output will be summed. "
+            "'mean': the sum of the output will be divided by the sum of applied weights.",
+            AttributeProto::STRING,
+            std::string("mean"))
+        .Attr(
+            "ignore_index",
+            "Specifies a target value that is ignored and does not contribute to the input gradient. It's an optional value.",
+            AttributeProto::INT,
+            false)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input, weight, and output types to floating-point tensors.")
+        .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain target to integer types")
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBody_opset13)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (hasNInputShapes(ctx, 2)) {
+            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
+
+            const int input_rank = static_cast<int>(input_shape.dim_size());
+            const int target_rank = static_cast<int>(target_shape.dim_size());
+
+            if (input_rank < 2) {
+              fail_shape_inference("Input rank must be >= 2.");
+            }
+            if (target_rank != input_rank - 1) {
+              fail_shape_inference("Target rank must be 1 less than the input rank.");
+            }
+
+            // match input dimensions (N, C, d1, ..., dk) with target
+            // dimensions of (C, d1, ..., dk)
+            for (int dim = 0; dim < target_rank; dim++) {
+              const auto input_dim = dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
+              const auto target_dim = target_shape.dim(dim);
+              if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
+                  input_dim.dim_value() != target_dim.dim_value())
+                fail_shape_inference("Input and target dimension value mismatch.");
+            }
+
+            if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
+              const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
+              if (weight_shape.dim_size() != 1) {
+                fail_shape_inference("Weight rank must be 1.");
+              }
+            }
+
+            TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+            if (getAttribute(ctx, "reduction", "mean") == "none") {
+              // output tensor is of shape (N, d1, d2, ..., dk) if
+              // reduction attribute is "none".
+              for (int i = 0; i < input_rank - 1; i++) {
+                auto* dim = output_shape->add_dim();
+                if (i == 0)
+                  *dim = input_shape.dim(i);
+                else
+                  *dim = input_shape.dim(i + 1);
+              }
+            }
+            // otherwise output is a scalar.
+          }
+        }));
+
+static const char* Det_ver11_doc = R"DOC(
+Det calculates determinant of a square matrix or batches of square matrices.
+Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
+and the inner-most 2 dimensions form square matrices.
+The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
+e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Det,
+    11,
+    OpSchema()
+        .SetDoc(Det_ver11_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to floating-point tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+            TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+            const int rank = static_cast<int>(input_shape.dim_size());
+
+            if (rank < 2) {
+              fail_shape_inference("Input rank must be >= 2.");
+            }
+
+            const auto mat_w = input_shape.dim(rank - 1);
+            const auto mat_h = input_shape.dim(rank - 2);
+            if (mat_w.has_dim_value() && mat_h.has_dim_value() && (mat_w.dim_value() != mat_h.dim_value())) {
+              fail_shape_inference(
+                  "The inner-most 2 dimensions must have the same size (mat_w:",
+                  mat_w.dim_value(),
+                  " != mat_h:",
+                  mat_h.dim_value(),
+                  ").");
+            }
+
+            for (int i = 0; i < rank - 2; ++i) {
+              auto* dim = output_shape->add_dim();
+              *dim = input_shape.dim(i);
+            }
+          }
+        }));
+
+static const char* Round_ver11_doc = R"DOC(
+Round takes one input Tensor and rounds the values, element-wise, meaning
+it finds the nearest integer for each value.
+In case of halves, the rule is to round them to the nearest even integer.
+If input x is integral, +0, -0, NaN,  or infinite, x itself is returned.
+The output tensor has the same shape and type as the input.
+
+Examples:
+```
+round([0.9]) = [1.0]
+round([2.5]) = [2.0]
+round([2.3]) = [2.0]
+round([1.5]) = [2.0]
+round([-4.5]) = [-4.0]
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Round,
+    11,
+    OpSchema()
+        .SetDoc(Round_ver11_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Atanh_ver9_doc = R"DOC(
+Calculates the hyperbolic arctangent of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Atanh,
+    9,
+    OpSchema()
+        .SetDoc(Atanh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The hyperbolic arctangent values of the input tensor "
+            "computed element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Acosh_ver9_doc = R"DOC(
+Calculates the hyperbolic arccosine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Acosh,
+    9,
+    OpSchema()
+        .SetDoc(Acosh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The hyperbolic arccosine values of the input tensor "
+            "computed element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Asinh_ver9_doc = R"DOC(
+Calculates the hyperbolic arcsine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Asinh,
+    9,
+    OpSchema()
+        .SetDoc(Asinh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The hyperbolic arcsine values of the input tensor "
+            "computed element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Cosh_ver9_doc = R"DOC(
+Calculates the hyperbolic cosine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Cosh,
+    9,
+    OpSchema()
+        .SetDoc(Cosh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The hyperbolic cosine values of the input tensor "
+            "computed element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Sinh_ver9_doc = R"DOC(
+Calculates the hyperbolic sine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Sinh,
+    9,
+    OpSchema()
+        .SetDoc(Sinh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The hyperbolic sine values of the input tensor "
+            "computed element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Atan_ver7_doc = R"DOC(
+Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Atan,
+    7,
+    OpSchema()
+        .SetDoc(Atan_ver7_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The arctangent of the input tensor computed "
+            "element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Acos_ver7_doc = R"DOC(
+Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Acos,
+    7,
+    OpSchema()
+        .SetDoc(Acos_ver7_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The arccosine of the input tensor computed "
+            "element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Asin_ver7_doc = R"DOC(
+Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Asin,
+    7,
+    OpSchema()
+        .SetDoc(Asin_ver7_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The arcsine of the input tensor computed "
+            "element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Tan_ver7_doc = R"DOC(
+Calculates the tangent of the given input tensor, element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Tan,
+    7,
+    OpSchema()
+        .SetDoc(Tan_ver7_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The tangent of the input tensor computed "
+            "element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Cos_ver7_doc = R"DOC(
+Calculates the cosine of the given input tensor, element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Cos,
+    7,
+    OpSchema()
+        .SetDoc(Cos_ver7_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The cosine of the input tensor computed "
+            "element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Sin_ver7_doc = R"DOC(
+Calculates the sine of the given input tensor, element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Sin,
+    7,
+    OpSchema()
+        .SetDoc(Sin_ver7_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The sine of the input tensor computed "
+            "element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Softplus_ver1_doc = R"DOC(
+Softplus takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
+the tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Softplus,
+    1,
+    OpSchema()
+        .SetDoc(Softplus_ver1_doc)
+        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+            {
+              exp_x = Exp (X)
+              one = Constant <value = float {1.0}>()
+              one_cast = CastLike (one, X)
+              exp_x_add_one = Add (exp_x, one_cast)
+              Y = Log (exp_x_add_one)
+            }
+            )ONNX",
+            18));
+
+static const char* Softsign_ver1_doc = R"DOC(
+Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Softsign,
+    1,
+    OpSchema()
+        .SetDoc(Softsign_ver1_doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The softsign (x/(1+|x|)) values of the input tensor computed element-wise",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            One = Constant <value = float {1.0}>()
+            OneCast = CastLike (One, input)
+            AbsInput = Abs(input)
+            OneAddAbsInput = Add (OneCast, AbsInput)
+            output = Div(input, OneAddAbsInput)
+          }
+        )ONNX",
+            18));
+
+static const char* HardSwish_ver14_doc = R"DOC(
+HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
+the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
+where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    HardSwish,
+    14,
+    OpSchema()
+        .SetDoc(HardSwish_ver14_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(R"ONNX(
+          {
+            HS_X = HardSigmoid<alpha = 0.16666667163372, beta = 0.5>(X)
+            Y = Mul (X, HS_X)
+          }
+        )ONNX"));
+
+static const char* HardSigmoid_ver6_doc = R"DOC(
+HardSigmoid takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
+is applied to the tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    HardSigmoid,
+    6,
+    OpSchema()
+        .Attr("alpha", "Value of alpha.", AttributeProto::FLOAT, 0.2f)
+        .Attr("beta", "Value of beta.", AttributeProto::FLOAT, 0.5f)
+        .SetDoc(HardSigmoid_ver6_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Beta = Constant <value_float: float = @beta>()
+            BetaCast = CastLike (Beta, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            One = Constant <value = float {1.0}>()
+            OneCast = CastLike (One, X)
+            AlphaMulX = Mul (X, AlphaCast)
+            AlphaMulXAddBeta = Add (AlphaMulX, BetaCast)
+            MinOneOrAlphaMulXAddBeta = Min (AlphaMulXAddBeta, OneCast)
+            Y = Max(MinOneOrAlphaMulXAddBeta, ZeroCast)
+          }
+        )ONNX",
+            18));
+
+static const char* mish_ver18_doc = R"DOC(
+Mish: A Self Regularized Non-Monotonic Neural Activation Function.
+
+Perform the linear unit element-wise on the input tensor X using formula:
+
+```
+mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Mish,
+    18,
+    OpSchema()
+        .SetDoc(mish_ver18_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input X and output types to float tensors.")
+        .FunctionBody(R"ONNX(
+          {
+            Softplus_X = Softplus (X)
+            TanHSoftplusX = Tanh (Softplus_X)
+            Y = Mul (X, TanHSoftplusX)
+           }
+        )ONNX")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Elu_ver6_doc = R"DOC(
+Elu takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
+0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Elu,
+    6,
+    OpSchema()
+        .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, 1.0f)
+        .SetDoc(Elu_ver6_doc)
+        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "1D output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            One = Constant <value = float {1.0}>()
+            OneCast = CastLike (One, X)
+            XLessThanZero = Less (X, ZeroCast)
+            ExpX = Exp (X)
+            ExpXSubOne = Sub (ExpX, OneCast)
+            AlphaMulExpXSubOne = Mul (AlphaCast, ExpXSubOne)
+            Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
+          }
+        )ONNX",
+            18));
+
+static const char* Selu_ver6_doc = R"DOC(
+Selu takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the scaled exponential linear unit function,
+`y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
+is applied to the tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Selu,
+    6,
+    OpSchema()
+        .Attr(
+            "alpha",
+            "Coefficient of SELU default to 1.67326319217681884765625 "
+            "(i.e., float32 approximation of 1.6732632423543772848170429916717).",
+            AttributeProto::FLOAT,
+            1.67326319217681884765625f)
+        .Attr(
+            "gamma",
+            "Coefficient of SELU default to 1.05070102214813232421875 "
+            "(i.e., float32 approximation of 1.0507009873554804934193349852946).",
+            AttributeProto::FLOAT,
+            1.05070102214813232421875f)
+        .SetDoc(Selu_ver6_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Gamma = Constant <value_float: float = @gamma>()
+            GammaCast = CastLike (Gamma, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            ExpX = Exp (X)
+            AlphaMulExpX = Mul(AlphaCast, ExpX)
+            AlphaMulExpXSubAlpha = Sub (AlphaMulExpX, AlphaCast)
+            Neg = Mul (GammaCast, AlphaMulExpXSubAlpha)
+            Pos = Mul (GammaCast, X)
+            XLessThanZero = Less (X, ZeroCast)
+            Y = Where(XLessThanZero, Neg, Pos)
+          }
+        )ONNX",
+            18));
+
+static const char* ThresholdedRelu_ver10_doc = R"DOC(
+ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
+is applied to the tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ThresholdedRelu,
+    10,
+    OpSchema()
+        .SetDoc(ThresholdedRelu_ver10_doc)
+        .Attr("alpha", "Threshold value", AttributeProto::FLOAT, 1.0f)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            AlphaLessThanX = Less(AlphaCast, X)
+            Y = Where(AlphaLessThanX, X, ZeroCast)
+          }
+        )ONNX",
+            18));
+
+static std::function<void(OpSchema&)> MathDocGenerator_opset13(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -56,7 +1028,7 @@ ONNX_OPERATOR_SET_SCHEMA(Mul, 13, OpSchema().FillUsing(MathDocGenerator_opset13(
 
 ONNX_OPERATOR_SET_SCHEMA(Div, 13, OpSchema().FillUsing(MathDocGenerator_opset13("division")));
 
-std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -93,7 +1065,7 @@ ONNX_OPERATOR_SET_SCHEMA(Mul, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("
 
 ONNX_OPERATOR_SET_SCHEMA(Div, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("division")));
 
-std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset_11(const char* name, const char* description) {
+static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset_11(const char* name, const char* description) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -557,7 +1529,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 // Generate opschema for element-wise ops. Leaves type constraint "T"
 // unspecified.
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_opset8(const char* name) {
+static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_opset8(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -572,9 +1544,9 @@ All inputs and outputs must have the same data type.
     schema.Output(0, name, "Output tensor.", "T");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      int num_inputs = static_cast<int>(ctx.getNumInputs());
+      auto num_inputs = ctx.getNumInputs();
       std::vector<const TensorShapeProto*> shapes;
-      for (int i = 0; i < num_inputs; ++i) {
+      for (size_t i = 0; i < num_inputs; ++i) {
         auto input_type = ctx.getInputType(i);
         if (nullptr == input_type || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
           return;
@@ -727,7 +1699,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, int input2Idx) {
+static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, size_t input1Idx, size_t input2Idx) {
   if (!hasInputShape(ctx, input1Idx) || !hasInputShape(ctx, input2Idx)) {
     return;
   }
@@ -760,8 +1732,8 @@ void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int inp
 
   // Check for compatible matrix multiply dimensions
   {
-    auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-    auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+    const auto& dimL = shapeL.dim(shapeL.dim_size() - 1);
+    const auto& dimR = shapeR.dim(shapeR.dim_size() - 2);
     if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
       fail_shape_inference("Incompatible dimensions for matrix multiplication");
     }
@@ -796,7 +1768,7 @@ void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, int inp
 }
 
 static const char* MatMul_ver9_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -862,7 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
             TensorShapeProto second_shape;
             if (nullptr != shape_initializer) {
-              const auto& shape_data = ParseData<int64_t>(shape_initializer);
+              const auto shape_data = ParseData<int64_t>(shape_initializer);
 
               for (const auto& e : shape_data) {
                 auto* dim = second_shape.add_dim();
@@ -1063,31 +2035,31 @@ Example 3:
     // -1.57
 )DOC";
 
-TensorProto ToDimensionOneFloatTensor_old(float value) {
+static TensorProto ToDimensionOneFloatTensor_old(float value) {
   auto t = ToTensor(std::vector<float>({value}));
   t.add_dims(1);
   return t;
 }
 
-TensorProto ToDimensionOneTensor_old(int32_t value) {
+static TensorProto ToDimensionOneTensor_old(int32_t value) {
   auto t = ToTensor(std::vector<int32_t>({value}));
   t.add_dims(1);
   return t;
 }
 
-TensorProto ToDimensionOneInt64Tensor_old(int64_t value) {
+static TensorProto ToDimensionOneInt64Tensor_old(int64_t value) {
   auto t = ToTensor(std::vector<int64_t>({value}));
   t.add_dims(1);
   return t;
 }
 
-TensorProto ToDimensionOneInt64Tensor_old(std::vector<int64_t> value) {
+static TensorProto ToDimensionOneInt64Tensor_old(const std::vector<int64_t>& value) {
   auto t = ToTensor(value);
-  t.add_dims(value.size());
+  t.add_dims(static_cast<int64_t>(value.size()));
   return t;
 }
 
-bool BuildContextDependentFunctionBody_opset12(
+static bool BuildContextDependentFunctionBody_opset12(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
@@ -1101,6 +2073,7 @@ bool BuildContextDependentFunctionBody_opset12(
   std::string reduction_attr =
       reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
   std::vector<FunctionBodyHelper::NodeDef> body;
+  body.reserve(23);
   body.push_back({{"const_zero"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor_old(0))}});
 
   body.push_back({{"const_one"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneTensor_old(1))}});
@@ -1112,7 +2085,7 @@ bool BuildContextDependentFunctionBody_opset12(
         {{"input_gather_element"},
          "GatherElements",
          {"input", "expanded_target"},
-         {MakeAttribute("axis", (int64_t)1)}});
+         {MakeAttribute("axis", static_cast<int64_t>(1))}});
 
     body.push_back({{"loss_NCdd"}, "Neg", {"input_gather_element"}});
 
@@ -1124,9 +2097,9 @@ bool BuildContextDependentFunctionBody_opset12(
       } else {
         body.push_back({{"loss_Ndd"}, "Squeeze", {"loss_N1dd"}, {MakeAttribute("axes", std::vector<int64_t>({1}))}});
         if (reduction_attr == "mean") {
-          body.push_back({{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+          body.push_back({{"loss"}, "ReduceMean", {"loss_Ndd"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}});
         } else {
-          body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+          body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}});
         }
       }
     } else {
@@ -1138,12 +2111,16 @@ bool BuildContextDependentFunctionBody_opset12(
       } else {
         body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
         if (reduction_attr == "mean") {
-          body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
           body.push_back(
-              {{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
+              {{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}});
+          body.push_back(
+              {{"weight_gather_sum"},
+               "ReduceSum",
+               {"weight_gather"},
+               {MakeAttribute("keepdims", static_cast<int64_t>(0))}});
           body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
         } else {
-          body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+          body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}});
         }
       }
     }
@@ -1167,7 +2144,7 @@ bool BuildContextDependentFunctionBody_opset12(
         {{"input_gather_element"},
          "GatherElements",
          {"input", "transform_targets"},
-         {MakeAttribute("axis", (int64_t)1)}});
+         {MakeAttribute("axis", static_cast<int64_t>(1))}});
     body.push_back(
         {{"const_zero_float"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneFloatTensor_old(0.0f))}});
     if (!float_input) {
@@ -1221,12 +2198,15 @@ bool BuildContextDependentFunctionBody_opset12(
     } else {
       body.push_back({{"loss_Ndd"}, "Mul", {"loss_unweighted", "weight_gather"}});
       if (reduction_attr == "mean") {
-        body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"loss_sum"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}});
         body.push_back(
-            {{"weight_gather_sum"}, "ReduceSum", {"weight_gather"}, {MakeAttribute("keepdims", (int64_t)0)}});
+            {{"weight_gather_sum"},
+             "ReduceSum",
+             {"weight_gather"},
+             {MakeAttribute("keepdims", static_cast<int64_t>(0))}});
         body.push_back({{"loss"}, "Div", {"loss_sum", "weight_gather_sum"}});
       } else {
-        body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", (int64_t)0)}});
+        body.push_back({{"loss"}, "ReduceSum", {"loss_Ndd"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}});
       }
     }
   }
@@ -1294,10 +2274,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             const int target_rank = static_cast<int>(target_shape.dim_size());
 
             if (input_rank < 2) {
-              fail_shape_inference("Input rank must be >= 2.");
+              fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
             }
             if (target_rank != input_rank - 1) {
-              fail_shape_inference("Target rank must be 1 less than the input rank.");
+              fail_shape_inference(
+                  "Target rank must be 1 less than the input rank. input_rank=",
+                  input_rank,
+                  ", target_rank=",
+                  target_rank);
             }
 
             // match input dimensions (N, C, d1, ..., dk) with target
@@ -1307,13 +2291,18 @@ ONNX_OPERATOR_SET_SCHEMA(
               const auto target_dim = target_shape.dim(dim);
               if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
                   input_dim.dim_value() != target_dim.dim_value())
-                fail_shape_inference("Input and target dimension value mismatch.");
+                fail_shape_inference(
+                    "Input and target dimension value mismatch. input_dim_value=",
+                    input_dim.dim_value(),
+                    " target_dim_value=",
+                    target_dim.dim_value());
             }
 
             if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
               const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
-              if (weight_shape.dim_size() != 1) {
-                fail_shape_inference("Weight rank must be 1.");
+              const auto weight_rank = weight_shape.dim_size();
+              if (weight_rank != 1) {
+                fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank);
               }
             }
 
@@ -1333,7 +2322,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-const char* reduction_doc_sce_opset12 =
+const static char* reduction_doc_sce_opset12 =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
     "'sum': the output will be summed. "
@@ -1374,17 +2363,18 @@ If reduction = 'mean', the output is scalar: ReduceMean(L), or if weight is prov
 where tensor W is of shape (N, D1, D2, ..., Dk) and W[n][d1][d2]...[dk] = weights[labels[i][d1][d2]...[dk]].
 )DOC";
 
-bool BuildContextDependentFunctionBodySCE_opset12(
+static bool BuildContextDependentFunctionBodySCE_opset12(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
   std::vector<FunctionBodyHelper::NodeDef> body;
+  body.reserve(9);
 
   // Using stable implementation of LogSoftmax
   body.push_back({{"Shape3D"}, "Constant", {}, {MakeAttribute("value", ToDimensionOneInt64Tensor_old({0, 0, -1}))}});
   body.push_back({{"X_NCD"}, "Reshape", {"scores", "Shape3D"}});
   body.push_back({{"X_NDC"}, "Transpose", {"X_NCD"}, {MakeAttribute("perm", std::vector<int64_t>({0, 2, 1}))}});
-  body.push_back({{"X_LogSM"}, "LogSoftmax", {"X_NDC"}, {MakeAttribute("axis", (int64_t)2)}});
+  body.push_back({{"X_LogSM"}, "LogSoftmax", {"X_NDC"}, {MakeAttribute("axis", static_cast<int64_t>(2))}});
   body.push_back({{"X_LogSM_NCD"}, "Transpose", {"X_LogSM"}, {MakeAttribute("perm", std::vector<int64_t>({0, 2, 1}))}});
   body.push_back({{"X_shape"}, "Shape", {"scores"}});
   body.push_back({{"X_Log"}, "Reshape", {"X_LogSM_NCD", "X_shape"}});
@@ -1405,12 +2395,12 @@ bool BuildContextDependentFunctionBodySCE_opset12(
       MakeRefAttribute("reduction", AttributeProto::STRING)};
   // Add weights as input if needed.
   if (ctx.hasInput(2)) {
-    input_tensor_names.push_back("weights");
+    input_tensor_names.emplace_back("weights");
   }
 
   // add ignore_index attributes if needed.
   if (ctx.getAttribute("ignore_index") != nullptr) {
-    attributes.push_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
+    attributes.emplace_back(MakeRefAttribute("ignore_index", AttributeProto::INT));
   }
 
   body.push_back({{"output"}, "NegativeLogLikelihoodLoss", input_tensor_names, attributes});
@@ -1481,7 +2471,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           std::string reduction = getAttribute(ctx, "reduction", "mean");
-          if (reduction.compare("none") == 0) {
+          if (reduction == "none") {
             if (hasInputShape(ctx, 1)) {
               propagateShapeFromInputToOutput(ctx, 1, 0);
             }
@@ -1495,7 +2485,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(const char* name, const char* description) {
+static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset1(const char* name, const char* description) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1561,7 +2551,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         SoftmaxFamilyDocGenerator_opset1("hardmax", "1 for the first maximum value, and 0 for all others")));
 
-const char* kBroadcastDoc_old = R"DOC(
+const static char* kBroadcastDoc_old = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second
 tensor can either be of element size 1 (including a scalar tensor and any
@@ -1582,7 +2572,7 @@ For example, the following tensor shapes are supported (with broadcast=1):
 Attribute `broadcast=1` needs to be passed to enable broadcasting.
 )DOC";
 
-std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -1614,7 +2604,7 @@ Performs element-wise binary {name} (with limited broadcast support).
   };
 }
 
-std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
+static std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2322,10 +3312,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto transBAttr = ctx.getAttribute("transB");
             bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
 
+            checkInputRank(ctx, 0, 2);
+            checkInputRank(ctx, 1, 2);
+
+            auto& first_input_shape = getInputShape(ctx, 0);
+            auto& second_input_shape = getInputShape(ctx, 1);
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(0)->tensor_type().shape().dim(transA ? 1 : 0);
+                first_input_shape.dim(transA ? 1 : 0);
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-                ctx.getInputType(1)->tensor_type().shape().dim(transB ? 0 : 1);
+                second_input_shape.dim(transB ? 0 : 1);
           } else if (
               hasInputShape(ctx, 2) &&
               (!ctx.getAttribute("broadcast") || static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
@@ -2544,7 +3539,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* MatMul_ver1_doc = R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2593,8 +3588,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Check for compatible matrix multiply dimensions
           {
-            auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-            auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+            auto const& dimL = shapeL.dim(shapeL.dim_size() - 1);
+            auto const& dimR = shapeR.dim(shapeR.dim_size() - 2);
             if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
               fail_shape_inference("Incompatible dimensions for matrix multiplication");
               ;
@@ -2631,10 +3626,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* TopK_ver1_doc = R"DOC(
 Retrieve the top-K elements along a specified axis. Given an input tensor of
-shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
-  -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
+  -Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
     which contains the values of the top k elements along the specified axis
-  -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+  -Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
    contains the indices of the top k elements (original indices from the input
    tensor).
 Given two equivalent values, this operator uses the indices along the axis  as
@@ -2646,17 +3641,17 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(TopK_ver1_doc)
-        .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
+        .Input(0, "X", "Tensor of shape [a_0, a_1, ..., a_{n-1}]", "T")
         .Output(
             0,
             "Values",
-            "Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] "
+            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
             "containing top K values from the input tensor",
             "T")
         .Output(
             1,
             "Indices",
-            "Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] "
+            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
             "containing the corresponding input tensor indices for the top K "
             "values.",
             "I")
@@ -2697,10 +3692,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* TopK_ver10_doc = R"DOC(
 Retrieve the top-K elements along a specified axis. Given an input tensor of
-shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
-  -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
+  -Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
     which contains the values of the top k elements along the specified axis
-  -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+  -Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
    contains the indices of the top k elements (original indices from the input
    tensor).
 
@@ -2713,7 +3708,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     10,
     OpSchema()
         .SetDoc(TopK_ver10_doc)
-        .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
+        .Input(0, "X", "Tensor of shape [a_0, a_1, ..., a_{n-1}]", "T")
         .Input(
             1,
             "K",
@@ -2722,13 +3717,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "Values",
-            "Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] "
+            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
             "containing top K values from the input tensor",
             "T")
         .Output(
             1,
             "Indices",
-            "Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] "
+            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
             "containing the corresponding input tensor indices for the top K "
             "values.",
             "I")
@@ -2770,7 +3765,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             if (k->data_type() == TensorProto::INT64) {
-              const auto& data = ParseData<int64_t>(k);
+              const auto data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
               fail_shape_inference("K input must be of type int64.");
@@ -2862,7 +3857,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(const char* name) {
+static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
     POPULATE_OP_DOC_STR(doc = R"DOC(
@@ -2881,9 +3876,9 @@ All inputs and outputs must have the same data type.
         "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      int num_inputs = static_cast<int>(ctx.getNumInputs());
+      auto num_inputs = ctx.getNumInputs();
       std::vector<const TensorShapeProto*> shapes;
-      for (int i = 0; i < num_inputs; ++i) {
+      for (size_t i = 0; i < num_inputs; ++i) {
         auto input_type = ctx.getInputType(i);
         if (nullptr == input_type || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
           return;
@@ -3051,6 +4046,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (rank < 2) {
             fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
           }
+          // NOLINTNEXTLINE(readability-simplify-boolean-expr)
           if (!(-rank <= axis && axis != -1 && axis < rank - 1)) {
             fail_shape_inference(
                 "axis attribute value ",
@@ -3060,7 +4056,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ". Valid values are '-rank <= axis && axis != -1 && axis < rank - 1'");
           }
 
-          auto axis_idx = (axis >= 0 ? axis : axis + rank);
+          int axis_idx = static_cast<int>(axis >= 0 ? axis : axis + rank);
 
           // If dft_length is specified, then we should honor the shape.
           // Set the output dimension to match the dft_length on the axis.

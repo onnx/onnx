@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -19,27 +19,12 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
         k = k[0]
     # This conversion is needed for distribution x86.
     k = int(k)
-    if len(X.shape) == 2 and axis == 1:
-        sample_range = np.arange(X.shape[0])[:, None]
-        if largest == 0:
-            sorted_indices = np.argpartition(X, axis=axis, kth=k - 1)
-            sorted_indices = sorted_indices[:, :k]
-            # argpartition doesn't guarantee sorted order, so we sort again
-            sorted_indices = sorted_indices[
-                sample_range, np.argsort(X[sample_range, sorted_indices])
-            ]
-        else:
-            sorted_indices = np.argpartition(-X, axis=axis, kth=k - 1)
-            sorted_indices = sorted_indices[:, :k]
-            # argpartition doesn't guarantee sorted order, so we sort again
-            sorted_indices = sorted_indices[
-                sample_range, np.argsort(-X[sample_range, sorted_indices])
-            ]
-        sorted_distances = X[sample_range, sorted_indices]
-        return sorted_distances, sorted_indices
-
-    sorted_indices = np.argsort(X, axis=axis)
-    sorted_values = np.sort(X, axis=axis)
+    # Used to tiebreak
+    ind_axis = np.indices(X.shape)[axis]
+    if largest:
+        ind_axis = -ind_axis
+    sorted_indices = np.lexsort((ind_axis, X), axis=axis)
+    sorted_values = np.take_along_axis(X, sorted_indices, axis=axis)
     if largest:
         sorted_indices = np.flip(sorted_indices, axis=axis)
         sorted_values = np.flip(sorted_values, axis=axis)
@@ -102,7 +87,12 @@ class TopK_10(_CommonTopK):
 
 class TopK_11(_CommonTopK):
     def _run(
-        self, data, ink, axis=None, largest=None, sorted=None  # noqa: A002
+        self,
+        data,
+        ink,
+        axis=None,
+        largest=None,
+        sorted=None,  # noqa: A002
     ):  # type: ignore
         """Runtime for operator *TopK*.
 

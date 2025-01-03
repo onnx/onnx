@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-
+from __future__ import annotations
 
 import numpy as np
 
@@ -37,7 +37,17 @@ def _gemm11(a, b, c, alpha, beta):  # type: ignore
 
 
 class Gemm_6(OpRun):
-    def _run(self, a, b, c=None, alpha=None, beta=None, transA=None, transB=None, broadcast=None):  # type: ignore
+    def _run(
+        self,
+        a,
+        b,
+        c=None,
+        alpha=None,
+        beta=None,
+        transA=None,
+        transB=None,
+        broadcast=None,
+    ):  # type: ignore
         if broadcast == 0:
             if transA:
                 _meth = _gemm11 if transB else _gemm10

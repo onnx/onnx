@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -202,7 +203,7 @@ class DequantizeLinear(Base):
         # scalar zero point and scale
         x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
         x_scale = np.float32(2)
-        x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+        x_zero_point = make_tensor("x_zero_point", TensorProto.UINT4, (1,), [1])
         y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
 
         expect(
@@ -224,7 +225,7 @@ class DequantizeLinear(Base):
         # scalar zero point and scale
         x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
         x_scale = np.float32(2)
-        x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+        x_zero_point = make_tensor("x_zero_point", TensorProto.INT4, (1,), [1])
         y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
 
         expect(
@@ -232,6 +233,28 @@ class DequantizeLinear(Base):
             inputs=[x, x_scale, x_zero_point],
             outputs=[y],
             name="test_dequantizelinear_int4",
+        )
+
+    @staticmethod
+    def export_float4e2m1() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale", "x_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.FLOAT4E2M1, [5], [0, 1, -1, 1.5, -4])
+        x_scale = np.float32(2)
+        x_zero_point = make_tensor("x_zero_point", TensorProto.FLOAT4E2M1, (1,), [0])
+        y = np.array([0, 2, -2, 3, -8], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale, x_zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_float4e2m1",
         )
 
     @staticmethod

@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -9,7 +10,9 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def softmaxcrossentropy(x, target, weight=None, reduction="mean", ignore_index=None, get_log_prob=None):  # type: ignore
+def softmaxcrossentropy(
+    x, target, weight=None, reduction="mean", ignore_index=None, get_log_prob=None
+):  # type: ignore
     input_shape = x.shape
     if len(input_shape) == 1:
         raise RuntimeError("Unsupported shape")

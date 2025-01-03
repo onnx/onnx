@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 """Automates the generation of ONNX operators."""
+from __future__ import annotations
 import difflib
 import importlib
 import inspect
@@ -282,8 +283,7 @@ def _get_all_schemas_with_history():
 
 
 def get_operator_schemas(op_name, version=None, domain=None):
-    """
-    Returns all schemas mapped to an operator name.
+    """Returns all schemas mapped to an operator name.
     :param op_name: name of the operator
     :param version: version
     :param domain: domain
@@ -339,8 +339,7 @@ def get_markdown_doc(
     diff=False,
     example=False,
 ):
-    """
-    Returns a documentation in Markdown format
+    """Returns a documentation in Markdown format
     for all :class:`OnnxOperator`.
 
     :param op_name: operator name of None for all
@@ -519,8 +518,7 @@ def get_markdown_doc(
 def _insert_diff(
     folder, docs, split=".. tag-diff-insert.", op_name=None, version=None, domain=None
 ):
-    """
-    Splits a using `split`, insert HTML differences between pieces.
+    """Splits a using `split`, insert HTML differences between pieces.
     The function relies on package `pyquickhelper`.
     """
     doc_parts = docs.split(split)
@@ -625,8 +623,7 @@ def _insert_diff(
 
 
 def pascal_to_snake_case(name: str) -> str:
-    """
-    Switches from *AaBb* into *aa_bb*.
+    """Switches from *AaBb* into *aa_bb*.
     :param name: name to convert
     :return: converted name
     """
@@ -636,9 +633,7 @@ def pascal_to_snake_case(name: str) -> str:
 
 
 def _process_example(code: str) -> str:
-    """
-    Add necessary imports to make the example work.
-    """
+    """Add necessary imports to make the example work."""
     code = code.replace("", "")
     missing_imports = ["import numpy as np", "import onnx"]
     elements = [*missing_imports, "", "", code.strip("\n")]
@@ -646,8 +641,7 @@ def _process_example(code: str) -> str:
 
 
 def get_onnx_example(op_name, domain):
-    """
-    Retrieves examples associated to one operator
+    """Retrieves examples associated to one operator
     stored in onnx packages.
     :param op_name: operator name
     :param domain: operator domain
@@ -708,8 +702,7 @@ def get_onnx_example(op_name, domain):
 
 
 def is_last_schema(sch: OpSchema) -> bool:
-    """
-    Tells if this is the most recent schema for this operator.
+    """Tells if this is the most recent schema for this operator.
     :param sch: schema
     :return: True
     """
@@ -723,8 +716,7 @@ def is_last_schema(sch: OpSchema) -> bool:
 def onnx_documentation_folder(
     folder, title="ONNX Operators", flog=None, max_opsets=None
 ):
-    """
-    Creates documentation in a folder for all known
+    """Creates documentation in a folder for all known
     ONNX operators or a subset.
     :param folder: folder where to write the documentation
     :param title: index title
@@ -893,8 +885,7 @@ def _copy_repo_docs(app):
 
 
 def setup(app):
-    """
-    Sphinx extension `onnx_sphinx` displays documentation
+    """Sphinx extension `onnx_sphinx` displays documentation
     on ONN Operators.
     """
     import sphinx

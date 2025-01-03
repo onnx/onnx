@@ -3,18 +3,28 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import itertools
 import os
 import pathlib
 import tempfile
 import unittest
 import uuid
+from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
 import parameterized
 
 import onnx
-from onnx import ModelProto, TensorProto, checker, helper, shape_inference
+from onnx import (
+    ModelProto,
+    NodeProto,
+    TensorProto,
+    checker,
+    helper,
+    parser,
+    shape_inference,
+)
 from onnx.external_data_helper import (
     convert_model_from_external_data,
     convert_model_to_external_data,
@@ -66,13 +76,16 @@ class TestLoadExternalDataBase(unittest.TestCase):
             inputs=[],
             outputs=["values"],
             value=self.create_external_data_tensor(
-                self.attribute_value, "attribute_value"  # type: ignore[arg-type]
+                self.attribute_value,  # type: ignore[arg-type]
+                "attribute_value",
             ),
         )
 
         initializers = [
             self.create_external_data_tensor(
-                self.initializer_value, "input_value", location  # type: ignore[arg-type]
+                self.initializer_value,  # type: ignore[arg-type]
+                "input_value",
+                location,
             )
         ]
         inputs = [
@@ -203,6 +216,52 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
 
         attribute_tensor = new_model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
+
+    @parameterized.parameterized.expand(itertools.product((True, False), (True, False)))
+    def test_save_external_invalid_single_file_data_and_check(
+        self, use_absolute_path: bool, use_model_path: bool
+    ) -> None:
+        model = onnx.load_model(self.model_filename, self.serialization_format)
+
+        model_dir = os.path.join(self.temp_dir, "save_copy")
+        os.mkdir(model_dir)
+
+        traversal_external_data_dir = os.path.join(
+            self.temp_dir, "invlid_external_data"
+        )
+        os.mkdir(traversal_external_data_dir)
+
+        if use_absolute_path:
+            traversal_external_data_location = os.path.join(
+                traversal_external_data_dir, "tensors.bin"
+            )
+        else:
+            traversal_external_data_location = "../invlid_external_data/tensors.bin"
+
+        external_data_dir = os.path.join(self.temp_dir, "external_data")
+        os.mkdir(external_data_dir)
+        new_model_filepath = os.path.join(model_dir, "model.onnx")
+
+        def convert_model_to_external_data_no_check(model: ModelProto, location: str):
+            for tensor in model.graph.initializer:
+                if tensor.HasField("raw_data"):
+                    set_external_data(tensor, location)
+
+        convert_model_to_external_data_no_check(
+            model,
+            location=traversal_external_data_location,
+        )
+
+        onnx.save_model(model, new_model_filepath, self.serialization_format)
+        if use_model_path:
+            with self.assertRaises(onnx.checker.ValidationError):
+                _ = onnx.load_model(new_model_filepath, self.serialization_format)
+        else:
+            onnx_model = onnx.load_model(
+                new_model_filepath, self.serialization_format, load_external_data=False
+            )
+            with self.assertRaises(onnx.checker.ValidationError):
+                load_external_data_for_model(onnx_model, external_data_dir)
 
 
 @parameterized.parameterized_class(
@@ -745,6 +804,87 @@ class TestExternalDataToArrayWithPath(TestExternalDataToArray):
     @property
     def model_file_path(self) -> pathlib.Path:
         return pathlib.Path(self._model_file_path)
+
+
+class TestFunctionsAndSubGraphs(unittest.TestCase):
+    def setUp(self) -> None:
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
+        temp_dir = self._temp_dir_obj.name
+        self._model_file_path: str = os.path.join(temp_dir, "model.onnx")
+        array = np.arange(4096).astype(np.float32)
+        self._tensor = from_array(array, "tensor")
+
+    def tearDown(self) -> None:
+        self._temp_dir_obj.cleanup()
+
+    def _check_is_internal(self, tensor: TensorProto) -> None:
+        self.assertEqual(tensor.data_location, TensorProto.DEFAULT)
+
+    def _check_is_external(self, tensor: TensorProto) -> None:
+        self.assertEqual(tensor.data_location, TensorProto.EXTERNAL)
+
+    def _check(self, model: ModelProto, nodes: Sequence[NodeProto]) -> None:
+        """Check that the tensors in the model are externalized.
+
+        The tensors in the specified sequence of Constant nodes are set to self._tensor,
+        an internal tensor. The model is then converted to external data format.
+        The tensors are then checked to ensure that they are externalized.
+
+        Arguments:
+            model: The model to check.
+            nodes: A sequence of Constant nodes.
+
+        """
+        for node in nodes:
+            self.assertEqual(node.op_type, "Constant")
+            tensor = node.attribute[0].t
+            tensor.CopyFrom(self._tensor)
+            self._check_is_internal(tensor)
+
+        convert_model_to_external_data(model, size_threshold=0, convert_attribute=True)
+
+        for node in nodes:
+            tensor = node.attribute[0].t
+            self._check_is_external(tensor)
+
+    def test_function(self) -> None:
+        model_text = """
+           <ir_version: 7,  opset_import: ["": 15, "local": 1]>
+           agraph (float[N] X) => (float[N] Y)
+            {
+              Y = local.add(X)
+            }
+
+            <opset_import: ["" : 15],  domain: "local">
+            add (float[N] X) => (float[N] Y) {
+              C = Constant <value = float[1] {1.0}> ()
+              Y = Add (X, C)
+           }
+        """
+        model = parser.parse_model(model_text)
+        self._check(model, [model.functions[0].node[0]])
+
+    def test_subgraph(self) -> None:
+        model_text = """
+           <ir_version: 7,  opset_import: ["": 15, "local": 1]>
+           agraph (bool flag, float[N] X) => (float[N] Y)
+            {
+              Y = if (flag) <
+                then_branch = g1 () => (float[N] Y_then) {
+                    B = Constant <value = float[1] {0.0}> ()
+                    Y_then = Add (X, C)
+                },
+                else_branch = g2 () => (float[N] Y_else) {
+                    C = Constant <value = float[1] {1.0}> ()
+                    Y_else = Add (X, C)
+                }
+              >
+            }
+        """
+        model = parser.parse_model(model_text)
+        if_node = model.graph.node[0]
+        constant_nodes = [attr.g.node[0] for attr in if_node.attribute]
+        self._check(model, constant_nodes)
 
 
 if __name__ == "__main__":

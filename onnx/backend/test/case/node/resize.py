@@ -1,6 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -856,7 +857,7 @@ class Resize(Base):
             node,
             inputs=[data, roi, sizes],
             outputs=[output],
-            name="test_resize_tf_crop_and_resize",
+            name="test_resize_tf_crop_and_resize_extrapolation_value",
         )
 
     @staticmethod
@@ -1563,7 +1564,7 @@ class Resize(Base):
             node,
             inputs=[data, sizes],
             outputs=[output],
-            name="test_resize_upsample_sizes_nearest_not_larger",
+            name="test_resize_upsample_sizes_nearest_not_smaller",
         )
 
     @staticmethod

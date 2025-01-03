@@ -12,88 +12,88 @@ For an operator input/output's differentiability, it can be differentiable,
 |**Operator**|**Since version**||
 |-|-|-|
 |<a href="#Abs">Abs</a>|<a href="Changelog.md#Abs-13">13</a>, <a href="Changelog.md#Abs-6">6</a>, <a href="Changelog.md#Abs-1">1</a>|
-|<a href="#Acos">Acos</a>|<a href="Changelog.md#Acos-7">7</a>|
-|<a href="#Acosh">Acosh</a>|<a href="Changelog.md#Acosh-9">9</a>|
+|<a href="#Acos">Acos</a>|<a href="Changelog.md#Acos-22">22</a>, <a href="Changelog.md#Acos-7">7</a>|
+|<a href="#Acosh">Acosh</a>|<a href="Changelog.md#Acosh-22">22</a>, <a href="Changelog.md#Acosh-9">9</a>|
 |<a href="#Add">Add</a>|<a href="Changelog.md#Add-14">14</a>, <a href="Changelog.md#Add-13">13</a>, <a href="Changelog.md#Add-7">7</a>, <a href="Changelog.md#Add-6">6</a>, <a href="Changelog.md#Add-1">1</a>|
 |<a href="#And">And</a>|<a href="Changelog.md#And-7">7</a>, <a href="Changelog.md#And-1">1</a>|
 |<a href="#ArgMax">ArgMax</a>|<a href="Changelog.md#ArgMax-13">13</a>, <a href="Changelog.md#ArgMax-12">12</a>, <a href="Changelog.md#ArgMax-11">11</a>, <a href="Changelog.md#ArgMax-1">1</a>|
 |<a href="#ArgMin">ArgMin</a>|<a href="Changelog.md#ArgMin-13">13</a>, <a href="Changelog.md#ArgMin-12">12</a>, <a href="Changelog.md#ArgMin-11">11</a>, <a href="Changelog.md#ArgMin-1">1</a>|
-|<a href="#Asin">Asin</a>|<a href="Changelog.md#Asin-7">7</a>|
-|<a href="#Asinh">Asinh</a>|<a href="Changelog.md#Asinh-9">9</a>|
-|<a href="#Atan">Atan</a>|<a href="Changelog.md#Atan-7">7</a>|
-|<a href="#Atanh">Atanh</a>|<a href="Changelog.md#Atanh-9">9</a>|
-|<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-19">19</a>, <a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
+|<a href="#Asin">Asin</a>|<a href="Changelog.md#Asin-22">22</a>, <a href="Changelog.md#Asin-7">7</a>|
+|<a href="#Asinh">Asinh</a>|<a href="Changelog.md#Asinh-22">22</a>, <a href="Changelog.md#Asinh-9">9</a>|
+|<a href="#Atan">Atan</a>|<a href="Changelog.md#Atan-22">22</a>, <a href="Changelog.md#Atan-7">7</a>|
+|<a href="#Atanh">Atanh</a>|<a href="Changelog.md#Atanh-22">22</a>, <a href="Changelog.md#Atanh-9">9</a>|
+|<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-22">22</a>, <a href="Changelog.md#AveragePool-19">19</a>, <a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
 |<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
 |<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
 |<a href="#BitwiseAnd">BitwiseAnd</a>|<a href="Changelog.md#BitwiseAnd-18">18</a>|
 |<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
 |<a href="#BitwiseOr">BitwiseOr</a>|<a href="Changelog.md#BitwiseOr-18">18</a>|
 |<a href="#BitwiseXor">BitwiseXor</a>|<a href="Changelog.md#BitwiseXor-18">18</a>|
-|<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
+|<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-23">23</a>, <a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
 |<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
 |<a href="#Concat">Concat</a>|<a href="Changelog.md#Concat-13">13</a>, <a href="Changelog.md#Concat-11">11</a>, <a href="Changelog.md#Concat-4">4</a>, <a href="Changelog.md#Concat-1">1</a>|
 |<a href="#ConcatFromSequence">ConcatFromSequence</a>|<a href="Changelog.md#ConcatFromSequence-11">11</a>|
-|<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-21">21</a>, <a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
-|<a href="#ConstantOfShape">ConstantOfShape</a>|<a href="Changelog.md#ConstantOfShape-21">21</a>, <a href="Changelog.md#ConstantOfShape-20">20</a>, <a href="Changelog.md#ConstantOfShape-9">9</a>|
-|<a href="#Conv">Conv</a>|<a href="Changelog.md#Conv-11">11</a>, <a href="Changelog.md#Conv-1">1</a>|
+|<a href="#Constant">Constant</a>|<a href="Changelog.md#Constant-23">23</a>, <a href="Changelog.md#Constant-21">21</a>, <a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-1">1</a>|
+|<a href="#ConstantOfShape">ConstantOfShape</a>|<a href="Changelog.md#ConstantOfShape-23">23</a>, <a href="Changelog.md#ConstantOfShape-21">21</a>, <a href="Changelog.md#ConstantOfShape-20">20</a>, <a href="Changelog.md#ConstantOfShape-9">9</a>|
+|<a href="#Conv">Conv</a>|<a href="Changelog.md#Conv-22">22</a>, <a href="Changelog.md#Conv-11">11</a>, <a href="Changelog.md#Conv-1">1</a>|
 |<a href="#ConvInteger">ConvInteger</a>|<a href="Changelog.md#ConvInteger-10">10</a>|
-|<a href="#ConvTranspose">ConvTranspose</a>|<a href="Changelog.md#ConvTranspose-11">11</a>, <a href="Changelog.md#ConvTranspose-1">1</a>|
-|<a href="#Cos">Cos</a>|<a href="Changelog.md#Cos-7">7</a>|
-|<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-9">9</a>|
+|<a href="#ConvTranspose">ConvTranspose</a>|<a href="Changelog.md#ConvTranspose-22">22</a>, <a href="Changelog.md#ConvTranspose-11">11</a>, <a href="Changelog.md#ConvTranspose-1">1</a>|
+|<a href="#Cos">Cos</a>|<a href="Changelog.md#Cos-22">22</a>, <a href="Changelog.md#Cos-7">7</a>|
+|<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-22">22</a>, <a href="Changelog.md#Cosh-9">9</a>|
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
-|<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-19">19</a>|
+|<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
 |<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
-|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
-|<a href="#Det">Det</a>|<a href="Changelog.md#Det-11">11</a>|
+|<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
+|<a href="#Det">Det</a>|<a href="Changelog.md#Det-22">22</a>, <a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
-|<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
+|<a href="#Dropout">Dropout</a>|<a href="Changelog.md#Dropout-22">22</a>, <a href="Changelog.md#Dropout-13">13</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-1">1</a>|
 |<a href="#Einsum">Einsum</a>|<a href="Changelog.md#Einsum-12">12</a>|
 |<a href="#Equal">Equal</a>|<a href="Changelog.md#Equal-19">19</a>, <a href="Changelog.md#Equal-13">13</a>, <a href="Changelog.md#Equal-11">11</a>, <a href="Changelog.md#Equal-7">7</a>, <a href="Changelog.md#Equal-1">1</a>|
 |<a href="#Erf">Erf</a>|<a href="Changelog.md#Erf-13">13</a>, <a href="Changelog.md#Erf-9">9</a>|
 |<a href="#Exp">Exp</a>|<a href="Changelog.md#Exp-13">13</a>, <a href="Changelog.md#Exp-6">6</a>, <a href="Changelog.md#Exp-1">1</a>|
 |<a href="#Expand">Expand</a>|<a href="Changelog.md#Expand-13">13</a>, <a href="Changelog.md#Expand-8">8</a>|
-|<a href="#EyeLike">EyeLike</a>|<a href="Changelog.md#EyeLike-9">9</a>|
-|<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-21">21</a>, <a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
+|<a href="#EyeLike">EyeLike</a>|<a href="Changelog.md#EyeLike-22">22</a>, <a href="Changelog.md#EyeLike-9">9</a>|
+|<a href="#Flatten">Flatten</a>|<a href="Changelog.md#Flatten-23">23</a>, <a href="Changelog.md#Flatten-21">21</a>, <a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-1">1</a>|
 |<a href="#Floor">Floor</a>|<a href="Changelog.md#Floor-13">13</a>, <a href="Changelog.md#Floor-6">6</a>, <a href="Changelog.md#Floor-1">1</a>|
-|<a href="#GRU">GRU</a>|<a href="Changelog.md#GRU-14">14</a>, <a href="Changelog.md#GRU-7">7</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-1">1</a>|
+|<a href="#GRU">GRU</a>|<a href="Changelog.md#GRU-22">22</a>, <a href="Changelog.md#GRU-14">14</a>, <a href="Changelog.md#GRU-7">7</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-1">1</a>|
 |<a href="#Gather">Gather</a>|<a href="Changelog.md#Gather-13">13</a>, <a href="Changelog.md#Gather-11">11</a>, <a href="Changelog.md#Gather-1">1</a>|
 |<a href="#GatherElements">GatherElements</a>|<a href="Changelog.md#GatherElements-13">13</a>, <a href="Changelog.md#GatherElements-11">11</a>|
 |<a href="#GatherND">GatherND</a>|<a href="Changelog.md#GatherND-13">13</a>, <a href="Changelog.md#GatherND-12">12</a>, <a href="Changelog.md#GatherND-11">11</a>|
 |<a href="#Gemm">Gemm</a>|<a href="Changelog.md#Gemm-13">13</a>, <a href="Changelog.md#Gemm-11">11</a>, <a href="Changelog.md#Gemm-9">9</a>, <a href="Changelog.md#Gemm-7">7</a>, <a href="Changelog.md#Gemm-6">6</a>, <a href="Changelog.md#Gemm-1">1</a>|
-|<a href="#GlobalAveragePool">GlobalAveragePool</a>|<a href="Changelog.md#GlobalAveragePool-1">1</a>|
-|<a href="#GlobalLpPool">GlobalLpPool</a>|<a href="Changelog.md#GlobalLpPool-2">2</a>, <a href="Changelog.md#GlobalLpPool-1">1</a>|
-|<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-1">1</a>|
+|<a href="#GlobalAveragePool">GlobalAveragePool</a>|<a href="Changelog.md#GlobalAveragePool-22">22</a>, <a href="Changelog.md#GlobalAveragePool-1">1</a>|
+|<a href="#GlobalLpPool">GlobalLpPool</a>|<a href="Changelog.md#GlobalLpPool-22">22</a>, <a href="Changelog.md#GlobalLpPool-2">2</a>, <a href="Changelog.md#GlobalLpPool-1">1</a>|
+|<a href="#GlobalMaxPool">GlobalMaxPool</a>|<a href="Changelog.md#GlobalMaxPool-22">22</a>, <a href="Changelog.md#GlobalMaxPool-1">1</a>|
 |<a href="#Greater">Greater</a>|<a href="Changelog.md#Greater-13">13</a>, <a href="Changelog.md#Greater-9">9</a>, <a href="Changelog.md#Greater-7">7</a>, <a href="Changelog.md#Greater-1">1</a>|
-|<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-20">20</a>, <a href="Changelog.md#GridSample-16">16</a>|
+|<a href="#GridSample">GridSample</a>|<a href="Changelog.md#GridSample-22">22</a>, <a href="Changelog.md#GridSample-20">20</a>, <a href="Changelog.md#GridSample-16">16</a>|
 |<a href="#Hardmax">Hardmax</a>|<a href="Changelog.md#Hardmax-13">13</a>, <a href="Changelog.md#Hardmax-11">11</a>, <a href="Changelog.md#Hardmax-1">1</a>|
-|<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-21">21</a>, <a href="Changelog.md#Identity-19">19</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
-|<a href="#If">If</a>|<a href="Changelog.md#If-21">21</a>, <a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
+|<a href="#Identity">Identity</a>|<a href="Changelog.md#Identity-23">23</a>, <a href="Changelog.md#Identity-21">21</a>, <a href="Changelog.md#Identity-19">19</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-1">1</a>|
+|<a href="#If">If</a>|<a href="Changelog.md#If-23">23</a>, <a href="Changelog.md#If-21">21</a>, <a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-1">1</a>|
 |<a href="#ImageDecoder">ImageDecoder</a>|<a href="Changelog.md#ImageDecoder-20">20</a>|
-|<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
+|<a href="#InstanceNormalization">InstanceNormalization</a>|<a href="Changelog.md#InstanceNormalization-22">22</a>, <a href="Changelog.md#InstanceNormalization-6">6</a>, <a href="Changelog.md#InstanceNormalization-1">1</a>|
 |<a href="#IsInf">IsInf</a>|<a href="Changelog.md#IsInf-20">20</a>, <a href="Changelog.md#IsInf-10">10</a>|
 |<a href="#IsNaN">IsNaN</a>|<a href="Changelog.md#IsNaN-20">20</a>, <a href="Changelog.md#IsNaN-13">13</a>, <a href="Changelog.md#IsNaN-9">9</a>|
 |<a href="#LRN">LRN</a>|<a href="Changelog.md#LRN-13">13</a>, <a href="Changelog.md#LRN-1">1</a>|
-|<a href="#LSTM">LSTM</a>|<a href="Changelog.md#LSTM-14">14</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-1">1</a>|
+|<a href="#LSTM">LSTM</a>|<a href="Changelog.md#LSTM-22">22</a>, <a href="Changelog.md#LSTM-14">14</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-1">1</a>|
 |<a href="#Less">Less</a>|<a href="Changelog.md#Less-13">13</a>, <a href="Changelog.md#Less-9">9</a>, <a href="Changelog.md#Less-7">7</a>, <a href="Changelog.md#Less-1">1</a>|
 |<a href="#Log">Log</a>|<a href="Changelog.md#Log-13">13</a>, <a href="Changelog.md#Log-6">6</a>, <a href="Changelog.md#Log-1">1</a>|
-|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-21">21</a>, <a href="Changelog.md#Loop-19">19</a>, <a href="Changelog.md#Loop-16">16</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
-|<a href="#LpNormalization">LpNormalization</a>|<a href="Changelog.md#LpNormalization-1">1</a>|
-|<a href="#LpPool">LpPool</a>|<a href="Changelog.md#LpPool-18">18</a>, <a href="Changelog.md#LpPool-11">11</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-1">1</a>|
+|<a href="#Loop">Loop</a>|<a href="Changelog.md#Loop-23">23</a>, <a href="Changelog.md#Loop-21">21</a>, <a href="Changelog.md#Loop-19">19</a>, <a href="Changelog.md#Loop-16">16</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-1">1</a>|
+|<a href="#LpNormalization">LpNormalization</a>|<a href="Changelog.md#LpNormalization-22">22</a>, <a href="Changelog.md#LpNormalization-1">1</a>|
+|<a href="#LpPool">LpPool</a>|<a href="Changelog.md#LpPool-22">22</a>, <a href="Changelog.md#LpPool-18">18</a>, <a href="Changelog.md#LpPool-11">11</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-1">1</a>|
 |<a href="#MatMul">MatMul</a>|<a href="Changelog.md#MatMul-13">13</a>, <a href="Changelog.md#MatMul-9">9</a>, <a href="Changelog.md#MatMul-1">1</a>|
 |<a href="#MatMulInteger">MatMulInteger</a>|<a href="Changelog.md#MatMulInteger-10">10</a>|
 |<a href="#Max">Max</a>|<a href="Changelog.md#Max-13">13</a>, <a href="Changelog.md#Max-12">12</a>, <a href="Changelog.md#Max-8">8</a>, <a href="Changelog.md#Max-6">6</a>, <a href="Changelog.md#Max-1">1</a>|
-|<a href="#MaxPool">MaxPool</a>|<a href="Changelog.md#MaxPool-12">12</a>, <a href="Changelog.md#MaxPool-11">11</a>, <a href="Changelog.md#MaxPool-10">10</a>, <a href="Changelog.md#MaxPool-8">8</a>, <a href="Changelog.md#MaxPool-1">1</a>|
-|<a href="#MaxRoiPool">MaxRoiPool</a>|<a href="Changelog.md#MaxRoiPool-1">1</a>|
-|<a href="#MaxUnpool">MaxUnpool</a>|<a href="Changelog.md#MaxUnpool-11">11</a>, <a href="Changelog.md#MaxUnpool-9">9</a>|
+|<a href="#MaxPool">MaxPool</a>|<a href="Changelog.md#MaxPool-22">22</a>, <a href="Changelog.md#MaxPool-12">12</a>, <a href="Changelog.md#MaxPool-11">11</a>, <a href="Changelog.md#MaxPool-10">10</a>, <a href="Changelog.md#MaxPool-8">8</a>, <a href="Changelog.md#MaxPool-1">1</a>|
+|<a href="#MaxRoiPool">MaxRoiPool</a>|<a href="Changelog.md#MaxRoiPool-22">22</a>, <a href="Changelog.md#MaxRoiPool-1">1</a>|
+|<a href="#MaxUnpool">MaxUnpool</a>|<a href="Changelog.md#MaxUnpool-22">22</a>, <a href="Changelog.md#MaxUnpool-11">11</a>, <a href="Changelog.md#MaxUnpool-9">9</a>|
 |<a href="#Mean">Mean</a>|<a href="Changelog.md#Mean-13">13</a>, <a href="Changelog.md#Mean-8">8</a>, <a href="Changelog.md#Mean-6">6</a>, <a href="Changelog.md#Mean-1">1</a>|
 |<a href="#MelWeightMatrix">MelWeightMatrix</a>|<a href="Changelog.md#MelWeightMatrix-17">17</a>|
 |<a href="#Min">Min</a>|<a href="Changelog.md#Min-13">13</a>, <a href="Changelog.md#Min-12">12</a>, <a href="Changelog.md#Min-8">8</a>, <a href="Changelog.md#Min-6">6</a>, <a href="Changelog.md#Min-1">1</a>|
 |<a href="#Mod">Mod</a>|<a href="Changelog.md#Mod-13">13</a>, <a href="Changelog.md#Mod-10">10</a>|
 |<a href="#Mul">Mul</a>|<a href="Changelog.md#Mul-14">14</a>, <a href="Changelog.md#Mul-13">13</a>, <a href="Changelog.md#Mul-7">7</a>, <a href="Changelog.md#Mul-6">6</a>, <a href="Changelog.md#Mul-1">1</a>|
-|<a href="#Multinomial">Multinomial</a>|<a href="Changelog.md#Multinomial-7">7</a>|
+|<a href="#Multinomial">Multinomial</a>|<a href="Changelog.md#Multinomial-22">22</a>, <a href="Changelog.md#Multinomial-7">7</a>|
 |<a href="#Neg">Neg</a>|<a href="Changelog.md#Neg-13">13</a>, <a href="Changelog.md#Neg-6">6</a>, <a href="Changelog.md#Neg-1">1</a>|
 |<a href="#NonMaxSuppression">NonMaxSuppression</a>|<a href="Changelog.md#NonMaxSuppression-11">11</a>, <a href="Changelog.md#NonMaxSuppression-10">10</a>|
 |<a href="#NonZero">NonZero</a>|<a href="Changelog.md#NonZero-13">13</a>, <a href="Changelog.md#NonZero-9">9</a>|
@@ -103,16 +103,16 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#OptionalGetElement">OptionalGetElement</a>|<a href="Changelog.md#OptionalGetElement-18">18</a>, <a href="Changelog.md#OptionalGetElement-15">15</a>|
 |<a href="#OptionalHasElement">OptionalHasElement</a>|<a href="Changelog.md#OptionalHasElement-18">18</a>, <a href="Changelog.md#OptionalHasElement-15">15</a>|
 |<a href="#Or">Or</a>|<a href="Changelog.md#Or-7">7</a>, <a href="Changelog.md#Or-1">1</a>|
-|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-21">21</a>, <a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
+|<a href="#Pad">Pad</a>|<a href="Changelog.md#Pad-23">23</a>, <a href="Changelog.md#Pad-21">21</a>, <a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-1">1</a>|
 |<a href="#Pow">Pow</a>|<a href="Changelog.md#Pow-15">15</a>, <a href="Changelog.md#Pow-13">13</a>, <a href="Changelog.md#Pow-12">12</a>, <a href="Changelog.md#Pow-7">7</a>, <a href="Changelog.md#Pow-1">1</a>|
 |<a href="#QLinearConv">QLinearConv</a>|<a href="Changelog.md#QLinearConv-10">10</a>|
 |<a href="#QLinearMatMul">QLinearMatMul</a>|<a href="Changelog.md#QLinearMatMul-21">21</a>, <a href="Changelog.md#QLinearMatMul-10">10</a>|
-|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
-|<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-14">14</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
-|<a href="#RandomNormal">RandomNormal</a>|<a href="Changelog.md#RandomNormal-1">1</a>|
-|<a href="#RandomNormalLike">RandomNormalLike</a>|<a href="Changelog.md#RandomNormalLike-1">1</a>|
-|<a href="#RandomUniform">RandomUniform</a>|<a href="Changelog.md#RandomUniform-1">1</a>|
-|<a href="#RandomUniformLike">RandomUniformLike</a>|<a href="Changelog.md#RandomUniformLike-1">1</a>|
+|<a href="#QuantizeLinear">QuantizeLinear</a>|<a href="Changelog.md#QuantizeLinear-23">23</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-10">10</a>|
+|<a href="#RNN">RNN</a>|<a href="Changelog.md#RNN-22">22</a>, <a href="Changelog.md#RNN-14">14</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-1">1</a>|
+|<a href="#RandomNormal">RandomNormal</a>|<a href="Changelog.md#RandomNormal-22">22</a>, <a href="Changelog.md#RandomNormal-1">1</a>|
+|<a href="#RandomNormalLike">RandomNormalLike</a>|<a href="Changelog.md#RandomNormalLike-22">22</a>, <a href="Changelog.md#RandomNormalLike-1">1</a>|
+|<a href="#RandomUniform">RandomUniform</a>|<a href="Changelog.md#RandomUniform-22">22</a>, <a href="Changelog.md#RandomUniform-1">1</a>|
+|<a href="#RandomUniformLike">RandomUniformLike</a>|<a href="Changelog.md#RandomUniformLike-22">22</a>, <a href="Changelog.md#RandomUniformLike-1">1</a>|
 |<a href="#Reciprocal">Reciprocal</a>|<a href="Changelog.md#Reciprocal-13">13</a>, <a href="Changelog.md#Reciprocal-6">6</a>, <a href="Changelog.md#Reciprocal-1">1</a>|
 |<a href="#ReduceMax">ReduceMax</a>|<a href="Changelog.md#ReduceMax-20">20</a>, <a href="Changelog.md#ReduceMax-18">18</a>, <a href="Changelog.md#ReduceMax-13">13</a>, <a href="Changelog.md#ReduceMax-12">12</a>, <a href="Changelog.md#ReduceMax-11">11</a>, <a href="Changelog.md#ReduceMax-1">1</a>|
 |<a href="#ReduceMean">ReduceMean</a>|<a href="Changelog.md#ReduceMean-18">18</a>, <a href="Changelog.md#ReduceMean-13">13</a>, <a href="Changelog.md#ReduceMean-11">11</a>, <a href="Changelog.md#ReduceMean-1">1</a>|
@@ -120,13 +120,13 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceProd">ReduceProd</a>|<a href="Changelog.md#ReduceProd-18">18</a>, <a href="Changelog.md#ReduceProd-13">13</a>, <a href="Changelog.md#ReduceProd-11">11</a>, <a href="Changelog.md#ReduceProd-1">1</a>|
 |<a href="#ReduceSum">ReduceSum</a>|<a href="Changelog.md#ReduceSum-13">13</a>, <a href="Changelog.md#ReduceSum-11">11</a>, <a href="Changelog.md#ReduceSum-1">1</a>|
 |<a href="#RegexFullMatch">RegexFullMatch</a>|<a href="Changelog.md#RegexFullMatch-20">20</a>|
-|<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-21">21</a>, <a href="Changelog.md#Reshape-19">19</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
+|<a href="#Reshape">Reshape</a>|<a href="Changelog.md#Reshape-23">23</a>, <a href="Changelog.md#Reshape-21">21</a>, <a href="Changelog.md#Reshape-19">19</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-1">1</a>|
 |<a href="#Resize">Resize</a>|<a href="Changelog.md#Resize-19">19</a>, <a href="Changelog.md#Resize-18">18</a>, <a href="Changelog.md#Resize-13">13</a>, <a href="Changelog.md#Resize-11">11</a>, <a href="Changelog.md#Resize-10">10</a>|
 |<a href="#ReverseSequence">ReverseSequence</a>|<a href="Changelog.md#ReverseSequence-10">10</a>|
-|<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
-|<a href="#Round">Round</a>|<a href="Changelog.md#Round-11">11</a>|
+|<a href="#RoiAlign">RoiAlign</a>|<a href="Changelog.md#RoiAlign-22">22</a>, <a href="Changelog.md#RoiAlign-16">16</a>, <a href="Changelog.md#RoiAlign-10">10</a>|
+|<a href="#Round">Round</a>|<a href="Changelog.md#Round-22">22</a>, <a href="Changelog.md#Round-11">11</a>|
 |<a href="#STFT">STFT</a>|<a href="Changelog.md#STFT-17">17</a>|
-|<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-21">21</a>, <a href="Changelog.md#Scan-19">19</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
+|<a href="#Scan">Scan</a>|<a href="Changelog.md#Scan-23">23</a>, <a href="Changelog.md#Scan-21">21</a>, <a href="Changelog.md#Scan-19">19</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-8">8</a>|
 |<a href="#Scatter">Scatter</a> (deprecated)|<a href="Changelog.md#Scatter-11">11</a>, <a href="Changelog.md#Scatter-9">9</a>|
 |<a href="#ScatterElements">ScatterElements</a>|<a href="Changelog.md#ScatterElements-18">18</a>, <a href="Changelog.md#ScatterElements-16">16</a>, <a href="Changelog.md#ScatterElements-13">13</a>, <a href="Changelog.md#ScatterElements-11">11</a>|
 |<a href="#ScatterND">ScatterND</a>|<a href="Changelog.md#ScatterND-18">18</a>, <a href="Changelog.md#ScatterND-16">16</a>, <a href="Changelog.md#ScatterND-13">13</a>, <a href="Changelog.md#ScatterND-11">11</a>|
@@ -136,59 +136,59 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SequenceErase">SequenceErase</a>|<a href="Changelog.md#SequenceErase-11">11</a>|
 |<a href="#SequenceInsert">SequenceInsert</a>|<a href="Changelog.md#SequenceInsert-11">11</a>|
 |<a href="#SequenceLength">SequenceLength</a>|<a href="Changelog.md#SequenceLength-11">11</a>|
-|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-21">21</a>, <a href="Changelog.md#Shape-19">19</a>, <a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
+|<a href="#Shape">Shape</a>|<a href="Changelog.md#Shape-23">23</a>, <a href="Changelog.md#Shape-21">21</a>, <a href="Changelog.md#Shape-19">19</a>, <a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-1">1</a>|
 |<a href="#Sigmoid">Sigmoid</a>|<a href="Changelog.md#Sigmoid-13">13</a>, <a href="Changelog.md#Sigmoid-6">6</a>, <a href="Changelog.md#Sigmoid-1">1</a>|
 |<a href="#Sign">Sign</a>|<a href="Changelog.md#Sign-13">13</a>, <a href="Changelog.md#Sign-9">9</a>|
-|<a href="#Sin">Sin</a>|<a href="Changelog.md#Sin-7">7</a>|
-|<a href="#Sinh">Sinh</a>|<a href="Changelog.md#Sinh-9">9</a>|
-|<a href="#Size">Size</a>|<a href="Changelog.md#Size-21">21</a>, <a href="Changelog.md#Size-19">19</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
+|<a href="#Sin">Sin</a>|<a href="Changelog.md#Sin-22">22</a>, <a href="Changelog.md#Sin-7">7</a>|
+|<a href="#Sinh">Sinh</a>|<a href="Changelog.md#Sinh-22">22</a>, <a href="Changelog.md#Sinh-9">9</a>|
+|<a href="#Size">Size</a>|<a href="Changelog.md#Size-23">23</a>, <a href="Changelog.md#Size-21">21</a>, <a href="Changelog.md#Size-19">19</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-1">1</a>|
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
 |<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
 |<a href="#Split">Split</a>|<a href="Changelog.md#Split-18">18</a>, <a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
 |<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
-|<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-21">21</a>, <a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
+|<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-23">23</a>, <a href="Changelog.md#Squeeze-21">21</a>, <a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
 |<a href="#StringConcat">StringConcat</a>|<a href="Changelog.md#StringConcat-20">20</a>|
 |<a href="#StringNormalizer">StringNormalizer</a>|<a href="Changelog.md#StringNormalizer-10">10</a>|
 |<a href="#StringSplit">StringSplit</a>|<a href="Changelog.md#StringSplit-20">20</a>|
 |<a href="#Sub">Sub</a>|<a href="Changelog.md#Sub-14">14</a>, <a href="Changelog.md#Sub-13">13</a>, <a href="Changelog.md#Sub-7">7</a>, <a href="Changelog.md#Sub-6">6</a>, <a href="Changelog.md#Sub-1">1</a>|
 |<a href="#Sum">Sum</a>|<a href="Changelog.md#Sum-13">13</a>, <a href="Changelog.md#Sum-8">8</a>, <a href="Changelog.md#Sum-6">6</a>, <a href="Changelog.md#Sum-1">1</a>|
-|<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-7">7</a>|
+|<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-22">22</a>, <a href="Changelog.md#Tan-7">7</a>|
 |<a href="#Tanh">Tanh</a>|<a href="Changelog.md#Tanh-13">13</a>, <a href="Changelog.md#Tanh-6">6</a>, <a href="Changelog.md#Tanh-1">1</a>|
 |<a href="#TfIdfVectorizer">TfIdfVectorizer</a>|<a href="Changelog.md#TfIdfVectorizer-9">9</a>|
 |<a href="#Tile">Tile</a>|<a href="Changelog.md#Tile-13">13</a>, <a href="Changelog.md#Tile-6">6</a>, <a href="Changelog.md#Tile-1">1</a>|
 |<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
-|<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-21">21</a>, <a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
+|<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-23">23</a>, <a href="Changelog.md#Transpose-21">21</a>, <a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
 |<a href="#Trilu">Trilu</a>|<a href="Changelog.md#Trilu-14">14</a>|
 |<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
-|<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-21">21</a>, <a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
+|<a href="#Unsqueeze">Unsqueeze</a>|<a href="Changelog.md#Unsqueeze-23">23</a>, <a href="Changelog.md#Unsqueeze-21">21</a>, <a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-1">1</a>|
 |<a href="#Upsample">Upsample</a> (deprecated)|<a href="Changelog.md#Upsample-10">10</a>, <a href="Changelog.md#Upsample-9">9</a>, <a href="Changelog.md#Upsample-7">7</a>|
 |<a href="#Where">Where</a>|<a href="Changelog.md#Where-16">16</a>, <a href="Changelog.md#Where-9">9</a>|
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|**Function version**|
 |<a href="#AffineGrid">AffineGrid</a>|<a href="Changelog.md#AffineGrid-20">20</a>|20|
-|<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-15">15</a>|15|
+|<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
-|<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|21|
+|<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|23|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|12|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
-|<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
+|<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-22">22</a>, <a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
 |<a href="#GreaterOrEqual">GreaterOrEqual</a>|<a href="Changelog.md#GreaterOrEqual-16">16</a>, <a href="Changelog.md#GreaterOrEqual-12">12</a>|16|
 |<a href="#GroupNormalization">GroupNormalization</a>|<a href="Changelog.md#GroupNormalization-21">21</a>, <a href="Changelog.md#GroupNormalization-18">18</a>|21|
 |<a href="#HammingWindow">HammingWindow</a>|<a href="Changelog.md#HammingWindow-17">17</a>|17|
 |<a href="#HannWindow">HannWindow</a>|<a href="Changelog.md#HannWindow-17">17</a>|17|
-|<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|18|
-|<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-14">14</a>|14|
+|<a href="#HardSigmoid">HardSigmoid</a>|<a href="Changelog.md#HardSigmoid-22">22</a>, <a href="Changelog.md#HardSigmoid-6">6</a>, <a href="Changelog.md#HardSigmoid-1">1</a>|18|
+|<a href="#HardSwish">HardSwish</a>|<a href="Changelog.md#HardSwish-22">22</a>, <a href="Changelog.md#HardSwish-14">14</a>|22|
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|17, 18|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
-|<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-18">18</a>|18|
-|<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|13|
+|<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
+|<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|11|
 |<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
@@ -197,14 +197,14 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ReduceLogSumExp">ReduceLogSumExp</a>|<a href="Changelog.md#ReduceLogSumExp-18">18</a>, <a href="Changelog.md#ReduceLogSumExp-13">13</a>, <a href="Changelog.md#ReduceLogSumExp-11">11</a>, <a href="Changelog.md#ReduceLogSumExp-1">1</a>|18|
 |<a href="#ReduceSumSquare">ReduceSumSquare</a>|<a href="Changelog.md#ReduceSumSquare-18">18</a>, <a href="Changelog.md#ReduceSumSquare-13">13</a>, <a href="Changelog.md#ReduceSumSquare-11">11</a>, <a href="Changelog.md#ReduceSumSquare-1">1</a>|18|
 |<a href="#Relu">Relu</a>|<a href="Changelog.md#Relu-14">14</a>, <a href="Changelog.md#Relu-13">13</a>, <a href="Changelog.md#Relu-6">6</a>, <a href="Changelog.md#Relu-1">1</a>|18|
-|<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|18|
+|<a href="#Selu">Selu</a>|<a href="Changelog.md#Selu-22">22</a>, <a href="Changelog.md#Selu-6">6</a>, <a href="Changelog.md#Selu-1">1</a>|18|
 |<a href="#SequenceMap">SequenceMap</a>|<a href="Changelog.md#SequenceMap-17">17</a>|17|
 |<a href="#Shrink">Shrink</a>|<a href="Changelog.md#Shrink-9">9</a>|18|
 |<a href="#Softmax">Softmax</a>|<a href="Changelog.md#Softmax-13">13</a>, <a href="Changelog.md#Softmax-11">11</a>, <a href="Changelog.md#Softmax-1">1</a>|13, 18|
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
-|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-1">1</a>|18|
-|<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-1">1</a>|18|
-|<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
+|<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-22">22</a>, <a href="Changelog.md#Softplus-1">1</a>|18|
+|<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-22">22</a>, <a href="Changelog.md#Softsign-1">1</a>|18|
+|<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
 
 ### ai.onnx.preview.training
 |**Operator**|**Since version**||
@@ -262,7 +262,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = abs(x)
+y = np.abs(x)
 
 expect(node, inputs=[x], outputs=[y], name="test_abs")
 ```
@@ -277,6 +277,7 @@ expect(node, inputs=[x], outputs=[y], name="test_abs")
 
 ```python
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import numpy as np
 
@@ -295,7 +296,9 @@ def abs(input: np.ndarray) -> np.ndarray:  # noqa: A001
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Acos-7">7</a>
 
 #### Inputs
 
@@ -314,7 +317,7 @@ This version of the operator has been available since version 7 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -349,7 +352,9 @@ expect(node, inputs=[x], outputs=[y], name="test_acos")
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Acosh-9">9</a>
 
 #### Inputs
 
@@ -368,7 +373,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -1397,7 +1402,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Asin-7">7</a>
 
 #### Inputs
 
@@ -1416,7 +1423,7 @@ This version of the operator has been available since version 7 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -1451,7 +1458,9 @@ expect(node, inputs=[x], outputs=[y], name="test_asin")
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Asinh-9">9</a>
 
 #### Inputs
 
@@ -1470,7 +1479,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -1505,7 +1514,9 @@ expect(node, inputs=[x], outputs=[y], name="test_asinh")
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Atan-7">7</a>
 
 #### Inputs
 
@@ -1524,7 +1535,7 @@ This version of the operator has been available since version 7 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -1559,7 +1570,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atan")
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Atanh-9">9</a>
 
 #### Inputs
 
@@ -1578,7 +1591,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -1644,9 +1657,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#AveragePool-1">1</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-11">11</a>
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">1</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-19">19</a>
 
 #### Attributes
 
@@ -1684,7 +1697,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">1</a>, <a 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -2439,7 +2452,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">1</
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 <dt><tt>training_mode</tt> : int (default is 0)</dt>
-<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1, 2, 3, and 4 would be populated.</dd>
+<dd>If set to true, it indicates BatchNormalization is being used for training, and outputs 1 and 2 are to be computed.</dd>
 </dl>
 
 #### Inputs
@@ -2610,7 +2623,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 15 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Bernoulli-15">15</a>
 
 #### Attributes
 
@@ -2638,9 +2653,9 @@ This version of the operator has been available since version 15 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bool)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
 <dd>Constrain output types to all numeric tensors and bool tensors.</dd>
 </dl>
 
@@ -3283,7 +3298,12 @@ a2 = 0.08
 y = a0
 y += a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
 y += a2 * np.cos(4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_blackmanwindow",
+)
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -3300,7 +3320,12 @@ y += a1 * np.cos(
 y += a2 * np.cos(
     4 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_blackmanwindow_symmetric",
+)
 ```
 
 </details>
@@ -3375,9 +3400,9 @@ expect(node, inputs=[size], outputs=[y], name="test_blackmanwindow_symmetric")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-19">19</a>
+Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-21">21</a>
 
 #### Attributes
 
@@ -3405,9 +3430,9 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Constrain input types. Casting from complex is not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
@@ -3456,6 +3481,10 @@ test_cases = [
     ("INT4", "FLOAT"),
     ("INT4", "FLOAT16"),
     ("INT4", "INT8"),
+    ("FLOAT4E2M1", "FLOAT"),
+    ("FLOAT4E2M1", "FLOAT16"),
+    ("FLOAT", "FLOAT4E2M1"),
+    ("FLOAT16", "FLOAT4E2M1"),
 ]
 
 vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
@@ -3672,7 +3701,57 @@ for from_type, to_type in test_cases:
         output_type_proto = onnx.helper.make_tensor_type_proto(
             getattr(TensorProto, to_type), input_shape
         )
+    elif from_type == "FLOAT4E2M1" or to_type == "FLOAT4E2M1":
+        np_fp32 = np.array(
+            [
+                "0.48",
+                "0.25",
+                "1.05",
+                "-3.5",
+                "-8",
+                "9",
+                "1000000",
+                "1e-7",
+                "NaN",
+                "INF",
+                "+INF",
+                "-INF",
+                "-4",
+                "0.01",
+                "-0.0",
+            ],
+            dtype=np.float32,
+        )
+        input_shape = (3, 5)
+        if from_type == "FLOAT":
+            input_values = np_fp32
+            input = make_tensor(
+                "x", TensorProto.FLOAT, input_shape, input_values.tolist()
+            )
+        elif from_type == "FLOAT16":
+            input_values = np_fp32.astype(np.float16).astype(np.float32)
+            input = make_tensor(
+                "x", TensorProto.FLOAT16, input_shape, input_values.tolist()
+            )
+        elif from_type == "FLOAT4E2M1":
+            input = make_tensor(
+                "x", TensorProto.FLOAT4E2M1, input_shape, np_fp32.tolist()
+            )
+        else:
+            raise ValueError(
+                f"Conversion from {from_type} to {to_type} is not tested."
+            )
 
+        if to_type not in ("FLOAT", "FLOAT16", "FLOAT4E2M1"):
+            raise ValueError(
+                f"Conversion from {from_type} to {to_type} is not tested."
+            )
+        expected = unpacked_float4e2m1_to_float32(
+            subbyte.float32_to_float4e2m1_unpacked(np_fp32)
+        )
+        output = make_tensor(
+            "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
+        )
     elif from_type != "STRING":
         input = np.random.random_sample(shape).astype(
             helper.tensor_dtype_to_np_dtype(getattr(TensorProto, from_type))
@@ -3843,9 +3922,9 @@ for from_type, to_type in test_cases:
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#CastLike-15">15</a>, <a href="Changelog.md#CastLike-19">19</a>
+Other versions of this operator: <a href="Changelog.md#CastLike-15">15</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-21">21</a>
 
 #### Attributes
 
@@ -3873,9 +3952,9 @@ Other versions of this operator: <a href="Changelog.md#CastLike-15">15</a>, <a h
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Constrain input types. Casting from complex is not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
@@ -4265,12 +4344,18 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_celu")
 
   Center crop or pad an input to given dimensions.
 
-  The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
-  cropped or padded.
+  The crop/pad dimensions can be specified for a subset of the `axes`; unspecified dimensions will remain unchanged.
 
-  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
-  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-  so that the input is centered in the output.
+  If the input dimensions are larger than the target crop dimensions, a centered cropping window will be extracted
+  from the input. The starting value for the cropping window is rounded down, which means that if the difference
+  between the input shape and the crop shape is odd, the cropping window will be shifted half a pixel to the left
+  of the input center.
+
+  If the input dimensions are smaller than the target crop dimensions, the input will be padded equally on both sides
+  to center it in the output. In cases where the total number of padding pixels is odd, an additional pixel will be
+  added to the right side.
+
+  The padding value used is zero.
 
 #### Version
 
@@ -4470,6 +4555,8 @@ expect(node, inputs=[x, shape], outputs=[y], name="test_center_crop_pad_pad")
   Clip operator limits the given input within an interval. The interval is
   specified by the inputs 'min' and 'max'. They default to
   numeric_limits::lowest() and numeric_limits::max(), respectively.
+  When 'min' is greater than 'max', the clip operator sets all the 'input' values to
+  the value of 'max'. Thus, this is equivalent to 'Min(max, Max(input, min))'.
 
 #### Version
 
@@ -4554,6 +4641,17 @@ expect(
     inputs=[x, min_val, max_val],
     outputs=[y],
     name="test_clip_splitbounds",
+)
+
+x = np.array([-2, 0, 6]).astype(np.float32)
+y = np.array([1, 1, 1]).astype(np.float32)
+min_val = np.float32(2)
+max_val = np.float32(1)
+expect(
+    node,
+    inputs=[x, min_val, max_val],
+    outputs=[y],
+    name="test_clip_min_greater_than_max",
 )
 ```
 
@@ -5266,7 +5364,7 @@ Other versions of this operator: <a href="Changelog.md#Concat-1">1</a>, <a href=
 <summary>concat</summary>
 
 ```python
-test_cases: Dict[str, Sequence[Any]] = {
+test_cases: dict[str, Sequence[Any]] = {
     "1d": ([1, 2], [3, 4]),
     "2d": ([[1, 2], [3, 4]], [[5, 6], [7, 8]]),
     "3d": (
@@ -5358,9 +5456,9 @@ This version of the operator has been available since version 11 of the default 
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Constant-1">1</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-19">19</a>
+Other versions of this operator: <a href="Changelog.md#Constant-1">1</a>, <a href="Changelog.md#Constant-9">9</a>, <a href="Changelog.md#Constant-11">11</a>, <a href="Changelog.md#Constant-12">12</a>, <a href="Changelog.md#Constant-13">13</a>, <a href="Changelog.md#Constant-19">19</a>, <a href="Changelog.md#Constant-21">21</a>
 
 #### Attributes
 
@@ -5396,7 +5494,7 @@ Other versions of this operator: <a href="Changelog.md#Constant-1">1</a>, <a hre
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -5432,9 +5530,9 @@ expect(node, inputs=[], outputs=[values], name="test_constant")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ConstantOfShape-9">9</a>, <a href="Changelog.md#ConstantOfShape-20">20</a>
+Other versions of this operator: <a href="Changelog.md#ConstantOfShape-9">9</a>, <a href="Changelog.md#ConstantOfShape-20">20</a>, <a href="Changelog.md#ConstantOfShape-21">21</a>
 
 #### Attributes
 
@@ -5462,8 +5560,8 @@ Other versions of this operator: <a href="Changelog.md#ConstantOfShape-9">9</a>,
 <dl>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain input types.</dd>
-<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
-<dd>Constrain output types to be numerics.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(uint4), tensor(int4), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(float4e2m1)</dt>
+<dd>Constrain output types to be numerics or boolean.</dd>
 </dl>
 
 
@@ -5546,9 +5644,9 @@ expect(node, inputs=[x], outputs=[y], name="test_constantofshape_int_zeros")
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Conv-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Conv-1">1</a>, <a href="Changelog.md#Conv-11">11</a>
 
 #### Attributes
 
@@ -5588,7 +5686,7 @@ Other versions of this operator: <a href="Changelog.md#Conv-1">1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -6004,9 +6102,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">1</a>
+Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">1</a>, <a href="Changelog.md#ConvTranspose-11">11</a>
 
 #### Attributes
 
@@ -6050,7 +6148,7 @@ Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -6434,6 +6532,152 @@ expect(node, inputs=[x, W], outputs=[y], name="test_convtranspose_dilations")
 
 
 <details>
+<summary>convtranspose_group_2</summary>
+
+```python
+x = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ]
+    ]
+).astype(np.float32)
+W = np.array(
+    [
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=2)
+
+y = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 3.0, 2.0],
+                [3.0, 8.0, 15.0, 12.0, 7.0],
+                [9.0, 21.0, 36.0, 27.0, 15.0],
+                [9.0, 20.0, 33.0, 24.0, 13.0],
+                [6.0, 13.0, 21.0, 15.0, 8.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ]
+    ]
+).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name="test_convtranspose_group_2")
+```
+
+</details>
+
+
+<details>
+<summary>convtranspose_group_2_image_3</summary>
+
+```python
+x = np.array(
+    [
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ],
+        [
+            [[18.0, 19.0, 20.0], [21.0, 22.0, 23.0], [24.0, 25.0, 26.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ],
+        [
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0]],
+            [[9.0, 10.0, 11.0], [12.0, 13.0, 14.0], [15.0, 16.0, 17.0]],
+        ],
+    ]
+).astype(np.float32)
+W = np.array(
+    [
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+        [
+            [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]],
+        ],
+    ]
+).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=2)
+
+y = np.array(
+    [
+        [
+            [
+                [0.0, 1.0, 3.0, 3.0, 2.0],
+                [3.0, 8.0, 15.0, 12.0, 7.0],
+                [9.0, 21.0, 36.0, 27.0, 15.0],
+                [9.0, 20.0, 33.0, 24.0, 13.0],
+                [6.0, 13.0, 21.0, 15.0, 8.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ],
+        [
+            [
+                [18.0, 37.0, 57.0, 39.0, 20.0],
+                [39.0, 80.0, 123.0, 84.0, 43.0],
+                [63.0, 129.0, 198.0, 135.0, 69.0],
+                [45.0, 92.0, 141.0, 96.0, 49.0],
+                [24.0, 49.0, 75.0, 51.0, 26.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ],
+        [
+            [
+                [0.0, 1.0, 3.0, 3.0, 2.0],
+                [3.0, 8.0, 15.0, 12.0, 7.0],
+                [9.0, 21.0, 36.0, 27.0, 15.0],
+                [9.0, 20.0, 33.0, 24.0, 13.0],
+                [6.0, 13.0, 21.0, 15.0, 8.0],
+            ],
+            [
+                [9.0, 19.0, 30.0, 21.0, 11.0],
+                [21.0, 44.0, 69.0, 48.0, 25.0],
+                [36.0, 75.0, 117.0, 81.0, 42.0],
+                [27.0, 56.0, 87.0, 60.0, 31.0],
+                [15.0, 31.0, 48.0, 33.0, 17.0],
+            ],
+        ],
+    ]
+).astype(np.float32)
+
+expect(
+    node, inputs=[x, W], outputs=[y], name="test_convtranspose_group_2_image_3"
+)
+```
+
+</details>
+
+
+<details>
 <summary>convtranspose_pads</summary>
 
 ```python
@@ -6491,7 +6735,9 @@ expect(node, inputs=[x, W], outputs=[y], name="test_convtranspose_pads")
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Cos-7">7</a>
 
 #### Inputs
 
@@ -6510,7 +6756,7 @@ This version of the operator has been available since version 7 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -6545,7 +6791,9 @@ expect(node, inputs=[x], outputs=[y], name="test_cos")
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Cosh-9">9</a>
 
 #### Inputs
 
@@ -6564,7 +6812,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -6690,6 +6938,24 @@ expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_1d_exclusive")
 
 
 <details>
+<summary>cumsum_1d_int32_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumSum", inputs=["x", "axis"], outputs=["y"], exclusive=1
+)
+x = np.array([1, 2, 3, 4, 5]).astype(np.int32)
+axis = np.int32(0)
+y = np.array([0, 1, 3, 6, 10]).astype(np.int32)
+expect(
+    node, inputs=[x, axis], outputs=[y], name="test_cumsum_1d_int32_exclusive"
+)
+```
+
+</details>
+
+
+<details>
 <summary>cumsum_1d_reverse</summary>
 
 ```python
@@ -6754,6 +7020,24 @@ x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
 axis = np.int32(1)
 y = np.array([1.0, 3.0, 6.0, 4.0, 9.0, 15.0]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_axis_1")
+```
+
+</details>
+
+
+<details>
+<summary>cumsum_2d_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumSum",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.int32).reshape((2, 3))
+axis = np.int32(0)
+y = np.array([1, 2, 3, 5, 7, 9]).astype(np.int32).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_int32")
 ```
 
 </details>
@@ -6941,7 +7225,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 19 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#DeformConv-19">19</a>
 
 #### Attributes
 
@@ -6985,7 +7271,7 @@ This version of the operator has been available since version 19 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -7002,12 +7288,10 @@ W = np.ones((1, 1, 2, 2), dtype=np.float32)
 
 # Convolution with padding
 offset_with_padding = np.zeros((1, 8, 4, 4), dtype=np.float32)
-offset_with_padding[
-    0, 0, 0, 0
-] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-offset_with_padding[
-    0, 5, 1, 2
-] = -0.1  # w-coord of [1, 0] element of kernel, at output position [1, 2]
+# h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_with_padding[0, 0, 0, 0] = 0.5
+# w-coord of [1, 0] element of kernel, at output position [1, 2]
+offset_with_padding[0, 5, 1, 2] = -0.1
 
 node_with_padding = onnx.helper.make_node(
     "DeformConv",
@@ -7037,12 +7321,10 @@ expect(
 
 # Convolution without padding
 offset_without_padding = np.zeros((1, 8, 2, 2), dtype=np.float32)
-offset_without_padding[
-    0, 0, 0, 0
-] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-offset_without_padding[
-    0, 5, 0, 1
-] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+# h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset_without_padding[0, 0, 0, 0] = 0.5
+# w-coord of [1, 0] element of kernel, at output position [0, 1]
+offset_without_padding[0, 5, 0, 1] = -0.1
 
 node_without_padding = onnx.helper.make_node(
     "DeformConv",
@@ -7082,12 +7364,10 @@ W = np.ones((1, 1, 2, 2), dtype=np.float32)
 B = np.ones((1,), dtype=np.float32)
 
 offset = np.zeros((1, 8, 2, 2), dtype=np.float32)
-offset[
-    0, 0, 0, 0
-] = 0.5  # h-coord of [0, 0] element of kernel, at output position [0, 0]
-offset[
-    0, 5, 0, 1
-] = -0.1  # w-coord of [1, 0] element of kernel, at output position [0, 1]
+# h-coord of [0, 0] element of kernel, at output position [0, 0]
+offset[0, 0, 0, 0] = 0.5
+# w-coord of [1, 0] element of kernel, at output position [0, 1]
+offset[0, 5, 0, 1] = -0.1
 
 mask = np.ones((1, 4, 2, 2), dtype=np.float32)
 mask[0, 2, 1, 1] = 0.2  # [1, 0] element of kernel at output position [1, 1]
@@ -7131,14 +7411,10 @@ X.shape = (1, 2, 3, 3)
 W = np.ones((1, 2, 2, 2), dtype=np.float32)
 
 offset = np.zeros((1, 16, 2, 2), dtype=np.float32)
-offset[
-    0, 0, 0, 0
-] = 0.5  # h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
-offset[
-    0, 13, 0, 1
-] = (
-    -0.1
-)  # w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+# h-coord of [0, 0] element of kernel in channel 0, at output position [0, 0]
+offset[0, 0, 0, 0] = 0.5
+# w-coord of [1, 0] element of kernel in channel 1, at output position [0, 1]
+offset[0, 13, 0, 1] = -0.1
 
 node = onnx.helper.make_node(
     "DeformConv",
@@ -7338,17 +7614,20 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
   full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
   must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
   a 1-D tensor for per-axis quantization, or have a rank identical to the input for blocked quantization.
-  See QuantizeLinear for details on quantization granularity."
+  See QuantizeLinear for details on quantization granularity.
+
   `x_zero_point` and `x` must have the same type. `x` and `y` must have the same shape. In the case of dequantizing
   `int32`, there's no zero point (zero point is supposed to be 0).
-  `zero-point` is usually not used in the case of float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz quantization,
-  but the dequantization formula remains the same for consistency, and `x_scale` still determines the output type.
+  `zero-point` is usually not used in the case of float8 and 4-bit types quantization, but the dequantization formula remains the same
+  for consistency. The output type is determined by the attribute `output_dtype`. If `output_dtype` is not supplied then the output type
+  is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
+
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>
+Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>
 
 #### Attributes
 
@@ -7357,6 +7636,8 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 <dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dt><tt>output_dtype</tt> : int (default is 0)</dt>
+<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `x_scale` data type (`T2`)</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -7373,17 +7654,19 @@ Other versions of this operator: <a href="Changelog.md#DequantizeLinear-10">10</
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> : T2</dt>
-<dd>N-D full precision output tensor. It has same shape as input `x`.</dd>
+<dt><tt>y</tt> : T3</dt>
+<dd>N-D full precision output tensor. It has the same shape as input `x`. The data type is specified by the `output_dtype` attribute or, in its absence, the type of `x_scale`.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>The type of the inputs 'x_zero_point' and 'x'.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'x_scale' determines the output type.</dd>
+<dd>The type of the input 'x_scale'.</dd>
+<dt><tt>T3</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>The type of the output 'y'.</dd>
 </dl>
 
 
@@ -7641,6 +7924,34 @@ expect(
 
 
 <details>
+<summary>float4e2m1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.FLOAT4E2M1, [5], [0, 1, -1, 1.5, -4])
+x_scale = np.float32(2)
+x_zero_point = make_tensor("x_zero_point", TensorProto.FLOAT4E2M1, (1,), [0])
+y = np.array([0, 2, -2, 3, -8], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_float4e2m1",
+)
+```
+
+</details>
+
+
+<details>
 <summary>int16</summary>
 
 ```python
@@ -7680,7 +7991,7 @@ node = onnx.helper.make_node(
 # scalar zero point and scale
 x = make_tensor("x", TensorProto.INT4, [5], [0, 1, 7, -4, -8])
 x_scale = np.float32(2)
-x_zero_point = make_tensor("zero_point", TensorProto.INT4, (1,), [1])
+x_zero_point = make_tensor("x_zero_point", TensorProto.INT4, (1,), [1])
 y = np.array([-2, 0, 12, -10, -18], dtype=np.float32)
 
 expect(
@@ -7734,7 +8045,7 @@ node = onnx.helper.make_node(
 # scalar zero point and scale
 x = make_tensor("x", TensorProto.UINT4, [5], [0, 1, 7, 10, 15])
 x_scale = np.float32(2)
-x_zero_point = make_tensor("zero_point", TensorProto.UINT4, (1,), [1])
+x_zero_point = make_tensor("x_zero_point", TensorProto.UINT4, (1,), [1])
 y = np.array([-2, 0, 12, 18, 28], dtype=np.float32)
 
 expect(
@@ -7758,7 +8069,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Det-11">11</a>
 
 #### Inputs
 
@@ -7777,7 +8090,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to floating-point tensors.</dd>
 </dl>
 
@@ -7927,9 +8240,9 @@ expect(node, inputs=[x, y], outputs=[z], name="test_div_bcast")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Dropout-1">1</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-12">12</a>
+Other versions of this operator: <a href="Changelog.md#Dropout-1">1</a>, <a href="Changelog.md#Dropout-6">6</a>, <a href="Changelog.md#Dropout-7">7</a>, <a href="Changelog.md#Dropout-10">10</a>, <a href="Changelog.md#Dropout-12">12</a>, <a href="Changelog.md#Dropout-13">13</a>
 
 #### Attributes
 
@@ -7961,9 +8274,9 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input 'ratio' types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
 <dd>Constrain output 'mask' types to boolean tensors.</dd>
@@ -8513,9 +8826,9 @@ expect(node, inputs=[X], outputs=[Y], name="test_einsum_transpose")
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Elu-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Elu-1">1</a>, <a href="Changelog.md#Elu-6">6</a>
 
 #### Attributes
 
@@ -8541,7 +8854,7 @@ Other versions of this operator: <a href="Changelog.md#Elu-1">1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -8779,7 +9092,7 @@ Other versions of this operator: <a href="Changelog.md#Exp-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -8929,7 +9242,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#EyeLike-9">9</a>
 
 #### Attributes
 
@@ -8957,9 +9272,9 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
 <dd>Constrain input types. Strings and complex are not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
 <dd>Constrain output types. Strings and complex are not supported.</dd>
 </dl>
 
@@ -9040,9 +9355,9 @@ expect(node, inputs=[x], outputs=[y], name="test_eyelike_without_dtype")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Flatten-1">1</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Flatten-1">1</a>, <a href="Changelog.md#Flatten-9">9</a>, <a href="Changelog.md#Flatten-11">11</a>, <a href="Changelog.md#Flatten-13">13</a>, <a href="Changelog.md#Flatten-21">21</a>
 
 #### Attributes
 
@@ -9068,7 +9383,7 @@ Other versions of this operator: <a href="Changelog.md#Flatten-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Constrain input and output to all tensor types up to IRv10.</dd>
 </dl>
 
@@ -9256,9 +9571,9 @@ expect(node, inputs=[x], outputs=[y], name="test_floor")
 
 #### Version
 
-This version of the operator has been available since version 14 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-7">7</a>
+Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Changelog.md#GRU-3">3</a>, <a href="Changelog.md#GRU-7">7</a>, <a href="Changelog.md#GRU-14">14</a>
 
 #### Attributes
 
@@ -9310,7 +9625,7 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
@@ -9495,7 +9810,22 @@ expect(
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
 
-  If `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
+  It is an indexing operation that indexes into the input `data` along a single (specified) axis.
+  Each entry in `indices` produces a `r-1` dimensional slice of the input tensor.
+  The entire operation produces, conceptually, a `q`-dimensional tensor of `r-1` dimensional slices,
+  which is arranged into a `q + (r-1)`-dimensional tensor, with the `q` dimensions taking the
+  place of the original `axis` that is being indexed into.
+
+  The following few examples illustrate how `Gather` works for specific shapes of `data`,
+  `indices`, and given value of `axis`:
+  | data shape | indices shape | axis | output shape | output equation |
+  | --- | --- | --- | --- | --- |
+  | (P, Q) | ( )  (a scalar)   | 0 | (Q)       | output[q] = data[indices, q] |
+  | (P, Q, R) | ( )  (a scalar)   | 1 | (P, R)       | output[p, r] = data[p, indices, r] |
+  | (P, Q) | (R, S) | 0 | (R, S, Q) | output[r, s, q] = data[ [indices[r, s], q] |
+  | (P, Q) | (R, S) | 1 | (P, R, S) | output[p, r, s] = data[ p, indices[r, s]] |
+
+  More generally, if `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
   then `output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]`:
 
   ```
@@ -10432,7 +10762,9 @@ expect(node, inputs=[a, b, c], outputs=[y], name="test_gemm_transposeB")
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GlobalAveragePool-1">1</a>
 
 #### Inputs
 
@@ -10451,7 +10783,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -10510,9 +10842,9 @@ expect(node, inputs=[x], outputs=[y], name="test_globalaveragepool_precomputed")
 
 #### Version
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">1</a>
+Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">1</a>, <a href="Changelog.md#GlobalLpPool-2">2</a>
 
 #### Attributes
 
@@ -10538,7 +10870,7 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -10551,7 +10883,9 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">1</a>
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#GlobalMaxPool-1">1</a>
 
 #### Inputs
 
@@ -10570,7 +10904,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -10800,9 +11134,9 @@ Other versions of this operator: <a href="Changelog.md#GreaterOrEqual-12">12</a>
 
 #### Version
 
-This version of the operator has been available since version 20 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#GridSample-16">16</a>
+Other versions of this operator: <a href="Changelog.md#GridSample-16">16</a>, <a href="Changelog.md#GridSample-20">20</a>
 
 #### Attributes
 
@@ -10834,9 +11168,9 @@ Other versions of this operator: <a href="Changelog.md#GridSample-16">16</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input `X` and output `Y` types to all tensor types.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain grid types to float tensors.</dd>
 </dl>
 
@@ -11478,7 +11812,7 @@ expect(
   y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
   ```
   where the mean and variance are computed per instance per group of channels, and
-  `scale` and `bias` should be specified for each group of channels. The number of
+  `scale` and `bias` should be specified for each channel. The number of
   groups `num_groups` should be divisible by the number of channels so that there are
   an equal number of channels per group.
 
@@ -11656,7 +11990,12 @@ size = np.int32(10)
 a0 = 25 / 46
 a1 = 1 - a0
 y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_hammingwindow")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_hammingwindow",
+)
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -11668,7 +12007,12 @@ a1 = 1 - a0
 y = a0 - a1 * np.cos(
     2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_hammingwindow_symmetric")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_hammingwindow_symmetric",
+)
 ```
 
 </details>
@@ -11731,7 +12075,9 @@ size = np.int32(10)
 a0 = 0.5
 a1 = 0.5
 y = a0 - a1 * np.cos(2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / size)
-expect(node, inputs=[size], outputs=[y], name="test_hannwindow")
+expect(
+    node, inputs=[size], outputs=[y.astype(np.float32)], name="test_hannwindow"
+)
 
 # Test symmetric window
 node = onnx.helper.make_node(
@@ -11743,7 +12089,12 @@ a1 = 0.5
 y = a0 - a1 * np.cos(
     2 * np.pi * np.arange(0, size, 1, dtype=np.float32) / (size - 1)
 )
-expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
+expect(
+    node,
+    inputs=[size],
+    outputs=[y.astype(np.float32)],
+    name="test_hannwindow_symmetric",
+)
 ```
 
 </details>
@@ -11757,9 +12108,9 @@ expect(node, inputs=[size], outputs=[y], name="test_hannwindow_symmetric")
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">1</a>
+Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">1</a>, <a href="Changelog.md#HardSigmoid-6">6</a>
 
 #### Attributes
 
@@ -11787,7 +12138,7 @@ Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -11841,7 +12192,9 @@ expect(node, inputs=[x], outputs=[y], name="test_hardsigmoid_default")
 
 #### Version
 
-This version of the operator has been available since version 14 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#HardSwish-14">14</a>
 
 #### Inputs
 
@@ -11860,7 +12213,7 @@ This version of the operator has been available since version 14 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -12027,9 +12380,9 @@ expect(node, inputs=[x], outputs=[y], name="test_hardmax_default_axis")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-19">19</a>
+Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a href="Changelog.md#Identity-13">13</a>, <a href="Changelog.md#Identity-14">14</a>, <a href="Changelog.md#Identity-16">16</a>, <a href="Changelog.md#Identity-19">19</a>, <a href="Changelog.md#Identity-21">21</a>
 
 #### Inputs
 
@@ -12048,7 +12401,7 @@ Other versions of this operator: <a href="Changelog.md#Identity-1">1</a>, <a hre
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128))</dt>
 <dd>Constrain input and output types to all tensor, sequence, and optional types.</dd>
 </dl>
 
@@ -12160,9 +12513,9 @@ expect(node, inputs=[data], outputs=[data], name="test_identity_sequence")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-19">19</a>
+Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Changelog.md#If-11">11</a>, <a href="Changelog.md#If-13">13</a>, <a href="Changelog.md#If-16">16</a>, <a href="Changelog.md#If-19">19</a>, <a href="Changelog.md#If-21">21</a>
 
 #### Attributes
 
@@ -12190,8 +12543,8 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4))</dt>
-<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4)), optional(tensor(float4e2m1))</dt>
+<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv11.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
 </dl>
@@ -12708,9 +13061,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">1</a>
+Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">1</a>, <a href="Changelog.md#InstanceNormalization-6">6</a>
 
 #### Attributes
 
@@ -12740,7 +13093,7 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -13161,9 +13514,9 @@ expect(node, inputs=[x], outputs=[y], name="test_lrn")
 
 #### Version
 
-This version of the operator has been available since version 14 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="Changelog.md#LSTM-7">7</a>
+Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="Changelog.md#LSTM-7">7</a>, <a href="Changelog.md#LSTM-14">14</a>
 
 #### Attributes
 
@@ -13221,7 +13574,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
@@ -14201,9 +14554,9 @@ expect(node, inputs=[x], outputs=[y], name="test_logsoftmax_default_axis")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-16">16</a>, <a href="Changelog.md#Loop-19">19</a>
+Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="Changelog.md#Loop-11">11</a>, <a href="Changelog.md#Loop-13">13</a>, <a href="Changelog.md#Loop-16">16</a>, <a href="Changelog.md#Loop-19">19</a>, <a href="Changelog.md#Loop-21">21</a>
 
 #### Attributes
 
@@ -14233,8 +14586,8 @@ Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4))</dt>
-<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4)), optional(tensor(float4e2m1))</dt>
+<dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv11.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>tensor of int64, which should be a scalar.</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
@@ -14482,7 +14835,7 @@ node = onnx.helper.make_node(
 )
 
 trip_count = np.array(5).astype(np.int64)
-seq_empty: List[Any] = []
+seq_empty: list[Any] = []
 seq_res = [x[: int(i)] for i in x]
 cond = np.array(1).astype(bool)
 expect(
@@ -14679,7 +15032,7 @@ node = onnx.helper.make_node(
 trip_count = np.array(5).astype(np.int64)
 cond = np.array(1).astype(bool)
 seq_res = compute_loop_outputs(x, [x0], trip_count)
-opt_seq_in: List[Any] = [x0]
+opt_seq_in: list[Any] = [x0]
 expect(
     node,
     inputs=[trip_count, cond, opt_seq_in],
@@ -14705,7 +15058,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LpNormalization-1">1</a>
 
 #### Attributes
 
@@ -14733,7 +15088,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -14766,9 +15121,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#LpPool-1">1</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-11">11</a>
+Other versions of this operator: <a href="Changelog.md#LpPool-1">1</a>, <a href="Changelog.md#LpPool-2">2</a>, <a href="Changelog.md#LpPool-11">11</a>, <a href="Changelog.md#LpPool-18">18</a>
 
 #### Attributes
 
@@ -14806,7 +15161,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">1</a>, <a href=
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -15124,7 +15479,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lppool_3d_default")
 
 ### <a name="MatMul"></a><a name="matmul">**MatMul**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 
 #### Version
 
@@ -15192,7 +15547,7 @@ expect(node, inputs=[a, b], outputs=[c], name="test_matmul_4d")
 
 ### <a name="MatMulInteger"></a><a name="matmulinteger">**MatMulInteger**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 
 #### Version
@@ -15425,9 +15780,9 @@ for op_dtype in all_numeric_dtypes:
 
 #### Version
 
-This version of the operator has been available since version 12 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href="Changelog.md#MaxPool-8">8</a>, <a href="Changelog.md#MaxPool-10">10</a>, <a href="Changelog.md#MaxPool-11">11</a>
+Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href="Changelog.md#MaxPool-8">8</a>, <a href="Changelog.md#MaxPool-10">10</a>, <a href="Changelog.md#MaxPool-11">11</a>, <a href="Changelog.md#MaxPool-12">12</a>
 
 #### Attributes
 
@@ -15467,7 +15822,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(uint8)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input and output types to float and 8 bit tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
@@ -16294,7 +16649,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#MaxRoiPool-1">1</a>
 
 #### Attributes
 
@@ -16324,7 +16681,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -16352,9 +16709,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">9</a>
+Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">9</a>, <a href="Changelog.md#MaxUnpool-11">11</a>
 
 #### Attributes
 
@@ -16388,7 +16745,7 @@ Other versions of this operator: <a href="Changelog.md#MaxUnpool-9">9</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
@@ -16881,7 +17238,9 @@ for op_dtype in all_numeric_dtypes:
 
 #### Version
 
-This version of the operator has been available since version 18 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Mish-18">18</a>
 
 #### Inputs
 
@@ -16900,7 +17259,7 @@ This version of the operator has been available since version 18 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input X and output types to float tensors.</dd>
 </dl>
 
@@ -17317,7 +17676,9 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mul_bcast")
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Multinomial-7">7</a>
 
 #### Attributes
 
@@ -17347,7 +17708,7 @@ This version of the operator has been available since version 7 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain output types to integral tensors.</dd>
@@ -17518,9 +17879,9 @@ expect(node, inputs=[x], outputs=[y], name="test_neg")
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>
+Other versions of this operator: <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>
 
 #### Attributes
 
@@ -17552,7 +17913,7 @@ Other versions of this operator: <a href="Changelog.md#NegativeLogLikelihoodLoss
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input, weight, and output types to floating-point tensors.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain target to integer types</dd>
@@ -19569,9 +19930,9 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-19">19</a>
+Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Changelog.md#Pad-2">2</a>, <a href="Changelog.md#Pad-11">11</a>, <a href="Changelog.md#Pad-13">13</a>, <a href="Changelog.md#Pad-18">18</a>, <a href="Changelog.md#Pad-19">19</a>, <a href="Changelog.md#Pad-21">21</a>
 
 #### Attributes
 
@@ -19603,8 +19964,8 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
-<dd>Constrain input and output types to all tensor types up to IRv10.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
+<dd>Constrain input and output types to all tensor types up to IRv11.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
 </dl>
@@ -20020,7 +20381,7 @@ expect(
 
 ### <a name="QLinearMatMul"></a><a name="qlinearmatmul">**QLinearMatMul**</a>
 
-  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html.
+  Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
   It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
   and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
   For (x / y_scale), it is rounding to nearest ties to even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
@@ -20238,14 +20599,22 @@ for quant_type_name in ["uint8", "int8"]:
   The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
   low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
   granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
-  For saturation, it saturates according to:
-  `uint8`: `[0, 255]`, `int8`: `[-128, 127]`, `uint16`: `[0, 65535]`, `int16`: `[-32768, 32767]`, `uint4`: `[0, 15]`,
-  `int4`: `[-8, 7]`.
+
+  Saturation is done according to:
+  - uint16: [0, 65535]
+  - int16: [-32768, 32767]
+  - uint8: [0, 255]
+  - int8: [-128, 127]
+  - uint4: [0, 15]
+  - int4: [-8, 7]
+
   For `(x / y_scale)`, it rounds to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
-  `y_zero_point` and `y` must have the same type.
-  `y_zero_point` is usually not used for quantization to float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, but
-  the quantization formula remains the same for consistency, and the type of the attribute `y_zero_point` still
-  determines the quantization type.
+
+  `y_zero_point` and `y` must have the same type. `y_zero_point` is usually not used for quantization to float8 and 4bit types, but the quantization
+  formula remains the same for consistency, and the type of the attribute `y_zero_point` still determines the quantization type.
+  `x` and `y_scale` are allowed to have different types. The type of `y_scale` determines the precision of the division operation between `x` and
+  `y_scale`, unless the `precision` attribute is specified.
+
   There are three supported quantization granularities, determined by the shape of `y_scale`.
   In all cases, `y_zero_point` must have the same shape as `y_scale`.
   - Per-tensor (per-layer) quantization: `y_scale` is a scalar.
@@ -20257,17 +20626,21 @@ for quant_type_name in ["uint8", "int8"]:
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>
+Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>, <a href="Changelog.md#QuantizeLinear-13">13</a>, <a href="Changelog.md#QuantizeLinear-19">19</a>, <a href="Changelog.md#QuantizeLinear-21">21</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
+<dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used only for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`. When the rank of the input is 1, per-tensor quantization is applied, rendering the axis unnecessary in this scenario.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dt><tt>output_dtype</tt> : int (default is 0)</dt>
+<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `y_zero_point` data type (`T3`). If neither `output_dtype` nor `y_zero_point` are supplied, output data type is uint8. If both `output_dtype` and `y_zero_point` are specified, `output_dtype` must be `T3`.</dd>
+<dt><tt>precision</tt> : int (default is 0)</dt>
+<dd>(Optional) The precision of the division operation between `x` and `y_scale`. If not provided, it will be the same as the type of `y_scale`.</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
 <dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>
@@ -20277,16 +20650,16 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dl>
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D full precision Input tensor to be quantized.</dd>
-<dt><tt>y_scale</tt> : T1</dt>
+<dt><tt>y_scale</tt> : T2</dt>
 <dd>Scale for doing quantization to get `y`. For per-tensor/layer quantization the scale is a scalar, for per-axis quantization it is a 1-D Tensor and for blocked quantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
-<dt><tt>y_zero_point</tt> (optional) : T2</dt>
+<dt><tt>y_zero_point</tt> (optional) : T3</dt>
 <dd>Zero point for doing quantization to get `y`. Shape must match `y_scale`.Default is uint8 with zero point of 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> : T2</dt>
+<dt><tt>y</tt> : T3</dt>
 <dd>N-D quantized output tensor. It has same shape as input `x`.</dd>
 </dl>
 
@@ -20295,7 +20668,9 @@ Other versions of this operator: <a href="Changelog.md#QuantizeLinear-10">10</a>
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
 <dd>The type of the input 'x'.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
+<dd>The type of the input 'y_scale'.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
@@ -20340,7 +20715,7 @@ expect(
 
 
 <details>
-<summary>blocked</summary>
+<summary>blocked_asymmetric</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -20400,7 +20775,74 @@ expect(
     node,
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
-    name="test_quantizelinear_blocked",
+    name="test_quantizelinear_blocked_asymmetric",
+)
+```
+
+</details>
+
+
+<details>
+<summary>blocked_symmetric</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale"],
+    outputs=["y"],
+    axis=1,
+    block_size=2,
+    output_dtype=TensorProto.INT16,
+)
+
+x = np.array(
+    [
+        [6.0, -8, -10, 5.0],
+        [1.0, 8.0, 4.0, 5.0],
+        [0.0, 20.0, 10.0, 4.0],
+    ],
+    dtype=np.float32,
+)
+
+y_scale = np.array(
+    [
+        [1.5, 2.5],
+        [3.0, 4.9],
+        [5.1, 6.9],
+    ],
+    dtype=np.float32,
+)
+
+# x.shape = (3, 4)
+# y_scale.shape = (3, 2)
+
+block_axis = 1
+# The block shape is [x.shape[i] // y_scale.shape[i] for i in range(len(x.shape))] = (1, 2)
+assert all(
+    x.shape[i] == y_scale.shape[i]
+    for i in range(len(x.shape))
+    if i != block_axis
+)
+assert x.shape[block_axis] % y_scale.shape[block_axis] == 0
+repeats = x.shape[block_axis] // y_scale.shape[block_axis]
+
+# Create element-wise scale and zero point
+y_scale_elementwise = np.repeat(y_scale, repeats=repeats, axis=block_axis)
+
+y_val = np.clip(
+    np.rint(x / y_scale_elementwise), a_min=-32768, a_max=32767
+).astype(np.int16)
+y = make_tensor(
+    "y",
+    TensorProto.INT16,
+    x.shape,
+    y_val,
+)
+expect(
+    node,
+    inputs=[x, y_scale],
+    outputs=[y],
+    name="test_quantizelinear_blocked_symmetric",
 )
 ```
 
@@ -20419,7 +20861,7 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
+y_zero_point = make_tensor("y_zero_point", TensorProto.FLOAT8E4M3FN, [1], [0])
 y = make_tensor("y", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 448, 96])
 
 expect(
@@ -20445,7 +20887,7 @@ node = onnx.helper.make_node(
 
 x = np.array([0.0, 1.0, 2.0, 100000.0, 200.0]).astype(np.float32)
 y_scale = np.float32(2)
-y_zero_point = make_tensor("zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
+y_zero_point = make_tensor("y_zero_point", TensorProto.FLOAT8E5M2, [1], [0.0])
 y = make_tensor("y", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 49152, 96])
 
 expect(
@@ -20453,6 +20895,50 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_e5m2",
+)
+```
+
+</details>
+
+
+<details>
+<summary>float4e2m1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-30, -20, 6, 9],
+        [-0.0, -2.5, -4.8, -8.6],
+    ]
+).astype(np.float32)
+
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "y_zero_point",
+    TensorProto.FLOAT4E2M1,
+    y_scale.shape,
+    np.zeros_like(y_scale),
+)
+y = make_tensor(
+    "y",
+    TensorProto.FLOAT4E2M1,
+    x.shape,
+    [0, 1, 2, 4, -6, -6, 2, 3, 0, -0.5, -1, -2],
+)
+
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_float4e2m1",
 )
 ```
 
@@ -20544,7 +21030,7 @@ x = np.array(
 
 y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
 y_zero_point = make_tensor(
-    "zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
+    "y_zero_point", TensorProto.INT4, y_scale.shape, np.ones_like(y_scale)
 )
 y = make_tensor(
     "y", TensorProto.INT4, x.shape, [1, 2, 3, 5, -8, -6, 3, 4, 4, 5, 5, 7]
@@ -20664,7 +21150,7 @@ x = np.array(
 
 y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
 y_zero_point = make_tensor(
-    "zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
+    "y_zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
 )
 y = make_tensor(
     "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, -1, -1, 3, 4, 4, 5, 5, 11]
@@ -20726,9 +21212,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 14 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Changelog.md#RNN-7">7</a>
+Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Changelog.md#RNN-7">7</a>, <a href="Changelog.md#RNN-14">14</a>
 
 #### Attributes
 
@@ -20778,7 +21264,7 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Ch
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
@@ -20947,7 +21433,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#RandomNormal-1">1</a>
 
 #### Attributes
 
@@ -20977,7 +21465,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
@@ -20994,7 +21482,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#RandomNormalLike-1">1</a>
 
 #### Attributes
 
@@ -21026,9 +21516,9 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
@@ -21044,7 +21534,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#RandomUniform-1">1</a>
 
 #### Attributes
 
@@ -21074,7 +21566,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
@@ -21091,7 +21583,9 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#RandomUniformLike-1">1</a>
 
 #### Attributes
 
@@ -21123,9 +21617,9 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
@@ -22480,7 +22974,7 @@ expect(
     node,
     inputs=[data, axes],
     outputs=[reduced],
-    name="test_reduce_min_empty_set",
+    name="test_reduce_max_empty_set",
 )
 ```
 
@@ -23566,7 +24060,7 @@ expect(
     node,
     inputs=[data, axes],
     outputs=[reduced],
-    name="test_reduce_sum_negative_axes_keepdims_random",
+    name="test_reduce_sum_empty_axes_input_noop",
 )
 ```
 
@@ -24172,9 +24666,9 @@ expect(node, inputs=[x], outputs=[y], name="test_relu")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Reshape-1">1</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-19">19</a>
+Other versions of this operator: <a href="Changelog.md#Reshape-1">1</a>, <a href="Changelog.md#Reshape-5">5</a>, <a href="Changelog.md#Reshape-13">13</a>, <a href="Changelog.md#Reshape-14">14</a>, <a href="Changelog.md#Reshape-19">19</a>, <a href="Changelog.md#Reshape-21">21</a>
 
 #### Attributes
 
@@ -24202,7 +24696,7 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -25346,7 +25840,7 @@ expect(
     node,
     inputs=[data, roi, sizes],
     outputs=[output],
-    name="test_resize_tf_crop_and_resize",
+    name="test_resize_tf_crop_and_resize_extrapolation_value",
 )
 ```
 
@@ -26278,7 +26772,7 @@ expect(
     node,
     inputs=[data, sizes],
     outputs=[output],
-    name="test_resize_upsample_sizes_nearest_not_larger",
+    name="test_resize_upsample_sizes_nearest_not_smaller",
 )
 ```
 
@@ -26517,9 +27011,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 16 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#RoiAlign-10">10</a>
+Other versions of this operator: <a href="Changelog.md#RoiAlign-10">10</a>, <a href="Changelog.md#RoiAlign-16">16</a>
 
 #### Attributes
 
@@ -26559,7 +27053,7 @@ Other versions of this operator: <a href="Changelog.md#RoiAlign-10">10</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd>Constrain types to int tensors.</dd>
@@ -26904,7 +27398,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Round-11">11</a>
 
 #### Inputs
 
@@ -26923,7 +27419,7 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -26959,6 +27455,8 @@ x = np.array(
         -2.8,
     ]
 ).astype(np.float32)
+
+# expected output
 y = np.array(
     [
         0.0,
@@ -26977,9 +27475,7 @@ y = np.array(
         -2.0,
         -3.0,
     ]
-).astype(
-    np.float32
-)  # expected output
+).astype(np.float32)
 expect(node, inputs=[x], outputs=[y], name="test_round")
 ```
 
@@ -27058,6 +27554,7 @@ for i in range(nstfts):
     complex_out = np.fft.fft(signal[0, start:stop, 0])[0:onesided_length]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
 
+output = output.astype(signal.dtype)
 expect(node, inputs=[signal, step, length], outputs=[output], name="test_stft")
 
 node = onnx.helper.make_node(
@@ -27083,6 +27580,8 @@ for i in range(nstfts):
         0:onesided_length
     ]
     output[0, i] = np.stack((complex_out.real, complex_out.imag), axis=1)
+window = window.astype(signal.dtype)
+output = output.astype(signal.dtype)
 expect(
     node,
     inputs=[signal, step, window],
@@ -27220,9 +27719,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-19">19</a>
+Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="Changelog.md#Scan-9">9</a>, <a href="Changelog.md#Scan-11">11</a>, <a href="Changelog.md#Scan-16">16</a>, <a href="Changelog.md#Scan-19">19</a>, <a href="Changelog.md#Scan-21">21</a>
 
 #### Attributes
 
@@ -27258,8 +27757,8 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
-<dd>All Tensor types up to IRv10.</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
+<dd>All Tensor types up to IRv11.</dd>
 </dl>
 
 
@@ -28149,9 +28648,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Selu-1">1</a>
+Other versions of this operator: <a href="Changelog.md#Selu-1">1</a>, <a href="Changelog.md#Selu-6">6</a>
 
 #### Attributes
 
@@ -28179,7 +28678,7 @@ Other versions of this operator: <a href="Changelog.md#Selu-1">1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -28930,9 +29429,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-19">19</a>
+Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="Changelog.md#Shape-13">13</a>, <a href="Changelog.md#Shape-15">15</a>, <a href="Changelog.md#Shape-19">19</a>, <a href="Changelog.md#Shape-21">21</a>
 
 #### Attributes
 
@@ -28960,7 +29459,7 @@ Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain output to int64 tensor.</dd>
@@ -29205,7 +29704,9 @@ expect(node, inputs=[x], outputs=[y], name="test_sign")
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Sin-7">7</a>
 
 #### Inputs
 
@@ -29224,7 +29725,7 @@ This version of the operator has been available since version 7 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -29259,7 +29760,9 @@ expect(node, inputs=[x], outputs=[y], name="test_sin")
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Sinh-9">9</a>
 
 #### Inputs
 
@@ -29278,7 +29781,7 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -29313,9 +29816,9 @@ expect(node, inputs=[x], outputs=[y], name="test_sinh")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Size-1">1</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-19">19</a>
+Other versions of this operator: <a href="Changelog.md#Size-1">1</a>, <a href="Changelog.md#Size-13">13</a>, <a href="Changelog.md#Size-19">19</a>, <a href="Changelog.md#Size-21">21</a>
 
 #### Inputs
 
@@ -29334,7 +29837,7 @@ Other versions of this operator: <a href="Changelog.md#Size-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
@@ -31188,7 +31691,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Softplus-1">1</a>
 
 #### Inputs
 
@@ -31207,7 +31712,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -31244,7 +31749,9 @@ expect(node, inputs=[x], outputs=[y], name="test_softplus")
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Softsign-1">1</a>
 
 #### Inputs
 
@@ -31263,7 +31770,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -32087,9 +32594,9 @@ expect(node, inputs=[x], outputs=[y], name="test_sqrt")
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-21">21</a>
 
 #### Inputs (1 - 2)
 
@@ -32110,8 +32617,8 @@ Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
-<dd>Constrain input and output types to all tensor types up to IRv10.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
+<dd>Constrain input and output types to all tensor types up to IRv11.</dd>
 </dl>
 
 
@@ -32863,7 +33370,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Tan-7">7</a>
 
 #### Inputs
 
@@ -32882,7 +33391,7 @@ This version of the operator has been available since version 7 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -32938,7 +33447,7 @@ Other versions of this operator: <a href="Changelog.md#Tanh-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -33302,7 +33811,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 10 of the default ONNX operator set.
+This version of the operator has been available since version 22 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#ThresholdedRelu-10">10</a>
 
 #### Attributes
 
@@ -33328,7 +33839,7 @@ This version of the operator has been available since version 10 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -33457,11 +33968,11 @@ expect(node, inputs=[x, repeats], outputs=[z], name="test_tile_precomputed")
 ### <a name="TopK"></a><a name="topk">**TopK**</a>
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
-  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+  shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
 
-  * Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+  * Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
     which contains the values of the top k elements along the specified axis
-  * Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+  * Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
     contains the indices of the top k elements (original indices from the input
     tensor).
 
@@ -33493,7 +34004,7 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{n-1}]</dd>
 <dt><tt>K</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
 </dl>
@@ -33502,9 +34013,9 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 
 <dl>
 <dt><tt>Values</tt> (differentiable) : T</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing top K values from the input tensor</dd>
 <dt><tt>Indices</tt> (non-differentiable) : I</dt>
-<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
 #### Type Constraints
@@ -33601,6 +34112,112 @@ expect(
 
 
 <details>
+<summary>top_k_same_values</summary>
+
+```python
+axis = 0
+largest = 0
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [0, 0, 0, 0],
+    dtype=np.int64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# (Pdb) print(values_ref)
+# [0 0 0]
+# (Pdb) print(indices_ref)
+# [0 1 2]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values",
+)
+```
+
+</details>
+
+
+<details>
+<summary>top_k_same_values_2d</summary>
+
+```python
+axis = 1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 1, 1]],
+    dtype=np.int64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+# [[0 0 0]
+# [1 1 1]
+# [1 1 2]]
+# print(indices_ref)
+# [[0 1 2]
+# [0 1 2]
+# [2 3 0]]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values_2d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>top_k_same_values_largest</summary>
+
+```python
+axis = 0
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [0, 0, 0, 0],
+    dtype=np.int64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+# [0 0 0]
+# print(indices_ref)
+# [0 1 2]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values_largest",
+)
+```
+
+</details>
+
+
+<details>
 <summary>top_k_smallest</summary>
 
 ```python
@@ -33649,6 +34266,48 @@ expect(
 </details>
 
 
+<details>
+<summary>top_k_uint64</summary>
+
+```python
+axis = 1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [
+        [0, 1, 2, 3],
+        [4, 5, 6, 7],
+        [8, 9, 10, 11],
+    ],
+    dtype=np.uint64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+# [[ 3  2  1]
+# [ 7  6  5]
+# [11 10  9]]
+# print(indices_ref)
+# [[3 2 1]
+# [3 2 1]
+# [3 2 1]]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_uint64",
+)
+```
+
+</details>
+
+
 ### <a name="Transpose"></a><a name="transpose">**Transpose**</a>
 
   Transpose the input tensor similar to numpy.transpose. For example, when
@@ -33657,9 +34316,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>, <a href="Changelog.md#Transpose-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>, <a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-21">21</a>
 
 #### Attributes
 
@@ -33685,7 +34344,7 @@ Other versions of this operator: <a href="Changelog.md#Transpose-1">1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -34474,6 +35133,44 @@ This version of the operator has been available since version 11 of the default 
 #### Examples
 
 <details>
+<summary>length_1</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=1,
+)
+
+x = np.array([0], dtype=np.int64)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+indices, inverse_indices, counts = specify_int64(
+    indices, inverse_indices, counts
+)
+# behavior changed with numpy >= 2.0
+inverse_indices = inverse_indices.reshape(-1)
+# print(y)
+# [0]
+# print(indices)
+# [0]
+# print(inverse_indices)
+# [0]
+# print(counts)
+# [1]
+
+expect(
+    node_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_length_1",
+)
+```
+
+</details>
+
+
+<details>
 <summary>not_sorted_without_axis</summary>
 
 ```python
@@ -34541,6 +35238,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=0)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behavior changed with numpy >= 2.0
+inverse_indices = inverse_indices.reshape(-1)
 # print(y)
 # [[1. 0. 0.]
 #  [2. 3. 4.]]
@@ -34585,6 +35284,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=1)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behavior changed with numpy >= 2.0
+inverse_indices = inverse_indices.reshape(-1)
 # print(y)
 # [[[0. 1.]
 #  [1. 1.]
@@ -34626,6 +35327,8 @@ y, indices, inverse_indices, counts = np.unique(x, True, True, True, axis=-1)
 indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
+# behavior changed with numpy >= 2.0
+inverse_indices = inverse_indices.reshape(-1)
 # print(y)
 # [[0. 1.]
 #  [0. 1.]
@@ -34689,9 +35392,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 21 of the default ONNX operator set.
+This version of the operator has been available since version 23 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-13">13</a>
+Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a href="Changelog.md#Unsqueeze-11">11</a>, <a href="Changelog.md#Unsqueeze-13">13</a>, <a href="Changelog.md#Unsqueeze-21">21</a>
 
 #### Inputs
 
@@ -34712,8 +35415,8 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a hr
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4)</dt>
-<dd>Constrain input and output types to all tensor types up to IRv10.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
+<dd>Constrain input and output types to all tensor types up to IRv11.</dd>
 </dl>
 
 

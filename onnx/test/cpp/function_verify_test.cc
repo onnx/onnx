@@ -10,11 +10,10 @@
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
+#include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
-#include "onnx/onnx-operators_pb.h"
-#include "onnx/onnx_pb.h"
 #include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE {
@@ -22,7 +21,7 @@ namespace Test {
 using namespace checker;
 using TENSOR_TYPES_MAP = std::unordered_map<std::string, std::vector<std::string>>;
 
-void GetFunctionProtoOpsetImport(
+static void GetFunctionProtoOpsetImport(
     const OpSchema& op,
     const FunctionProto* function_proto,
     std::unordered_map<std::string, int>& op_set) {
@@ -35,13 +34,13 @@ void GetFunctionProtoOpsetImport(
   }
 }
 
-void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* function_proto, int& counter) {
+static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* function_proto, int& counter) {
   // This is a simple partial type-checker for a function-body.
   // TODO: Revisit to make the type-checker more complete.
   TENSOR_TYPES_MAP tc_map;
   std::set<std::string> primitive_types(OpSchema::all_tensor_types().begin(), OpSchema::all_tensor_types().end());
   for (const auto& input : function_op.inputs()) {
-    std::string name = input.GetName();
+    const std::string& name = input.GetName();
     auto& tvec = tc_map[name];
     for (const auto& t : input.GetTypes()) {
       tvec.emplace_back(*t);
@@ -49,7 +48,7 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
   }
 
   for (const auto& output : function_op.outputs()) {
-    std::string name = output.GetName();
+    const std::string& name = output.GetName();
     auto& tvec = tc_map[name];
     for (const auto& t : output.GetTypes()) {
       tvec.emplace_back(*t);
@@ -60,7 +59,7 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
   GetFunctionProtoOpsetImport(function_op, function_proto, op_set);
 
   for (auto& node : function_proto->node()) {
-    std::string op_type = node.op_type();
+    const std::string& op_type = node.op_type();
     std::unordered_map<std::string, int>::const_iterator it = op_set.find(node.domain());
     if (it == op_set.end()) {
       fail_check(
@@ -77,7 +76,7 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
     auto num_actual_inputs = static_cast<size_t>(node.input_size());
 
     for (size_t i = 0; i < num_actual_inputs; ++i) {
-      auto actual_param_name = node.input(static_cast<int>(i));
+      const auto& actual_param_name = node.input(static_cast<int>(i));
       auto iter = tc_map.find(actual_param_name);
       if (iter != tc_map.end()) {
         // if i >= num_formal_inputs, it is a variadic parameter corresponding
@@ -91,8 +90,13 @@ void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* func
         for (auto& actual_type : iter->second) {
           if (allowed_types.find(actual_type) == allowed_types.end()) {
             fail_check(
-                "Input type " + actual_type + " of parameter " + actual_param_name + " of function " +
-                function_op.Name() + " is not allowed by operator " + op_type);
+                "Input type ",
+                actual_type,
+                " of parameter ",
+                actual_param_name + " of function ",
+                function_op.Name(),
+                " is not allowed by operator ",
+                op_type);
           }
         }
       }
@@ -120,16 +124,16 @@ using AttributeValues = std::vector<AttributeProto>;
 struct FunctionOpAttributeMap {
   std::unordered_map<std::string, std::vector<AttributeValues>> map;
 
-  std::string key(std::string domain, std::string opname, int opset_version) const {
+  std::string key(const std::string& domain, const std::string& opname, int opset_version) const {
     return domain + ":" + opname + ":" + std::to_string(opset_version);
   }
 
   void addTestCase(const std::string& opname, int opset_version, std::initializer_list<const char*> attributes) {
     auto& schema_test_cases = map[key("", opname, opset_version)];
-    schema_test_cases.push_back(AttributeValues());
+    schema_test_cases.emplace_back();
     auto& test_case = schema_test_cases.back();
     for (auto attr_text : attributes) {
-      test_case.push_back(AttributeProto());
+      test_case.emplace_back();
       OnnxParser::Parse(test_case.back(), attr_text);
     }
   }
@@ -170,9 +174,9 @@ struct FunctionOpAttributeMap {
     auto it = map.find(key_value);
     if (it != map.end())
       return it->second;
-    if (schema.attributes().size() == 0) {
+    if (schema.attributes().empty()) {
       // Test with no-attributes
-      map[key_value].push_back(std::vector<AttributeProto>());
+      map[key_value].emplace_back();
     }
     return map[key_value];
   }
@@ -189,16 +193,16 @@ struct FunctionTypeChecker {
   const std::vector<AttributeValues>* attribute_cases;
 
   FunctionTypeChecker(const OpSchema& op_schema, const FunctionProto& proto)
-      : schema(op_schema), function_proto(proto) {
-    attribute_cases = &FunctionOpAttributeMap::instance().getTestCases(op_schema);
-  }
+      : schema(op_schema),
+        function_proto(proto),
+        attribute_cases(&FunctionOpAttributeMap::instance().getTestCases(op_schema)) {}
 
   // Binds each type-variable in schema to a type-value
   std::unordered_map<std::string, DataType> typeVarBindings;
 
   std::vector<std::string> errors;
 
-  void recordError(const std::string& error, AttributeValues attrs) {
+  void recordError(const std::string& error, const AttributeValues& attrs) {
     std::ostringstream ostr;
     ostr << "Type checking failed for instantiation " << schema.Name() << ":" << schema.SinceVersion() << " {";
     for (auto& pair : typeVarBindings) {
@@ -211,7 +215,7 @@ struct FunctionTypeChecker {
     errors.push_back(ostr.str());
   }
 
-  void recordSuccess(AttributeValues attrs) {
+  void recordSuccess(const AttributeValues& attrs) {
     std::cout << "Type checking succeeded for instantiation " << schema.Name() << ":" << schema.SinceVersion() << " {";
     for (auto& pair : typeVarBindings) {
       std::cout << pair.first << " = " << *pair.second << ", ";
@@ -258,7 +262,7 @@ struct FunctionTypeChecker {
 
     for (auto& attribute_vals : *attribute_cases) {
       ONNX_TRY {
-        auto output_types = shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
+        shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
       }
       ONNX_CATCH(ONNX_NAMESPACE::InferenceError & e) {
         ONNX_HANDLE_EXCEPTION(([&]() { recordError(e.what(), attribute_vals); }));
@@ -267,7 +271,7 @@ struct FunctionTypeChecker {
   }
 
   std::string checkAll() {
-    if (attribute_cases->size() > 0)
+    if (!attribute_cases->empty())
       forTypeVar(0);
     std::string all_errors = "";
     for (const std::string& error : errors)
@@ -276,7 +280,7 @@ struct FunctionTypeChecker {
   }
 };
 
-void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int& counter) {
+static void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int& counter) {
   // Verify function proto is valid
   if (!function_proto) {
     fail_check("Cannot get function body for op '", op.Name(), "'");
@@ -305,7 +309,7 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int
 
   FunctionTypeChecker type_checker(op, *function_proto);
   auto type_errors = type_checker.checkAll();
-  auto success = (type_errors == "");
+  auto success = (type_errors.empty());
   ASSERT_TRUE(success) << type_errors;
 }
 
@@ -314,7 +318,7 @@ void VerifyFunction(const OpSchema& op, const FunctionProto* function_proto, int
 TEST(FunctionVerification, VerifyFunctionOps) {
   const std::vector<OpSchema> schemas = OpSchemaRegistry::get_all_schemas();
   int function_counter = 0, verified_counter = 0;
-  for (const auto s : schemas) {
+  for (const auto& s : schemas) {
     if (!s.HasFunction())
       continue;
     // Skip test for functions with known errors that need to be fixed:
@@ -330,11 +334,11 @@ TEST(FunctionVerification, VerifyFunctionOps) {
         VerifyFunction(s, function_body, verified_counter);
       }
     }
-    ONNX_CATCH(ONNX_NAMESPACE::checker::ValidationError e) {
+    ONNX_CATCH(const ONNX_NAMESPACE::checker::ValidationError& e) {
       ONNX_HANDLE_EXCEPTION([&]() { FAIL() << e.what(); });
     }
   }
-  std::cerr << "[          ] Verified " << verified_counter << "/" << function_counter << " Functions." << std::endl;
+  std::cerr << "[          ] Verified " << verified_counter << "/" << function_counter << " Functions." << '\n';
 }
 
 // Verify that FunctionExpandHelper obtains missing default attributes
@@ -352,7 +356,7 @@ TEST(FunctionVerification, VerifyFunctionExpandHelper) {
 
   for (const auto& node : graph.node()) {
     if (node.op_type() == "ReduceMean") {
-      auto attr = node.attribute(0);
+      const auto& attr = node.attribute(0);
       EXPECT_EQ(attr.name(), "axes");
       EXPECT_EQ(attr.ints().size(), default_axes_attribute.ints().size());
 
@@ -366,7 +370,7 @@ TEST(FunctionVerification, VerifyFunctionExpandHelper) {
          << "the default attribute `axes` has not been assigned to ReduceMean op.";
 }
 
-void RegisterFunctionSchema() {
+static void RegisterFunctionSchema() {
   ONNX_NAMESPACE::OpSchema function_schema;
   function_schema.SetName("DynamicQuantizeLinear_Fake")
       .SetDomain(AI_ONNX_ML_DOMAIN)
