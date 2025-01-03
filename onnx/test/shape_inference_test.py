@@ -977,6 +977,42 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    def test_rms_normalization(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
+                ("scale", TensorProto.FLOAT, ("H", "W")),
+            ],
+            [make_node("RMSNormalization", ["X", "scale"], ["y"], axis=2)],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))])  # type: ignore
+
+    def test_skip_rms_normalization(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
+                ("S", TensorProto.FLOAT, ("N", "C", "H", "W")),
+                ("gamma", TensorProto.FLOAT, ("H", "W")),
+            ],
+            [make_node("RMSNormalization", ["X", "S", "gamma"], ["y"], axis=2)],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))])  # type: ignore
+
+    def test_skip_layer_normalization(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
+                ("S", TensorProto.FLOAT, ("N", "C", "H", "W")),
+                ("gamma", TensorProto.FLOAT, ("H", "W")),
+                ("beta", TensorProto.FLOAT, ("H", "W")),
+            ],
+            [make_node("RMSNormalization", ["X", "S", "gamma", "beta"], ["y"], axis=2)],
+            [],
+        )
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))])  # type: ignore
+
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_size_axes_2_3(self, _, version) -> None:
         self.skipIf(version < 18, "axes is from Version 18")
