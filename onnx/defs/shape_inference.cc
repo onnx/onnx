@@ -191,17 +191,11 @@ static void UnionShapeInfo(const TensorShapeProto& source_shape, TensorShapeProt
     const auto target_dim = target_shape.dim(i);
     bool is_dims_conflict = [&]() {
       if (source_dim.has_dim_value()) {
-        if (target_dim.has_dim_value() && target_dim.dim_value() == source_dim.dim_value()) {
-          return false;
-        }
-        return true;
+        return !target_dim.has_dim_value() || target_dim.dim_value() != source_dim.dim_value();
       }
 
       if (source_dim.has_dim_param()) {
-        if (target_dim.has_dim_param() && target_dim.dim_param() == source_dim.dim_param()) {
-          return false;
-        }
-        return true;
+        return !(target_dim.has_dim_param() && target_dim.dim_param() == source_dim.dim_param());
       }
 
       return (target_dim.has_dim_value() || target_dim.has_dim_param());

@@ -28,7 +28,7 @@ struct Scan_9_8 final : public Adapter {
 
     Symbol input_dirs = Symbol("scan_input_directions");
     if (node->hasAttribute(input_dirs)) {
-      const std::vector<int64_t> scan_input_directions(node->is(input_dirs));
+      std::vector<int64_t> scan_input_directions(node->is(input_dirs));
       node->removeAttribute(input_dirs);
       node->is_(Symbol("directions"), std::move(scan_input_directions));
     }

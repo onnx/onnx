@@ -93,11 +93,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
   const char* value_field = nullptr;
 
-#define check_data_field(field)             \
-  bool has_##field = tensor.field().size(); \
-  if (has_##field) {                        \
-    ++num_value_fields;                     \
-    value_field = #field;                   \
+#define check_data_field(field)               \
+  bool has_##field = !tensor.field().empty(); \
+  if (has_##field) {                          \
+    ++num_value_fields;                       \
+    value_field = #field;                     \
   }
 
   check_data_field(float_data);
