@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from onnx.reference import astype
 from onnx.reference.op_run import OpRun
 
 
@@ -23,7 +24,7 @@ def _batchnorm_test_mode(
     mean = mean.reshape(-1, *dim_ones)
     var = var.reshape(-1, *dim_ones)
     y = s * (x - mean) / np.sqrt(var + epsilon) + bias
-    return y.astype(x.dtype)  # type: ignore
+    return astype(y, x.dtype)  # type: ignore
 
 
 def _batchnorm_training_mode(
@@ -42,11 +43,11 @@ def _batchnorm_training_mode(
     output_var = var * momentum + saved_var * (1 - momentum)
     y = _batchnorm_test_mode(x, s, bias, saved_mean, saved_var, epsilon=epsilon)
     return (  # type: ignore
-        y.astype(x.dtype),
-        saved_mean.astype(x.dtype),
-        saved_var.astype(x.dtype),
-        output_mean.astype(x.dtype),
-        output_var.astype(x.dtype),
+        astype(y, x.dtype),
+        astype(saved_mean, x.dtype),
+        astype(saved_var, x.dtype),
+        astype(output_mean, x.dtype),
+        astype(output_var, x.dtype),
     )
 
 
