@@ -11,6 +11,8 @@
 #include <memory>
 #include <vector>
 
+#include "onnx/version_converter/adapters/adapter.h"
+
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
@@ -18,7 +20,7 @@ class Slice_9_10 final : public Adapter {
  public:
   explicit Slice_9_10() : Adapter("Slice", OpSetID(9), OpSetID(10)) {}
 
-  void attrToInput(std::shared_ptr<Graph> graph, Node* node, const std::vector<int64_t>& attr) const {
+  void attrToInput(const std::shared_ptr<Graph>& graph, Node* node, const std::vector<int64_t>& attr) const {
     Tensor t;
     t.elem_type() = TensorProto_DataType_INT64;
     t.sizes() = std::vector<int64_t>{static_cast<int64_t>(attr.size())};
@@ -32,7 +34,7 @@ class Slice_9_10 final : public Adapter {
     node->addInput(constant->output());
   }
 
-  void adapt_slice_9_10(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_slice_9_10(const std::shared_ptr<Graph>& graph, Node* node) const {
     attrToInput(graph, node, node->is(kstarts));
     node->removeAttribute(kstarts);
     attrToInput(graph, node, node->is(kends));

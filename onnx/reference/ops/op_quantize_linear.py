@@ -10,19 +10,20 @@ from typing import ClassVar
 import numpy as np
 
 from onnx import TensorProto, subbyte
-from onnx.helper import (
-    float32_to_float8e4m3,
-    float32_to_float8e5m2,
-    np_dtype_to_tensor_dtype,
-    tensor_dtype_to_np_dtype,
-)
-from onnx.reference.custom_element_types import (
+from onnx._custom_element_types import (
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
     int4,
     uint4,
+)
+from onnx.helper import (
+    float32_to_float8e4m3,
+    float32_to_float8e5m2,
+    np_dtype_to_tensor_dtype,
+    tensor_dtype_to_np_dtype,
 )
 from onnx.reference.op_run import OpRun
 
@@ -97,6 +98,7 @@ class _CommonQuantizeLinear(OpRun):
         TensorProto.FLOAT8E4M3FNUZ,
         TensorProto.FLOAT8E5M2,
         TensorProto.FLOAT8E5M2FNUZ,
+        TensorProto.FLOAT4E2M1,
     )
 
     def get_zero_point_type(self, zero_point: np.ndarray) -> int:
@@ -122,11 +124,16 @@ class _CommonQuantizeLinear(OpRun):
             zero_point_type = TensorProto.UINT4
         elif zero_point.dtype == int4 and zero_point.dtype.descr[0][0] == "int4":
             zero_point_type = TensorProto.INT4
+        elif (
+            zero_point.dtype == float4e2m1
+            and zero_point.dtype.descr[0][0] == "float4e2m1"
+        ):
+            zero_point_type = TensorProto.FLOAT4E2M1
         else:
             zero_point_type = np_dtype_to_tensor_dtype(zero_point.dtype)
         return zero_point_type
 
-    def _run(
+    def _run(  # noqa: PLR0911
         self,
         x: np.ndarray,
         y_scale: np.ndarray,
@@ -134,7 +141,8 @@ class _CommonQuantizeLinear(OpRun):
         axis: int = 1,
         saturate: bool = True,
         block_size: int | None = None,
-        output_dtype: np.dtype | None = None,
+        output_dtype: int | None = None,
+        precision: int | None = None,
     ) -> tuple[np.ndarray]:
         y_scale = reshape_input(y_scale, x.shape, axis, block_size)
 
@@ -160,7 +168,11 @@ class _CommonQuantizeLinear(OpRun):
             if zero_point is not None
             else 0
         )
-        x = x / y_scale
+        if precision:
+            precision_np = tensor_dtype_to_np_dtype(precision)
+            x = x.astype(precision_np) / y_scale.astype(precision_np)
+        else:
+            x = x / y_scale
 
         if tensor_type in _CommonQuantizeLinear.quant_integer_ranges:
             xi = np.rint(x).astype(np.int32)
@@ -199,6 +211,11 @@ class _CommonQuantizeLinear(OpRun):
             i4 = func(xi)
             return (i4,)  # type: ignore[attr-defined]
 
+        if tensor_type == TensorProto.FLOAT4E2M1:
+            x += zero_point
+            f4 = subbyte.float32_to_float4e2m1_unpacked(x)
+            return (f4.astype(float4e2m1),)  # type: ignore[attr-defined]
+
         raise ValueError(
             f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."
         )
@@ -221,4 +238,31 @@ class QuantizeLinear_19(_CommonQuantizeLinear):
 class QuantizeLinear_21(_CommonQuantizeLinear):
     def _run(self, *args, axis=None, saturate=None, block_size=None, output_dtype=None):  # type: ignore
         # args: x, y_scale, zero_point
-        return super()._run(*args, axis=axis, saturate=saturate, block_size=block_size, output_dtype=output_dtype)  # type: ignore
+        return super()._run(
+            *args,
+            axis=axis,
+            saturate=saturate,
+            block_size=block_size,
+            output_dtype=output_dtype,
+        )  # type: ignore
+
+
+class QuantizeLinear_23(_CommonQuantizeLinear):
+    def _run(
+        self,
+        *args,
+        axis=None,
+        saturate=None,
+        block_size=None,
+        output_dtype=None,
+        precision=None,
+    ):  # type: ignore
+        # args: x, y_scale, zero_point
+        return super()._run(
+            *args,
+            axis=axis,
+            saturate=saturate,
+            block_size=block_size,
+            output_dtype=output_dtype,
+            precision=precision,
+        )  # type: ignore

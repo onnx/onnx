@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 
 ## What is an ONNX backend
 
-An ONNX backend is a library that can run ONNX models. Since many deep learning frameworks already exist, you likely won't need to create everything from scratch. Rather, you'll likely create a converter that converts ONNX models to the corresponding framework specific representation and then delegate the execution to the framework. For example, [onnx-caffe2 (as part of caffe2)](https://github.com/pytorch/pytorch/tree/master/caffe2/python/onnx) , [onnx-coreml](https://github.com/onnx/onnx-coreml), and [onnx-tensorflow](https://github.com/onnx/onnx-tensorflow) are all implemented as converters.
+An ONNX backend is a library that can run ONNX models. Since many deep learning frameworks already exist, you likely won't need to create everything from scratch. Rather, you'll likely create a converter that converts ONNX models to the corresponding framework specific representation and then delegate the execution to the framework. For example, [onnx-caffe2 (as part of caffe2)](https://github.com/pytorch/pytorch/tree/v2.3.1/caffe2/python/onnx) , [onnx-coreml](https://github.com/onnx/onnx-coreml), and [onnx-tensorflow](https://github.com/onnx/onnx-tensorflow) are all implemented as converters.
 
 ## Unified backend interface
 
@@ -34,7 +34,7 @@ ONNX provides a standard backend test suite to assist backend implementation ver
 
 Integrating the ONNX Backend Test suite into your CI is simple. The following are some examples demonstrating how a backend performs the integration:
 
-- [onnx-caffe2 onnx backend test](https://github.com/pytorch/pytorch/blob/master/caffe2/python/onnx/tests/onnx_backend_test.py)
+- [onnx-caffe2 onnx backend test](https://github.com/pytorch/pytorch/blob/v2.3.1/caffe2/python/onnx/tests/onnx_backend_test.py)
 
 - [onnx-tensorflow onnx backend test](https://github.com/onnx/onnx-tensorflow/blob/main/test/backend/test_onnx_backend.py)
 

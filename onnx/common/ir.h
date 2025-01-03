@@ -9,16 +9,13 @@
 
 #pragma once
 
-#include <stdint.h>
-
 #include <algorithm>
-#include <atomic>
+#include <array>
 #include <cstdint>
 #include <functional>
 #include <iostream>
 #include <limits>
 #include <memory>
-#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -65,11 +62,11 @@ struct Value;
 
 class ResourceGuard final {
   std::function<void()> destructor_;
-  bool released_;
+  bool released_{false};
 
  public:
   ONNX_DISALLOW_COPY_AND_ASSIGN(ResourceGuard);
-  explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)), released_(false) {}
+  explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)) {}
   ResourceGuard(ResourceGuard&& other) = default;
   ResourceGuard& operator=(ResourceGuard&& other) = default;
 
@@ -134,10 +131,10 @@ struct ScalarAttributeValue final : public AttributeValue {
   ValueType& value() {
     return value_;
   }
-  virtual Ptr clone() const override {
-    return Ptr(new ScalarAttributeValue(name, value_));
+  Ptr clone() const override {
+    return std::make_unique<ScalarAttributeValue>(name, value_);
   }
-  virtual AttributeKind kind() const override {
+  AttributeKind kind() const override {
     return Kind;
   }
 
@@ -149,16 +146,15 @@ template <typename T, AttributeKind Kind>
 struct VectorAttributeValue final : public AttributeValue {
   using ConstructorType = const std::vector<T>&&;
   using ValueType = std::vector<T>;
-  VectorAttributeValue(Symbol name, ConstructorType value_) : AttributeValue(name), value_(std::move(value_)) {}
+  VectorAttributeValue(Symbol name, ValueType value_) : AttributeValue(name), value_(std::move(value_)) {}
   ValueType& value() {
     return value_;
   }
-  virtual AttributeKind kind() const override {
+  AttributeKind kind() const override {
     return Kind;
   }
-  virtual std::unique_ptr<AttributeValue> clone() const override {
-    auto copy = value_;
-    return Ptr(new VectorAttributeValue(name, std::move(copy)));
+  std::unique_ptr<AttributeValue> clone() const override {
+    return std::make_unique<VectorAttributeValue>(name, ValueType(value_));
   }
 
  private:
@@ -184,7 +180,8 @@ using TypeProtosAttr = VectorAttributeValue<TypeProto, AttributeKind::tps>;
 // we return Derived* pointers because Nodes are normally held as pointers.
 template <typename Derived>
 struct Attributes {
-  Attributes() {}
+  Attributes() = default;
+
   void copyAttributes(const Attributes& rhs) {
     values_.clear();
     values_.reserve(rhs.values_.size());
@@ -243,7 +240,7 @@ struct Attributes {
   template <typename T>
   Derived* set(Symbol name, typename T::ConstructorType v) {
     auto it = find(name, false);
-    auto nv = AVPtr(new T(name, std::forward<typename T::ConstructorType>(v)));
+    auto nv = std::make_unique<T>(name, std::forward<typename T::ConstructorType>(v));
     if (it == values_.end()) {
       values_.push_back(std::move(nv));
     } else {
@@ -317,10 +314,10 @@ struct Value final {
   size_t unique_ = 0; // unique id
   size_t stage_ = 0; // 0-forward, 1-backward, 2-double-backward,...
   use_list uses_in_current_graph_;
-  bool has_unique_name_;
+  bool has_unique_name_{false};
   std::string unique_name_;
-  int32_t elem_type_;
-  bool has_sizes_;
+  int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
+  bool has_sizes_{false};
   std::vector<Dimension> sizes_;
 
  public:
@@ -378,7 +375,7 @@ struct Value final {
   Graph* owningGraph();
   const Graph* owningGraph() const;
   // TODO: make this more const correct
-  const use_list uses() const;
+  use_list uses() const;
 
   // Replaces all uses of this node with 'newValue'.
   //
@@ -391,7 +388,7 @@ struct Value final {
   //          %5 = h(%6, %6)
   void replaceAllUsesWith(Value* newValue);
 
-  Value* copyMetadata(Value* from) {
+  Value* copyMetadata(const Value* from) {
     setElemType(from->elemType());
     setSizes(from->sizes());
     if (from->has_unique_name()) {
@@ -419,7 +416,7 @@ struct Node : public Attributes<Node> {
   // using an array to allow the same iterator class for forward and reverse node lists
   // This list represents a topological sort
 
-  Node* next_in_graph[2] = {nullptr, nullptr};
+  std::array<Node*, 2> next_in_graph{nullptr, nullptr};
   Node*& next() {
     return next_in_graph[kNextDirection];
   }
@@ -438,13 +435,13 @@ struct Node : public Attributes<Node> {
   std::vector<Value*> outputs_;
   Graph* graph_;
   size_t stage_;
-  bool has_name_;
+  bool has_name_{false};
   std::string name_;
-  bool has_domain_;
+  bool has_domain_{false};
   std::string domain_;
-  bool has_doc_string_;
+  bool has_doc_string_{false};
   std::string doc_string_;
-  bool has_overload_;
+  bool has_overload_{false};
   std::string overload_;
 
  protected:
@@ -732,7 +729,7 @@ struct Node : public Attributes<Node> {
   }
 
   // Check whether this node is before node n in the graph.
-  bool isBefore(Node* n);
+  bool isBefore(const Node* n);
 
   // iterators of the node list starting at this node
   // useful for resuming a search starting at this node
@@ -842,7 +839,7 @@ class OpSetID final {
   // Default Domain Constructor
   explicit OpSetID(const int64_t version) : domain_(""), version_(version) {}
 
-  explicit OpSetID(const std::string& domain, int64_t version) : domain_(domain), version_(version) {}
+  explicit OpSetID(std::string domain, int64_t version) : domain_(std::move(domain)), version_(version) {}
 
   // target must be in the form "<domain>&<version>"
   std::string toString() const {
@@ -852,8 +849,8 @@ class OpSetID final {
   // target must be in the form "<domain>&<version>"
   static OpSetID fromString(const std::string& target) {
     ONNX_TRY {
-      std::string new_domain = target.substr(0, target.find("$"));
-      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
+      std::string new_domain = target.substr(0, target.find('$'));
+      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find('$') + 1, target.length()));
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
@@ -898,9 +895,9 @@ struct Graph final {
 
   std::unordered_set<const Node*> all_nodes;
   std::unordered_set<const Value*> all_values;
-  size_t next_unique_;
+  size_t next_unique_{0};
 
-  size_t new_node_stage_;
+  size_t new_node_stage_{0};
 
   // holds outputs in a way that can be reflected
   // as a Use object
@@ -914,9 +911,9 @@ struct Graph final {
   std::vector<Tensor> initializers_;
   std::vector<std::string> initializer_names_;
 
-  bool has_name_;
+  bool has_name_{false};
   std::string name_;
-  bool has_doc_string_;
+  bool has_doc_string_{false};
   std::string doc_string_;
 
   std::vector<OpSetID> opset_versions_;
@@ -954,14 +951,7 @@ struct Graph final {
   }
 
  public:
-  Graph()
-      : next_unique_(0),
-        new_node_stage_(0),
-        output_(initOutput(create(kReturn, 0))),
-        input_(create(kParam, 0)),
-        initializer_node_(create(kParam, 0)),
-        has_name_(false),
-        has_doc_string_(false) {}
+  Graph() : output_(initOutput(create(kReturn, 0))), input_(create(kParam, 0)), initializer_node_(create(kParam, 0)) {}
 
   bool has_doc_string() const {
     return has_doc_string_;
@@ -1229,7 +1219,7 @@ struct Graph final {
   }
 
   void forEachNode(const std::function<void(Node*)>& fn) {
-    forSelfAndEachSubGraph([fn](Graph* graph) {
+    forSelfAndEachSubGraph([&fn](Graph* graph) {
       for (Node* node : graph->nodes()) {
         fn(node);
       }
@@ -1265,13 +1255,7 @@ struct Graph final {
 };
 
 inline Value::Value(Node* node_, size_t offset_)
-    : node_(node_),
-      offset_(offset_),
-      unique_(node_->graph_->getNextUnique()),
-      stage_(node_->graph_->new_node_stage_),
-      has_unique_name_(false),
-      elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
-      has_sizes_(false) {
+    : node_(node_), offset_(offset_), unique_(node_->graph_->getNextUnique()), stage_(node_->graph_->new_node_stage_) {
   node_->graph_->all_values.emplace(this);
 }
 
@@ -1356,14 +1340,7 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
   assert(this->uses().empty());
 }
 
-inline Node::Node(Graph* graph_, NodeKind kind_)
-    : kind_(kind_),
-      graph_(graph_),
-      stage_(graph_->new_node_stage_),
-      has_name_(false),
-      has_domain_(false),
-      has_doc_string_(false),
-      has_overload_(false) {
+inline Node::Node(Graph* graph_, NodeKind kind_) : kind_(kind_), graph_(graph_), stage_(graph_->new_node_stage_) {
   graph_->all_nodes.emplace(this);
 }
 
@@ -1378,7 +1355,7 @@ inline void Node::eraseOutput(size_t i) {
   }
 }
 
-inline bool Node::isBefore(Node* n) {
+inline bool Node::isBefore(const Node* n) {
   if (n == nullptr || this == n) {
     // Bail out early.
     return false;
@@ -1428,7 +1405,7 @@ inline const_graph_node_list_iterator Node::reverseIterator() const {
 // nodes in subgraph are also included.
 // This method is usually used to check whether it is
 // safe to delete a Value.
-inline const use_list Value::uses() const {
+inline use_list Value::uses() const {
   use_list all_uses = uses_in_current_graph_;
   owningGraph()->forEachNode([this, &all_uses](const Node* node) {
     if (node->owningGraph() == this->owningGraph()) {

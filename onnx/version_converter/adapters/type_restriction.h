@@ -26,13 +26,13 @@ class TypeRestriction : public Adapter {
       const std::vector<TensorProto_DataType>& unallowed_types)
       : Adapter(op_name, initial, target), unallowed_types_(unallowed_types) {}
 
-  void adapt_type_restriction(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_type_restriction(const std::shared_ptr<Graph>&, const Node* node) const {
     // Since consumed_inputs is optional, no need to add it (as in batchnorm)
     // Iterate over all inputs and outputs
-    for (Value* input : node->inputs()) {
+    for (const Value* input : node->inputs()) {
       isUnallowed(input);
     }
-    for (Value* output : node->outputs()) {
+    for (const Value* output : node->outputs()) {
       isUnallowed(output);
     }
   }
@@ -45,7 +45,7 @@ class TypeRestriction : public Adapter {
  private:
   std::vector<TensorProto_DataType> unallowed_types_;
 
-  void isUnallowed(Value* val) const {
+  void isUnallowed(const Value* val) const {
     ONNX_ASSERTM(
         std::find(std::begin(unallowed_types_), std::end(unallowed_types_), val->elemType()) ==
             std::end(unallowed_types_),

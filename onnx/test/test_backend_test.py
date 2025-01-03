@@ -7,7 +7,8 @@ import itertools
 import os
 import platform
 import unittest
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import numpy
 
@@ -81,9 +82,7 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def supports_device(cls, device: str) -> bool:
         d = Device(device)
-        if d.type == DeviceType.CPU:
-            return True
-        return False
+        return d.type == DeviceType.CPU  # type: ignore[no-any-return]
 
 
 test_coverage_safelist = {

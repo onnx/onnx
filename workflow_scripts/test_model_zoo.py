@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import gc
 import os
+import shutil
 import sys
 import time
 
@@ -95,8 +96,10 @@ def main():
                     )
 
             # remove the model to save space in CIs
-            if os.path.exists(model_name):
-                os.remove(model_name)
+            full_model_path = os.path.join(hub._ONNX_HUB_DIR, model_path)
+            parent_dir = os.path.dirname(full_model_path)
+            if os.path.exists(parent_dir):
+                shutil.rmtree(parent_dir)
 
         except Exception as e:  # noqa: BLE001
             print(f"[FAIL]: {e}")

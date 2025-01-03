@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=64", "protobuf>=3.20.2", "cmake"]
+requires = ["setuptools>=64", "protobuf>=3.20.2", "cmake>=3.18"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -16,7 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 license = {text = "Apache License v2.0"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [project.urls]
 Homepage = "https://onnx.ai/"
@@ -97,7 +97,7 @@ ignore_errors = true
 
 [tool.black]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py39", "py310", "py311"]
 
 [tool.isort]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
@@ -117,7 +117,7 @@ disable = [
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py38"
+target-version = "py39"
 unsafe-fixes = true
 lint.select = [
     "A", # flake8-builtins
@@ -168,13 +168,14 @@ lint.ignore = [
     "PYI021", # Allow docstrings in pyi files
     "PYI041", # int | float is sometimes more clear than float
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
+    "RUF022", # We may want to keep __all__ unsorted for better readability
     "SIM102", # We don't perfer always combining if branches
+    "SIM103", # We don't always prefer combining if branches
     "SIM108", # We don't always encourage ternary operators
     "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
     "TRY003", # Messages can be constructed in the exception
 ]
-lint.ignore-init-module-imports = false
 lint.unfixable = [
     "SIM112", # Envvars should not be modified
 ]

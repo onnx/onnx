@@ -20,7 +20,7 @@ class Softmax_12_13 final : public Adapter {
  public:
   explicit Softmax_12_13(const std::string& op_name) : Adapter(op_name, OpSetID(12), OpSetID(13)) {}
 
-  void adapt_softmax_12_13(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_softmax_12_13(const std::shared_ptr<Graph>& graph, Node* node) const {
     int old_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 1;
     int input_rank = node->inputs()[0]->sizes().size();
 
@@ -61,7 +61,7 @@ class Softmax_12_13 final : public Adapter {
       reshape->insertAfter(node);
 
       // Fix outputs & wiring
-      if (node->output()->sizes().size() != 0) {
+      if (!node->output()->sizes().empty()) {
         reshape->output()->setSizes(node->output()->sizes());
       }
       reshape->output()->setElemType(node->output()->elemType());

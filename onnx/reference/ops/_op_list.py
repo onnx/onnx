@@ -10,12 +10,11 @@ with `_`, it means the implementation is valid for every opset.
 The operator may have been updated to support more types but that
 did not change the implementation.
 """
+
 from __future__ import annotations
 
 import textwrap
-from typing import Any, Dict, List
-from typing import Optional as TOptional
-from typing import Union
+from typing import Any
 
 from onnx import FunctionProto, NodeProto, TypeProto
 from onnx.defs import get_schema, onnx_opset_version
@@ -25,7 +24,6 @@ from onnx.reference.op_run import (
     OpRun,
     RuntimeContextError,
     RuntimeImplementationError,
-    _split_class_name,
 )
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
 from onnx.reference.ops.op_abs import Abs
@@ -242,7 +240,7 @@ from onnx.reference.ops.op_where import Where
 from onnx.reference.ops.op_xor import Xor
 
 
-def _build_registered_operators() -> dict[str, dict[int | None, OpRun]]:
+def _build_registered_operators() -> dict[str, dict[int | None, type[OpRun]]]:
     return build_registered_operators_any_domain(globals().copy())
 
 
@@ -278,6 +276,7 @@ def load_op(
     schema = None
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]
+    assert _registered_operators is not None
     if custom is not None:
         return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
     if version is None:
@@ -287,7 +286,7 @@ def load_op(
     if op_type in _registered_operators and not expand:  # type: ignore
         found = True
     else:
-        # maybe the operator can be replacted by a function
+        # maybe the operator can be replaced by a function
         try:
             schema = get_schema(op_type, version, domain)  # type: ignore
         except SchemaError:
@@ -333,7 +332,7 @@ def load_op(
             f"You may either add one or skip the test in "
             f"'reference_evaluator_bakcend_test.py'. Available implementations:\n{available}"
         )
-    impl = _registered_operators[op_type]  # type: ignore
+    impl = _registered_operators[op_type]
     if None not in impl:
         raise RuntimeError(
             f"No default implementation for operator {op_type!r} "

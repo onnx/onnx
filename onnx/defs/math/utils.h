@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "onnx/defs/shape_inference.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/onnx_pb.h"
@@ -39,6 +41,8 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
 void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx);
 
 const char* QLinearMatMulDoc();
+
+int MathOpTwoIntegers(const std::string& op_type, int a, int b);
 
 } // namespace utils
 } // namespace math

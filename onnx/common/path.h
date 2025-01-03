@@ -32,24 +32,53 @@ constexpr const char k_preferred_path_separator = '/';
 inline std::wstring path_join(const std::wstring& origin, const std::wstring& append) {
   return (std::filesystem::path(origin) / std::filesystem::path(append)).wstring();
 }
-inline std::wstring utf8str_to_wstring(const std::string& utf8str) {
-  if (utf8str.size() > INT_MAX) {
-    fail_check("utf8str_to_wstring: string is too long for converting to wstring.");
+inline std::wstring utf8str_to_wstring(const std::string& utf8str, bool try_decode = false) {
+  if (utf8str.empty()) {
+    return std::wstring();
   }
-  int size_required = MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), static_cast<int>(utf8str.size()), NULL, 0);
+  auto size_required =
+      MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS | MB_PRECOMPOSED, utf8str.c_str(), -1, nullptr, 0);
+  if (size_required == 0) {
+    if (try_decode) {
+      return std::wstring(
+          reinterpret_cast<const wchar_t*>(utf8str.c_str()), utf8str.size() / sizeof(std::wstring::value_type));
+    }
+    auto last_error = GetLastError();
+    fail_check("MultiByteToWideChar in utf8str_to_wstring returned error:", last_error);
+  }
   std::wstring ws_str(size_required, 0);
-  MultiByteToWideChar(CP_UTF8, 0, utf8str.c_str(), static_cast<int>(utf8str.size()), &ws_str[0], size_required);
+  auto converted_size = MultiByteToWideChar(
+      CP_UTF8, MB_ERR_INVALID_CHARS | MB_PRECOMPOSED, utf8str.c_str(), -1, &ws_str[0], size_required);
+  if (converted_size == 0) {
+    auto last_error = GetLastError();
+    fail_check("MultiByteToWideChar in utf8str_to_wstring returned error:", last_error);
+  }
+  if (ws_str.back() == '\0') {
+    ws_str.pop_back();
+  }
   return ws_str;
 }
+
 inline std::string wstring_to_utf8str(const std::wstring& ws_str) {
-  if (ws_str.size() > INT_MAX) {
-    fail_check("wstring_to_utf8str: string is too long for converting to UTF-8.");
+  if (ws_str.empty()) {
+    return std::string();
   }
-  int size_required =
-      WideCharToMultiByte(CP_UTF8, 0, ws_str.c_str(), static_cast<int>(ws_str.size()), NULL, 0, NULL, NULL);
+  auto size_required =
+      WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, ws_str.c_str(), -1, nullptr, 0, nullptr, nullptr);
+  if (size_required == 0) {
+    auto last_error = GetLastError();
+    fail_check("WideCharToMultiByte in wstring_to_utf8str returned error:", last_error);
+  }
   std::string utf8str(size_required, 0);
-  WideCharToMultiByte(
-      CP_UTF8, 0, ws_str.c_str(), static_cast<int>(ws_str.size()), &utf8str[0], size_required, NULL, NULL);
+  auto converted_size = WideCharToMultiByte(
+      CP_UTF8, WC_ERR_INVALID_CHARS, ws_str.c_str(), -1, &utf8str[0], size_required, nullptr, nullptr);
+  if (converted_size == 0) {
+    auto last_error = GetLastError();
+    fail_check("WideCharToMultiByte in wstring_to_utf8str returned error:", last_error);
+  }
+  if (utf8str.back() == '\0') {
+    utf8str.pop_back();
+  }
   return utf8str;
 }
 

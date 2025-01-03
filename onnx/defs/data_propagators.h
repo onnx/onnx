@@ -33,18 +33,21 @@ inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
     }
   }
   int axis = static_cast<int>(axisAttr->i());
-  auto input_data_0 = ctx.getInputData(0);
-  if (input_data_0 == nullptr) {
+  if (axis >= 0) {
+    return axis == 0;
+  }
+  // For negative axes, we need rank information to determine if it is equivalent to axis 0
+  const TypeProto* type = ctx.getInputType(0);
+  if ((type == nullptr) || (!type->has_tensor_type()) || (!type->tensor_type().has_shape())) {
     return false;
   }
-  int rank = input_data_0->dim_size();
+
+  int rank = type->tensor_type().shape().dim_size();
   if (axis < -rank || axis >= rank) {
     fail_shape_inference("axis must be in [-rank, rank-1].");
     return false;
   }
-  if (axis < 0) {
-    axis += rank;
-  }
+  axis += rank;
   // Only supports axis = 0 since the data comes from Shape
   return axis == 0;
 }
@@ -68,7 +71,7 @@ inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
     return;
   }
   const auto input_indices = ctx.getInputData(1);
-  if (input_data == nullptr || input_indices == nullptr) {
+  if (input_indices == nullptr) {
     return;
   }
   TensorShapeProto tsp;

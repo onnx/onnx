@@ -7,11 +7,18 @@ import os
 import re
 import sys
 import uuid
+from collections.abc import Iterable
 from itertools import chain
-from typing import Callable, Iterable
+from typing import Callable
 
 import onnx.onnx_cpp2py_export.checker as c_checker
-from onnx.onnx_pb import AttributeProto, GraphProto, ModelProto, TensorProto
+from onnx.onnx_pb import (
+    AttributeProto,
+    FunctionProto,
+    GraphProto,
+    ModelProto,
+    TensorProto,
+)
 
 
 class ExternalDataInfo:
@@ -121,18 +128,24 @@ def convert_model_to_external_data(
             it will be converted to external data. To convert every tensor with raw data to external data set size_threshold=0.
         convert_attribute (bool): If true, convert all tensors to external data
                        If false, convert only non-attribute tensors to external data
+
+    Raise:
+        ValueError: If location is not a relative path.
+        FileExistsError: If a file already exists in location.
     """
     tensors = _get_initializer_tensors(model)
     if convert_attribute:
         tensors = _get_all_tensors(model)
 
     if all_tensors_to_one_file:
-        file_name = str(uuid.uuid1())
+        file_name = str(uuid.uuid1()) + ".data"
         if location:
             if os.path.isabs(location):
                 raise ValueError(
                     "location must be a relative path that is relative to the model path."
                 )
+            if os.path.exists(location):
+                raise FileExistsError(f"External data file exists in {location}.")
             file_name = location
         for tensor in tensors:
             if (
@@ -222,11 +235,12 @@ def _recursive_attribute_processor(
 
 
 def _get_initializer_tensors_from_graph(
-    onnx_model_proto_graph: GraphProto,
+    graph_or_function: GraphProto | FunctionProto, /
 ) -> Iterable[TensorProto]:
-    """Create an iterator of initializer tensors from ONNX model graph."""
-    yield from onnx_model_proto_graph.initializer
-    for node in onnx_model_proto_graph.node:
+    """Create an iterator of initializer tensors from ONNX model graph/function."""
+    if isinstance(graph_or_function, GraphProto):
+        yield from graph_or_function.initializer
+    for node in graph_or_function.node:
         for attribute in node.attribute:
             yield from _recursive_attribute_processor(
                 attribute, _get_initializer_tensors_from_graph
@@ -236,13 +250,15 @@ def _get_initializer_tensors_from_graph(
 def _get_initializer_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
     """Create an iterator of initializer tensors from ONNX model."""
     yield from _get_initializer_tensors_from_graph(onnx_model_proto.graph)
+    for function in onnx_model_proto.functions:
+        yield from _get_attribute_tensors_from_graph(function)
 
 
 def _get_attribute_tensors_from_graph(
-    onnx_model_proto_graph: GraphProto,
+    graph_or_function: GraphProto | FunctionProto, /
 ) -> Iterable[TensorProto]:
-    """Create an iterator of tensors from node attributes of an ONNX model graph."""
-    for node in onnx_model_proto_graph.node:
+    """Create an iterator of tensors from node attributes of an ONNX model graph/function."""
+    for node in graph_or_function.node:
         for attribute in node.attribute:
             if attribute.HasField("t"):
                 yield attribute.t
@@ -255,6 +271,8 @@ def _get_attribute_tensors_from_graph(
 def _get_attribute_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
     """Create an iterator of tensors from node attributes of an ONNX model."""
     yield from _get_attribute_tensors_from_graph(onnx_model_proto.graph)
+    for function in onnx_model_proto.functions:
+        yield from _get_attribute_tensors_from_graph(function)
 
 
 def _is_valid_filename(filename: str) -> bool:
@@ -266,7 +284,7 @@ def _is_valid_filename(filename: str) -> bool:
 
 def uses_external_data(tensor: TensorProto) -> bool:
     """Returns true if the tensor stores data in an external location."""
-    return (  # type: ignore[no-any-return]
+    return (
         tensor.HasField("data_location")
         and tensor.data_location == TensorProto.EXTERNAL
     )

@@ -5,9 +5,10 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Callable
 
 import numpy as np
 
@@ -27,6 +28,7 @@ from onnx.onnx_pb import (
 _NodeTestCases = []
 _TargetOpType = None
 _DiffOpTypes = None
+_existing_names: dict[str, onnx.NodeProto] = {}
 
 
 def _rename_edges_helper(
@@ -66,11 +68,11 @@ def _rename_edges_helper(
                 for sparse_init_desc in new_graph.sparse_initializer:
                     sg_rename[sparse_init_desc.values.name] = (
                         sparse_init_desc.values.name
-                    ) = (prefix + sparse_init_desc.values.name)
+                    ) = prefix + sparse_init_desc.values.name
                 for sparse_init_desc in new_graph.sparse_initializer:
                     sg_rename[sparse_init_desc.indices.name] = (
                         sparse_init_desc.indices.name
-                    ) = (prefix + sparse_init_desc.indices.name)
+                    ) = prefix + sparse_init_desc.indices.name
 
                 def subgraph_rename_helper(name: str) -> Any:
                     if name in sg_rename:  # noqa: B023
@@ -194,7 +196,11 @@ def _extract_value_info(
 
 
 def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto:
-    latest_onnx_version, latest_ml_version, latest_training_version = onnx.helper.VERSION_TABLE[-1][2:5]  # type: ignore
+    (
+        latest_onnx_version,
+        latest_ml_version,
+        latest_training_version,
+    ) = onnx.helper.VERSION_TABLE[-1][2:5]  # type: ignore
     if "opset_imports" in kwargs:
         for opset in kwargs["opset_imports"]:
             # If the test model uses an unreleased opset version (latest_version+1),
@@ -243,6 +249,11 @@ def expect(
         return
     if _DiffOpTypes is not None and node_op.op_type.lower() not in _DiffOpTypes:
         return
+    if name in _existing_names:
+        raise ValueError(
+            f"Name {name!r} is already using by one test case for node type {node_op.op_type!r}."
+        )
+    _existing_names[name] = node_op
 
     # in case node_op is modified
     node = deepcopy(node_op)

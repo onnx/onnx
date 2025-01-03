@@ -1,21 +1,17 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: WindowsRelease
 
-on:
-  schedule:
-    # Run weekly on Monday 00:00
-    - cron:  '00 00 * * MON'
-  push:
-    branches: [main, rel-*]
-  pull_request:
-    branches: [main, rel-*]
-  workflow_dispatch:
-
+on:  # Specifies the event triggering the workflow
+  workflow_call:  # Indicates that this is a reusable workflow
+    inputs:
+      os:
+        required: true
+        type: string
 permissions:  # set top-level default permissions as security best practice
   contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
-  cancel-in-progress: true
 
 jobs:
   build:
@@ -23,23 +19,17 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         architecture: ['x64', 'x86']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
          path: ./onnx
-    - name: Checkout ONNX submodules
-      shell: bash
-      run: |
-         cd onnx
-         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-         git submodule sync --recursive
-         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+         submodules: 'recursive'
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -58,6 +48,7 @@ jobs:
           sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
         }
         python -m pip install -q -r requirements-release.txt
+        python -m pip install cmake
 
     - name: Build ONNX wheel
       run: |
@@ -73,34 +64,30 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
-        if ('${{ github.event_name }}' -eq 'schedule') {
+        if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
           echo "Build weekly PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-
+ 
     - name: Test the installed wheel
       run: |
         cd onnx
         pytest
 
-    - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+    - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
       with:
-        name: wheels
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./onnx/dist
-
-    - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
-      if: (github.event_name == 'schedule') # Only triggered by weekly event
-      run: |
-        twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        python -m pip uninstall -y numpy onnx
+        python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
@@ -108,7 +95,8 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
+        python -m pip uninstall -y protobuf onnx
+        python -m pip install protobuf
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
@@ -116,17 +104,7 @@ jobs:
       if: ${{ always() }}
       run: |
         cd onnx
-        python -m pip uninstall -y protobuf numpy onnx && python -m pip install -r requirements-min.txt
+        python -m pip uninstall -y protobuf numpy onnx
+        python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest
-
-    - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.12'
-      run: |
-        cd onnx
-        python -m pip uninstall -y protobuf numpy && python -m pip install -q -r requirements-release.txt
-        python -m pip install -q onnxruntime
-        $Env:ORT_MAX_IR_SUPPORTED_VERSION=9
-        $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20
         pytest
