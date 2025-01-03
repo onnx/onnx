@@ -10342,6 +10342,38 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    @parameterized.expand(
+        [
+            ([1, 2, 3], ["1", "2", "3"]),
+            (None, None),
+        ]
+    )
+    @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
+    def test_one_hot_encoder_fails_if_invalid_attributes(self, cats_int64s, cats_strings) -> None:
+        graph = self._make_graph(
+            [("input", TensorProto.INT64, (2, "N", 3))],
+            [
+                make_node(
+                    "OneHotEncoder",
+                    ["input"],
+                    ["output"],
+                    cats_int64s=cats_int64s,
+                    cats_strings=cats_strings,
+                    domain="ai.onnx.ml",
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_ML_DOMAIN, 1),
+                make_opsetid(ONNX_DOMAIN, 11),
+            ],
+        )
+
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_zip_map(self) -> None:
         params = (
