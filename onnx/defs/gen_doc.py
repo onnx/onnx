@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import os
 from collections import defaultdict
-from typing import Any, NamedTuple, Sequence
+from collections.abc import Sequence
+from typing import Any, NamedTuple
 
 import numpy as np
 

@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, ClassVar, Iterable
+from collections.abc import Iterable
+from typing import Any, ClassVar
 
 import numpy as np
 
@@ -255,7 +256,9 @@ class OpRun(abc.ABC):
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, value=value, attributes=None: OpRun._evaluate_subgraph(
+                    lambda context,
+                    value=value,
+                    attributes=None: OpRun._evaluate_subgraph(
                         context, value, attributes
                     ),
                 )

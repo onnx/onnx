@@ -227,12 +227,20 @@ class CmakeBuild(setuptools.Command):
                 )
             subprocess.check_call(cmake_args)
 
-            build_args = [CMAKE, "--build", os.curdir]
+            build_args = [
+                CMAKE,
+                "--build",
+                os.curdir,
+                f"--parallel {self.jobs}",
+            ]
             if WINDOWS:
-                build_args.extend(["--config", build_type, "--verbose"])
-                build_args.extend(["--", f"/maxcpucount:{self.jobs}"])
-            else:
-                build_args.extend(["--", "-j", str(self.jobs)])
+                build_args.extend(
+                    [
+                        "--config",
+                        build_type,
+                        "--verbose",
+                    ]
+                )
             subprocess.check_call(build_args)
 
 

@@ -136,11 +136,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             return;
           }
           auto& cast_to = cast_to_attr->s();
-          if (0 == cast_to.compare("TO_FLOAT")) {
+          if ("TO_FLOAT" == cast_to) {
             output_type->set_elem_type(TensorProto::FLOAT);
-          } else if (0 == cast_to.compare("TO_INT64")) {
+          } else if ("TO_INT64" == cast_to) {
             output_type->set_elem_type(TensorProto::INT64);
-          } else if (0 == cast_to.compare("TO_STRING")) {
+          } else if ("TO_STRING" == cast_to) {
             output_type->set_elem_type(TensorProto::STRING);
           }
         }));

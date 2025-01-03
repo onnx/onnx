@@ -298,6 +298,23 @@ agraph (int32[1,2] x, int32[3,4] y) => (int32[4] w)
   EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }
 
+TEST(DataPropagationImplTest, DynamicConcatTest) {
+  const char* code = R"ONNX(
+agraph (float[32, 1024] x, int64[2] dynamic_shape) => (int64[4] z)
+{
+    xs = Shape(x)   # [32, 1024]
+    z = Concat<axis = 0>(xs, dynamic_shape)  # [32, 1024, ?, ?]
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(32);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(1024);
+  expected_tsp.mutable_dim()->Add();
+  expected_tsp.mutable_dim()->Add();
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
 TEST(DataPropagationImplTest, GatherTest) {
   const char* code = R"ONNX(
 agraph (int32[1,2,3,4,5,6] x) => (int32[3] w)

@@ -204,11 +204,11 @@ inline const std::string* Tensor::data<std::string>() const {
     }                                                         \
   }
 
-define_data(float, float_data_);
-define_data(double, double_data_);
-define_data(int32_t, int32_data_);
-define_data(int64_t, int64_data_);
-define_data(uint64_t, uint64_data_);
+define_data(float, float_data_)
+define_data(double, double_data_)
+define_data(int32_t, int32_data_)
+define_data(int64_t, int64_data_)
+define_data(uint64_t, uint64_data_)
 #undef define_data
 
 } // namespace ONNX_NAMESPACE
