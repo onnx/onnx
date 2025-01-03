@@ -248,7 +248,15 @@ class QuantizeLinear_21(_CommonQuantizeLinear):
 
 
 class QuantizeLinear_23(_CommonQuantizeLinear):
-    def _run(self, *args, axis=None, saturate=None, block_size=None, output_dtype=None, precision=None):  # type: ignore
+    def _run(
+        self,
+        *args,
+        axis=None,
+        saturate=None,
+        block_size=None,
+        output_dtype=None,
+        precision=None,
+    ):  # type: ignore
         # args: x, y_scale, zero_point
         return super()._run(
             *args,
