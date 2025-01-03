@@ -10349,7 +10349,9 @@ class TestShapeInference(TestShapeInferenceHelper):
         ]
     )
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
-    def test_one_hot_encoder_fails_if_invalid_attributes(self, cats_int64s, cats_strings) -> None:
+    def test_one_hot_encoder_fails_if_invalid_attributes(
+        self, cats_int64s, cats_strings
+    ) -> None:
         graph = self._make_graph(
             [("input", TensorProto.INT64, (2, "N", 3))],
             [
