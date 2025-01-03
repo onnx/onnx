@@ -77,13 +77,16 @@ class LSTMHelper:
             raise NotImplementedError()
 
     def f(self, x: np.ndarray) -> np.ndarray:
-        return 1 / (1 + np.exp(-x))
+        output: np.ndarray  = 1 / (1 + np.exp(-x))
+        return output
 
     def g(self, x: np.ndarray) -> np.ndarray:
-        return np.tanh(x)
+        output: np.ndarray = np.tanh(x)
+        return output
 
     def h(self, x: np.ndarray) -> np.ndarray:
-        return np.tanh(x)
+        output: np.ndarray = np.tanh(x)
+        return output
 
     def step(self) -> tuple[np.ndarray, np.ndarray]:
         seq_length = self.X.shape[0]
