@@ -7,8 +7,9 @@ import os
 import re
 import sys
 import uuid
+from collections.abc import Iterable
 from itertools import chain
-from typing import Callable, Iterable
+from typing import Callable
 
 import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx.onnx_pb import (

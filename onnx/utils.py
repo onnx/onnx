@@ -32,6 +32,8 @@ class Extractor:
         output_to_index: dict[str, int] = {}
         for index, node in enumerate(graph.node):
             for output_name in node.output:
+                if output_name == "":
+                    continue
                 assert output_name not in output_to_index  # output_name is unique
                 output_to_index[output_name] = index
         return output_to_index
@@ -81,7 +83,11 @@ class Extractor:
                 if index not in reachable:
                     # add nodes connected to this output to sets
                     reachable.add(index)
-                    stack += self.graph.node[index].input
+                    stack += [
+                        input_name
+                        for input_name in self.graph.node[index].input
+                        if input_name != ""
+                    ]
 
     def _collect_reachable_nodes(
         self,

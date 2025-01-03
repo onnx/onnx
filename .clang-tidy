@@ -39,7 +39,21 @@ Checks: >-
   -modernize-use-auto,
   -modernize-use-trailing-return-type,
   -modernize-use-nodiscard,
-  readability-container-size-empty
+  readability-container-size-empty,
+  readability-delete-null-pointer,
+  readability-duplicate-include
+  readability-misplaced-array-index,
+  readability-non-const-parameter,
+  readability-redundant*
+  readability-simplify*,
+  readability-string-compare,
+  -readability-redundant-access-specifiers,
+  -readability-redundant-control-flow,
+  readability-static-accessed-through-instance,
+  readability-static-definition-in-anonymous-namespace,
+  readability-string-compare,
+  readability-suspicious-call-argument,
+  readability-uniqueptr-delete-release,
 
 CheckOptions:
   # `cppcoreguidelines-special-member-functions` is enabled, refer to https://en.cppreference.com/w/cpp/language/rule_of_three

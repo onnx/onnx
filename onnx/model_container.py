@@ -4,11 +4,13 @@
 """Implements function make_large_model to easily create and save models
 bigger than 2 Gb.
 """
+
 from __future__ import annotations
 
 import os
 import sys
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import numpy as np
 
