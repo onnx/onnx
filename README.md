@@ -77,6 +77,14 @@ A roadmap process takes place every year. More details can be found [here](https
 
 # Installation
 
+ONNX released packages are published in PyPi.
+
+```sh
+pip install onnx  
+```
+
+[ONNX weekly packages](https://pypi.org/project/onnx-weekly/) are published in PyPI to enable experimentation and early testing.
+
 Detailed install instructions, including Common Build Options and Common Errors can be found [here](https://github.com/onnx/onnx/blob/main/INSTALLL.md)
 
 # Testing
