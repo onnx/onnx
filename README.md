@@ -85,7 +85,7 @@ pip install onnx # or pip install onnx[reference] for optional reference impleme
 
 [ONNX weekly packages](https://pypi.org/project/onnx-weekly/) are published in PyPI to enable experimentation and early testing.
 
-Detailed install instructions, including Common Build Options and Common Errors can be found [here](https://github.com/onnx/onnx/blob/main/INSTALLL.md)
+Detailed install instructions, including Common Build Options and Common Errors can be found [here](https://github.com/onnx/onnx/blob/main/INSTALL.md)
 
 # Testing
 
