@@ -195,11 +195,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto* cats_int64s = ctx.getAttribute("cats_int64s");
-          if (nullptr == cats_int64s) {
+          if (cats_int64s == nullptr) {
             fail_shape_inference("Attribute 'cats_int64s' is required.");
           }
           auto* cats_strings = ctx.getAttribute("cats_strings");
-          if (nullptr == cats_strings) {
+          if (cats_strings == nullptr) {
             fail_shape_inference("Attribute 'cats_strings' is required.");
           }
           if (cats_int64s->ints_size() != cats_strings->strings_size()) {
