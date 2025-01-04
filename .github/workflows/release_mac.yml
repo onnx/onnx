@@ -24,7 +24,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         target-architecture: ['x86_64', 'arm64']
 
     steps:
@@ -64,7 +64,7 @@ jobs:
         python -m build --wheel
 
     - name: Upload wheel artifacts
-      uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
+      uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.target-architecture }}
         path: dist/*.whl
@@ -74,7 +74,7 @@ jobs:
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
         target-architecture: ['x86_64', 'arm64']
 
     steps:
@@ -116,7 +116,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: always() && (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.8' && matrix.python-version != '3.9'))
+      if: always() && (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.9'))
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt

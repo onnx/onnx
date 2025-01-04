@@ -14,7 +14,9 @@ import tempfile
 import time
 import unittest
 from collections import defaultdict
-from typing import Any, Callable, Iterable, Pattern, Sequence
+from collections.abc import Iterable, Sequence
+from re import Pattern
+from typing import Any, Callable
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -214,6 +216,11 @@ class Runner:
                         raise AssertionError(f"{ref_outputs[i]} != {outputs[i]}")
                     continue
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
+                np.testing.assert_array_equal(
+                    outputs[i].shape,
+                    ref_outputs[i].shape,
+                    err_msg=f"Output {i} has incorrect shape",
+                )
                 if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
