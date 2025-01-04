@@ -194,8 +194,20 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (nullptr == ctx.getInputType(0))
+          auto* cats_int64s = ctx.getAttribute("cats_int64s");
+          if (cats_int64s == nullptr) {
+            fail_shape_inference("Attribute 'cats_int64s' is required.");
+          }
+          auto* cats_strings = ctx.getAttribute("cats_strings");
+          if (cats_strings == nullptr) {
+            fail_shape_inference("Attribute 'cats_strings' is required.");
+          }
+          if (cats_int64s->ints_size() != cats_strings->strings_size()) {
+            fail_shape_inference("Attributes 'cats_int64s' and 'cats_strings' are required to be the same length.");
+          }
+          if (nullptr == ctx.getInputType(0)) {
             return;
+          }
           auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
           if (TensorProto::STRING == input_elem_type) {
             updateOutputElemType(ctx, 0, TensorProto::INT64);
