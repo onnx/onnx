@@ -31,6 +31,9 @@ on:
           - 'yes'
           - 'no'
         default: 'no'
+  issues:
+    types:
+      - labeled 
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
