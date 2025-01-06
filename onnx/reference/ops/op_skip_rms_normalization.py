@@ -29,5 +29,7 @@ def _skip_rms_normalization(
 
 class SkipRMSNormalization(OpRun):
     def _run(self, X, S, Scale, B=None, axis=None, epsilon=None, scaling_factor=None):  # type: ignore
-        res = _skip_rms_normalization(X, S, Scale, B, axis=axis, epsilon=epsilon, scaling_factor=scaling_factor)
+        res = _skip_rms_normalization(
+            X, S, Scale, B, axis=axis, epsilon=epsilon, scaling_factor=scaling_factor
+        )
         return res  # type: ignore

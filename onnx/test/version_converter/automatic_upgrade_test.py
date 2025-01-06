@@ -1235,7 +1235,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             23,
             [[2, 3, 4, 5], [2, 3, 4, 5], [4, 5], [4, 5]],
             [[2, 3, 4, 5]],
-            input_types=[TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            input_types=[
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+            ],
             output_types=[TensorProto.FLOAT],
             attrs={"axis": 2},
         )

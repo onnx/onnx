@@ -2870,32 +2870,29 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axis",
             "The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).",
-            AttributeProto::INT, static_cast<int64_t>(-1))
-        .Attr(
-            "epsilon",
-            "The epsilon value to use to avoid division by zero.",
-            AttributeProto::FLOAT, 1e-5f)
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "stash_type",
             "The floating-point precision used in stage one of the computation.",
             AttributeProto::INT,
             static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
         .AllowUncheckedAttributes()
-        .Input(0,
-               "X",
-               "The output of the layer for which the skip connection is being created. "
-               "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
-               "D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels. "
-               "The root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.",
-               "T")
-        .Input(1,
-               "scale",
-               "Scale tensor. Scale tensor shape should be broadcastable to the normalized shape ([axis, .., Dn]).",
-               "V")
-        .Output(0,
-                "Y",
-                "Output data tensor. Same shape as X",
-                "V")
+        .Input(
+            0,
+            "X",
+            "The output of the layer for which the skip connection is being created. "
+            "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
+            "D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels. "
+            "The root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.",
+            "T")
+        .Input(
+            1,
+            "scale",
+            "Scale tensor. Scale tensor shape should be broadcastable to the normalized shape ([axis, .., Dn]).",
+            "V")
+        .Output(0, "Y", "Output data tensor. Same shape as X", "V")
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
@@ -2933,59 +2930,59 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ".");
           }
         })
-        .SetContextDependentFunctionBodyBuilder(
-            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              // RMSNormalization <axis, epsilon, stash_type> (X, Scale) => (Y)
-              auto* tp = ctx.getInputType(0);
-              if ((tp == nullptr) || (!tp->has_tensor_type()))
-                return false;
-              int64_t T = tp->tensor_type().elem_type();
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // RMSNormalization <axis, epsilon, stash_type> (X, Scale) => (Y)
+          auto* tp = ctx.getInputType(0);
+          if ((tp == nullptr) || (!tp->has_tensor_type()))
+            return false;
+          int64_t T = tp->tensor_type().elem_type();
 
-              auto type_attr = ctx.getAttribute("stash_type");
-              int64_t U =
-                  (type_attr != nullptr) ? type_attr->i() : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-              if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-                  (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
-                  (U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
-                  (U != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
-                return false; // Error
+          auto type_attr = ctx.getAttribute("stash_type");
+          int64_t U = (type_attr != nullptr) ? type_attr->i()
+                                             : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) && (U != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
 
-              auto* axis_attr = ctx.getAttribute("axis");
-              int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
-              auto* epsilon_attr = ctx.getAttribute("epsilon");
-              float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+          auto* axis_attr = ctx.getAttribute("axis");
+          int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
+          auto* epsilon_attr = ctx.getAttribute("epsilon");
+          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
 
-              auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
-                auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
-                tp.add_dims(1);
-                return tp;
-              };
+          auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+            tp.add_dims(1);
+            return tp;
+          };
 
-              FunctionBuilder builder(functionProto);
-              builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
-                  .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
-                  .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
-                  .Add("Rank = Size (XShape)") // rank of input tensor: scalar
-                  .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
-                  .Add(
-                      axis >= 0 // number of axes that are reduced =
-                          ? "PosAxis1D = Identity (Axis1D)" // [axis]: 1D tensor
-                          : "PosAxis1D = Add (Rank, Axis1D)") // [rank + axis] : 1D tensor
-                  .Const1D("One1D", (int64_t)1)
-                  .Add("ReduceAxes = Range(PosAxis1D, Rank, One1D)")
-                  .Add("XU = Cast (X)", "to", U);
-              builder.Add("XSquared = Mul (XU, XU)")
-                    .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
-                    .Add("RMS = Sqrt (XSquaredMean)")
-                    .Add("RMSPlusEpsilon = Add (RMS, Epsilon)")
-                    .Add("SqrtRMS = Sqrt (RMSPlusEpsilon)")
-                    .Add("Normalized = Div (XU, SqrtRMS)")
-                    .Add("NormalizedT = Cast (Normalized)", "to", T);
-              builder.Add("Y = Mul (NormalizedT, scale)");
+          FunctionBuilder builder(functionProto);
+          builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
+              .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+              .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
+              .Add("Rank = Size (XShape)") // rank of input tensor: scalar
+              .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
+              .Add(
+                  axis >= 0 // number of axes that are reduced =
+                      ? "PosAxis1D = Identity (Axis1D)" // [axis]: 1D tensor
+                      : "PosAxis1D = Add (Rank, Axis1D)") // [rank + axis] : 1D tensor
+              .Const1D("One1D", (int64_t)1)
+              .Add("ReduceAxes = Range(PosAxis1D, Rank, One1D)")
+              .Add("XU = Cast (X)", "to", U);
+          builder.Add("XSquared = Mul (XU, XU)")
+              .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
+              .Add("RMS = Sqrt (XSquaredMean)")
+              .Add("RMSPlusEpsilon = Add (RMS, Epsilon)")
+              .Add("SqrtRMS = Sqrt (RMSPlusEpsilon)")
+              .Add("Normalized = Div (XU, SqrtRMS)")
+              .Add("NormalizedT = Cast (Normalized)", "to", T);
+          builder.Add("Y = Mul (NormalizedT, scale)");
 
-              schema.BuildFunction(functionProto);
-              return true;
-          }));
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
 
 static const char* SkipLayerNormalization_ver23_doc = R"DOC(
 Applies LayerNormalization to an expanded skip connection as described in the paper https://arxiv.org/pdf/2105.07205v1
@@ -3015,51 +3012,54 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Negative value means counting dimensions from the back.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
-        .Attr(
-            "epsilon",
-            "The epsilon value to use to avoid division by zero.",
-            AttributeProto::FLOAT, 1e-5f)
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "scaling_factor",
             "Modulating scalar by which the skip input is multiplied.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .Input(0,
-               "X",
-               "The output of the layer for which the skip connection is being created. "
-               "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
-               "D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels.",
-               "T")
-        .Input(1,
-               "S",
-               "Skip input with same shape as X. This is the input to the layer for which the skip connection is being created.",
-               "T")
-        .Input(2,
-               "gamma",
-               "1D tensor representing scale input of layer normalization "
-               "with shape of the spatial dimension along which layer normalization is applied.",
-               "T")
-        .Input(3,
-               "beta",
-               "1D tensor representing bias input of layer normalization "
-               "with shape of the spatial dimension along which layer normalization is applied.",
-               "T",
-               OpSchema::Optional)
-        .Input(4,
-               "B",
-               "1D bias tensor for the skip connection with shape of the spatial dimension along which layer normalization is applied.",
-               "T",
-               OpSchema::Optional)
-        .Output(0,
-                "Y",
-                "Output tensor with same shape as X",
-                "T")
-        .Output(1,
-                "InputSkipBiasSum",
-                "Sum of the input and skip inputs (and bias if it exists). Same shape as X",
-                "T",
-                OpSchema::Optional)
-        .TypeConstraint("T", {"tensor(float)", "tensor(float16)"}, "Constrain input and output types to float or half tensors.")
+        .Input(
+            0,
+            "X",
+            "The output of the layer for which the skip connection is being created. "
+            "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
+            "D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels.",
+            "T")
+        .Input(
+            1,
+            "S",
+            "Skip input with same shape as X. This is the input to the layer for which the skip connection is being created.",
+            "T")
+        .Input(
+            2,
+            "gamma",
+            "1D tensor representing scale input of layer normalization "
+            "with shape of the spatial dimension along which layer normalization is applied.",
+            "T")
+        .Input(
+            3,
+            "beta",
+            "1D tensor representing bias input of layer normalization "
+            "with shape of the spatial dimension along which layer normalization is applied.",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "B",
+            "1D bias tensor for the skip connection with shape of the spatial dimension along which layer normalization is applied.",
+            "T",
+            OpSchema::Optional)
+        .Output(0, "Y", "Output tensor with same shape as X", "T")
+        .Output(
+            1,
+            "InputSkipBiasSum",
+            "Sum of the input and skip inputs (and bias if it exists). Same shape as X",
+            "T",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "T",
+            {"tensor(float)", "tensor(float16)"},
+            "Constrain input and output types to float or half tensors.")
         .TypeConstraint("U", {"tensor(float)"}, "Constrain mean and inv_std_var to float tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
@@ -3099,7 +3099,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              // SkipLayerNormalization  <axis, epsilon, scaling_factor> (X, S, gamma, beta, B) => (Y, Mean?, InvStdDev?, InputSkipBiasSum?)
+              // SkipLayerNormalization  <axis, epsilon, scaling_factor> (X, S, gamma, beta, B) => (Y, Mean?,
+              // InvStdDev?, InputSkipBiasSum?)
 
               auto* tp = ctx.getInputType(0);
               if ((tp == nullptr) || (!tp->has_tensor_type()))
@@ -3115,21 +3116,19 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               FunctionBuilder builder(functionProto);
               builder.Const("ScalingFactorTensor", ToTensor<int>(scaling_factor))
-                .Add("ScalingFactor = Cast (ScalingFactorTensor)", "to", T)
-                .Add("ScaledSkip = Mul(S, ScalingFactor)");
+                  .Add("ScalingFactor = Cast (ScalingFactorTensor)", "to", T)
+                  .Add("ScaledSkip = Mul(S, ScalingFactor)");
 
               // Check if bias needs to be added to the sum of inputs and skip
               if (ctx.hasInput(4)) {
-                builder.Add("InputSkipSum = Add (X, ScaledSkip)")
-                  .Add("LNInput = Add (InputSkipSum, B)");
+                builder.Add("InputSkipSum = Add (X, ScaledSkip)").Add("LNInput = Add (InputSkipSum, B)");
               } else {
                 builder.Add("LNInput = Add (X, ScaledSkip)");
               }
 
               if (ctx.hasInput(3)) {
                 builder.Add("LNOutput = LayerNormalization (LNInput, gamma, beta)", "axis", axis, "epsilon", epsilon);
-              }
-              else {
+              } else {
                 builder.Add("LNOutput = LayerNormalization (LNInput, gamma)", "axis", axis, "epsilon", epsilon);
               }
 
@@ -3140,7 +3139,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               schema.BuildFunction(functionProto);
               return true;
-          }));
+            }));
 
 static const char* SkipRMSNormalization_ver23_doc = R"DOC(
 Applies RMSNormalization to an expanded skip connection similar to SkipLayerNormalization
@@ -3169,45 +3168,47 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Negative value means counting dimensions from the back.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
-        .Attr(
-            "epsilon",
-            "The epsilon value to use to avoid division by zero.",
-            AttributeProto::FLOAT, 1e-5f)
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
             "scaling_factor",
             "Modulating scalar by which the skip input is multiplied.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .Input(0,
-               "X",
-               "The output of the layer for which the skip connection is being created. "
-               "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
-               "D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels.",
-               "T")
-        .Input(1,
-               "S",
-               "Skip input with same shape as X. This is the input to the layer for which the skip connection is being created.",
-               "T")
-        .Input(2,
-               "gamma",
-               "1D tensor representing scale input of rms normalization "
-               "with shape of the spatial dimension along which rms normalization is applied.",
-               "T")
-        .Input(3,
-               "B",
-               "1D bias tensor for the skip connection with shape of the spatial dimension along which rms normalization is applied.",
-               "T",
-               OpSchema::Optional)
-        .Output(0,
-                "Y",
-                "Output tensor with same shape as X",
-                "T")
-        .Output(1,
-                "InputSkipBiasSum",
-                "Sum of the input and skip inputs (and bias if it exists). Same shape as X",
-                "T",
-                OpSchema::Optional)
-        .TypeConstraint("T", {"tensor(float)", "tensor(float16)"}, "Constrain input and output types to float or half tensors.")
+        .Input(
+            0,
+            "X",
+            "The output of the layer for which the skip connection is being created. "
+            "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
+            "D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels.",
+            "T")
+        .Input(
+            1,
+            "S",
+            "Skip input with same shape as X. This is the input to the layer for which the skip connection is being created.",
+            "T")
+        .Input(
+            2,
+            "gamma",
+            "1D tensor representing scale input of rms normalization "
+            "with shape of the spatial dimension along which rms normalization is applied.",
+            "T")
+        .Input(
+            3,
+            "B",
+            "1D bias tensor for the skip connection with shape of the spatial dimension along which rms normalization is applied.",
+            "T",
+            OpSchema::Optional)
+        .Output(0, "Y", "Output tensor with same shape as X", "T")
+        .Output(
+            1,
+            "InputSkipBiasSum",
+            "Sum of the input and skip inputs (and bias if it exists). Same shape as X",
+            "T",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "T",
+            {"tensor(float)", "tensor(float16)"},
+            "Constrain input and output types to float or half tensors.")
         .TypeConstraint("U", {"tensor(float)"}, "Constrain mean and inv_std_var to float tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
@@ -3263,13 +3264,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               FunctionBuilder builder(functionProto);
               builder.Const("ScalingFactorTensor", ToTensor<int>(scaling_factor))
-                .Add("ScalingFactor = Cast (ScalingFactorTensor)", "to", T)
-                .Add("ScaledSkip = Mul(S, ScalingFactor)");
+                  .Add("ScalingFactor = Cast (ScalingFactorTensor)", "to", T)
+                  .Add("ScaledSkip = Mul(S, ScalingFactor)");
 
               // Check if bias needs to be added to the sum of inputs and skip
               if (ctx.hasInput(3)) {
-                builder.Add("InputSkipSum = Add (X, ScaledSkip)")
-                  .Add("RMSInput = Add (InputSkipSum, B)");
+                builder.Add("InputSkipSum = Add (X, ScaledSkip)").Add("RMSInput = Add (InputSkipSum, B)");
               } else {
                 builder.Add("RMSInput = Add (X, ScaledSkip)");
               }
@@ -3280,5 +3280,5 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               schema.BuildFunction(functionProto);
               return true;
-          }));
+            }));
 } // namespace ONNX_NAMESPACE

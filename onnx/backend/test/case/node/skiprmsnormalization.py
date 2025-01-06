@@ -65,7 +65,9 @@ class SkipRMSNormalization(Base):
         gamma = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
         epsilon = 1e-2
-        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, epsilon=epsilon)
+        y, input_skip_bias_sum = _skip_rms_normalization(
+            x, skip, gamma, B=bias, epsilon=epsilon
+        )
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
@@ -90,7 +92,9 @@ class SkipRMSNormalization(Base):
         gamma = np.random.randn(2).astype(np.float32)
         bias = np.random.randn(2).astype(np.float32)
         scaling_factor = 3
-        y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, scaling_factor=scaling_factor)
+        y, input_skip_bias_sum = _skip_rms_normalization(
+            x, skip, gamma, B=bias, scaling_factor=scaling_factor
+        )
         y.astype(np.float32)
         input_skip_bias_sum.astype(np.float32)
 
