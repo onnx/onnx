@@ -49,7 +49,7 @@ def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
         return array
     for dtype, _, ml_name in _SUPPORTED_TYPES:
         ml_dtype = getattr(ml_dtypes, ml_name, None)
-        if ml_dtype == array.dtype:
+        if ml_dtype is not None and ml_dtype == array.dtype:
             return array.view(dtype=dtype)
     return array
 

@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 
 from onnx.onnx_pb import NodeProto
-from from onnx.reference import custom_element_types
+from onnx.reference import custom_element_types
 from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 
