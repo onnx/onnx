@@ -10,6 +10,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 from onnx.reference.ops.op_rotary_embedding import rotary_embedding
 
+
 class RotaryEmbedding(Base):
     @staticmethod
     def export_rotary_embedding() -> None:
@@ -166,9 +167,7 @@ class RotaryEmbedding(Base):
         sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
         cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
-        expected_output = rotary_embedding(
-            input_data, cos_cache_data, sin_cache_data
-        )
+        expected_output = rotary_embedding(input_data, cos_cache_data, sin_cache_data)
 
         expect(
             node,
@@ -191,7 +190,10 @@ class RotaryEmbedding(Base):
         cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
         expected_output = rotary_embedding(
-            input_data, cos_cache_data, sin_cache_data, interleaved=1,
+            input_data,
+            cos_cache_data,
+            sin_cache_data,
+            interleaved=1,
         )
 
         expect(
@@ -215,7 +217,10 @@ class RotaryEmbedding(Base):
         cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
         expected_output = rotary_embedding(
-            input_data, cos_cache_data, sin_cache_data, rotary_embedding_dim=4,
+            input_data,
+            cos_cache_data,
+            sin_cache_data,
+            rotary_embedding_dim=4,
         )
 
         expect(
