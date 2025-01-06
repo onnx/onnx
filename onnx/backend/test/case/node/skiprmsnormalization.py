@@ -25,7 +25,7 @@ class SkipRMSNormalization(Base):
         node = onnx.helper.make_node(
             "SkipRMSNormalization",
             inputs=["x", "skip", "gamma", "bias"],
-            outputs=["y, input_skip_bias_sum"],
+            outputs=["y", "input_skip_bias_sum"],
         )
 
         expect(

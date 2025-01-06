@@ -21340,7 +21340,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>X</tt> : T</dt>
 <dd>The output of the layer for which the skip connection is being created. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels. The root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
 <dt><tt>scale</tt> : V</dt>
-<dd>Scale tensor. Shape is the normalized shape ([axis, .., Dn]) or a scalar (which will be broadcasted to the normalized shape.</dd>
+<dd>Scale tensor. Scale tensor shape should be broadcastable to the normalized shape ([axis, .., Dn]).</dd>
 </dl>
 
 #### Outputs
@@ -30453,6 +30453,128 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>U</tt> : tensor(float)</dt>
 <dd>Constrain mean and inv_std_var to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>2d</summary>
+
+```python
+x = np.random.randn(4, 2).astype(np.float32)
+skip = np.random.randn(4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipRMSNormalization",
+    inputs=["x", "skip", "gamma", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_rms_normalization_2d_example",
+)
+```
+
+</details>
+
+
+<details>
+<summary>3d</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipRMSNormalization",
+    inputs=["x", "skip", "gamma", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_rms_normalization_3d_example",
+)
+```
+
+</details>
+
+
+<details>
+<summary>epsilon</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+epsilon = 1e-2
+y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, epsilon=epsilon)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipRMSNormalization",
+    inputs=["x", "skip", "gamma", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+    epsilon=epsilon,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_rms_normalization_epsilon_example",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scaling_factor</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+scaling_factor = 3
+y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, scaling_factor=scaling_factor)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipRMSNormalization",
+    inputs=["x", "skip", "gamma", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+    scaling_factor=scaling_factor,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_rms_normalization_scaling_factor_example",
+)
+```
+
+</details>
 
 
 ### <a name="Slice"></a><a name="slice">**Slice**</a>

@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 181/195 (92.82%, 5 generators excluded) common operators.
+Node tests have covered 182/195 (93.33%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -20930,6 +20930,122 @@ expect(
 </details>
 
 
+### SkipRMSNormalization
+There are 4 test cases, listed as following:
+<details>
+<summary>2d</summary>
+
+```python
+x = np.random.randn(4, 2).astype(np.float32)
+skip = np.random.randn(4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipRMSNormalization",
+    inputs=["x", "skip", "gamma", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_rms_normalization_2d_example",
+)
+```
+
+</details>
+<details>
+<summary>3d</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipRMSNormalization",
+    inputs=["x", "skip", "gamma", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_rms_normalization_3d_example",
+)
+```
+
+</details>
+<details>
+<summary>epsilon</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+epsilon = 1e-2
+y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, epsilon=epsilon)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipRMSNormalization",
+    inputs=["x", "skip", "gamma", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+    epsilon=epsilon,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_rms_normalization_epsilon_example",
+)
+```
+
+</details>
+<details>
+<summary>scaling_factor</summary>
+
+```python
+x = np.random.randn(3, 4, 2).astype(np.float32)
+skip = np.random.randn(3, 4, 2).astype(np.float32)
+gamma = np.random.randn(2).astype(np.float32)
+bias = np.random.randn(2).astype(np.float32)
+scaling_factor = 3
+y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, scaling_factor=scaling_factor)
+y.astype(np.float32)
+input_skip_bias_sum.astype(np.float32)
+
+node = onnx.helper.make_node(
+    "SkipRMSNormalization",
+    inputs=["x", "skip", "gamma", "bias"],
+    outputs=["y", "input_skip_bias_sum"],
+    scaling_factor=scaling_factor,
+)
+
+expect(
+    node,
+    inputs=[x, skip, gamma, bias],
+    outputs=[y, input_skip_bias_sum],
+    name="test_skip_rms_normalization_scaling_factor_example",
+)
+```
+
+</details>
+
+
 ### Slice
 There are 8 test cases, listed as following:
 <details>
@@ -25319,9 +25435,6 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 
 
 ### SequenceLength (call for test cases)
-
-
-### SkipRMSNormalization (call for test cases)
 
 
 <br/>

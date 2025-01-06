@@ -13,7 +13,7 @@ def _rms_normalization(
     W: np.ndarray,
     axis: int = -1,
     epsilon: float = 1e-5,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> np.ndarray:
     shape = X.shape
     rank = len(shape)
     if axis < 0:

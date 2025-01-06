@@ -2890,8 +2890,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                "T")
         .Input(1,
                "scale",
-               "Scale tensor. Shape is the normalized shape ([axis, .., Dn]) or a scalar (which will be broadcasted to "
-               "the normalized shape.",
+               "Scale tensor. Scale tensor shape should be broadcastable to the normalized shape ([axis, .., Dn]).",
                "V")
         .Output(0,
                 "Y",
@@ -3115,9 +3114,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               int64_t scaling_factor = (scaling_factor_attr != nullptr) ? scaling_factor_attr->i() : 1;
 
               FunctionBuilder builder(functionProto);
-              builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
-                .Add("Epsilon = Cast (FloatEpsilon)", "to", T)
-                .Const("ScalingFactorTensor", ToTensor<int>(scaling_factor))
+              builder.Const("ScalingFactorTensor", ToTensor<int>(scaling_factor))
                 .Add("ScalingFactor = Cast (ScalingFactorTensor)", "to", T)
                 .Add("ScaledSkip = Mul(S, ScalingFactor)");
 
@@ -3265,9 +3262,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               int64_t scaling_factor = (scaling_factor_attr != nullptr) ? scaling_factor_attr->i() : 1;
 
               FunctionBuilder builder(functionProto);
-              builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
-                .Add("Epsilon = Cast (FloatEpsilon)", "to", T)
-                .Const("ScalingFactorTensor", ToTensor<int>(scaling_factor))
+              builder.Const("ScalingFactorTensor", ToTensor<int>(scaling_factor))
                 .Add("ScalingFactor = Cast (ScalingFactorTensor)", "to", T)
                 .Add("ScaledSkip = Mul(S, ScalingFactor)");
 
@@ -3281,7 +3276,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               builder.Add("Y = RMSNormalization (RMSInput, gamma)", "axis", axis, "epsilon", epsilon);
               if (ctx.hasOutput(1)) {
-                builder.Add("InputSkipBiasSum = Identity (LNInput)");
+                builder.Add("InputSkipBiasSum = Identity (RMSInput)");
               }
               schema.BuildFunction(functionProto);
               return true;
