@@ -24,7 +24,9 @@ def _rms_normalization(
 
     # This computes RMS for every x_mat's column.
     x_squared = np.power(X, 2)
-    x_squared_mean = np.mean(x_squared, axis=tuple(range(axis, len(shape))), keepdims=True)
+    x_squared_mean = np.mean(
+        x_squared, axis=tuple(range(axis, len(shape))), keepdims=True
+    )
     rms = np.sqrt(x_squared_mean)
     # epsilon adjustment to avoid divide-by-zero.
     rms = rms + epsilon

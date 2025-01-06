@@ -24,11 +24,32 @@ def _skip_layer_normalization(
         input_skip_bias_sum = input_skip_sum + B
     else:
         input_skip_bias_sum = input_skip_sum
-    output, _, _ = _layer_normalization(input_skip_bias_sum, gamma, beta, epsilon=epsilon, axis=axis)
+    output, _, _ = _layer_normalization(
+        input_skip_bias_sum, gamma, beta, epsilon=epsilon, axis=axis
+    )
     return output, input_skip_bias_sum
 
 
 class SkipLayerNormalization(OpRun):
-    def _run(self, X, S, Scale, beta=None, B=None, axis=None, epsilon=None, scaling_factor=None):  # type: ignore
-        res = _skip_layer_normalization(X, S, Scale, beta, B, axis=axis, epsilon=epsilon, scaling_factor=scaling_factor)
+    def _run(
+        self,
+        X,
+        S,
+        Scale,
+        beta=None,
+        B=None,
+        axis=None,
+        epsilon=None,
+        scaling_factor=None,
+    ):  # type: ignore
+        res = _skip_layer_normalization(
+            X,
+            S,
+            Scale,
+            beta,
+            B,
+            axis=axis,
+            epsilon=epsilon,
+            scaling_factor=scaling_factor,
+        )
         return res  # type: ignore

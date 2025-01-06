@@ -986,7 +986,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("RMSNormalization", ["X", "scale"], ["y"], axis=2)],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
+        )  # type: ignore
 
     def test_skip_rms_normalization(self) -> None:
         graph = self._make_graph(
@@ -998,7 +1001,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("SkipRMSNormalization", ["X", "S", "gamma"], ["y"], axis=2)],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
+        )  # type: ignore
 
     def test_skip_layer_normalization(self) -> None:
         graph = self._make_graph(
@@ -1008,10 +1014,17 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ("gamma", TensorProto.FLOAT, ("H", "W")),
                 ("beta", TensorProto.FLOAT, ("H", "W")),
             ],
-            [make_node("SkipLayerNormalization", ["X", "S", "gamma", "beta"], ["y"], axis=2)],
+            [
+                make_node(
+                    "SkipLayerNormalization", ["X", "S", "gamma", "beta"], ["y"], axis=2
+                )
+            ],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
+        )  # type: ignore
 
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_size_axes_2_3(self, _, version) -> None:

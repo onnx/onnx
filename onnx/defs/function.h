@@ -147,7 +147,7 @@ class FunctionBuilder {
     int nodes_size = nodes.size();
     if (nodes_size != 0) {
       auto& node = *funProto.mutable_node(nodes_size - 1);
-      *node.add_attribute() =  MakeAttribute(attr_name, attr_value);
+      *node.add_attribute() = MakeAttribute(attr_name, attr_value);
     }
     return *this;
   }
